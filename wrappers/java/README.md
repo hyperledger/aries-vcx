@@ -1,54 +1,20 @@
-## Indy SDK for Java
+# Vcx SDK for Java and Android
 
-This Java wrapper currently requires Java 8 (e.g. the openjdk-8-jdk package in Debian/Ubuntu).
+##JAR
 
-Pull requests welcome!
+run `./gradlew clean build`
 
-**Not ready for production use! Not all commands work properly! Use at your own risk!**
-### How to install
-In your maven project add to pom.xml file next content:
+The jar will be present in `sdk/vcx/wrappers/java/vcx/build/libs`
 
-1. Inside repositories tag block add:
-    
-    
-    <repository>
-        <id>evernym</id>
-        <url>https://repo.evernym.com/artifactory/libindy-maven-local</url>
-    </repository>
+## AAR
 
-2. Inside dependencies tag block add:    
-    
-    
-    <dependency>
-        <groupId>org.hyperledger</groupId>
-        <artifactId>indy</artifactId>
-        <version>1.3.1-dev-410</version>
-    </dependency>
-     
-Note that before you can use java wrapper you must install  c-callable SDK. 
-See the section "How-to-install" in [Indy SDK](README.md)
-### How to build
+### Generate the AAR
 
-First, build the native "indy" library at https://github.com/hyperledger/indy-sdk:
+ - Copy the binaries i.e `libvcx.so` to folder `sdk/vcx/wrappers/java/vcx/android/src/main/jniLibs/<ARCH>`.
+    - Make sure the binaries are in correct architecture folders.
+ - run `./gradlew clean build --project-dir=android` in folder `sdk/vcx/wrappers/java/vcx`
 
-	cargo build
+###Publishing the AAR
+- run `./gradlew clean assemble --project-dir=android` in folder `sdk/vcx/wrappers/java/vcx`
 
-Then copy the resulting `libindy.so` to `./lib/`.
-
-Then run
-
-    mvn clean install
-    
-#### Troubleshooting
-Use environment variable `RUST_LOG={info|debug|trace}` to output logs of Libindy.
-
-If your application that uses libindy crashes with a Null Pointer Exception then probably the libindy shared library could 
-not be loaded properly. If you have build libindy from source then either put the resulting shared library where your
-operating system searches for shared libraries or set appropriate environment variables to help the OS's loader to find them.
-
-On Ubuntu either copy libindy.so to /usr/local/lib or set LD_LIBRARY_PATH to the directory that contains libindy.so.
-
-```
-export LD_LIBRARY_PATH=<path to libindy.so>
-```
-
+Aar will be present in `sdk/vcx/wrappers/java/vcx/android/build/outputs/aar`
