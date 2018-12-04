@@ -1,16 +1,18 @@
-## Indy SDK for Java
+# Vcx SDK for Java and Android
 
-This Java wrapper currently requires Java 8 (e.g. the openjdk-8-jdk package in Debian/Ubuntu).
+This is a Java wrapper for VCX library. 
+VCX is the open-source library on top of Libindy which fully implements the credentials exchange.
 
-Pull requests welcome!
+**Note**: This library is currently in experimental state.
 
-**Not ready for production use! Not all commands work properly! Use at your own risk!**
+This Java wrapper currently requires Java 8.
+
 ### How to install
 In your maven project add to pom.xml file next content:
 
 1. Inside repositories tag block add:
     
-    
+
     <repository>
         <id>evernym</id>
         <url>https://repo.evernym.com/artifactory/libindy-maven-local</url>
@@ -20,35 +22,30 @@ In your maven project add to pom.xml file next content:
     
     
     <dependency>
-        <groupId>org.hyperledger</groupId>
-        <artifactId>indy</artifactId>
-        <version>1.3.1-dev-410</version>
+        <groupId>com.evernym</groupId>
+        <artifactId>vcx</artifactId>
+        <version>0.1.2097319-dev-854</version>
     </dependency>
      
-Note that before you can use java wrapper you must install  c-callable SDK. 
-See the section "How-to-install" in [Indy SDK](README.md)
+**Note** that before you can use java wrapper you must install  c-callable SDK and Vcx.  
+* See the section "Installing the SDK" in the [Indy SDK documentation](../../../README.md#installing-the-sdk) 
+* See the section "Installing VCX" in the [VCX documentation](../../README.md#installing-the-vcx) 
+
 ### How to build
 
-First, build the native "indy" library at https://github.com/hyperledger/indy-sdk:
+## JAR
 
-	cargo build
+ - run `./gradlew clean build`. 
 
-Then copy the resulting `libindy.so` to `./lib/`.
+The jar will be present in `indy-sdk/vcx/wrappers/java/vcx/build/libs`
 
-Then run
+## AAR
 
-    mvn clean install
-    
-#### Troubleshooting
-Use environment variable `RUST_LOG={info|debug|trace}` to output logs of Libindy.
+ - Copy the binaries i.e `libvcx.so` to folder `indy-sdk/vcx/wrappers/java/vcx/android/src/main/jniLibs/<ARCH>`.
+    - Make sure the binaries are in correct architecture folders.
+ - run `./gradlew clean build --project-dir=android` in folder `indy-sdk/vcx/wrappers/java/vcx`
 
-If your application that uses libindy crashes with a Null Pointer Exception then probably the libindy shared library could 
-not be loaded properly. If you have build libindy from source then either put the resulting shared library where your
-operating system searches for shared libraries or set appropriate environment variables to help the OS's loader to find them.
+###Publishing the AAR
+- run `./gradlew clean assemble --project-dir=android` in folder `indy-sdk/vcx/wrappers/java/vcx`
 
-On Ubuntu either copy libindy.so to /usr/local/lib or set LD_LIBRARY_PATH to the directory that contains libindy.so.
-
-```
-export LD_LIBRARY_PATH=<path to libindy.so>
-```
-
+Aar will be present in `indy-sdk/vcx/wrappers/java/vcx/android/build/outputs/aar`

@@ -1,271 +1,145 @@
-# Indy SDK
-![logo](https://raw.githubusercontent.com/hyperledger/indy-node/master/collateral/logos/indy-logo.png)
-This is the official SDK for [Hyperledger Indy](https://www.hyperledger.org/projects),
-which provides a distributed-ledger-based foundation for [self-sovereign identity](https://sovrin.org). Indy provides a software ecosystem for private, secure, and powerful identity, and the Indy SDK enables clients for it.
-The major artifact of the SDK is a c-callable
-library; there are also convenience wrappers for various programming languages and Indy CLI tool.
+# VCX
 
-All bugs, stories, and backlog for this project are managed through [Hyperledger's Jira](https://jira.hyperledger.org/secure/RapidBoard.jspa)
-in project IS (note that regular Indy tickets are in the INDY project instead...). Also, make sure to join
-us on [Hyperledger's Rocket.Chat](https://chat.hyperledger.org/) at #indy-sdk to discuss. You will need a Linux Foundation login to get access to these channels
+Libvcx is a c-callable library built on top of Libindy that provides a high-level credential exchange protocol. 
+It simplifies creation of agent applications and provides better agent-2-agent interoperability for [Hyperledger Indy](https://www.hyperledger.org/projects/hyperledger-indy)
+infrastructure.
 
-## Understanding Hyperledger Indy
+**Note** This library is currently in an **experimental** state.
 
-If you have just started learning about self-sovereign identity, here are some resources to increase your understanding:
-
-* This extended tutorial introduces Indy, explains how the whole ecosystem works, and how the
-functions in the SDK can be used to construct rich clients: [Indy-SDK Getting-Started Guide](doc/getting-started/getting-started.md)
-
-* A recent webinar explaining self-sovereign identity using Hyperledger Indy and Sovrin: [SSI Meetup Webinar](https://youtu.be/RllH91rcFdE?t=4m30s)
-
-* Visit the main resource for all things "Indy" to get acquainted with the code base, helpful resources, and up-to-date information: [Hyperledger Wiki-Indy](https://wiki.hyperledger.org/projects/indy).
-
-* You may also want to look at the [older guide](https://github.com/hyperledger/indy-node/blob/stable/getting-started.md)
-that explored the ecosystem via command line. That material is being
-rewritten but still contains some useful ideas.
-
-## How-To Tutorials
-
-Short, simple tutorials that demonstrate how to accomplish common tasks
-are also available. See the [doc/how-tos](doc/how-tos) folder.
-
-1. [Write a DID and Query Its Verkey](doc/how-tos/write-did-and-query-verkey/README.md)
-2. [Rotate a Key](doc/how-tos/rotate-key/README.md)
-3. [Save a Schema and Cred Def](doc/how-tos/save-schema-and-cred-def/README.md)
-4. [Issue a Credential](doc/how-tos/issue-credential/README.md)
-5. [Negotiate a Proof](doc/how-tos/negotiate-proof/README.md)
-6. [Send a Secure Message](doc/how-tos/send-secure-msg/README.md)
-
-## Installing the SDK
-### Release channels
-The Indy SDK release process defines the following release channels:
-
-* `master` - development builds for each push to master branch.
-* `rc` - release candidates.
-* `stable` - stable releases.
-
-Please refer to our [release workflow](doc/release-workflow.md) for more details.
+## Installing the VCX
+* VCX requires access to some Cloud Agent for full work. 
+[Here](https://github.com/hyperledger/indy-sdk/tree/master/vcx/dummy-cloud-agent/README.md) is the simple Agent that can be used.
+* VCX requires some payment plugin.
+[Here](https://github.com/hyperledger/indy-sdk/tree/master/libnullpay/README.md) is the simple plugin that can be used.
 
 ### Ubuntu based distributions (Ubuntu 16.04)
-It is recommended to install the SDK packages with APT:
+It is recommended to install the VCX packages with APT:
 
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88
     sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb xenial {release channel}"
     sudo apt-get update
-    sudo apt-get install -y libindy
+    sudo apt-get install -y libvcx
 
 {release channel} must be replaced with master, rc or stable to define corresponded release channel.
-Please See the section "Release channels" above for more details.
+Please See the section [Release channels](../README.md/#release-channels) for more details.
 
-### Windows
+### OSX
 
-1. Go to https://repo.sovrin.org/windows/libindy/{release-channel}.
-2. Download last version of libindy.
-3. Unzip archives to the directory where you want to save working library.
-4. After unzip you will get next structure of files:
+To build libvcx for OSX and iOS using scripts do the following steps --
+1) Add the following environment variables to your .bash_profile
+export PKG_CONFIG_ALLOW_CROSS=1
+export CARGO_INCREMENTAL=1
+export RUST_LOG=indy=trace
+export RUST_TEST_THREADS=1
+for i in `ls -t /usr/local/Cellar/openssl/`; do export OPENSSL_DIR=/usr/local/Cellar/openssl/$i; break; done
+export PYTHONPATH=/Users/[your_username]/[path_to_sdk]/vcx/libvcx/vcx-indy-sdk/wrappers/python:/Users/[your_username]/[path_to_sdk]/vcx/wrappers/python3:${PYTHONPATH}
+#it is important that the $HOME/.cargo/bin comes first in the PATH
+export PATH="$HOME/.cargo/bin:$PATH"
+export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/Cellar/zeromq/4.2.5/lib/pkgconfig:/usr/local/Cellar/libsodium/1.0.12/lib/pkgconfig
+2) git clone this repository
+3) cd sdk/vcx/libvcx/build/macos
+4) ./mac.01.libindy.setup.sh
+5) source ./mac.02.libindy.env.sh
+6) ./mac.03.libindy.build.sh > mac.03.libindy.build.sh 2<&1
+7) ./mac.04.libvcx.setup.sh
+8) source ./mac.05.libvcx.env.sh
+9) ./mac.06.libvcx.build.sh > mac.06.libvcx.build.sh.out 2>&1
+10) If the script ./mac.06.libvcx.build.sh terminates with the message
+"signal: 11, SIGSEGV: invalid memory reference" OR "signal: 4, SIGILL: illegal instruction"
+then that means the 'cargo test' command was unsuccessful OR if you have intermittent
+behavior (some tests pass on one try then fail on the next) with the
+'cargo test' command then execute the script ./mac.build.and.install.rust.tools.sh
+After the mac.build.and.install.rust.tools.sh finishes (it will take a long long time)
+then restart your terminal and then re-run all of the scripts starting at step 1)
+above and they should all be successful. If they are not successful then run the
+./mac.build.and.install.rust.tools.sh script one more time (it will be fast this time)
+and DO NOT restart your terminal but run the ./mac.06.libvcx.build.sh script and
+it should finish successfully.
+11) ./mac.07.libvcx.prepare.ios.deps.sh
 
-* `Your working directory`
-    * `include`
-        * `...`
-    * `lib`
-        * `indy.dll`
-        * `libeay32md.dll`
-        * `libsodium.dll`
-        * `libzmq.dll`
-        * `ssleay32md.dll`
 
-`include` contains c-header files which contains all necessary declarations
-that may be need for your applications.
-
-`lib` contains all necessary binaries which contains libindy and all it's dependencies.
- `You must add to PATH environment variable path to lib`. It's necessary for dynamic linkage
- your application with libindy.
-
-{release channel} must be replaced with master, rc or stable to define corresponded release channel.
-See section "Release channels" for more details.
-
-### iOS
-See [wrapper iOS install documentation](wrappers/ios/README.md "How to install").
+To build libvcx on your own you can follow these steps --
+1) Install rust and rustup (https://www.rust-lang.org/install.html).
+2) Install or build libindy (https://repo.evernym.com/libindy/).
+    - As of now there is no distribution channel for OSX for LibIndy. [You have to build it manually.](https://github.com/hyperledger/indy-sdk/blob/master/doc/mac-build.md) 
+    - Copy generated `libindy.dylib` file to `/usr/local/lib`
+        - Or create a symlink in `/usr/local/lib` pointing to newly generated `libindy.dylib`, this will help in updating the libindy in future.
+3) Clone this repo to your local machine.
+4) Run `export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2o_1` in terminal.
+    - The version of openssl in /usr/local/Cellar/openssl may change. Set OPENSSL_DIR to the version installed on your Mac. 
+    For example, run export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2o_1 in terminal if version 1.0.2o_1 is installed.
+5) From the local repository run the following commands to verify everything works:
+    ```
+    $ cargo build
+    ```
+6) Make sure all tests are passing
+       ```
+       $ cargo test
+       ```
+       If tests do not pass due to a "signal: 11, SIGSEGV: invalid memory reference" or if you have intermittent behavior (some tests pass on one try then fail on the next) , try replacing the `rustc` binary installed in step 1 in ${HOME}/.cargo/bin with a version built from the stable branch.
+   
+       ```
+       git clone git@github.com:rust-lang/rust.git -b stable
+       cd rust
+       ./x.py build && ./x.py install
+       ```
+   
+      This will install rustc, rust-gdb, rust-lldb, and rustdoc executables in /usr/local/lib
+   
+       Compare the version of ${HOME}/.cargo/bin/rustc with the version in /usr/local/lib
+       ```
+        ${HOME}/.cargo/bin/rustc --version
+        /usr/local/bin/rustc --version
+       ```
+       It is likely that the only difference you will see in the version number is a "-dev" appended to the version in /usr/local/bin.
+   
+       Both ${HOME}/.cargo/bin and /usr/local/lib are likely in your PATH. It appears that when ${HOME}/.cargo/bin/cargo is used, the ${HOME}/.cargo/bin/rustc executable is used instead of /usr/local/lib/rustc, even if /usr/local/lib is first in your PATH. To fix this problem, simply delete rustc from ${HOME}/.cargo/bin. Doing so will ensure the versions in /usr/local/bin will be invoked.
+   
+       ```
+       rm -f ${HOME}/.cargo/bin/rustc
+       rm -f ${HOME}/.cargo/bin/rust-gdb
+       rm -f ${HOME}/.cargo/bin/rust-lldb
+       rm -f ${HOME}/.cargo/bin/rustdoc
+       ```
+       
+       If this seems too messy to you, it is recommended that ${HOME}/.cargo be removed entirely (as if you never followed install instructions found at https://www.rust-lang.org/install.html) and build/install rust and cargo from source. To build and install cargo from source, follow instructions found at: https://github.com/rust-lang/cargo
 
 ### Android
+1) Install rust and rustup (https://www.rust-lang.org/install.html).
+2) Clone this repo to your local machine.
+3) Install libindy (https://repo.evernym.com/libindy/).
+    - As of now there is no distribution channel for Android for LibIndy. You have to build it manually.
+    - Copy generated `libindy.a` file to whatever location you want
+    - Set env variable `LIBINDY_DIR=<Directory_containing_libindy.a>`. e.g `export LIBINDY_DIR=/usr/local/aarch64-linux-android/libindy` libindy directory holds libindy.a
+4) Run `install_toolchains.sh`. You need to run this once to setup toolchains for android
+5) Run `android_build.sh aarm64` to build libvcx for aarm64 architecture.(Other architerctures will follow soon)
+6) Tests are not working on Android as of now.
 
-1. Go to `https://repo.sovrin.org/android/libindy/{release-channel}`.
-2. 3 architecture are supported as of now arm,arm64 and x86.
-3. Download latest version of libindy.
-4. Unzip archives to the directory where you want to save the `.so` files.
-5. After unzip you will get next structure of files:
+## How to build VCX from source
 
-* `Your working directory`
-    * `include`
-        * `...`
-    * `lib`
-        * `libindy.so`
-        * `libindy_shared.so`
-        * `libindy.a`
-
-`include` contains c-header files which contains all necessary declarations
-that may be need for your applications.
-
-`lib` contains three types of binaries.
- * `libindy.so` - This is a shared library which is statically linked with all the depenedencies. 
- You dont need to sidelaod other dependencies like zmq, sodium and openssl to android app if you use this.
+## Linux 
+1) Install rust and rustup (https://www.rust-lang.org/install.html). 
+2) [Install Libindy](../README.md#installing-the-sdk) 
+3) Optionally [install Libnullpay](../libnullpay/README.md) to include payment functionality.
+3) Clone this repo to your local machine. 
+4) From the indy-sdk/vcx/libvcx folder inside this local repository run the following commands to verify everything works: 
+    ``` 
+    $ cargo build 
+    $ cargo test 
+    ``` 
+5) Currently developers are using intellij for IDE development (https://www.jetbrains.com/idea/download/) with the rust plugin (https://plugins.jetbrains.com/plugin/8182-rust). 
  
- * `libindy_shared.so` - This is pure shared library. It is not dynamically linked to its dependencies. 
- You need to sideload the binaries with its dependencies. You can download the needed pre-built dependencies from [here](https://github.com/evernym/indy-android-dependencies/tree/v1.0.2)
-    * Rename this library to `libindy.so` before loading it into the app. This will help you in having the compatibility with existing wrappers.
-    
- * `libindy.a` - This is a static library, which is compiled with NDK.
- 
- [How to use instructions.](https://github.com/hyperledger/indy-sdk/blob/master/doc/android-build.md#usage)  
-
-{release channel} must be replaced with rc or stable to define corresponded release channel.
-See section "Release channels" for more details.
-
- **Note** :
- 
- - [WARNING] This library should be considered as experimental as currently unit tests are *not* executed in the CI phase.
- 
- - We are using the [NDK16b](https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip) because it is the last NDK to have support for `gnustl_shared` stl. 
- gnustl_shared is deprecated in latest NDK. gnustal_shared is needed because the dependencies are compiled using gnustal_shared and you will get build errors if more than one type of stl while compiling.
- 
- 
-### MacOS
-
-Pre-built libraries are not provided for MacOS. Please look [here](doc/mac-build.md)
-for details on building from source for MacOS.
-
- **Note:** After building `libindy`, add the path containing the library the `LD_LIBRARY_PATH` and
-`DYLD_LIBRARY_PATH` environment variables. This is necessary for dynamically linking
-your application with `libindy`. The dynamic linker will first check for the library in
-`LD_LIBRARY_PATH` if the library in your application doesn't include directory names.
-If the library in your application does include any directory name, then dynamic
-linker will search for the library in `DYLD_LIBRARY_PATH` (not `LD_LIBRARY_PATH`)
-so we recommend you set both variables to be safe.
-
-### RHEL-based distributions (Amazon Linux 2017.03)
-Pre-built libraries are not provided for RHEL-based distributions. Please look [here](doc/rhel-build.md)
-for details on building from source for RHEL-based distributions.
-
-After successfully compiling `libindy`, you will need to add the path containing `libindy.so` to the
-`LD_LIBRARY_PATH` environment variable. This is required for your application to link to
-`libindy`.
-
-## How to build Indy SDK from source
-
-* [Ubuntu based distributions (Ubuntu 16.04)](doc/ubuntu-build.md)
-* [RHEL based distributions (Amazon Linux 2017.03)](doc/rhel-build.md)
-* [Windows](doc/windows-build.md)
-* [MacOS](doc/mac-build.md)
-* [Android](doc/android-build.md)
-
-**Note:**
-By default `cargo build` produce debug artifacts with a large amount of run-time checks.
-It's good for development, but this build can be in 100+ times slower for some math calculation.
-If you would like to analyse CPU performance of libindy for your use case, you have to use release artifacts (`cargo build --release`). 
-
-## How to start local nodes pool with docker
-To test the SDK codebase with a virtual Indy node network, you can start a pool of local nodes using docker:
-
-### 1) Starting the test pool on localhost
-Start the pool of local nodes on `127.0.0.1:9701-9708` with Docker by running:
-
-```
-docker build -f ci/indy-pool.dockerfile -t indy_pool .
-docker run -itd -p 9701-9708:9701-9708 indy_pool
-```
-
-### 2) Starting the test pool on a specific IP address
- Dockerfile `ci/indy-pool.dockerfile` supports an optional pool_ip param that allows
- changing ip of pool nodes in generated pool configuration. 
-
- You can start the pool with e.g. with the IP address of your development machine's WIFI interface
- so that mobile apps in the same network can reach the pool.
-
- ```
- # replace 192.168.179.90 with your wifi IP address
- docker build --build-arg pool_ip=192.168.179.90 -f ci/indy-pool.dockerfile -t indy_pool .
- docker run -itd -p 192.168.179.90:9701-9708:9701-9708 indy_pool
- ```
- To connect to the pool the IP addresses in /var/lib/indy/sandbox/pool_transactions_genesis (in docker) and the
- pool configuration you use in your mobile app must match.
-
-### 3) Starting the test pool on a docker network
- The following commands allow to start local nodes pool in custom docker network and access this pool
- by custom ip in docker network:
-
- ```
- docker network create --subnet 10.0.0.0/8 indy_pool_network
- docker build --build-arg pool_ip=10.0.0.2 -f ci/indy-pool.dockerfile -t indy_pool .
- docker run -d --ip="10.0.0.2" --net=indy_pool_network indy_pool
- ```
- Note that for Windows and MacOS this approach has some issues. Docker for these OS run in
- their virtual environment. First command creates network for container and host can't
- get access to that network because container placed on virtual machine. You must appropriate set up
- networking on your virtual environment. See the instructions for MacOS below.
-
-### Docker port mapping on MacOS
-
-If you use some Docker distribution based on Virtual Box you can use Virtual Box's
-port forwarding future to map 9701-9709 container ports to local 9701-9709 ports.
-
-If you use VMWare Fusion to run Docker locally, follow the instructions from
-[this article](https://medium.com/@tuweizhong/how-to-setup-port-forward-at-vmware-fusion-8-for-os-x-742ad6ca1344)
-and add the following lines to _/Library/Preferences/VMware Fusion/vmnet8/nat.conf_:
-
-```
-# Use these with care - anyone can enter into your VM through these...
-# The format and example are as follows:
-#<external port number> = <VM's IP address>:<VM's port number>
-#8080 = 172.16.3.128:80
-9701 = <your_docker_ip>:9701
-9702 = <your_docker_ip>:9702
-9703 = <your_docker_ip>:9703
-9704 = <your_docker_ip>:9704
-9705 = <your_docker_ip>:9705
-9706 = <your_docker_ip>:9706
-9707 = <your_docker_ip>:9707
-9708 = <your_docker_ip>:9708
-9709 = <your_docker_ip>:9709
-```
-where <your_docker_ip> is your Docker host IP.
-
-Docker machine needs to be rebooted after these changes.
-
 ## Wrappers documentation
 
-The following wrappers are tested and complete. There is also active work
-on a wrapper for Go; visit
-[#indy-sdk on Rocket.Chat](https://chat.hyperledger.org/channel/indy-sdk) for
-details.
+The following wrappers are tested and complete.
 
-* [.Net](wrappers/dotnet/README.md)
 * [Java](wrappers/java/README.md)
-* [Python](wrappers/python/README.md)
+* [Python](wrappers/python3/README.md)
 * [iOS](wrappers/ios/README.md)
-* [NodeJS](wrappers/nodejs/README.md)
+* [NodeJS](wrappers/node/README.md)
 
-## Indy CLI documentation
-* An explanation of how to install the official command line interface for that provides commands to manage wallets and interactions with the ledger: [Indy CLI](cli/README.md)
+## Getting started guide
+[The tutorial](docs/getting-started/getting-started.md) which introduces Libvcx and explains how the whole ecosystem works, and how the functions in the SDK can be used to construct rich clients.
 
-## How to migrate
-The documents that provide necessary information for Libindy migration. This document is written for developers using Libindy 1.3.0 to provide necessary information and
-to simplify their transition to API of Libindy 1.4.0.
-* [v1.3.0 → v1.4.0](doc/migration-guide-1.3.0-1.4.0.md)
-* [v1.4.0 → v1.5.0](doc/migration-guide-1.4.0-1.5.0.md)
-* [v1.5.0 → v1.6.x](doc/migration-guide-1.5.0-1.6.0.md)
-
-## How to Contribute
-* We'd love your help; see these [instructions on how to contribute](http://bit.ly/2ugd0bq).
-* You may also want to read this info about [maintainers](MAINTAINERS.md) and our process.
-* We use developer certificate of origin (DCO) in all hyperledger repositories,
-  so to get your pull requests accepted, you must certify your commits by signing off on each commit.
-  More information can be found in [Signing Commits](doc/signing-commits.md) article.
-
-
-#### Notes
-* Libindy implements multithreading approach based on **mpsc channels**. 
-If your application needs to use Libindy from multiple processes you should keep in mind the following restrictions:
-    * Fork - duplicates only the main thread. So, child threads will not be duplicated.
-      If any out-of-process requirements are possible, the caller must fork first **before any calls to Libindy**
-      (otherwise the command from a child thread will hang). Fork is only available on Unix. 
-    * Popen - spawns a new OS level process which will create its own child threads. Popen is cross-platform.
+### Example use
+For the main workflow example check [demo](https://github.com/hyperledger/indy-sdk/tree/master/vcx/wrappers/python3/demo).
