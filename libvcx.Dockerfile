@@ -64,6 +64,3 @@ USER root
 RUN mv /home/indy/indy-sdk/vcx/libvcx/target/release/*.so /usr/lib
 RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so /usr/lib
 USER indy
-
-
-
