@@ -59,13 +59,13 @@ WORKDIR /home/indy
 RUN git clone "${INDYSDK_REPO}" "./indy-sdk"
 RUN cd "/home/indy/indy-sdk" && git checkout "${INDYSDK_REVISION}"
 
-# Build indy libraries
+# Build indy binaries and move to system library
 RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libindy/Cargo.toml
-RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libnullpay/Cargo.toml
-
-# Move the binaries to system library
 USER root
 RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
+USER indy 
+RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libnullpay/Cargo.toml
+USER root
 RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so /usr/lib
 
 # Build libvcx
@@ -75,7 +75,6 @@ COPY --chown=indy  ./ ./
 RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 
 # Move the binary to system library
-USER root
 USER root
 RUN mv /home/indy/libvcx/target/release/*.so /usr/lib
 

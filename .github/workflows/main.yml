@@ -10,11 +10,11 @@ jobs:
       BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
       DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
-      # CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
+      CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
-      # DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
+      DOCKER_IMG_NAME_AGENCY: docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
     steps:
       - run: echo $GITHUB_REPOSITORY
@@ -63,10 +63,10 @@ jobs:
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
-          # echo "::set-output name=CACHE_KEY_AGENCY::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$AGENCY_HASH)"
+          echo "::set-output name=CACHE_KEY_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=CACHE_KEY_LIBVCX::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$LIBVCX_HASH)"
           echo "::set-output name=CACHE_KEY_POOL::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$POOL_HASH)"
-          # echo "::set-output name=DOCKER_IMG_NAME_AGENCY::AGENCY:$DOCKER_TAG_VERSION"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$DOCKER_TAG_VERSION"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$DOCKER_TAG_VERSION"
 
@@ -134,14 +134,12 @@ jobs:
 #          mkdir -p /tmp/imgcache
 #          docker save "$DOCKER_IMG_NAME_LIBINDY" > /tmp/imgcache/img_base.rar
 
-  # This step may not be necessary
   build-image-vcxagency:
     runs-on: ubuntu-16.04
     needs:
       - workflow-setup
     env:
       DOCKER_BUILDKIT: 1
-      DOCKER_IMG_NAME_AGENCY: docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -211,47 +209,48 @@ jobs:
 #  #  ███████ ██ ██████    ████    ██████ ██   ██ 
 #  #
 #
-#  test-libvcx:
-#    runs-on: ubuntu-16.04
-#    env:
-#      DOCKER_BUILDKIT: 1
-#    needs: [build-image-indypool, build-image-libvcx, build-image-vcxagency]
-#    steps:
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: Docker setup
-#        run: |
-#          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY | awk '{print tolower($0)}')
-#          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
-#          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-#          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Load ubuntu16-libvcx image
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libvcx:$REF_HASH || true
-#      - name: Load indy_pool image
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH || true
-#      - name: Run libindy unit tests in Docker
-#        run: |
-#          set -x
-#          docker run --rm -d --name indylocalhost \
-#                        --network host \
-#
-#          docker run --rm -d --name vcxagency \
-#                        --network host \
-#                        docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-vcxagency:$REF_HASH
-#
-#          docker run --rm -i --name libindy-tests \
-#                              --network host \
-#                              bash -c '(cd $HOME/indy-sdk/vcx/libvcx &&  RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
-#  run-pool-image:
-#    needs: build-pool-image
-#    runs-on: ubuntu-16.04
-#    steps:
-#      - name: Building docker image
-#        run: |
-#          echo "Run pool image cached from previous dependent 'build-pool-image' workflow"
-#          docker image ls
-#          docker run --name indylocalhost -p 9701-9708:9701-9708 -d indy_pool:$REF_HASH
+  test-libvcx:
+    runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
+    needs: [build-image-indypool, build-image-libvcx, build-image-vcxagency]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Docker setup
+        run: |
+          echo ::set-env name=CACHE_KEY_POOL::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_POOL}})
+          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
+          echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
+          echo ::set-env name=DOCKER_IMG_NAME_POOL::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL}})
+          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
+      - name: Load indy-pool image node
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_POOL }}
+      - name: Load pool image from cache
+        run: docker load < /tmp/imgcache/img_indypool.rar
+      - name: Load agency image cache
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_AGENCY }}
+      - name: Load pool image from cache
+        run: docker load < /tmp/imgcache/img_agency.rar
+      - name: Load libvcx image cache
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_LIBVCX }}
+      - name: Load pool image from cache
+        run: docker load < /tmp/imgcache/img_libvcx.rar
+      - name: Run libvcx unit tests in Docker
+        run: |
+          set -x
+        docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name vcxagency --network host $DOCKER_IMG_NAME_AGENCY
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
