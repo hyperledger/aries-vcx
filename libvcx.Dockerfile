@@ -60,6 +60,7 @@ RUN git clone "${INDYSDK_REPO}" "./indy-sdk"
 RUN cd "/home/indy/indy-sdk" && git checkout "${INDYSDK_REVISION}"
 
 # Build indy binaries and move to system library
+# TODO: It should be possible to run a single command as a user
 RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libindy/Cargo.toml
 USER root
 RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
@@ -69,8 +70,8 @@ USER root
 RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so /usr/lib
 
 # Build libvcx
+WORKDIR /home/indy
 USER indy
-RUN cd "/home/indy"
 COPY --chown=indy  ./ ./
 RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 
@@ -86,7 +87,9 @@ RUN apt-get update && \
     apt-get install -y \
       libssl-dev \
       apt-transport-https \
-      ca-certificates
+      ca-certificates \
+      curl \
+      build-essential
 
 RUN useradd -ms /bin/bash -u 1000 indy
 USER indy
@@ -101,8 +104,12 @@ COPY --from=BASE /usr/lib/libindy.so /usr/lib/libindy.so
 COPY --from=BASE /usr/lib/libvcx.so /usr/lib/libvcx.so
 COPY --from=BASE /usr/lib/libnullpay.so /usr/lib/libnullpay.so
 
+COPY --from=BASE /home/indy/libvcx ./libvcx
+
+# TODO: Just copyr the binary and add to path
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.43.1
+ENV PATH /home/indy/.cargo/bin:$PATH
+
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="libvcx"
 LABEL org.label-schema.version="${INDY_VERSION}"
-
-USER indy

@@ -43,7 +43,7 @@ jobs:
 
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
-          echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }})
+          echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }}-${{ hashFiles('libvcx.Dockerfile') }})
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
