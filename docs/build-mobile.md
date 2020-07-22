@@ -16,9 +16,9 @@ For general overview, see https://dev.to/jakubkoci/how-to-build-a-vcx-ios-librar
         * `libvcx.a`
         * `libvcx.so`
     
-Copy `libvcx.so` file to the jniLibs/{abi} folder of your android project
+Copy `libvcx.so` file to the `jniLibs/{abi}` folder of your android project
     
-{release channel} must be replaced with master, rc or stable to define corresponded release channel.
+`{release channel}` must be replaced with `master`, `rc` or `stable` to define corresponding release channel.
 
 ## How to build VCX from source
 
@@ -32,7 +32,7 @@ Copy `libvcx.so` file to the jniLibs/{abi} folder of your android project
     $ cargo build 
     $ cargo test 
     ``` 
-5) Currently developers are using intellij for IDE development (https://www.jetbrains.com/idea/download/) with the rust plugin (https://plugins.jetbrains.com/plugin/8182-rust). 
+5) Currently developers are using IntelliJ for IDE development (https://www.jetbrains.com/idea/download/) with the Rust plugin (https://plugins.jetbrains.com/plugin/8182-rust). 
 
 ### Android
 1) Install rust and rustup (https://www.rust-lang.org/install.html).
