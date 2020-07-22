@@ -10,11 +10,11 @@ jobs:
       BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
       DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
-      CACHE_KEY_LIBINDY: ${{ steps.mainstep.outputs.CACHE_KEY_LIBINDY }}
+      # CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
-      DOCKER_IMG_NAME_LIBINDY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBINDY }}
+      # DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
     steps:
       - run: echo $GITHUB_REPOSITORY
@@ -52,7 +52,7 @@ jobs:
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
 
-          echo ::set-env name=LIBINDY_CACHE::$(echo ${{ hashFiles('libindy.Dockerfile') }})
+          echo ::set-env name=AGENCY_CACHE::$(echo ${{ hashFiles('agency.Dockerfile') }})
           echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }})
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('indy-pool.dockerfile') }})
 
@@ -63,10 +63,10 @@ jobs:
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
-          echo "::set-output name=CACHE_KEY_LIBINDY::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$LIBINDY_HASH)"
+          # echo "::set-output name=CACHE_KEY_AGENCY::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$AGENCY_HASH)"
           echo "::set-output name=CACHE_KEY_LIBVCX::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$LIBVCX_HASH)"
           echo "::set-output name=CACHE_KEY_POOL::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$POOL_HASH)"
-          echo "::set-output name=DOCKER_IMG_NAME_LIBINDY::libindy:$DOCKER_TAG_VERSION"
+          # echo "::set-output name=DOCKER_IMG_NAME_AGENCY::AGENCY:$DOCKER_TAG_VERSION"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$DOCKER_TAG_VERSION"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$DOCKER_TAG_VERSION"
 
@@ -98,45 +98,85 @@ jobs:
                        -t "$DOCKER_IMG_NAME_POOL" \
                         .
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_base.rar
+          docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 
-  build-image-ubuntu16-libindy:
+#  build-image-ubuntu16-libindy:
+#    needs:
+#      - workflow-setup
+#    runs-on: ubuntu-16.04
+#    env:
+#      DOCKER_BUILDKIT: 1
+#      INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
+#      INDYSDK_REVISION: "1.15.0"
+#    steps:
+#      - name: Load up custom variables
+#        run: |
+#          echo ::set-env name=CACHE_KEY_LIBINDY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBINDY}})
+#          echo ::set-env name=DOCKER_IMG_NAME_LIBINDY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBINDY}})
+#      - name: Git checkout
+#        uses: actions/checkout@v2
+#      - name: Try load from cache.
+#        id: cache-image
+#        uses: actions/cache@v2
+#        with:
+#          path: /tmp/imgcache
+#          key: ${{ env.CACHE_KEY_LIBINDY }}
+#      - name: If NOT found in cache, build and cache image.
+#        if: steps.cache-image.outputs.cache-hit != 'true'
+#        run: |
+#          set -x
+#          INDYSDK_REVISION=$(git describe --tags --always --abbrev=0)
+#          docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
+#                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
+#                       -f libindy.Dockerfile \
+#                       -t "$DOCKER_IMG_NAME_LIBINDY" \
+#                        .
+#          mkdir -p /tmp/imgcache
+#          docker save "$DOCKER_IMG_NAME_LIBINDY" > /tmp/imgcache/img_base.rar
+
+  # This step may not be necessary
+  build-image-vcxagency:
+    runs-on: ubuntu-16.04
     needs:
       - workflow-setup
-    runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
+      DOCKER_IMG_NAME_AGENCY: docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_LIBINDY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBINDY}})
-          echo ::set-env name=DOCKER_IMG_NAME_LIBINDY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBINDY}})
       - name: Git checkout
         uses: actions/checkout@v2
-      - name: Try load from cache.
-        id: cache-image
+      - name: Login to docker
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Load base image cache
+        id: load-cached-image-node
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_LIBINDY }}
-      - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image.outputs.cache-hit != 'true'
+          key: $DOCKER_IMG_NAME_AGENCY
+      - name: If no cached image found, pull and save to cache
+        if: steps.load-cached-image-node.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
-                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-                       -f libindy.Dockerfile \
-                       -t "$DOCKER_IMG_NAME_LIBINDY" \
-                        .
+          docker pull $DOCKER_IMG_NAME_AGENCY
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
+          docker save "$DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache/img_agency.rar
+          docker image rm "$DOCKER_IMG_NAME_AGENCY"
+      - name: Load agency image from cache
+        run: |
+          docker load < /tmp/imgcache/img_agency.rar
 
-  build-image-ubuntu16-libvcx:
+  build-image-libvcx:
     needs:
       - workflow-setup
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
+      INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
+      INDYSDK_REVISION: "1.15.0"
     steps:
       - name: Load up custom variables
         run: |
@@ -154,90 +194,14 @@ jobs:
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build -f libvcx.Dockerfile \
+          docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
+                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
+                       -f libvcx.Dockerfile\
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
                         .
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_LIBVCX" > /tmp/imgcache/img_base.rar
+          docker save "$DOCKER_IMG_NAME_LIBVCX" > /tmp/imgcache/img_libvcx.rar
 
-#
-#  ██      ██ ██████  ██ ███    ██ ██████  ██    ██ 
-#  ██      ██ ██   ██ ██ ████   ██ ██   ██  ██  ██  
-#  ██      ██ ██████  ██ ██ ██  ██ ██   ██   ████  
-#  ██      ██ ██   ██ ██ ██  ██ ██ ██   ██    ██  
-#  ███████ ██ ██████  ██ ██   ████ ██████     ██ 
-#                                               
-
-#  test-libindy:
-#    runs-on: ubuntu-16.04
-#    env:
-#      DOCKER_BUILDKIT: 1
-#    needs: [build-image-indypool, build-image-ubuntu16-libindy]
-#    steps:
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: Docker setup
-#        run: |
-#          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY | awk '{print tolower($0)}')
-#          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
-#          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-#          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Pull image ubuntu16-libindy
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libindy:$REF_HASH || true
-#      - name: Pull image indy_pool
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH || true
-#      - name: Run libindy unit tests in Docker
-#        run: |
-#          set -x
-#          docker run -d --name indylocalhost \
-#                        --network host \
-#                        docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH
-#
-#          docker run --rm -i --name libindy-tests \
-#                              --network host \
-#                              docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libindy:$REF_HASH \
-#                              bash -c '(cd $HOME/indy-sdk/libindy && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
-#
-#  test-libindy-wrapper-rust:
-#    runs-on: ubuntu-16.04
-#    env:
-#      DOCKER_BUILDKIT: 1
-#    needs: [build-image-indypool, build-image-ubuntu16-libindy]
-#    steps:
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: Docker setup
-#        run: |
-#          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY | awk '{print tolower($0)}')
-#          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
-#          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-#          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Pull image ubuntu16-libindy
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libindy:$REF_HASH || true
-#      - name: Pull image indy_pool
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH || true
-#      - name: Run tests
-#        run: |
-#          set -x
-#          docker run -d --name indylocalhost \
-#                        --network host \
-#                        docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH
-#
-#          docker run --rm -i --name libindy-tests \
-#                              --network host \
-#                              docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libindy:$REF_HASH \
-#                              bash -c '(cd $HOME/indy-sdk/wrappers/rust && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
-#
-#
-#
 #
 #  #
 #  #  ██      ██ ██████  ██    ██  ██████ ██   ██ 
@@ -247,38 +211,11 @@ jobs:
 #  #  ███████ ██ ██████    ████    ██████ ██   ██ 
 #  #
 #
-#  test-vcxagency:
-#    runs-on: ubuntu-16.04
-#    needs: [build-image-ubuntu16-vcxagency]
-#    env:
-#      DOCKER_BUILDKIT: 1
-#    steps:
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: Docker setup
-#        run: |
-#          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY | awk '{print tolower($0)}')
-#          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
-#          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-#          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Pull image ubuntu16-vcxagency
-#        run: |
-#          set -x
-#          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-vcxagency:$REF_HASH || true
-#      - name: Building docker image
-#        run: |
-#          set -x
-#          docker run --rm -i --name libindy-tests \
-#                              --network host \
-#                              docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-vcxagency:$REF_HASH \
-#                              bash -c '(cd $HOME/indy-sdk/vcx/dummy-cloud-agent && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test)'
-#
-#
 #  test-libvcx:
 #    runs-on: ubuntu-16.04
 #    env:
 #      DOCKER_BUILDKIT: 1
-#    needs: [build-image-indypool, build-image-ubuntu16-libvcx, build-image-ubuntu16-vcxagency]
+#    needs: [build-image-indypool, build-image-libvcx, build-image-vcxagency]
 #    steps:
 #      - name: Git checkout
 #        uses: actions/checkout@v2
@@ -288,80 +225,27 @@ jobs:
 #          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
 #          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
 #          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Pull image ubuntu16-libvcx
+#      - name: Load ubuntu16-libvcx image
 #        run: |
 #          set -x
 #          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libvcx:$REF_HASH || true
-#      - name: Pull image indy_pool
+#      - name: Load indy_pool image
 #        run: |
 #          set -x
 #          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH || true
 #      - name: Run libindy unit tests in Docker
 #        run: |
 #          set -x
-#          docker run -d --name indylocalhost \
+#          docker run --rm -d --name indylocalhost \
 #                        --network host \
-#                        docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH
 #
-#          docker run -d --name vcxagency \
+#          docker run --rm -d --name vcxagency \
 #                        --network host \
 #                        docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-vcxagency:$REF_HASH
 #
 #          docker run --rm -i --name libindy-tests \
 #                              --network host \
-#                              docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/ubuntu16-libvcx:$REF_HASH \
 #                              bash -c '(cd $HOME/indy-sdk/vcx/libvcx &&  RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
-#
-
-
-
-
-
-#
-#
-#  build-libindy-run-unittests:
-#    needs: build-image-indypool
-#    runs-on: ubuntu-16.04
-#    steps:
-#      - name: Check cargo version
-#        run: |
-#          cargo --version
-#          rustc --version
-#      - name: Docker setup
-#        run: |
-#          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY | awk '{print tolower($0)}')
-#          REF_HASH=`echo -n "$GITHUB_REF-$GITHUB_ACTOR" | shasum | cut -f1 -d" "`
-#          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-#          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-#      - name: Run indy pool
-#        run: |
-#          echo "Run pool image cached from previous dependent 'build-pool-image' workflow"
-#          docker run -d --name indylocalhost -p 9701-9708:9701-9708 -d docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/indy_pool:$REF_HASH
-#          sleep 2
-#          docker ps -a
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: "Install libsodium"
-#        run: |
-#          cd /tmp && \
-#          curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz | tar -xz && \
-#          cd /tmp/libsodium-1.0.18 && \
-#          ./configure --disable-shared && \
-#          sudo make && \
-#          sudo make install
-#      - name: Install dependencies
-#        run: |
-#          sudo apt-get update && sudo apt-get install -y libzmq3-dev
-#      - name: Build libindy
-#        run: |
-#          pwd
-#          cd libindy
-#          cargo build
-#      - name: Run libindy unit tests
-#        run: |
-#          cd libindy
-#          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test
-
 #  run-pool-image:
 #    needs: build-pool-image
 #    runs-on: ubuntu-16.04
