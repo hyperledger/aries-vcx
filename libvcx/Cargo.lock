@@ -467,6 +467,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "indy"
 version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44f6e90ca0615004e737c9db48e3488a94608e37eae1f5cb196088dc9992f467"
 dependencies = [
  "failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -484,6 +486,8 @@ dependencies = [
 [[package]]
 name = "indy-sys"
 version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d534b40e84ff04672640a78d2cb61ca67a2c1a5f82263bc628b4352af6b5e70f"
 dependencies = [
  "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
