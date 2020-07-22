@@ -6,11 +6,11 @@ iOS, NodeJS.
 * VCX requires access to a [Mediator Agency](https://github.com/AbsaOSS/vcxagencynode) 
 * VCX requires a payment plugin as an implementation of [libindy payment interface](https://hyperledger-indy.readthedocs.io/projects/sdk/en/latest/docs/design/004-payment-interface/README.html), such as [libnullpay](https://github.com/hyperledger/indy-sdk/tree/master/libnullpay/README.md) for the simplest implementation.
 
-### OSX
-Instructions [here](./docs/build-osx.md)
+### Building LibVCX on OSX
+Instructions can be found [here](./docs/build-osx.md)
 
 # Building LibVCX on mobile
-Instructions [here](./docs/build-mobile.md)
+Instructions cane be foun [here](./docs/build-mobile.md)
  
 ## Wrappers documentation
 
