@@ -17,6 +17,4 @@ Specs/
 docs/
 .github/
 .idea/
-cli/
-
-experimental/
+ci/
