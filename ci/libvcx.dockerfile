@@ -49,7 +49,8 @@ RUN useradd -ms /bin/bash -u $uid indy
 USER indy
 
 # Install Rust toolchain
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.43.1
+ARG RUST_VER
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
 # Clone indy-sdk
@@ -106,8 +107,9 @@ COPY --from=BASE /usr/lib/libnullpay.so /usr/lib/libnullpay.so
 
 COPY --from=BASE /home/indy/libvcx ./libvcx
 
-# TODO: Just copyr the binary and add to path
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.43.1
+# TODO: Just copy the binary and add to path
+ARG RUST_VER
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
 LABEL org.label-schema.schema-version="1.0"

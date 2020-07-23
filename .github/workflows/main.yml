@@ -43,8 +43,8 @@ jobs:
 
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
-          echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }}-${{ hashFiles('libvcx.Dockerfile') }})
-          echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('indy-pool.dockerfile') }})
+          echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }}-${{ hashFiles('ci/libvcx.dockerfile') }})
+          echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
@@ -86,9 +86,7 @@ jobs:
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build -f indy-pool.dockerfile \
-                       -t "$DOCKER_IMG_NAME_POOL" \
-                        .
+          docker build -t "$DOCKER_IMG_NAME_POOL" - < ci/indy-pool.dockerfile
           mkdir -p /tmp/imgcache
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 
@@ -182,6 +180,7 @@ jobs:
       DOCKER_BUILDKIT: 1
       INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
       INDYSDK_REVISION: "1.15.0"
+      RUST_VER: "1.43.1"
     steps:
       - name: Load up custom variables
         run: |
@@ -201,7 +200,8 @@ jobs:
           set -x
           docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
                        --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-                       -f libvcx.Dockerfile\
+                       --build-arg "RUST_VER=$RUST_VER" \
+                       -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
                         .
           mkdir -p /tmp/imgcache
