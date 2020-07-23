@@ -1,7 +1,5 @@
 FROM ubuntu:16.04 as BASE
 
-ARG uid=1000
-
 # Install dependenciesj
 RUN apt-get update && \
     apt-get install -y \
@@ -45,7 +43,7 @@ RUN cd /tmp && \
     rm -rf /tmp/libsodium-1.0.18
 
 # Create new user
-RUN useradd -ms /bin/bash -u $uid indy
+RUN useradd -ms /bin/bash -u 1000 indy
 USER indy
 
 # Install Rust toolchain
@@ -93,7 +91,6 @@ RUN apt-get update && \
       build-essential
 
 RUN useradd -ms /bin/bash -u 1000 indy
-USER indy
 
 WORKDIR /home/indy
 
@@ -101,11 +98,14 @@ COPY --from=BASE /var/lib/dpkg/info /var/lib/dpkg/info
 COPY --from=BASE /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
 COPY --from=BASE /usr/local /usr/local
 
-COPY --from=BASE /usr/lib/libindy.so /usr/lib/libindy.so
-COPY --from=BASE /usr/lib/libvcx.so /usr/lib/libvcx.so
-COPY --from=BASE /usr/lib/libnullpay.so /usr/lib/libnullpay.so
+COPY --from=BASE --chown=indy /usr/lib/libindy.so /usr/lib/libindy.so
+COPY --from=BASE --chown=indy /usr/lib/libvcx.so /usr/lib/libvcx.so
+COPY --from=BASE --chown=indy /usr/lib/libnullpay.so /usr/lib/libnullpay.so
 
-COPY --from=BASE /home/indy/libvcx ./libvcx
+COPY --from=BASE --chown=indy /home/indy/libvcx ./libvcx
+RUN chown -R indy . 
+
+USER indy
 
 # TODO: Just copy the binary and add to path
 ARG RUST_VER

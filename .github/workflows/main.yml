@@ -97,40 +97,6 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
 
-#  build-image-ubuntu16-libindy:
-#    needs:
-#      - workflow-setup
-#    runs-on: ubuntu-16.04
-#    env:
-#      DOCKER_BUILDKIT: 1
-#      INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
-#      INDYSDK_REVISION: "1.15.0"
-#    steps:
-#      - name: Load up custom variables
-#        run: |
-#          echo ::set-env name=CACHE_KEY_LIBINDY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBINDY}})
-#          echo ::set-env name=DOCKER_IMG_NAME_LIBINDY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBINDY}})
-#      - name: Git checkout
-#        uses: actions/checkout@v2
-#      - name: Try load from cache.
-#        id: cache-image
-#        uses: actions/cache@v2
-#        with:
-#          path: /tmp/imgcache
-#          key: ${{ env.CACHE_KEY_LIBINDY }}
-#      - name: If NOT found in cache, build and cache image.
-#        if: steps.cache-image.outputs.cache-hit != 'true'
-#        run: |
-#          set -x
-#          INDYSDK_REVISION=$(git describe --tags --always --abbrev=0)
-#          docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
-#                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-#                       -f libindy.Dockerfile \
-#                       -t "$DOCKER_IMG_NAME_LIBINDY" \
-#                        .
-#          mkdir -p /tmp/imgcache
-#          docker save "$DOCKER_IMG_NAME_LIBINDY" > /tmp/imgcache/img_base.rar
-
   build-image-vcxagency:
     runs-on: ubuntu-16.04
     needs:
@@ -214,16 +180,6 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
-
-#
-#  #
-#  #  ██      ██ ██████  ██    ██  ██████ ██   ██ 
-#  #  ██      ██ ██   ██ ██    ██ ██       ██ ██  
-#  #  ██      ██ ██████  ██    ██ ██        ███  
-#  #  ██      ██ ██   ██  ██  ██  ██       ██ ██ 
-#  #  ███████ ██ ██████    ████    ██████ ██   ██ 
-#  #
-#
   test-libvcx:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency]
