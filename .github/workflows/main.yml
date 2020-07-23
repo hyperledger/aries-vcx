@@ -276,11 +276,27 @@ jobs:
       - name: Load pool image from cache
         run: docker load < /tmp/imgcache/img_libvcx.rar
 
-      - name: Run libvcx unit tests in Docker
+      - name: Start services
         run: |
           set -x
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name vcxagency --network host $DOCKER_IMG_NAME_AGENCY
+      - name: Run libvcx unit tests in Docker
+        run: |
+          set -x
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release)'
+      - name: Run libvcx node pool integration tests in Docker
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests")'
+      - name: Run libvcx agency integration tests in Docker
+        run: |
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2")'
+      - name: Run Aries e2e tests
+        run: |
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+          bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
