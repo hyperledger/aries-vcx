@@ -253,20 +253,24 @@ jobs:
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
-  test-node-wrapper:
-    runs-on: ubuntu-16.04
-    needs: test-libvcx
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 8.x
-      - name: Install, compile and run node tests
-        run: |
-          cd wrappers/node
-          npm install
-          npm run compile
-          npm test
 
+#   test-node-wrapper:
+#     runs-on: ubuntu-16.04
+#     needs: test-libvcx
+#     env:
+#         LD_LIBRARY_PATH: ''
+#     steps:
+#       - name: Git checkout
+#         uses: actions/checkout@v2
+#       - name: Use Node.js
+#         uses: actions/setup-node@v1
+#         with:
+#           node-version: 8.x
+#       - name: Install, compile and run node tests
+#         run: |
+#           cd libvcx
+#           cargo build
+#           cd ../wrappers/node
+#           npm install
+#           npm run compile
+#           LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH} LIBVCX_PATH=./ npm test
