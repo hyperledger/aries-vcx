@@ -262,7 +262,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 8.x
+          node-version: 12.x
       - name: Install, compile and run node tests
         run: |
           cd wrappers/node
