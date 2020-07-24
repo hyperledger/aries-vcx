@@ -1396,7 +1396,7 @@ pub mod tests {
 
         let handle = create_connection("invalid").unwrap();
         let rc = connect(handle, None);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::PostMessageFailed);
+        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidMessagePack);
     }
 
     #[test]
