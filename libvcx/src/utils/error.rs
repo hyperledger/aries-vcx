@@ -116,6 +116,7 @@ pub static INVALID_REDIRECT_DETAILS: Error = Error{code_num: 1104, message: "Inv
 /* EC 1105 is reserved for proprietary forks of libVCX */
 pub static NO_AGENT_INFO: Error = Error{code_num: 1106, message: "Agent pairwise information not found"};
 pub static NO_REQUEST_RECEIVED: Error = Error{code_num: 1107, message: "Received no connection request"};
+pub static REV_DELTA_NOT_FOUND: Error = Error{code_num: 1108, message: "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"};
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {
