@@ -237,7 +237,7 @@ jobs:
           set -x
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name vcxagency --network host $DOCKER_IMG_NAME_AGENCY
+          docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
       - name: Run libvcx unit tests in Docker
         run: |
           set -x

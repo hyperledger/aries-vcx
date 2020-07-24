@@ -114,4 +114,4 @@ ENV PATH /home/indy/.cargo/bin:$PATH
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="libvcx"
-LABEL org.label-schema.version="${INDY_VERSION}"
+LABEL org.label-schema.version="${INDYSDK_REVISION}"
