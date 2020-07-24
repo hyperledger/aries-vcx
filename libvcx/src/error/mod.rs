@@ -86,6 +86,8 @@ pub enum VcxErrorKind {
     InvalidRevocationEntry,
     #[fail(display = "Invalid Credential Revocation timestamp")]
     InvalidRevocationTimestamp,
+    #[fail(display = "No revocation definition found")]
+    RevRegDefNotFound,
 
     // Credential
     #[fail(display = "Invalid credential handle")]
@@ -383,6 +385,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::Common(num) => num,
             VcxErrorKind::LibndyError(num) => num,
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
+            VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
         }
     }
