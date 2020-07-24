@@ -136,6 +136,7 @@ export interface IFFIEntryPoint {
   vcx_issuer_create_credential: (commandId: number, sourceId: string, credDefHandle: number, issuerDid: string | null,
                                  attr: string, credentialName: string, price: string, cb: any) => number,
   vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: any) => number,
+  vcx_issuer_revoke_credential_local: (commandId: number, handle: number, cb: any) => number,
   vcx_issuer_send_credential: (commandId: number, credentialHandle: number, connectionHandle: number, cb: any) =>
     number,
   vcx_issuer_get_credential_msg: (commandId: number, credentialHandle: number, myPwDid: string, cb: any) =>
@@ -223,6 +224,7 @@ export interface IFFIEntryPoint {
   vcx_credentialdef_update_state: (commandId: number, handle: number, cb: any) => number,
   vcx_credentialdef_get_state: (commandId: number, handle: number, cb: any) => number,
   vcx_credentialdef_rotate_rev_reg_def: (commandId: number, handle: number, cb: any) => string,
+  vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: any) => number,
 
   // schema
   vcx_schema_get_attributes: (commandId: number, sourceId: string, schemaId: string, cb: any) => number,
@@ -336,6 +338,7 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_issuer_create_credential: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_SOURCE_ID,
     FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_issuer_revoke_credential: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_issuer_revoke_credential_local: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],
   vcx_issuer_send_credential: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE,
     FFI_CALLBACK_PTR]],
   vcx_issuer_get_credential_msg: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_STRING_DATA,
@@ -420,6 +423,7 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_credentialdef_update_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
   vcx_credentialdef_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
   vcx_credentialdef_rotate_rev_reg_def: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_credentialdef_publish_revocations: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
 
   // logger
   vcx_set_default_logger: [FFI_ERROR_CODE, [FFI_STRING]],
