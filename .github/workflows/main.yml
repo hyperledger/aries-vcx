@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
   workflow-setup:
@@ -247,18 +253,20 @@ jobs:
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
-        # TODO: Run wrapper tests
+  test-node-wrapper:
+    runs-on: ubuntu-16.04
+    needs: test-libvcx
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 8.x
+      - name: Install, compile and run node tests
+        run: |
+          cd wrappers/node
+          npm install
+          npm run compile
+          npm test
 
-#       - name: Run libvcx node pool integration tests in Docker
-#         run: |
-#           set -x
-#           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
-#                               bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests")'
-#       - name: Run libvcx agency integration tests in Docker
-#         run: |
-#           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
-#                               bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2")'
-#       - name: Run Aries e2e tests
-#         run: |
-#           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
-#           bash -c '(cd $HOME/libvcx && RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
