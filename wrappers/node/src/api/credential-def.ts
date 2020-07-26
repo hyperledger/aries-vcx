@@ -1,4 +1,4 @@
-import * as ffi from 'ffi'
+import * as ffi from 'ffi-napi'
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
@@ -325,8 +325,8 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_credentialdef_update_state(0, this.handle, cb)
           if (rc) {
-              reject(rc)
-            }
+            reject(rc)
+          }
         },
         (resolve, reject) => ffi.Callback(
           'void',
@@ -377,6 +377,32 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
+  public async rotateRevRegDef (): Promise<ISerializedData<ICredentialDefCreateData>> {
+    try {
+      const dataStr = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credentialdef_rotate_rev_reg_def(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => ffi.Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: any, x: string) => {
+            if (err) {
+              reject(err)
+            }
+            resolve(x)
+          })
+      )
+      const data: ISerializedData<ICredentialDefCreateData> = JSON.parse(dataStr)
+      return data
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
   public async publishRevocations (): Promise<void> {
     try {
       await createFFICallbackPromise<number>(
@@ -400,7 +426,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       throw new VCXInternalError(err)
     }
   }
-
 
   get name () {
     return this._name
