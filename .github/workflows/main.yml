@@ -111,8 +111,7 @@ jobs:
 
 
   build-image-indypool:
-    needs:
-      - workflow-setup
+    needs: workflow-setup
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
@@ -124,13 +123,13 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Try load from cache.
-        id: cache-image
+        id: cache-image-pool
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_POOL }}
       - name: If NOT found in cache, build and cache image.
-        # if: steps.cache-image.outputs.cache-hit != 'true'
+        if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
           docker build -t "$DOCKER_IMG_NAME_POOL" - < ci/indy-pool.dockerfile
@@ -146,8 +145,7 @@ jobs:
 
   build-image-vcxagency:
     runs-on: ubuntu-16.04
-    needs:
-      - workflow-setup
+    needs: workflow-setup
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -163,14 +161,14 @@ jobs:
           login-server: docker.pkg.github.com
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Load base image cache
-        id: load-cached-image-node
+      - name: Load image cache
+        id: load-cached-image-agency
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_AGENCY }}
       - name: If no cached image found, pull and save to cache
-        if: steps.load-cached-image-node.outputs.cache-hit != 'true'
+        if: steps.load-cached-image-agency.outputs.cache-hit != 'true'
         run: |
           set -x
           docker pull $DOCKER_IMG_NAME_AGENCY
@@ -202,13 +200,13 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Try load from cache.
-        id: cache-image
+        id: cache-image-libvcx
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_LIBVCX }}
       - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image.outputs.cache-hit != 'true'
+        if: steps.cache-image-libvcx.outputs.cache-hit != 'true'
         run: |
           set -x
           docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
@@ -283,6 +281,7 @@ jobs:
       - name: Start services
         run: |
           set -x
+          docker images
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
