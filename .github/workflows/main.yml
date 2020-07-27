@@ -17,8 +17,6 @@ jobs:
       INDYSDK_REPO: ${{ steps.mainstep.outputs.INDYSDK_REPO }}
       INDYSDK_REVISION: ${{ steps.mainstep.outputs.INDYSDK_REVISION }}
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
-      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
@@ -53,6 +51,38 @@ jobs:
 
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
+
+          RELEASE_VERSION=''
+
+          if [[ "${{ github.event_name}}" == "push" && "$BRANCH_NAME" == "master" ]]
+          then
+            echo "Running push on master branch. Release will happen if version was bumped."
+
+            REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
+            echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
+            echo "Highest released version was $REPO_VERSION_HIGHEST"
+
+            REPO_VERSION_DESIRED=$(cargo pkgid | cut -d# -f2 | cut -d: -f2)
+            echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
+            echo "Repo declares version $REPO_VERSION_DESIRED"
+
+            if [[ "$REPO_VERSION_HIGHEST" == "$REPO_VERSION_DESIRED" ]]
+            then
+              DOCKER_TAG_VERSION="$BRANCH_NAME"
+              echo "Running push on master but version was not bumped. Will NOT release."
+            else
+              DOCKER_TAG_VERSION="$BRANCH_NAME"
+              RELEASE_VERSION="$REPO_VERSION_DESIRED"
+              DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
+              echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
+            fi
+          else
+             FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+             echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
+             DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
+             echo "This is not push to master. Will NOT release."
+          fi
+
           echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }}-${{ hashFiles('ci/libvcx.dockerfile') }})
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
@@ -75,8 +105,9 @@ jobs:
           echo "::set-output name=CACHE_KEY_LIBVCX::$(echo branch-$BRANCH_NAME-hash-$LIBVCX_HASH)"
           echo "::set-output name=CACHE_KEY_POOL::$(echo branch-$BRANCH_NAME-hash-$POOL_HASH)"
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
-          echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$BRANCH_NAME"
+          echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$DOCKER_TAG_VERSION"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$BRANCH_NAME"
+          echo "::set-output name=NPM_PKG_NAME_NODE_WRAPPER::node-vcx-wrapper:$DOCKER_TAG_VERSION"
 
 
   build-image-indypool:
@@ -265,23 +296,32 @@ jobs:
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
-#   test-node-wrapper:
-#     runs-on: ubuntu-16.04
-#     needs: test-libvcx
-#     env:
-#         LD_LIBRARY_PATH: ''
-#     steps:
-#       - name: Git checkout
-#         uses: actions/checkout@v2
-#       - name: Use Node.js
-#         uses: actions/setup-node@v1
-#         with:
-#           node-version: 12.x
-#       - name: Install, compile and run node tests
-#         run: |
-#           cd libvcx
-#           cargo build
-#           cd ../wrappers/node
-#           npm install
-#           npm run compile
-#           LD_LIBRARY_PATH=./:${LD_LIBRARY_PATH} LIBVCX_PATH=./ npm test
+
+  test-node-wrapper:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Load libvcx image cache
+        id: load-cached-libvcx-image
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_LIBVCX }}
+      - name: If no cached image found
+        if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX"; exit -1
+      - name: Load pool image from cache
+        run: docker load < /tmp/imgcache/img_libvcx.rar
+
+      - name: Run wrapper tests
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(
+                                cd $HOME/wrappers/node && \
+                                npm install && \
+                                npm run compile && \
+                                npm test)' 
