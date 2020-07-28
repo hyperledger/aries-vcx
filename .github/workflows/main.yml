@@ -129,10 +129,11 @@ jobs:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_POOL }}
       - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image-pool.outputs.cache-hit != 'true'
+        # if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build -t "$DOCKER_IMG_NAME_POOL" - < ci/indy-pool.dockerfile
+          # docker build -t "$DOCKER_IMG_NAME_POOL" - < ci/indy-pool.dockerfile
+          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 

@@ -2,7 +2,6 @@ FROM ubuntu:16.04
 
 ARG uid=1000
 
-# Install environment
 RUN apt-get update -y && apt-get install -y \
 	git \
 	wget \
