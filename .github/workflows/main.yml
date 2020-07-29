@@ -299,9 +299,6 @@ jobs:
   test-node-wrapper:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency]
-    # needs:
-    #   - workflow-setup
-    #   - build-image-libvcx
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -337,10 +334,6 @@ jobs:
   publish-libvcx:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency, test-libvcx, test-node-wrapper]
-    # needs:
-    #   - workflow-setup
-    #   - build-image-libvcx
-    #   - test-node-wrapper
     steps:
       - name: Load env. variables
         run: |
@@ -383,7 +376,7 @@ jobs:
             docker tag "$DOCKER_IMG_NAME_LIBVCX" "$REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker push "$REMOTE_DOCKER_IMG_NAME_LIBVCX" || true
           else
-             echo "New version was not defined, skipping release.'workflow-setup' job to see the reason."
+             echo "New version was not defined, skipping release."
           fi
 
   publish-node-wrapper:
@@ -435,5 +428,5 @@ jobs:
                                   npm version $RELEASE_VERSION && \
                                   npm publish)'
           else
-             echo "New version was not defined, skipping release.'workflow-setup' job to see the reason."
+             echo "New version was not defined, skipping release."
           fi
