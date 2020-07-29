@@ -12,6 +12,10 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
+      NODE_VER: ${{ steps.mainstep.outputs.NODE_VER }}
+      RUST_VER: ${{ steps.mainstep.outputs.RUST_VER }}
+      INDYSDK_REPO: ${{ steps.mainstep.outputs.INDYSDK_REPO }}
+      INDYSDK_REVISION: ${{ steps.mainstep.outputs.INDYSDK_REVISION }}
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
       BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
@@ -21,17 +25,17 @@ jobs:
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
+    env:
+      NODE_VER: "8.x"
+      RUST_VER: "1.43.1"
+      INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
+      INDYSDK_REVISION: "1.15.0"
     steps:
-      - run: echo $GITHUB_REPOSITORY
-      - run: echo $GITHUB_REF
-      - run: echo $GITHUB_HEAD_REF
-      - run: echo $GITHUB_BASE_REF
-      - run: echo $GITHUB_WORKSPACE
-      - run: echo $GITHUB_EVENT_NAME
-      - run: echo $GITHUB_RUN_NUMBER
-      - run: echo $GITHUB_RUN_ID
       - name: Git checkout
         uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VER }}
       - name: Set custom env variables
         run: |
           set -x
@@ -55,12 +59,18 @@ jobs:
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
 
+          echo ::set-env name=NODE_VER::$(echo $NODE_VER)
+          echo ::set-env name=RUST_VER::$(echo $RUST_VER)
+
       - name: Set and print outputs
         id: mainstep
         run: |
           set -x
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          echo "::set-output name=NODE_VER::$NODE_VER"
+          echo "::set-output name=RUST_VER::$RUST_VER"
+          echo "::set-output name=INDYSDK_REPO::$INDYSDK_REPO"
+          echo "::set-output name=INDYSDK_REVISION::$INDYSDK_REVISION"
           echo "::set-output name=CACHE_KEY_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=CACHE_KEY_LIBVCX::$(echo branch-$BRANCH_NAME-hash-$LIBVCX_HASH)"
           echo "::set-output name=CACHE_KEY_POOL::$(echo branch-$BRANCH_NAME-hash-$POOL_HASH)"
@@ -150,14 +160,15 @@ jobs:
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
-      INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
-      INDYSDK_REVISION: "1.15.0"
-      RUST_VER: "1.43.1"
     steps:
       - name: Load up custom variables
         run: |
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
+          echo ::set-env name=RUST_VER::$(echo ${{needs.workflow-setup.outputs.RUST_VER}})
+          echo ::set-env name=NODE_VER::$(echo ${{needs.workflow-setup.outputs.NODE_VER}})
+          echo ::set-env name=INDYSDK_REPO::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REPO}})
+          echo ::set-env name=INDYSDK_REVISION::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REVISION}})
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Try load from cache.
@@ -173,6 +184,7 @@ jobs:
           docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
                        --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
                        --build-arg "RUST_VER=$RUST_VER" \
+                       --build-arg "NODE_VER=$NODE_VER" \
                        -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
                         .
