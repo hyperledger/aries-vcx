@@ -17,7 +17,6 @@ jobs:
       INDYSDK_REPO: ${{ steps.mainstep.outputs.INDYSDK_REPO }}
       INDYSDK_REVISION: ${{ steps.mainstep.outputs.INDYSDK_REVISION }}
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
@@ -101,7 +100,6 @@ jobs:
           echo "::set-output name=RUST_VER::$RUST_VER"
           echo "::set-output name=INDYSDK_REPO::$INDYSDK_REPO"
           echo "::set-output name=INDYSDK_REVISION::$INDYSDK_REVISION"
-          echo "::set-output name=CACHE_KEY_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=CACHE_KEY_LIBVCX::branch-$BRANCH_NAME-hash-$LIBVCX_HASH"
           echo "::set-output name=CACHE_KEY_POOL::branch-$BRANCH_NAME-hash-$POOL_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
@@ -128,10 +126,9 @@ jobs:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_POOL }}
       - name: If NOT found in cache, build and cache image.
-        # if: steps.cache-image-pool.outputs.cache-hit != 'true'
+        if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
-          # docker build -t "$DOCKER_IMG_NAME_POOL" - < ci/indy-pool.dockerfile
           docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
@@ -142,46 +139,6 @@ jobs:
       - name: Verify indypool image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
-
-  build-image-vcxagency:
-    runs-on: ubuntu-16.04
-    needs: workflow-setup
-    env:
-      DOCKER_BUILDKIT: 1
-    steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
-      - name: Git checkout
-        uses: actions/checkout@v2
-      - name: Login to docker
-        uses: azure/docker-login@v1
-        with:
-          login-server: docker.pkg.github.com
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Load image cache
-        id: load-cached-image-agency
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_AGENCY }}
-      - name: If no cached image found, pull and save to cache
-        if: steps.load-cached-image-agency.outputs.cache-hit != 'true'
-        run: |
-          set -x
-          docker pull $DOCKER_IMG_NAME_AGENCY
-          mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache/img_agency.rar
-
-      - name: Load agency image from cache
-        run: |
-          docker load < /tmp/imgcache/img_agency.rar
-      - name: Verify agency image was loaded
-        run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
-
 
   build-image-libvcx:
     needs: workflow-setup
@@ -227,9 +184,9 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
-  test-libvcx:
+  test-libvcx-image:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -238,7 +195,6 @@ jobs:
       - name: Docker setup
         run: |
           echo ::set-env name=CACHE_KEY_POOL::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_POOL}})
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_POOL::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL}})
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
@@ -255,18 +211,6 @@ jobs:
       - name: Load image from cache
         run: docker load < /tmp/imgcache/img_indypool.rar
 
-      - name: Load agency image cache
-        id: load-cached-agency-image
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_AGENCY }}
-      - name: If no cached image found
-        if: steps.load-cached-agency-image.outputs.cache-hit != 'true'
-        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY"; exit -1
-      - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_agency.rar
-
       - name: Load libvcx image cache
         id: load-cached-libvcx-image
         uses: actions/cache@v2
@@ -278,6 +222,13 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX"; exit -1
       - name: Load image from cache
         run: docker load < /tmp/imgcache/img_libvcx.rar
+
+      - name: Login to docker
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start services
         run: |
@@ -298,7 +249,7 @@ jobs:
 
   test-node-wrapper:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -333,7 +284,7 @@ jobs:
     
   publish-libvcx:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency, test-libvcx, test-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-node-wrapper]
     steps:
       - name: Load env. variables
         run: |
@@ -381,7 +332,7 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-vcxagency, test-libvcx, test-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
     steps:
