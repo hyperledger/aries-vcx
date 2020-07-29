@@ -63,10 +63,12 @@ RUN cd "/home/indy/indy-sdk" && git checkout "${INDYSDK_REVISION}"
 RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libindy/Cargo.toml
 USER root
 RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
-USER indy 
+USER indy
 RUN cargo build --release --manifest-path=/home/indy/indy-sdk/libnullpay/Cargo.toml
+RUN cargo build --release --manifest-path=/home/indy/indy-sdk/experimental/plugins/postgres_storage/Cargo.toml
 USER root
 RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so /usr/lib
+RUN mv /home/indy/indy-sdk/experimental/plugins/postgres_storage/target/release/*.so /usr/lib
 
 # Build libvcx
 WORKDIR /home/indy
@@ -101,8 +103,16 @@ COPY --from=BASE /usr/local /usr/local
 COPY --from=BASE --chown=indy /usr/lib/libindy.so /usr/lib/libindy.so
 COPY --from=BASE --chown=indy /usr/lib/libvcx.so /usr/lib/libvcx.so
 COPY --from=BASE --chown=indy /usr/lib/libnullpay.so /usr/lib/libnullpay.so
+COPY --from=BASE --chown=indy /usr/lib/libindystrgpostgres.so /usr/lib/libindystrgpostgres.so
 
 COPY --from=BASE --chown=indy /home/indy/libvcx ./libvcx
+COPY --from=BASE --chown=indy /home/indy/wrappers/node ./wrappers/node
+
+# Install node
+ARG NODE_VER
+RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
+RUN apt-get install -y nodejs
+
 RUN chown -R indy . 
 
 USER indy
