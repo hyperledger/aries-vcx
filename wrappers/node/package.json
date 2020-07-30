@@ -14,7 +14,7 @@
         }
     ],
     "bugs": {
-        "url": "https://github.com/evernym/vcx/issues"
+        "url": "https://github.com/AbsaOSS/libvcx/issues"
     },
     "standard": {
         "env": [
@@ -22,8 +22,11 @@
         ]
     },
     "repository": {
-        "url": "git+https://github.com/evernym/vcx.git",
+        "url": "https://github.com/AbsaOSS/libvcx.git",
         "type": "git"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "version": "0.8.0",
     "dependencies": {
@@ -88,6 +91,6 @@
         "winston": "^3.2.1"
     },
     "main": "dist/src/index.js",
-    "homepage": "https://github.com/evernym/vcx#readme",
-    "name": "node-vcx-wrapper"
+    "homepage": "https://github.com/AbsaOSS/libvcx/tree/master/wrappers/node",
+    "name": "@mirgee/node-vcx-wrapper"
 }
