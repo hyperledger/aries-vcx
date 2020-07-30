@@ -88,11 +88,11 @@ else
     echo "Skipping download android-ndk-r20-linux-x86_64.zip"
 fi
 
-_SDK_REPO="git@github.com:evernym/sdk.git"
+_SDK_REPO="https://github.com/AbsaOSS/libvcx.git"
 
 if [ ! -d "sdk" ] ; then
     echo "git cloning sdk"
-    git clone --branch ${GIT_INSTALL} ${_SDK_REPO}
+    git clone --branch ${GIT_INSTALL} ${_SDK_REPO} sdk
 else
     echo "Skipping git clone of sdk"
     _GIT_BRANCH=$(git --git-dir sdk/.git branch | head -n 1 | sed -e 's/^..//g')
