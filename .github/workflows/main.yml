@@ -59,7 +59,7 @@ jobs:
             echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
             echo "Highest released version was $REPO_VERSION_HIGHEST"
 
-            REPO_VERSION_DESIRED=$(cargo pkgid | cut -d# -f2 | cut -d: -f2)
+            REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
             echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
             echo "Repo declares version $REPO_VERSION_DESIRED"
 
@@ -68,7 +68,6 @@ jobs:
               DOCKER_TAG_VERSION="$BRANCH_NAME"
               echo "Running push on master but version was not bumped. Will NOT release. The latest release version is $REPO_VERSION_HIGHEST."
             else
-              DOCKER_TAG_VERSION="$BRANCH_NAME"
               RELEASE_VERSION="$REPO_VERSION_DESIRED"
               DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
               echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
