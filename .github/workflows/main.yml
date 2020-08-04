@@ -81,7 +81,7 @@ jobs:
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
 
-          echo ::set-env name=LIBVCX_HASH::$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})
+          echo ::set-env name=LIBVCX_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})"
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
