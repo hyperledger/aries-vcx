@@ -30,9 +30,9 @@ if [ -z "${INDY_DIR}" ] ; then
             exit 1
         fi
 fi
-if [ -d "${INDY_DIR}/lib" ] ; then
-    INDY_DIR="${INDY_DIR}/lib"
-fi
+# if [ -d "${INDY_DIR}/lib" ] ; then
+#     INDY_DIR="${INDY_DIR}/lib"
+# fi
 
 echo ">> in runner script"
 declare -a EXE_ARRAY
@@ -45,19 +45,19 @@ build_test_artifacts(){
 
         SET_OF_TESTS=''
 
-        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_DIR=${INDY_DIR} \
+        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+        LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
             cargo build ${BUILD_TYPE} --target=${TRIPLET}
 
         # This is needed to get the correct message if test are not built. Next call will just reuse old results and parse the response.
-        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_DIR=${INDY_DIR} \
+        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+        LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
             cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run
 
         # Collect items to execute tests, uses resulting files from previous step
         EXE_ARRAY=($(
-            RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-            LIBINDY_DIR=${INDY_DIR} \
+            RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+            LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
                 cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]"))
 
     popd
@@ -86,7 +86,7 @@ execute_on_device(){
     "${LIBZMQ_LIB_DIR}/libzmq.so" "/data/local/tmp/libzmq.so"
 
     adb -e push \
-    "${INDY_DIR}/libindy.so" "/data/local/tmp/libindy.so"
+    "${INDY_LIB_DIR}/libindy.so" "/data/local/tmp/libindy.so"
 
     adb -e logcat | grep indy &
 

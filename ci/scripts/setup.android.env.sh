@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+export BLACK=`tput setaf 0`
+export RED=`tput setaf 1`
+export GREEN=`tput setaf 2`
+export YELLOW=`tput setaf 3`
+export BLUE=`tput setaf 4`
+export MAGENTA=`tput setaf 5`
+export CYAN=`tput setaf 6`
+export WHITE=`tput setaf 7`
+
+export BOLD=`tput bold`
+export RESET=`tput sgr0`
+
 
 
 if [ -z "${ANDROID_BUILD_FOLDER}" ]; then
@@ -46,9 +58,7 @@ download_emulator() {
     curl -o emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
-# TODO: This is being run on wrong path
 create_avd(){
-
     echo "${GREEN}Creating Android SDK${RESET}"
 
     yes | sdkmanager --licenses
@@ -59,9 +69,9 @@ create_avd(){
                 "emulator" \
                 "platform-tools" \
                 "platforms;android-24" \
-                "system-images;android-24;default;${ABI}"
+                "system-images;android-24;default;${ABI}" > sdkmanager.install.emulator.and.tools.out 2>&1
 
-        # TODO hack to downgrade Android Emulator. Should be removed as soon as headless mode will be fixed.
+        # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator. Should be removed as soon as headless mode will be fixed.
         mv /home/indy/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
@@ -76,10 +86,21 @@ create_avd(){
                 --name ${ABSOLUTE_ARCH} \
                 --package "system-images;android-24;default;${ABI}" \
                 -f \
-                -c 1000M
+                -c 4094M
 
-        ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -no-audio -no-window -no-snapshot -no-accel &
+        # ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -no-audio -no-window -no-snapshot -no-accel &
+        ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
+
+create_cargo_config(){
+mkdir -p ${HOME}/.cargo
+cat << EOF > ${HOME}/.cargo/config
+[target.${TRIPLET}]
+ar = "$(realpath ${AR})"
+linker = "$(realpath ${CC})"
+EOF
+}
+
 
 download_and_unzip_if_missed() {
     target_dir=$1
@@ -227,6 +248,7 @@ set_env_vars(){
     export SODIUM_LIB_DIR=${SODIUM_DIR}/lib
     export SODIUM_INCLUDE_DIR=${SODIUM_DIR}/include
     export LIBZMQ_LIB_DIR=${LIBZMQ_DIR}/lib
+    export INDY_LIB_DIR=${INDY_DIR}/lib
     export LIBZMQ_INCLUDE_DIR=${LIBZMQ_DIR}/include
     export TOOLCHAIN_DIR=${TOOLCHAIN_PREFIX}/${TARGET_ARCH}
     export PATH=${TOOLCHAIN_DIR}/bin:${PATH}
@@ -238,3 +260,22 @@ set_env_vars(){
     export TARGET=android
     export OPENSSL_STATIC=1
 }
+
+build_libvcx(){
+    echo "**************************************************"
+    echo "Building for architecture ${BOLD}${YELLOW}${ABSOLUTE_ARCH}${RESET}"
+    echo "Toolchain path ${BOLD}${YELLOW}${TOOLCHAIN_DIR}${RESET}"
+    echo "Sodium path ${BOLD}${YELLOW}${SODIUM_DIR}${RESET}"
+    echo "Indy path ${BOLD}${YELLOW}${INDY_LIB_DIR}${RESET}"
+    echo "Artifacts will be in ${BOLD}${YELLOW}${HOME}/artifacts/${RESET}"
+    echo "**************************************************"
+    pushd ${LIBVCX_WORKDIR}
+        rm -rf target/${TRIPLET}
+        cargo clean
+        LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
+
+        # Copy libvcx library to JNI lib for it to be used in tests
+        cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
+    popd
+}
+

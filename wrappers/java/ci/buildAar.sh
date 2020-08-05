@@ -149,6 +149,9 @@ pushd ${SCRIPT_DIR} # we will work on relative paths from the script directory
 popd
 
 pushd ${SCRIPT_DIR} # we will work on relative paths from the script directory
+    pushd ../android
+        npm install
+    popd
     pushd ..
         # Now build it clean
         ./gradlew --no-daemon clean build --project-dir=android -x test #skipping tests because they already run in jenkins CI
