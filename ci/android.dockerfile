@@ -16,11 +16,28 @@ ARG JAVA_VER=8
 RUN apt-get update && apt-get install openjdk-${JAVA_VER}-jdk maven -y
 ENV JAVA_HOME /usr/lib/jvm/java-${JAVA_VER}-openjdk-amd64
 
+# Install node
+ARG NODE_VER=8.x
+RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
+RUN apt-get install -y nodejs
+
+COPY --chown=indy:indy ci/scripts/android.prepare.sh .
+COPY --chown=indy:indy ci/scripts/setup.android.env.sh .
+RUN chmod +x android.prepare.sh setup.android.env.sh
+
+# Add indy to sudoers
+RUN usermod -aG sudo indy
+
 USER indy
+
 # Install Rust toolchain
 ARG RUST_VER=1.40.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
+
+# This is to mount a host volume with write access
+RUN mkdir /home/indy/libvcx-absa
+VOLUME ["/home/indy/libvcx-absa"]
 
 # Set env vars
 ARG LIBINDY_VER=1.15.0
@@ -33,15 +50,6 @@ ENV TOOLCHAIN_PREFIX=${ANDROID_BUILD_FOLDER}/toolchains/linux
 ENV ANDROID_NDK_ROOT=${TOOLCHAIN_PREFIX}/android-ndk-r20
 ENV PATH=${PATH}:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin
 ENV LIBINDY_VER=$LIBINDY_VER
-ENV LIBVCX_VER=$LIBVCX_VER
+ENV LIBVCX_VERSION=$LIBVCX_VER
 
-COPY --chown=indy:indy ci/scripts/android.prepare.sh .
-COPY --chown=indy:indy ci/scripts/setup.android.env.sh .
-USER root
-RUN chmod +x android.prepare.sh setup.android.env.sh # build_libraries.sh
-RUN chown indy:indy android.prepare.sh setup.android.env.sh # build_libraries.sh
-USER indy
 RUN ./android.prepare.sh
-
-RUN mkdir /home/indy/libvcx-absa
-VOLUME ["/home/indy/libvcx-absa"]
