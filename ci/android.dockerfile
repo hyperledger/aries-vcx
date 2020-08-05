@@ -42,3 +42,6 @@ RUN chmod +x android.prepare.sh setup.android.env.sh # build_libraries.sh
 RUN chown indy:indy android.prepare.sh setup.android.env.sh # build_libraries.sh
 USER indy
 RUN ./android.prepare.sh
+
+RUN mkdir /home/indy/libvcx-absa
+VOLUME ["/home/indy/libvcx-absa"]
