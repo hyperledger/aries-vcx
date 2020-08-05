@@ -64,8 +64,8 @@ build_test_artifacts(){
 }
 
 create_cargo_config(){
-mkdir -p ${LIBVCX_WORKDIR}/.cargo
-cat << EOF > ${LIBVCX_WORKDIR}/.cargo/config
+mkdir -p ${HOME}/.cargo
+cat << EOF > ${HOME}/.cargo/config
 [target.${TRIPLET}]
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CXX})"
