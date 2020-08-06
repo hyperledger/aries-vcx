@@ -16,10 +16,15 @@ jobs:
       RUST_VER: ${{ steps.mainstep.outputs.RUST_VER }}
       INDYSDK_REPO: ${{ steps.mainstep.outputs.INDYSDK_REPO }}
       INDYSDK_REVISION: ${{ steps.mainstep.outputs.INDYSDK_REVISION }}
+      LIBVCX_REVISION: ${{ steps.mainstep.outputs.LIBVCX_REVISION }}
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
+      CACHE_KEY_BASE: ${{ steps.mainstep.outputs.CACHE_KEY_BASE }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
+      CACHE_KEY_ANDROID: ${{ steps.mainstep.outputs.CACHE_KEY_ANDROID }}
+      CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
+      DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_BASE }}
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
+      DOCKER_IMG_NAME_ANDROID: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ANDROID }}
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
     env:
@@ -81,11 +86,23 @@ jobs:
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
 
-          echo ::set-env name=LIBVCX_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})"
+          BASE_HASH="$(echo ${{ hashFiles('ci/base.dockerfile') }})"
+          echo ::set-env name=BASE_HASH::$(echo $BASE_HASH)
+
+          echo ::set-env name=LIBVCX_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})-$(echo $BASE_HASH)"
+
+          echo ::set-env name=ANDROID_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/android.dockerfile') }})-$(echo $BASE_HASH)"
+
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
+
+          DOCKER_IMG_NAME_BASE="base:1.0.0"
+          echo ::set-env name=DOCKER_IMG_NAME_BASE::$(echo $DOCKER_IMG_NAME_BASE)
+
+          DOCKER_IMG_NAME_ANDROID="android-test:1.0.0"
+          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo $DOCKER_IMG_NAME_ANDROID)
 
           echo ::set-env name=NODE_VER::$(echo $NODE_VER)
           echo ::set-env name=RUST_VER::$(echo $RUST_VER)
@@ -99,11 +116,17 @@ jobs:
           echo "::set-output name=RUST_VER::$RUST_VER"
           echo "::set-output name=INDYSDK_REPO::$INDYSDK_REPO"
           echo "::set-output name=INDYSDK_REVISION::$INDYSDK_REVISION"
-          echo "::set-output name=CACHE_KEY_LIBVCX::branch-$BRANCH_NAME-hash-$LIBVCX_HASH"
-          echo "::set-output name=CACHE_KEY_POOL::branch-$BRANCH_NAME-hash-$POOL_HASH"
+          echo "::set-output name=LIBVCX_REVISION::$DOCKER_TAG_VERSION"
+          echo "::set-output name=DOCKER_IMG_NAME_BASE::$DOCKER_IMG_NAME_BASE"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
+          echo "::set-output name=DOCKER_IMG_NAME_ANDROID::$DOCKER_IMG_NAME_ANDROID"
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$DOCKER_TAG_VERSION"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$DOCKER_TAG_VERSION"
+          echo "::set-output name=CACHE_KEY_BASE::branch-$BRANCH_NAME-hash-$BASE_HASH"
+          echo "::set-output name=CACHE_KEY_LIBVCX::branch-$BRANCH_NAME-hash-$LIBVCX_HASH"
+          echo "::set-output name=CACHE_KEY_ANDROID::branch-$BRANCH_NAME-hash-$ANDROID_HASH"
+          echo "::set-output name=CACHE_KEY_POOL::branch-$BRANCH_NAME-hash-$POOL_HASH"
 
 
   build-image-indypool:
@@ -139,7 +162,7 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
 
-  build-image-libvcx:
+  build-image-base:
     needs: workflow-setup
     runs-on: ubuntu-16.04
     env:
@@ -147,6 +170,42 @@ jobs:
     steps:
       - name: Load up custom variables
         run: |
+          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
+          echo ::set-env name=DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_BASE}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Try load from cache.
+        id: cache-image-base
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_BASE }}
+      - name: If NOT found in cache, build and cache image.
+        if: steps.cache-image-base.outputs.cache-hit != 'true'
+        run: |
+          set -x
+          docker build -f ci/base.dockerfile \
+                       -t "$DOCKER_IMG_NAME_BASE" \
+                        .
+          mkdir -p /tmp/imgcache
+          docker save "$DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
+
+      - name: Load base image from cache
+        run: |
+          docker load < /tmp/imgcache/img_base.rar
+      - name: Verify libvcx image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+
+  build-image-libvcx:
+    needs: [workflow-setup, build-image-base]
+    runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
           echo ::set-env name=RUST_VER::$(echo ${{needs.workflow-setup.outputs.RUST_VER}})
@@ -155,6 +214,17 @@ jobs:
           echo ::set-env name=INDYSDK_REVISION::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REVISION}})
       - name: Git checkout
         uses: actions/checkout@v2
+      - name: Try load base image from cache.
+        id: cache-image-base
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_BASE }}
+      - name: If NOT found in cache, fail
+        if: steps.cache-image-base.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_BASE"; exit -1
+      - name: Load image from cache
+        run: docker load < /tmp/imgcache/img_base.rar
       - name: Try load from cache.
         id: cache-image-libvcx
         uses: actions/cache@v2
@@ -182,6 +252,60 @@ jobs:
       - name: Verify libvcx image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+
+  build-image-android:
+    needs: [workflow-setup, build-image-base]
+    runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
+          echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
+          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
+          echo ::set-env name=LIBVCX_REVISION::$(echo ${{needs.workflow-setup.outputs.LIBVCX_REVISION}})
+          echo ::set-env name=INDYSDK_REVISION::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REVISION}})
+          echo ::set-env name=RUST_VER::$(echo ${{needs.workflow-setup.outputs.RUST_VER}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Try loading base image from cache.
+        id: cache-image-base
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_BASE }}
+      - name: If NOT found in cache, fail
+        if: steps.cache-image-base.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_BASE"; exit -1
+      - name: Load image from cache
+        run: docker load < /tmp/imgcache/img_base.rar
+
+      - name: Try loading android image from cache.
+        id: cache-image-android
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_ANDROID }}
+      - name: If NOT found in cache, build and cache image.
+        if: steps.cache-image-android.outputs.cache-hit != 'true'
+        run: |
+          docker build --build-arg "RUST_VER=$RUST_VER" \
+                       --build-arg "JAVA_VER=8" \
+                       --build-arg "LIBVCX_VER=$LIBVCX_REVISION" \
+                       --build-arg "INDY_VER=$INDYSDK_REVISION" \
+                       -f ci/android.dockerfile \
+                       -t "$DOCKER_IMG_NAME_ANDROID" \
+                        .
+          mkdir -p /tmp/imgcache
+          docker save "$DOCKER_IMG_NAME_ANDROID" > /tmp/imgcache/img_android.rar
+
+      - name: Load libvcx image from cache
+        run: |
+          docker load < /tmp/imgcache/img_android.rar
+      - name: Verify android image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
   test-libvcx-image:
     runs-on: ubuntu-16.04
@@ -245,6 +369,34 @@ jobs:
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2" && \
                                 RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
+
+  test-android:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-android]
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Docker setup
+        run: |
+          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
+          echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Load android image cache
+        id: load-cached-android-image
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_ANDROID }}
+      - name: If no cached image found
+        if: steps.load-cached-android-image.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_ANDROID"; exit -1
+      - name: Load image from cache
+        run: docker load < /tmp/imgcache/img_android.rar
+      - name: Run android tests
+        run: |
+          docker run --rm -i --name android-test -v $PWD:/home/indy/libvcx-absa:z $DOCKER_IMG_NAME_ANDROID \
+                              bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.test.sh x86)'
 
   test-node-wrapper:
     runs-on: ubuntu-16.04
