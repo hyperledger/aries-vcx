@@ -7,7 +7,6 @@ set -ex
 export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 JAVA_WRAPPER_DIR="${LIBVCX_WORKDIR}/../wrappers/java"
-ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
 
 TARGET_ARCH=$1
 
@@ -38,6 +37,10 @@ prepare_artifacts(){
 }
 
 build_android_wrapper(){
+    ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
+    mkdir -p ${ANDROID_JNI_LIB}
+    cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
+
     pushd ${JAVA_WRAPPER_DIR}
         pushd android
             npm install

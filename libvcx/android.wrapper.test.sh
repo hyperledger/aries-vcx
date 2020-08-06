@@ -6,7 +6,7 @@ set -ex
 
 export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
-JAVA_WRAPPER_DIR="${WORKDIR}/../wrappers/java"
+JAVA_WRAPPER_DIR="${LIBVCX_WORKDIR}/../wrappers/java"
 
 TARGET_ARCH=$1
 
@@ -19,12 +19,16 @@ if [ -z "${TARGET_ARCH}" ]; then
 fi
 
 test_wrapper(){
+    ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
+    mkdir -p ${ANDROID_JNI_LIB}
+    cp ${LIBVCX_WORKDIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
+
     pushd ${JAVA_WRAPPER_DIR}
+
         pushd android
             npm install
         popd
 
-        # ANDROID_JNI_LIB=android/src/main/jniLibs
         # for arch in arm arm64 armv7 x86 x86_64
         # do
         #     arch_folder=${arch}
@@ -38,7 +42,6 @@ test_wrapper(){
 
         echo "Running :assembleDebugAndroidTest to see if it passes..."
 
-        # Run the tests first
         ./gradlew --full-stacktrace --debug --no-daemon :assembleDebugAndroidTest --project-dir=android -x test
 
         echo "Installing the android test apk that will test the aar library..."
@@ -50,7 +53,7 @@ test_wrapper(){
             ADB_INSTALL=$(adb install android/build/outputs/apk/androidTest/debug/com.evernym-vcx_1.0.0-*_x86-armv7-debug-androidTest.apk 2>&1)
             echo "ADB_INSTALL -- ${ADB_INSTALL}"
             FAILED_INSTALL=$(echo ${ADB_INSTALL}|grep "adb: failed to install")
-            [ "${FAILED_INSTALL}" != "" ] && [ "$i" -lt 70 ]            # test the limit of the loop.
+            [ "${FAILED_INSTALL}" != "" ] && [ "$i" -lt 70 ]
         do :;  done
 
         if [ "${FAILED_INSTALL}" != "" ]; then
@@ -60,7 +63,7 @@ test_wrapper(){
         adb shell service list
         echo "Starting the tests of the aar library..."
         ./gradlew --full-stacktrace --debug --no-daemon :connectedCheck --project-dir=android
-        cat ./android/build/reports/androidTests/connected/me.connect.VcxWrapperTests.html
+        # cat android/build/reports/androidTests/connected/me.connect.VcxWrapperTests.html
 
         # for arch in arm arm64 armv7 x86 x86_64
         # do
@@ -81,12 +84,13 @@ set_env_vars
 
 download_sdk
 
+recreate_avd
+
 create_standalone_toolchain_and_rust_target
 create_cargo_config
 
 build_libvcx
-
-recreate_avd
 check_if_emulator_is_running
 test_wrapper
+
 kill_avd

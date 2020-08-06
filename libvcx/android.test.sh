@@ -30,9 +30,6 @@ if [ -z "${INDY_DIR}" ] ; then
             exit 1
         fi
 fi
-# if [ -d "${INDY_DIR}/lib" ] ; then
-#     INDY_DIR="${INDY_DIR}/lib"
-# fi
 
 echo ">> in runner script"
 declare -a EXE_ARRAY

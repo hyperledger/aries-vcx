@@ -7,17 +7,15 @@ export BLUE=`tput setaf 4`
 export MAGENTA=`tput setaf 5`
 export CYAN=`tput setaf 6`
 export WHITE=`tput setaf 7`
-
 export BOLD=`tput bold`
 export RESET=`tput sgr0`
-
-
 
 if [ -z "${ANDROID_BUILD_FOLDER}" ]; then
     echo STDERR "ANDROID_BUILD_FOLDER is not set. Please set it in the caller script"
     echo STDERR "e.g. x86 or arm"
     exit 1
 fi
+
 ANDROID_SDK=${ANDROID_BUILD_FOLDER}/sdk
 export ANDROID_SDK_ROOT=${ANDROID_SDK}
 export ANDROID_HOME=${ANDROID_SDK}
@@ -31,12 +29,13 @@ TARGET_ARCH=$1
 
 
 check_if_emulator_is_running(){
+    # NOTE: Emulator starts with delay
     emus=$(adb devices)
     if [[ ${emus} = *"emulator"* ]]; then
         echo "emulator is running"
         until adb -e shell "ls /storage/emulated/0/"
         do
-            echo "waiting emulator FS"
+            echo "waiting for emulator FS"
             sleep 30
         done
     else
@@ -81,15 +80,14 @@ create_avd(){
 
     echo "${BLUE}Creating android emulator${RESET}"
 
-        echo "no" |
-             avdmanager -v create avd \
-                --name ${ABSOLUTE_ARCH} \
-                --package "system-images;android-24;default;${ABI}" \
-                -f \
-                -c 4094M
+    echo "no" |
+         avdmanager -v create avd \
+            --name ${ABSOLUTE_ARCH} \
+            --package "system-images;android-24;default;${ABI}" \
+            -f \
+            -c 4094M
 
-        # ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -no-audio -no-window -no-snapshot -no-accel &
-        ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
+    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
 create_cargo_config(){
@@ -100,7 +98,6 @@ ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
 EOF
 }
-
 
 download_and_unzip_if_missed() {
     target_dir=$1
@@ -132,7 +129,6 @@ recreate_avd(){
         create_avd
     popd
 }
-
 
 generate_arch_flags(){
     if [ -z $1 ]; then
@@ -193,15 +189,12 @@ prepare_dependencies() {
     popd
 }
 
-
 setup_dependencies_env_vars(){
     export OPENSSL_DIR=${ANDROID_BUILD_FOLDER}/openssl_$1
     export SODIUM_DIR=${ANDROID_BUILD_FOLDER}/libsodium_$1
     export LIBZMQ_DIR=${ANDROID_BUILD_FOLDER}/libzmq_$1
     export INDY_DIR=${ANDROID_BUILD_FOLDER}/libindy_$1
 }
-
-
 
 create_standalone_toolchain_and_rust_target(){
     # will only create toolchain if not already created
@@ -215,8 +208,6 @@ create_standalone_toolchain_and_rust_target(){
     # add rust target
     rustup target add ${TRIPLET}
 }
-
-
 
 download_and_setup_toolchain(){
     if [ "$(uname)" == "Darwin" ]; then
@@ -236,7 +227,6 @@ download_and_setup_toolchain(){
     fi
     export ANDROID_NDK_ROOT=${TOOLCHAIN_PREFIX}/android-ndk-r20
 }
-
 
 set_env_vars(){
     export PKG_CONFIG_ALLOW_CROSS=1
@@ -273,10 +263,5 @@ build_libvcx(){
         rm -rf target/${TRIPLET}
         cargo clean
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
-
-        # Copy libvcx library to JNI lib for it to be used in tests
-        mkdir -p ${ANDROID_JNI_LIB}
-        cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
     popd
 }
-
