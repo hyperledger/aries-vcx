@@ -1391,15 +1391,6 @@ pub mod tests {
     }
 
     #[test]
-    fn test_create_connection_agency_failure() {
-        let _setup = SetupIndyMocks::init();
-
-        let handle = create_connection("invalid").unwrap();
-        let rc = connect(handle, None);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidMessagePack);
-    }
-
-    #[test]
     fn test_create_connection() {
         let _setup = SetupMocks::init();
 
