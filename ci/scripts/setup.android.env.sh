@@ -275,6 +275,7 @@ build_libvcx(){
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
 
         # Copy libvcx library to JNI lib for it to be used in tests
+        mkdir -p ${ANDROID_JNI_LIB}
         cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
     popd
 }

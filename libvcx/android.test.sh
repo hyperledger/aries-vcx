@@ -2,7 +2,7 @@
 
 set -ex
 
-LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
+export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
 BUILD_TYPE="--release"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 
@@ -39,25 +39,23 @@ declare -a EXE_ARRAY
 
 build_test_artifacts(){
     pushd ${LIBVCX_WORKDIR}
-
-        set -e
         cargo clean
 
         SET_OF_TESTS=''
 
         RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
+        LIBINDY_DIR=${INDY_LIB_DIR} \
             cargo build ${BUILD_TYPE} --target=${TRIPLET}
 
         # This is needed to get the correct message if test are not built. Next call will just reuse old results and parse the response.
         RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
+        LIBINDY_DIR=${INDY_LIB_DIR} \
             cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run
 
         # Collect items to execute tests, uses resulting files from previous step
         EXE_ARRAY=($(
             RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-            LIBINDY_LIB_DIR=${INDY_LIB_DIR} \
+            LIBINDY_DIR=${INDY_LIB_DIR} \
                 cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]"))
 
     popd

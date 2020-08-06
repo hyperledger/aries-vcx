@@ -4,14 +4,13 @@
 
 set -ex
 
-WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
-CI_DIR="${WORKDIR}/../ci/scripts"
+export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 JAVA_WRAPPER_DIR="${WORKDIR}/../wrappers/java"
 
 TARGET_ARCH=$1
 
-source ${CI_DIR}/setup.android.env.sh
+source $LIBVCX_WORKDIR/../ci/scripts/setup.android.env.sh
 
 if [ -z "${TARGET_ARCH}" ]; then
     echo STDERR "${RED}Missing TARGET_ARCH argument${RESET}"
