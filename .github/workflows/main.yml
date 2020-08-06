@@ -394,7 +394,8 @@ jobs:
         run: docker load < /tmp/imgcache/img_android.rar
       - name: Run android tests
         run: |
-          docker run --rm -i --name test-android-build -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+          # docker run --rm -i --name test-android-build -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+          docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
                               bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.test.sh x86)'
 
   test-node-wrapper:
@@ -459,7 +460,8 @@ jobs:
 
       - name: Build, run android wrapper tests, and publish artifacts
         run: |
-          docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+          # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+          docker run --name test-android-wrapper $DOCKER_IMG_NAME_ANDROID \
                               bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.build.sh x86)'
           docker_id=$(docker ps -a | grep test-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)

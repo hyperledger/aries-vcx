@@ -26,7 +26,7 @@ COPY --chown=indy:indy ci/scripts/setup.android.env.sh .
 RUN chmod +x android.prepare.sh setup.android.env.sh
 
 # Add indy to sudoers
-RUN usermod -aG sudo indy
+# RUN usermod -aG sudo indy
 
 USER indy
 
@@ -36,8 +36,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
 # This is to mount a host volume with write access
-RUN mkdir /home/indy/libvcx-absa
-VOLUME ["/home/indy/libvcx-absa"]
+# RUN mkdir /home/indy/libvcx-absa
+# VOLUME ["/home/indy/libvcx-absa"]
 
 # Set env vars
 ARG LIBINDY_VER=1.15.0
@@ -55,5 +55,5 @@ ENV LIBVCX_VERSION=$LIBVCX_VER
 RUN ./android.prepare.sh
 
 # This is temporary workaround GA mounted directory issues
-# WORKDIR /home/indy/libvcx-absa
-# COPY --chown=indy:indy . .
+WORKDIR /home/indy/libvcx-absa
+COPY --chown=indy:indy . .
