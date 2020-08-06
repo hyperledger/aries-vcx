@@ -53,3 +53,7 @@ ENV LIBINDY_VER=$LIBINDY_VER
 ENV LIBVCX_VERSION=$LIBVCX_VER
 
 RUN ./android.prepare.sh
+
+# This is temporary workaround GA mounted directory issues
+# WORKDIR /home/indy/libvcx-absa
+# COPY --chown=indy:indy . .
