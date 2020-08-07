@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 
-# TODO: Move this to wrapper folder
-
 set -ex
 
-export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
-export ANDROID_BUILD_FOLDER="/tmp/android_build"
-JAVA_WRAPPER_DIR="${LIBVCX_WORKDIR}/../wrappers/java"
+REPO_DIR=$PWD
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+LIBVCX_DIR="${REPO_DIR}/libvcx"
+JAVA_WRAPPER_DIR="${REPO_DIR}/wrappers/java"
 
 TARGET_ARCHS="$@"
 
-source $LIBVCX_WORKDIR/../ci/scripts/setup.android.env.sh
+source ${SCRIPT_DIR}/setup.android.env.sh
 
 if [ -z "${TARGET_ARCHS}" ]; then
     echo STDERR "${RED}Missing TARGET_ARCHS argument${RESET}"
@@ -26,7 +25,7 @@ prepare_artifacts(){
     mkdir -p ${PACKAGE_DIR}/{include,lib} ${ZIP_DIR} ${AAR_DIR}
 
     # TODO: Get and copy includes
-    cp ${LIBVCX_WORKDIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
+    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
 
     if [ -z "${LIBVCX_VERSION}" ]; then
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}.zip ${PACKAGE_DIR}
@@ -56,9 +55,9 @@ do
     create_standalone_toolchain_and_rust_target
     create_cargo_config
 
-    build_libvcx
+    build_libvcx ${LIBVCX_DIR}
 
-    copy_libraries_to_jni ${JAVA_WRAPPER_DIR} ${TARGET_ARCH}
+    copy_libraries_to_jni ${JAVA_WRAPPER_DIR} ${TARGET_ARCH} ${LIBVCX_DIR}
 done
 
 accept_licenses

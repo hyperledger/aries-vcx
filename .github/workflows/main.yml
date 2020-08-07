@@ -495,7 +495,7 @@ jobs:
           # TODO: Do we need all those architectures for device?
           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
           docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.build.sh arm armv7 arm64)'
+                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh arm armv7 arm64)'
           docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
           mkdir -p /tmp/artifacts/aar
@@ -537,7 +537,7 @@ jobs:
         run: |
           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
           docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.build.sh arm armv7 arm64 x86 x86_64)'
+                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh arm armv7 arm64 x86 x86_64)'
           docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
           mkdir -p /tmp/artifacts/aar

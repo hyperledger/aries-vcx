@@ -2,7 +2,10 @@
 
 set -ex
 
-export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
+REPO_DIR=$PWD
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+LIBVCX_DIR="${REPO_DIR}/libvcx"
+
 BUILD_TYPE="--release"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 
@@ -14,7 +17,8 @@ if [ -z "${TARGET_ARCH}" ]; then
     exit 1
 fi
 
-source $LIBVCX_WORKDIR/../ci/scripts/setup.android.env.sh
+source ${SCRIPT_DIR}/setup.android.env.sh
+
 generate_arch_flags ${TARGET_ARCH}
 setup_dependencies_env_vars ${ABSOLUTE_ARCH}
 
@@ -35,7 +39,7 @@ echo ">> in runner script"
 declare -a EXE_ARRAY
 
 build_test_artifacts(){
-    pushd ${LIBVCX_WORKDIR}
+    pushd ${LIBVCX_DIR}
         cargo clean
 
         SET_OF_TESTS=''

@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 
-# TODO: Move this to wrapper folder
-
 set -ex
 
-export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
-export ANDROID_BUILD_FOLDER="/tmp/android_build"
-JAVA_WRAPPER_DIR="${LIBVCX_WORKDIR}/../wrappers/java"
+REPO_DIR=$PWD
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+LIBVCX_DIR="${REPO_DIR}/libvcx"
+JAVA_WRAPPER_DIR="${REPO_DIR}/wrappers/java"
 
 TARGET_ARCH=$1
 
-source $LIBVCX_WORKDIR/../ci/scripts/setup.android.env.sh
+source ${SCRIPT_DIR}/setup.android.env.sh
 
 if [ -z "${TARGET_ARCH}" ]; then
     echo STDERR "${RED}Missing TARGET_ARCH argument${RESET}"
@@ -21,7 +20,7 @@ fi
 test_wrapper(){
     ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
     mkdir -p ${ANDROID_JNI_LIB}
-    cp ${LIBVCX_WORKDIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
+    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
 
     pushd ${JAVA_WRAPPER_DIR}
 

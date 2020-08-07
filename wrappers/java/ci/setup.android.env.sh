@@ -264,7 +264,8 @@ build_libvcx(){
     echo "Indy path ${BOLD}${YELLOW}${INDY_LIB_DIR}${RESET}"
     echo "Artifacts will be in ${BOLD}${YELLOW}${HOME}/artifacts/${RESET}"
     echo "**************************************************"
-    pushd ${LIBVCX_WORKDIR}
+    LIBVCX_DIR=$1
+    pushd ${LIBVCX_DIR}
         rm -rf target/${TRIPLET}
         cargo clean
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
@@ -274,11 +275,12 @@ build_libvcx(){
 copy_libraries_to_jni(){
     JAVA_WRAPPER_DIR=$1
     TARGET_ARCH=$2
+    LIBVCX_DIR=$3
     ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
     LIB_PATH=${ANDROID_JNI_LIB}/${TARGET_ARCH}
     echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
     mkdir -p $LIB_PATH
-    cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
+    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
     # cp ${OPENSSL_LIB_DIR}/* ${LIB_PATH}
     # cp ${SODIUM_LIB_DIR}/* ${LIB_PATH}
     # cp ${LIBZMQ_LIB_DIR}/* ${LIB_PATH}
