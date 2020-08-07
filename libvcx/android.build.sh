@@ -8,13 +8,13 @@ export LIBVCX_WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 JAVA_WRAPPER_DIR="${LIBVCX_WORKDIR}/../wrappers/java"
 
-TARGET_ARCH=$1
+TARGET_ARCHS="$@"
 
 source $LIBVCX_WORKDIR/../ci/scripts/setup.android.env.sh
 
-if [ -z "${TARGET_ARCH}" ]; then
-    echo STDERR "${RED}Missing TARGET_ARCH argument${RESET}"
-    echo STDERR "${BLUE}e.g. x86 or arm${RESET}"
+if [ -z "${TARGET_ARCHS}" ]; then
+    echo STDERR "${RED}Missing TARGET_ARCHS argument${RESET}"
+    echo STDERR "${BLUE}e.g. a list of archs such as arm, armv7, x86 or arm64${RESET}"
     exit 1
 fi
 
@@ -33,14 +33,10 @@ prepare_artifacts(){
     else
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}_${LIBVCX_VERSION}.zip ${PACKAGE_DIR}
     fi
-    cp $(ls -r -t1 ${JAVA_WRAPPER_DIR}/android/build/outputs/aar/* |  head -n 1) ${AAR_DIR}
+    cp $(ls -r -t1 ${JAVA_WRAPPER_DIR}/android/build/outputs/aar/* | head -n 1) ${AAR_DIR}
 }
 
 build_android_wrapper(){
-    ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
-    mkdir -p ${ANDROID_JNI_LIB}
-    cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
-
     pushd ${JAVA_WRAPPER_DIR}
         pushd android
             npm install
@@ -51,17 +47,21 @@ build_android_wrapper(){
 }
 
 
-generate_arch_flags ${TARGET_ARCH}
-setup_dependencies_env_vars ${TARGET_ARCH}
-set_env_vars
+for TARGET_ARCH in ${TARGET_ARCHS}
+do
+    generate_arch_flags ${TARGET_ARCH}
+    setup_dependencies_env_vars ${TARGET_ARCH}
+    set_env_vars
 
-create_standalone_toolchain_and_rust_target
-create_cargo_config
+    create_standalone_toolchain_and_rust_target
+    create_cargo_config
 
-build_libvcx
+    build_libvcx
 
-recreate_avd
+    copy_libraries_to_jni ${JAVA_WRAPPER_DIR} ${TARGET_ARCH}
+done
+
+accept_licenses
 build_android_wrapper
-kill_avd
 
 prepare_artifacts

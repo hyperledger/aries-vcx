@@ -28,39 +28,19 @@ mkdir -p ${ANDROID_SDK}
 TARGET_ARCH=$1
 
 
-check_if_emulator_is_running(){
-    # NOTE: Emulator starts with delay
-    emus=$(adb devices)
-    if [[ ${emus} = *"emulator"* ]]; then
-        echo "emulator is running"
-        until adb -e shell "ls /storage/emulated/0/"
-        do
-            echo "waiting for emulator FS"
-            sleep 30
-        done
-    else
-        echo "emulator is not running"
-        exit 1
-    fi
-}
-
-kill_avd(){
-    adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done || true
-}
-
 delete_existing_avd(){
     kill_avd
     avdmanager delete avd -n ${ABSOLUTE_ARCH}
 }
 
-download_emulator() {
-    curl -o emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+accept_licenses(){
+    yes | sdkmanager --licenses
 }
 
 create_avd(){
     echo "${GREEN}Creating Android SDK${RESET}"
 
-    yes | sdkmanager --licenses
+    accept_licenses
 
     if [ ! -d "${ANDROID_SDK}/emulator/" ] ; then
         echo "yes" |
@@ -90,6 +70,35 @@ create_avd(){
     ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
+kill_avd(){
+    adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done || true
+}
+
+recreate_avd(){
+    pushd ${ANDROID_SDK}
+        set +e
+        delete_existing_avd
+        set -e
+        create_avd
+    popd
+}
+
+check_if_emulator_is_running(){
+    # NOTE: Emulator starts with delay
+    emus=$(adb devices)
+    if [[ ${emus} = *"emulator"* ]]; then
+        echo "emulator is running"
+        until adb -e shell "ls /storage/emulated/0/"
+        do
+            echo "waiting for emulator FS"
+            sleep 30
+        done
+    else
+        echo "emulator is not running"
+        exit 1
+    fi
+}
+
 create_cargo_config(){
 mkdir -p ${HOME}/.cargo
 cat << EOF > ${HOME}/.cargo/config
@@ -97,6 +106,10 @@ cat << EOF > ${HOME}/.cargo/config
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
 EOF
+}
+
+download_emulator() {
+    curl -o emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 download_and_unzip_if_missed() {
@@ -121,18 +134,9 @@ download_sdk(){
     popd
 }
 
-recreate_avd(){
-    pushd ${ANDROID_SDK}
-        set +e
-        delete_existing_avd
-        set -e
-        create_avd
-    popd
-}
-
 generate_arch_flags(){
     if [ -z $1 ]; then
-        echo STDERR "${RED}Please provide the arch e.g arm,armv7, x86 or arm64${RESET}"
+        echo STDERR "${RED}Please provide the arch e.g arm, armv7, x86 or arm64${RESET}"
         exit 1
     fi
     export ABSOLUTE_ARCH=$1
@@ -235,6 +239,7 @@ set_env_vars(){
     export RUST_TEST_THREADS=1
     export RUST_BACKTRACE=1
     export OPENSSL_DIR=${OPENSSL_DIR}
+    export OPENSSL_LIB_DIR=${OPENSSL_DIR}/lib
     export SODIUM_LIB_DIR=${SODIUM_DIR}/lib
     export SODIUM_INCLUDE_DIR=${SODIUM_DIR}/include
     export LIBZMQ_LIB_DIR=${LIBZMQ_DIR}/lib
@@ -264,4 +269,18 @@ build_libvcx(){
         cargo clean
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
     popd
+}
+
+copy_libraries_to_jni(){
+    JAVA_WRAPPER_DIR=$1
+    TARGET_ARCH=$2
+    ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
+    LIB_PATH=${ANDROID_JNI_LIB}/${TARGET_ARCH}
+    echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
+    mkdir -p $LIB_PATH
+    cp target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
+    # cp ${OPENSSL_LIB_DIR}/* ${LIB_PATH}
+    # cp ${SODIUM_LIB_DIR}/* ${LIB_PATH}
+    # cp ${LIBZMQ_LIB_DIR}/* ${LIB_PATH}
+    # cp ${INDY_LIB_DIR}/* ${LIB_PATH}
 }
