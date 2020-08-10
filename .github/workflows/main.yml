@@ -89,7 +89,7 @@ jobs:
           BASE_HASH="$(echo ${{ hashFiles('ci/base.dockerfile') }})"
           echo ::set-env name=BASE_HASH::$(echo $BASE_HASH)
           echo ::set-env name=LIBVCX_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})-$(echo $BASE_HASH)"
-          echo ::set-env name=ANDROID_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/android.dockerfile') }})-$(echo $BASE_HASH)"
+          echo ::set-env name=ANDROID_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('wrappers/java/ci/android.dockerfile') }})-$(echo $BASE_HASH)"
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
@@ -294,7 +294,7 @@ jobs:
                        --build-arg "JAVA_VER=8" \
                        --build-arg "LIBVCX_VER=$LIBVCX_REVISION" \
                        --build-arg "INDY_VER=$INDYSDK_REVISION" \
-                       -f ci/android.dockerfile \
+                       -f wrappers/java/ci/android.dockerfile \
                        -t "$DOCKER_IMG_NAME_ANDROID" \
                         .
           mkdir -p /tmp/imgcache
@@ -397,7 +397,7 @@ jobs:
         run: |
           # docker run --rm -i --name test-android-build -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.test.sh x86)'
+                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh x86)'
 
   test-node-wrapper:
     runs-on: ubuntu-16.04

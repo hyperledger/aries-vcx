@@ -21,12 +21,8 @@ ARG NODE_VER=8.x
 RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
 RUN apt-get install -y nodejs
 
-COPY --chown=indy:indy ci/scripts/android.prepare.sh .
-COPY --chown=indy:indy ci/scripts/setup.android.env.sh .
-RUN chmod +x android.prepare.sh setup.android.env.sh
-
 # Add indy to sudoers
-# RUN usermod -aG sudo indy
+RUN usermod -aG sudo indy
 
 USER indy
 
@@ -35,8 +31,9 @@ ARG RUST_VER=1.40.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
+
 # This is to mount a host volume with write access
-# RUN mkdir /home/indy/libvcx-absa
+RUN mkdir /home/indy/libvcx-absa
 # VOLUME ["/home/indy/libvcx-absa"]
 
 # Set env vars
@@ -52,8 +49,11 @@ ENV PATH=${PATH}:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools:${ANDROID_
 ENV LIBINDY_VER=$LIBINDY_VER
 ENV LIBVCX_VERSION=$LIBVCX_VER
 
-RUN ./android.prepare.sh
+# COPY --chown=indy:indy ci/scripts/android.prepare.sh .
+# COPY --chown=indy:indy ci/scripts/setup.android.env.sh .
+# RUN chmod +x android.prepare.sh setup.android.env.sh
 
 # This is temporary workaround GA mounted directory issues
-WORKDIR /home/indy/libvcx-absa
-COPY --chown=indy:indy . .
+COPY --chown=indy:indy . libvcx-absa/
+
+RUN ./libvcx-absa/wrappers/java/ci/android.prepare.sh

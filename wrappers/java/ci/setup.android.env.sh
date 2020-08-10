@@ -109,7 +109,7 @@ EOF
 }
 
 download_emulator() {
-    curl -o emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 download_and_unzip_if_missed() {

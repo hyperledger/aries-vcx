@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-source setup.android.env.sh
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+
+source ${SCRIPT_DIR}/setup.android.env.sh
 
 archs=("arm" "armv7" "x86" "arm64" "x86_64")
 
