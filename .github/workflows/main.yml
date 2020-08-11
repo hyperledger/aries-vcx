@@ -163,7 +163,9 @@ jobs:
           docker load < /tmp/imgcache/img_indypool.rar
       - name: Verify indypool image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_POOL
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
   build-image-base:
     needs: workflow-setup
@@ -198,7 +200,9 @@ jobs:
           docker load < /tmp/imgcache/img_base.rar
       - name: Verify libvcx image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_BASE
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
   build-image-libvcx:
     needs: [workflow-setup, build-image-base]
@@ -254,7 +258,9 @@ jobs:
           docker load < /tmp/imgcache/img_libvcx.rar
       - name: Verify libvcx image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_LIBVCX
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
   build-image-android:
     needs: [workflow-setup, build-image-base]
@@ -308,7 +314,9 @@ jobs:
           docker load < /tmp/imgcache/img_android.rar
       - name: Verify android image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_ANDROID
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
   test-libvcx-image:
     runs-on: ubuntu-16.04
@@ -462,9 +470,11 @@ jobs:
       - name: Load image from cache
         run: docker load < /tmp/imgcache/img_libvcx.rar
 
-      - name: Verify images were loaded
+      - name: Verify libvcx image were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!"; docker image ls; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_LIBVCX
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
@@ -511,9 +521,11 @@ jobs:
       - name: Load image from cache
         run: docker load < /tmp/imgcache/img_libvcx.rar
 
-      - name: Verify images were loaded
+      - name: Verify libvcx image were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!"; docker image ls; exit 1; }
+          IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_LIBVCX
+          DOCKER_IMG_NAME_TAGLESS=${arr[0]}
+          docker image ls --format "{{.Repository}}" | grep "$DOCKER_IMG_NAME_TAGLESS" || { echo "Image $DOCKER_IMG_NAME_TAGLESS was not found!" ; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
