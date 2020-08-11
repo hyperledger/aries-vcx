@@ -168,6 +168,9 @@ async function runFaber (options) {
     await sleepPromise(2000)
     await credentialForAlice.updateState()
     credentialState = await credentialForAlice.getState()
+    if (credentialState===0) {
+      return
+    }
   }
 
   const proofAttributes = [
@@ -182,6 +185,10 @@ async function runFaber (options) {
     {
       name: 'degree',
       restrictions: { 'attr::degree::value': 'maths' }
+    },
+    {
+      name: 'nickname',
+      self_attest_allowed: true
     }
   ]
 
