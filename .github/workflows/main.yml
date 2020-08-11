@@ -27,6 +27,7 @@ jobs:
       DOCKER_IMG_NAME_ANDROID: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ANDROID }}
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
+      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
     env:
       NODE_VER: "8.x"
       RUST_VER: "1.43.1"
@@ -127,6 +128,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_LIBVCX::branch-$BRANCH_NAME-hash-$LIBVCX_HASH"
           echo "::set-output name=CACHE_KEY_ANDROID::branch-$BRANCH_NAME-hash-$ANDROID_HASH"
           echo "::set-output name=CACHE_KEY_POOL::branch-$BRANCH_NAME-hash-$POOL_HASH"
+          echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
 
   build-image-indypool:
@@ -442,6 +444,7 @@ jobs:
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
           echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
 
       - name: Git checkout
         uses: actions/checkout@v2
@@ -491,6 +494,7 @@ jobs:
         run: |
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
+          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
       - name: Git checkout
         uses: actions/checkout@v2
 
