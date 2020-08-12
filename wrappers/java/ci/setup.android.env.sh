@@ -65,9 +65,9 @@ create_avd(){
             --name ${ABSOLUTE_ARCH} \
             --package "system-images;android-24;default;${ABI}" \
             -f \
-            -c 4094M
+            -c 4096M
 
-    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 8192 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
+    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
 kill_avd(){
@@ -84,19 +84,30 @@ recreate_avd(){
 }
 
 check_if_emulator_is_running(){
-    # NOTE: Emulator starts with delay
+    tries=0
+    running=false
     emus=$(adb devices)
-    if [[ ${emus} = *"emulator"* ]]; then
-        echo "emulator is running"
-        until adb -e shell "ls /storage/emulated/0/"
-        do
-            echo "waiting for emulator FS"
-            sleep 30
-        done
-    else
-        echo "emulator is not running"
+    while [ $running = false ]
+    do
+      if [ $tries -gt 5 ]; then
+        echo 'Exceeded the number of attempts to check the emulator status, shutting down'
         exit 1
-    fi
+      else
+        sleep 30
+      fi
+      if [[ ${emus} = *"emulator"* ]]; then
+          echo "emulator is running"
+          running=true
+          until adb -e shell "ls /storage/emulated/0/"
+          do
+              echo "waiting for emulator FS"
+              sleep 30
+          done
+      else
+          echo "Emulator is not running, tried $[$tries+1] times"
+      fi
+      tries=$[$tries+1]
+    done
 }
 
 create_cargo_config(){

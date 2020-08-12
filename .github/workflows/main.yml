@@ -89,7 +89,7 @@ jobs:
           BASE_HASH="$(echo ${{ hashFiles('ci/base.dockerfile') }})"
           echo ::set-env name=BASE_HASH::$(echo $BASE_HASH)
           echo ::set-env name=LIBVCX_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})-$(echo $BASE_HASH)"
-          echo ::set-env name=ANDROID_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('wrappers/java/ci/android.dockerfile') }})-$(echo $BASE_HASH)"
+          echo ::set-env name=ANDROID_HASH::"$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('wrappers') }})-$(echo ${{ hashFiles('wrappers/java/ci/android.dockerfile') }})-$(echo $BASE_HASH)"
           echo ::set-env name=POOL_HASH::$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
