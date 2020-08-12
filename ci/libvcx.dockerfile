@@ -1,4 +1,53 @@
-FROM base:1.0.0 AS BASE
+FROM ubuntu:16.04 as BASE
+
+ARG uid=1000
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y \
+      pkg-config \
+      libssl-dev \
+      libgmp3-dev \
+      curl \
+      build-essential \
+      libsqlite3-dev \
+      cmake \
+      git \
+      python3.5 \
+      python3-pip \
+      python-setuptools \
+      apt-transport-https \
+      ca-certificates \
+      debhelper \
+      wget \
+      devscripts \
+      libncursesw5-dev \
+      libzmq3-dev \
+      zip \
+      unzip \
+      jq
+
+RUN pip3 install -U \
+	pip \
+	setuptools \
+	virtualenv \
+	twine==1.15.0 \
+	plumbum==1.6.7 six==1.12.0 \
+	deb-pkg-tools
+
+# Install libsodium
+RUN cd /tmp && \
+   curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz | tar -xz && \
+    cd /tmp/libsodium-1.0.18 && \
+    ./configure && \
+    make && \
+    make install && \
+    rm -rf /tmp/libsodium-1.0.18
+
+RUN useradd -ms /bin/bash -u $uid indy
+USER indy
+WORKDIR /home/indy
+
 
 # Install Rust toolchain
 ARG RUST_VER=1.40.0
@@ -33,13 +82,14 @@ RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 # Move the binary to system library
 USER root
 RUN mv /home/indy/libvcx/target/release/*.so /usr/lib
-
+RUN rm -r /home/indy/libvcx/target
 
 # Create a new build stage and copy outputs from BASE
 FROM ubuntu:16.04
 
 RUN apt-get update && \
     apt-get install -y \
+      pkg-config \
       libssl-dev \
       apt-transport-https \
       ca-certificates \
@@ -67,7 +117,7 @@ ARG NODE_VER=8.x
 RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
 RUN apt-get install -y nodejs
 
-RUN chown -R indy . 
+RUN chown -R indy .
 
 USER indy
 
