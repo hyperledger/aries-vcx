@@ -12,7 +12,6 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
-      NODE_VER: ${{ steps.mainstep.outputs.NODE_VER }}
       RUST_VER: ${{ steps.mainstep.outputs.RUST_VER }}
       INDYSDK_REPO: ${{ steps.mainstep.outputs.INDYSDK_REPO }}
       INDYSDK_REVISION: ${{ steps.mainstep.outputs.INDYSDK_REVISION }}
@@ -29,7 +28,6 @@ jobs:
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
     env:
-      NODE_VER: "8.x"
       RUST_VER: "1.43.1"
       INDYSDK_REPO: "https://github.com/hyperledger/indy-sdk"
       INDYSDK_REVISION: "1.15.0"
@@ -105,7 +103,6 @@ jobs:
           DOCKER_IMG_NAME_ANDROID="android-test:1.0.0"
           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo $DOCKER_IMG_NAME_ANDROID)
 
-          echo ::set-env name=NODE_VER::$(echo $NODE_VER)
           echo ::set-env name=RUST_VER::$(echo $RUST_VER)
           echo ::set-env name=RELEASE_VERSION::$(echo $RELEASE_VERSION)
 
@@ -114,7 +111,6 @@ jobs:
         run: |
           set -x
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=NODE_VER::$NODE_VER"
           echo "::set-output name=RUST_VER::$RUST_VER"
           echo "::set-output name=INDYSDK_REPO::$INDYSDK_REPO"
           echo "::set-output name=INDYSDK_REVISION::$INDYSDK_REVISION"
@@ -212,7 +208,6 @@ jobs:
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
           echo ::set-env name=RUST_VER::$(echo ${{needs.workflow-setup.outputs.RUST_VER}})
-          echo ::set-env name=NODE_VER::$(echo ${{needs.workflow-setup.outputs.NODE_VER}})
           echo ::set-env name=INDYSDK_REPO::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REPO}})
           echo ::set-env name=INDYSDK_REVISION::$(echo ${{needs.workflow-setup.outputs.INDYSDK_REVISION}})
       - name: Git checkout
@@ -240,8 +235,6 @@ jobs:
           set -x
           docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
                        --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-                       --build-arg "RUST_VER=$RUST_VER" \
-                       --build-arg "NODE_VER=$NODE_VER" \
                        --build-arg "NPMJS_TOKEN=$NPMJS_TOKEN" \
                        -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
