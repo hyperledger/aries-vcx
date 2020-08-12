@@ -66,7 +66,6 @@ create_avd(){
             --package "system-images;android-24;default;${ABI}" \
             -f \
             -c 4096M
-
     ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
