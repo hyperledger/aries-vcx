@@ -68,7 +68,7 @@ def getKrakenUserFromEnv(){
 version = "${versionMajor()}"
 
 def fullVersionName() {
-    return "com.evernym-vcx_${versionMajor()}-${buildTime()}_x86-armv7"
+    return "com.absa-vcx_${versionMajor()}-${buildTime()}"
 }
 
 description = """vcx"""
@@ -85,6 +85,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        abortOnError false
     }
 
     sourceSets {
@@ -173,6 +176,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test:rules:1.0.1'
     // Set this dependency if you want to use the Hamcrest matcher library
     androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
-
 }
 

@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-ARG uid=1000
+ARG USER_ID=1000
 
 # Install dependencies
 RUN apt-get update && \
@@ -44,7 +44,7 @@ RUN cd /tmp && \
     make install && \
     rm -rf /tmp/libsodium-1.0.18
 
-RUN useradd -ms /bin/bash -u $uid indy
+RUN useradd -ms /bin/bash -u $USER_ID indy
 USER indy
 
 EXPOSE 8080
