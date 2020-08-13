@@ -76,9 +76,15 @@ jobs:
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
 
-          LIBVCX_HASH="$(echo ${{ hashFiles('libvcx') }})$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})"
-          ANDROID_HASH="$(echo ${{ hashFiles('libvcx') }})$(echo ${{ hashFiles('wrappers/java') }})"
-          POOL_HASH="$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})"
+          LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
+          LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
+          JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
+          POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
+
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
+          ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
+          POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
+
           echo ::set-env name=LIBVCX_HASH::$(echo $LIBVCX_HASH)
           echo ::set-env name=ANDROID_HASH::$(echo $ANDROID_HASH)
           echo ::set-env name=POOL_HASH::$(echo $POOL_HASH)
@@ -142,7 +148,8 @@ jobs:
           docker load < /tmp/imgcache/img_indypool.rar
       - name: Verify indypool image was loaded
         run: |
-          docker image ls --format "{{.Repository}}{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
+          docker images
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
 
   build-image-libvcx:
     needs: workflow-setup
@@ -179,7 +186,7 @@ jobs:
           docker load < /tmp/imgcache/img_libvcx.rar
       - name: Verify libvcx image was loaded
         run: |
-          docker image ls --format "{{.Repository}}{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
   build-image-android:
     needs: workflow-setup
@@ -215,7 +222,7 @@ jobs:
           docker load < /tmp/imgcache/img_android.rar
       - name: Verify android image was loaded
         run: |
-          docker image ls --format "{{.Repository}}{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
   test-libvcx-image:
     runs-on: ubuntu-16.04
@@ -314,6 +321,7 @@ jobs:
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
+      NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
     steps:
       - name: Load up custom variables
         run: |
@@ -337,7 +345,7 @@ jobs:
       - name: Run wrapper tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && \
                                 npm install && \
@@ -488,7 +496,7 @@ jobs:
 
       - name: Verify libvcx image were loaded
         run: |
-          docker image ls --format "{{.Repository}}{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
@@ -539,7 +547,7 @@ jobs:
 
       - name: Verify libvcx image were loaded
         run: |
-          docker image ls --format "{{.Repository}}{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
