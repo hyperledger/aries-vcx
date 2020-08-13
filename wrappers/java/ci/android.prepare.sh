@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e
 
-export ANDROID_BUILD_FOLDER="/tmp/android_build"
-source setup.android.env.sh
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
-echo ">> in runner script"
+source ${SCRIPT_DIR}/setup.android.env.sh
 
 archs=("arm" "armv7" "x86" "arm64" "x86_64")
 
