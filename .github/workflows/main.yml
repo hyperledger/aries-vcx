@@ -79,18 +79,18 @@ jobs:
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
 
           BASE_HASH="$(echo ${{ hashFiles('ci/base.dockerfile') }})"
-          LIBVCX_HASH="$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})"
-          ANDROID_HASH="$(echo ${{ hashFiles('libvcx') }})-$(echo ${{ hashFiles('wrappers') }})-$(echo ${{ hashFiles('wrappers/java/ci/android.dockerfile') }})-$(echo $BASE_HASH)"
+          LIBVCX_HASH="$(echo ${{ hashFiles('libvcx') }})$(echo ${{ hashFiles('ci/libvcx.dockerfile') }})"
+          ANDROID_HASH="$(echo ${{ hashFiles('libvcx') }})$(echo ${{ hashFiles('wrappers/java') }})"
           POOL_HASH="$(echo ${{ hashFiles('ci/indy-pool.dockerfile') }})"
           echo ::set-env name=BASE_HASH::$(echo $BASE_HASH)
           echo ::set-env name=LIBVCX_HASH::$(echo $LIBVCX_HASH)
           echo ::set-env name=ANDROID_HASH::$(echo $ANDROID_HASH)
           echo ::set-env name=POOL_HASH::$(echo $POOL_HASH)
 
-          echo ::set-env name=CACHE_KEY_BASE::branch-$BRANCH_NAME-hash-$BASE_HASH
-          echo ::set-env name=CACHE_KEY_LIBVCX::branch-$BRANCH_NAME-hash-$LIBVCX_HASH
-          echo ::set-env name=CACHE_KEY_ANDROID::branch-$BRANCH_NAME-hash-$ANDROID_HASH
-          echo ::set-env name=CACHE_KEY_POOL::branch-$BRANCH_NAME-hash-$ANDROID_HASH
+          echo ::set-env name=CACHE_KEY_BASE::$BRANCH_NAME-$BASE_HASH
+          echo ::set-env name=CACHE_KEY_LIBVCX::$BRANCH_NAME-$LIBVCX_HASH
+          echo ::set-env name=CACHE_KEY_ANDROID::$BRANCH_NAME-$ANDROID_HASH
+          echo ::set-env name=CACHE_KEY_POOL::$BRANCH_NAME-$POOL_HASH
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
