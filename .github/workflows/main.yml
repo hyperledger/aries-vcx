@@ -24,9 +24,6 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.40.0
       - name: Set custom env variables
         run: |
           set -x
@@ -48,6 +45,7 @@ jobs:
           FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
 
+          echo "Github context = ${{ toJson(github) }}"
           if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
             echo "This is pull request with base repo ${{ github.pull_request.base.repo }}"
