@@ -3,8 +3,8 @@
 ###Development:
 With Docker
 
-- run `build_scripts/android/vcx/build.sh`
+- run `{repo_dir}/libvcx/build_scripts/android/vcx/build.sh`
 
 Without Docker
 
-- run `build_scripts/android/vcx/build.nondocker.sh`
+- run `{repo_dir}/build_scripts/android/vcx/build.nondocker.sh`

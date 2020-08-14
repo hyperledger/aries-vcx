@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
+set -ex
 
+REPO_DIR=$PWD
+SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+LIBVCX_DIR="${REPO_DIR}/libvcx"
 
-WORKDIR="$( cd "$(dirname "$0")" ; pwd -P )"
-LIBINDY_WORKDIR="$(realpath ${WORKDIR}/../../libindy)"
-LIBNULLPAY_WORKDIR="$(realpath ${WORKDIR}/../../libnullpay)"
-LIBVCX_WORKDIR=${WORKDIR}
-CI_DIR="${LIBINDY_WORKDIR}/ci"
 BUILD_TYPE="--release"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 
@@ -14,12 +13,14 @@ TARGET_ARCH=$1
 
 if [ -z "${TARGET_ARCH}" ]; then
     echo STDERR "Missing TARGET_ARCH argument"
-    echo STDERR "e.g. x86 or arm"
+    echo STDERR "expecting one of: x86, x86_64, arm, arm7"
     exit 1
 fi
 
-source ${CI_DIR}/setup.android.env.sh
+source ${SCRIPT_DIR}/setup.android.env.sh
+
 generate_arch_flags ${TARGET_ARCH}
+setup_dependencies_env_vars ${ABSOLUTE_ARCH}
 
 if [ -z "${INDY_DIR}" ] ; then
         INDY_DIR="libindy_${TARGET_ARCH}"
@@ -27,16 +28,10 @@ if [ -z "${INDY_DIR}" ] ; then
             echo "Found ${INDY_DIR}"
         elif [ -n "$2" ] ; then
             INDY_DIR=$2
-        elif [ -d "${LIBINDY_WORKDIR}/target/${TRIPLET}/release/" ] ; then
-            INDY_DIR="${LIBINDY_WORKDIR}/target/${TRIPLET}/release/"
-            echo "Found local INDY_DIR=${INDY_DIR}"
         else
             echo STDERR "Missing INDY_DIR argument and environment variable"
             echo STDERR "e.g. set INDY_DIR=<path> for environment or libindy_${TARGET_ARCH}"
             exit 1
-        fi
-        if [ -d "${INDY_DIR}/lib" ] ; then
-            INDY_DIR="${INDY_DIR}/lib"
         fi
 fi
 
@@ -44,44 +39,35 @@ echo ">> in runner script"
 declare -a EXE_ARRAY
 
 build_test_artifacts(){
-    pushd ${WORKDIR}
-
-        set -e
-        # The libc.so in the standalone toolchains does not have FORTIFIED_SOURCE compatible symbols.
-        # We need to copy the libc.so from platforms folder into the standalone toolchain.
-        #DEPS_TARGET_API_LEVEL=21 #FIXME remove it, should be same with TARGET_API. Probably deps (sodium and/or zmq) should be rebuilt
-        #cp "${ANDROID_NDK_ROOT}/platforms/android-${DEPS_TARGET_API_LEVEL}/arch-${TARGET_ARCH}/usr/lib/libc.so" "${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB}"
-
+    pushd ${LIBVCX_DIR}
         cargo clean
 
         SET_OF_TESTS=''
 
-        # TODO move RUSTFLAGS to cargo config and do not duplicate it here
-        # build - separate step to see origin build output
-        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_DIR=${INDY_DIR} \
+        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+        LIBINDY_DIR=${INDY_LIB_DIR} \
             cargo build ${BUILD_TYPE} --target=${TRIPLET}
 
         # This is needed to get the correct message if test are not built. Next call will just reuse old results and parse the response.
-        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_DIR=${INDY_DIR} \
+        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+        LIBINDY_DIR=${INDY_LIB_DIR} \
             cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run
 
-        # collect items to execute tests, uses resulting files from previous step
+        # Collect items to execute tests, uses resulting files from previous step
         EXE_ARRAY=($(
-            RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-            LIBINDY_DIR=${INDY_DIR} \
+            RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
+            LIBINDY_DIR=${INDY_LIB_DIR} \
                 cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]"))
 
     popd
 }
 
 create_cargo_config(){
-mkdir -p ${LIBVCX_WORKDIR}/.cargo
-cat << EOF > ${LIBVCX_WORKDIR}/.cargo/config
+mkdir -p ${HOME}/.cargo
+cat << EOF > ${HOME}/.cargo/config
 [target.${TRIPLET}]
 ar = "$(realpath ${AR})"
-linker = "$(realpath ${CC})"
+linker = "$(realpath ${CXX})"
 EOF
 }
 
@@ -99,10 +85,7 @@ execute_on_device(){
     "${LIBZMQ_LIB_DIR}/libzmq.so" "/data/local/tmp/libzmq.so"
 
     adb -e push \
-    "${LIBINDY_WORKDIR}/target/${TRIPLET}/release/libindy.so" "/data/local/tmp/libindy.so"
-
-    adb -e push \
-    "${LIBNULLPAY_WORKDIR}/target/${TRIPLET}/release/libnullpay.so" "/data/local/tmp/libnullpay.so"
+    "${INDY_LIB_DIR}/libindy.so" "/data/local/tmp/libindy.so"
 
     adb -e logcat | grep indy &
 
@@ -124,9 +107,7 @@ execute_on_device(){
 }
 
 
-
 recreate_avd
-setup_dependencies_env_vars ${ABSOLUTE_ARCH}
 set_env_vars
 create_standalone_toolchain_and_rust_target
 create_cargo_config

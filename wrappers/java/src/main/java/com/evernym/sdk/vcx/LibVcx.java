@@ -26,6 +26,7 @@ public abstract class LibVcx {
         public String vcx_version();
         public int vcx_shutdown(boolean delete);
         public int vcx_update_institution_info(String name, String logo_url);
+        public int vcx_update_webhook_url(int command_handle, String notification_webhook_url, Callback cb);
 
     /**
      * Helper API for testing purposes.
@@ -299,6 +300,8 @@ public abstract class LibVcx {
         /** Sets the credential request in an accepted state. (not in MVP) */
         public int vcx_issuer_accept_credential(int credential_handle);
 
+        /** Revokes credential. */
+        public int vcx_issuer_revoke_credential(int command_handle, int credential_handle, Callback cb);
 
     /**
      * proof object
