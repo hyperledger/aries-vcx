@@ -6,7 +6,7 @@ LIB_DIR=${OUTDIR}/libs
 VCX_DIR=${OUTDIR}/vcx
 
 LIBINDY_VER=${1:-1.15.0}
-LIBVCX_VER=${2:-0.8.0}
+LIBVCX_VERSION=${2:-0.8.0}
 
 mkdir -p ${OUTDIR}/libs
 mkdir -p ${VCX_DIR}/libvcx_x86
@@ -57,9 +57,9 @@ deploy_library(){
     ARCH=$1
     mv libvcx.so ${vcxdir}/libvcx_${ARCH}
     pushd ${VCX_DIR}
-    zip -r libvcx_${ARCH}_${LIBVCX_VER}.zip libvcx_${ARCH}
+    zip -r libvcx_${ARCH}_${LIBVCX_VERSION}.zip libvcx_${ARCH}
     #Place your deployment script below
-    #curl -v --user 'id:pw' --upload-file ./libvcx_${ARCH}_${LIBVCX_VER}.zip http://13.125.219.189/repository/libraries/android/libvcx_${ARCH}_${LIBVCX_VER}.zip
+    #curl -v --user 'id:pw' --upload-file ./libvcx_${ARCH}_${LIBVCX_VERSION}.zip http://13.125.219.189/repository/libraries/android/libvcx_${ARCH}_${LIBVCX_VERSION}.zip
     popd
 }
 

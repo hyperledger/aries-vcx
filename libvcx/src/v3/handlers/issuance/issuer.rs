@@ -8,7 +8,7 @@ use v3::messages::issuance::credential::Credential;
 use v3::messages::error::ProblemReport;
 use v3::messages::mime_type::MimeType;
 use error::{VcxResult, VcxError, VcxErrorKind};
-use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer, revoke_credential};
+use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer};
 use issuer_credential::encode_attributes;
 use v3::messages::status::Status;
 use std::collections::HashMap;
@@ -40,14 +40,17 @@ impl IssuerSM {
         }
     }
 
-    pub fn revoke(&self) -> VcxResult<()> {
-
+    pub fn revoke(&self, publish: bool) -> VcxResult<()> {
         match &self.state {
             IssuerState::Finished(state) => {
                 match &state.revocation_info_v1 {
                     Some(rev_info) => {
                         if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
-                            revoke_credential(&tails_file, &rev_reg_id, &cred_rev_id)?;
+                            if publish {
+                                anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
+                            } else {
+                                anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id)?;
+                            }
                             Ok(())
                         } else {
                             Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails))
