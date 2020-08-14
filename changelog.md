@@ -1,4 +1,16 @@
-libvcx (0.8.0) unstable; urgency=medium
+[ Hyperledger  + AbsaOSS ]
+
+# Upcoming 0.9.0
+* Add `4.0` protocol - objects returned from LibVCX API are in Aries format
+* Support revocations when using `3.0` / `4.0` protocol
+* Changed interface and behaviour of vcx_update_webhook_url which uses `UpdateComMethod` Vcx2Agency message type to let agency know about new webhook url for agent.
+* Add `vcx_delete_credential` method to delete credential from wallet.
+* Methods `vcx_*_update_state_with_message` are not automatically updating status of message in [agency](https://github.com/hyperledger/indy-sdk/pull/2200)
+* Fixed double escaping and sending of generic msgs. [PR](https://github.com/hyperledger/indy-sdk/pull/2202)
+* [Update VCX iOS wrapper](https://github.com/hyperledger/indy-sdk/pull/2187) Fixes of vcx_disclosed_proof_get_requests and addition of APIs `connectionGetState`, `connectionUpdateState`, `connectionRelease`, `credentialRelease`, `proofGetRequests`, `proofGetState`, `proofUpdateState`, `proofRelease` 
+* LibVCX Python fix for accepting TAA [PR](https://github.com/hyperledger/indy-sdk/pull/2175)
+* LibVCX NodeJS fix for sending basic message [PR](https://github.com/hyperledger/indy-sdk/pull/2162)
+* Add support for predicates when requesting proof [PR](https://github.com/hyperledger/indy-sdk/pull/2119)
 
 [ Hyperledger ]
 
