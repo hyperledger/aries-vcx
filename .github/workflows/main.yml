@@ -49,7 +49,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
             echo "This is pull request with base repo ${{ github.pull_request.base.repo }}"
-            if [[ "${{ github.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]]
+            if [[ "${{ github.event.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]]
             then
               echo "This is not fork"
               IS_FORK="FALSE";
