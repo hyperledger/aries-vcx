@@ -48,21 +48,22 @@ jobs:
           FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
 
-          if [[ -z "${{ github.pull_request }}" ]]
+          if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
-            IS_FORK="FALSE";
-          else
             if [[ "${{ github.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]]
             then
               IS_FORK="FALSE";
             else
               IS_FORK="true";
             fi;
+          else
+            IS_FORK="FALSE";
           fi;
+          echo "Is fork = $IS_FORK"
 
           if [[ "$IS_FORK" == "false" ]]
           then
-            PUBLISH_VERSION="${{ github.run_number }}-$FULL_REPO_SLUG-$BRANCH_NAME"
+            PUBLISH_VERSION="${{ github.run_number }}-$BRANCH_NAME"
             echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION"
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
