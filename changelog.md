@@ -2,7 +2,7 @@
 
 # Upcoming 0.9.0
 * Add `4.0` protocol - objects returned from LibVCX API are in Aries format
-* Support revocations when using `3.0` / `4.0` protocol
+* Support revocations when using `3.0` / `4.0` protocol [PR](https://github.com/AbsaOSS/libvcx/pull/24)
 * Changed interface and behaviour of vcx_update_webhook_url which uses `UpdateComMethod` Vcx2Agency message type to let agency know about new webhook url for agent.
 * Add `vcx_delete_credential` method to delete credential from wallet.
 * Methods `vcx_*_update_state_with_message` are not automatically updating status of message in [agency](https://github.com/hyperledger/indy-sdk/pull/2200)
@@ -11,6 +11,22 @@
 * LibVCX Python fix for accepting TAA [PR](https://github.com/hyperledger/indy-sdk/pull/2175)
 * LibVCX NodeJS fix for sending basic message [PR](https://github.com/hyperledger/indy-sdk/pull/2162)
 * Add support for predicates when requesting proof [PR](https://github.com/hyperledger/indy-sdk/pull/2119)
+* Add iOS wrapper APIs `updateWebhookUrl`, `errorCMessage`, `connectionGetPwDid`, `connectionGetTheirPwDid`
+* Fix Java wrapper bugs in `issuerSendCredentialCB`, `vcxProofGetStateCB` [PR](https://github.com/AbsaOSS/libvcx/pull/11)
+* Add Java demo [PR](https://github.com/AbsaOSS/libvcx/pull/16)
+* Add Java wrapper APIs `issuerRevokeCredential`, `vcxUpdateWebhookUrl` [PR](https://github.com/AbsaOSS/libvcx/pull/12)
+* Make `comment` inside Credential optional [PR](https://github.com/AbsaOSS/libvcx/pull/18)
+* Fix behaviour of wallet import [PR](https://github.com/AbsaOSS/libvcx/pull/9)
+* Add API `vcx_credentialdef_rotate_rev_reg_def` to rotate revocation registries [PR](https://github.com/AbsaOSS/libvcx/pull/4/files) 
+so that credential definition can be used after its revocation registry accumulator gets full.
+* Update Node VCX Wrapper to support NodeJS 12 [PR](https://github.com/AbsaOSS/libvcx/pull/6)
+* Fix caching bug when multiple revokable credentials are issued under the same revocation revocation registry to a 
+single vcx client [PR](https://github.com/AbsaOSS/libvcx/pull/5)
+* Enable batch revocations by adding APIs `vcx_credentialdef_publish_revocations`, `vcx_issuer_revoke_credential_local` 
+[PR](https://github.com/AbsaOSS/libvcx/pull/8)
+* Remove dummy cloud agency from the repository [PR](https://github.com/AbsaOSS/libvcx/pull/2)
+* Update project readme, delete unnecessary / old documentation [PR](https://github.com/AbsaOSS/libvcx/pull/32/files) 
+
 
 [ Hyperledger ]
 
