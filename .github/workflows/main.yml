@@ -9,6 +9,21 @@ on:
       - "**"
 
 jobs:
+  ga-info:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo $GITHUB_REPOSITORY
+      - run: echo $GITHUB_REF
+      - run: echo $GITHUB_HEAD_REF
+      - run: echo $GITHUB_BASE_REF
+      - run: echo $GITHUB_WORKSPACE
+      - run: echo $GITHUB_EVENT_NAME
+      - run: echo $GITHUB_RUN_NUMBER
+      - run: echo $GITHUB_RUN_ID
+      - run: echo $GITHUB_RUN_ID
+      - run: echo "Event name = ${{ toJson(github) }}"
+      - run: echo "Event info ${{ toJson(github.event) }}"
+
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
