@@ -816,7 +816,7 @@ pub fn revoke_credential(handle: u32) -> VcxResult<()> {
         match obj {
             IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(true),
             IssuerCredentials::V1(ref mut obj) => obj.revoke_cred(true),
-            IssuerCredentials::V3(_) => Err(VcxError::from(VcxErrorKind::NotReady)), // TODO: implement
+            IssuerCredentials::V3(ref mut obj) => obj.revoke_credential(true)
         }
     })
 }
@@ -826,7 +826,7 @@ pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
         match obj {
             IssuerCredentials::Pending(ref mut obj) => obj.revoke_cred(false),
             IssuerCredentials::V1(ref mut obj) => obj.revoke_cred(false),
-            IssuerCredentials::V3(_) => Err(VcxError::from(VcxErrorKind::NotReady)), // TODO: implement
+            IssuerCredentials::V3(ref mut obj) => obj.revoke_credential(false)
         }
     })
 

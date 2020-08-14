@@ -1,7 +1,7 @@
 [package]
 
 name = "libvcx"
-version = "0.8.0"
+version = "0.8.3"
 authors = ["Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
 description = "This is the official SDK for Evernym's VCX"
@@ -41,7 +41,7 @@ regex = "1.1.0"
 rust-base58 = "0.0.4"
 rmp-serde = "0.13.7"
 base64 = "0.8.0"
-openssl = { version = "0.10.29", features = ["vendored"] }
+openssl = { version = "0.10.29" }
 num-traits = "0.2.0"
 indy = "1.15.0"
 indy-sys = "1.15.0"

@@ -46,8 +46,8 @@ impl Issuer {
         Ok(self.issuer_sm.get_source_id())
     }
 
-    pub fn revoke_credential(&self) -> VcxResult<()> {
-        self.issuer_sm.revoke()
+    pub fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(publish)
     }
 
     pub fn update_status(&mut self, msg: Option<String>) -> VcxResult<()> {

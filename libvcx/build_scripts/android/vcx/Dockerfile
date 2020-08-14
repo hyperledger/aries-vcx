@@ -29,7 +29,7 @@ ENV CXXLD=${TOOLCHAIN_DIR}/bin/${CROSS_COMPILE}-ld
 ENV RANLIB=${TOOLCHAIN_DIR}/bin/${CROSS_COMPILE}-ranlib
 ENV TARGET=android
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -qq update -y && apt-get -qq install -y zip unzip libtool curl wget python3 2>&1 > /dev/null
+RUN DEBIAN_FRONTEND=noninteractive apt-get -qq update -y && apt-get -qq install -y zip unzip libtool curl wget python3 perl-* 2>&1 > /dev/null
 RUN useradd -m -d /home/vcx_user -s /bin/bash vcx_user && mkdir -p /etc/sudoers.d/
 RUN echo "vcx_user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vcx_user
 RUN chmod 0440 /etc/sudoers.d/vcx_user
@@ -39,12 +39,11 @@ WORKDIR /home/vcx_user
 
 COPY android-ndk-r20-linux-x86_64.zip /home/vcx_user/
 RUN unzip -qq /home/vcx_user/android-ndk-r20-linux-x86_64.zip -d /home/vcx_user/
-COPY --chown=vcx_user:vcx_user sdk/ /home/vcx_user/sdk/
+COPY --chown=vcx_user:vcx_user . /home/vcx_user/libvcx-absa
 COPY --chown=vcx_user:vcx_user ${openssl_dir}/ ${OPENSSL_DIR}/
 COPY --chown=vcx_user:vcx_user ${sodium_dir}/ /home/vcx_user/${sodium_dir}/
 COPY --chown=vcx_user:vcx_user ${libzmq_dir}/ /home/vcx_user/${libzmq_dir}/
 COPY --chown=vcx_user:vcx_user ${libindy_dir}/ /home/vcx_user/${libindy_dir}/
-COPY --chown=vcx_user:vcx_user make_vcx.sh /home/vcx_user/
-RUN chmod a+x make_vcx.sh
-RUN ./make_vcx.sh
+RUN chmod a+x libvcx-absa/libvcx/build_scripts/android/vcx/make_vcx.sh
+RUN ./libvcx-absa/libvcx/build_scripts/android/vcx/make_vcx.sh
 RUN echo "libvcx android build successful"

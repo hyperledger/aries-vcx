@@ -1,6 +1,8 @@
 FROM ubuntu:16.04 as BASE
 
-# Install dependenciesj
+ARG uid=1000
+
+# Install dependencies
 RUN apt-get update && \
     apt-get install -y \
       pkg-config \
@@ -29,31 +31,32 @@ RUN pip3 install -U \
 	pip \
 	setuptools \
 	virtualenv \
-	twine \
-	plumbum \
+	twine==1.15.0 \
+	plumbum==1.6.7 six==1.12.0 \
 	deb-pkg-tools
 
 # Install libsodium
 RUN cd /tmp && \
    curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz | tar -xz && \
     cd /tmp/libsodium-1.0.18 && \
-    ./configure --disable-shared && \
+    ./configure && \
     make && \
     make install && \
     rm -rf /tmp/libsodium-1.0.18
 
-# Create new user
-RUN useradd -ms /bin/bash -u 1000 indy
+RUN useradd -ms /bin/bash -u $uid indy
 USER indy
+WORKDIR /home/indy
+
 
 # Install Rust toolchain
-ARG RUST_VER
+ARG RUST_VER=1.40.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
 # Clone indy-sdk
-ARG INDYSDK_REVISION
-ARG INDYSDK_REPO
+ARG INDYSDK_REVISION=v1.15.0
+ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk
 WORKDIR /home/indy
 RUN git clone "${INDYSDK_REPO}" "./indy-sdk"
 RUN cd "/home/indy/indy-sdk" && git checkout "${INDYSDK_REVISION}"
@@ -79,13 +82,14 @@ RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 # Move the binary to system library
 USER root
 RUN mv /home/indy/libvcx/target/release/*.so /usr/lib
-
+RUN rm -r /home/indy/libvcx/target
 
 # Create a new build stage and copy outputs from BASE
 FROM ubuntu:16.04
 
 RUN apt-get update && \
     apt-get install -y \
+      pkg-config \
       libssl-dev \
       apt-transport-https \
       ca-certificates \
@@ -109,16 +113,16 @@ COPY --from=BASE --chown=indy /home/indy/libvcx ./libvcx
 COPY --from=BASE --chown=indy /home/indy/wrappers/node ./wrappers/node
 
 # Install node
-ARG NODE_VER
+ARG NODE_VER=8.x
 RUN curl -sL https://deb.nodesource.com/setup_${NODE_VER} | bash -
 RUN apt-get install -y nodejs
 
-RUN chown -R indy . 
+RUN chown -R indy .
 
 USER indy
 
 # TODO: Just copy the binary and add to path
-ARG RUST_VER
+ARG RUST_VER=1.40.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
