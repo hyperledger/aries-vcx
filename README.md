@@ -1,27 +1,22 @@
 # VCX
-LibVCX is Aries c-callable implementation written in Rust with language wrappers currently available in Java, Python,
-iOS, NodeJS.  
+LibVCX is Aries c-callable implementation written in Rust with language wrappers available in Java (+Android), iOS, 
+NodeJS, Python and Rust.  
 
-## Installing the VCX
-* VCX requires access to a [Mediator Agency](https://github.com/AbsaOSS/vcxagencynode) 
-* VCX requires a payment plugin as an implementation of [libindy payment interface](https://hyperledger-indy.readthedocs.io/projects/sdk/en/latest/docs/design/004-payment-interface/README.html), such as [libnullpay](https://github.com/hyperledger/indy-sdk/tree/master/libnullpay/README.md) for the simplest implementation.
+# Get started
+Best way to get your hands on! Demos are available in multiple language and platforms! Try to build and run some of these:
+* NodeJS [demo](https://github.com/AbsaOSS/libvcx/tree/master/wrappers/node).
+* Java [demo](https://github.com/AbsaOSS/libvcx/tree/master/demo/java).
+* Python [demo](https://github.com/AbsaOSS/libvcx/tree/master/wrappers/python3).
+* Android [demo](https://github.com/sktston/vcx-demo-android)
+* iOS [demo](https://github.com/sktston/vcx-demo-ios)
+* iOS [skeleton project](https://github.com/sktston/vcx-skeleton-ios)
+#### ::Important::
+However before you'll be able to pick one of these demos and run them, you need to build binary LibVCX library which
+all these demos depends on.  
+-  [Building LibVCX on OSX, Linux](./docs/build-general.md)
+-  [Building LibVCX on mobile](./docs/build-mobile.md)
 
-### Building LibVCX on OSX
-Instructions can be found [here](./docs/build-osx.md)
-
-# Building LibVCX on mobile
-Instructions cane be foun [here](./docs/build-mobile.md)
- 
-## Wrappers documentation
-
-The following wrappers are tested and complete.
-
-* [Java](wrappers/java/README.md)
-* [Python](wrappers/python3/README.md)
-* [iOS](wrappers/ios/README.md)
-* [NodeJS](wrappers/node/README.md)
-
-## Library initialization
+# Library initialization
 Libvcx library must be initialized with one of the functions:
 * `vcx_init_with_config` -  initializes with <configuration> passed as JSON string. 
 * `vcx_init` -  initializes with a path to the file containing <configuration>. 
@@ -35,12 +30,6 @@ If the library works with an agency `vcx_agent_provision` function must be calle
 The result of this function is <configuration> JSON which can be extended and used for initialization.
 
 To change <configuration> a user must call `vcx_shutdown` and then call initialization function again.
-
-## Getting started guide
-[The tutorial](docs/getting-started/getting-started.md) which introduces Libvcx and explains how the whole ecosystem works, and how the functions in the SDK can be used to construct rich clients.
-
-### Example use
-For the main workflow example check [demo](https://github.com/hyperledger/indy-sdk/tree/master/vcx/wrappers/python3/demo).
 
 ## Actors
 Libvcx provides APIs for acting as different actors.
