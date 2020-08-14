@@ -103,7 +103,6 @@ jobs:
         run: |
           set -x
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
-          echo "::set-output name=DO_RELEASE::$DO_RELEASE"
 
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
 
