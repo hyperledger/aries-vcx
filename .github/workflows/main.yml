@@ -49,7 +49,7 @@ jobs:
           then
             echo "PR base info ${{ toJson(github.event.pull_request.base) }}"
             echo "This is pull request with base repo ${{ github.event.pull_request.base.repo }}"
-            if [[ "${{ github.event.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]]
+            if [[ "${{ github.event.pull_request.base.repo.full_name }}" == "AbsaOSS/libvcx" ]]
             then
               echo "This is not fork"
               IS_FORK="FALSE";
