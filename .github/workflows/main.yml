@@ -21,10 +21,9 @@ jobs:
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
-      DO_RELEASE: ${{ steps.mainstep.outputs.DO_RELEASE }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.40.0
@@ -49,47 +48,22 @@ jobs:
           FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
 
-          if [[ -z "${{ github.pull_request }}" ]] then
+          if [[ -z "${{ github.pull_request }}" ]]
+          then
             IS_FORK="FALSE";
           else
-            if [[ "${{ github.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]] then
+            if [[ "${{ github.pull_request.base.repo }}" == "AbsaOSS/libvcx" ]]
+            then
               IS_FORK="FALSE";
             else
               IS_FORK="true";
             fi;
           fi;
 
-          DO_RELEASE="false"
           if [[ "$IS_FORK" == "false" ]]
           then
-            if [[ "${{ github.event_name }}" == "push" && "$BRANCH_NAME" == "master" ]] then
-              IS_MASTER_PUSH="yes";
-            fi;
-            
-            if [[ "$IS_MASTER_PUSH" == "yes" ]]
-            then
-              echo "Running push on master branch. Release will happen if version was bumped."
-
-              REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
-              echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
-              echo "Highest released version was $REPO_VERSION_HIGHEST"
-
-              REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
-              echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
-              echo "Repo declares version $REPO_VERSION_DESIRED"
-
-              if [[ "$REPO_VERSION_HIGHEST" != "$REPO_VERSION_DESIRED" ]] then
-                PUBLISH_VERSION="$REPO_VERSION_DESIRED"
-                DO_RELEASE="true"
-                echo "Detected push on master, version was bumped $REPO_VERSION_HIGHEST->$PUBLISH_VERSION. Will release $PUBLISH_VERSION."
-              fi;
-            fi;
-
-            if [[ -z "$PUBLISH_VERSION" ]] then
-              PUBLISH_VERSION="${{ github.run_number }}-$FULL_REPO_SLUG-$BRANCH_NAME"
-              echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION"
-            fi;
-
+            PUBLISH_VERSION="${{ github.run_number }}-$FULL_REPO_SLUG-$BRANCH_NAME"
+            echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION"
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
             PUBLISH_VERSION=""
@@ -105,7 +79,6 @@ jobs:
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
           echo ::set-env name=PUBLISH_VERSION::$(echo $PUBLISH_VERSION)
-          echo ::set-env name=DO_RELEASE::$(echo $DO_RELEASE)
 
           echo ::set-env name=LIBVCX_HASH::$(echo $LIBVCX_HASH)
           echo ::set-env name=ANDROID_HASH::$(echo $ANDROID_HASH)
