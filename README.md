@@ -1,6 +1,9 @@
-# VCX
-LibVCX is Aries c-callable implementation written in Rust with language wrappers available in Java (+Android), iOS, 
-NodeJS, Python and Rust.  
+# LibVCX AbsaFork
+- LibVCX is Aries c-callable implementation written in Rust with language wrappers available in Java (+Android), iOS, 
+NodeJS, Python and Rust. 
+- This is fork of LibVCX which was previously developed 
+within [Hyperledger Indy](https://github.com/hyperledger/indy-sdk). This fork will follow its own 
+way (see [changelog](./changelog.md)). The main goal is to turn it into pure Aries implementation. 
 
 # Get started
 Best way to get your hands on! Demos are available in multiple language and platforms! Try to build and run some of these:
