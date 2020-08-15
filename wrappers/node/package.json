@@ -92,5 +92,5 @@
     },
     "main": "dist/src/index.js",
     "homepage": "https://github.com/AbsaOSS/libvcx/tree/master/wrappers/node",
-    "name": "@mirgee/node-vcx-wrapper"
+    "name": "@absaoss/node-vcx-wrapper"
 }
