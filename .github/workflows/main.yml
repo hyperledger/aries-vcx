@@ -42,9 +42,6 @@ jobs:
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
-          FULL_REPO_SLUG=`echo "${{ github.event.pull_request.head.repo.full_name }}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-          echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
-
           REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
           echo "Highest released version was: $REPO_VERSION_HIGHEST"
 
@@ -54,12 +51,12 @@ jobs:
             REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
             echo "This is pull request from $REPO_HEAD to $REPO_BASE"
 
-            if [[ "$REPO_HEAD" == "AbsaOSS/libvcx" ]]
+            if [[ "$REPO_HEAD" == github.repository ]]
             then
-              echo "This is not fork."
+              echo "This CI run is PR from non-forked repository."
               IS_FORK="false";
             else
-              echo "This is fork. "
+              echo "This is fork."
               IS_FORK="true";
             fi;
           else
@@ -86,7 +83,7 @@ jobs:
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
-          echo ::set-env name=PUBLISH_VERSION::$(echo $PUBLISH_VERSION)
+          echo ::set-env name=PUBLISH_VERSION::$PUBLISH_VERSION
           echo ::set-env name=CACHE_KEY_LIBVCX::$LIBVCX_HASH
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
