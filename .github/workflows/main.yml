@@ -42,13 +42,16 @@ jobs:
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
-          FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+          FULL_REPO_SLUG=`echo "${{ github.event.pull_request.head.repo.full_name }}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
-            echo "This is pull request with base repo ${{ github.event.pull_request.base.repo.full_name }}"
-            if [[ "${{ github.event.pull_request.base.repo.full_name }}" == "AbsaOSS/libvcx" ]]
+            REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repo
+            REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repo
+            echo "This is pull request from $REPO_HEAD to $REPO_BASE"
+
+            if [[ "$REPO_HEAD" == "AbsaOSS/libvcx" ]]
             then
               echo "This is not fork."
               IS_FORK="false";
@@ -60,7 +63,6 @@ jobs:
             echo "Not PR so this is not fork."
             IS_FORK="false";
           fi;
-          echo "Is fork = $IS_FORK"
 
           if [[ "$IS_FORK" == "false" ]]
           then
