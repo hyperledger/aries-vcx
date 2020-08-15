@@ -112,7 +112,6 @@ pub static INVALID_ATTACHMENT_ENCODING: Error = Error { code_num: 1100, message:
 pub static UNKNOWN_ATTACHMENT_ENCODING: Error = Error { code_num: 1101, message: "This type of attachment can not be used"};
 pub static UNKNOWN_MIME_TYPE: Error = Error { code_num: 1102, message: "Unknown mime type"};
 pub static ACTION_NOT_SUPPORTED: Error = Error { code_num: 1103, message: "Action is not supported"};
-pub static INVALID_REDIRECT_DETAILS: Error = Error{code_num: 1104, message: "Invalid redirect details structure"};
 /* EC 1105 is reserved for proprietary forks of libVCX */
 pub static NO_AGENT_INFO: Error = Error{code_num: 1106, message: "Agent pairwise information not found"};
 pub static REV_REG_DEF_NOT_FOUND: Error = Error{code_num: 1107, message: "No revocation definition found"};
@@ -221,7 +220,6 @@ lazy_static! {
         insert_c_message(&mut m, &UNKNOWN_ATTACHMENT_ENCODING);
         insert_c_message(&mut m, &UNKNOWN_MIME_TYPE);
         insert_c_message(&mut m, &ACTION_NOT_SUPPORTED);
-        insert_c_message(&mut m, &INVALID_REDIRECT_DETAILS);
         insert_c_message(&mut m, &NO_AGENT_INFO);
 
         m
@@ -420,11 +418,6 @@ mod tests {
     #[test]
     fn test_invalid_invite_details() {
         assert_eq!(error_message(&INVALID_INVITE_DETAILS.code_num), INVALID_INVITE_DETAILS.message);
-    }
-
-    #[test]
-    fn test_invalid_redirect_details() {
-        assert_eq!(error_message(&INVALID_REDIRECT_DETAILS.code_num), INVALID_REDIRECT_DETAILS.message);
     }
 
     #[test]

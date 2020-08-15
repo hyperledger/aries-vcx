@@ -93,12 +93,6 @@ impl GetMessagesBuilder {
         }
     }
 
-    #[cfg(test)]
-    pub fn create_v1() -> GetMessagesBuilder {
-        let mut builder = GetMessagesBuilder::create();
-        builder.version = settings::ProtocolTypes::V1;
-        builder
-    }
 
     pub fn uid(&mut self, uids: Option<Vec<String>>) -> VcxResult<&mut Self> {
         //Todo: validate msg_uid??
@@ -151,7 +145,6 @@ impl GetMessagesBuilder {
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::GetMessagesResponse(res)) => Ok(res.msgs),
             A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => Ok(res.msgs),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
         }
@@ -175,15 +168,6 @@ impl GetMessagesBuilder {
 
     fn prepare_download_request(&self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -208,7 +192,6 @@ impl GetMessagesBuilder {
 
         trace!("parse_download_messages_response: parsed response {:?}", response);
         let msgs = match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::GetMessagesByConnectionsResponse(res)) => res.msgs,
             A2AMessage::Version2(A2AMessageV2::GetMessagesByConnectionsResponse(res)) => res.msgs,
             _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
         };
@@ -237,15 +220,6 @@ impl GeneralMessage for GetMessagesBuilder {
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessages,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -492,96 +466,81 @@ mod tests {
     use std::time::Duration;
     use utils::devsetup::*;
 
-    #[test]
-    fn test_parse_get_messages_response() {
-        let _setup = SetupMocks::init();
-
-        let result = GetMessagesBuilder::create_v1().parse_response(GET_MESSAGES_RESPONSE.to_vec()).unwrap();
-        assert_eq!(result.len(), 3)
-    }
-
-    #[test]
-    fn test_parse_get_connection_messages_response() {
-        let _setup = SetupMocks::init();
-
-        let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
-        assert_eq!(result.len(), 1)
-    }
-
     #[cfg(feature = "agency")]
     #[cfg(feature = "pool_tests")]
     #[test]
-    #[ignore] // Dummy cloud agent has not implemented this functionality yet
+    #[ignore] // todo: could be adjusted for V2 protocol?
     fn test_download_agent_messages() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
-
-        // AS CONSUMER GET MESSAGES
-        ::utils::devsetup::set_consumer();
-        let all_messages = download_agent_messages(None, None).unwrap();
-        assert_eq!(all_messages.len(), 0);
-
-        let _hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
-        thread::sleep(Duration::from_millis(2000));
-        let all_messages = download_agent_messages(None, None).unwrap();
-        assert_eq!(all_messages.len(), 1);
-
-        let invalid_status_code = "abc".to_string();
-        let bad_req = download_agent_messages(Some(vec![invalid_status_code]), None);
-        assert!(bad_req.is_err());
+        // let _setup = SetupLibraryAgencyV1::init();
+        //
+        // let (_faber, alice) = ::connection::tests::create_connected_connections();
+        //
+        // // AS CONSUMER GET MESSAGES
+        // ::utils::devsetup::set_consumer();
+        // let all_messages = download_agent_messages(None, None).unwrap();
+        // assert_eq!(all_messages.len(), 0);
+        //
+        // let _hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
+        // thread::sleep(Duration::from_millis(2000));
+        // let all_messages = download_agent_messages(None, None).unwrap();
+        // assert_eq!(all_messages.len(), 1);
+        //
+        // let invalid_status_code = "abc".to_string();
+        // let bad_req = download_agent_messages(Some(vec![invalid_status_code]), None);
+        // assert!(bad_req.is_err());
     }
 
     #[cfg(feature = "agency")]
     #[cfg(feature = "pool_tests")]
     #[test]
+    #[ignore]  // todo: could be adjusted for V2 protocol?
     fn test_download_messages() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
-
-        let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
-
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let credential_offer = ::issuer_credential::issuer_credential_create(cred_def_handle,
-                                                                             "1".to_string(),
-                                                                             institution_did.clone(),
-                                                                             "credential_name".to_string(),
-                                                                             credential_data.to_owned(),
-                                                                             1).unwrap();
-
-        ::issuer_credential::send_credential_offer(credential_offer, alice).unwrap();
-
-        thread::sleep(Duration::from_millis(1000));
-
-        let hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
-
-        // AS CONSUMER GET MESSAGES
-        ::utils::devsetup::set_consumer();
-
-        let _all_messages = download_messages(None, None, None).unwrap();
-
-        let pending = download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
-        assert_eq!(pending.len(), 1);
-        assert!(pending[0].msgs[0].decrypted_payload.is_some());
-
-        let accepted = download_messages(None, Some(vec!["MS-104".to_string()]), None).unwrap();
-        assert_eq!(accepted[0].msgs.len(), 2);
-
-        let specific = download_messages(None, None, Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(specific.len(), 1);
-
-        // No pending will return empty list
-        let empty = download_messages(None, Some(vec!["MS-103".to_string()]), Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(empty.len(), 1);
-
-        let hello_msg = download_messages(None, None, Some(vec![hello_uid])).unwrap();
-        assert_eq!(hello_msg[0].msgs[0].decrypted_payload, Some("{\"@type\":{\"name\":\"hello\",\"ver\":\"1.0\",\"fmt\":\"json\"},\"@msg\":\"hello\"}".to_string()));
-
-        // Agency returns a bad request response for invalid dids
-        let invalid_did = "abc".to_string();
-        let bad_req = download_messages(Some(vec![invalid_did]), None, None);
-        assert_eq!(bad_req.unwrap_err().kind(), VcxErrorKind::PostMessageFailed);
+        // let _setup = SetupLibraryAgencyV1::init();
+        //
+        // let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        // let (_faber, alice) = ::connection::tests::create_connected_connections();
+        //
+        // let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
+        //
+        // let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
+        // let credential_offer = ::issuer_credential::issuer_credential_create(cred_def_handle,
+        //                                                                      "1".to_string(),
+        //                                                                      institution_did.clone(),
+        //                                                                      "credential_name".to_string(),
+        //                                                                      credential_data.to_owned(),
+        //                                                                      1).unwrap();
+        //
+        // ::issuer_credential::send_credential_offer(credential_offer, alice).unwrap();
+        //
+        // thread::sleep(Duration::from_millis(1000));
+        //
+        // let hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
+        //
+        // // AS CONSUMER GET MESSAGES
+        // ::utils::devsetup::set_consumer();
+        //
+        // let _all_messages = download_messages(None, None, None).unwrap();
+        //
+        // let pending = download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
+        // assert_eq!(pending.len(), 1);
+        // assert!(pending[0].msgs[0].decrypted_payload.is_some());
+        //
+        // let accepted = download_messages(None, Some(vec!["MS-104".to_string()]), None).unwrap();
+        // assert_eq!(accepted[0].msgs.len(), 2);
+        //
+        // let specific = download_messages(None, None, Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
+        // assert_eq!(specific.len(), 1);
+        //
+        // // No pending will return empty list
+        // let empty = download_messages(None, Some(vec!["MS-103".to_string()]), Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
+        // assert_eq!(empty.len(), 1);
+        //
+        // let hello_msg = download_messages(None, None, Some(vec![hello_uid])).unwrap();
+        // assert_eq!(hello_msg[0].msgs[0].decrypted_payload, Some("{\"@type\":{\"name\":\"hello\",\"ver\":\"1.0\",\"fmt\":\"json\"},\"@msg\":\"hello\"}".to_string()));
+        //
+        // // Agency returns a bad request response for invalid dids
+        // let invalid_did = "abc".to_string();
+        // let bad_req = download_messages(Some(vec![invalid_did]), None, None);
+        // assert_eq!(bad_req.unwrap_err().kind(), VcxErrorKind::PostMessageFailed);
     }
 }

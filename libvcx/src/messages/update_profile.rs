@@ -104,15 +104,6 @@ impl UpdateProfileDataBuilder {
 
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateConfigs(
-                        UpdateConfigs {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConfigs),
-                            configs: self.configs.clone()
-                        }
-                    )
-                ),
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -135,7 +126,6 @@ impl UpdateProfileDataBuilder {
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateConfigsResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
         }

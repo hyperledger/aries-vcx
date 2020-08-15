@@ -228,13 +228,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (void) getRejectMsg:(vcx_proof_handle_t) proofHandle
        withCompletion:(void (^)(NSError *error, NSString *rejectMsg))completion;
 
-- (void)connectionRedirect:(vcx_connection_handle_t)redirect_connection_handle
-      withConnectionHandle:(vcx_connection_handle_t)connection_handle
-            withCompletion:(void (^)(NSError *error))completion;
-
-- (void)getRedirectDetails:(vcx_connection_handle_t)connection_handle
-      withCompletion:(void (^)(NSError *error, NSString *redirectDetails))completion;
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle))completion;

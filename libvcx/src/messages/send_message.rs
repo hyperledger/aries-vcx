@@ -114,20 +114,12 @@ impl SendMessageBuilder {
 
         let index = match self.version {
             // TODO: THINK better
-            settings::ProtocolTypes::V1 => {
-                if response.len() <= 1 {
-                    return Err(VcxError::from(VcxErrorKind::InvalidHttpResponse));
-                }
-                1
-            }
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 => 0
         };
 
         match response.remove(index) {
-            A2AMessage::Version1(A2AMessageV1::MessageSent(res)) =>
-                Ok(SendResponse { uid: res.uid, uids: res.uids }),
             A2AMessage::Version2(A2AMessageV2::SendRemoteMessageResponse(res)) =>
                 Ok(SendResponse { uid: Some(res.id.clone()), uids: if res.sent { vec![res.id] } else { vec![] } }),
             _ => Err(VcxError::from(VcxErrorKind::InvalidHttpResponse))
@@ -147,23 +139,6 @@ impl GeneralMessage for SendMessageBuilder {
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let messages =
             match self.version {
-                settings::ProtocolTypes::V1 => {
-                    let create = CreateMessage {
-                        msg_type: MessageTypes::build_v1(A2AMessageKinds::CreateMessage),
-                        mtype: self.mtype.clone(),
-                        reply_to_msg_id: self.ref_msg_id.clone(),
-                        send_msg: true,
-                        uid: self.uid.clone(),
-                    };
-                    let detail = GeneralMessageDetail {
-                        msg_type: MessageTypes::build_v1(A2AMessageKinds::MessageDetail),
-                        msg: self.payload.clone(),
-                        title: self.title.clone(),
-                        detail: self.detail.clone(),
-                    };
-                    vec![A2AMessage::Version1(A2AMessageV1::CreateMessage(create)),
-                         A2AMessage::Version1(A2AMessageV1::MessageDetail(MessageDetail::General(detail)))]
-                }
                 settings::ProtocolTypes::V2 |
                 settings::ProtocolTypes::V3 |
                 settings::ProtocolTypes::V4 => {

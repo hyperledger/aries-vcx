@@ -982,39 +982,6 @@ vcx_error_t vcx_disclosed_proof_get_reject_msg(vcx_command_handle_t command_hand
                                                vcx_disclosed_proof_handle_t proof_handle,
                                                void (*cb)(vcx_command_handle_t, vcx_error_t, const char*));
 
-// Redirects to an existing connection, if a connection already exists.
-//
-// #params
-// command_handle: command handle to map callback to API user context.
-//
-// connection_handle: Connection handle that identifies pairwise connection.
-//
-// redirect_connection_handle: Redirect connection handle, used to identify an existing connection.
-//
-// cb: Callback that provides error status of a redirection.
-//
-// #Returns
-// Error code as u32
-vcx_error_t vcx_connection_redirect(vcx_command_handle_t command_handle,
-                                    vcx_connection_handle_t connection_handle,
-                                    vcx_connection_handle_t redirect_connection_handle,
-                                    void (*cb)(vcx_command_handle_t, vcx_error_t));
-
-// Gets the details of an existing connection.
-//
-// #params
-// command_handle: command handle to map callback to API user context.
-//
-// connection_handle: Connection handle that identifies pairwise connection.
-//
-// cb: Callback that provides error status of a redirection.
-//
-// #Returns
-// Error code as u32
-vcx_error_t vcx_connection_get_redirect_details(vcx_command_handle_t command_handle,
-                                                vcx_connection_handle_t connection_handle,
-                                                void (*cb)(vcx_command_handle_t, vcx_error_t, const char *));
-
 // Takes the disclosed proof object and returns a json string of all its attributes
 //
 // #Params

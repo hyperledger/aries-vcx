@@ -2,7 +2,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use settings;
-use messages::{A2AMessage, A2AMessageV1, A2AMessageV2, A2AMessageKinds, prepare_message_for_agency, parse_response_from_agency};
+use messages::{A2AMessage, A2AMessageV2, A2AMessageKinds, prepare_message_for_agency, parse_response_from_agency};
 use messages::message_type::MessageTypes;
 use utils::{error, httpclient, constants};
 use utils::libindy::{wallet, anoncreds};
@@ -303,7 +303,6 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
     trace!("Connecting to Agency");
     let (agent_did, agent_vk) = match my_config.protocol_type {
-        settings::ProtocolTypes::V1 => onboarding_v1(&my_did, &my_vk, &my_config.agency_did)?,
         settings::ProtocolTypes::V2 |
         settings::ProtocolTypes::V3 |
         settings::ProtocolTypes::V4 => onboarding_v2(&my_did, &my_vk, &my_config.agency_did)?,
@@ -314,57 +313,6 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     wallet::close_wallet()?;
 
     Ok(config)
-}
-
-fn onboarding_v1(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
-    /* STEP 1 - CONNECT */
-    AgencyMock::set_next_response(constants::CONNECTED_RESPONSE.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::Connect(Connect::build(my_did, my_vk))
-    );
-
-    let mut response = send_message_to_agency(&message, agency_did)?;
-
-    let ConnectResponse { from_vk: agency_pw_vk, from_did: agency_pw_did, .. } =
-        match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::ConnectResponse(resp)) => resp,
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of ConnectResponse"))
-        };
-
-    settings::set_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
-
-    /* STEP 2 - REGISTER */
-    AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::SignUp(SignUp::build())
-    );
-
-    let mut response = send_message_to_agency(&message, &agency_pw_did)?;
-
-    let _response: SignUpResponse =
-        match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::SignUpResponse(resp)) => resp,
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of SignUpResponse"))
-        };
-
-    /* STEP 3 - CREATE AGENT */
-    AgencyMock::set_next_response(constants::AGENT_CREATED.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::CreateAgent(CreateAgent::build())
-    );
-
-    let mut response = send_message_to_agency(&message, &agency_pw_did)?;
-
-    let response: CreateAgentResponse =
-        match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::CreateAgentResponse(resp)) => resp,
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
-        };
-
-    Ok((response.from_did, response.from_vk))
 }
 
 pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
@@ -435,25 +383,12 @@ pub fn update_agent_info(id: &str, value: &str) -> VcxResult<()> {
     };
 
     match settings::get_protocol_type() {
-        settings::ProtocolTypes::V1 => {
-            update_agent_info_v1(&to_did, com_method)
-        }
         settings::ProtocolTypes::V2 |
         settings::ProtocolTypes::V3 |
         settings::ProtocolTypes::V4 => {
             update_agent_info_v2(&to_did, com_method)
         }
     }
-}
-
-fn update_agent_info_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, to_did)?;
-    Ok(())
 }
 
 fn update_agent_info_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
@@ -476,7 +411,6 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
     match settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID) {
         Ok(to_did) => {
             match settings::get_protocol_type() {
-                settings::ProtocolTypes::V1 => update_agent_webhook_v1(&to_did, com_method)?,
                 settings::ProtocolTypes::V2 |
                 settings::ProtocolTypes::V3 |
                 settings::ProtocolTypes::V4 => update_agent_webhook_v2(&to_did, com_method)?,
@@ -484,16 +418,6 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
         },
         Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
     }
-    Ok(())
-}
-
-fn update_agent_webhook_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    if settings::agency_mocks_enabled() { return Ok(()) }
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, &to_did)?;
     Ok(())
 }
 

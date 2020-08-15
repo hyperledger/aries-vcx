@@ -83,16 +83,6 @@ impl UpdateMessageStatusByConnectionsBuilder {
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateMessageStatusByConnections(
-                        UpdateMessageStatusByConnections {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
-                            uids_by_conns: self.uids_by_conns.clone(),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                ),
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -117,7 +107,6 @@ impl UpdateMessageStatusByConnectionsBuilder {
         let mut response = parse_response_from_agency(response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
         }

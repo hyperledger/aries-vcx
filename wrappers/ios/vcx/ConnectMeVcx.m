@@ -1095,41 +1095,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     }
 }
 
-- (void) connectionRedirect: (vcx_connection_handle_t) redirect_connection_handle
-        withConnectionHandle: (vcx_connection_handle_t) connection_handle
-        withCompletion: (void (^)(NSError *error)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor: completion];
-
-    ret = vcx_connection_redirect(handle, connection_handle, redirect_connection_handle, VcxWrapperCommonCallback);
-
-    if (ret != 0)
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
-- (void) getRedirectDetails: (vcx_connection_handle_t) connection_handle
-        withCompletion: (void (^)(NSError *error, NSString *redirectDetails)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    ret = vcx_connection_get_redirect_details(handle, connection_handle, VcxWrapperCommonStringCallback);
-
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle))completion {

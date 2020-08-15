@@ -49,21 +49,6 @@ impl Payloads {
     // On second thought, this should stick as a ConnectionError.
     pub fn encrypt(my_vk: &str, their_vk: &str, data: &str, msg_type: PayloadKinds, thread: Option<Thread>) -> VcxResult<Vec<u8>> {
         match ProtocolTypes::from(get_protocol_type()) {
-            ProtocolTypes::V1 => {
-                let payload = PayloadV1 {
-                    type_: PayloadTypes::build_v1(msg_type, "json"),
-                    msg: data.to_string(),
-                };
-
-                let bytes = rmp_serde::to_vec_named(&payload)
-                    .map_err(|err| {
-                        error!("could not encode create_keys msg: {}", err);
-                        VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot encrypt  payload: {}", err))
-                    })?;
-
-                trace!("Sending payload: {:?}", bytes);
-                crypto::prep_msg(&my_vk, &their_vk, &bytes)
-            }
             ProtocolTypes::V2 |
             ProtocolTypes::V3 |
             ProtocolTypes::V4 => {
@@ -200,16 +185,6 @@ impl PayloadKinds {
 
     pub fn name<'a>(&'a self) -> &'a str {
         match get_protocol_type() {
-            ProtocolTypes::V1 => {
-                match self {
-                    PayloadKinds::CredOffer => "CRED_OFFER",
-                    PayloadKinds::CredReq => "CRED_REQ",
-                    PayloadKinds::Cred => "CRED",
-                    PayloadKinds::ProofRequest => "PROOF_REQUEST",
-                    PayloadKinds::Proof => "PROOF",
-                    PayloadKinds::Other(kind) => kind,
-                }
-            }
             ProtocolTypes::V2 |
             ProtocolTypes::V3 |
             ProtocolTypes::V4 => {

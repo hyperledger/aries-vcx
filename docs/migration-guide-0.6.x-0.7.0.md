@@ -25,10 +25,6 @@ Added new functions to get information about connection object:
 * `vcx_connection_get_their_pw_did` - gets DID of the other side (`their_pw_did`) associated with this connection.
 * `vcx_connection_info` - gets all information about this connection.
    
-Added ability to accept a duplicate connection by redirecting to the already existing one instead of forming a duplicate connection. 
-* `vcx_connection_redirect` - redirect a new connection to already existing one.
-* `vcx_connection_get_redirect_details` - gets redirection information.
-   
 Example flow:   
 1. Faber sends invite to ALice.
 2. Alice creates a connection with Faber.

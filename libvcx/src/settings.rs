@@ -80,7 +80,7 @@ pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
 pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
 pub static DEFAULT_USE_LATEST_PROTOCOLS: &str = "false";
 pub static DEFAULT_PAYMENT_METHOD: &str = "null";
-pub static DEFAULT_PROTOCOL_TYPE: &str = "1.0";
+pub static DEFAULT_PROTOCOL_TYPE: &str = "4.0";
 pub static MAX_THREADPOOL_SIZE: usize = 128;
 pub static MOCK_DEFAULT_INDY_PROOF_VALIDATION: &str = "true";
 
@@ -349,14 +349,6 @@ pub fn get_wallet_credentials(_storage_creds: Option<&str>) -> String { // TODO:
     credentials.to_string()
 }
 
-pub fn get_connecting_protocol_version() -> ProtocolTypes {
-    let protocol = get_config_value(CONFIG_USE_LATEST_PROTOCOLS).unwrap_or(DEFAULT_USE_LATEST_PROTOCOLS.to_string());
-    match protocol.as_ref() {
-        "true" | "TRUE" | "True" => return ProtocolTypes::V2,
-        "false" | "FALSE" | "False" | _ => return ProtocolTypes::V1,
-    }
-}
-
 pub fn get_payment_method() -> String {
     get_config_value(CONFIG_PAYMENT_METHOD).unwrap_or(DEFAULT_PAYMENT_METHOD.to_string())
 }
@@ -403,8 +395,6 @@ pub const ARIES_COMMUNICATION_METHOD: &str = "aries";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ProtocolTypes {
-    #[serde(rename = "1.0")]
-    V1,
     #[serde(rename = "2.0")]
     V2,
     #[serde(rename = "3.0")]
@@ -415,14 +405,13 @@ pub enum ProtocolTypes {
 
 impl Default for ProtocolTypes {
     fn default() -> Self {
-        ProtocolTypes::V1
+        ProtocolTypes::V4
     }
 }
 
 impl From<String> for ProtocolTypes {
     fn from(type_: String) -> Self {
         match type_.as_str() {
-            "1.0" => ProtocolTypes::V1,
             "2.0" => ProtocolTypes::V2,
             "3.0" => ProtocolTypes::V3,
             "4.0" => ProtocolTypes::V4,
@@ -437,7 +426,6 @@ impl From<String> for ProtocolTypes {
 impl ::std::string::ToString for ProtocolTypes {
     fn to_string(&self) -> String {
         match self {
-            ProtocolTypes::V1 => "1.0".to_string(),
             ProtocolTypes::V2 => "2.0".to_string(),
             ProtocolTypes::V3 => "3.0".to_string(),
             ProtocolTypes::V4 => "4.0".to_string(),
