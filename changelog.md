@@ -1,7 +1,7 @@
 [ Hyperledger  + AbsaOSS ]
 
 # Upcoming 0.9.0
-* Add `4.0` protocol - objects returned from LibVCX API are in Aries format
+* Add `4.0` protocol - objects returned from LibVCX API are in Aries format [PR](https://github.com/hyperledger/indy-sdk/pull/2196)
 * Support revocations when using `3.0` / `4.0` protocol [PR](https://github.com/AbsaOSS/libvcx/pull/24)
 * Changed interface and behaviour of vcx_update_webhook_url which uses `UpdateComMethod` Vcx2Agency message type to let agency know about new webhook url for agent.
 * Add `vcx_delete_credential` method to delete credential from wallet.
@@ -25,7 +25,7 @@ single vcx client [PR](https://github.com/AbsaOSS/libvcx/pull/5)
 * Enable batch revocations by adding APIs `vcx_credentialdef_publish_revocations`, `vcx_issuer_revoke_credential_local` 
 [PR](https://github.com/AbsaOSS/libvcx/pull/8)
 * Remove dummy cloud agency from the repository [PR](https://github.com/AbsaOSS/libvcx/pull/2)
-* Update project readme, delete unnecessary / old documentation [PR](https://github.com/AbsaOSS/libvcx/pull/32/files) 
+* Update project readme, delete unnecessary / old documentation [PR](https://github.com/AbsaOSS/libvcx/pull/32) 
 
 
 [ Hyperledger ]
