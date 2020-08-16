@@ -23,6 +23,7 @@ use error::prelude::*;
 
 
 use utils::libindy;
+use std::env::VarError;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();
@@ -140,10 +141,14 @@ impl LibvcxDefaultLogger {
 
         // ensures that the test that is calling this wont fail simply because
         // the user did not set the RUST_LOG env var.
-        let pattern = Some(env::var("RUST_LOG").unwrap_or("trace".to_string()));
-        match LibvcxDefaultLogger::init(pattern) {
-            Ok(()) => (),
-            Err(_) => (),
+        match env::var("RUST_LOG") {
+            Ok(log_pattern) => {
+                match LibvcxDefaultLogger::init(Some(log_pattern)) {
+                    Ok(()) => (),
+                    Err(_) => (),
+                }
+            }
+            Err(_) => {}
         }
     }
 
