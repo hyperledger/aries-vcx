@@ -138,7 +138,6 @@ impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
         trace!("LibvcxDefaultLogger::init_testing_logger >>>");
 
-        // if RUST_LOG is not set, logs will not be captured
         env::var("RUST_LOG")
             .map_or((), |log_pattern| LibvcxDefaultLogger::init(Some(log_pattern)).unwrap())
     }
