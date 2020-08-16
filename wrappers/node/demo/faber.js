@@ -168,9 +168,6 @@ async function runFaber (options) {
     await sleepPromise(2000)
     await credentialForAlice.updateState()
     credentialState = await credentialForAlice.getState()
-    if (credentialState===0) {
-      return
-    }
   }
 
   const proofAttributes = [
