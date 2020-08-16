@@ -71,7 +71,6 @@ public enum ErrorCode {
     INVALID_WALLET_CREATION(1058),
     WALLET_ACCESS_FAILED(1075),
     ACTION_NOT_SUPPORTED(1103),
-    INVALID_REDIRECT_DETAILS(1104),
     NO_AGENT_INFO(1106),
     UNIDENTIFIED_ERROR_CODE(9999); //Wrapper expects to never receive 9999 from libindy. If libindy ever reaches this number in error codes, please increment number in UNIDENTIFIED_ERROR_CODE(<new bigger number>)
 
