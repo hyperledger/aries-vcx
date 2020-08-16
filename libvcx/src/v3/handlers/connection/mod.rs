@@ -55,6 +55,7 @@ pub mod tests {
         }
 
         #[cfg(feature = "aries")]
+        #[cfg(feature = "to_restore")]
         #[test]
         fn test_connection_send_works() {
             _setup();

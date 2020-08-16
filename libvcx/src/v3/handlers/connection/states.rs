@@ -865,7 +865,7 @@ pub mod test {
             }
 
             #[test]
-            fn test_did_exchange_handle_messages_from_completed_state() {
+            fn test_did_exchange_handle_messages_from_completed_state_inviter() {
                 let _setup = AgencyModeSetup::init();
 
                 let mut did_exchange_sm = inviter_sm().to_inviter_completed_state();
@@ -1031,6 +1031,7 @@ pub mod test {
             }
 
             #[test]
+            #[cfg(feature = "to_restore")]
             fn test_find_message_to_handle_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1236,6 +1237,7 @@ pub mod test {
             }
 
             #[test]
+            #[cfg(feature = "to_restore")]
             fn test_did_exchange_handle_response_message_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1287,7 +1289,7 @@ pub mod test {
             }
 
             #[test]
-            fn test_did_exchange_handle_messages_from_completed_state() {
+            fn test_did_exchange_handle_messages_from_completed_state_invitee() {
                 let _setup = AgencyModeSetup::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_completed_state();

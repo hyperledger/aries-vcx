@@ -521,6 +521,7 @@ pub mod test {
         }
 
         #[test]
+        #[cfg(feature = "to_restore")]
         fn test_issuer_find_message_to_handle_from_offer_sent_state() {
             let _setup = SetupAriesMocks::init();
 
