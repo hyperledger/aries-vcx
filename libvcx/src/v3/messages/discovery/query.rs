@@ -52,6 +52,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_query_build_works() {
         let query: Query = Query::default()
             .set_query(Some(_query_string()))

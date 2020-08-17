@@ -82,6 +82,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_problem_code(_problem_code())

@@ -199,6 +199,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_response_build_works() {
         let response: Response = Response::default()
             .set_did(_did())

@@ -102,6 +102,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_presentation_proposal_build_works() {
         let presentation_proposal: PresentationProposal = PresentationProposal::default()
             .set_comment(_comment())

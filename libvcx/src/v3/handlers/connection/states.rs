@@ -1289,6 +1289,7 @@ pub mod test {
             }
 
             #[test]
+            #[cfg(feature = "to_restore")]
             fn test_did_exchange_handle_messages_from_completed_state_invitee() {
                 let _setup = AgencyModeSetup::init();
 

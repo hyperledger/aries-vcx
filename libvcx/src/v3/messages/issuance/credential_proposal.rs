@@ -87,6 +87,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_credential_proposal_build_works() {
         let (name, value) = _value();
 

@@ -67,6 +67,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_ack_build_works() {
         let ack: Ack = Ack::default()
             .set_status(AckStatus::Fail)

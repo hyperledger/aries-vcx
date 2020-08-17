@@ -134,6 +134,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_presentation_request_build_works() {
         let presentation_request: PresentationRequest = PresentationRequest::default()
             .set_comment(_comment())
@@ -143,6 +144,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_presentation_request_build_works_for_service() {
         let presentation_request: PresentationRequest = PresentationRequest::default()
             .set_comment(_comment())

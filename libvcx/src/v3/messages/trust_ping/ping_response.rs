@@ -43,6 +43,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_ping_response_build_works() {
         let ping_response: PingResponse = PingResponse::default()
             .set_comment(_comment())

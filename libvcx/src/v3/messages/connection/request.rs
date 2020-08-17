@@ -67,6 +67,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_request_build_works() {
         let request: Request = Request::default()
             .set_did(_did())

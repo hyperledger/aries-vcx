@@ -63,6 +63,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_credential_request_build_works() {
         let credential_request: CredentialRequest = CredentialRequest::create()
             .set_comment(_comment())

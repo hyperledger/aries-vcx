@@ -156,6 +156,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     fn test_credential_offer_build_works() {
         let credential_offer: CredentialOffer = CredentialOffer::create()
             .set_comment(_comment())
