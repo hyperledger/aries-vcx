@@ -573,7 +573,7 @@ jobs:
             docker run --rm -i --name libvcx --network host \
                    -e NPMJS_TOKEN="$NPMJS_TOKEN" \
                    -e PUBLISH_VERSION="$PUBLISH_VERSION" \
-                    "$DOCKER_IMG_NAME_LIBVCX" '$HOME/wrappers/node/publish.sh'
+                    "$DOCKER_IMG_NAME_LIBVCX" bash -c '$HOME/wrappers/node/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi

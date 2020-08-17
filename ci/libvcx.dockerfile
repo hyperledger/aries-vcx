@@ -50,7 +50,7 @@ WORKDIR /home/indy
 
 
 # Install Rust toolchain
-ARG RUST_VER=1.40.0
+ARG RUST_VER=1.42.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
@@ -122,7 +122,7 @@ RUN chown -R indy .
 USER indy
 
 # TODO: Just copy the binary and add to path
-ARG RUST_VER=1.40.0
+ARG RUST_VER=1.42.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 
