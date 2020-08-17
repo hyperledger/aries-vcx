@@ -14,8 +14,7 @@ if [ -z "$PUBLISH_VERSION" ]; then
     exitWithErrMsg  "PUBLISH_VERSION environment variable not set."
 fi
 
-cd `dirname "$0"`
-pwd
+cd "$(dirname "$0")" || exit
 echo '//registry.npmjs.org/:_authToken=${NPMJS_TOKEN}' > .npmrc
 npm install
 npm run compile
