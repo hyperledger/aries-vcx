@@ -555,13 +555,10 @@ jobs:
           if [[ "$PUBLISH_VERSION" ]]
           then
             echo "Releasing node wrapper version $PUBLISH_VERSION..."
-            docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN -e PUBLISH_VERSION=$PUBLISH_VERSION $DOCKER_IMG_NAME_LIBVCX \
-                                bash -c '(
-                                  cd $HOME/wrappers/node && \
-                                  npm install && \
-                                  npm run compile && \
-                                  npm version $PUBLISH_VERSION && \
-                                  npm publish)'
+            docker run --rm -i --name libvcx --network host \
+                   -e NPMJS_TOKEN="$NPMJS_TOKEN" \
+                   -e PUBLISH_VERSION="$PUBLISH_VERSION" \
+                    "$DOCKER_IMG_NAME_LIBVCX" '$HOME/wrappers/node/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi
