@@ -251,7 +251,7 @@ pub mod tests {
     }
 
     pub fn export_test_wallet() -> (TempFile, String) {
-        let wallet_name = "export_test_wallet";
+        let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
 
         let export_file = TempFile::prepare_path(wallet_name);
 
