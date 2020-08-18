@@ -693,7 +693,7 @@ pub fn create_connection(source_id: &str) -> VcxResult<u32> {
         let connection = Connections::V3(ConnectionV3::create(source_id));
         return store_connection(connection);
     }
-
+    error!("Creating legacy v1 connection");
     let connection = create_connection_v1(source_id)?;
 
     store_connection(Connections::V1(connection))

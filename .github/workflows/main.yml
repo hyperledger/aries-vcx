@@ -276,8 +276,8 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                                echo "Starting testing with features: pool_agency_tests pool_tests" && \
-                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_agency_tests pool_tests")'
+                                echo "Starting testing with features: pool_tests" && \
+                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests")'
 
   test-libvcx-image:
     runs-on: ubuntu-16.04
