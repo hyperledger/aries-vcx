@@ -349,17 +349,17 @@ jobs:
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
     needs: [workflow-setup, build-image-libvcx]
-      runs-on: macos-10.15
-      steps: 
-      - name: Git checkout
-        uses: actions/checkout@v2
-      - name: Build iOS wrapper
-        run: |
-            ./wrappers/ios/ci/build.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: libvcx-ios-universal
-          path: /tmp/artifacts/vcx
+    runs-on: macos-10.15
+    steps:
+    - name: Git checkout
+      uses: actions/checkout@v2
+    - name: Build iOS wrapper
+      run: |
+          ./wrappers/ios/ci/build.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libvcx-ios-universal
+        path: /tmp/artifacts/vcx
 
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04
@@ -392,7 +392,7 @@ jobs:
   #         docker run --name test-android-wrapper $DOCKER_IMG_NAME_ANDROID \
   #                             bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.wrapper.test.sh x86)'
 
-  publish-android-wrapper-device:
+  publish-android-wrapper:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-android]
     env:
@@ -419,10 +419,9 @@ jobs:
 
       - name: Build, run android wrapper tests, and publish artifacts
         run: |
-          # TODO: Do we need all those architectures for device?
           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
           docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh arm armv7 arm64)'
+                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh armv7 x86)'
           docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
           mkdir -p /tmp/artifacts/aar
@@ -435,6 +434,7 @@ jobs:
           name: libvcx-android-device
           path: /tmp/artifacts/aar
 
+# TODO: To create universal android build, we need to reduce android image size
 #   publish-android-wrapper-universal:
 #     runs-on: ubuntu-16.04
 #     needs: [workflow-setup, build-image-android]
@@ -464,7 +464,7 @@ jobs:
 #         run: |
 #           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
 #           docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-#                               bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh arm armv7 arm64 x86 x86_64)'
+#                               bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh armv7 arm64 x86_64)'
 #           docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
 #           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
 #           mkdir -p /tmp/artifacts/aar
