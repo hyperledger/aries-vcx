@@ -349,17 +349,17 @@ jobs:
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
     needs: [workflow-setup, build-image-libvcx]
-      runs-on: macos-10.15
-      steps: 
-      - name: Git checkout
-        uses: actions/checkout@v2
-      - name: Build iOS wrapper
-        run: |
-            ./wrappers/ios/ci/build.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: libvcx-ios-universal
-          path: /tmp/artifacts/vcx
+    runs-on: macos-10.15
+    steps:
+    - name: Git checkout
+      uses: actions/checkout@v2
+    - name: Build iOS wrapper
+      run: |
+          ./wrappers/ios/ci/build.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libvcx-ios-universal
+        path: /tmp/artifacts/vcx
 
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04
