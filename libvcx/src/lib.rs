@@ -416,8 +416,7 @@ mod tests {
         println!("proof valid for specified interval!");
     }
 
-    #[cfg(feature = "pool_tests")]
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "pool_agency_tests")]
     #[test]
     fn test_real_proof_for_protocol_type_v2() {
         let _setup = SetupLibraryAgencyV2::init();
