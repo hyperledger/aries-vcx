@@ -182,6 +182,10 @@ async function runFaber (options) {
     {
       name: 'degree',
       restrictions: { 'attr::degree::value': 'maths' }
+    },
+    {
+      name: 'nickname',
+      self_attest_allowed: true
     }
   ]
 
