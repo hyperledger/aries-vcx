@@ -267,14 +267,16 @@ mod tests {
         assert_ne!(delta, delta_after_revoke);
     }
 
+    // todo: seems like this is using legacy msg  'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_REQUEST'
     fn _real_proof_demo() {
+        info!(">>> _real_proof_demo");
         let number_of_attributes = 10;
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections();
 
         // AS INSTITUTION SEND CREDENTIAL OFFER
-        println!("creating schema/credential_def and paying fees");
+        info!("creating schema/credential_def and paying fees");
         let mut attrs_list: Value = serde_json::Value::Array(vec![]);
         for i in 1..number_of_attributes {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));

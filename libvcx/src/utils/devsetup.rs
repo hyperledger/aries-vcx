@@ -249,7 +249,9 @@ impl Drop for SetupLibraryAgencyV1ZeroFees {
 
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
+        debug!(">>> SetupLibraryAgencyV2 init");
         setup();
+        debug!("going to setup agency env");
         setup_agency_env("2.0", false);
         SetupLibraryAgencyV2
     }
