@@ -99,22 +99,36 @@ async function runAlice (options) {
     requests = await DisclosedProof.getRequests(connectionToFaber)
   }
   logger.info('#23 Create a Disclosed proof object from proof request')
+  logger.debug(`Received proof request = ${JSON.stringify(requests, null, 2)}`)
   const proof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(requests[0]) })
+  const requestInfo = JSON.parse(Buffer.from(requests[0]['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
+  logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const credentials = await proof.getCredentials()
+  const resolvedCreds = await proof.getCredentials()
+  const selectedCreds = { attrs: {} }
+  logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
 
-  // Use the first available credentials to satisfy the proof request
-  for (let i = 0; i < Object.keys(credentials.attrs).length; i++) {
-    const attr = Object.keys(credentials.attrs)[i]
-    credentials.attrs[attr] = {
-      credential: credentials.attrs[attr][0]
+  for (const attrName of Object.keys(resolvedCreds.attrs)) {
+    const attrCredInfo = resolvedCreds.attrs[attrName]
+    if (Array.isArray(attrCredInfo) === false) {
+      throw Error('Unexpected data, expected attrCredInfo to be an array.')
     }
-    credentials.attrs[attr].tails_file = '/tmp/tails'
+    if (attrCredInfo.length > 0) {
+      selectedCreds.attrs[attrName] = {
+        credential: resolvedCreds.attrs[attrName][0]
+      }
+      selectedCreds.attrs[attrName].tails_file = '/tmp/tails'
+    } else {
+      logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)
+    }
   }
+  const selfAttestedAttrs = { attribute_3: 'Smith' }
 
-  logger.info('#25 Generate the proof')
-  await proof.generateProof({ selectedCreds: credentials, selfAttestedAttrs: {} })
+  logger.info('#25 Generate the proof.')
+  logger.debug(`Proof is using wallet credentials:\n${JSON.stringify(selectedCreds, null, 2)}
+  \nProof is using self attested attributes: ${JSON.stringify(selfAttestedAttrs, null, 2)}`)
+  await proof.generateProof({ selectedCreds, selfAttestedAttrs })
 
   logger.info('#26 Send the proof to faber')
   await proof.sendProof(connectionToFaber)

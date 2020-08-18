@@ -346,6 +346,21 @@ jobs:
                                 npm run compile && \
                                 npm test)'
 
+  # TODO: Add tests of iOS build
+  publish-ios-wrapper:
+    needs: [workflow-setup, build-image-libvcx]
+      runs-on: macos-10.15
+      steps: 
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Build iOS wrapper
+        run: |
+            ./wrappers/ios/ci/build.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: libvcx-ios-universal
+          path: /tmp/artifacts/vcx
+
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04
   #   needs: [workflow-setup, build-image-android]
@@ -555,13 +570,10 @@ jobs:
           if [[ "$PUBLISH_VERSION" ]]
           then
             echo "Releasing node wrapper version $PUBLISH_VERSION..."
-            docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN -e PUBLISH_VERSION=$PUBLISH_VERSION $DOCKER_IMG_NAME_LIBVCX \
-                                bash -c '(
-                                  cd $HOME/wrappers/node && \
-                                  npm install && \
-                                  npm run compile && \
-                                  npm version $PUBLISH_VERSION && \
-                                  npm publish)'
+            docker run --rm -i --name libvcx --network host \
+                   -e NPMJS_TOKEN="$NPMJS_TOKEN" \
+                   -e PUBLISH_VERSION="$PUBLISH_VERSION" \
+                    "$DOCKER_IMG_NAME_LIBVCX" '$HOME/wrappers/node/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi

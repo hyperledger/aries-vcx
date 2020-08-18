@@ -1,0 +1,19 @@
+diff --git a/libzmq.rb b/libzmq.rb
+index 5d50af6..a1b461f 100755
+--- a/libzmq.rb
++++ b/libzmq.rb
+@@ -21,10 +21,10 @@ LIBNAME="libzmq.a"
+ ROOTDIR=File.absolute_path(File.dirname(__FILE__))
+ LIBSODIUM_DIST=File.join(ROOTDIR, "dist")
+ VALID_ARHS_PER_PLATFORM = {
+-  "iOS"     => ["armv7", "armv7s", "arm64", "i386", "x86_64"],
+-  "macOS"   => ["x86_64"],
+-  "tvOS"    => ["arm64", "x86_64"],
+-  "watchOS" => ["armv7k", "i386"],
++  "iOS"     => ["arm64", "x86_64"],
++  "macOS"   => [],
++  "tvOS"    => [],
++  "watchOS" => [],
+ }
+ 
+ DEVELOPER               = `xcode-select -print-path`.chomp
