@@ -6,6 +6,7 @@ pub mod messages;
 #[cfg(test)]
 pub mod tests {
     use v3::messages::connection::invite::tests::_invitation_json;
+    use utils::logger::LibvcxDefaultLogger;
 
     pub fn mock_connection() -> u32 {
         let connection_handle = ::connection::create_connection_with_invite("source_id", &_invitation_json()).unwrap();
@@ -15,6 +16,7 @@ pub mod tests {
 
     fn _setup() {
         ::settings::set_config_value(::settings::COMMUNICATION_METHOD, "aries");
+        LibvcxDefaultLogger::init_testing_logger();
     }
 
     fn _source_id() -> &'static str {
@@ -153,7 +155,8 @@ pub mod tests {
                 let message: Message = messages[0].msgs[0].clone();
                 assert_eq!(::messages::RemoteMessageType::Other("aries".to_string()), message.msg_type);
                 let payload: ::messages::payload::PayloadV1 = ::serde_json::from_str(&message.decrypted_payload.unwrap()).unwrap();
-                let _payload: ::issuer_credential::CredentialOffer = ::serde_json::from_str(&payload.msg).unwrap();
+                warn!("Downlaoded payload = {:?}", payload);
+                let _payload: Vec<::issuer_credential::CredentialOffer> = ::serde_json::from_str(&payload.msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
