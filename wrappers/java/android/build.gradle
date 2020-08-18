@@ -1,5 +1,6 @@
 import java.text.SimpleDateFormat
 
+
 apply plugin: 'maven'
 apply plugin: 'com.android.library'
 
@@ -65,10 +66,12 @@ def getKrakenPassFromEnv(){
 def getKrakenUserFromEnv(){
     return System.getenv( 'KRAKEN_USER' )
 }
+
 version = "${versionMajor()}"
 
+// TODO: Remove build time on release?
 def fullVersionName() {
-    return "com.absa-vcx_${versionMajor()}-${buildTime()}"
+    return "absa-vcx-${versionMajor()}-${buildTime()}"
 }
 
 description = """vcx"""
@@ -111,7 +114,8 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 23
+        // minSdkVersion must match minSdkVersion of the client app using the built AAR
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "${fullVersionName()}"
