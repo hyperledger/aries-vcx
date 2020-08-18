@@ -88,7 +88,7 @@ jobs:
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
 
-          DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
+          DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.2"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
 
           # No tag to grep on docker images
