@@ -66,7 +66,6 @@ create_avd(){
             --package "system-images;android-24;default;${ABI}" \
             -f \
             -c 4096M
-
     ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
@@ -288,12 +287,12 @@ copy_libraries_to_jni(){
     TARGET_ARCH=$2
     LIBVCX_DIR=$3
     ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
-    LIB_PATH=${ANDROID_JNI_LIB}/${TARGET_ARCH}
+    LIB_PATH=${ANDROID_JNI_LIB}/${ABI}
     echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
     mkdir -p $LIB_PATH
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
+    cp ${INDY_LIB_DIR}/* ${LIB_PATH}
     # cp ${OPENSSL_LIB_DIR}/* ${LIB_PATH}
     # cp ${SODIUM_LIB_DIR}/* ${LIB_PATH}
     # cp ${LIBZMQ_LIB_DIR}/* ${LIB_PATH}
-    # cp ${INDY_LIB_DIR}/* ${LIB_PATH}
 }

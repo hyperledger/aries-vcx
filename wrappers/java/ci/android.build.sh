@@ -24,7 +24,6 @@ prepare_artifacts(){
     AAR_DIR=${HOME}/artifacts/aar
     mkdir -p ${PACKAGE_DIR}/{include,lib} ${ZIP_DIR} ${AAR_DIR}
 
-    # TODO: Get and copy includes
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
 
     if [ -z "${LIBVCX_VERSION}" ]; then
@@ -41,7 +40,7 @@ build_android_wrapper(){
             npm install
         popd
 
-        ./gradlew --no-daemon clean build --project-dir=android -x test
+        ./gradlew --no-daemon clean build --project-dir=android
     popd
 }
 
