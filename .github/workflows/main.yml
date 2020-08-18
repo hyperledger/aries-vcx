@@ -12,7 +12,6 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
-      LIBVCX_REVISION: ${{ steps.mainstep.outputs.LIBVCX_REVISION }}
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
       CACHE_KEY_ANDROID: ${{ steps.mainstep.outputs.CACHE_KEY_ANDROID }}
@@ -21,13 +20,10 @@ jobs:
       DOCKER_IMG_NAME_ANDROID: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ANDROID }}
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
-      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
+      PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.40.0
       - name: Set custom env variables
         run: |
           set -x
@@ -46,52 +42,51 @@ jobs:
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
-          if [[ "${{ github.event_name}}" == "push" && "$BRANCH_NAME" == "master" ]]
+          REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
+          echo "Highest released version was: $REPO_VERSION_HIGHEST"
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
-            echo "Running push on master branch. Release will happen if version was bumped."
+            REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
+            REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
+            echo "This is pull request from $REPO_HEAD to $REPO_BASE"
 
-            REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
-            echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
-            echo "Highest released version was $REPO_VERSION_HIGHEST"
-
-            REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
-            echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
-            echo "Repo declares version $REPO_VERSION_DESIRED"
-
-            if [[ "$REPO_VERSION_HIGHEST" == "$REPO_VERSION_DESIRED" ]]
+            if [[ "$REPO_HEAD" == github.repository ]]
             then
-              DOCKER_TAG_VERSION="$BRANCH_NAME"
-              echo "Running push on master but version was not bumped. Will NOT release. The latest release version is $REPO_VERSION_HIGHEST."
+              echo "This CI run is PR from non-forked repository."
+              IS_FORK="false";
             else
-              RELEASE_VERSION="$REPO_VERSION_DESIRED"
-              DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
-              echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
-            fi
+              echo "This is fork."
+              IS_FORK="true";
+            fi;
           else
-             FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-             echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
-             DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
-             echo "This is not push to master. Will NOT release. The latest release version is $REPO_VERSION_HIGHEST."
-          fi
+            echo "Not PR so this is not fork."
+            IS_FORK="false";
+          fi;
 
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
+          if [[ "$IS_FORK" == "false" ]]
+          then
+            PUBLISH_VERSION="$REPO_VERSION_HIGHEST-$BRANCH_NAME-${{ github.run_number }}"
+            echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION"
+          else
+            echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
+            PUBLISH_VERSION=""
+          fi;
 
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
+          LIBVCX_NODE_WRAPPERS_HASH=${{ hashFiles('wrappers/node') }}
           JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
 
-          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_NODE_WRAPPERS_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
-          echo ::set-env name=LIBVCX_HASH::$(echo $LIBVCX_HASH)
-          echo ::set-env name=ANDROID_HASH::$(echo $ANDROID_HASH)
-          echo ::set-env name=POOL_HASH::$(echo $POOL_HASH)
-
-          echo ::set-env name=CACHE_KEY_LIBVCX::$BRANCH_NAME-$LIBVCX_HASH
-          echo ::set-env name=CACHE_KEY_ANDROID::$BRANCH_NAME-$ANDROID_HASH
-          echo ::set-env name=CACHE_KEY_POOL::$BRANCH_NAME-$POOL_HASH
+          echo ::set-env name=PUBLISH_VERSION::$PUBLISH_VERSION
+          echo ::set-env name=CACHE_KEY_LIBVCX::$LIBVCX_HASH
+          echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
+          echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
 
           DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
@@ -100,22 +95,22 @@ jobs:
           DOCKER_IMG_NAME_ANDROID="android-test"
           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo $DOCKER_IMG_NAME_ANDROID)
 
-          echo ::set-env name=RELEASE_VERSION::$(echo $RELEASE_VERSION)
-
       - name: Set and print outputs
         id: mainstep
         run: |
           set -x
+          echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
+
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=LIBVCX_REVISION::$DOCKER_TAG_VERSION"
+
           echo "::set-output name=CACHE_KEY_LIBVCX::$CACHE_KEY_LIBVCX"
           echo "::set-output name=CACHE_KEY_ANDROID::$CACHE_KEY_ANDROID"
           echo "::set-output name=CACHE_KEY_POOL::$CACHE_KEY_POOL"
+
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::$CACHE_KEY_ANDROID"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$CACHE_KEY_LIBVCX"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$CACHE_KEY_POOL"
-          echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
   build-image-indypool:
     needs: workflow-setup
@@ -198,7 +193,6 @@ jobs:
         run: |
           echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
-          echo ::set-env name=LIBVCX_REVISION::$(echo ${{needs.workflow-setup.outputs.LIBVCX_REVISION}})
       - name: Git checkout
         uses: actions/checkout@v2
 
@@ -352,6 +346,21 @@ jobs:
                                 npm run compile && \
                                 npm test)'
 
+  # TODO: Add tests of iOS build
+  publish-ios-wrapper:
+    needs: [workflow-setup, build-image-libvcx]
+    runs-on: macos-10.15
+    steps:
+    - name: Git checkout
+      uses: actions/checkout@v2
+    - name: Build iOS wrapper
+      run: |
+          ./wrappers/ios/ci/build.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libvcx-ios-universal
+        path: /tmp/artifacts/vcx
+
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04
   #   needs: [workflow-setup, build-image-android]
@@ -438,7 +447,7 @@ jobs:
 #           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
 #       - name: Git checkout
 #         uses: actions/checkout@v2
-# 
+#
 #       - name: Load android image cache
 #         id: load-cached-android-image
 #         uses: actions/cache@v2
@@ -450,7 +459,7 @@ jobs:
 #         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_ANDROID"; exit -1
 #       - name: Load android image from cache
 #         run: docker load < /tmp/imgcache/img_android.rar
-# 
+#
 #       - name: Build, run android wrapper tests, and publish artifacts
 #         run: |
 #           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
@@ -462,12 +471,12 @@ jobs:
 #           docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts/aar
 #           docker rm ${docker_id} > /dev/null
 #           docker rmi ${docker_image_id} > /dev/null
-# 
+#
 #       - uses: actions/upload-artifact@v2
 #         with:
 #           name: libvcx-android-universal
 #           path: /tmp/artifacts/aar
-    
+
   publish-libvcx:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-node-wrapper]
@@ -477,7 +486,7 @@ jobs:
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
           echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
+          echo ::set-env name=PUBLISH_VERSION::$(echo ${{needs.workflow-setup.outputs.PUBLISH_VERSION}})
 
       - name: Git checkout
         uses: actions/checkout@v2
@@ -507,12 +516,12 @@ jobs:
 
       - name: Publish image
         run: |
-          if [[ "$RELEASE_VERSION" ]]
+          if [[ "$PUBLISH_VERSION" ]]
           then
             IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_LIBVCX
             DOCKER_IMG_NAME_TAGLESS=${arr[0]}
-            REMOTE_DOCKER_IMG_NAME_LIBVCX="docker.pkg.github.com/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_NAME_TAGLESS}:${RELEASE_VERSION}"
-            echo "Releasing libvcx docker image version $RELEASE_VERSION, tagged $REMOTE_DOCKER_IMG_NAME_LIBVCX"
+            REMOTE_DOCKER_IMG_NAME_LIBVCX="docker.pkg.github.com/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_NAME_TAGLESS}:${PUBLISH_VERSION}"
+            echo "Releasing libvcx docker image version $PUBLISH_VERSION, tagged $REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker tag "$DOCKER_IMG_NAME_LIBVCX" "$REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker push "$REMOTE_DOCKER_IMG_NAME_LIBVCX" || true
           else
@@ -529,7 +538,7 @@ jobs:
         run: |
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
-          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
+          echo ::set-env name=PUBLISH_VERSION::$(echo ${{needs.workflow-setup.outputs.PUBLISH_VERSION}})
       - name: Git checkout
         uses: actions/checkout@v2
 
@@ -558,16 +567,13 @@ jobs:
 
       - name: Release wrapper
         run: |
-          if [[ "$RELEASE_VERSION" ]]
+          if [[ "$PUBLISH_VERSION" ]]
           then
-            echo "Releasing node wrapper version $RELEASE_VERSION..."
-            docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN -e RELEASE_VERSION=$RELEASE_VERSION $DOCKER_IMG_NAME_LIBVCX \
-                                bash -c '(
-                                  cd $HOME/wrappers/node && \
-                                  npm install && \
-                                  npm run compile && \
-                                  npm version $RELEASE_VERSION && \
-                                  npm publish)'
+            echo "Releasing node wrapper version $PUBLISH_VERSION..."
+            docker run --rm -i --name libvcx --network host \
+                   -e NPMJS_TOKEN="$NPMJS_TOKEN" \
+                   -e PUBLISH_VERSION="$PUBLISH_VERSION" \
+                    "$DOCKER_IMG_NAME_LIBVCX" '$HOME/wrappers/node/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi
