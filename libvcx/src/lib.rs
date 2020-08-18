@@ -267,7 +267,6 @@ mod tests {
         assert_ne!(delta, delta_after_revoke);
     }
 
-    // todo: seems like this is using legacy msg  'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_REQUEST'
     fn _real_proof_demo() {
         info!(">>> _real_proof_demo");
         let number_of_attributes = 10;

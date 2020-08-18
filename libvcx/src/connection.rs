@@ -693,7 +693,6 @@ pub fn create_connection(source_id: &str) -> VcxResult<u32> {
         let connection = Connections::V3(ConnectionV3::create(source_id));
         return store_connection(connection);
     }
-    error!("Creating legacy v1 connection");
     let connection = create_connection_v1(source_id)?;
 
     store_connection(Connections::V1(connection))
@@ -1351,15 +1350,12 @@ pub mod tests {
     }
 
     pub fn create_connected_connections() -> (u32, u32) {
-        info!(">>> create_connected_connections");
         ::utils::devsetup::set_institution();
 
-        info!(">>> create_connected_connections going to create connection");
         let alice = create_connection("alice").unwrap();
         let my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let options = json!({"use_public_did": true}).to_string();
 
-        info!(">>> create_connected_connections going to connect");
         connect(alice, Some(options)).unwrap();
         let details = get_invite_details(alice, false).unwrap();
 
