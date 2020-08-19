@@ -418,6 +418,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_legacy_agency_tests")]
+    // this test is using legacy msgtype did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_REQUEST
+    // which is not supported by vcxnode-agency
+    // todo: update this test
     #[test]
     fn test_real_proof_for_protocol_type_v2() {
         let _setup = SetupLibraryAgencyV2::init();
