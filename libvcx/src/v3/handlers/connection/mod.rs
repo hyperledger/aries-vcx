@@ -6,7 +6,7 @@ pub mod messages;
 #[cfg(test)]
 pub mod tests {
     use v3::messages::connection::invite::tests::_invitation_json;
-    use utils::logger::LibvcxDefaultLogger;
+    use utils::devsetup::SetupEmpty;
 
     pub fn mock_connection() -> u32 {
         let connection_handle = ::connection::create_connection_with_invite("source_id", &_invitation_json()).unwrap();
@@ -15,8 +15,8 @@ pub mod tests {
     }
 
     fn _setup() {
-        ::settings::set_config_value(::settings::COMMUNICATION_METHOD, "aries");
-        LibvcxDefaultLogger::init_testing_logger();
+        let _setup = SetupEmpty::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
     }
 
     fn _source_id() -> &'static str {

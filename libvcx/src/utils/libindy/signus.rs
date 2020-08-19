@@ -12,7 +12,8 @@ pub fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) ->
 
     let my_did_json = json!({"seed": seed, "method_name": method_name});
 
-    did::create_and_store_my_did(get_wallet_handle(), &my_did_json.to_string())
+    let wh = get_wallet_handle();
+    did::create_and_store_my_did(wh, &my_did_json.to_string())
         .wait()
         .map_err(VcxError::from)
 }
