@@ -268,9 +268,7 @@ jobs:
         run: |
           set -x
           docker images
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
       - name: Run libvcx tests
         run: |
           set -x
@@ -330,7 +328,6 @@ jobs:
           set -x
           docker images
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
       - name: Run libvcx tests
         run: |
@@ -538,7 +535,7 @@ jobs:
 
   publish-libvcx:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-libvcx-image-poolfeatures, test-node-wrapper]
     steps:
       - name: Load env. variables
         run: |
@@ -589,7 +586,7 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image, test-libvcx-image-poolfeatures, test-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
     steps:
