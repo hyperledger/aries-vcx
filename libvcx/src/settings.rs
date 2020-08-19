@@ -493,6 +493,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_bad_path() {
         let _setup = SetupDefaults::init();
 
@@ -501,6 +502,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_read_config_file() {
         let _setup = SetupDefaults::init();
 
@@ -511,6 +513,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_file() {
         let _setup = SetupDefaults::init();
 
@@ -523,6 +526,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_config_str() {
         let _setup = SetupDefaults::init();
 
@@ -533,6 +537,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_config() {
         let _setup = SetupDefaults::init();
 
@@ -547,6 +552,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_config_failures() {
         let _setup = SetupDefaults::init();
 
@@ -597,6 +603,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_optional_config_val() {
         let _setup = SetupDefaults::init();
 
@@ -620,6 +627,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_and_set_values() {
         let _setup = SetupDefaults::init();
 
@@ -634,6 +642,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_clear_config() {
         let _setup = SetupDefaults::init();
 
@@ -667,6 +676,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_config_str_for_actors() {
         let _setup = SetupDefaults::init();
 

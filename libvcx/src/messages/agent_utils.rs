@@ -522,6 +522,7 @@ mod tests {
     use api::vcx::vcx_shutdown;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_connect_register_provision_config_path() {
         let agency_did = "LTjTWsezEmV4wJYD5Ufxvk";
         let agency_vk = "BcCSmgdfChLqmtBkkA26YotWVFBNnyY45WCnQziF4cqN";
@@ -556,6 +557,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_connect_register_provision() {
         let _setup = SetupMocks::init();
 
@@ -594,12 +596,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_method_type_serialization() {
         assert_eq!("\"1\"", serde_json::to_string::<ComMethodType>(&ComMethodType::A2A).unwrap());
         assert_eq!("\"2\"", serde_json::to_string::<ComMethodType>(&ComMethodType::Webhook).unwrap());
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_method_type_deserialization() {
         assert_eq!(ComMethodType::A2A, serde_json::from_str::<ComMethodType>("\"1\"").unwrap());
         assert_eq!(ComMethodType::Webhook, serde_json::from_str::<ComMethodType>("\"2\"").unwrap());
@@ -607,6 +611,7 @@ mod tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_real_connect_register_provision() {
         let _setup = SetupDefaults::init();
 
@@ -626,6 +631,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_agent_info() {
         let _setup = SetupMocks::init();
 

@@ -40,6 +40,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_forward_build_works() {
         let message = ::serde_json::to_vec(&_ack()).unwrap();
         let forward: Forward = Forward::new(_to(), message).unwrap();

@@ -19,6 +19,7 @@ agency = []
 agency_v2 = []
 pool_legacy_agency_tests = []
 aries = []
+general_test = []
 # Causes the build to fail on all warnings
 fatal_warnings = []
 

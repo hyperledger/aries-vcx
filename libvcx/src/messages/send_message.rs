@@ -253,6 +253,7 @@ mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_msgpack() {
         let _setup = SetupMocks::init();
 
@@ -276,6 +277,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_send_message_response() {
         let _setup = SetupMocks::init();
 
@@ -288,6 +290,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_send_message_bad_response() {
         let _setup = SetupMocks::init();
 
@@ -296,6 +299,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_msg_uid() {
         let _setup = SetupDefaults::init();
 
@@ -359,6 +363,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 

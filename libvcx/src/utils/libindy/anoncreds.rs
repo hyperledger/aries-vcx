@@ -964,6 +964,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
@@ -1070,6 +1071,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn from_ledger_schema_id() {
         let _setup = SetupMocks::init();
 

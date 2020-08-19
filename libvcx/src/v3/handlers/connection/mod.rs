@@ -176,7 +176,9 @@ pub mod tests {
         #[cfg(feature = "aries")]
         fn test_connection_delete() {
             _setup();
+            warn!(">> test_connection_delete going to create connection");
             let connection_handle = ::connection::create_connection(_source_id()).unwrap();
+            warn!(">> test_connection_delete checking is valid handle");
             assert!(::connection::is_valid_handle(connection_handle));
 
             ::connection::release(connection_handle).unwrap();

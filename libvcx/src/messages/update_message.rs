@@ -154,6 +154,7 @@ mod tests {
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use std::time::Duration;
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_parse_update_messages_response() {
         let _setup = SetupMocks::init();
 

@@ -104,6 +104,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_string() {
         let _setup = SetupDefaults::init();
 
@@ -115,6 +116,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_cb(){
         let _setup = SetupDefaults::init();
 

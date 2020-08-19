@@ -24,6 +24,7 @@ mod test {
     use super::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encoding() {
         // number
         {

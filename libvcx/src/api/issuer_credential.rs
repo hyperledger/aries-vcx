@@ -928,6 +928,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_success() {
         let _setup = SetupMocks::init();
 
@@ -936,6 +937,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_fails() {
         let _setup = SetupMocks::init();
 
@@ -954,6 +956,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -978,6 +981,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_send_credential_offer() {
         let _setup = SetupMocks::init();
         let connection_handle = ::connection::tests::build_test_connection();
@@ -1002,6 +1006,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_get_credential_offer_msg() {
         let _setup = SetupMocks::init();
 
@@ -1016,6 +1021,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_send_a_credential() {
         let _setup = SetupMocks::init();
 
@@ -1036,6 +1042,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_get_credential_msg() {
         let _setup = SetupMocks::init();
 
@@ -1052,6 +1059,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_credential_arguments_correct() {
         let _setup = SetupMocks::init();
 
@@ -1066,6 +1074,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_credential_invalid_price() {
         let _setup = SetupMocks::init();
 
@@ -1083,6 +1092,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1098,6 +1108,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
         let _setup = SetupMocks::init();
         let credential = issuer_credential::tests::create_standard_issuer_credential_json(None);
@@ -1109,6 +1120,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_revoke_credential() {
         let _setup = SetupMocks::init();
 
@@ -1125,6 +1137,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_release() {
         let _setup = SetupMocks::init();
 

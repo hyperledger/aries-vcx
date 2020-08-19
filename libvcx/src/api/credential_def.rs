@@ -616,6 +616,7 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_create_credentialdef_success() {
         let _setup = SetupMocks::init();
 
@@ -633,6 +634,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_create_credentialdef_fails() {
         let _setup = SetupLibraryWallet::init();
 
@@ -651,6 +653,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_serialize() {
         let _setup = SetupMocks::init();
 
@@ -673,6 +676,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -689,6 +693,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_deserialize_succeeds_with_old_data() {
         let _setup = SetupMocks::init();
 
@@ -706,6 +711,7 @@ mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_release() {
         let _setup = SetupMocks::init();
 
@@ -727,6 +733,7 @@ mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_creddef_get_id() {
         let _setup = SetupMocks::init();
 
@@ -747,6 +754,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
         let _setup = SetupMocks::init();
 
@@ -762,6 +770,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_prepare_cred_def_success() {
         let _setup = SetupMocks::init();
 
@@ -786,6 +795,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_prepare_cred_def_with_revocation_success() {
         let _setup = SetupMocks::init();
 
@@ -810,6 +820,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_cred_def_get_state() {
         let _setup = SetupMocks::init();
 

@@ -56,6 +56,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_ping_build_works() {
         let ping: Ping = Ping::default()
             .set_comment(Some(_comment()))

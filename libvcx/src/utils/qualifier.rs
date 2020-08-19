@@ -13,6 +13,7 @@ mod test {
     use super::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn is_fully_qualified_works() {
         assert!(is_fully_qualified("did:indy:some"));
         assert!(!is_fully_qualified("did:indy"));
