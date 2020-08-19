@@ -949,6 +949,7 @@ pub mod tests {
                                                 CString::new("1").unwrap().into_raw(),
                                                 Some(cb.get_callback())),
                    error::INVALID_OPTION.code_num);
+        // todo: Timeouting 15 seconds in test, could we do this better?
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
 

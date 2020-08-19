@@ -23,7 +23,6 @@ pub mod tests {
         "test connection"
     }
 
-    #[cfg(feature = "aries")]
     mod aries {
         use super::*;
 
@@ -32,6 +31,7 @@ pub mod tests {
         use v3::messages::a2a::A2AMessage;
 
         #[test]
+        #[cfg(feature = "aries")]
         fn test_create_connection_works() {
             _setup();
             let connection_handle = ::connection::create_connection(_source_id()).unwrap();
@@ -39,8 +39,8 @@ pub mod tests {
             assert_eq!(1, ::connection::get_state(connection_handle));
         }
 
-        #[cfg(feature = "aries")]
         #[test]
+        #[cfg(feature = "aries")]
         fn test_create_connection_with_invite_works() {
             _setup();
             let connection_handle = ::connection::create_connection_with_invite(_source_id(), &_invitation_json()).unwrap();
@@ -48,16 +48,8 @@ pub mod tests {
             assert_eq!(2, ::connection::get_state(connection_handle));
         }
 
-        #[cfg(feature = "aries")]
         #[test]
-        fn test_get_connection_state_works() {
-            _setup();
-            let connection_handle = ::connection::create_connection(_source_id()).unwrap();
-            assert_eq!(1, ::connection::get_state(connection_handle));
-        }
-
-        #[cfg(feature = "aries")]
-        #[test]
+        #[cfg(feature = "agency_v2")]
         fn test_connection_send_works() {
             _setup();
             let mut faber = Faber::setup();
@@ -172,8 +164,16 @@ pub mod tests {
             }
         }
 
-        #[cfg(feature = "aries")]
         #[test]
+        #[cfg(feature = "aries")]
+        fn test_get_connection_state_works() {
+            _setup();
+            let connection_handle = ::connection::create_connection(_source_id()).unwrap();
+            assert_eq!(1, ::connection::get_state(connection_handle));
+        }
+
+        #[test]
+        #[cfg(feature = "aries")]
         fn test_connection_delete() {
             _setup();
             let connection_handle = ::connection::create_connection(_source_id()).unwrap();
