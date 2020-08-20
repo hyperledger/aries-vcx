@@ -1,6 +1,9 @@
 const { initRustAPI, initVcxWithConfig, provisionAgent } = require('./../dist/src')
-const ffi = require('ffi-napi');
+const ffi = require('ffi-napi')
 const os = require('os')
+const { setActiveTxnAuthorAgreementMeta, getLedgerAuthorAgreement } = require('./../dist/src/api/utils')
+const url = require('url')
+const isPortReachable = require('is-port-reachable')
 
 const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
@@ -44,9 +47,18 @@ function getRandomInt (min, max) {
   return Math.floor(Math.random() * (max - min)) + min
 }
 
+async function acceptTaa () {
+  const taa = await getLedgerAuthorAgreement()
+  const taaJson = JSON.parse(taa)
+  const utime = Math.floor(new Date() / 1000)
+  await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
+}
+
+
 module.exports.loadPostgresPlugin = loadPostgresPlugin
 module.exports.initLibNullPay = initLibNullPay
 module.exports.initRustApiAndLogger = initRustApiAndLogger
 module.exports.provisionAgentInAgency = provisionAgentInAgency
 module.exports.initVcxWithProvisionedAgentConfig = initVcxWithProvisionedAgentConfig
 module.exports.getRandomInt = getRandomInt
+module.exports.acceptTaa = acceptTaa

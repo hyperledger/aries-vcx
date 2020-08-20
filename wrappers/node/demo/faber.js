@@ -1,21 +1,19 @@
+import { initializeVcxClient } from './workflows-vcx'
+
 const { CredentialDef } = require('../dist/src/api/credential-def')
 const { IssuerCredential } = require('../dist/src/api/issuer-credential')
 const { Proof } = require('../dist/src/api/proof')
 const { Connection } = require('../dist/src/api/connection')
 const { Schema } = require('./../dist/src/api/schema')
 const { StateType, ProofState } = require('../dist/src')
-const { setActiveTxnAuthorAgreementMeta, getLedgerAuthorAgreement } = require('./../dist/src/api/utils')
 const sleepPromise = require('sleep-promise')
-const demoCommon = require('./common')
 const { getRandomInt } = require('./common')
 const logger = require('./logger')
-const url = require('url')
-const isPortReachable = require('is-port-reachable')
 const { runScript } = require('./script-comon')
 const assert = require('assert')
 
 const utime = Math.floor(new Date() / 1000)
-const optionalWebhook = 'http://localhost:7209/notifications/faber'
+const webhookUrl = 'http://localhost:7209/notifications/faber'
 
 const TAA_ACCEPT = process.env.TAA_ACCEPT === 'true' || false
 
@@ -32,45 +30,8 @@ const provisionConfig = {
 const logLevel = 'error'
 
 async function runFaber (options) {
-  await demoCommon.initLibNullPay()
-
-  logger.info('#0 Initialize rust API from NodeJS')
-  await demoCommon.initRustApiAndLogger(logLevel)
-
-  if (options.comm === 'aries') {
-    provisionConfig.protocol_type = '4.0'
-    logger.info('Running with Aries VCX Enabled! Make sure VCX agency is configured to use protocol_type 2.0')
-  }
-
-  if (options.postgresql) {
-    await demoCommon.loadPostgresPlugin(provisionConfig)
-    provisionConfig.wallet_type = 'postgres_storage'
-    provisionConfig.storage_config = '{"url":"localhost:5432"}'
-    provisionConfig.storage_credentials = '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'
-    logger.info(`Running with PostreSQL wallet enabled! Config = ${provisionConfig.storage_config}`)
-  } else {
-    logger.info('Running with builtin wallet.')
-  }
-
-  if (await isPortReachable(url.parse(optionalWebhook).port, { host: url.parse(optionalWebhook).hostname })) { // eslint-disable-line
-    provisionConfig.webhook_url = optionalWebhook
-    logger.info(`Running with webhook notifications enabled! Webhook url = ${optionalWebhook}`)
-  } else {
-    logger.info('Webhook url will not be used')
-  }
-
-  logger.info(`#1 Config used to provision agent in agency: ${JSON.stringify(provisionConfig, null, 2)}`)
-  const agentProvision = await demoCommon.provisionAgentInAgency(provisionConfig)
-
-  logger.info(`#2 Using following agent provision to initialize VCX ${JSON.stringify(agentProvision, null, 2)}`)
-  await demoCommon.initVcxWithProvisionedAgentConfig(agentProvision)
-
-  if (TAA_ACCEPT) {
-    logger.info('#2.1 Accept transaction author agreement')
-    const taa = await getLedgerAuthorAgreement()
-    const taaJson = JSON.parse(taa)
-    await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
-  }
+  provisionConfig.protocol_type = options.protocolType
+  await initializeVcxClient(provisionConfig, options.postgresql, webhookUrl, TAA_ACCEPT, logger, logLevel)
 
   const version = `${getRandomInt(1, 101)}.${getRandomInt(1, 101)}.${getRandomInt(1, 101)}`
   const schemaData = {
@@ -251,10 +212,10 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'comm',
+    name: 'protocolType',
     type: String,
-    description: 'Communication method. Possible values: aries, legacy. Default is aries.',
-    defaultValue: 'aries'
+    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
+    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -276,17 +237,15 @@ const usage = [
     optionList: optionDefinitions
   },
   {
-    content: 'Project home: {underline https://github.com/Patrik-Stas/indy-wallet-watch}'
+    content: 'Project home: {underline https://github.com/AbsaOSS/libvcx}'
   }
 ]
 
 function areOptionsValid (options) {
-  const allowedCommMethods = ['aries', 'legacy']
-  if (!(allowedCommMethods.includes(options.comm))) {
-    console.error(`Unknown communication method ${options.comm}. Only ${JSON.stringify(allowedCommMethods)} are allowed.`)
+  if (!(allowedProtocolTypes.includes(options.protocolType))) {
+    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
     return false
   }
   return true
 }
-
 runScript(optionDefinitions, usage, areOptionsValid, runFaber)

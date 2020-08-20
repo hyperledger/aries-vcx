@@ -12,6 +12,7 @@ const { runScript } = require('./script-comon')
 
 const utime = Math.floor(new Date() / 1000)
 const optionalWebhook = 'http://localhost:7209/notifications/alice'
+const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 
 const provisionConfig = {
   agency_url: 'http://localhost:8080',
@@ -31,10 +32,7 @@ async function runAlice (options) {
   logger.info('#0 Initialize rust API from NodeJS')
   await demoCommon.initRustApiAndLogger(logLevel)
 
-  if (options.comm === 'aries') {
-    provisionConfig.protocol_type = '4.0'
-    logger.info('Running with Aries VCX Enabled! Make sure VCX agency is configured to use protocol_type 2.0')
-  }
+  provisionConfig.protocol_type = options.protocolType
 
   if (options.postgresql) {
     await demoCommon.loadPostgresPlugin(provisionConfig)
@@ -152,10 +150,10 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'comm',
+    name: 'protocolType',
     type: String,
-    description: 'Communication method. Possible values: aries, legacy. Default is aries.',
-    defaultValue: 'aries'
+    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
+    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -171,14 +169,13 @@ const usage = [
     optionList: optionDefinitions
   },
   {
-    content: 'Project home: {underline https://github.com/Patrik-Stas/indy-wallet-watch}'
+    content: 'Project home: {underline https://github.com/AbsaOSS/libvcx}'
   }
 ]
 
 function areOptionsValid (options) {
-  const allowedCommMethods = ['aries', 'legacy']
-  if (!(allowedCommMethods.includes(options.comm))) {
-    console.error(`Unknown communication method ${options.comm}. Only ${JSON.stringify(allowedCommMethods)} are allowed.`)
+  if (!(allowedProtocolTypes.includes(options.protocolType))) {
+    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
     return false
   }
   return true
