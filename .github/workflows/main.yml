@@ -435,7 +435,7 @@ jobs:
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run compile && \
-                                npm test)'
+                                LIBVCX_FFI_ARCHITECTURE=x64 npm test)'
 
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04

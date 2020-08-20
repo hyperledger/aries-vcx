@@ -58,20 +58,24 @@ WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx
 COPY --chown=node ./wrappers/node ./wrappers/node
 
+RUN rm wrappers/node/.npmrc
+
 RUN echo '@alpine38 http://dl-cdn.alpinelinux.org/alpine/v3.8/main' >> /etc/apk/repositories
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
         bash \
+        cargo \
         g++ \
         gcc \
         git \
         libsodium-dev \
         libzmq \
+        nodejs \
+        npm \
         make \
-        nodejs@alpine38 \
-        npm@alpine38 \
         openssl-dev \
+        rust \
         python2 \
         zeromq-dev
 
