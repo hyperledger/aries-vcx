@@ -58,8 +58,6 @@ WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx
 COPY --chown=node ./wrappers/node ./wrappers/node
 
-RUN rm wrappers/node/.npmrc
-
 RUN echo '@alpine38 http://dl-cdn.alpinelinux.org/alpine/v3.8/main' >> /etc/apk/repositories
 
 RUN apk update && apk upgrade
