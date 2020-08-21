@@ -47,7 +47,6 @@ const testConfig = {
   institution_name: 'default',
   agency_did: '2hoqvcwupRTUNkXn6ArYzs',
   institution_did: '2hoqvcwupRTUNkXn6ArYzs',
-  webhook_url: 'http://127.0.0.1:8080',
   sdk_to_remote_did: '2hoqvcwupRTUNkXn6ArYzs',
   remote_to_sdk_did: '2hoqvcwupRTUNkXn6ArYzs',
   sdk_to_remote_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
