@@ -32,7 +32,7 @@ describe('Using the vcx ffi directly', () => {
   const libDir = libPath[platform.toLowerCase()] || libPath['linux']
   const run = new VCXRuntime({ basepath: `${libDir}libvcx${postfix}` })
 
-  before(() => initVcxTestMode())
+  before(() => initVcxTestMode('3.0'))
 
   it('a call to vcx_connection_create should return 0', () => {
     const result = run.ffi.vcx_connection_create(

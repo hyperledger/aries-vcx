@@ -363,7 +363,7 @@ jobs:
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run compile && \
-                                npm test)'
+                                npm run test:aries)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:

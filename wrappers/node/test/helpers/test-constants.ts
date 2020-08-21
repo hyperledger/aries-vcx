@@ -1,5 +1,8 @@
 export const VCX_CONFIG_TEST_MODE = 'ENABLE_TEST_MODE'
 export const TIMEOUT_GC = 300000
+export const PROTOCOL_TYPE_LEGACY = '1.0'
+export const PROTOCOL_TYPE_ARIES = '3.0'
+// eslint-disable-next-line no-multi-str
 export const INVITE_ACCEPTED_MESSAGE = '{ "statusCode": "MS-104", "payload": \
 [ -126, -91, 64, 116, 121, 112, 101, -125, -92, 110, 97, 109, 101, -83, 67, 111, \
   110, 110, 82, 101, 113, 65, 110, 115, 119, 101, 114, -93, 118, 101, 114, -93, 49, \
@@ -25,6 +28,7 @@ export const INVITE_ACCEPTED_MESSAGE = '{ "statusCode": "MS-104", "payload": \
   111, 110, 101, 107, 110, 54, 88, 75, 122, 122, 122, 86, 68, 90, 107, 98, 114, 74, 85, \
   56, 86, 104, 99, 114 ], "senderDID": "NsQ1rvm6TrsHx1TB4xEh55", "uid": "owm5yta", \
   "type": "connReqAnswer", "deliveryDetails": [] }'
+// eslint-disable-next-line no-multi-str
 export const INVITE_REDIRECTED_MESSAGE = '{ "statusCode": "MS-107", "payload": \
 [-110, -109, -81, 99, 111, 110, 110, 82, 101, 113, 82, 101, 100, 105, 114, 101, 99, 116, -93, 49, 46, 48, -84, 105, \
   110, 100, 121, 46, 109, 115, 103, 112, 97, 99, 107, -36, 0, -24, -48, -111, -48, -105, -48, -74, 57, 54, 106, 111, \
@@ -38,6 +42,7 @@ export const INVITE_REDIRECTED_MESSAGE = '{ "statusCode": "MS-107", "payload": \
   98, 115, 110, 81, 86, 66, 68, 84, 115, 67, 100, 119, 122, 75, 114, 52, 54, 120, 87, 116, 80, 43, 78, 65, 68, 73, 57, \
   88, 68, 71, 55, 50, 50, 103, 113, 86, 80, 77, 104, 117, 76, 90, 103, 89, 67, 103, 61, 61], \
   "senderDID": "NsQ1rvm6TrsHx1TB4xEh55", "uid": "owm5yta", "type": "connReqRedirect", "deliveryDetails": [] }'
+// eslint-disable-next-line no-multi-str
 export const INVITE_DETAILS = '{"statusCode":"MS-101","connReqId":"NjcwOWU","senderDetail":\
   {"name":"ent-name","agentKeyDlgProof":{"agentDID":"U5LXs4U7P9msh647kToezy","agentDelegatedKey":\
   "FktSZg8idAVzyQZrdUppK6FTrfAzW3wWVzAjJAfdUvJq","signature":\

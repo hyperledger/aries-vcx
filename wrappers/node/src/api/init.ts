@@ -16,7 +16,9 @@ import { IInitVCXOptions } from './common'
  * ```
  */
 export async function initVcx (configPath: string, options: IInitVCXOptions = {}): Promise<void> {
-  initRustAPI(options.libVCXPath)
+  const rustapi = initRustAPI(options.libVCXPath)
+  const rustLogPattern = process.env.RUST_LOG || 'vcx=info'
+  await rustapi.vcx_set_default_logger(rustLogPattern)
   let rc = null
   try {
     return await createFFICallbackPromise<void>(
@@ -66,7 +68,9 @@ export async function initVcx (configPath: string, options: IInitVCXOptions = {}
  * ```
  */
 export async function initVcxWithConfig (config: string, options: IInitVCXOptions = {}): Promise<void> {
-  initRustAPI(options.libVCXPath)
+  const rustapi = initRustAPI(options.libVCXPath)
+  const rustLogPattern = process.env.RUST_LOG || 'vcx=info'
+  await rustapi.vcx_set_default_logger(rustLogPattern)
   let rc = null
   try {
     return await createFFICallbackPromise<void>(
