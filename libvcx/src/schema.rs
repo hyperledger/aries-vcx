@@ -252,6 +252,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_schema_to_string() {
         let _setup = SetupMocks::init();
 
@@ -276,6 +277,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -288,6 +290,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -301,6 +304,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_schema_attrs_success() {
         let _setup = SetupMocks::init();
 
@@ -310,6 +314,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
 
@@ -377,6 +382,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -398,6 +404,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_handle_errors() {
         let _setup = SetupEmpty::init();
 

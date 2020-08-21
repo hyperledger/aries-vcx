@@ -557,6 +557,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_address() {
         let _setup = SetupMocks::init();
 
@@ -565,6 +566,7 @@ pub mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_sign_with_address() {
         let _setup = SetupMocks::init();
 
@@ -573,6 +575,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verify_with_address() {
         let _setup = SetupMocks::init();
 
@@ -581,6 +584,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_addresses() {
         let _setup = SetupMocks::init();
 
@@ -589,6 +593,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_wallet_token_info() {
         let _setup = SetupMocks::init();
 
@@ -653,6 +658,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_ledger_fees() {
         let _setup = SetupMocks::init();
 
@@ -672,6 +678,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_address_balance() {
         let _setup = SetupDefaults::init();
 
@@ -684,6 +691,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_inputs() {
         let _setup = SetupMocks::init();
 
@@ -707,6 +715,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_gen_outputs_for_txn_fees() {
         let _setup = SetupMocks::init();
 
@@ -724,6 +733,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_gen_outputs_for_transfer_of_tokens() {
         let _setup = SetupMocks::init();
 
@@ -735,6 +745,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_txn_cost() {
         let _setup = SetupMocks::init();
 
@@ -746,6 +757,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_pay_for_txn() {
         let _setup = SetupMocks::init();
 
@@ -903,6 +915,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_info_to_string() {
         let _setup = SetupDefaults::init();
 
@@ -958,6 +971,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_action_price_for_requester_match_to_constraint() {
         let _setup = SetupMocks::init();
 
@@ -972,6 +986,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_action_price_for_requester_not_match_to_constraint() {
         let _setup = SetupMocks::init();
 

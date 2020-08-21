@@ -906,6 +906,7 @@ pub mod tests {
     use utils::timeout::TimeoutUtils;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_token_info() {
         let _setup = SetupMocks::init();
 
@@ -918,6 +919,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_tokens() {
         let _setup = SetupMocks::init();
 
@@ -932,6 +934,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_address() {
         let _setup = SetupMocks::init();
 
@@ -944,6 +947,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_sign_with_address_api() {
         let _setup = SetupMocks::init();
 
@@ -962,6 +966,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verify_with_address_api() {
         let _setup = SetupMocks::init();
 
@@ -1047,6 +1052,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_add_record() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1080,6 +1086,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_add_record_with_tag() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1100,6 +1107,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_record_fails_with_no_value() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1123,6 +1131,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_record_value_success() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1159,6 +1168,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_delete_record() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1198,6 +1208,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_record_value() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1244,6 +1255,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_import_export() {
         let _setup = SetupDefaults::init();
 

@@ -251,12 +251,12 @@ impl MessageId {
 }
 
 impl Default for MessageId {
-    #[cfg(all(test, not(feature = "aries")))]
+    #[cfg(test)]
     fn default() -> MessageId {
         MessageId::id()
     }
 
-    #[cfg(any(not(test), feature = "aries"))]
+    #[cfg(not(test))]
     fn default() -> MessageId {
         use utils::uuid;
         MessageId(uuid::uuid())

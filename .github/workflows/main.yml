@@ -101,7 +101,7 @@ jobs:
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
 
-          DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.0"
+          DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.2"
           echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
 
           DOCKER_IMG_NAME_ANDROID="android-test"
@@ -277,22 +277,27 @@ jobs:
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Start services
-        run: |
-          set -x
-          docker images
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
-      - name: Run libvcx tests
+      - name: Run quick unit tests
         run: |
           set -x
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release && \
-                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
-                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_v2" && \
-                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests aries" -- v3::test::aries_demo --exact)'
+                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "general_test aries")'
+
+      - name: Start services for integration tests
+        run: |
+          set -x
+          docker images
+          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
+
+      - name: Run integration tests
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(cd $HOME/libvcx && \
+                                RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
 
   test-android-build:
     runs-on: ubuntu-16.04

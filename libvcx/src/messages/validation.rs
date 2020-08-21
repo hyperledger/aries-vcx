@@ -75,6 +75,7 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_is_b58_and_valid_length() {
         let _setup = SetupDefaults::init();
 
@@ -86,6 +87,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_is_b58_but_invalid_length() {
         let _setup = SetupDefaults::init();
 
@@ -97,6 +99,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_did_with_non_base58() {
         let _setup = SetupDefaults::init();
 
@@ -108,6 +111,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_and_valid_length() {
         let _setup = SetupDefaults::init();
 
@@ -119,6 +123,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_but_invalid_length() {
         let _setup = SetupDefaults::init();
 
@@ -130,6 +135,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_verkey_with_non_base58() {
         let _setup = SetupDefaults::init();
 
@@ -141,6 +147,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_payment_plugin_validation() {
         let _setup = SetupDefaults::init();
 
@@ -148,6 +155,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_payment_plugin_validation_empty_string() {
         let _setup = SetupDefaults::init();
 

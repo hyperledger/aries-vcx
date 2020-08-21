@@ -570,6 +570,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_create_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -608,6 +609,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_serialize() {
         let _setup = SetupMocks::init();
 
@@ -618,6 +620,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -629,6 +632,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_schema_id_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -642,6 +646,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_attrs() {
         let _setup = SetupMocks::init();
 
@@ -659,6 +664,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
         let _setup = SetupMocks::init();
 
@@ -688,6 +694,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_release() {
         let _setup = SetupMocks::init();
 
@@ -699,6 +706,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
@@ -719,6 +727,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_state() {
         let _setup = SetupMocks::init();
 

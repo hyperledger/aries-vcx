@@ -15,9 +15,11 @@ crate-type = ["staticlib","rlib", "cdylib"]
 [features]
 default = []
 pool_tests = []
-agency = []
+agency = [] # migrate these to v2 agency
 agency_v2 = []
+pool_legacy_agency_tests = [] # migrate the test using this
 aries = []
+general_test = []
 # Causes the build to fail on all warnings
 fatal_warnings = []
 

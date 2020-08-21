@@ -721,6 +721,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_proof_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -732,6 +733,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_revocation_details() {
         let _setup = SetupMocks::init();
 
@@ -754,6 +756,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_nonce() {
         let _setup = SetupDefaults::init();
 
@@ -762,6 +765,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -777,6 +781,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -795,6 +800,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_proof() {
         let _setup = SetupMocks::init();
 
@@ -808,6 +814,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -828,6 +835,7 @@ pub mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_proof_request_fails_with_no_pw() {
         //This test has 2 purposes:
         //1. when send_proof_request fails, Ok(c.send_proof_request(connection_handle)?) returns error instead of Ok(_)
@@ -847,6 +855,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_fails_with_no_proof() {
         let _setup = SetupMocks::init();
 
@@ -860,6 +869,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_pending_proof() {
         let _setup = SetupMocks::init();
 
@@ -897,6 +907,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -906,6 +917,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_reject_message() {
         let _setup = SetupMocks::init();
 
@@ -919,6 +931,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_returns_proof_when_proof_state_invalid() {
         let _setup = SetupMocks::init();
 
@@ -938,6 +951,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_credential_defs_json_with_multiple_credentials() {
         let _setup = SetupMocks::init();
 
@@ -962,6 +976,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_schemas_json_with_multiple_schemas() {
         let _setup = SetupMocks::init();
 
@@ -986,6 +1001,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_rev_reg_defs_json() {
         let _setup = SetupMocks::init();
 
@@ -1010,6 +1026,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_rev_reg_json() {
         let _setup = SetupMocks::init();
 
@@ -1034,6 +1051,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof() {
         let _setup = SetupMocks::init();
 
@@ -1048,6 +1066,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -1066,6 +1085,7 @@ pub mod tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1109,6 +1129,7 @@ pub mod tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_proof_request_can_be_retried() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1133,6 +1154,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_request_status_can_be_retried() {
         let _setup = SetupMocks::init();
 
@@ -1161,6 +1183,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_errors() {
         let _setup = SetupLibraryWallet::init();
 

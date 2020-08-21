@@ -275,6 +275,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet() {
         let _setup = SetupLibraryWallet::init();
 
@@ -283,6 +284,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_for_unknown_type() {
         let _setup = SetupDefaults::init();
 
@@ -290,6 +292,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_calls_fail_with_different_key_derivation() {
         let _setup = SetupDefaults::init();
 
@@ -321,6 +324,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_import_export_with_different_wallet_key() {
         let _setup = SetupDefaults::init();
 
@@ -350,6 +354,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_wallet_import_export() {
         let _setup = SetupDefaults::init();
 
@@ -381,6 +386,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_import_fails_with_missing_configs() {
         let _setup = SetupEmpty::init();
 
@@ -412,6 +418,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_import_wallet_fails_with_existing_wallet() {
         let _setup = SetupDefaults::init();
 
@@ -431,6 +438,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_import_wallet_fails_with_invalid_path() {
         let _setup = SetupDefaults::init();
 
@@ -446,6 +454,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_import_wallet_fails_with_invalid_backup_key() {
         let _setup = SetupDefaults::init();
 
@@ -466,6 +475,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_add_new_record_with_no_tag() {
         let _setup = SetupLibraryWallet::init();
 
@@ -475,6 +485,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_add_duplicate_record_fails() {
         let _setup = SetupLibraryWallet::init();
 
@@ -487,6 +498,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_add_record_with_same_id_but_different_type_success() {
         let _setup = SetupLibraryWallet::init();
 
@@ -500,6 +512,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_retrieve_missing_record_fails() {
         let _setup = SetupLibraryWallet::init();
 
@@ -516,6 +529,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_retrieve_record_success() {
         let _setup = SetupLibraryWallet::init();
 
@@ -535,6 +549,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_delete_record_fails_with_no_record() {
         let _setup = SetupLibraryWallet::init();
 
@@ -545,6 +560,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_delete_record_success() {
         let _setup = SetupLibraryWallet::init();
 
@@ -563,6 +579,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_record_value_fails_with_no_initial_record() {
         let _setup = SetupLibraryWallet::init();
 
@@ -573,6 +590,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_record_value_success() {
         let _setup = SetupLibraryWallet::init();
 

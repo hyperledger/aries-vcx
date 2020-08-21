@@ -629,6 +629,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_can_be_called_with_no_pool_config() {
         let _setup = SetupWallet::init();
 
@@ -645,6 +646,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_fails_with_no_wallet_key() {
         let _setup = SetupEmpty::init();
 
@@ -657,6 +659,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_config_with_no_wallet_uses_default() {
         let _setup = SetupEmpty::init();
 
@@ -724,6 +727,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_after_importing_wallet_success() {
         let _setup = SetupDefaults::init();
 
@@ -752,6 +756,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_with_imported_wallet_fails_with_different_params() {
         let _setup = SetupDefaults::init();
 
@@ -781,6 +786,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_import_after_init_fails() {
         let _setup = SetupDefaults::init();
 
@@ -806,6 +812,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_bad_path() {
         let _setup = SetupEmpty::init();
 
@@ -814,6 +821,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_init_no_config_path() {
         let _setup = SetupEmpty::init();
 
@@ -825,6 +833,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_shutdown_with_no_previous_config() {
         let _setup = SetupDefaults::init();
 
@@ -833,6 +842,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_shutdown() {
         let _setup = SetupMocks::init();
 
@@ -857,6 +867,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_c_message() {
         let _setup = SetupMocks::init();
 
@@ -874,6 +885,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_version() {
         let _setup = SetupDefaults::init();
 
@@ -882,6 +894,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_update_institution_info() {
         let _setup = SetupDefaults::init();
 
@@ -898,6 +911,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_update_institution_webhook() {
         let _setup = SetupDefaults::init();
 
@@ -913,6 +927,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_no_error() {
         let _setup = SetupDefaults::init();
 
@@ -925,6 +940,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_sync_error() {
         let _setup = SetupDefaults::init();
 
@@ -936,6 +952,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_current_error_works_for_async_error() {
         let _setup = SetupDefaults::init();
 
@@ -953,6 +970,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_set_active_txn_author_agreement_meta() {
         let _setup = SetupMocks::init();
 
@@ -985,6 +1003,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_get_ledger_author_agreement() {
         let _setup = SetupMocks::init();
 
@@ -1052,6 +1071,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_no_agency_config() {
         let _setup = SetupMocks::init();
 

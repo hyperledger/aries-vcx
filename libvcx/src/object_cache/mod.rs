@@ -108,6 +108,7 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn create_test() {
         let _setup = SetupDefaults::init();
 
@@ -115,6 +116,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_closure() {
         let _setup = SetupDefaults::init();
 
@@ -125,6 +127,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn to_string_test() {
         let _setup = SetupDefaults::init();
 
@@ -138,6 +141,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn mut_object_test() {
         let _setup = SetupDefaults::init();
 

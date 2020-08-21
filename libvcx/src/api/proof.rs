@@ -689,6 +689,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_success() {
         let _setup = SetupMocks::init();
 
@@ -697,6 +698,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_no_agency() {
         let _setup = SetupMocks::init();
 
@@ -709,6 +711,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_fails() {
         let _setup = SetupMocks::init();
 
@@ -724,6 +727,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -736,6 +740,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_serialize() {
         let _setup = SetupMocks::init();
 
@@ -750,6 +755,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -763,6 +769,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_update_state() {
         let _setup = SetupMocks::init();
 
@@ -778,6 +785,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_send_request() {
         let _setup = SetupMocks::init();
 
@@ -809,6 +817,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_fails_when_not_ready_with_proof() {
         let _setup = SetupMocks::init();
 
@@ -824,6 +833,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupMocks::init();
 
@@ -843,6 +853,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 

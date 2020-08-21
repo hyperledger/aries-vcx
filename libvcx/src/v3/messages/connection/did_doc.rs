@@ -461,6 +461,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_build_works() {
         let mut did_doc: DidDoc = DidDoc::default();
         did_doc.set_id(_id());
@@ -471,6 +472,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_validate_works() {
         _did_doc().validate().unwrap();
         _did_doc_2().validate().unwrap();
@@ -480,11 +482,13 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_key_for_reference_works() {
         assert_eq!(_key_1(), _did_doc().key_for_reference(&_key_reference_1()));
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_resolve_keys_works() {
         let (recipient_keys, routing_keys) = _did_doc().resolve_keys();
         assert_eq!(_recipient_keys(), recipient_keys);
@@ -496,17 +500,20 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_build_key_reference_works() {
         assert_eq!(_key_reference_1(), DidDoc::_build_key_reference(&_id(), "1"));
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_parse_key_reference_works() {
         assert_eq!(String::from("1"), DidDoc::_parse_key_reference(&_key_reference_1()));
         assert_eq!(_key_1(), DidDoc::_parse_key_reference(&_key_1()));
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_did_doc_from_invitation_works() {
         let mut did_doc = DidDoc::default();
         did_doc.set_id(MessageId::id().0);

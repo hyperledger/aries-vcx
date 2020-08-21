@@ -134,6 +134,7 @@ mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_key_set_values() {
         let _setup = SetupDefaults::init();
 
@@ -146,6 +147,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_key_set_values_and_serialize() {
         let _setup = SetupLibraryWallet::init();
 
@@ -165,6 +167,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v1_response() {
         let _setup = SetupMocks::init();
 
@@ -177,6 +180,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
 
@@ -189,6 +193,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
         let _setup = SetupDefaults::init();
 
