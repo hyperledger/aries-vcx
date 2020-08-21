@@ -1,94 +1,52 @@
+const { provisionAgent } = require('../client-vcx/vcx-workflows')
 const { DisclosedProof } = require('../dist/src/api/disclosed-proof')
-const { Connection } = require('../dist/src/api/connection')
 const { Credential } = require('../dist/src/api/credential')
 const { StateType } = require('../dist/src')
 const readlineSync = require('readline-sync')
+const { createVcxClient } = require('../client-vcx/vcxclient')
+const { createStorageService } = require('../client-vcx/storage-service')
+const { waitUntilAgencyIsReady } = require('../common/common')
+const { initRustapi } = require('../client-vcx/vcx-workflows')
 const sleepPromise = require('sleep-promise')
-const demoCommon = require('./common')
-const logger = require('./logger')
-const url = require('url')
-const isPortReachable = require('is-port-reachable')
-const { runScript } = require('./script-comon')
+const logger = require('../common/logger')
+const { runScript } = require('../common/script-comon')
+const uuid = require('uuid')
 
-const utime = Math.floor(new Date() / 1000)
-const optionalWebhook = 'http://localhost:7209/notifications/alice'
 const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 
-const provisionConfig = {
-  agency_url: 'http://localhost:8080',
-  agency_did: 'VsKV7grR1BUE29mG2Fm2kX',
-  agency_verkey: 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',
-  wallet_name: `node_vcx_demo_alice_wallet_${utime}`,
-  wallet_key: '123',
-  payment_method: 'null',
-  enterprise_seed: '000000000000000000000000Trustee1'
-}
-
-const logLevel = 'error'
-
 async function runAlice (options) {
-  await demoCommon.initLibNullPay()
+  const testRunId = uuid.v4()
+  const seed = '000000000000000000000000Trustee1'
+  const protocolType = options.protocolType
+  const agentName = `alice-${testRunId}`
+  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
+  const usePostgresWallet = false
+  const logLevel = 'error'
 
-  logger.info('#0 Initialize rust API from NodeJS')
-  await demoCommon.initRustApiAndLogger(logLevel)
+  await initRustapi(logLevel)
 
-  provisionConfig.protocol_type = options.protocolType
+  const agencyUrl = 'http://localhost:8080'
+  await waitUntilAgencyIsReady(agencyUrl, logger)
 
-  if (options.postgresql) {
-    await demoCommon.loadPostgresPlugin(provisionConfig)
-    provisionConfig.wallet_type = 'postgres_storage'
-    provisionConfig.storage_config = '{"url":"localhost:5432"}'
-    provisionConfig.storage_credentials = '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'
-    logger.info(`Running with PostreSQL wallet enabled! Config = ${provisionConfig.storage_config}`)
-  } else {
-    logger.info('Running with builtin wallet.')
+  const storageService = await createStorageService(agentName)
+
+  if (!await storageService.agentProvisionExists()) {
+    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+    await storageService.saveAgentProvision(agentProvision)
   }
-  if (await isPortReachable(url.parse(optionalWebhook).port, { host: url.parse(optionalWebhook).hostname })) { // eslint-disable-line
-    provisionConfig.webhook_url = optionalWebhook
-    logger.info(`Running with webhook notifications enabled! Webhook url = ${optionalWebhook}`)
-  } else {
-    logger.info('Webhook url will not be used')
+  const vcxClient = await createVcxClient(storageService, logger)
+
+  const connectionName = `alice-${testRunId}`
+  const invitationString = readlineSync.question('Enter connection invitation:\n')
+  await vcxClient.connectionAccept(connectionName, invitationString)
+
+  const connectionToFaber = await vcxClient.connectionAutoupdate(connectionName)
+  if (!connectionToFaber) {
+    throw Error('Connection with alice was not established.')
   }
+  logger.info('Connection to alice was Accepted!')
 
-  logger.info('#8 Provision an agent and wallet, get back configuration details')
-  const config = await demoCommon.provisionAgentInAgency(provisionConfig)
-
-  logger.info('#9 Initialize libvcx with new configuration')
-  await demoCommon.initVcxWithProvisionedAgentConfig(config)
-
-  logger.info('Input faber.py invitation details')
-  const details = readlineSync.question('Enter your invite details: ')
-  const jdetails = JSON.parse(details)
-
-  logger.info('#10 Convert to valid json and string and create a connection to faber')
-  const connectionToFaber = await Connection.createWithInvite({ id: 'faber', invite: JSON.stringify(jdetails) })
-  await connectionToFaber.connect({ data: '{"use_public_did": true}' })
-  let connectionstate = await connectionToFaber.getState()
-  while (connectionstate !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await connectionToFaber.updateState()
-    connectionstate = await connectionToFaber.getState()
-  }
-
-  logger.info('#11 Wait for faber.py to issue a credential offer')
-  await sleepPromise(10000)
-  const offers = await Credential.getOffers(connectionToFaber)
-  logger.info(`Alice found ${offers.length} credential offers.`)
-  logger.debug(JSON.stringify(offers))
-
-  // Create a credential object from the credential offer
-  const credential = await Credential.create({ sourceId: 'credential', offer: JSON.stringify(offers[0]) })
-
-  logger.info('#15 After receiving credential offer, send credential request')
-  await credential.sendRequest({ connection: connectionToFaber, payment: 0 })
-
-  logger.info('#16 Poll agency and accept credential offer from faber')
-  let credentialState = await credential.getState()
-  while (credentialState !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await credential.updateState()
-    credentialState = await credential.getState()
-  }
+  await vcxClient.waitForCredentialOfferAndAccept(connectionName)
 
   logger.info('#22 Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)

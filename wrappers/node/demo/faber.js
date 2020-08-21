@@ -1,90 +1,64 @@
-import { initializeVcxClient } from './workflows-vcx'
-
-const { CredentialDef } = require('../dist/src/api/credential-def')
-const { IssuerCredential } = require('../dist/src/api/issuer-credential')
+// todo: fix next line
+const { provisionAgent } = require('../client-vcx/vcx-workflows')
 const { Proof } = require('../dist/src/api/proof')
-const { Connection } = require('../dist/src/api/connection')
-const { Schema } = require('./../dist/src/api/schema')
 const { StateType, ProofState } = require('../dist/src')
 const sleepPromise = require('sleep-promise')
-const { getRandomInt } = require('./common')
-const logger = require('./logger')
-const { runScript } = require('./script-comon')
+const { runScript } = require('../common/script-comon')
+const { createVcxClient } = require('../client-vcx/vcxclient')
+const logger = require('../common/logger')
 const assert = require('assert')
-
-const utime = Math.floor(new Date() / 1000)
-const webhookUrl = 'http://localhost:7209/notifications/faber'
-
-const TAA_ACCEPT = process.env.TAA_ACCEPT === 'true' || false
-
-const provisionConfig = {
-  agency_url: 'http://localhost:8080',
-  agency_did: 'VsKV7grR1BUE29mG2Fm2kX',
-  agency_verkey: 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',
-  wallet_name: `node_vcx_demo_faber_wallet_${utime}`,
-  wallet_key: '123',
-  payment_method: 'null',
-  enterprise_seed: '000000000000000000000000Trustee1'
-}
-
-const logLevel = 'error'
+const { initRustapi } = require('../client-vcx/vcx-workflows')
+const uuid = require('uuid')
+const { waitUntilAgencyIsReady } = require('../common/common')
+const { createStorageService } = require('../client-vcx/storage-service')
+const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 
 async function runFaber (options) {
-  provisionConfig.protocol_type = options.protocolType
-  await initializeVcxClient(provisionConfig, options.postgresql, webhookUrl, TAA_ACCEPT, logger, logLevel)
+  const testRunId = uuid.v4()
+  const seed = '000000000000000000000000Trustee1'
+  const protocolType = options.protocolType
+  const agentName = `alice-${testRunId}`
+  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
+  const usePostgresWallet = false
+  const acceptTaa = process.env.ACCEPT_TAA || false
+  const logLevel = 'error'
 
-  const version = `${getRandomInt(1, 101)}.${getRandomInt(1, 101)}.${getRandomInt(1, 101)}`
-  const schemaData = {
-    data: {
-      attrNames: ['name', 'last_name', 'sex', 'date', 'degree', 'age'],
-      name: 'FaberVcx',
-      version
-    },
-    paymentHandle: 0,
-    sourceId: `your-identifier-fabervcx-${version}`
+  await initRustapi(logLevel)
+
+  const agencyUrl = 'http://localhost:8080'
+  await waitUntilAgencyIsReady(agencyUrl, logger)
+
+  const storageService = await createStorageService(agentName)
+
+  if (!await storageService.agentProvisionExists()) {
+    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+    await storageService.saveAgentProvision(agentProvision)
   }
-  logger.info(`#3 Create a new schema on the ledger: ${JSON.stringify(schemaData, null, 2)}`)
+  const agentProvision = await storageService.loadAgentProvision()
+  const issuerDid = agentProvision.institution_did
+  const vcxClient = await createVcxClient(storageService, logger)
 
-  const schema = await Schema.create(schemaData)
+  if (acceptTaa) {
+    await vcxClient.acceptTaa()
+  }
+
+  const schema = await vcxClient.createSchema()
   const schemaId = await schema.getSchemaId()
-  logger.info(`Created schema with id ${schemaId}`)
+  await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
 
-  logger.info('#4 Create a new credential definition on the ledger')
-  const data = {
-    name: 'DemoCredential123',
-    paymentHandle: 0,
-    revocationDetails: {
-      supportRevocation: true,
-      tailsFile: '/tmp/tails',
-      maxCreds: 5
-    },
-    schemaId: schemaId,
-    sourceId: 'testCredentialDefSourceId123'
-  }
-  const credDef = await CredentialDef.create(data)
-  const credDefId = await credDef.getCredDefId()
-  const credDefHandle = credDef.handle
-  logger.info(`Created credential with id ${credDefId} and handle ${credDefHandle}`)
-
-  logger.info('#5 Create a connection to alice and print out the invite details')
-  const connectionToAlice = await Connection.create({ id: 'alice' })
-  await connectionToAlice.connect('{}')
-  await connectionToAlice.updateState()
-  const details = await connectionToAlice.inviteDetails(false)
+  const connectionName = `alice-${testRunId}`
+  const invitationString = await vcxClient.connectionCreate(connectionName)
   logger.info('\n\n**invite details**')
   logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
   logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
   logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
   logger.info('\n******************\n\n')
-  logger.info(JSON.stringify(JSON.parse(details)))
+  logger.info(invitationString)
   logger.info('\n\n******************\n\n')
 
-  logger.info('#6 Polling agency and waiting for alice to accept the invitation. (start alice.py now)')
-  let connectionState = await connectionToAlice.getState()
-  while (connectionState !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await connectionToAlice.updateState()
-    connectionState = await connectionToAlice.getState()
+  const connectionToAlice = await vcxClient.connectionAutoupdate(connectionName, 30, 3000)
+  if (!connectionToAlice) {
+    throw Error('Connection with alice was not established.')
   }
   logger.info('Connection to alice was Accepted!')
 
@@ -97,48 +71,16 @@ async function runFaber (options) {
     age: '25'
   }
 
-  logger.info('#12 Create an IssuerCredential object using the schema and credential definition')
-
-  const credentialForAlice = await IssuerCredential.create({
-    attr: schemaAttrs,
-    sourceId: 'alice_degree',
-    credDefHandle,
-    credentialName: 'cred',
-    price: '0'
-  })
-
-  logger.info('#13 Issue credential offer to alice')
-  await credentialForAlice.sendOffer(connectionToAlice)
-  await credentialForAlice.updateState()
-
-  logger.info('#14 Poll agency and wait for alice to send a credential request')
-  let credentialState = await credentialForAlice.getState()
-  while (credentialState !== StateType.RequestReceived) {
-    await sleepPromise(2000)
-    await credentialForAlice.updateState()
-    credentialState = await credentialForAlice.getState()
-  }
-
-  logger.info('#17 Issue credential to alice')
-  await credentialForAlice.sendCredential(connectionToAlice)
-
-  logger.info('#18 Wait for alice to accept credential')
-  await credentialForAlice.updateState()
-  credentialState = await credentialForAlice.getState()
-  while (credentialState !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await credentialForAlice.updateState()
-    credentialState = await credentialForAlice.getState()
-  }
+  await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', connectionName, options.revocation)
 
   const proofAttributes = [
     {
       names: ['name', 'last_name', 'sex'],
-      restrictions: [{ issuer_did: agentProvision.institution_did }]
+      restrictions: [{ issuer_did: issuerDid }]
     },
     {
       name: 'date',
-      restrictions: { issuer_did: agentProvision.institution_did }
+      restrictions: { issuer_did: issuerDid }
     },
     {
       name: 'degree',
@@ -150,10 +92,6 @@ async function runFaber (options) {
     }
   ]
 
-  if (options.revocation) {
-    logger.info('#18.5 Revoking credential')
-    await credentialForAlice.revokeCredential()
-  }
   const proofPredicates = [
     { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: agentProvision.institution_did }] }
   ]
