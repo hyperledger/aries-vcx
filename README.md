@@ -1,4 +1,7 @@
 # LibVCX AbsaFork
+
+![CI build](https://github.com/AbsaOSS/libvcx/workflows/CI/badge.svg)
+
 - LibVCX is Aries c-callable implementation written in Rust with language wrappers available in Java (+Android), iOS, 
 NodeJS, Python and Rust. 
 - This is fork of LibVCX which was previously developed 
