@@ -138,10 +138,6 @@ impl GetMessagesBuilder {
 
         let response = httpclient::post_u8(&data)?;
 
-        if settings::agency_mocks_enabled() && response.len() == 0 {
-            return Ok(Vec::new());
-        }
-
         self.parse_response(response)
     }
 
@@ -163,10 +159,6 @@ impl GetMessagesBuilder {
         let data = self.prepare_download_request()?;
 
         let response = httpclient::post_u8(&data)?;
-
-        if settings::agency_mocks_enabled() && response.len() == 0 {
-            return Ok(Vec::new());
-        }
 
         let response = self.parse_download_messages_response(response)?;
 
