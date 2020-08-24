@@ -76,7 +76,7 @@ jobs:
             then
               PUBLISH_VERSION="$REPO_VERSION_DESIRED"
               RELEASE="true"
-              echo "This is push to master, and version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will publish and release $REPO_VERSION_DESIRED."
+              echo "This is push to master, and version was bumped $REPO_VERSION_MOST_RECENT->$REPO_VERSION_DESIRED. Will publish and release $REPO_VERSION_DESIRED."
             else
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
               echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
