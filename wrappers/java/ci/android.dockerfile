@@ -23,18 +23,19 @@ RUN apt-get update && \
       unzip \
       jq
 
+# Add indy user to sudoers
+RUN useradd -ms /bin/bash -u $USER_ID indy
+RUN usermod -aG sudo indy
+
+USER root
+
+# Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ruby \
         ruby-dev \
         rubygems \
     && gem install --no-ri --no-rdoc rake fpm \
     && rm -rf /var/lib/apt/lists/*
-
-# Add indy user to sudoers
-RUN useradd -ms /bin/bash -u $USER_ID indy
-RUN usermod -aG sudo indy
-
-USER root
 
 # Install JDK
 ARG JAVA_VER=8

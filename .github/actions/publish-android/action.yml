@@ -1,0 +1,59 @@
+name: 'Publish android image'
+
+# defaults:
+#   run:
+#     shell: bash
+
+inputs:
+  abis: 
+    description: 'A space separated list of ABIs to create a AAR for'
+    default: 'armv7 arm64 x86 x86_64'
+  docker-img-name: 
+    description: 'Name of the android image'
+    required: true
+  cache-key:
+    description: 'Cache key under which the android image is stored'
+    required: true
+  rar-path:
+    description: 'Path where the image is stored'
+    default: /tmp/imgcache/img_android.rar
+
+env:
+  DOCKER_BUILDKIT: 1
+
+runs:
+  using: "composite"
+  steps:
+#     - name: Load android image cache
+#       id: load-cached-android-image
+#       uses: actions/cache@v2
+#       with:
+#         path: /tmp/imgcache
+#         key: ${{ inputs.cache-key  }}
+# 
+#     - name: If no cached image found
+#       if: steps.load-cached-android-image.outputs.cache-hit != 'true'
+#       run: echo "ERROR == Expected to find image from cache ${{ inputs.cache-key }}"; exit -1
+#       shell: bash
+# 
+#     - name: Load android image from cache
+#       run: docker load < ${{ inputs.rar-path }}
+#       shell: bash
+
+    - name: Build, run android wrapper tests, and publish artifacts
+      run: |
+        # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw ${{ inputs.docker-img.name }} \
+        docker run --name publish-android-wrapper ${{ inputs.docker-img.name }} \
+                            bash -c "(cd \$HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh ${{ inputs.abis }})"
+        docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
+        docker_image_id=$(docker images | grep ${{ inputs.docker-img.name }} | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
+        mkdir -p /tmp/artifacts/aar
+        docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts/aar
+        docker rm ${docker_id} > /dev/null
+        docker rmi ${docker_image_id} > /dev/null
+      shell: bash
+
+#     - uses: actions/upload-artifact@v2
+#       with:
+#         name: libvcx-android-device
+#         path: /tmp/artifacts/aar
