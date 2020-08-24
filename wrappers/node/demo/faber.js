@@ -12,134 +12,163 @@ const uuid = require('uuid')
 const { waitUntilAgencyIsReady } = require('../common/common')
 const { createStorageService } = require('../client-vcx/storage-service')
 const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+const express = require('express')
+const bodyParser = require('body-parser')
 
 async function runFaber (options) {
-  const testRunId = uuid.v4()
-  const seed = '000000000000000000000000Trustee1'
-  const protocolType = options.protocolType
-  const agentName = `alice-${testRunId}`
-  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
-  const usePostgresWallet = false
-  const acceptTaa = process.env.ACCEPT_TAA || false
-  const logLevel = 'error'
+  let faberServer
+  let exitcode = 0
+  try {
+    const testRunId = uuid.v4()
+    const seed = '000000000000000000000000Trustee1'
+    const protocolType = options.protocolType
+    const agentName = `alice-${testRunId}`
+    const webhookUrl = `http://localhost:7209/notifications/${agentName}`
+    const usePostgresWallet = false
+    const acceptTaa = process.env.ACCEPT_TAA || false
+    const logLevel = 'error'
 
-  await initRustapi(logLevel)
+    await initRustapi(logLevel)
 
-  const agencyUrl = 'http://localhost:8080'
-  await waitUntilAgencyIsReady(agencyUrl, logger)
+    const agencyUrl = 'http://localhost:8080'
+    await waitUntilAgencyIsReady(agencyUrl, logger)
 
-  const storageService = await createStorageService(agentName)
+    const storageService = await createStorageService(agentName)
 
-  if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
-    await storageService.saveAgentProvision(agentProvision)
-  }
-  const agentProvision = await storageService.loadAgentProvision()
-  const issuerDid = agentProvision.institution_did
-  const vcxClient = await createVcxClient(storageService, logger)
-
-  if (acceptTaa) {
-    await vcxClient.acceptTaa()
-  }
-
-  const schema = await vcxClient.createSchema()
-  const schemaId = await schema.getSchemaId()
-  await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
-
-  const connectionName = `alice-${testRunId}`
-  const invitationString = await vcxClient.connectionCreate(connectionName)
-  logger.info('\n\n**invite details**')
-  logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
-  logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
-  logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
-  logger.info('\n******************\n\n')
-  logger.info(invitationString)
-  logger.info('\n\n******************\n\n')
-
-  const connectionToAlice = await vcxClient.connectionAutoupdate(connectionName, 30, 3000)
-  if (!connectionToAlice) {
-    throw Error('Connection with alice was not established.')
-  }
-  logger.info('Connection to alice was Accepted!')
-
-  const schemaAttrs = {
-    name: 'alice',
-    last_name: 'clark',
-    sex: 'female',
-    date: '05-2018',
-    degree: 'maths',
-    age: '25'
-  }
-
-  await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', connectionName, options.revocation)
-
-  const proofAttributes = [
-    {
-      names: ['name', 'last_name', 'sex'],
-      restrictions: [{ issuer_did: issuerDid }]
-    },
-    {
-      name: 'date',
-      restrictions: { issuer_did: issuerDid }
-    },
-    {
-      name: 'degree',
-      restrictions: { 'attr::degree::value': 'maths' }
-    },
-    {
-      name: 'nickname',
-      self_attest_allowed: true
+    if (!await storageService.agentProvisionExists()) {
+      const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+      await storageService.saveAgentProvision(agentProvision)
     }
-  ]
+    const agentProvision = await storageService.loadAgentProvision()
+    const issuerDid = agentProvision.institution_did
+    const vcxClient = await createVcxClient(storageService, logger)
 
-  const proofPredicates = [
-    { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: agentProvision.institution_did }] }
-  ]
+    if (acceptTaa) {
+      await vcxClient.acceptTaa()
+    }
 
-  logger.info('#19 Create a Proof object')
-  const vcxProof = await Proof.create({
-    sourceId: '213',
-    attrs: proofAttributes,
-    preds: proofPredicates,
-    name: 'proofForAlice',
-    revocationInterval: { to: Date.now() }
-  })
+    const schema = await vcxClient.createSchema()
+    const schemaId = await schema.getSchemaId()
+    await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
 
-  logger.info('#20 Request proof of degree from alice')
-  await vcxProof.requestProof(connectionToAlice)
+    const connectionName = `alice-${testRunId}`
+    const invitationString = await vcxClient.connectionCreate(connectionName)
+    logger.info('\n\n**invite details**')
+    logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
+    logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
+    logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
+    logger.info('\n******************\n\n')
+    logger.info(invitationString)
+    logger.info('\n\n******************\n\n')
+    if (options['expose-invitation-port']) {
+      const port = options['expose-invitation-port']
+      try {
+        const appCallbacks = express()
+        appCallbacks.use(bodyParser.json())
+        appCallbacks.get('/',
+          async function (req, res) {
+            res.status(200).send({ invitationString })
+          }
+        )
+        faberServer = appCallbacks.listen(port)
+        logger.info(`The invitation is also available on port ${port}`)
+      } catch (e) {
+        logger.error(`Error trying to expose connection invitation on port ${port}`)
+      }
+    }
 
-  logger.info('#21 Poll agency and wait for alice to provide proof')
-  let proofProtocolState = await vcxProof.getState()
-  logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
-  logger.info(`proofState = ${proofProtocolState}`)
-  while (proofProtocolState !== StateType.Accepted) {
-    // even if revoked credential was used, vcxProof.getState() should in final state return StateType.Accepted
-    await sleepPromise(2000)
-    await vcxProof.updateState()
-    proofProtocolState = await vcxProof.getState()
-    logger.info(`proofState=${proofProtocolState}`)
+    const connectionToAlice = await vcxClient.connectionAutoupdate(connectionName, 30, 3000)
+    if (!connectionToAlice) {
+      throw Error('Connection with alice was not established.')
+    }
+    logger.info('Connection to alice was Accepted!')
+
+    const schemaAttrs = {
+      name: 'alice',
+      last_name: 'clark',
+      sex: 'female',
+      date: '05-2018',
+      degree: 'maths',
+      age: '25'
+    }
+
+    await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', connectionName, options.revocation)
+
+    const proofAttributes = [
+      {
+        names: ['name', 'last_name', 'sex'],
+        restrictions: [{ issuer_did: issuerDid }]
+      },
+      {
+        name: 'date',
+        restrictions: { issuer_did: issuerDid }
+      },
+      {
+        name: 'degree',
+        restrictions: { 'attr::degree::value': 'maths' }
+      },
+      {
+        name: 'nickname',
+        self_attest_allowed: true
+      }
+    ]
+
+    const proofPredicates = [
+      { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: agentProvision.institution_did }] }
+    ]
+
+    logger.info('#19 Create a Proof object')
+    const vcxProof = await Proof.create({
+      sourceId: '213',
+      attrs: proofAttributes,
+      preds: proofPredicates,
+      name: 'proofForAlice',
+      revocationInterval: { to: Date.now() }
+    })
+
+    logger.info('#20 Request proof of degree from alice')
+    await vcxProof.requestProof(connectionToAlice)
+
+    logger.info('#21 Poll agency and wait for alice to provide proof')
+    let proofProtocolState = await vcxProof.getState()
+    logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
+    logger.info(`proofState = ${proofProtocolState}`)
+    while (proofProtocolState !== StateType.Accepted) {
+      // even if revoked credential was used, vcxProof.getState() should in final state return StateType.Accepted
+      await sleepPromise(2000)
+      await vcxProof.updateState()
+      proofProtocolState = await vcxProof.getState()
+      logger.info(`proofState=${proofProtocolState}`)
+    }
+
+    logger.info('#27 Process the proof provided by alice.')
+    const { proofState, proof } = await vcxProof.getProof(connectionToAlice)
+    assert(proofState)
+    assert(proof)
+    logger.info(`proofState = ${JSON.stringify(proofProtocolState)}`)
+    logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
+
+    logger.info('#28 Check if proof is valid.')
+    if (proofState === ProofState.Verified) {
+      logger.warn('Proof is verified.')
+      assert(options.revocation === false)
+    } else if (proofState === ProofState.Invalid) {
+      logger.warn('Proof verification failed, credential has been revoked.')
+      assert(options.revocation === true)
+    } else {
+      logger.error(`Unexpected proof state '${proofState}'.`)
+      process.exit(-1)
+    }
+    logger.info(`Serialized proof ${JSON.stringify(await vcxProof.serialize())}`)
+  } catch (err) {
+    exitcode = -1
+    logger.error(`Faber encountered error ${err.message} ${err.stack}`)
+  } finally {
+    if (faberServer) {
+      await faberServer.close()
+    }
+    process.exit(exitcode)
   }
-
-  logger.info('#27 Process the proof provided by alice.')
-  const { proofState, proof } = await vcxProof.getProof(connectionToAlice)
-  assert(proofState)
-  assert(proof)
-  logger.info(`proofState = ${JSON.stringify(proofProtocolState)}`)
-  logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
-
-  logger.info('#28 Check if proof is valid.')
-  if (proofState === ProofState.Verified) {
-    logger.warn('Proof is verified.')
-    assert(options.revocation === false)
-  } else if (proofState === ProofState.Invalid) {
-    logger.warn('Proof verification failed, credential has been revoked.')
-    assert(options.revocation === true)
-  } else {
-    logger.error(`Unexpected proof state '${proofState}'.`)
-    process.exit(-1)
-  }
-  logger.info(`Serialized proof ${JSON.stringify(await vcxProof.serialize())}`)
-  process.exit(0)
 }
 
 const optionDefinitions = [
@@ -166,6 +195,12 @@ const optionDefinitions = [
     type: Boolean,
     description: 'If specified, the issued credential will be revoked',
     defaultValue: false
+  },
+  {
+    name: 'expose-invitation-port',
+    type: Number,
+    description: 'If specified, invitation will be exposed on this port via HTTP',
+    defaultValue: 8181
   }
 ]
 

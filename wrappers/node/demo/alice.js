@@ -1,6 +1,5 @@
 const { provisionAgent } = require('../client-vcx/vcx-workflows')
 const { DisclosedProof } = require('../dist/src/api/disclosed-proof')
-const { Credential } = require('../dist/src/api/credential')
 const { StateType } = require('../dist/src')
 const readlineSync = require('readline-sync')
 const { createVcxClient } = require('../client-vcx/vcxclient')
@@ -11,8 +10,36 @@ const sleepPromise = require('sleep-promise')
 const logger = require('../common/logger')
 const { runScript } = require('../common/script-comon')
 const uuid = require('uuid')
+const axios = require('axios')
+const isPortReachable = require('is-port-reachable')
+const url = require('url')
 
 const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+
+async function getInvitationString (fetchInviteUrl) {
+  let invitationString
+  if (fetchInviteUrl) {
+    const fetchInviteAttemptThreshold = 30
+    const fetchInviteTimeout = 1000
+    let fetchInviteAttemps = 0
+    while (!invitationString) {
+      if (await isPortReachable(url.parse(fetchInviteUrl).port, { host: url.parse(fetchInviteUrl).hostname })) { // eslint-disable-line
+        ({ data: { invitationString } } = await axios.get(fetchInviteUrl))
+        logger.info(`Invitation ${invitationString} was loaded from ${fetchInviteUrl}.`)
+      } else {
+        logger.info(`Invitation fetch url ${fetchInviteUrl} not yet available. ${fetchInviteAttemps}/${fetchInviteAttemptThreshold}`)
+        await sleepPromise(fetchInviteTimeout)
+      }
+      fetchInviteAttemps++
+      if (fetchInviteAttemps > 15) {
+        throw Error(`Could not reach ${fetchInviteUrl} to fetch connection invitation.`)
+      }
+    }
+  } else {
+    invitationString = readlineSync.question('Enter connection invitation:\n')
+  }
+  return invitationString
+}
 
 async function runAlice (options) {
   const testRunId = uuid.v4()
@@ -37,7 +64,8 @@ async function runAlice (options) {
   const vcxClient = await createVcxClient(storageService, logger)
 
   const connectionName = `alice-${testRunId}`
-  const invitationString = readlineSync.question('Enter connection invitation:\n')
+
+  const invitationString = await getInvitationString(options['autofetch-invitation-url'])
   await vcxClient.connectionAccept(connectionName, invitationString)
 
   const connectionToFaber = await vcxClient.connectionAutoupdate(connectionName)
@@ -118,6 +146,12 @@ const optionDefinitions = [
     type: Boolean,
     description: 'If specified, postresql wallet will be used.',
     defaultValue: false
+  },
+  {
+    name: 'autofetch-invitation-url',
+    type: String,
+    description: 'If specified, postresql wallet will be used.',
+    defaultValue: 'http://localhost:8181'
   }
 ]
 
