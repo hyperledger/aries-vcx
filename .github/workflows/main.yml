@@ -195,42 +195,42 @@ jobs:
 #       - name: Verify libvcx image was loaded
 #         run: |
 #           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
-# 
-#   build-image-android:
-#     needs: workflow-setup
-#     runs-on: ubuntu-16.04
-#     env:
-#       DOCKER_BUILDKIT: 1
-#     steps:
-#       - name: Load up custom variables
-#         run: |
-#           echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
-#           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
-#       - name: Git checkout
-#         uses: actions/checkout@v2
-# 
-#       - name: Try loading android image from cache.
-#         id: cache-image-android
-#         uses: actions/cache@v2
-#         with:
-#           path: /tmp/imgcache
-#           key: ${{ env.CACHE_KEY_ANDROID }}
-#       - name: If NOT found in cache, build and cache image.
-#         if: steps.cache-image-android.outputs.cache-hit != 'true'
-#         run: |
-#           docker build -f wrappers/java/ci/android.dockerfile \
-#                        -t "$DOCKER_IMG_NAME_ANDROID" \
-#                         .
-#           mkdir -p /tmp/imgcache
-#           docker save "$DOCKER_IMG_NAME_ANDROID" > /tmp/imgcache/img_android.rar
-# 
-#       - name: Load android image from cache
-#         run: |
-#           docker load < /tmp/imgcache/img_android.rar
-#       - name: Verify android image was loaded
-#         run: |
-#           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
-# 
+ 
+  build-image-android:
+    needs: workflow-setup
+    runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
+          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Try loading android image from cache.
+        id: cache-image-android
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_ANDROID }}
+      - name: If NOT found in cache, build and cache image.
+        if: steps.cache-image-android.outputs.cache-hit != 'true'
+        run: |
+          docker build -f wrappers/java/ci/android.dockerfile \
+                       -t "$DOCKER_IMG_NAME_ANDROID" \
+                        .
+          mkdir -p /tmp/imgcache
+          docker save "$DOCKER_IMG_NAME_ANDROID" > /tmp/imgcache/img_android.rar
+
+      - name: Load android image from cache
+        run: |
+          docker load < /tmp/imgcache/img_android.rar
+      - name: Verify android image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+
 #   test-libvcx-image:
 #     runs-on: ubuntu-16.04
 #     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
@@ -410,10 +410,11 @@ jobs:
   #         docker run --name test-android-wrapper $DOCKER_IMG_NAME_ANDROID \
   #                             bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.wrapper.test.sh x86)'
 
+  # TODO: We can further reduce the number of lines by moving more into the action
   publish-android-wrapper-device:
     runs-on: ubuntu-16.04
-    # needs: [workflow-setup, build-image-android]
-    needs: [workflow-setup]
+    needs: [workflow-setup, build-image-android]
+    # needs: [workflow-setup]
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -446,10 +447,10 @@ jobs:
           name: libvcx-android-device
           path: /tmp/artifacts/aar
 
-# TODO: To create universal android build, we need to reduce android image size
-#   publish-android-wrapper-universal:
+#   publish-android-wrapper-emulator:
 #     runs-on: ubuntu-16.04
-#     needs: [workflow-setup, build-image-android]
+#     # needs: [workflow-setup, build-image-android]
+#     needs: [workflow-setup]
 #     env:
 #       DOCKER_BUILDKIT: 1
 #     steps:
@@ -459,7 +460,7 @@ jobs:
 #           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
 #       - name: Git checkout
 #         uses: actions/checkout@v2
-#
+# 
 #       - name: Load android image cache
 #         id: load-cached-android-image
 #         uses: actions/cache@v2
@@ -471,22 +472,15 @@ jobs:
 #         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_ANDROID"; exit -1
 #       - name: Load android image from cache
 #         run: docker load < /tmp/imgcache/img_android.rar
-#
+# 
 #       - name: Build, run android wrapper tests, and publish artifacts
-#         run: |
-#           # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
-#           docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-#                               bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh armv7 arm64 x86_64)'
-#           docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
-#           docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
-#           mkdir -p /tmp/artifacts/aar
-#           docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts/aar
-#           docker rm ${docker_id} > /dev/null
-#           docker rmi ${docker_image_id} > /dev/null
-#
+#         uses: ./.github/actions/android-build
+#         with:
+#           abis: "x86 x86_64"
+# 
 #       - uses: actions/upload-artifact@v2
 #         with:
-#           name: libvcx-android-universal
+#           name: libvcx-android-device
 #           path: /tmp/artifacts/aar
 
 #   publish-libvcx:
