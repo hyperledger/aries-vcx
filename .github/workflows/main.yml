@@ -196,40 +196,40 @@ jobs:
 #         run: |
 #           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
  
-  build-image-android:
-    needs: workflow-setup
-    runs-on: ubuntu-16.04
-    env:
-      DOCKER_BUILDKIT: 1
-    steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
-          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
-      - name: Git checkout
-        uses: actions/checkout@v2
-
-      - name: Try loading android image from cache.
-        id: cache-image-android
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_ANDROID }}
-      - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image-android.outputs.cache-hit != 'true'
-        run: |
-          docker build -f wrappers/java/ci/android.dockerfile \
-                       -t "$DOCKER_IMG_NAME_ANDROID" \
-                        .
-          mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_ANDROID" > /tmp/imgcache/img_android.rar
-
-      - name: Load android image from cache
-        run: |
-          docker load < /tmp/imgcache/img_android.rar
-      - name: Verify android image was loaded
-        run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
+#   build-image-android:
+#     needs: workflow-setup
+#     runs-on: ubuntu-16.04
+#     env:
+#       DOCKER_BUILDKIT: 1
+#     steps:
+#       - name: Load up custom variables
+#         run: |
+#           echo ::set-env name=CACHE_KEY_ANDROID::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}})
+#           echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID}})
+#       - name: Git checkout
+#         uses: actions/checkout@v2
+# 
+#       - name: Try loading android image from cache.
+#         id: cache-image-android
+#         uses: actions/cache@v2
+#         with:
+#           path: /tmp/imgcache
+#           key: ${{ env.CACHE_KEY_ANDROID }}
+#       - name: If NOT found in cache, build and cache image.
+#         if: steps.cache-image-android.outputs.cache-hit != 'true'
+#         run: |
+#           docker build -f wrappers/java/ci/android.dockerfile \
+#                        -t "$DOCKER_IMG_NAME_ANDROID" \
+#                         .
+#           mkdir -p /tmp/imgcache
+#           docker save "$DOCKER_IMG_NAME_ANDROID" > /tmp/imgcache/img_android.rar
+# 
+#       - name: Load android image from cache
+#         run: |
+#           docker load < /tmp/imgcache/img_android.rar
+#       - name: Verify android image was loaded
+#         run: |
+#           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
 #   test-libvcx-image:
 #     runs-on: ubuntu-16.04
@@ -412,8 +412,8 @@ jobs:
 
   publish-android-wrapper-device:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-android]
-    # needs: [workflow-setup]
+    # needs: [workflow-setup, build-image-android]
+    needs: [workflow-setup]
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -449,8 +449,8 @@ jobs:
 
   publish-android-wrapper-emulator:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-android]
-    # needs: [workflow-setup]
+    # needs: [workflow-setup, build-image-android]
+    needs: [workflow-setup]
     env:
       DOCKER_BUILDKIT: 1
     steps:
