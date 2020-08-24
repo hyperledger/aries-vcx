@@ -104,6 +104,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_struct() {
         let _setup = SetupMocks::init();
 
@@ -112,6 +113,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_reject() {
         let _setup = SetupMocks::init();
 
@@ -120,6 +122,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
@@ -130,6 +133,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential_data() {
         let _setup = SetupMocks::init();
 

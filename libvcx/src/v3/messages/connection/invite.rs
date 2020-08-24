@@ -67,6 +67,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_request_build_works() {
         let invitation: Invitation = Invitation::default()
             .set_label(_label())

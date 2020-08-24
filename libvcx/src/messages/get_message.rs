@@ -493,6 +493,7 @@ mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_get_messages_response() {
         let _setup = SetupMocks::init();
 
@@ -501,6 +502,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_get_connection_messages_response() {
         let _setup = SetupMocks::init();
 

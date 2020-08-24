@@ -438,6 +438,7 @@ mod test {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verify_transaction_can_be_endorsed() {
         let _setup = SetupDefaults::init();
 

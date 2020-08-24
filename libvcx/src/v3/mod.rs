@@ -485,7 +485,7 @@ pub mod test {
         }
     }
 
-    #[cfg(feature = "aries")]
+    #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo() {
         PaymentPlugin::load();
@@ -522,7 +522,8 @@ pub mod test {
         alice.ensure_presentation_verified();
     }
 
-    #[cfg(feature = "aries")]
+
+    #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo_handle_connection_related_messages() {
         PaymentPlugin::load();
@@ -567,7 +568,7 @@ pub mod test {
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 
-    #[cfg(feature = "aries")]
+    #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo_create_with_message_id_flow() {
         PaymentPlugin::load();
@@ -632,7 +633,7 @@ pub mod test {
         faber.verify_presentation();
     }
 
-    #[cfg(feature = "aries")]
+    #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo_download_message_flow() {
         PaymentPlugin::load();

@@ -883,6 +883,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_success() {
         let _setup = SetupMocks::init();
 
@@ -891,6 +892,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_fails() {
         let _setup = SetupMocks::init();
 
@@ -899,6 +901,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_serialize_and_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -922,6 +925,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_send_request() {
         let _setup = SetupMocks::init();
 
@@ -936,6 +940,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
@@ -950,6 +955,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
@@ -965,6 +971,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_state() {
         let _setup = SetupMocks::init();
 
@@ -976,6 +983,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
@@ -995,6 +1003,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -1019,6 +1028,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential() {
         let _setup = SetupMocks::init();
 
@@ -1040,6 +1050,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
         let _setup = SetupMocks::init();
 
@@ -1051,6 +1062,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_credential_release() {
         let _setup = SetupMocks::init();
 

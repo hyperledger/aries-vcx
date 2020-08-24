@@ -268,13 +268,14 @@ mod tests {
     }
 
     fn _real_proof_demo() {
+        info!(">>> _real_proof_demo");
         let number_of_attributes = 10;
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections();
 
         // AS INSTITUTION SEND CREDENTIAL OFFER
-        println!("creating schema/credential_def and paying fees");
+        info!("creating schema/credential_def and paying fees");
         let mut attrs_list: Value = serde_json::Value::Array(vec![]);
         for i in 1..number_of_attributes {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
@@ -416,8 +417,10 @@ mod tests {
         println!("proof valid for specified interval!");
     }
 
-    #[cfg(feature = "pool_tests")]
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "pool_legacy_agency_tests")]
+    // this test is using legacy msgtype did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_REQUEST
+    // which is not supported by vcxnode-agency
+    // todo: update this test
     #[test]
     fn test_real_proof_for_protocol_type_v2() {
         let _setup = SetupLibraryAgencyV2::init();

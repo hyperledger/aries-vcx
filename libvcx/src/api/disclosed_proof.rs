@@ -954,6 +954,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request_success() {
         let _setup = SetupMocks::init();
 
@@ -962,6 +963,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request() {
         let _setup = SetupMocks::init();
 
@@ -970,6 +972,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
@@ -988,6 +991,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_release() {
         let _setup = SetupMocks::init();
 
@@ -998,6 +1002,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_serialize_and_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -1023,6 +1028,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_generate_msg() {
         let _setup = SetupMocks::init();
 
@@ -1036,6 +1042,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_send_proof() {
         let _setup = SetupMocks::init();
 
@@ -1050,6 +1057,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_reject_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -1064,6 +1072,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_get_reject_msg() {
         let _setup = SetupMocks::init();
 
@@ -1078,6 +1087,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
@@ -1091,6 +1101,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1103,6 +1114,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_retrieve_credentials() {
         let _setup = SetupMocks::init();
 
@@ -1117,6 +1129,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_generate_proof() {
         let _setup = SetupMocks::init();
 

@@ -53,6 +53,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_service_build_works() {
         let service: Service = Service::default()
             .set_service_endpoint(_service_endpoint())

@@ -1,23 +1,21 @@
-use api::VcxStateType;
-
-use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::messages::a2a::A2AMessage;
-use v3::handlers::connection::agent::AgentInfo;
-use v3::messages::connection::invite::Invitation;
-use v3::messages::connection::request::Request;
-use v3::messages::connection::response::{Response, SignedResponse};
-use v3::messages::connection::problem_report::{ProblemReport, ProblemCode};
-use v3::messages::trust_ping::ping::Ping;
-use v3::messages::trust_ping::ping_response::PingResponse;
-use v3::messages::ack::Ack;
-use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::discovery::query::Query;
-use v3::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use v3::messages::a2a::protocol_registry::ProtocolRegistry;
-
 use std::collections::HashMap;
 
+use api::VcxStateType;
 use error::prelude::*;
+use v3::handlers::connection::agent::AgentInfo;
+use v3::handlers::connection::messages::DidExchangeMessages;
+use v3::messages::a2a::A2AMessage;
+use v3::messages::a2a::protocol_registry::ProtocolRegistry;
+use v3::messages::ack::Ack;
+use v3::messages::connection::did_doc::DidDoc;
+use v3::messages::connection::invite::Invitation;
+use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
+use v3::messages::connection::request::Request;
+use v3::messages::connection::response::{Response, SignedResponse};
+use v3::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use v3::messages::discovery::query::Query;
+use v3::messages::trust_ping::ping::Ping;
+use v3::messages::trust_ping::ping_response::PingResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DidExchangeSM {
@@ -680,20 +678,20 @@ pub enum Actor {
 
 #[cfg(test)]
 pub mod test {
-    use super::*;
-
     use utils::devsetup::SetupAriesMocks;
-    use v3::test::source_id;
-    use v3::test::setup::AgencyModeSetup;
+    use v3::messages::ack::tests::_ack;
     use v3::messages::connection::invite::tests::_invitation;
+    use v3::messages::connection::problem_report::tests::_problem_report;
     use v3::messages::connection::request::tests::_request;
     use v3::messages::connection::response::tests::_signed_response;
-    use v3::messages::connection::problem_report::tests::_problem_report;
+    use v3::messages::discovery::disclose::tests::_disclose;
+    use v3::messages::discovery::query::tests::_query;
     use v3::messages::trust_ping::ping::tests::_ping;
     use v3::messages::trust_ping::ping_response::tests::_ping_response;
-    use v3::messages::ack::tests::_ack;
-    use v3::messages::discovery::query::tests::_query;
-    use v3::messages::discovery::disclose::tests::_disclose;
+    use v3::test::setup::AgencyModeSetup;
+    use v3::test::source_id;
+
+    use super::*;
 
     pub mod inviter {
         use super::*;
@@ -725,7 +723,8 @@ pub mod test {
         mod new {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_inviter_new() {
                 let _setup = SetupAriesMocks::init();
 
@@ -739,7 +738,8 @@ pub mod test {
         mod step {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_init() {
                 let _setup = AgencyModeSetup::init();
 
@@ -747,7 +747,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_connect_message_from_null_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -758,7 +759,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Invited(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_null_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -771,7 +773,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_exchange_request_message_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -781,7 +784,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Responded(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -795,7 +799,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -806,7 +811,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -819,7 +825,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Invited(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_ack_message_from_responded_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -831,7 +838,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Completed(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_ping_message_from_responded_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -842,7 +850,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Completed(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_responded_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -853,7 +862,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_responded_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -864,7 +874,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Inviter(DidExchangeState::Responded(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_messages_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -912,7 +923,8 @@ pub mod test {
         mod find_message_to_handle {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_null_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -932,7 +944,8 @@ pub mod test {
                 }
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -975,7 +988,8 @@ pub mod test {
                 }
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_responded_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1030,7 +1044,8 @@ pub mod test {
                 }
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1097,7 +1112,8 @@ pub mod test {
         mod get_state {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_get_state() {
                 let _setup = SetupAriesMocks::init();
 
@@ -1110,9 +1126,9 @@ pub mod test {
     }
 
     pub mod invitee {
-        use super::*;
-
         use v3::messages::connection::did_doc::tests::_service_endpoint;
+
+        use super::*;
 
         pub fn invitee_sm() -> DidExchangeSM {
             DidExchangeSM::new(Actor::Invitee, &source_id())
@@ -1153,7 +1169,8 @@ pub mod test {
         mod new {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_invitee_new() {
                 let _setup = SetupAriesMocks::init();
 
@@ -1167,7 +1184,8 @@ pub mod test {
         mod step {
             use super::*;
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_init() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1176,7 +1194,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_invite_message_from_null_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1187,7 +1206,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Invited(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_message_from_null_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1200,7 +1220,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_connect_message_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1211,7 +1232,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Requested(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1222,7 +1244,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1235,7 +1258,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Invited(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_response_message_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1248,7 +1272,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Completed(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_invalid_response_message_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1262,7 +1287,8 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
+    #[test]
+    #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
@@ -1273,8 +1299,9 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Null(_)), did_exchange_sm.state);
             }
 
-            #[test]
-            fn test_did_exchange_handle_other_messages_from_requested_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_did_exchange_handle_other_messages_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
@@ -1286,8 +1313,9 @@ pub mod test {
                 assert_match!(ActorDidExchangeState::Invitee(DidExchangeState::Requested(_)), did_exchange_sm.state);
             }
 
-            #[test]
-            fn test_did_exchange_handle_messages_from_completed_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_did_exchange_handle_messages_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_completed_state();
@@ -1334,8 +1362,9 @@ pub mod test {
         mod find_message_to_handle {
             use super::*;
 
-            #[test]
-            fn test_find_message_to_handle_from_invited_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_find_message_to_handle_from_invited_state() {
                 let _setup = AgencyModeSetup::init();
 
                 let connection = invitee_sm().to_invitee_invited_state();
@@ -1354,8 +1383,9 @@ pub mod test {
                 }
             }
 
-            #[test]
-            fn test_find_message_to_handle_from_requested_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_find_message_to_handle_from_requested_state() {
                 let _setup = AgencyModeSetup::init();
 
                 let connection = invitee_sm().to_invitee_requested_state();
@@ -1397,8 +1427,9 @@ pub mod test {
                 }
             }
 
-            #[test]
-            fn test_find_message_to_handle_from_completed_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_find_message_to_handle_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
 
                 let connection = invitee_sm().to_invitee_completed_state();
@@ -1464,8 +1495,9 @@ pub mod test {
         mod get_state {
             use super::*;
 
-            #[test]
-            fn test_get_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_state() {
                 let _setup = SetupAriesMocks::init();
 
                 assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().state());

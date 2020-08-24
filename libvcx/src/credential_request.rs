@@ -45,6 +45,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_request_struct() {
         let _setup = SetupDefaults::init();
 
@@ -54,6 +55,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_serialize() {
         let _setup = SetupDefaults::init();
 
@@ -63,6 +65,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_deserialize() {
         let _setup = SetupDefaults::init();
 
@@ -71,6 +74,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_credential_request_from_raw_message() {
         let _setup = SetupDefaults::init();
 

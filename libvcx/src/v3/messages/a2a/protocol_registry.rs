@@ -91,6 +91,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_protocol_registry_init_works() {
         let _setup = SetupEmpty::init();
 
@@ -99,6 +100,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_none_query() {
         let _setup = SetupEmpty::init();
 
@@ -108,6 +110,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_placeholder() {
         let _setup = SetupEmpty::init();
 
@@ -118,6 +121,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_partial() {
         let _setup = SetupEmpty::init();
 
@@ -133,6 +137,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_exact_protocol() {
         let _setup = SetupEmpty::init();
 
@@ -147,6 +152,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_no_matching() {
         let _setup = SetupEmpty::init();
 
@@ -158,6 +164,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_real() {
         let _setup = SetupEmpty::init();
 
@@ -180,6 +187,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_limited_actors() {
         let _setup = SetupEmpty::init();
 

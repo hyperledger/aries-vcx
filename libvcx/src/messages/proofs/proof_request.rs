@@ -430,6 +430,7 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_proof_request_data() {
         let _setup = SetupDefaults::init();
 
@@ -447,6 +448,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
@@ -484,6 +486,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -499,6 +502,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_requested_predicates_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -511,6 +515,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_requested_attrs_constructed_correctly_for_names() {
         let _setup = SetupDefaults::init();
 
@@ -529,6 +534,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_requested_attrs_constructed_correctly_for_name_and_names_passed_together() {
         let _setup = SetupDefaults::init();
 
@@ -541,6 +547,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_indy_proof_req_parses_correctly() {
         let _setup = SetupDefaults::init();
 

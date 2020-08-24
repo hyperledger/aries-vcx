@@ -819,6 +819,7 @@ mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_invite_set_values_and_post() {
         let _setup = SetupLibraryWallet::init();
 
@@ -844,6 +845,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_send_invite_v1_response() {
         let _setup = SetupIndyMocks::init();
 
@@ -855,6 +857,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_send_invite_v2_response() {
         let _setup = SetupIndyMocks::init();
 
@@ -863,6 +866,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_invite_null_parameters() {
         let _setup = SetupDefaults::init();
 
@@ -888,6 +892,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_redirect_connection_set_values_and_post() {
         let _setup = SetupLibraryWallet::init();
 

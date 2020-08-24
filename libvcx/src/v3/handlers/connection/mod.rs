@@ -6,6 +6,7 @@ pub mod messages;
 #[cfg(test)]
 pub mod tests {
     use v3::messages::connection::invite::tests::_invitation_json;
+    use utils::devsetup::SetupEmpty;
 
     pub fn mock_connection() -> u32 {
         let connection_handle = ::connection::create_connection_with_invite("source_id", &_invitation_json()).unwrap();
@@ -14,14 +15,14 @@ pub mod tests {
     }
 
     fn _setup() {
-        ::settings::set_config_value(::settings::COMMUNICATION_METHOD, "aries");
+        let _setup = SetupEmpty::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
     }
 
     fn _source_id() -> &'static str {
         "test connection"
     }
 
-    #[cfg(feature = "aries")]
     mod aries {
         use super::*;
 
@@ -30,6 +31,7 @@ pub mod tests {
         use v3::messages::a2a::A2AMessage;
 
         #[test]
+        #[cfg(feature = "aries")]
         fn test_create_connection_works() {
             _setup();
             let connection_handle = ::connection::create_connection(_source_id()).unwrap();
@@ -37,8 +39,8 @@ pub mod tests {
             assert_eq!(1, ::connection::get_state(connection_handle));
         }
 
-        #[cfg(feature = "aries")]
         #[test]
+        #[cfg(feature = "aries")]
         fn test_create_connection_with_invite_works() {
             _setup();
             let connection_handle = ::connection::create_connection_with_invite(_source_id(), &_invitation_json()).unwrap();
@@ -46,16 +48,8 @@ pub mod tests {
             assert_eq!(2, ::connection::get_state(connection_handle));
         }
 
-        #[cfg(feature = "aries")]
         #[test]
-        fn test_get_connection_state_works() {
-            _setup();
-            let connection_handle = ::connection::create_connection(_source_id()).unwrap();
-            assert_eq!(1, ::connection::get_state(connection_handle));
-        }
-
-        #[cfg(feature = "aries")]
-        #[test]
+        #[cfg(feature = "agency_v2")]
         fn test_connection_send_works() {
             _setup();
             let mut faber = Faber::setup();
@@ -153,7 +147,7 @@ pub mod tests {
                 let message: Message = messages[0].msgs[0].clone();
                 assert_eq!(::messages::RemoteMessageType::Other("aries".to_string()), message.msg_type);
                 let payload: ::messages::payload::PayloadV1 = ::serde_json::from_str(&message.decrypted_payload.unwrap()).unwrap();
-                let _payload: ::issuer_credential::CredentialOffer = ::serde_json::from_str(&payload.msg).unwrap();
+                let _payload: Vec<::issuer_credential::CredentialOffer> = ::serde_json::from_str(&payload.msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
@@ -170,11 +164,21 @@ pub mod tests {
             }
         }
 
-        #[cfg(feature = "aries")]
         #[test]
-        fn test_connection_delete() {
+        #[cfg(feature = "aries")]
+        fn test_get_connection_state_works() {
             _setup();
             let connection_handle = ::connection::create_connection(_source_id()).unwrap();
+            assert_eq!(1, ::connection::get_state(connection_handle));
+        }
+
+        #[test]
+        #[cfg(feature = "aries")]
+        fn test_connection_delete() {
+            _setup();
+            warn!(">> test_connection_delete going to create connection");
+            let connection_handle = ::connection::create_connection(_source_id()).unwrap();
+            warn!(">> test_connection_delete checking is valid handle");
             assert!(::connection::is_valid_handle(connection_handle));
 
             ::connection::release(connection_handle).unwrap();
