@@ -599,7 +599,7 @@ jobs:
   make-release:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, test-libvcx-image, test-android-build, test-node-wrapper]
-    if: ${{ needs.workflow-setup.outputs.RELEASE }} == "true"
+    if: needs.workflow-setup.outputs.RELEASE == 'true'
     steps:
       - name: Load env. variables
         run: |
