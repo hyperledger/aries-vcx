@@ -97,6 +97,7 @@ jobs:
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
           echo ::set-env name=PUBLISH_VERSION::$PUBLISH_VERSION
+          echo ::set-env name=RELEASE::$RELEASE
           echo ::set-env name=CACHE_KEY_LIBVCX::$LIBVCX_HASH
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
