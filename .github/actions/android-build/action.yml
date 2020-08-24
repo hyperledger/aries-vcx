@@ -1,0 +1,19 @@
+inputs:
+  abis: 
+    description: 'A space separated list of ABIs to create a AAR for'
+    default: 'armv7 arm64 x86 x86_64'
+runs:
+  using: "composite"
+  steps:
+    - name: Build, run android wrapper tests, and publish artifacts
+      run: |
+        # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+        docker run --name publish-android-wrapper $DOCKER_IMG_NAME_ANDROID \
+                            bash -c "(cd \$HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh ${{ inputs.abis }})"
+        docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
+        docker_image_id=$(docker images | grep $DOCKER_IMG_NAME_ANDROID | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
+        mkdir -p /tmp/artifacts/aar
+        docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts/aar
+        docker rm ${docker_id} > /dev/null
+        docker rmi ${docker_image_id} > /dev/null
+      shell: bash
