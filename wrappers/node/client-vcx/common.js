@@ -56,13 +56,6 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   }
 }
 
-// async function acceptTaa () {
-//   const taa = await getLedgerAuthorAgreement()
-//   const taaJson = JSON.parse(taa)
-//   const utime = Math.floor(new Date() / 1000)
-//   await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
-// }
-
 module.exports.loadPostgresPlugin = loadPostgresPlugin
 module.exports.initLibNullPay = initLibNullPay
 module.exports.initRustApiAndLogger = initRustApiAndLogger

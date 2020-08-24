@@ -5,11 +5,11 @@ const { StateType, ProofState } = require('../dist/src')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('../common/script-comon')
 const { createVcxClient } = require('../client-vcx/vcxclient')
-const logger = require('../common/logger')
+const logger = require('../common/logger')('Faber')
 const assert = require('assert')
 const { initRustapi } = require('../client-vcx/vcx-workflows')
 const uuid = require('uuid')
-const { waitUntilAgencyIsReady } = require('../common/common')
+const { waitUntilAgencyIsReady } = require('../client-vcx/common')
 const { createStorageService } = require('../client-vcx/storage-service')
 const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 const express = require('express')
@@ -34,7 +34,6 @@ async function runFaber (options) {
     await waitUntilAgencyIsReady(agencyUrl, logger)
 
     const storageService = await createStorageService(agentName)
-
     if (!await storageService.agentProvisionExists()) {
       const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
       await storageService.saveAgentProvision(agentProvision)
@@ -167,6 +166,7 @@ async function runFaber (options) {
     if (faberServer) {
       await faberServer.close()
     }
+    logger.info(`Exiting process with code ${exitcode}`)
     process.exit(exitcode)
   }
 }
@@ -200,7 +200,6 @@ const optionDefinitions = [
     name: 'expose-invitation-port',
     type: Number,
     description: 'If specified, invitation will be exposed on this port via HTTP',
-    defaultValue: 8181
   }
 ]
 

@@ -4,10 +4,10 @@ const { StateType } = require('../dist/src')
 const readlineSync = require('readline-sync')
 const { createVcxClient } = require('../client-vcx/vcxclient')
 const { createStorageService } = require('../client-vcx/storage-service')
-const { waitUntilAgencyIsReady } = require('../common/common')
+const { waitUntilAgencyIsReady } = require('../client-vcx/common')
 const { initRustapi } = require('../client-vcx/vcx-workflows')
 const sleepPromise = require('sleep-promise')
-const logger = require('../common/logger')
+const logger = require('../common/logger')('Alice')
 const { runScript } = require('../common/script-comon')
 const uuid = require('uuid')
 const axios = require('axios')
@@ -31,7 +31,7 @@ async function getInvitationString (fetchInviteUrl) {
         await sleepPromise(fetchInviteTimeout)
       }
       fetchInviteAttemps++
-      if (fetchInviteAttemps > 15) {
+      if (fetchInviteAttemps > fetchInviteAttemptThreshold) {
         throw Error(`Could not reach ${fetchInviteUrl} to fetch connection invitation.`)
       }
     }
@@ -150,8 +150,7 @@ const optionDefinitions = [
   {
     name: 'autofetch-invitation-url',
     type: String,
-    description: 'If specified, postresql wallet will be used.',
-    defaultValue: 'http://localhost:8181'
+    description: 'If specified, the script will try to download invitation from specified url.'
   }
 ]
 

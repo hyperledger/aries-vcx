@@ -3,7 +3,7 @@ const {
   initRustApiAndLogger,
   loadPostgresPlugin,
   provisionAgentInAgency
-} = require('../common/common')
+} = require('./common')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
 

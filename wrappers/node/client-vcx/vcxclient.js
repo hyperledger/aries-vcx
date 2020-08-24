@@ -2,7 +2,7 @@ const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('.
 const {
   getRandomInt,
   initVcxWithProvisionedAgentConfig
-} = require('../common/common')
+} = require('./common')
 const { Schema } = require('../dist/src/api/schema')
 const { CredentialDef } = require('../dist/src/api/credential-def')
 const { Connection } = require('../dist/src/api/connection')

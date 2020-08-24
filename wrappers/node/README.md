@@ -108,3 +108,15 @@ In the case of this demo, it's by default `localhost:7209/notifications/faber` a
 `localhost:7209/notifications/alice`.
 
 
+# Testing
+- To run all unit tests:
+```
+npm run test
+```
+
+To run integration test, you need to make sure:
+ - mediator agent is running on `localhost:8080`
+ - you have start local pool on `127.0.0.1` (must match [genesis file](./client-vcx/docker.txn))
+```
+npm run test:integration
+```

@@ -7,16 +7,16 @@ const prettyFormatter = format.combine(
   )
 )
 
-const logger = createLogger({
-  level: 'debug',
-  format: format.combine(
-    label({ label: 'VCX Node demo:' }),
-    format.colorize({ all: true }),
-    prettyFormatter
-  ),
-  transports: [
-    new transports.Console()
-  ]
-})
-
-module.exports = logger
+module.exports = loggerLabel => {
+  return createLogger({
+    level: 'debug',
+    format: format.combine(
+      label({ label: loggerLabel }),
+      format.colorize({ all: true }),
+      prettyFormatter
+    ),
+    transports: [
+      new transports.Console()
+    ]
+  })
+}
