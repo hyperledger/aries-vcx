@@ -1,10 +1,10 @@
 [package]
 
 name = "libvcx"
-version = "0.8.3"
-authors = ["Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
+version = "0.9.0"
+authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
-description = "This is the official SDK for Evernym's VCX"
+description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"
 
 [lib]
