@@ -8,7 +8,7 @@ import {
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { Connection, DisclosedProof, Proof, ProofState, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
-import {PROTOCOL_TYPE_ARIES} from '../helpers/test-constants'
+import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
 
 describe('Proof:', () => {
   before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
@@ -71,11 +71,8 @@ describe('Proof:', () => {
   describe('deserialize:', () => {
     it('success', async () => {
       const proof1 = await proofCreate()
-      console.log(`Original proof1 ${JSON.stringify(proof1)}`)
       const data1 = await proof1.serialize()
-      // console.log(`Serialized proof1 = ${JSON.stringify(data1)}`)
       const proof2 = await Proof.deserialize(data1)
-      // console.log(`Deserialized proof1data = ${JSON.stringify(proof2)}`)
       // todo: Does not hold in aries, the TS/JS representation after serialize->deserialize in incorrect because
       // IProofData structure is matching legacy structure
       // perhaps we could make JS layer thinner and instead of trying to keeping attributes like _requestedAttributes
@@ -117,7 +114,6 @@ describe('Proof:', () => {
   })
 
   describe('requestProof:', () => {
-
     it('success', async () => {
       const connection = await connectionCreateConnect()
       const proof = await proofCreate()

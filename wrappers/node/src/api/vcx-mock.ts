@@ -11,7 +11,6 @@ export enum VCXMockMessage {
   Proof = 7, // get_message response with proof,
   CredentialResponse = 8, // reply to credential request with an actual credential
   AcceptInvite = 9, // connection invite was accepted
-  AcceptInviteAries = 10 // aries connection invite was accepted
 }
 
 export class VCXMock {

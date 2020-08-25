@@ -1,19 +1,12 @@
 import '../module-resolver-helper'
 
-// @ts-ignore
 import { assert } from 'chai'
-// @ts-ignore
 import { connectionCreate, connectionCreateConnect, dataConnectionCreate } from 'helpers/entities'
-// @ts-ignore
-import {// @ts-ignore
-  INVITE_ACCEPTED_MESSAGE, // @ts-ignore
-  INVITE_DETAILS,// @ts-ignore
-  INVITE_REDIRECTED_MESSAGE,
+import {
+  INVITE_ACCEPTED_MESSAGE,
   PROTOCOL_TYPE_ARIES
 } from 'helpers/test-constants'
-// @ts-ignore
 import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils'
-// @ts-ignore
 import { Connection, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 
 describe('Connection:', () => {
@@ -37,10 +30,10 @@ describe('Connection:', () => {
       const inviteDetails = await connection.connect({ data: '{}' })
       assert.notEqual(inviteDetails, '')
     })
-  //
+
     it('throws: not initialized', async () => {
       const connection = new (Connection as any)()
-      const err = await shouldThrow(async () => connection.connect({ data: '{"connection_type":"QR"}' }))
+      const err = await shouldThrow(async () => connection.connect({ data: '{}' }))
       assert.equal(err.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE)
     })
   })
@@ -145,11 +138,8 @@ describe('Connection:', () => {
     // todo : restore for aries
     it.skip(`returns ${StateType.OfferSent}: connected`, async () => {
       const connection = await connectionCreateConnect()
-      console.log('connectionCreateConnect was called')
-      VCXMock.setVcxMock(VCXMockMessage.AcceptInviteAries) // todo: Need to generate create this data
-      console.log('going to update state')
+      VCXMock.setVcxMock(VCXMockMessage.AcceptInvite) // todo: must return Aries mock data
       await connection.updateState()
-      console.log('state was updated')
       assert.equal(await connection.getState(), StateType.Accepted)
     })
 

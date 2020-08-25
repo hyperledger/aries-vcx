@@ -2,16 +2,12 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import {
-  // @ts-ignore
-  connectionCreateConnect,
   dataDisclosedProofCreateWithMsgId,
   dataDisclosedProofCreateWithRequest,
-  // @ts-ignore
   disclosedProofCreateWithMsgId,
   disclosedProofCreateWithRequest
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
-// @ts-ignore
 import { mapValues } from 'lodash'
 import { DisclosedProof, StateType, VCXCode } from 'src'
 import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
@@ -51,9 +47,10 @@ describe('DisclosedProof', () => {
   })
 
   describe('createWithMsgId:', () => {
-    // it('success', async () => {
-    //   await disclosedProofCreateWithMsgId()
-    // })
+    // todo: migrate to aries
+    it.skip('success', async () => {
+      await disclosedProofCreateWithMsgId()
+    })
 
     it('throws: missing sourceId', async () => {
       const { connection, msgId } = await dataDisclosedProofCreateWithMsgId()

@@ -5,7 +5,7 @@ import { validatePaymentTxn } from 'helpers/asserts'
 import { credentialDefCreate, credentialDefPrepareForEndorser } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { CredentialDef, CredentialDefPaymentManager, CredentialDefState, VCXCode } from 'src'
-import {PROTOCOL_TYPE_ARIES} from '../helpers/test-constants'
+import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
 
 describe('CredentialDef:', () => {
   before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))

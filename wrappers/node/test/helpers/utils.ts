@@ -1,32 +1,6 @@
 import '../module-resolver-helper'
 
-// import { VCX_CONFIG_TEST_MODE } from 'helpers/test-constants'
-// import { SinonStub, stub } from 'sinon'
 import * as vcx from 'src'
-
-// let _initVCXCalled = false
-// let _patchInitVCXObj: SinonStub | undefined
-// const _patchInitVCX = () => {
-//   const initVCXOriginal = vcx.initVcx as any
-//   const stubInitVCX = stub(vcx, 'initVcx')
-//   // tslint:disable-next-line only-arrow-functions
-//   stubInitVCX.callsFake(async function (...args) {
-//     if (_initVCXCalled) {
-//       console.log('calling a stub -> already called')
-//       return
-//     }
-//     console.log('calling a stub -> calling original')
-//     await initVCXOriginal(...args)
-//     _initVCXCalled = true
-//   })
-//   return stubInitVCX
-// }
-// export const patchInitVCX = () => {
-//   if (!_patchInitVCXObj) {
-//     _patchInitVCXObj = _patchInitVCX()
-//   }
-//   return _patchInitVCXObj
-// }
 
 const testConfig = {
   agency_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
@@ -53,17 +27,14 @@ const testConfig = {
   wallet_key: '********',
   sdk_to_remote_role: '0',
   wallet_key_derivation: 'RAW',
-  agency_endpoint: 'http://127.0.0.1:8080',
-  // protocol_type: '1.0'
+  agency_endpoint: 'http://127.0.0.1:8080'
 }
 
 export async function initVcxTestMode (protocolType: string) {
-  const useTestConfig = { ... testConfig, protocol_type: protocolType}
-  console.debug('Patching vcx init')
-  // patchInitVCX()
-  console.debug('Patched vcx init')
-  console.debug(`Going to ini vcx with config ${JSON.stringify(useTestConfig)}`)
+  const useTestConfig = { ...testConfig, protocol_type: protocolType }
   await vcx.initVcxWithConfig(JSON.stringify(useTestConfig))
+  const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
+  await vcx.defaultLogger(rustLogPattern)
   console.debug(`Vcx initialized.`)
 }
 

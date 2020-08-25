@@ -144,9 +144,7 @@ export const credentialCreateWithMsgId = async (data?: ICredentialCreateWithMsgI
   if (!data) {
     data = await dataCredentialCreateWithMsgId()
   }
-  console.log(`Creating credential with data with msgId ${JSON.stringify(data)}`)
   const credential = await Credential.createWithMsgId(data)
-  console.log(`Created credential!`)
   assert.notEqual(credential.handle, undefined)
   assert.equal(credential.sourceId, data.sourceId)
   assert.ok(credential.credOffer)

@@ -1,7 +1,6 @@
 import '../module-resolver-helper'
 
 import { assert } from 'chai'
-// @ts-ignore
 import { validatePaymentTxn } from 'helpers/asserts'
 import {
   connectionCreateConnect,
@@ -15,8 +14,8 @@ import {
   IssuerCredential,
   IssuerCredentialPaymentManager,
   StateType,
-  VCXCode, // @ts-ignore
-  VCXMock, // @ts-ignore
+  VCXCode,
+  VCXMock,
   VCXMockMessage
 } from 'src'
 import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'

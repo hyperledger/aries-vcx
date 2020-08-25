@@ -1,21 +1,16 @@
 import '../module-resolver-helper'
 
 import { assert } from 'chai'
-// @ts-ignore
 import { validatePaymentTxn } from 'helpers/asserts'
 import {
-  // @ts-ignore
   connectionCreateConnect,
-  // @ts-ignore
   credentialCreateWithMsgId,
   credentialCreateWithOffer,
-  // @ts-ignore
   credentialOffer,
   dataCredentialCreateWithMsgId,
   dataCredentialCreateWithOffer
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
-// @ts-ignore
 import { Credential, CredentialPaymentManager, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
 
@@ -55,9 +50,9 @@ describe('Credential:', () => {
 
   describe('createWithMsgId', () => {
     // TODO: to enable this test, credential offer must be mocked in aries code of get_credential_offer_msg
-    // it('createWithMsgIdsuccess', async () => {
-    //   await credentialCreateWithMsgId()
-    // })
+    it.skip('createWithMsgIdsuccess', async () => {
+      await credentialCreateWithMsgId()
+    })
 
     it('throws: missing sourceId', async () => {
       const { connection, msgId } = await dataCredentialCreateWithMsgId()
