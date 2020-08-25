@@ -1,9 +1,5 @@
 name: 'Publish android image'
 
-# defaults:
-#   run:
-#     shell: bash
-
 inputs:
   abis: 
     description: 'A space separated list of ABIs to create a AAR for'
@@ -24,22 +20,6 @@ env:
 runs:
   using: "composite"
   steps:
-#     - name: Load android image cache
-#       id: load-cached-android-image
-#       uses: actions/cache@v2
-#       with:
-#         path: /tmp/imgcache
-#         key: ${{ inputs.cache-key  }}
-# 
-#     - name: If no cached image found
-#       if: steps.load-cached-android-image.outputs.cache-hit != 'true'
-#       run: echo "ERROR == Expected to find image from cache ${{ inputs.cache-key }}"; exit -1
-#       shell: bash
-# 
-#     - name: Load android image from cache
-#       run: docker load < ${{ inputs.rar-path }}
-#       shell: bash
-
     - name: Build, run android wrapper tests, and publish artifacts
       run: |
         set -x
@@ -53,8 +33,3 @@ runs:
         docker rm ${docker_id} > /dev/null
         docker rmi ${docker_image_id} > /dev/null
       shell: bash
-
-#     - uses: actions/upload-artifact@v2
-#       with:
-#         name: libvcx-android-device
-#         path: /tmp/artifacts/aar
