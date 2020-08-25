@@ -101,12 +101,14 @@ impl GetMessagesBuilder {
     }
 
     pub fn uid(&mut self, uids: Option<Vec<String>>) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.uid():");
         //Todo: validate msg_uid??
         self.uids = uids;
         Ok(self)
     }
 
     pub fn status_codes(&mut self, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.status_codes():");
         self.status_codes = status_codes;
         Ok(self)
     }
@@ -124,6 +126,7 @@ impl GetMessagesBuilder {
     }
 
     pub fn version(&mut self, version: &Option<ProtocolTypes>) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.version():");
         self.version = match version {
             Some(version) => version.clone(),
             None => settings::get_protocol_type()
@@ -132,10 +135,13 @@ impl GetMessagesBuilder {
     }
 
     pub fn send_secure(&mut self) -> VcxResult<Vec<Message>> {
+        info!("deleteme... GeneralMessage.send_secure():");
         trace!("GetMessages::send >>>");
 
+        info!("deleteme... GeneralMessage.send_secure()  going to prepare_request:");
         let data = self.prepare_request()?;
 
+        info!("deleteme... GeneralMessage.send_secure()  going to post_u8:");
         let response = httpclient::post_u8(&data)?;
 
         if settings::agency_mocks_enabled() && response.len() == 0 {

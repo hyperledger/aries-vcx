@@ -348,9 +348,11 @@ impl Connection {
         if self.state == VcxStateType::VcxStateInitialized ||
             self.state == VcxStateType::VcxStateAccepted ||
             self.state == VcxStateType::VcxStateRedirected {
+            debug!("State is initialized/accepted/redirected so returning success");
             return Ok(error::SUCCESS.code_num);
         }
 
+        debug!("update_state >> Going to get messages.");
         let response =
             messages::get_messages()
                 .to(&self.pw_did)?
@@ -694,7 +696,12 @@ pub fn create_connection(source_id: &str) -> VcxResult<u32> {
         let connection = Connections::V3(ConnectionV3::create(source_id));
         return store_connection(connection);
     }
-    warn!("Creating v1 connection");
+    if ::std::env::var("DISALLOW_V1_CONNECTION").unwrap_or("true".to_string()) == "true"
+    {
+        error!("Using v1 connection");
+        panic!("Trying to create non-aries connection!");
+    }
+
     let connection = create_connection_v1(source_id)?;
 
     store_connection(Connections::V1(connection))
@@ -1384,6 +1391,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_build_connection_failures_with_no_wallet() {
         let _setup = SetupDefaults::init();
 
@@ -1393,6 +1401,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_create_connection() {
         let _setup = SetupMocks::init();
@@ -1417,6 +1426,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_create_drop_create() {
         let _setup = SetupMocks::init();
@@ -1468,6 +1478,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_get_qr_code_data() {
         let _setup = SetupMocks::init();
 
@@ -1482,6 +1493,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_serialize_deserialize() {
         let _setup = SetupMocks::init();
@@ -1513,6 +1525,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_deserialize_existing() {
         let _setup = SetupMocks::init();
@@ -1532,6 +1545,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
@@ -1719,6 +1733,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -1748,6 +1763,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();

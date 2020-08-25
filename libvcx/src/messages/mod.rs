@@ -35,6 +35,7 @@ use error::prelude::*;
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 use settings::ProtocolTypes;
+use utils::httpclient::AgencyMockDecrypted;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -853,11 +854,15 @@ fn parse_response_from_agency_v1(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage
     let verkey = settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
     let (_, data) = crypto::parse_msg(&verkey, &response)?;
     let bundle: Bundled<Vec<u8>> = bundle_from_u8(data)?;
-    bundle.bundled
+    let messages = bundle.bundled
         .iter()
         .map(|msg| rmp_serde::from_slice(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize response: {}", err))))
-        .collect::<VcxResult<Vec<A2AMessage>>>()
+        .collect::<VcxResult<Vec<A2AMessage>>>();
+    if settings::agency_mocks_enabled() {
+        warn!("Parse mocked agency response: {:?}", messages);
+    }
+    messages
 }
 
 pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
@@ -871,7 +876,13 @@ pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
 }
 
 fn parse_response_from_agency_v2(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
-    let message = parse_message_from_response(response)?;
+    let mut message: String;
+    if AgencyMockDecrypted::has_decrypted_mock_responses() {
+        warn!("parse_response_from_agency_v2 >> retrieving decrypted mock response");
+        message = AgencyMockDecrypted::get_decrypted_response();
+    } else {
+        message = parse_message_from_response(response)?;
+    }
 
     let message: A2AMessage = serde_json::from_str(&message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
@@ -1019,24 +1030,30 @@ pub trait GeneralMessage {
     //todo: deserialize_message
 
     fn to(&mut self, to_did: &str) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.to(): going to validate_did");
         validation::validate_did(to_did)?;
+        info!("deleteme... GeneralMessage.to(): going to set_to_did");
         self.set_to_did(to_did.to_string());
+        info!("deleteme... GeneralMessage.to(): finished");
         Ok(self)
     }
 
     fn to_vk(&mut self, to_vk: &str) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.to_vk():");
         validation::validate_verkey(to_vk)?;
         self.set_to_vk(to_vk.to_string());
         Ok(self)
     }
 
     fn agent_did(&mut self, did: &str) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.agent_did():");
         validation::validate_did(did)?;
         self.set_agent_did(did.to_string());
         Ok(self)
     }
 
     fn agent_vk(&mut self, to_vk: &str) -> VcxResult<&mut Self> {
+        info!("deleteme... GeneralMessage.agent_vk():");
         validation::validate_verkey(to_vk)?;
         self.set_agent_vk(to_vk.to_string());
         Ok(self)

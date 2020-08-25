@@ -80,7 +80,6 @@ pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
 pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
 pub static DEFAULT_USE_LATEST_PROTOCOLS: &str = "false";
 pub static DEFAULT_PAYMENT_METHOD: &str = "null";
-pub static DEFAULT_PROTOCOL_TYPE: &str = "1.0";
 pub static MAX_THREADPOOL_SIZE: usize = 128;
 pub static MOCK_DEFAULT_INDY_PROOF_VALIDATION: &str = "true";
 
@@ -188,6 +187,9 @@ pub fn validate_payment_method() -> VcxResult<u32> {
     validate_mandatory_config_val(get_config_value(CONFIG_PAYMENT_METHOD).ok().as_ref(),
                                   VcxErrorKind::MissingPaymentMethod, validation::validate_payment_method)
 }
+pub fn settings_as_string() -> HashMap<String, String> {
+    SETTINGS.read().unwrap().to_string()
+}
 
 pub fn log_settings() {
     let settings = SETTINGS.read().unwrap();
@@ -209,6 +211,15 @@ pub fn agency_mocks_enabled() -> bool {
     match config.get(CONFIG_ENABLE_TEST_MODE) {
         None => false,
         Some(value) => value == "true" || value == "agency"
+    }
+}
+
+pub fn agency_decrypted_mocks_enabled() -> bool {
+    let config = SETTINGS.read().unwrap();
+
+    match config.get(CONFIG_ENABLE_TEST_MODE) {
+        None => false,
+        Some(value) => value == "true"
     }
 }
 
@@ -446,8 +457,15 @@ impl ::std::string::ToString for ProtocolTypes {
 }
 
 pub fn get_protocol_type() -> ProtocolTypes {
-    ProtocolTypes::from(get_config_value(CONFIG_PROTOCOL_TYPE)
-        .unwrap_or(DEFAULT_PROTOCOL_TYPE.to_string()))
+    ::std::env::var("CONFIG_PROTOCOL_TYPE")
+        .unwrap_or_else(|e| {
+            warn!("Env variable CONFIG_PROTOCOL_TYPE was not set.");
+            get_config_value(CONFIG_PROTOCOL_TYPE).unwrap_or_else(|e| {
+                error!("Config CONFIG_PROTOCOL_TYPE was not set. Will use default value of 3.0");
+                "3.0".into()
+            })
+        })
+        .into()
 }
 
 pub fn clear_config() {

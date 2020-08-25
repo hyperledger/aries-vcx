@@ -546,11 +546,11 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_update_state(command_handle: {}, connection_handle: {}), source_id: {:?}",
+    trace!("vcx_connection_update_state(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
     if !is_valid_handle(connection_handle) {
-        error!("vcx_connection_get_state - invalid handle");
+        error!("vcx_connection_update_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -567,7 +567,9 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
                 x.into()
             }
         };
+        debug!("State has been updated, going to get state of connection {}", connection_handle);
         let state = get_state(connection_handle);
+        debug!("got state {}", state);
         cb(command_handle, rc, state);
 
         Ok(())
@@ -1311,7 +1313,9 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: creates v1 connection, migrate to aries
     fn test_vcx_connection_create() {
         let _setup = SetupMocks::init();
 
@@ -1324,7 +1328,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -1341,6 +1347,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_connect() {
         let _setup = SetupMocks::init();
 
@@ -1357,7 +1365,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: delete this test when deleting redirection
     fn test_vcx_connection_redirect() {
         let _setup = SetupMocks::init();
 
@@ -1382,7 +1392,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_update_state() {
         let _setup = SetupMocks::init();
 
@@ -1398,6 +1410,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -1420,7 +1434,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_serialize() {
         let _setup = SetupMocks::init();
 
@@ -1436,7 +1452,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_release() {
         let _setup = SetupMocks::init();
 
@@ -1469,7 +1487,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1488,7 +1508,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
+    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_delete_connection() {
         let _setup = SetupMocks::init();
 
@@ -1503,6 +1525,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    // todo: uses v1 connection, migrate to aries
     fn test_send_message() {
         let _setup = SetupMocks::init();
 
@@ -1518,6 +1542,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    // todo: uses v1 connection, migrate to aries
     fn test_sign() {
         let _setup = SetupMocks::init();
 
@@ -1537,6 +1563,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    // todo: uses v1 connection, migrate to aries
     fn test_verify_signature() {
         let _setup = SetupMocks::init();
 

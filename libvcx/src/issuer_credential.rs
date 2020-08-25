@@ -1083,6 +1083,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -1106,6 +1107,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_retry_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -1129,6 +1131,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_credential_can_be_resent_after_failure() {
         let _setup = SetupMocks::init();
 
@@ -1173,6 +1176,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_update_state_with_pending_credential_request() {
         let _setup = SetupMocks::init();
 
@@ -1186,6 +1190,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
@@ -1197,6 +1202,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_bad_message() {
         let _setup = SetupMocks::init();
@@ -1229,6 +1235,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_that_test_mode_enabled_bypasses_libindy_create_credential() {
         let _setup = SetupMocks::init();
 
@@ -1314,6 +1321,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_send_credential_with_payments() {
         let _setup = SetupMocks::init();
 

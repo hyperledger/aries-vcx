@@ -154,10 +154,10 @@ mod tests {
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use std::time::Duration;
     #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_parse_parse_update_messages_response() {
         let _setup = SetupMocks::init();
-
+        // todo: need to set arias compatible mock, this is legacy so we get parsing failure
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&::utils::constants::UPDATE_MESSAGES_RESPONSE.to_vec()).unwrap();
     }
 

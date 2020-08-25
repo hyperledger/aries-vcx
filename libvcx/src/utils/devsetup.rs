@@ -37,6 +37,8 @@ pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 age
 
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
+pub struct SetupLibraryAgencyZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
+
 fn setup() {
     settings::clear_config();
     set_defaults();
@@ -271,6 +273,21 @@ impl SetupLibraryAgencyV2ZeroFees  {
 }
 
 impl Drop for SetupLibraryAgencyV2ZeroFees  {
+    fn drop(&mut self) {
+        cleanup_agency_env();
+        tear_down()
+    }
+}
+
+impl SetupLibraryAgencyZeroFees  {
+    pub fn init(protocol_type: &str) -> SetupLibraryAgencyZeroFees  {
+        setup();
+        setup_agency_env(&protocol_type, true);
+        SetupLibraryAgencyZeroFees
+    }
+}
+
+impl Drop for SetupLibraryAgencyZeroFees  {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()
