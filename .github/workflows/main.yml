@@ -76,7 +76,7 @@ jobs:
             then
               PUBLISH_VERSION="$REPO_VERSION_DESIRED"
               RELEASE="true"
-              echo "This is push to master, and version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will publish and release $REPO_VERSION_DESIRED."
+              echo "This is push to master, and version was bumped $REPO_VERSION_MOST_RECENT->$REPO_VERSION_DESIRED. Will publish and release $REPO_VERSION_DESIRED."
             else
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
               echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
@@ -97,6 +97,7 @@ jobs:
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
           echo ::set-env name=PUBLISH_VERSION::$PUBLISH_VERSION
+          echo ::set-env name=RELEASE::$RELEASE
           echo ::set-env name=CACHE_KEY_LIBVCX::$LIBVCX_HASH
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
@@ -586,7 +587,7 @@ jobs:
   make-release:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, test-libvcx-image, test-android-build, test-node-wrapper]
-    if: needs.workflow-setup.outputs.RELEASE == "true"
+    if: needs.workflow-setup.outputs.RELEASE == 'true'
     steps:
       - name: Load env. variables
         run: |
