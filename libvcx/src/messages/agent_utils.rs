@@ -317,7 +317,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 }
 
 fn onboarding_v1(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
-    error!("Performing onboarding_v1");
+    panic!("Performing onboarding_v1");
     // panic!("Tried to perform v1 onboarding");
     /* STEP 1 - CONNECT */
     AgencyMock::set_next_response(constants::CONNECTED_RESPONSE.to_vec());
