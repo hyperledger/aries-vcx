@@ -3,7 +3,7 @@
     "homepage": "https://github.com/AbsaOSS/libvcx/tree/master/wrappers/node",
     "description": "NodeJS wrapper for Absa's fork of HL LibVCX",
     "license": "Apache-2.0",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "typings": "dist/index.d.ts",
     "directories": {
         "test": "test",
