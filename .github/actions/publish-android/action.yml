@@ -1,0 +1,35 @@
+name: 'Publish android image'
+
+inputs:
+  abis: 
+    description: 'A space separated list of ABIs to create a AAR for'
+    default: 'armv7 arm64 x86 x86_64'
+  docker-img-name: 
+    description: 'Name of the android image'
+    required: true
+  cache-key:
+    description: 'Cache key under which the android image is stored'
+    required: true
+  rar-path:
+    description: 'Path where the image is stored'
+    default: /tmp/imgcache/img_android.rar
+
+env:
+  DOCKER_BUILDKIT: 1
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build, run android wrapper tests, and publish artifacts
+      run: |
+        set -x
+        # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw ${{ inputs.docker-img.name }} \
+        docker run --name publish-android-wrapper -e ABIS="${{ inputs.abis }}" ${{ inputs.docker-img-name }} \
+                            bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.build.sh $ABIS)'
+        docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
+        docker_image_id=$(docker images | grep ${{ inputs.docker-img-name }} | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
+        mkdir -p /tmp/artifacts/aar
+        docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts/aar
+        docker rm ${docker_id} > /dev/null
+        docker rmi ${docker_image_id} > /dev/null
+      shell: bash
