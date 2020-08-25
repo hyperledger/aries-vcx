@@ -13,7 +13,7 @@ interface IUintTypes {
   [key: string]: string
 }
 const UINTS_TYPES: IUintTypes = { x86: 'uint32', x64: 'uint64' }
-const ARCHITECTURE: string = process.env.LIBVCX_FFI_ARCHITECTURE || 'x86'
+const ARCHITECTURE: string = process.env.LIBVCX_FFI_ARCHITECTURE || 'x64'
 const FFI_UINT: string = UINTS_TYPES[ARCHITECTURE]
 
 // FFI Type Strings

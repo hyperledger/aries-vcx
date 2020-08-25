@@ -2,12 +2,15 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import { connectionCreate, connectionCreateConnect, dataConnectionCreate } from 'helpers/entities'
-import { INVITE_ACCEPTED_MESSAGE, INVITE_REDIRECTED_MESSAGE, INVITE_DETAILS } from 'helpers/test-constants'
+import {
+  INVITE_ACCEPTED_MESSAGE,
+  PROTOCOL_TYPE_ARIES
+} from 'helpers/test-constants'
 import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils'
 import { Connection, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 
 describe('Connection:', () => {
-  before(() => initVcxTestMode())
+  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
 
   describe('create:', () => {
     it('success', async () => {
@@ -24,25 +27,20 @@ describe('Connection:', () => {
   describe('connect:', () => {
     it('success: without phone', async () => {
       const connection = await connectionCreate()
-      const inviteDetails = await connection.connect({ data: '{"connection_type":"QR"}' })
-      assert.notEqual(inviteDetails, '')
-    })
-
-    it('success: with phone', async () => {
-      const connection = await connectionCreate()
-      const inviteDetails = await connection.connect({ data: '{"connection_type":"SMS","phone":"7202200000"}' })
+      const inviteDetails = await connection.connect({ data: '{}' })
       assert.notEqual(inviteDetails, '')
     })
 
     it('throws: not initialized', async () => {
       const connection = new (Connection as any)()
-      const err = await shouldThrow(async () => connection.connect({ data: '{"connection_type":"QR"}' }))
+      const err = await shouldThrow(async () => connection.connect({ data: '{}' }))
       assert.equal(err.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE)
     })
   })
 
+  // todo : restore for aries
   describe('sendMessage:', () => {
-    it('success: sends message', async () => {
+    it.skip('success: sends message', async () => {
       const connection = await connectionCreate()
       await connection.connect({ data: '{"connection_type":"QR"}' })
       const error = await shouldThrow(() => connection.sendMessage({ msg: 'msg', type: 'msg', title: 'title' }))
@@ -53,7 +51,7 @@ describe('Connection:', () => {
   describe('signData:', () => {
     it('success: signs data', async () => {
       const connection = await connectionCreate()
-      await connection.connect({ data: '{"connection_type":"QR"}' })
+      await connection.connect({ data: '{}' })
       const signature = await connection.signData(new Buffer('random string'))
       assert(signature)
     })
@@ -62,12 +60,13 @@ describe('Connection:', () => {
   describe('verifySignature', () => {
     it('success: verifies the signature', async () => {
       const connection = await connectionCreate()
-      await connection.connect({ data: '{"connection_type":"QR"}' })
+      await connection.connect({ data: '{}' })
       const valid = await connection.verifySignature({data: new Buffer('random string'),
         signature: new Buffer('random string')})
       assert(valid)
     })
   })
+
   describe('serialize:', () => {
     it('success', async () => {
       const connection = await connectionCreate()
@@ -75,6 +74,13 @@ describe('Connection:', () => {
       assert.ok(serialized)
       assert.property(serialized, 'version')
       assert.property(serialized, 'data')
+      assert.property(serialized, 'state')
+      assert.property(serialized.data, 'source_id')
+      assert.property(serialized.data, 'pw_did')
+      assert.property(serialized.data, 'pw_verkey')
+      assert.property(serialized.data, 'endpoint')
+      assert.property(serialized.data, 'their_pw_did')
+      assert.property(serialized.data, 'their_pw_verkey')
       const { data, version } = serialized
       assert.ok(data)
       assert.ok(version)
@@ -82,13 +88,15 @@ describe('Connection:', () => {
       assert.equal(data.state, StateType.Initialized)
     })
 
-    it('throws: not initialized', async () => {
+    // TODO: restore for aries
+    it.skip('throws: not initialized', async () => {
       const connection = new (Connection as any)()
       const error = await shouldThrow(() => connection.serialize())
       assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE)
     })
 
-    it('throws: connection deleted', async () => {
+    // TODO: Is this op supported in 3.0?
+    it.skip('throws: connection deleted', async () => {
       const connection = await connectionCreate()
       await connection.connect({ data: '{"connection_type":"QR"}' })
       await connection.delete()
@@ -109,7 +117,7 @@ describe('Connection:', () => {
 
     it('throws: incorrect data', async () => {
       const error = await shouldThrow(async () => Connection.deserialize({ data:
-        { source_id: 'Invalid' } } as any))
+          { source_id: 'Invalid' } } as any))
       assert.equal(error.vcxCode, VCXCode.INVALID_JSON)
     })
   })
@@ -122,37 +130,35 @@ describe('Connection:', () => {
     })
 
     it(`returns ${StateType.Initialized}: not connected`, async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreate({ id: 'alice' })
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Initialized)
     })
 
-    it(`returns ${StateType.OfferSent}: connected`, async () => {
+    // todo : restore for aries
+    it.skip(`returns ${StateType.OfferSent}: connected`, async () => {
       const connection = await connectionCreateConnect()
-      VCXMock.setVcxMock(VCXMockMessage.AcceptInvite)
+      VCXMock.setVcxMock(VCXMockMessage.AcceptInvite) // todo: must return Aries mock data
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Accepted)
     })
 
-    it(`returns ${StateType.Accepted}: mocked accepted`, async () => {
+    // todo : restore for aries
+    it.skip(`returns ${StateType.Accepted}: mocked accepted`, async () => {
       const connection = await connectionCreateConnect()
       VCXMock.setVcxMock(VCXMockMessage.GetMessages)
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Accepted)
     })
 
-    it(`returns ${StateType.Accepted}: mocked accepted`, async () => {
+    // todo : restore for aries
+    it.skip(`returns ${StateType.Accepted}: mocked accepted`, async () => {
       const connection = await connectionCreateConnect()
       await connection.updateStateWithMessage(INVITE_ACCEPTED_MESSAGE)
       assert.equal(await connection.getState(), StateType.Accepted)
     })
 
-    it(`returns ${StateType.Redirected}: redirected with message`, async () => {
-      const connection = await connectionCreateConnect()
-      await connection.updateStateWithMessage(INVITE_REDIRECTED_MESSAGE)
-      assert.equal(await connection.getState(), StateType.Redirected)
-    })
-
+    // todo : restore for aries
     it.skip(`returns ${StateType.Accepted}: mocked accepted in parallel`, async () => {
       const numConnections = 50
       const interval = 50
@@ -174,57 +180,32 @@ describe('Connection:', () => {
   })
 
   describe('inviteDetails:', () => {
-    it('success: with abbr', async () => {
+    it('success', async () => {
       const connection = await connectionCreateConnect()
       const details = await connection.inviteDetails(true)
-      assert.include(details, '"dp":')
-    })
-
-    it('success: without abbr', async () => {
-      const connection = await connectionCreateConnect()
-      const details = await connection.inviteDetails()
-      assert.include(details, '"senderAgencyDetail":')
+      const parsedInvitation = JSON.parse(details)
+      assert.isString(parsedInvitation['@id'])
+      assert.equal(parsedInvitation['@type'], 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation')
+      assert.isString(parsedInvitation.label)
+      assert.isArray(parsedInvitation.recipientKeys)
+      assert.equal(parsedInvitation.recipientKeys.length, 1)
+      assert.isArray(parsedInvitation.routingKeys)
+      assert.equal(parsedInvitation.routingKeys.length, 2)
+      assert.equal(parsedInvitation.serviceEndpoint, 'http://127.0.0.1:8080/agency/msg')
     })
   })
 
   describe('sendPing:', () => {
     it('success: send ping', async () => {
       const connection = await connectionCreate()
-      const error = await shouldThrow(() => connection.sendPing('ping'))
-      assert.equal(error.vcxCode, VCXCode.ACTION_NOT_SUPPORTED)
+      await connection.sendPing('ping')
     })
   })
 
   describe('sendDiscoveryFeatures:', () => {
     it('success: send discovery features', async () => {
       const connection = await connectionCreate()
-      const error = await shouldThrow(() => connection.sendDiscoveryFeatures('*', 'comment'))
-      assert.equal(error.vcxCode, VCXCode.ACTION_NOT_SUPPORTED)
+      await connection.sendDiscoveryFeatures('*', 'comment')
     })
   })
-  describe('redirect:', () => {
-    it('success', async () => {
-      // create an connection.
-      const old_connection = await connectionCreateConnect()
-      await old_connection.updateStateWithMessage(INVITE_ACCEPTED_MESSAGE)
-      assert.equal(await old_connection.getState(), StateType.Accepted)
-
-      const connection = await Connection.createWithInvite({
-        'id': 'new',
-        'invite': INVITE_DETAILS
-      })
-      await connection.connectionRedirect(old_connection)
-      assert.equal(await connection.getState(), StateType.Redirected)
-    })
-  })
-
-  describe('getRedirectDetails:', () => {
-    it('success', async () => {
-      const connection = await connectionCreateConnect()
-      await connection.updateStateWithMessage(INVITE_REDIRECTED_MESSAGE)
-      const details = await connection.getRedirectDetails()
-      assert.include(details, '"DID":')
-    })
-  })
-
 })
