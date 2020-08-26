@@ -575,6 +575,7 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     static CONFIG: &'static str = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
+    static CONFIG_V3: &'static str = r#"{"protocol_type": "3.0", "agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -592,7 +593,7 @@ mod tests {
     fn test_provision_agent() {
         let _setup = SetupMocks::init();
 
-        let c_json = CString::new(CONFIG).unwrap().into_raw();
+        let c_json = CString::new(CONFIG_V3).unwrap().into_raw();
 
         let result = vcx_provision_agent(c_json);
 
@@ -602,10 +603,10 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_agent() {
-        let _setup = SetupAriesMocks::init();
+    fn test_provision_agent_async_c_closure() {
+        let _setup = SetupMocks::init();
 
-        let result = _vcx_agent_provision_async_c_closure(CONFIG).unwrap();
+        let result = _vcx_agent_provision_async_c_closure(CONFIG_V3).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
     }
 

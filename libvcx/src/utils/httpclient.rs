@@ -37,9 +37,9 @@ impl AgencyMock {
 }
 
 impl AgencyMockDecrypted {
-    pub fn set_next_decrypted_response(body: String) {
+    pub fn set_next_decrypted_response(body: &str) {
         if settings::agency_mocks_enabled() {
-            AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.push(body);
+            AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.push(body.into());
         }
     }
 

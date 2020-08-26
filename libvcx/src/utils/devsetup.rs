@@ -95,8 +95,7 @@ impl SetupAriesMocks {
     pub fn init() -> SetupAriesMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "2.0");
-        settings::set_config_value(settings::COMMUNICATION_METHOD, "aries");
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "3.0");
         SetupAriesMocks
     }
 }
