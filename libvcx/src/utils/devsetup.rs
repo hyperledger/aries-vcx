@@ -37,6 +37,8 @@ pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 age
 
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
+pub struct SetupLibraryAgencyZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
+
 fn setup() {
     settings::clear_config();
     set_defaults();
@@ -93,8 +95,7 @@ impl SetupAriesMocks {
     pub fn init() -> SetupAriesMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "2.0");
-        settings::set_config_value(settings::COMMUNICATION_METHOD, "aries");
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "3.0");
         SetupAriesMocks
     }
 }
@@ -250,7 +251,7 @@ impl Drop for SetupLibraryAgencyV1ZeroFees {
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
-        setup_agency_env("2.0", false);
+        setup_agency_env("3.0", false);
         SetupLibraryAgencyV2
     }
 }
@@ -271,6 +272,21 @@ impl SetupLibraryAgencyV2ZeroFees  {
 }
 
 impl Drop for SetupLibraryAgencyV2ZeroFees  {
+    fn drop(&mut self) {
+        cleanup_agency_env();
+        tear_down()
+    }
+}
+
+impl SetupLibraryAgencyZeroFees  {
+    pub fn init(protocol_type: &str) -> SetupLibraryAgencyZeroFees  {
+        setup();
+        setup_agency_env(&protocol_type, true);
+        SetupLibraryAgencyZeroFees
+    }
+}
+
+impl Drop for SetupLibraryAgencyZeroFees  {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()
@@ -389,6 +405,7 @@ pub fn set_institution() {
     settings::clear_config();
     unsafe {
         CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
+            warn!("Setting institution config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             settings::process_config_string(&t, true)
         }).unwrap();
@@ -400,6 +417,7 @@ pub fn set_consumer() {
     settings::clear_config();
     unsafe {
         CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
+            warn!("Setting consumer config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             settings::process_config_string(&t, true)
         }).unwrap();
@@ -551,13 +569,12 @@ impl Drop for TempFile {
     }
 }
 
-#[cfg(feature = "agency")]
-#[cfg(feature = "pool_tests")]
+#[cfg(feature = "agency_pool_tests")]
 mod tests {
     use super::*;
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();

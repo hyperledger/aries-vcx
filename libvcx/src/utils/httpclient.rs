@@ -10,9 +10,18 @@ lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
 }
 
+lazy_static! {
+    static ref AGENCY_MOCK_DECRYPTED: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
+}
+
 #[derive(Default)]
 pub struct AgencyMock {
     responses: Vec<Vec<u8>>
+}
+
+#[derive(Default)]
+pub struct AgencyMockDecrypted {
+    responses: Vec<String>
 }
 
 impl AgencyMock {
@@ -27,6 +36,23 @@ impl AgencyMock {
     }
 }
 
+impl AgencyMockDecrypted {
+    pub fn set_next_decrypted_response(body: &str) {
+        if settings::agency_mocks_enabled() {
+            AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.push(body.into());
+        }
+    }
+
+    pub fn has_decrypted_mock_responses() -> bool {
+        AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.len() > 0
+    }
+
+    pub fn get_decrypted_response() -> String {
+        AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.pop().unwrap()
+    }
+}
+
+
 //Todo: change this RC to a u32
 pub fn post_u8(body_content: &Vec<u8>) -> VcxResult<Vec<u8>> {
     let endpoint = format!("{}/agency/msg", settings::get_config_value(settings::CONFIG_AGENCY_ENDPOINT)?);
@@ -35,7 +61,13 @@ pub fn post_u8(body_content: &Vec<u8>) -> VcxResult<Vec<u8>> {
 
 pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     if settings::agency_mocks_enabled() {
-        return AgencyMock::get_response();
+        if AgencyMockDecrypted::has_decrypted_mock_responses() {
+            warn!("Agency requests returns empty response, decrypted mock response is available");
+            return Ok(vec!())
+        }
+        let mocked_response = AgencyMock::get_response();
+        warn!("Returning mocked agency response!");
+        return mocked_response;
     }
 
     //Setting SSL Certs location. This is needed on android platform. Or openssl will fail to verify the certs

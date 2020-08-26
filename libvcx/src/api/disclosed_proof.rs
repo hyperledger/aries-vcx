@@ -973,6 +973,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
@@ -1043,6 +1044,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_send_proof() {
         let _setup = SetupMocks::init();
 
@@ -1058,6 +1060,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_reject_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -1072,6 +1075,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_reject_msg() {
         let _setup = SetupMocks::init();
@@ -1088,6 +1092,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
