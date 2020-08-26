@@ -1357,6 +1357,7 @@ pub mod tests {
     }
 
     pub fn create_connected_connections() -> (u32, u32) {
+        debug!("Institution is going to create connection.");
         ::utils::devsetup::set_institution();
         let faber_to_alice = create_connection("alice").unwrap();
         let my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -1364,21 +1365,24 @@ pub mod tests {
         update_state(faber_to_alice, None).unwrap();
         let details = get_invite_details(faber_to_alice, false).unwrap();
 
-        //BE CONSUMER AND ACCEPT INVITE FROM INSTITUTION
         ::utils::devsetup::set_consumer();
+        debug!("Consumer is going to accept connection invitation.");
         let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
         connect(alice_to_faber,  None).unwrap();
         update_state(alice_to_faber, None).unwrap();
         // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
 
+        debug!("Institution is going to process connection request.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
         update_state(faber_to_alice, None).unwrap();
 
+        debug!("Consumer is going to complete the connection protocol.");
         ::utils::devsetup::set_consumer();
         update_state(alice_to_faber, None).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(alice_to_faber));
 
+        debug!("Institution is going to complete the connection protocol.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
         update_state(faber_to_alice, None).unwrap();
@@ -1835,59 +1839,5 @@ pub mod tests {
         }).unwrap();
 
         let _serialized = to_string(handle).unwrap();
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: delete this once we delete redirection code
-    #[test]
-    fn test_connection_redirection_real() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        //0. Create initial connection
-        let (faber, alice) = ::connection::tests::create_connected_connections();
-
-        //1. Faber sends another invite
-        ::utils::devsetup::set_institution(); //Faber to Alice
-        let alice2 = create_connection("alice2").unwrap();
-        let my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let options = json!({"use_public_did": true}).to_string();
-        connect(alice2, Some(options)).unwrap();
-        let details_for_alice2 = get_invite_details(alice2, false).unwrap();
-        println!("alice2 details: {}", details_for_alice2);
-
-        //2. Alice receives (recognizes that there is already a connection), calls different api (redirect rather than regular connect)
-        //BE CONSUMER AND REDIRECT INVITE FROM INSTITUTION
-        ::utils::devsetup::set_consumer();
-        let faber_duplicate = create_connection_with_invite("faber_duplicate", &details_for_alice2).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber_duplicate));
-        redirect(faber_duplicate, faber).unwrap();
-        let public_did = get_their_public_did(faber_duplicate).unwrap().unwrap();
-        assert_eq!(my_public_did, public_did);
-
-        //3. Faber waits for redirect state change
-        //BE INSTITUTION AND CHECK THAT INVITE WAS ACCEPTED
-        ::utils::devsetup::set_institution();
-        thread::sleep(Duration::from_millis(2000));
-        update_state(alice2, None).unwrap();
-        assert_eq!(VcxStateType::VcxStateRedirected as u32, get_state(alice2));
-
-        //4. Faber calls 'get_redirect_data' and based on data, finds old connection  (business logic of enterprise)
-        let redirect_data = get_redirect_details(alice2).unwrap();
-        println!("redirect_data: {}", redirect_data);
-
-        let rd: RedirectDetail = serde_json::from_str(&redirect_data).unwrap();
-        let alice_serialized = to_string(alice).unwrap();
-
-        let to_alice_old: Connection = ::messages::ObjectWithVersion::deserialize(&alice_serialized)
-            .map(|obj: ::messages::ObjectWithVersion<Connection>| obj.data).unwrap();
-
-
-        // Assert redirected data match old connection to alice
-        assert_eq!(rd.did, to_alice_old.pw_did);
-        assert_eq!(rd.verkey, to_alice_old.pw_verkey);
-        assert_eq!(rd.public_did, to_alice_old.public_did);
-        assert_eq!(rd.their_did, to_alice_old.their_pw_did);
-        assert_eq!(rd.their_verkey, to_alice_old.their_pw_verkey);
-        assert_eq!(rd.their_public_did, to_alice_old.their_public_did);
     }
 }

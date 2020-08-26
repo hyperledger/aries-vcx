@@ -251,7 +251,9 @@ impl Drop for SetupLibraryAgencyV1ZeroFees {
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
+        debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
         setup_agency_env("3.0", false);
+        debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
     }
 }
@@ -405,10 +407,11 @@ pub fn set_institution() {
     settings::clear_config();
     unsafe {
         CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
-            warn!("Setting institution config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
-            settings::process_config_string(&t, true)
-        }).unwrap();
+            let result = settings::process_config_string(&t, true);
+            warn!("Switching test context to institution. Settings: {:?}", settings::settings_as_string());
+            result
+        });
     }
     change_wallet_handle();
 }
@@ -419,7 +422,9 @@ pub fn set_consumer() {
         CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
             warn!("Setting consumer config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
-            settings::process_config_string(&t, true)
+            let result = settings::process_config_string(&t, true);
+            warn!("Switching test context to consumer. Settings: {:?}", settings::settings_as_string());
+            result
         }).unwrap();
     }
     change_wallet_handle();
@@ -431,6 +436,7 @@ fn change_wallet_handle() {
 }
 
 pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
+    debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
@@ -457,6 +463,7 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
         config["use_latest_protocols"] = json!("true");
     }
 
+    debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
     let enterprise_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
 
     ::api::vcx::vcx_shutdown(false);
@@ -482,6 +489,7 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
         config["use_latest_protocols"] = json!("true");
     }
 
+    debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
     let consumer_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
 
     unsafe {
