@@ -426,7 +426,7 @@ pub enum ProtocolTypes {
 
 impl Default for ProtocolTypes {
     fn default() -> Self {
-        ProtocolTypes::V1
+        ProtocolTypes::V3
     }
 }
 
