@@ -512,27 +512,26 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: download_agent_messages is not valid for v2 agency, this test was trying to download *sent* messages
     #[test]
-    // this test is failing because it's tryinh to use message pairwise/1.0
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
 
         let (_faber, alice) = ::connection::tests::create_connected_connections();
 
+        debug!("test_send_and_download_messages >> Institution is going to send a message");
+        let _hello_uid = ::connection::send_generic_message(alice, "hello_world", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
+        thread::sleep(Duration::from_millis(1000));
+
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer();
 
-        debug!("test_download_agent_messages >> Consumer is going to send generic message.");
-        let _hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
-        thread::sleep(Duration::from_millis(2000));
-        let all_messages = download_agent_messages(None, None).unwrap();
-        assert_eq!(all_messages.len(), 1);
-
         debug!("test_download_agent_messages >> Consumer is going to download generic message.");
         let invalid_status_code = "abc".to_string();
-        let bad_req = download_agent_messages(Some(vec![invalid_status_code]), None);
-        assert!(bad_req.is_err());
+        let msgsByConnection = download_messages(None, Some(vec!("MS-103".into())), None).unwrap();
+        assert_eq!(msgsByConnection.len(), 1);
+        let msgs = &msgsByConnection[0].msgs;
+        let serialized = serde_json::to_string(msgs).unwrap();
+        assert!(serialized.contains("hello_world"));
     }
 
     #[cfg(feature = "agency_pool_tests")]
