@@ -161,8 +161,7 @@ mod tests {
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&::utils::constants::UPDATE_MESSAGES_RESPONSE.to_vec()).unwrap();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV1::init();

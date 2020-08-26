@@ -567,13 +567,11 @@ impl Drop for TempFile {
     }
 }
 
-#[cfg(feature = "agency")]
-#[cfg(feature = "pool_tests")]
+#[cfg(feature = "agency_pool_tests")]
 mod tests {
     use super::*;
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();

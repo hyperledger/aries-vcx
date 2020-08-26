@@ -332,8 +332,7 @@ mod tests {
         assert_eq!(VcxErrorKind::InvalidJson, uid.kind());
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_send_generic_message() {
         let _setup = SetupLibraryAgencyV1::init();
@@ -346,8 +345,7 @@ mod tests {
         let _all_messages = get_message::download_messages(None, None, None).unwrap();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_send_message_and_download_response() {
         let _setup = SetupLibraryAgencyV1::init();

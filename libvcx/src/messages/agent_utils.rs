@@ -652,8 +652,7 @@ mod tests {
         update_agent_info("123", "value").unwrap();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_update_agent_info_real() {
         let _setup = SetupLibraryAgencyV1::init();

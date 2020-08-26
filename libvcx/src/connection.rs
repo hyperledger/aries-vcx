@@ -1839,8 +1839,7 @@ pub mod tests {
         let _serialized = to_string(handle).unwrap();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_connection_redirection_real() {
         let _setup = SetupLibraryAgencyV1::init();

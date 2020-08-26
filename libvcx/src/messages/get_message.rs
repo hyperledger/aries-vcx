@@ -516,8 +516,7 @@ mod tests {
         assert_eq!(result.len(), 1)
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     #[ignore] // Dummy cloud agent has not implemented this functionality yet
     fn test_download_agent_messages() {
@@ -540,8 +539,7 @@ mod tests {
         assert!(bad_req.is_err());
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV1::init();
