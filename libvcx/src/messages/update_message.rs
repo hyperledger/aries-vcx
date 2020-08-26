@@ -149,9 +149,9 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
 mod tests {
     use super::*;
     use utils::devsetup::*;
-    #[cfg(any(feature = "agency", feature = "pool_tests"))]
+    #[cfg(any(feature = "agency_pool_tests"))]
     use std::thread;
-    #[cfg(any(feature = "agency", feature = "pool_tests"))]
+    #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
     #[test]
     #[cfg(feature = "to_restore")]
@@ -162,6 +162,7 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV1::init();

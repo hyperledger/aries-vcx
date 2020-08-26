@@ -1840,6 +1840,7 @@ pub mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: delete this once we delete redirection code
     #[test]
     fn test_connection_redirection_real() {
         let _setup = SetupLibraryAgencyV1::init();

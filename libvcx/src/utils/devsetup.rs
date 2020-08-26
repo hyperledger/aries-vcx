@@ -572,6 +572,7 @@ mod tests {
     use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();

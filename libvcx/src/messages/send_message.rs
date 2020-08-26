@@ -333,6 +333,7 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_send_generic_message() {
         let _setup = SetupLibraryAgencyV1::init();
@@ -346,6 +347,7 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_send_message_and_download_response() {
         let _setup = SetupLibraryAgencyV1::init();

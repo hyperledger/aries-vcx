@@ -492,9 +492,9 @@ pub fn download_agent_messages(status_codes: Option<Vec<String>>, uids: Option<V
 mod tests {
     use super::*;
     use utils::constants::{GET_MESSAGES_RESPONSE, GET_ALL_MESSAGES_RESPONSE};
-    #[cfg(any(feature = "agency", feature = "pool_tests"))]
+    #[cfg(feature = "agency_pool_tests")]
     use std::thread;
-    #[cfg(any(feature = "agency", feature = "pool_tests"))]
+    #[cfg(feature = "agency_pool_tests")]
     use std::time::Duration;
     use utils::devsetup::*;
 
@@ -517,8 +517,8 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
-    #[ignore] // Dummy cloud agent has not implemented this functionality yet
     fn test_download_agent_messages() {
         let _setup = SetupLibraryAgencyV1::init();
 
@@ -540,6 +540,7 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV1::init();
