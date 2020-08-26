@@ -130,19 +130,8 @@ pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match messages::agent_utils::update_agent_info(&agent_info.id, &agent_info.value) {
-            Ok(()) => {
-                trace!("vcx_agent_update_info_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
-                cb(command_handle, error::SUCCESS.code_num);
-            }
-            Err(e) => {
-                error!("vcx_agent_update_info_cb(command_handle: {}, rc: {})",
-                       command_handle, e);
-                cb(command_handle, e.into());
-            }
-        };
-
+        error!("vcx_agent_update_info is not supported anymore");
+        cb(command_handle, error::NOT_READY.code_num);
         Ok(())
     });
 
@@ -257,33 +246,8 @@ pub extern fn vcx_download_agent_messages(command_handle: u32,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::messages::get_message::download_agent_messages(message_status, uids) {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, x);
-
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
-                        warn!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                              command_handle, err, "null");
-
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                };
-            }
-            Err(e) => {
-                warn!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, e, "null");
-
-                cb(command_handle, e.into(), ptr::null_mut());
-            }
-        };
-
+        error!("vcx_download_agent_messages is not supported anymore");
+        cb(command_handle, error::NOT_READY.code_num, ptr::null_mut());
         Ok(())
     });
 
@@ -636,21 +600,6 @@ mod tests {
 
         let err = _vcx_agent_provision_async_c_closure(&config).unwrap_err();
         assert_eq!(err, error::INVALID_WALLET_CREATION.code_num);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_update_agent_info() {
-        let _setup = SetupMocks::init();
-
-        let json_string = r#"{"id":"123","value":"value"}"#;
-        let c_json = CString::new(json_string).unwrap().into_raw();
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        // todo: method update_agent_info_v2 is not mocking messages at all
-        let _result = vcx_agent_update_info(cb.command_handle, c_json, Some(cb.get_callback()));
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
     #[test]
