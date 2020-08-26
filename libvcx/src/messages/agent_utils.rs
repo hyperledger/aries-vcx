@@ -468,6 +468,8 @@ fn update_agent_info_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
 }
 
 fn update_agent_info_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
+    AgencyMockDecrypted::set_next_decrypted_response(constants::UPDATE_COM_METHOD_RESPONSE_DECRYPTED);
+
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
     );
