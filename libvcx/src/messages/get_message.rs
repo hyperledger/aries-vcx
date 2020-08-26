@@ -520,7 +520,7 @@ mod tests {
     #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_download_agent_messages() {
-        let _setup = SetupLibraryAgencyV1::init();
+        let _setup = SetupLibraryAgencyV2::init();
 
         let (_faber, alice) = ::connection::tests::create_connected_connections();
 

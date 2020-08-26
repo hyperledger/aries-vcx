@@ -251,7 +251,7 @@ impl Drop for SetupLibraryAgencyV1ZeroFees {
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
-        setup_agency_env("2.0", false);
+        setup_agency_env("3.0", false);
         SetupLibraryAgencyV2
     }
 }
@@ -405,6 +405,7 @@ pub fn set_institution() {
     settings::clear_config();
     unsafe {
         CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
+            warn!("Setting institution config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             settings::process_config_string(&t, true)
         }).unwrap();
@@ -416,6 +417,7 @@ pub fn set_consumer() {
     settings::clear_config();
     unsafe {
         CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
+            warn!("Setting consumer config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             settings::process_config_string(&t, true)
         }).unwrap();
