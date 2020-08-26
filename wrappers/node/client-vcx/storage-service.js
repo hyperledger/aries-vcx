@@ -2,7 +2,6 @@ const { createFileStorage } = require('./storage-file')
 const mkdirp = require('mkdirp')
 
 async function createStorageService (agentName) {
-
   mkdirp.sync('storage-agentProvisions/')
   mkdirp.sync('storage-connections/')
   mkdirp.sync('storage-credentialDefinitions/')
