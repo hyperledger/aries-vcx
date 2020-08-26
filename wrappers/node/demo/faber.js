@@ -1,4 +1,3 @@
-// todo: fix next line
 const { provisionAgent } = require('../client-vcx/vcx-workflows')
 const { Proof } = require('../dist/src/api/proof')
 const { StateType, ProofState } = require('../dist/src')
@@ -16,6 +15,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 
 async function runFaber (options) {
+  logger.info(`Starting. Revocation enabled=${options.revocation}`)
   let faberServer
   let exitcode = 0
   try {
@@ -130,8 +130,8 @@ async function runFaber (options) {
 
     logger.info('#21 Poll agency and wait for alice to provide proof')
     let proofProtocolState = await vcxProof.getState()
-    logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
-    logger.info(`proofState = ${proofProtocolState}`)
+    logger.debug(`vcxProof = ${JSON.stringify(vcxProof)}`)
+    logger.debug(`proofState = ${proofProtocolState}`)
     while (proofProtocolState !== StateType.Accepted) {
       // even if revoked credential was used, vcxProof.getState() should in final state return StateType.Accepted
       await sleepPromise(2000)
@@ -148,17 +148,21 @@ async function runFaber (options) {
     logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
 
     logger.info('#28 Check if proof is valid.')
+    logger.debug(`Serialized proof ${JSON.stringify(await vcxProof.serialize())}`)
     if (proofState === ProofState.Verified) {
       logger.warn('Proof is verified.')
-      assert(options.revocation === false)
+      if (options.revocation) {
+        throw Error('Proof was verified, but was expected to be invalid, because revocation was enabled.')
+      }
     } else if (proofState === ProofState.Invalid) {
-      logger.warn('Proof verification failed, credential has been revoked.')
-      assert(options.revocation === true)
+      logger.warn('Proof verification failed. A credential used to create proof may have been revoked.')
+      if (options.revocation === false) {
+        throw Error('Proof was invalid, but was expected to be verified. Revocation was not enabled.')
+      }
     } else {
       logger.error(`Unexpected proof state '${proofState}'.`)
       process.exit(-1)
     }
-    logger.info(`Serialized proof ${JSON.stringify(await vcxProof.serialize())}`)
   } catch (err) {
     exitcode = -1
     logger.error(`Faber encountered error ${err.message} ${err.stack}`)
@@ -199,7 +203,7 @@ const optionDefinitions = [
   {
     name: 'expose-invitation-port',
     type: Number,
-    description: 'If specified, invitation will be exposed on this port via HTTP',
+    description: 'If specified, invitation will be exposed on this port via HTTP'
   }
 ]
 

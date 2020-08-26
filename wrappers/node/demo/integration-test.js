@@ -23,11 +23,20 @@ function run (spawnProcess) {
 }
 
 const spawnFaber = () => {
-  return spawn('node',
-    [path.resolve(__dirname, './faber.js'),
-      '--expose-invitation-port', 8181
-    ]
-  )
+  if (process.env.REVOCATION === 'true') {
+    return spawn('node',
+      [path.resolve(__dirname, './faber.js'),
+        '--expose-invitation-port', 8181,
+        '--revocation'
+      ]
+    )
+  } else {
+    return spawn('node',
+      [path.resolve(__dirname, './faber.js'),
+        '--expose-invitation-port', 8181
+      ]
+    )
+  }
 }
 
 const spawnAlice = () => {

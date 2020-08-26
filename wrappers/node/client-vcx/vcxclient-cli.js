@@ -61,10 +61,6 @@ function areOptionsValid (options) {
     console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
     return false
   }
-  if (!options.name) {
-    console.error('Must specify --name.')
-    return false
-  }
   return true
 }
 

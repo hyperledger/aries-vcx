@@ -42,6 +42,7 @@ async function getInvitationString (fetchInviteUrl) {
 }
 
 async function runAlice (options) {
+  logger.info('Starting.')
   const testRunId = uuid.v4()
   const seed = '000000000000000000000000Trustee1'
   const protocolType = options.protocolType

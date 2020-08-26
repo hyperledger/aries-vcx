@@ -422,7 +422,7 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper tests
+      - name: Run wrapper integration test
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
@@ -431,6 +431,16 @@ jobs:
                                 npm install && \
                                 npm run compile && \
                                 npm run test:integration)'
+
+      - name: Run wrapper integration revocation test
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(
+                                cd $HOME/wrappers/node && \
+                                npm install && \
+                                npm run compile && \
+                                npm run test:integration:revocation)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
