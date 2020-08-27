@@ -166,7 +166,8 @@ impl IssuerSM {
                 CredentialIssuanceMessage::CredentialInit(connection_handle) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
-                        .set_offers_attach(&cred_offer)?;
+                        .set_offers_attach(&cred_offer)?
+                        .set_comment("".into());
                     let cred_offer_msg = _append_credential_preview(cred_offer_msg, &state_data.credential_json)?;
                     send_message(connection_handle, cred_offer_msg.to_a2a_message())?;
                     IssuerState::OfferSent((state_data, cred_offer, connection_handle, cred_offer_msg.id).into())
@@ -201,7 +202,9 @@ impl IssuerSM {
                     let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data);
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
-                            let credential_msg = credential_msg.set_thread_id(&state_data.thread_id);
+                            let credential_msg = credential_msg
+                                .set_thread_id(&state_data.thread_id)
+                                .set_comment("".into());
                             send_message(state_data.connection_handle, credential_msg.to_a2a_message())?;
                             IssuerState::Finished((state_data, cred_rev_id).into())
                         }
