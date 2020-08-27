@@ -35,6 +35,7 @@ mod log_tests {
         unsafe { COUNT = COUNT + 1 }
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_logging_default_debug() {
         // this test should output a single debug line
         // and a single info line (from the vcx_error_c_message call)
@@ -48,6 +49,7 @@ mod log_tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_logging_default_is_warn() {
         // this test should output a single warning line
         assert_eq!(vcx_set_default_logger(null()), 0);
@@ -57,6 +59,7 @@ mod log_tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_logging_env_var() {
         // this test should output a single info line
         use std::env::set_var;
@@ -70,6 +73,7 @@ mod log_tests {
     /// it tests that both calls to log::init an occur and not conflict
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_works_with_libindy() {
         pub const DEFAULT_WALLET_CONFIG: &'static str = r#"{"id":"wallet_1","storage_type":"default"}"#;
         pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
@@ -82,6 +86,7 @@ mod log_tests {
 
     #[ignore]
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_set_logger() {
         unsafe { assert_eq!(COUNT, 0);}
         let _err = vcx_set_logger(null(), None, Some(custom_log), None);

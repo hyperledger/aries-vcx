@@ -4,7 +4,7 @@ ARG USER_ID=1000
 
 # Install dependencies
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
       pkg-config \
       libssl-dev \
       libgmp3-dev \
@@ -12,10 +12,6 @@ RUN apt-get update && \
       build-essential \
       libsqlite3-dev \
       cmake \
-      git \
-      python3.5 \
-      python3-pip \
-      python-setuptools \
       apt-transport-https \
       ca-certificates \
       debhelper \
@@ -26,23 +22,6 @@ RUN apt-get update && \
       zip \
       unzip \
       jq
-
-RUN pip3 install -U \
-	pip \
-	setuptools \
-	virtualenv \
-	twine==1.15.0 \
-	plumbum==1.6.7 six==1.12.0 \
-	deb-pkg-tools
-
-# Install libsodium
-RUN cd /tmp && \
-   curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz | tar -xz && \
-    cd /tmp/libsodium-1.0.18 && \
-    ./configure && \
-    make && \
-    make install && \
-    rm -rf /tmp/libsodium-1.0.18
 
 # Add indy user to sudoers
 RUN useradd -ms /bin/bash -u $USER_ID indy
@@ -55,7 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ruby \
         ruby-dev \
         rubygems \
-        zip \
     && gem install --no-ri --no-rdoc rake fpm \
     && rm -rf /var/lib/apt/lists/*
 
@@ -74,7 +52,7 @@ RUN apt-get install -y nodejs
 USER indy
 
 # Install Rust toolchain
-ARG RUST_VER=1.40.0
+ARG RUST_VER=1.42.0
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
 

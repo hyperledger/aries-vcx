@@ -1,7 +1,7 @@
-import * as ffi from 'ffi-napi'
 import '../module-resolver-helper'
 
 import { assert } from 'chai'
+import * as ffi from 'ffi-napi'
 import { Logger, loggerFunction, loggerToVoidPtr, setLogger } from 'src'
 import { initRustAPI } from '../../src/rustlib'
 import { errorMessage } from '../../src/utils/error-message'
@@ -54,9 +54,9 @@ describe('Set Logger: ', () => {
       console.log('file: ' + file)
       console.log('line: ' + line)
     }
-    assert(count === 0)
+    assert.equal(count, 0)
     setLogger(_logFn)
     errorMessage(1058)
-    assert(count === 2)
+    assert.equal(count, 3)
   })
 })

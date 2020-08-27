@@ -73,6 +73,7 @@ mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn simple() {
         let simple_map = vec!(("d".to_string(), "devin".to_string()));
         let simple = json!({"d":"d"});
@@ -90,6 +91,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn abbr_test() {
         let un_abbr = json!({
   "statusCode":"MS-102",

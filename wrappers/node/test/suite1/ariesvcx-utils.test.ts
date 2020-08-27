@@ -16,8 +16,9 @@ import {
   VCXCode
 } from 'src'
 import { errorMessage } from '../../src/utils/error-message'
+import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
 describe('utils:', () => {
-  before(() => initVcxTestMode())
+  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
 
   // tslint:disable-next-line max-line-length
   const provisionString = '{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"123"}'

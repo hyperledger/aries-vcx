@@ -92,6 +92,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encryption_envelope_works_for_no_keys() {
         _setup();
         let setup = test_setup::key();
@@ -103,6 +104,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encryption_envelope_works_for_recipient_only() {
         _setup();
         let setup = test_setup::key();
@@ -114,6 +116,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encryption_envelope_works_for_routing_keys() {
         _setup();
         let setup = test_setup::key();

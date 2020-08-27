@@ -933,6 +933,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_defaults() {
         let _setup = SetupDefaults::init();
 
@@ -941,6 +942,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_create_with_offer() {
         let _setup = SetupDefaults::init();
 
@@ -949,6 +951,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_create_with_bad_offer() {
         let _setup = SetupDefaults::init();
 
@@ -957,6 +960,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
@@ -975,6 +979,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn full_credential_test() {
         let _setup = SetupMocks::init();
 
@@ -1005,6 +1010,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -1023,6 +1029,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -1034,6 +1041,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_sufficient_funds() {
         let _setup = SetupMocks::init();
 
@@ -1044,6 +1052,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_pay_for_non_premium_credential() {
         let _setup = SetupMocks::init();
 
@@ -1053,6 +1062,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_insufficient_funds() {
         let _setup = SetupMocks::init();
 
@@ -1061,6 +1071,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_handle() {
         let _setup = SetupMocks::init();
 
@@ -1074,6 +1085,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential() {
         let _setup = SetupMocks::init();
 
@@ -1085,6 +1097,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_submit_payment_through_credential_request() {
         let _setup = SetupMocks::init();
 
@@ -1104,6 +1117,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_cred_offer_returns_json_string_with_cred_offer_json_nested() {
         let _setup = SetupMocks::init();
 

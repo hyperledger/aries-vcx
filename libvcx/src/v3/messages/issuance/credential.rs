@@ -107,6 +107,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_build_works() {
         let credential: Credential = Credential::create()
             .set_comment(_comment())

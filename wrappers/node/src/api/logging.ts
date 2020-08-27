@@ -1,16 +1,19 @@
 import * as ffi from 'ffi-napi'
 import * as ref from 'ref-napi'
-import * as Struct from 'ref-struct-di'
+import * as buildStructType from 'ref-struct-di'
 
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
+
+const Struct = buildStructType(ref)
 
 export const Logger = Struct({
   flushFn: ffi.Function('void', []),
   logFn: ffi.Function('void', ['int', 'string', 'string', 'string', 'string', 'int'])
 })
 
-export function loggerToVoidPtr (_logger: any | Struct): Buffer {
+// The _logger must in fact be instance of Struct type we generated above using buildStructType(ref)
+export function loggerToVoidPtr (_logger: any): Buffer {
   const _pointer = ref.alloc('void *')
   ref.writePointer(_pointer, 0, _logger.ref())
   return _pointer

@@ -1016,6 +1016,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_proof() {
         let _setup = SetupMocks::init();
 
@@ -1023,6 +1024,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -1030,6 +1032,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
@@ -1045,6 +1048,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
@@ -1060,6 +1064,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn get_state_test() {
         let _setup = SetupMocks::init();
 
@@ -1071,6 +1076,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn to_string_test() {
         let _setup = SetupMocks::init();
 
@@ -1085,6 +1091,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
@@ -1092,6 +1099,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
@@ -1103,6 +1111,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
@@ -1138,6 +1147,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_find_schemas_fails() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1156,6 +1166,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_find_credential_def() {
         let _setup = SetupMocks::init();
 
@@ -1189,6 +1200,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_find_credential_def_fails() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1207,6 +1219,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_requested_credentials() {
         let _setup = SetupMocks::init();
 
@@ -1270,6 +1283,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -1369,6 +1383,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_retrieve_credentials_fails_with_no_proof_req() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1377,6 +1392,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers() {
         let _setup = SetupDefaults::init();
 
@@ -1462,6 +1478,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers_failure() {
         let _setup = SetupDefaults::init();
 
@@ -1712,6 +1729,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_generate_reject_proof() {
         let _setup = SetupMocks::init();
 
@@ -1721,6 +1739,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_rev_states_json() {
         let _setup = SetupMocks::init();
 
@@ -1971,6 +1990,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential_intervals_from_proof_req() {
         let _setup = SetupDefaults::init();
 

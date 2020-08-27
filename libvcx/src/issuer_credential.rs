@@ -1063,6 +1063,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_issuer_credential_create_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -1071,6 +1072,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -1080,6 +1082,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -1102,6 +1105,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_retry_send_credential_offer() {
         let _setup = SetupMocks::init();
 
@@ -1124,6 +1128,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_can_be_resent_after_failure() {
         let _setup = SetupMocks::init();
 
@@ -1147,6 +1152,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -1166,6 +1172,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_pending_credential_request() {
         let _setup = SetupMocks::init();
 
@@ -1179,6 +1186,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -1189,6 +1197,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_bad_message() {
         let _setup = SetupMocks::init();
 
@@ -1201,6 +1210,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn basic_add_attribute_encoding() {
         let _setup = SetupDefaults::init();
 
@@ -1218,6 +1228,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_that_test_mode_enabled_bypasses_libindy_create_credential() {
         let _setup = SetupMocks::init();
 
@@ -1231,6 +1242,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -1248,6 +1260,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_errors() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1256,6 +1269,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encoding() {
         let _setup = SetupMocks::init();
 
@@ -1278,6 +1292,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verify_payment() {
         let _setup = SetupMocks::init();
 
@@ -1298,6 +1313,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_credential_with_payments() {
         let _setup = SetupMocks::init();
 
@@ -1322,6 +1338,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_revoke_credential() {
         let _setup = SetupMocks::init();
 
@@ -1351,6 +1368,7 @@ pub mod tests {
 
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_with_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -1395,6 +1413,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_with_one_attribute_success() {
         let _setup = SetupDefaults::init();
 
@@ -1416,6 +1435,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -1459,6 +1479,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_one_attribute_success() {
         let _setup = SetupDefaults::init();
 
@@ -1480,6 +1501,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_with_mixed_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -1524,6 +1546,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
 
@@ -1534,6 +1557,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
 
@@ -1544,6 +1568,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_encode_empty_field() {
         let _setup = SetupDefaults::init();
 

@@ -1,10 +1,10 @@
 [package]
 
 name = "libvcx"
-version = "0.8.3"
-authors = ["Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
+version = "0.9.1"
+authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
-description = "This is the official SDK for Evernym's VCX"
+description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"
 
 [lib]
@@ -15,9 +15,11 @@ crate-type = ["staticlib","rlib", "cdylib"]
 [features]
 default = []
 pool_tests = []
-agency = []
+agency = [] # migrate these to v2 agency
 agency_v2 = []
+pool_legacy_agency_tests = [] # migrate the test using this
 aries = []
+general_test = []
 # Causes the build to fail on all warnings
 fatal_warnings = []
 

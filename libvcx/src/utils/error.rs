@@ -270,18 +270,21 @@ pub fn error_message(code_num:&u32) -> String {
 mod tests {
     use super::*;
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_has_error(){
         let e = &UNKNOWN_ERROR;
         assert_eq!(e.code_num, 1001);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_display_error(){
         let msg = format!("{}",UNKNOWN_ERROR);
         assert_eq!(msg, "Unknown Error: (Error Num:1001)")
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_message(){
         let msg = error_message(&1);
         assert_eq!(msg, "Unknown Error");
@@ -291,67 +294,81 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_unknown_error(){
         assert_eq!(error_message(&UNKNOWN_ERROR.code_num), UNKNOWN_ERROR.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_connection_error(){
         assert_eq!(error_message(&CONNECTION_ERROR.code_num), CONNECTION_ERROR.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_success_error(){
         assert_eq!(error_message(&SUCCESS.code_num), SUCCESS.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_no_endpoint_error(){
         assert_eq!(error_message(&NO_ENDPOINT.code_num), NO_ENDPOINT.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_option_error(){
         assert_eq!(error_message(&INVALID_OPTION.code_num), INVALID_OPTION.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_retrieving_messages(){
         assert_eq!(error_message(&INVALID_MESSAGES.code_num), INVALID_MESSAGES.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_malformed_attributes_for_credential_offer(){
         assert_eq!(error_message(&INVALID_ATTRIBUTES_STRUCTURE.code_num), INVALID_ATTRIBUTES_STRUCTURE.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_proof_handle_error(){
         assert_eq!(error_message(&INVALID_PROOF_HANDLE.code_num), INVALID_PROOF_HANDLE.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_request_incorrect_json_format_error(){
         assert_eq!(error_message(&INVALID_CREDENTIAL_REQUEST.code_num), INVALID_CREDENTIAL_REQUEST.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_invalid_proof() {
         assert_eq!(error_message(&INVALID_PROOF.code_num), INVALID_PROOF.message);
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_genesis() {
         assert_eq!(error_message(&INVALID_GENESIS_TXN_PATH.code_num), INVALID_GENESIS_TXN_PATH.message);
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_config() {
         assert_eq!(error_message(&POOL_LEDGER_CONNECT.code_num), POOL_LEDGER_CONNECT.message);
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_pool_config() {
         assert_eq!(error_message(&CREATE_POOL_CONFIG.code_num), CREATE_POOL_CONFIG.message);
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_big_number() {
         assert_eq!(error_message(&BIG_NUMBER_ERROR.code_num), BIG_NUMBER_ERROR.message);
         assert_eq!(error_message(&INVALID_PROOF_CREDENTIAL_DATA.code_num), INVALID_PROOF_CREDENTIAL_DATA.message);
@@ -361,50 +378,60 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_proof_incorrect_json_format_error(){
         assert_eq!(error_message(&INVALID_PROOF.code_num), INVALID_PROOF.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_error_credential_data() {
         assert_eq!(error_message(&INVALID_PROOF_CREDENTIAL_DATA.code_num), INVALID_PROOF_CREDENTIAL_DATA.message);
     }
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_failed_proof_compliance() {
         assert_eq!(error_message(&FAILED_PROOF_COMPLIANCE.code_num), FAILED_PROOF_COMPLIANCE.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_def_err() {
         assert_eq!(error_message(&CREATE_CREDENTIAL_DEF_ERR.code_num), CREATE_CREDENTIAL_DEF_ERR.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_unknown_libindy_error() {
         assert_eq!(error_message(&UNKNOWN_LIBINDY_ERROR.code_num), UNKNOWN_LIBINDY_ERROR.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_timeout_libindy_error() {
         assert_eq!(error_message(&TIMEOUT_LIBINDY_ERROR.code_num), TIMEOUT_LIBINDY_ERROR.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_credential_def_json() {
         assert_eq!(error_message(&INVALID_CREDENTIAL_DEF_JSON.code_num), INVALID_CREDENTIAL_DEF_JSON.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_def_handle_err() {
         assert_eq!(error_message(&INVALID_CREDENTIAL_DEF_HANDLE.code_num), INVALID_CREDENTIAL_DEF_HANDLE.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_def_already_on_ledger_err() {
         assert_eq!(error_message(&CREDENTIAL_DEF_ALREADY_CREATED.code_num), CREDENTIAL_DEF_ALREADY_CREATED.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_schema_err() {
         assert_eq!(error_message(&INVALID_SCHEMA.code_num), INVALID_SCHEMA.message);
         assert_eq!(error_message(&INVALID_SCHEMA_SEQ_NO.code_num), INVALID_SCHEMA_SEQ_NO.message);
@@ -413,21 +440,25 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_already_initialized() {
         assert_eq!(error_message(&ALREADY_INITIALIZED.code_num), ALREADY_INITIALIZED.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_invite_details() {
         assert_eq!(error_message(&INVALID_INVITE_DETAILS.code_num), INVALID_INVITE_DETAILS.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_redirect_details() {
         assert_eq!(error_message(&INVALID_REDIRECT_DETAILS.code_num), INVALID_REDIRECT_DETAILS.message);
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invalid_master_secret() {
         assert_eq!(error_message(&INVALID_MASTER_SECRET.code_num), INVALID_MASTER_SECRET.message);
     }

@@ -341,7 +341,7 @@ lazy_static! {
 
 fn init_test_logging(){
     TEST_LOGGING_INIT.call_once(|| {
-        LibvcxDefaultLogger::init(Some(String::from("vcx=trace"))).ok();
+        LibvcxDefaultLogger::init_testing_logger();
     })
 }
 

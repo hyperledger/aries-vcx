@@ -587,6 +587,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_provision_agent() {
         let _setup = SetupMocks::init();
 
@@ -599,6 +600,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_agent() {
         let _setup = SetupMocks::init();
 
@@ -607,6 +609,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_agent_fails() {
         let _setup = SetupMocks::init();
 
@@ -617,6 +620,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_agent_fails_for_unknown_wallet_type() {
         let _setup = SetupDefaults::init();
 
@@ -634,6 +638,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_agent_info() {
         let _setup = SetupMocks::init();
 
@@ -646,6 +651,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_agent_fails() {
         let _setup = SetupMocks::init();
 
@@ -662,6 +668,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_ledger_fees() {
         let _setup = SetupMocks::init();
 
@@ -672,6 +679,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_messages_download() {
         let _setup = SetupMocks::init();
 
@@ -681,6 +689,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_messages_update_status() {
         let _setup = SetupMocks::init();
 

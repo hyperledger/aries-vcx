@@ -73,7 +73,10 @@ pub static DEFAULT_WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2
 pub static DEFAULT_THREADPOOL_SIZE: usize = 8;
 pub static MASK_VALUE: &str = "********";
 pub static DEFAULT_WALLET_KEY_DERIVATION: &str = "RAW";
+#[cfg(not(target_os = "macos"))]
 pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.so";
+#[cfg(target_os = "macos")]
+pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
 pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
 pub static DEFAULT_USE_LATEST_PROTOCOLS: &str = "false";
 pub static DEFAULT_PAYMENT_METHOD: &str = "null";
@@ -490,6 +493,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_bad_path() {
         let _setup = SetupDefaults::init();
 
@@ -498,6 +502,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_read_config_file() {
         let _setup = SetupDefaults::init();
 
@@ -508,6 +513,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_file() {
         let _setup = SetupDefaults::init();
 
@@ -520,6 +526,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_config_str() {
         let _setup = SetupDefaults::init();
 
@@ -530,6 +537,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_config() {
         let _setup = SetupDefaults::init();
 
@@ -544,6 +552,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_config_failures() {
         let _setup = SetupDefaults::init();
 
@@ -594,6 +603,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_validate_optional_config_val() {
         let _setup = SetupDefaults::init();
 
@@ -617,6 +627,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_and_set_values() {
         let _setup = SetupDefaults::init();
 
@@ -631,6 +642,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_clear_config() {
         let _setup = SetupDefaults::init();
 
@@ -664,6 +676,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_config_str_for_actors() {
         let _setup = SetupDefaults::init();
 

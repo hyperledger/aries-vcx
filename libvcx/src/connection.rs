@@ -690,10 +690,11 @@ pub fn create_connection(source_id: &str) -> VcxResult<u32> {
 
     // Initiate connection of new format -- redirect to v3 folder
     if settings::is_aries_protocol_set() {
+        warn!("Creating aries connection");
         let connection = Connections::V3(ConnectionV3::create(source_id));
         return store_connection(connection);
     }
-
+    warn!("Creating v1 connection");
     let connection = create_connection_v1(source_id)?;
 
     store_connection(Connections::V1(connection))
@@ -1382,6 +1383,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_build_connection_failures_with_no_wallet() {
         let _setup = SetupDefaults::init();
 
@@ -1391,6 +1393,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_connection() {
         let _setup = SetupMocks::init();
 
@@ -1414,6 +1417,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_drop_create() {
         let _setup = SetupMocks::init();
 
@@ -1436,6 +1440,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_connection_release_fails() {
         let _setup = SetupEmpty::init();
 
@@ -1444,6 +1449,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
@@ -1452,6 +1458,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_string_fails() {
         let _setup = SetupEmpty::init();
 
@@ -1460,6 +1467,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_qr_code_data() {
         let _setup = SetupMocks::init();
 
@@ -1474,6 +1482,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
@@ -1504,6 +1513,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_deserialize_existing() {
         let _setup = SetupMocks::init();
 
@@ -1521,6 +1531,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
@@ -1533,6 +1544,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_redirect_details() {
         let _setup = SetupMocks::init();
         let test_name = "test_parse_acceptance_details";
@@ -1589,6 +1601,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_acceptance_details() {
         let _setup = SetupMocks::init();
 
@@ -1648,6 +1661,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_invite_detail_abbr() {
         let _setup = SetupEmpty::init();
 
@@ -1704,6 +1718,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
@@ -1721,6 +1736,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_with_valid_invite_details() {
         let _setup = SetupMocks::init();
 
@@ -1732,6 +1748,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();
 
@@ -1741,6 +1758,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_with_invalid_invite_details() {
         let _setup = SetupMocks::init();
 
@@ -1750,6 +1768,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_void_functions_actually_have_results() {
         let _setup = SetupDefaults::init();
 
@@ -1777,6 +1796,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_different_protocol_version() {
         let _setup = SetupMocks::init();
 

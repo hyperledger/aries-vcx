@@ -61,7 +61,7 @@ impl CredentialDef {
 
     pub fn get_source_id(&self) -> &String { &self.source_id }
 
-    pub fn get_rev_reg_id(&self) -> Option<&String> { 
+    pub fn get_rev_reg_id(&self) -> Option<&String> {
         match &self.rev_reg {
             Some(rev_reg) => Some(&rev_reg.rev_reg_id),
             None => None
@@ -147,7 +147,7 @@ impl CredentialDef {
 
                 let (rev_reg_delta_payment_txn, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
                         .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
-                
+
                 let new_rev_reg = RevocationRegistry {
                     rev_reg_id,
                     rev_reg_def,
@@ -447,7 +447,7 @@ pub fn rotate_rev_reg_def(handle: u32) -> VcxResult<String> {
                 match update_rev_reg_ids_cache(&s.id, &new_rev_reg.rev_reg_id) {
                     Ok(()) => s.to_string(),
                     Err(err) => Err(err)
-                } 
+                }
             },
             // TODO: Better error
             None => Err(VcxError::from(VcxErrorKind::InvalidCredentialHandle))
@@ -530,6 +530,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
@@ -649,6 +650,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -660,6 +662,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -679,6 +682,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 

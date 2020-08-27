@@ -67,6 +67,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_ack_build_works() {
         let ack: Ack = Ack::default()
             .set_status(AckStatus::Fail)

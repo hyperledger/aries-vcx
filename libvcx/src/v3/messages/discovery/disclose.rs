@@ -60,6 +60,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_disclose_build_works() {
         let mut disclose: Disclose = Disclose::default()
             .set_thread_id(_thread_id());

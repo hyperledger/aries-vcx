@@ -169,6 +169,7 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
         let _setup = SetupDefaults::init();
 

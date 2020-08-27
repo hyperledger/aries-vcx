@@ -1,17 +1,15 @@
-use messages::get_message::Message;
-use error::prelude::*;
-
-use v3::handlers::connection::states::{DidExchangeSM, Actor, ActorDidExchangeState};
-use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::handlers::connection::agent::AgentInfo;
-use v3::messages::a2a::A2AMessage;
-use v3::messages::connection::invite::Invitation;
-
 use std::collections::HashMap;
-use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::basic_message::message::BasicMessage;
-use v3::messages::discovery::disclose::ProtocolDescriptor;
 
+use error::prelude::*;
+use messages::get_message::Message;
+use v3::handlers::connection::agent::AgentInfo;
+use v3::handlers::connection::messages::DidExchangeMessages;
+use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM};
+use v3::messages::a2a::A2AMessage;
+use v3::messages::basic_message::message::BasicMessage;
+use v3::messages::connection::did_doc::DidDoc;
+use v3::messages::connection::invite::Invitation;
+use v3::messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -93,6 +91,10 @@ impl Connection {
 
     pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
+
+        if  self.connection_sm.isInNullState() { // nothing to do
+            return Ok(());
+        }
 
         if let Some(message_) = message {
             return self.update_state_with_message(message_);
@@ -270,10 +272,11 @@ struct SideConnectionInfo {
 
 #[cfg(test)]
 mod tests {
-    use v3::messages::a2a::A2AMessage;
     use v3::handlers::connection::connection::Connection;
+    use v3::messages::a2a::A2AMessage;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_generic_message_plain_string_should_be_parsed_as_basic_msg() -> Result<(), String> {
         let message = "Some plain text message";
         let result = Connection::parse_generic_message(message, "");
@@ -287,6 +290,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_generic_message_json_msg_should_be_parsed_as_generic() -> Result<(), String> {
         let message = json!({
             "@id": "some id",

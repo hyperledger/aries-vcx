@@ -47,6 +47,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_basic_message_build_works() {
         let basic_message: BasicMessage = BasicMessage::default()
             .set_content(_content())

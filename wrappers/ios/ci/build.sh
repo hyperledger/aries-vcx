@@ -51,17 +51,17 @@ setup() {
     brew update
 
     echo "Install required native libraries and utilities"
-    brew install pkg-config
+    which pkg-config &>/dev/null || brew install pkg-config
     # Libsodium version<1.0.15 is required
     # brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/65effd2b617bade68a8a2c5b39e1c3089cc0e945/Formula/libsodium.rb
-    brew install automake
-    brew install autoconf
-    brew install cmake
-    brew install openssl
-    brew install zmq
-    brew install wget
-    brew install truncate
-    brew install libzip
+    which automake &>/dev/null || brew install automake
+    which autoconf &>/dev/null || brew install autoconf
+    which cmake &>/dev/null || brew install cmake
+    which wget &>/dev/null || brew install wget
+    which truncate &>/dev/null || brew install truncate
+    brew list openssl &>/dev/null || brew install openssl
+    brew list zmq &>/dev/null || brew install zmq
+    brew list libzip &>/dev/null || brew install libzip
 
     mkdir -p $OUTPUT_DIR
 }

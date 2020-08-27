@@ -255,6 +255,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential_cache_returns_default_when_not_exists_in_wallet() {
         let _setup = SetupLibraryWallet::init();
 
@@ -263,6 +264,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_get_credential_cache_returns_default_when_invalid_data_in_the_wallet() {
         let _setup = SetupLibraryWallet::init();
 
@@ -273,6 +275,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_cache_set_than_get_works() {
         let _setup = SetupLibraryWallet::init();
 
@@ -291,6 +294,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_cache_set_than_double_get_works() {
         let _setup = SetupLibraryWallet::init();
 
@@ -311,6 +315,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_credential_cache_overwrite_works() {
         let _setup = SetupLibraryWallet::init();
 
