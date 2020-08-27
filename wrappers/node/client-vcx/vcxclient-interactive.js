@@ -1,10 +1,9 @@
-const { provisionAgent } = require('./vcx-workflows')
+const { provisionAgent, initRustapi } = require('./vcx-workflows')
 const readlineSync = require('readline-sync')
 const { createVcxClient } = require('./vcxclient')
 const logger = require('../common/logger')
 const { waitUntilAgencyIsReady } = require('./common')
 const { createStorageService } = require('./storage-service')
-const { initRustapi } = require('./vcx-workflows')
 
 async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustlog) {
   logger.debug('Initializing rust api')

@@ -1,11 +1,10 @@
-const { provisionAgent } = require('../client-vcx/vcx-workflows')
+const { provisionAgent, initRustapi } = require('../client-vcx/vcx-workflows')
 const { DisclosedProof } = require('../dist/src/api/disclosed-proof')
 const { StateType } = require('../dist/src')
 const readlineSync = require('readline-sync')
 const { createVcxClient } = require('../client-vcx/vcxclient')
 const { createStorageService } = require('../client-vcx/storage-service')
-const { waitUntilAgencyIsReady } = require('../client-vcx/common')
-const { initRustapi } = require('../client-vcx/vcx-workflows')
+const { waitUntilAgencyIsReady, allowedProtocolTypes } = require('../client-vcx/common')
 const sleepPromise = require('sleep-promise')
 const logger = require('../common/logger')('Alice')
 const { runScript } = require('../common/script-comon')
@@ -13,7 +12,6 @@ const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
-const { allowedProtocolTypes } = require('../client-vcx/common')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
