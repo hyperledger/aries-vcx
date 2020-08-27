@@ -1,7 +1,7 @@
 const { provisionAgent, initRustapi } = require('./vcx-workflows')
 const readlineSync = require('readline-sync')
 const { createVcxClient } = require('./vcxclient')
-const logger = require('../common/logger')
+const logger = require('../common/logger')('VCX Client')
 const { waitUntilAgencyIsReady } = require('./common')
 const { createStorageService } = require('./storage-service')
 
