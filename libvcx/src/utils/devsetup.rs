@@ -411,7 +411,7 @@ pub fn set_institution() {
             let result = settings::process_config_string(&t, true);
             warn!("Switching test context to institution. Settings: {:?}", settings::settings_as_string());
             result
-        });
+        }).unwrap();
     }
     change_wallet_handle();
 }
