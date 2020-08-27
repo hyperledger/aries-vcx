@@ -1,5 +1,6 @@
 const { runInteractive } = require('./vcxclient-interactive')
 const { runScript } = require('../common/script-comon')
+const { allowedProtocolTypes } = require('./common')
 
 const optionDefinitions = [
   {
@@ -54,7 +55,6 @@ const usage = [
     content: 'Project home: {underline https://github.com/AbsaOSS/libvcx}'
   }
 ]
-const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 
 function areOptionsValid (options) {
   if (!(allowedProtocolTypes.includes(options.protocolType))) {

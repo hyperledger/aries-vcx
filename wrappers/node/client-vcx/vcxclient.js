@@ -10,6 +10,7 @@ const { StateType } = require('../dist/src')
 const { IssuerCredential } = require('../dist/src/api/issuer-credential')
 const { Credential } = require('../dist/src/api/credential')
 const sleepPromise = require('sleep-promise')
+const { pollFunction } = require('./common')
 
 async function createVcxClient (storageService, logger) {
   const connections = {}
@@ -104,23 +105,28 @@ async function createVcxClient (storageService, logger) {
     await storageService.saveConnection(connectionName, connSerialized)
   }
 
+  async function _progressConnection (connection, attemptsThreshold, timeout) {
+    async function progressToAcceptedState () {
+      await connection.updateState()
+      const connectionState = await connection.getState()
+      if (connectionState !== StateType.Accepted) {
+        return { result: undefined, isFinished: false }
+      } else {
+        return { result: null, isFinished: true }
+      }
+    }
+    const [error] = await pollFunction(progressToAcceptedState, 'Progress connection', logger, attemptsThreshold, timeout)
+    if (error) {
+      throw Error(`Couldn't progress connection to Accepted state. ${error}`)
+    }
+  }
+
   async function connectionAutoupdate (connectionName, updateAttemptsThreshold = 10, timeout = 2000) {
     const connSerializedBefore = await storageService.loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
     keepConnectionInMemory(connectionName, connection)
-    let connectionState = await connection.getState()
-    let attempts = 0
-    while (connectionState !== StateType.Accepted) {
-      await connection.updateState()
-      connectionState = await connection.getState()
-      attempts += 1
-      logger.info(`Connection autoupdate [${attempts}/${updateAttemptsThreshold}]. State= ${connectionState}`)
-      if (attempts === updateAttemptsThreshold) {
-        logger.warn('Connection was not progressed to Accepted state.')
-        return
-      }
-      await sleepPromise(timeout)
-    }
+    await _progressConnection(connection, updateAttemptsThreshold, timeout)
+
     logger.info('Success! Connection was progressed to Accepted state.')
     const connSerialized = await connection.serialize()
     await storageService.saveConnection(connectionName, connSerialized)
@@ -147,7 +153,7 @@ async function createVcxClient (storageService, logger) {
     logger.info(`Found ${offers.length} credential offers.`)
   }
 
-  async function credentialIssue (schemaAttrs, credDefName, connectionNameReceiver, doRevoke) {
+  async function credentialIssue (schemaAttrs, credDefName, connectionNameReceiver, revoke) {
     const credDefSerialized = await storageService.loadCredentialDefinition(credDefName)
     const credDef = await CredentialDef.deserialize(credDefSerialized)
     logger.info('#12 Create an IssuerCredential object using the schema and credential definition')
@@ -187,9 +193,41 @@ async function createVcxClient (storageService, logger) {
       credentialState = await credentialForAlice.getState()
     }
     logger.info('Credential was issued.')
-    if (doRevoke) {
+    if (revoke) {
       logger.info('#18.5 Revoking credential')
       await credentialForAlice.revokeCredential()
+    }
+  }
+
+  async function _getOffers (connection, attemptsThreshold, timeout) {
+    async function findSomeCredOffer () {
+      const offers = await Credential.getOffers(connection)
+      if (offers.length === 0) {
+        return { result: undefined, isFinished: false }
+      } else {
+        return { result: offers, isFinished: true }
+      }
+    }
+    const [error, offers] = await pollFunction(findSomeCredOffer, 'Get credential offer', logger, attemptsThreshold, timeout)
+    if (error) {
+      throw Error(`Couldn't get credential offers. ${error}`)
+    }
+    return offers
+  }
+
+  async function _progressCredential (credential, attemptsThreshold, timeout) {
+    async function progressToAcceptedState () {
+      await credential.updateState()
+      const credentialState = await credential.getState()
+      if (credentialState !== StateType.Accepted) {
+        return { result: undefined, isFinished: false }
+      } else {
+        return { result: null, isFinished: true }
+      }
+    }
+    const [error] = await pollFunction(progressToAcceptedState, 'Get credential', logger, attemptsThreshold, timeout)
+    if (error) {
+      throw Error(`Couldn't progress credential to Accepted state. ${error}`)
     }
   }
 
@@ -197,35 +235,15 @@ async function createVcxClient (storageService, logger) {
     const connSerializedBefore = await storageService.loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
 
-    let offers = await Credential.getOffers(connection)
-    let attemptsFetchCredOffers = 1
-    while (offers.length === 0) {
-      await sleepPromise(timeout)
-      if (attemptsFetchCredOffers > attemptsThreshold) {
-        throw Error(`Tried to fetch credential offers ${attemptsFetchCredOffers} times, but none found.`)
-      }
-      offers = await Credential.getOffers(connection)
-      attemptsFetchCredOffers += 1
-    }
+    const offers = await _getOffers(connection, attemptsThreshold, timeout)
     logger.info(`Credential offers = ${JSON.stringify(offers)}`)
-    // Create a credential object from the credential offer
     const credential = await Credential.create({ sourceId: 'credential', offer: JSON.stringify(offers[0]) })
 
     logger.info('#15 After receiving credential offer, send credential request')
     await credential.sendRequest({ connection, payment: 0 })
 
     logger.info('#16 Poll agency and accept credential offer from faber')
-    let credentialState = await credential.getState()
-    let attemptsProgress = 1
-    while (credentialState !== StateType.Accepted) {
-      await sleepPromise(timeout)
-      if (attemptsProgress > attemptsThreshold) {
-        throw Error(`Tried to fetch credential offers ${attemptsProgress} times, but none found.`)
-      }
-      await credential.updateState()
-      credentialState = await credential.getState()
-      attemptsProgress += 1
-    }
+    await _progressCredential(credential, attemptsThreshold, timeout)
   }
 
   return {

@@ -7,6 +7,8 @@ const axios = require('axios')
 const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
 
+module.exports.allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+
 function getLibraryPath (libraryName) {
   const platform = os.platform()
   const postfix = extension[platform.toLowerCase()] || extension.linux
@@ -56,6 +58,22 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   }
 }
 
+async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 10, timeout = 2000) {
+  let { result, isFinished } = await fn()
+  let attempts = 1
+  while (!isFinished) {
+    if (attempts > attemptsThreshold) {
+      const error = `Tried to poll ${attempts} times and result was not received.`
+      return [error, null]
+    }
+    logger.info(`Trying to do: ${actionDescription} Attempt ${attempts}/${attemptsThreshold}. Will try again after ${timeout}ms.`)
+    await sleepPromise(timeout);
+    ({ result, isFinished } = await fn())
+    attempts += 1
+  }
+  return [null, result]
+}
+
 module.exports.loadPostgresPlugin = loadPostgresPlugin
 module.exports.initLibNullPay = initLibNullPay
 module.exports.initRustApiAndLogger = initRustApiAndLogger
@@ -63,3 +81,4 @@ module.exports.provisionAgentInAgency = provisionAgentInAgency
 module.exports.initVcxWithProvisionedAgentConfig = initVcxWithProvisionedAgentConfig
 module.exports.getRandomInt = getRandomInt
 module.exports.waitUntilAgencyIsReady = waitUntilAgencyIsReady
+module.exports.pollFunction = pollFunction

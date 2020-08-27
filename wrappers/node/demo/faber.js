@@ -10,7 +10,7 @@ const { initRustapi } = require('../client-vcx/vcx-workflows')
 const uuid = require('uuid')
 const { waitUntilAgencyIsReady } = require('../client-vcx/common')
 const { createStorageService } = require('../client-vcx/storage-service')
-const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+const { allowedProtocolTypes } = require('../client-vcx/common')
 const express = require('express')
 const bodyParser = require('body-parser')
 

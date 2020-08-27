@@ -13,8 +13,7 @@ const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
-
-const allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+const { allowedProtocolTypes } = require('../client-vcx/common')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
