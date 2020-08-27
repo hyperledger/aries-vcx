@@ -434,49 +434,6 @@ fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Stri
     Ok((response.from_did, response.from_vk))
 }
 
-pub fn update_agent_info(id: &str, value: &str) -> VcxResult<()> {
-    trace!("update_agent_info >>> id: {}, value: {}", id, value);
-
-    let to_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
-
-    let com_method = ComMethod {
-        id: id.to_string(),
-        e_type: ComMethodType::A2A,
-        value: value.to_string(),
-    };
-
-    match settings::get_protocol_type() {
-        settings::ProtocolTypes::V1 => {
-            update_agent_info_v1(&to_did, com_method)
-        }
-        settings::ProtocolTypes::V2 |
-        settings::ProtocolTypes::V3 |
-        settings::ProtocolTypes::V4 => {
-            update_agent_info_v2(&to_did, com_method)
-        }
-    }
-}
-
-fn update_agent_info_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, to_did)?;
-    Ok(())
-}
-
-fn update_agent_info_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    AgencyMockDecrypted::set_next_decrypted_response(constants::UPDATE_COM_METHOD_RESPONSE_DECRYPTED);
-
-    let message = A2AMessage::Version2(
-        A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, to_did)?;
-    Ok(())
-}
-
 pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
     info!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
 
@@ -659,12 +616,11 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
-    fn test_update_agent_info_real() {
-        let _setup = SetupLibraryAgencyV1::init();
+    fn test_update_agent_webhook_real() {
+        let _setup = SetupLibraryAgencyV2::init();
 
         ::utils::devsetup::set_consumer();
-        update_agent_info("7b7f97f2", "FCM:Value").unwrap();
+        update_agent_webhook("https://example.org").unwrap();
     }
 }

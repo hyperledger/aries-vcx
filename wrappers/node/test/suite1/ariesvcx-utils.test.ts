@@ -10,7 +10,6 @@ import {
   getVersion,
   provisionAgent,
   setActiveTxnAuthorAgreementMeta,
-  updateAgentInfo,
   updateInstitutionConfigs,
   updateMessages,
   VCXCode
@@ -22,7 +21,6 @@ describe('utils:', () => {
 
   // tslint:disable-next-line max-line-length
   const provisionString = '{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"123"}'
-  const agentUpdateString = '{"id":"123","value":"value"}'
   const updateInstitutionConfigsData = {
     logoUrl: 'https://google.com',
     name: 'New Name'
@@ -44,17 +42,6 @@ describe('utils:', () => {
 
     it('throws: invalid input', async () => {
       const error = await shouldThrow(() => provisionAgent(''))
-      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
-    })
-  })
-
-  describe('updateAgentInfo:', () => {
-    it('success', async () => {
-      await updateAgentInfo(agentUpdateString)
-    })
-
-    it('throws: invalid input', async () => {
-      const error = await shouldThrow(() => updateAgentInfo(''))
       assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
     })
   })

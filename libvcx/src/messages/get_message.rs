@@ -132,7 +132,7 @@ impl GetMessagesBuilder {
     }
 
     pub fn send_secure(&mut self) -> VcxResult<Vec<Message>> {
-        trace!("GetMessages::send >>>");
+        debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
         let data = self.prepare_request()?;
 
@@ -236,6 +236,7 @@ impl GeneralMessage for GetMessagesBuilder {
     fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
+        debug!("prepare_request >> This connection is using protocol_type: {:?}", self.version);
         let message = match self.version {
             settings::ProtocolTypes::V1 =>
                 A2AMessage::Version1(
@@ -511,33 +512,33 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
-    fn test_download_agent_messages() {
+    fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
 
         let (_faber, alice) = ::connection::tests::create_connected_connections();
 
+        debug!("test_send_and_download_messages >> Institution is going to send a message");
+        let _hello_uid = ::connection::send_generic_message(alice, "hello_world", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
+        thread::sleep(Duration::from_millis(1000));
+
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer();
-        let all_messages = download_agent_messages(None, None).unwrap();
-        assert_eq!(all_messages.len(), 0);
 
-        let _hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
-        thread::sleep(Duration::from_millis(2000));
-        let all_messages = download_agent_messages(None, None).unwrap();
-        assert_eq!(all_messages.len(), 1);
-
+        debug!("test_download_agent_messages >> Consumer is going to download generic message.");
         let invalid_status_code = "abc".to_string();
-        let bad_req = download_agent_messages(Some(vec![invalid_status_code]), None);
-        assert!(bad_req.is_err());
+        let msgsByConnection = download_messages(None, Some(vec!("MS-103".into())), None).unwrap();
+        assert_eq!(msgsByConnection.len(), 1);
+        let msgs = &msgsByConnection[0].msgs;
+        let serialized = serde_json::to_string(msgs).unwrap();
+        assert!(serialized.contains("hello_world"));
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
+    #[cfg(feature = "to_restore")] // todo: failing on "invalid credential preview"
     #[test]
     fn test_download_messages() {
-        let _setup = SetupLibraryAgencyV1::init();
+        let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (_faber, alice) = ::connection::tests::create_connected_connections();

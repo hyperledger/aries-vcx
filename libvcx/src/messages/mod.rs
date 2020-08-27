@@ -977,6 +977,7 @@ fn prepare_forward_message_for_agency_v2(message: &ForwardV2, agency_vk: &str) -
 }
 
 pub fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str, version: &ProtocolTypes) -> VcxResult<Vec<u8>> {
+    debug!("prepare_message_for_agent >> {:?}", messages);
     match version {
         settings::ProtocolTypes::V1 => prepare_message_for_agent_v1(messages, pw_vk, agent_did, agent_vk),
         settings::ProtocolTypes::V2 |
