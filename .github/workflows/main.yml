@@ -52,7 +52,7 @@ jobs:
             REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
             echo "This is pull request from $REPO_HEAD to $REPO_BASE"
 
-            if [[ "$REPO_HEAD" == github.repository ]]
+            if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]
             then
               echo "This CI run is PR from non-forked repository."
               IS_FORK="false";
