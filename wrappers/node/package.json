@@ -51,7 +51,7 @@
     "weak-napi": "^1.0.3"
   },
   "scripts": {
-    "interactive": "node client-vcx/vcxclient-interactive.js",
+    "interactive": "node client-vcx/vcxclient-cli.js",
     "demo:notifyserver": "node notification-server.js",
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
