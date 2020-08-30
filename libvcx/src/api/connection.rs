@@ -371,17 +371,8 @@ pub extern fn vcx_connection_redirect(command_handle: CommandHandle,
            command_handle, connection_handle, redirect_connection_handle, source_id);
 
     spawn(move|| {
-        match redirect(connection_handle, redirect_connection_handle) {
-            Ok(_) => {
-                trace!("vcx_connection_redirect_cb(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
-                cb(command_handle, error::SUCCESS.code_num);
-            },
-            Err(e) => {
-                trace!("vcx_connection_redirect_cb(command_handle: {}, rc: {})", command_handle, e);
-                cb(command_handle, e.into());
-            },
-        };
-
+        error!("Action not supported");
+        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num);
         Ok(())
     });
 
@@ -406,20 +397,8 @@ pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
     }
 
     spawn(move|| {
-        match get_redirect_details(connection_handle){
-            Ok(str) => {
-                trace!("vcx_connection_get_redirect_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
-                       command_handle, connection_handle, error::SUCCESS.message, str, source_id);
-                let msg = CStringUtils::string_to_cstring(str);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            },
-            Err(x) => {
-                warn!("vcx_connection_get_redirect_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {:?})",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
-            }
-        };
-
+        error!("Action not supported");
+        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
     });
 
@@ -1360,33 +1339,6 @@ mod tests {
         assert_eq!(rc, error::SUCCESS.code_num);
         let invite_details = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(invite_details.is_some());
-    }
-
-    #[test]
-    #[cfg(feature = "to_restore")]
-    #[cfg(feature = "general_test")]
-    // todo: delete this test when deleting redirection
-    fn test_vcx_connection_redirect() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        let rc = vcx_connection_redirect(cb.command_handle, 0, 0,Some(cb.get_callback()));
-        assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
-
-        let handle = build_test_connection();
-        assert!(handle > 0);
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        let rc = vcx_connection_redirect(cb.command_handle,handle, 0,Some(cb.get_callback()));
-        assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
-
-        let handle2 = create_connection("alice2").unwrap();
-        connect(handle2, Some("{}".to_string())).unwrap();
-        assert!(handle2 > 0);
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        let rc = vcx_connection_redirect(cb.command_handle,handle, handle2,Some(cb.get_callback()));
-        assert_eq!(rc, error::SUCCESS.code_num);
     }
 
     #[test]
