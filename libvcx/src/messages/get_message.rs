@@ -138,21 +138,25 @@ impl GetMessagesBuilder {
 
         let response = httpclient::post_u8(&data)?;
 
-        if settings::agency_mocks_enabled() && response.len() == 0 {
-            return Ok(Vec::new());
-        }
-
         self.parse_response(response)
     }
 
     fn parse_response(&self, response: Vec<u8>) -> VcxResult<Vec<Message>> {
-        trace!("parse_get_messages_response >>>");
+        trace!("parse_get_messages_response >>> response: {:?}", response);
 
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
+        trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
+
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::GetMessagesResponse(res)) => Ok(res.msgs),
-            A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => Ok(res.msgs),
+            A2AMessage::Version1(A2AMessageV1::GetMessagesResponse(res)) => {
+                trace!("Interpreting response as V1");
+                Ok(res.msgs)
+            },
+            A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => {
+                trace!("Interpreting response as V2");
+                Ok(res.msgs)
+            },
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
         }
     }

@@ -88,6 +88,7 @@ impl AgentInfo {
                                                Some(vec![MessageStatusCode::Received]),
                                                &Some(ProtocolTypes::V2))?;
 
+        debug!("Agent::get_messages >>> obtained messages: {:?}", messages);
 
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
 
@@ -120,8 +121,8 @@ impl AgentInfo {
     }
 
     pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
-        trace!("Agent::decode_message >>>");
-
+        trace!("Agent::decode_message >>> message = {:?}", json!(&message).to_string());
+ 
         EncryptionEnvelope::open(message.payload()?)
     }
 

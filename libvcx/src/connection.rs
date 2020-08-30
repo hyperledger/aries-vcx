@@ -25,6 +25,8 @@ use v3::handlers::connection::connection::Connection as ConnectionV3;
 use v3::handlers::connection::states::ActorDidExchangeState;
 use v3::handlers::connection::agent::AgentInfo;
 use v3::messages::connection::invite::Invitation as InvitationV3;
+use v3::messages::connection::did_doc::DidDoc;
+use v3::messages::a2a::A2AMessage;
 use settings::ProtocolTypes;
 
 lazy_static! {
@@ -627,8 +629,8 @@ pub fn set_pw_verkey(handle: u32, verkey: &str) -> VcxResult<()> {
 }
 
 pub fn get_state(handle: u32) -> u32 {
+    trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP.get(handle, |cxn| {
-        debug!("get state for connection");
         match cxn {
             Connections::V1(ref connection) => Ok(connection.get_state()),
             Connections::V3(ref connection) => Ok(connection.state())
@@ -854,18 +856,12 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
     })
 }
 
-pub fn update_state_with_message(handle: u32, message: Message) -> VcxResult<u32> {
+pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
-            Connections::V1(ref mut connection) => {
-                if message.status_code == MessageStatusCode::Redirected && message.msg_type == RemoteMessageType::ConnReqRedirect {
-                    connection.process_redirect_message(&message)
-                } else {
-                    connection.process_acceptance_message(&message)
-                }
-            }
+            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
             Connections::V3(ref mut connection) => {
-                connection.update_state(Some(&json!(message).to_string()))?;
+                connection.update_state(Some(message.clone()))?;
                 Ok(error::SUCCESS.code_num)
             }
         }
@@ -873,6 +869,7 @@ pub fn update_state_with_message(handle: u32, message: Message) -> VcxResult<u32
         .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
+// TODO: Delete
 impl Connection {
     pub fn force_v2_parse_redirection_details(&mut self, message: &Message) -> VcxResult<RedirectDetail> {
         debug!("forcing connection {} parsing redirection details for message {:?}", self.source_id, message);
@@ -908,14 +905,14 @@ impl Connection {
     }
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
+    trace!("update_state >>> handle: {}", handle);
+
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
-            Connections::V1(ref mut connection) => {
-                connection.update_state(message.clone())
-            }
+            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
             Connections::V3(ref mut connection) => {
-                connection.update_state(message.as_ref().map(String::as_str))?;
+                connection.update_state(message.clone())?;
                 Ok(error::SUCCESS.code_num)
             }
         }
@@ -924,6 +921,7 @@ pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
 }
 
 impl Connection {
+    // TODO: Delete
     pub fn process_redirect_message(&mut self, message: &Message) -> VcxResult<u32> {
         let details = self.parse_redirection_details(&message)
             .map_err(|err| err.extend("Cannot parse redirection details"))?;
@@ -935,6 +933,7 @@ impl Connection {
     }
 }
 
+// TODO: Delete
 pub fn process_redirect_message(handle: u32, message: &Message) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
@@ -1247,9 +1246,6 @@ impl From<(Connection, ActorDidExchangeState)> for ConnectionV3 {
         ConnectionV3::from_parts(connection.get_source_id().to_string(), agent_info, state)
     }
 }
-
-use v3::messages::a2a::A2AMessage;
-use v3::messages::connection::did_doc::DidDoc;
 
 pub fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     CONNECTION_MAP.get_mut(handle, |connection| {

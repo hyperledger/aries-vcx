@@ -112,7 +112,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     fn parse_response(&self, response: &Vec<u8>) -> VcxResult<()> {
-        trace!("parse_create_keys_response >>>");
+        trace!("UpdateMessageStatusByConnectionsBuilder::parse_response >>>");
 
         let mut response = parse_response_from_agency(response, &self.version)?;
 
@@ -139,6 +139,13 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()
 }
 
 pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> VcxResult<()> {
+    trace!("update_messages >>> ");
+
+    if settings::agency_mocks_enabled() {
+        trace!("update_messages >>> agency mocks enabled, returning empty response");
+        return Ok(());
+    };
+
     UpdateMessageStatusByConnectionsBuilder::create()
         .uids_by_conns(uids_by_conns)?
         .status_code(status_code)?

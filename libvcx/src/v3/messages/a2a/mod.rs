@@ -79,6 +79,12 @@ impl<'de> Deserialize<'de> for A2AMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
+        let message_json = serde_json::ser::to_string(&value);
+        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+
+        trace!("Deserializing v3::A2AMessage in V3 json: {:?}", &message_json);
+        trace!("Found v3::A2AMessage message type {:?}", &message_type_json);
+
         let message_type: MessageType = match serde_json::from_value(value["@type"].clone()) {
             Ok(message_type) => message_type,
             Err(_) => return Ok(A2AMessage::Generic(value))

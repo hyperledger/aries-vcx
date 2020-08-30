@@ -89,10 +89,11 @@ impl Connection {
         self.step(DidExchangeMessages::Connect())
     }
 
-    pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
+    pub fn update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
-        if  self.connection_sm.isInNullState() { // nothing to do
+        // TODO: Remove - it should be SM logic to decide state transitions
+        if self.connection_sm.isInNullState() {
             return Ok(());
         }
 
@@ -102,22 +103,25 @@ impl Connection {
 
         let messages = self.get_messages()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
-        let agent_info = self.agent_info().clone();
 
         if let Some((uid, message)) = self.connection_sm.find_message_to_handle(messages) {
+            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
             self.handle_message(message.into())?;
-            agent_info.update_message_status(uid)?;
-        };
-
-        if let Some(prev_agent_info) = self.connection_sm.prev_agent_info().cloned() {
+            self.agent_info().clone().update_message_status(uid)?;
+        } else if let Some(prev_agent_info) = self.connection_sm.prev_agent_info().cloned() {
+            trace!("Connection::update_state >>> getting messages from bootstrap agent: {:?}", prev_agent_info);
             let messages = prev_agent_info.get_messages()?;
 
+            trace!("Connection::update_state >>> handling obtained messages: {:?}", messages);
             if let Some((uid, message)) = self.connection_sm.find_message_to_handle(messages) {
                 self.handle_message(message.into())?;
                 prev_agent_info.update_message_status(uid)?;
             }
+        } else {
+            trace!("Connection::update_state >>> found no message to handle");
         }
 
+        trace!("Connection::update_state >>> done");
         Ok(())
     }
 
@@ -126,12 +130,8 @@ impl Connection {
         self.connection_sm.agent_info().update_message_status(uid)
     }
 
-    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<()> {
-        trace!("Connection: update_state_with_message: {}", message);
-
-        let message: A2AMessage = ::serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption,
-                                              format!("Cannot updated state with messages: Message deserialization failed: {:?}", err)))?;
+    pub fn update_state_with_message(&mut self, message: A2AMessage) -> VcxResult<()> {
+        trace!("Connection: update_state_with_message: {:?}", message);
 
         self.handle_message(message.into())?;
 
@@ -168,6 +168,13 @@ impl Connection {
 
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection::send_message >>> message: {:?}", message);
+
+        match self.state_object() {
+            ActorDidExchangeState::Inviter(ref state) | ActorDidExchangeState::Invitee(ref state) => match state {
+                DidExchangeState::Completed(_) => {},
+                _ => warn!("Sending message to connection in incomplete state!")
+            }
+        }
 
         let did_doc = self.connection_sm.did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;

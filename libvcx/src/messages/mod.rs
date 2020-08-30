@@ -264,6 +264,13 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageTypeV2 = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
+        let message_json = serde_json::ser::to_string(&value);
+        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+
+        debug!("Deserializing A2AMessageV2 json: {:?}", &message_json);
+        debug!("Found A2AMessageV2 message type json {:?}", &message_type_json);
+        debug!("Found A2AMessageV2 message type {:?}", &message_type);
+
         match message_type.type_.as_str() {
             "FWD" => {
                 ForwardV2::deserialize(value)
@@ -444,6 +451,13 @@ impl<'de> Deserialize<'de> for A2AMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageTypes = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
+
+        let message_json = serde_json::ser::to_string(&value);
+        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+
+        trace!("Deserializing A2AMessage json: {:?}", &message_json);
+        trace!("Found A2AMessage message type json {:?}", &message_type_json);
+        trace!("Found A2AMessage message type {:?}", &message_type);
 
         match message_type {
             MessageTypes::MessageTypeV1(_) =>
@@ -842,6 +856,8 @@ fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u
 }
 
 fn parse_response_from_agency(response: &Vec<u8>, version: &ProtocolTypes) -> VcxResult<Vec<A2AMessage>> {
+    trace!("parse_response_from_agency >>>");
+
     match version {
         settings::ProtocolTypes::V1 => parse_response_from_agency_v1(response),
         settings::ProtocolTypes::V2 |
@@ -876,13 +892,16 @@ pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
 }
 
 fn parse_response_from_agency_v2(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
-    let mut message: String;
-    if AgencyMockDecrypted::has_decrypted_mock_responses() {
+    trace!("parse_response_from_agency_v2 >>> response = {:?}", response);
+
+    let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
         warn!("parse_response_from_agency_v2 >> retrieving decrypted mock response");
-        message = AgencyMockDecrypted::get_decrypted_response();
+        AgencyMockDecrypted::get_next_decrypted_response()
     } else {
-        message = parse_message_from_response(response)?;
-    }
+        parse_message_from_response(response)?
+    };
+
+    trace!("AgencyComm Inbound V2 A2AMessage: {}", message);
 
     let message: A2AMessage = serde_json::from_str(&message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
