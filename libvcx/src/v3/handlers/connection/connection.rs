@@ -92,6 +92,10 @@ impl Connection {
     pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
+        if  self.connection_sm.isInNullState() { // nothing to do
+            return Ok(());
+        }
+
         if let Some(message_) = message {
             return self.update_state_with_message(message_);
         }

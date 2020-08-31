@@ -1,13 +1,13 @@
 import '../module-resolver-helper'
 
 import { assert } from 'chai'
+import * as uuid from 'uuid'
 import {
   Connection,
   Credential,
   CredentialDef,
   DisclosedProof,
   IConnectionCreateData,
-  IConnectOptions,
   ICredentialCreateWithMsgId,
   ICredentialCreateWithOffer,
   ICredentialDefCreateData,
@@ -25,7 +25,7 @@ import {
 } from 'src'
 
 export const dataConnectionCreate = (): IConnectionCreateData => ({
-  id: 'testConnectionId'
+  id: `testConnectionId-${uuid.v4()}`
 })
 
 export const connectionCreate = async (data = dataConnectionCreate()) => {
@@ -35,14 +35,9 @@ export const connectionCreate = async (data = dataConnectionCreate()) => {
   return connection
 }
 
-export const dataConnectionConnectOptions = (): IConnectOptions => ({
-  data: '{"connection_type":"SMS","phone":"123","use_public_did":true}'
-})
-
 export const connectionCreateConnect = async (data = dataConnectionCreate()) => {
   const connection = await connectionCreate(data)
-  const connectionData = dataConnectionConnectOptions()
-  const inviteDetails = await connection.connect(connectionData)
+  const inviteDetails = await connection.connect({ data: '{}' })
   assert.ok(inviteDetails)
   return connection
 }
@@ -59,7 +54,7 @@ export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
   sourceId: 'testCredentialDefSourceId'
 })
 
-export const dataCredentialDefPrepareForEndorser = ():  ICredentialDefPrepareForEndorserData => ({
+export const dataCredentialDefPrepareForEndorser = (): ICredentialDefPrepareForEndorserData => ({
   endorser: 'V4SGRU86Z58d6TV7PBUe6f',
   name: 'testCredentialDefName',
   revocationDetails: {
@@ -269,7 +264,7 @@ export const dataProofCreate = (): IProofCreateData => ({
     { names: ['attr3', 'attr4'] }
   ],
   preds: [
-    { name: 'pred1', p_type: 'GE', p_value: 123},
+    { name: 'pred1', p_type: 'GE', p_value: 123 }
   ],
   name: 'Proof',
   revocationInterval: {
