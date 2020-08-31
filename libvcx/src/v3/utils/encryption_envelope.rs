@@ -1,6 +1,8 @@
 use utils::libindy::crypto;
+use utils::httpclient::AgencyMockDecrypted;
 
 use error::prelude::*;
+
 use v3::messages::a2a::A2AMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::forward::Forward;
@@ -62,20 +64,24 @@ impl EncryptionEnvelope {
     }
 
     pub fn open(payload: Vec<u8>) -> VcxResult<A2AMessage> {
-        let unpacked_msg = crypto::unpack_message(&payload)?;
+        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
 
-        let message: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
+        let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
+            trace!("EncryptionEnvelope::open >>> returning decrypted mock message");
+            AgencyMockDecrypted::get_next_decrypted_message()
+        } else {
+            let unpacked_msg = crypto::unpack_message(&payload)?;
 
-        let message = message["message"].as_str()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
+            let _message: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
 
-        let message: A2AMessage = ::serde_json::from_str(&message)
-            .map_err(|err| {
-                VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err))
-            })?;
+            _message["message"].as_str()
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string()
+        };
 
-        Ok(message)
+        Ok(::serde_json::from_str(&message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?
+        )
     }
 }
 

@@ -8,10 +8,8 @@ use error::prelude::*;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
-}
-
-lazy_static! {
-    static ref AGENCY_MOCK_DECRYPTED: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
+    static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
+    static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> = Mutex::new(AgencyMockDecryptedMessages::default());
 }
 
 #[derive(Default)]
@@ -22,6 +20,11 @@ pub struct AgencyMock {
 #[derive(Default)]
 pub struct AgencyMockDecrypted {
     responses: Vec<String>
+}
+
+#[derive(Default)]
+pub struct AgencyMockDecryptedMessages {
+    messages: Vec<String>
 }
 
 impl AgencyMock {
@@ -39,19 +42,41 @@ impl AgencyMock {
 impl AgencyMockDecrypted {
     pub fn set_next_decrypted_response(body: &str) {
         if settings::agency_mocks_enabled() {
-            AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.push(body.into());
+            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.push(body.into());
+        } else {
+            warn!("Attempting to set mocked decrypted response when mocks are not enabled!");
+        }
+    }
+
+    pub fn get_next_decrypted_response() -> String {
+        if !Self::has_decrypted_mock_responses() && Self::has_decrypted_mock_messages() {
+            debug!("Attempting to obtain decrypted response when none were set, but decrypted messages available - returning empty response...");
+            String::new()
+        } else {
+            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.pop().unwrap()
         }
     }
 
     pub fn has_decrypted_mock_responses() -> bool {
-        AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.len() > 0
+        AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.len() > 0
     }
 
-    pub fn get_decrypted_response() -> String {
-        AGENCY_MOCK_DECRYPTED.lock().unwrap().responses.pop().unwrap()
+    pub fn set_next_decrypted_message(message: &str) {
+        if settings::agency_mocks_enabled() {
+            AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.push(message.into());
+        } else {
+            warn!("Attempting to set mocked decrypted message when mocks are not enabled!");
+        }
+    }
+
+    pub fn get_next_decrypted_message() -> String {
+        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.pop().unwrap()
+    }
+
+    pub fn has_decrypted_mock_messages() -> bool {
+        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.len() > 0
     }
 }
-
 
 //Todo: change this RC to a u32
 pub fn post_u8(body_content: &Vec<u8>) -> VcxResult<Vec<u8>> {
