@@ -167,6 +167,9 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 
 - (int)credentialRelease:(NSInteger) credentialHandle;
 
+- (void)deleteCredential:(NSInteger)credentialHandle
+                  completion:(void (^)(NSError *error))completion;
+
 - (void)exportWallet:(NSString *)exportPath
          encryptWith:(NSString *)encryptionKey
           completion:(void (^)(NSError *error, NSInteger exportHandle))completion;
