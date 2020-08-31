@@ -5,6 +5,7 @@ use utils::threadpool::spawn;
 use std::ptr;
 use connection::*;
 use error::prelude::*;
+use messages::get_message::Message;
 use indy_sys::CommandHandle;
 use v3::messages::a2a::A2AMessage;
 
@@ -13,7 +14,7 @@ use v3::messages::a2a::A2AMessage;
     Once the connection, is established communication can happen securely and privately.
     Credentials and Presentations are exchanged using this object.
 
-    States
+    # States
 
     The set of object states, messages and transitions depends on the communication method is used.
     There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
@@ -66,7 +67,7 @@ use v3::messages::a2a::A2AMessage;
                                             OR
                                         `ConnectionProblemReport` messages is received on state updates.
 
-    Transitions
+    # Transitions
 
     proprietary:
         Inviter:
@@ -110,7 +111,7 @@ use v3::messages::a2a::A2AMessage;
 
             any state - `vcx_connection_delete_connection` - VcxStateType::VcxStateNone
 
-    Messages
+    # Messages
 
     proprietary:
         ConnectionRequest (`connReq`)
@@ -120,8 +121,8 @@ use v3::messages::a2a::A2AMessage;
         Invitation - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#0-invitation-to-connect
         ConnectionRequest - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#1-connection-request
         ConnectionResponse - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#2-connection-response
-        ConnectionProblemReport - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocolrror-message-example
-        Ack - https://github.com/hyperledger/aries-rfcs/tree/master/features/0015-acksxplicit-acks
+        ConnectionProblemReport - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#error-message-example
+        Ack - https://github.com/hyperledger/aries-rfcs/tree/master/features/0015-acks#explicit-acks
         Ping - https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping#messages
         PingResponse - https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping#messages
         Query - https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features#query-message-type
@@ -132,14 +133,14 @@ use v3::messages::a2a::A2AMessage;
 ///
 /// NOTE: This eliminates the connection and any ability to use it for any communication.
 ///
-/// Params
+/// # Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// connection_handle: handle of the connection to delete.
 ///
 /// cb: Callback that provides feedback of the api call.
 ///
-/// Returns
+/// # Returns
 /// Error code as a u32
 #[no_mangle]
 #[allow(unused_assignments)]
@@ -176,14 +177,14 @@ pub extern fn vcx_connection_delete_connection(command_handle: CommandHandle,
 
 /// Create a Connection object that provides a pairwise connection for an institution's user
 ///
-/// Params
+/// # Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// source_id: institution's personal identification for the connection
 ///
 /// cb: Callback that provides connection handle and error status of request
 ///
-/// Returns
+/// # Returns
 /// Error code as a u32
 #[no_mangle]
 #[allow(unused_assignments)]
@@ -219,7 +220,7 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
 
 /// Create a Connection object from the given invite_details that provides a pairwise connection.
 ///
-/// Params
+/// # Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// source_id: institution's personal identification for the connection
@@ -228,7 +229,7 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides connection handle and error status of request
 ///
-/// Examples
+/// # Examples
 /// invite_details -> depends on communication method:
 ///     proprietary:
 ///         {"targetName": "", "statusMsg": "message created", "connReqId": "mugIkrWeMr", "statusCode": "MS-101", "threadId": null, "senderAgencyDetail": {"endpoint": "http://localhost:8080", "verKey": "key", "DID": "did"}, "senderDetail": {"agentKeyDlgProof": {"agentDID": "8f6gqnT13GGMNPWDa2TRQ7", "agentDelegatedKey": "5B3pGBYjDeZYSNk9CXvgoeAAACe2BeujaAkipEC7Yyd1", "signature": "TgGSvZ6+/SynT3VxAZDOMWNbHpdsSl8zlOfPlcfm87CjPTmC/7Cyteep7U3m9Gw6ilu8SOOW59YR1rft+D8ZDg=="}, "publicDID": "7YLxxEfHRiZkCMVNii1RCy", "name": "Faber", "logoUrl": "http://robohash.org/234", "verKey": "CoYZMV6GrWqoG9ybfH3npwH3FnWPcHmpWYUF8n172FUx", "DID": "Ney2FxHT4rdEyy6EDCCtxZ"}}
@@ -241,7 +242,7 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
 ///         "routingKeys": ["8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K"]
 ///      }
 ///
-/// Returns
+/// # Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
@@ -276,21 +277,21 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
 
 /// Establishes connection between institution and its user
 ///
-/// Params
+/// # Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// connection_handle: Connection handle that identifies connection object
 ///
 /// connection_options: Provides details indicating if the connection will be established by text or QR Code
 ///
-/// Examples connection_options ->
+/// # Examples connection_options ->
 /// "{"connection_type":"SMS","phone":"123","use_public_did":true}"
 ///     OR:
 /// "{"connection_type":"QR","phone":"","use_public_did":false}"
 ///
 /// cb: Callback that provides error status of request
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_connect(command_handle: CommandHandle,
@@ -428,14 +429,14 @@ pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
 
 /// Takes the Connection object and returns a json string of all its attributes
 ///
-/// Params
+/// # Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// connection_handle: Connection handle that identifies pairwise connection
 ///
 /// cb: Callback that provides json string of the connection's attributes and provides error status
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
@@ -484,7 +485,7 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides credential handle and provides error status
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
@@ -535,7 +536,7 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
 ///         3 - Offer Received
 ///         4 - Accepted
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
@@ -587,7 +588,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides most current state of the connection and error status of request
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHandle,
@@ -652,7 +653,7 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
 ///
 /// cb: Callback that provides most current state of the connection and error status of request
 ///
-/// eturns
+/// #Returns
 #[no_mangle]
 pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
                                        connection_handle: u32,
@@ -692,7 +693,7 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides the json string of details
 ///
-/// Example
+/// # Example
 /// details -> depends on communication method:
 ///     proprietary:
 ///       {"targetName": "", "statusMsg": "message created", "connReqId": "mugIkrWeMr", "statusCode": "MS-101", "threadId": null, "senderAgencyDetail": {"endpoint": "http://localhost:8080", "verKey": "key", "DID": "did"}, "senderDetail": {"agentKeyDlgProof": {"agentDID": "8f6gqnT13GGMNPWDa2TRQ7", "agentDelegatedKey": "5B3pGBYjDeZYSNk9CXvgoeAAACe2BeujaAkipEC7Yyd1", "signature": "TgGSvZ6+/SynT3VxAZDOMWNbHpdsSl8zlOfPlcfm87CjPTmC/7Cyteep7U3m9Gw6ilu8SOOW59YR1rft+D8ZDg=="}, "publicDID": "7YLxxEfHRiZkCMVNii1RCy", "name": "Faber", "logoUrl": "http://robohash.org/234", "verKey": "CoYZMV6GrWqoG9ybfH3npwH3FnWPcHmpWYUF8n172FUx", "DID": "Ney2FxHT4rdEyy6EDCCtxZ"}}
@@ -708,7 +709,7 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 ///         ] - optional array. The set of protocol supported by remote side. Is filled after DiscoveryFeatures process was completed.
 /////    }
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
@@ -768,7 +769,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 ///         ref_msg_id: Option<String>, // If responding to a message, id of the message
 ///     }
 ///
-/// Example:
+/// # Example:
 /// msg ->
 ///     "HI"
 ///   OR
@@ -795,7 +796,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides id of retrieved response message
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
@@ -852,7 +853,7 @@ pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides success or failure of request
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_send_ping(command_handle: u32,
@@ -903,11 +904,11 @@ pub extern fn vcx_connection_send_ping(command_handle: u32,
 ///
 /// cb: Callback that provides the generated signature
 ///
-/// Example
+/// # Example
 /// data_raw -> [1, 2, 3, 4, 5, 6]
 /// data_len -> 6
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
@@ -979,13 +980,13 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
 ///
 /// cb: Callback that specifies whether the signature was valid or not
 ///
-/// Example
+/// # Example
 /// data_raw -> [1, 2, 3, 4, 5, 6]
 /// data_len -> 6
 /// signature_raw -> [2, 3, 4, 5, 6, 7]
 /// signature_len -> 6
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
@@ -1044,7 +1045,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
 /// #Params
 /// connection_handle: was provided during creation. Used to identify connection object
 ///
-/// eturns
+/// #Returns
 /// Success
 #[no_mangle]
 pub extern fn vcx_connection_release(connection_handle: u32) -> u32 {
@@ -1084,12 +1085,12 @@ pub extern fn vcx_connection_release(connection_handle: u32) -> u32 {
 ///
 /// cb: Callback that provides success or failure of request
 ///
-/// Example
+/// # Example
 /// query -> `did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/`
 ///
 /// comment -> `share please`
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_send_discovery_features(command_handle: u32,
@@ -1139,7 +1140,7 @@ pub extern fn vcx_connection_send_discovery_features(command_handle: u32,
 ///
 /// cb: Callback that provides the json string of connection information
 ///
-/// Example
+/// # Example
 /// info ->
 ///      {
 ///         "current": {
@@ -1158,7 +1159,7 @@ pub extern fn vcx_connection_send_discovery_features(command_handle: u32,
 ///          }
 ///    }
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_info(command_handle: CommandHandle,
@@ -1207,7 +1208,7 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides your pw_did for this connection
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_get_pw_did(command_handle: u32,
@@ -1256,7 +1257,7 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
 ///
 /// cb: Callback that provides your pw_did for this connection
 ///
-/// eturns
+/// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
