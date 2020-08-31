@@ -116,7 +116,6 @@ jobs:
           echo "::set-output name=RELEASE::$RELEASE"
 
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-
           echo "::set-output name=CACHE_KEY_LIBVCX::$CACHE_KEY_LIBVCX"
           echo "::set-output name=CACHE_KEY_ANDROID::$CACHE_KEY_ANDROID"
           echo "::set-output name=CACHE_KEY_POOL::$CACHE_KEY_POOL"
@@ -128,7 +127,7 @@ jobs:
 
   build-image-indypool:
     needs: workflow-setup
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -162,7 +161,7 @@ jobs:
 
   build-image-libvcx:
     needs: workflow-setup
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -198,8 +197,10 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
   build-image-android:
+
     needs: workflow-setup
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
+
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -233,7 +234,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
   test-libvcx-image:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -330,7 +331,7 @@ jobs:
                               bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh x86)'
 
   test-node-wrapper:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -364,7 +365,6 @@ jobs:
                                 npm install && \
                                 npm run compile && \
                                 npm run test:aries)'
-
 
   test-integration-node-wrapper:
     runs-on: ubuntu-16.04
