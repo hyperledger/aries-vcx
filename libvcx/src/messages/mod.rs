@@ -15,6 +15,7 @@ pub mod thread;
 
 use std::u8;
 use settings;
+use log;
 use utils::libindy::crypto;
 use self::create_key::{CreateKeyBuilder, CreateKey, CreateKeyResponse};
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
@@ -264,12 +265,14 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageTypeV2 = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
-        let message_json = serde_json::ser::to_string(&value);
-        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+        if log::log_enabled!(log::Level::Trace) {
+            let message_json = serde_json::ser::to_string(&value);
+            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
 
-        debug!("Deserializing A2AMessageV2 json: {:?}", &message_json);
-        debug!("Found A2AMessageV2 message type json {:?}", &message_type_json);
-        debug!("Found A2AMessageV2 message type {:?}", &message_type);
+            trace!("Deserializing A2AMessageV2 json: {:?}", &message_json);
+            trace!("Found A2AMessageV2 message type json {:?}", &message_type_json);
+            trace!("Found A2AMessageV2 message type {:?}", &message_type);
+        };
 
         match message_type.type_.as_str() {
             "FWD" => {
@@ -452,12 +455,14 @@ impl<'de> Deserialize<'de> for A2AMessage {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageTypes = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
-        let message_json = serde_json::ser::to_string(&value);
-        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+        if log::log_enabled!(log::Level::Trace) {
+            let message_json = serde_json::ser::to_string(&value);
+            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
 
-        trace!("Deserializing A2AMessage json: {:?}", &message_json);
-        trace!("Found A2AMessage message type json {:?}", &message_type_json);
-        trace!("Found A2AMessage message type {:?}", &message_type);
+            trace!("Deserializing A2AMessage json: {:?}", &message_json);
+            trace!("Found A2AMessage message type json {:?}", &message_type_json);
+            trace!("Found A2AMessage message type {:?}", &message_type);
+        }
 
         match message_type {
             MessageTypes::MessageTypeV1(_) =>

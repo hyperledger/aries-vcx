@@ -138,9 +138,6 @@ async function runFaber (options) {
       logger.info(`proofState=${proofProtocolState}`)
     }
 
-    logger.info('Deleting connection...')
-    await connectionToAlice.delete()
-
     logger.info('#27 Process the proof provided by alice.')
     const { proofState, proof } = await vcxProof.getProof(connectionToAlice)
     assert(proofState)

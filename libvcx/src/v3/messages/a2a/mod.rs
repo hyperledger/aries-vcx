@@ -2,6 +2,7 @@ pub mod message_family;
 pub mod message_type;
 pub mod protocol_registry;
 
+use log;
 use self::message_type::MessageType;
 use self::message_family::MessageFamilies;
 
@@ -79,11 +80,13 @@ impl<'de> Deserialize<'de> for A2AMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
-        let message_json = serde_json::ser::to_string(&value);
-        let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
+        if log::log_enabled!(log::Level::Trace) {
+            let message_json = serde_json::ser::to_string(&value);
+            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
 
-        trace!("Deserializing v3::A2AMessage in V3 json: {:?}", &message_json);
-        trace!("Found v3::A2AMessage message type {:?}", &message_type_json);
+            trace!("Deserializing v3::A2AMessage in V3 json: {:?}", &message_json);
+            trace!("Found v3::A2AMessage message type {:?}", &message_type_json);
+        };
 
         let message_type: MessageType = match serde_json::from_value(value["@type"].clone()) {
             Ok(message_type) => message_type,

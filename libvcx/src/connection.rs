@@ -861,7 +861,7 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
         match connection {
             Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
             Connections::V3(ref mut connection) => {
-                connection.update_state(Some(message.clone()))?;
+                connection.update_state(Some(&message))?;
                 Ok(error::SUCCESS.code_num)
             }
         }
@@ -912,7 +912,7 @@ pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> 
         match connection {
             Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
             Connections::V3(ref mut connection) => {
-                connection.update_state(message.clone())?;
+                connection.update_state(message.as_ref())?;
                 Ok(error::SUCCESS.code_num)
             }
         }

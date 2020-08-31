@@ -89,7 +89,7 @@ impl Connection {
         self.step(DidExchangeMessages::Connect())
     }
 
-    pub fn update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
+    pub fn update_state(&mut self, message: Option<&A2AMessage>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
         // TODO: Remove - it should be SM logic to decide state transitions
@@ -130,10 +130,10 @@ impl Connection {
         self.connection_sm.agent_info().update_message_status(uid)
     }
 
-    pub fn update_state_with_message(&mut self, message: A2AMessage) -> VcxResult<()> {
+    pub fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection: update_state_with_message: {:?}", message);
 
-        self.handle_message(message.into())?;
+        self.handle_message(message.clone().into())?;
 
         Ok(())
     }
