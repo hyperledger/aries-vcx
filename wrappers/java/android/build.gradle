@@ -115,7 +115,7 @@ android {
 
     defaultConfig {
         // minSdkVersion must match minSdkVersion of the client app using the built AAR
-        minSdkVersion 24
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
         versionName "${fullVersionName()}"
