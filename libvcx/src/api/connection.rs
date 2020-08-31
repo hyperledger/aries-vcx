@@ -1311,6 +1311,7 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_create() {
         let _setup = SetupMocks::init();
 
@@ -1323,6 +1324,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_create_fails() {
         let _setup = SetupMocks::init();
 
@@ -1338,6 +1340,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_connect() {
         let _setup = SetupMocks::init();
 
@@ -1354,6 +1357,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_redirect() {
         let _setup = SetupMocks::init();
 
@@ -1378,6 +1382,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state() {
         let _setup = SetupMocks::init();
 
@@ -1392,6 +1397,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state_with_message() {
         let _setup = SetupMocks::init();
 
@@ -1405,6 +1411,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state_fails() {
         let _setup = SetupMocks::init();
 
@@ -1413,6 +1420,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_serialize() {
         let _setup = SetupMocks::init();
 
@@ -1428,6 +1436,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_release() {
         let _setup = SetupMocks::init();
 
@@ -1445,6 +1454,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_deserialize_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -1459,6 +1469,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 
@@ -1477,6 +1488,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_delete_connection() {
         let _setup = SetupMocks::init();
 
@@ -1490,6 +1502,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_send_message() {
         let _setup = SetupMocks::init();
 
@@ -1504,6 +1517,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_sign() {
         let _setup = SetupMocks::init();
 
@@ -1522,6 +1536,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_verify_signature() {
         let _setup = SetupMocks::init();
 

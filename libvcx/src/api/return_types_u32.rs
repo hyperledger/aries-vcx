@@ -348,6 +348,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_return_u32() {
         let rtn = Return_U32::new().unwrap();
         rtn.get_callback()(rtn.command_handle, 0);
@@ -361,6 +362,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_return_u32_u32() {
         let test_val = 23455;
 
@@ -377,6 +379,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_return_u32_str() {
         let test_str = "Journey before destination".to_string();
 

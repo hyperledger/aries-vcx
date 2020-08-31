@@ -1105,6 +1105,7 @@ pub mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_to_u8() {
         let _setup = SetupDefaults::init();
 
@@ -1115,6 +1116,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_to_i8() {
         let _setup = SetupDefaults::init();
 
@@ -1124,6 +1126,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_general_message_null_parameters() {
         let _setup = SetupDefaults::init();
 
@@ -1143,6 +1146,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_create_message_null_parameters() {
         let _setup = SetupDefaults::init();
 

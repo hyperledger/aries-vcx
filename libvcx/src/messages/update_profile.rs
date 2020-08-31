@@ -150,6 +150,7 @@ mod tests {
     use utils::devsetup::*;
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_data_post() {
         let _setup = SetupMocks::init();
 
@@ -164,6 +165,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_data_set_values_and_post() {
         let _setup = SetupLibraryWallet::init();
 
@@ -184,6 +186,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_parse_update_profile_response() {
         let _setup = SetupIndyMocks::init();
 

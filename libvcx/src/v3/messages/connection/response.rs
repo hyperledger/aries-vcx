@@ -199,6 +199,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_response_build_works() {
         let response: Response = Response::default()
             .set_did(_did())
@@ -210,6 +211,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_response_encode_works() {
         let setup = test_setup::key();
         let signed_response: SignedResponse = _response().encode(&setup.key).unwrap();

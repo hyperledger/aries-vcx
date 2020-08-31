@@ -308,8 +308,9 @@ mod test {
     mod new {
         use super::*;
 
-        #[test]
-        fn test_holder_new() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_holder_new() {
             let _setup = SetupAriesMocks::init();
 
             let holder_sm = _holder_sm();
@@ -322,16 +323,18 @@ mod test {
     mod step {
         use super::*;
 
-        #[test]
-        fn test_holder_init() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_holder_init() {
             let _setup = SetupAriesMocks::init();
 
             let holder_sm = _holder_sm();
             assert_match!(HolderState::OfferReceived(_), holder_sm.state);
         }
 
-        #[test]
-        fn test_issuer_handle_credential_request_sent_message_from_offer_received_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_credential_request_sent_message_from_offer_received_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -340,8 +343,9 @@ mod test {
             assert_match!(HolderState::RequestSent(_), holder_sm.state);
         }
 
-        #[test]
-        fn test_issuer_handle_credential_request_sent_message_from_offer_received_state_for_invalid_offer() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_credential_request_sent_message_from_offer_received_state_for_invalid_offer() {
             let _setup = SetupAriesMocks::init();
 
             let credential_offer = CredentialOffer::create().set_offers_attach(r#"{"credential offer": {}}"#).unwrap();
@@ -353,8 +357,9 @@ mod test {
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
         }
 
-        #[test]
-        fn test_issuer_handle_other_messages_from_offer_received_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_other_messages_from_offer_received_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -366,8 +371,9 @@ mod test {
             assert_match!(HolderState::OfferReceived(_), holder_sm.state);
         }
 
-        #[test]
-        fn test_issuer_handle_credential_message_from_request_sent_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_credential_message_from_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -378,8 +384,9 @@ mod test {
             assert_eq!(Status::Success.code(), holder_sm.credential_status());
         }
 
-        #[test]
-        fn test_issuer_handle_invalid_credential_message_from_request_sent_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_invalid_credential_message_from_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -390,8 +397,9 @@ mod test {
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
         }
 
-        #[test]
-        fn test_issuer_handle_problem_report_from_request_sent_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_problem_report_from_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -402,8 +410,9 @@ mod test {
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
         }
 
-        #[test]
-        fn test_issuer_handle_other_messages_from_request_sent_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_other_messages_from_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -416,8 +425,9 @@ mod test {
             assert_match!(HolderState::RequestSent(_), holder_sm.state);
         }
 
-        #[test]
-        fn test_issuer_handle_message_from_finished_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_issuer_handle_message_from_finished_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut holder_sm = _holder_sm();
@@ -438,8 +448,9 @@ mod test {
     mod find_message_to_handle {
         use super::*;
 
-        #[test]
-        fn test_holder_find_message_to_handle_from_offer_received_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_holder_find_message_to_handle_from_offer_received_state() {
             let _setup = SetupAriesMocks::init();
 
             let holder = _holder_sm();
@@ -460,8 +471,9 @@ mod test {
             }
         }
 
-        #[test]
-        fn test_holder_find_message_to_handle_from_request_sent_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_holder_find_message_to_handle_from_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let holder = _holder_sm().to_request_sent_state();
@@ -521,8 +533,9 @@ mod test {
             }
         }
 
-        #[test]
-        fn test_holder_find_message_to_handle_from_finished_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_holder_find_message_to_handle_from_finished_state() {
             let _setup = SetupAriesMocks::init();
 
             let holder = _holder_sm().to_finished_state();
@@ -546,8 +559,9 @@ mod test {
     mod get_state {
         use super::*;
 
-        #[test]
-        fn test_get_state() {
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_state() {
             let _setup = SetupAriesMocks::init();
 
             assert_eq!(VcxStateType::VcxStateRequestReceived as u32, _holder_sm().state());

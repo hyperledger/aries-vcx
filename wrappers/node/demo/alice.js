@@ -1,96 +1,78 @@
+const { provisionAgent, initRustapi } = require('../client-vcx/vcx-workflows')
 const { DisclosedProof } = require('../dist/src/api/disclosed-proof')
-const { Connection } = require('../dist/src/api/connection')
-const { Credential } = require('../dist/src/api/credential')
 const { StateType } = require('../dist/src')
 const readlineSync = require('readline-sync')
+const { createVcxClient } = require('../client-vcx/vcxclient')
+const { createStorageService } = require('../client-vcx/storage-service')
+const { waitUntilAgencyIsReady, allowedProtocolTypes } = require('../client-vcx/common')
 const sleepPromise = require('sleep-promise')
-const demoCommon = require('./common')
-const logger = require('./logger')
-const url = require('url')
+const logger = require('../common/logger')('Alice')
+const { runScript } = require('../common/script-comon')
+const uuid = require('uuid')
+const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
-const { runScript } = require('./script-comon')
+const url = require('url')
 
-const utime = Math.floor(new Date() / 1000)
-const optionalWebhook = 'http://localhost:7209/notifications/alice'
-
-const provisionConfig = {
-  agency_url: 'http://localhost:8080',
-  agency_did: 'VsKV7grR1BUE29mG2Fm2kX',
-  agency_verkey: 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',
-  wallet_name: `node_vcx_demo_alice_wallet_${utime}`,
-  wallet_key: '123',
-  payment_method: 'null',
-  enterprise_seed: '000000000000000000000000Trustee1'
+async function getInvitationString (fetchInviteUrl) {
+  let invitationString
+  if (fetchInviteUrl) {
+    const fetchInviteAttemptThreshold = 30
+    const fetchInviteTimeout = 1000
+    let fetchInviteAttemps = 0
+    while (!invitationString) {
+      if (await isPortReachable(url.parse(fetchInviteUrl).port, { host: url.parse(fetchInviteUrl).hostname })) { // eslint-disable-line
+        ({ data: { invitationString } } = await axios.get(fetchInviteUrl))
+        logger.info(`Invitation ${invitationString} was loaded from ${fetchInviteUrl}.`)
+      } else {
+        logger.info(`Invitation fetch url ${fetchInviteUrl} not yet available. ${fetchInviteAttemps}/${fetchInviteAttemptThreshold}`)
+        await sleepPromise(fetchInviteTimeout)
+      }
+      fetchInviteAttemps++
+      if (fetchInviteAttemps > fetchInviteAttemptThreshold) {
+        throw Error(`Could not reach ${fetchInviteUrl} to fetch connection invitation.`)
+      }
+    }
+  } else {
+    invitationString = readlineSync.question('Enter connection invitation:\n')
+  }
+  return invitationString
 }
 
-const logLevel = 'error'
-
 async function runAlice (options) {
-  await demoCommon.initLibNullPay()
+  logger.info('Starting.')
+  const testRunId = uuid.v4()
+  const seed = '000000000000000000000000Trustee1'
+  const protocolType = options.protocolType
+  const agentName = `alice-${testRunId}`
+  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
+  const usePostgresWallet = false
+  const logLevel = 'error'
 
-  logger.info('#0 Initialize rust API from NodeJS')
-  await demoCommon.initRustApiAndLogger(logLevel)
+  await initRustapi(logLevel)
 
-  if (options.comm === 'aries') {
-    provisionConfig.protocol_type = '4.0'
-    logger.info('Running with Aries VCX Enabled! Make sure VCX agency is configured to use protocol_type 2.0')
+  const agencyUrl = 'http://localhost:8080'
+  await waitUntilAgencyIsReady(agencyUrl, logger)
+
+  const storageService = await createStorageService(agentName)
+
+  if (!await storageService.agentProvisionExists()) {
+    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+    await storageService.saveAgentProvision(agentProvision)
   }
+  const vcxClient = await createVcxClient(storageService, logger)
 
-  if (options.postgresql) {
-    await demoCommon.loadPostgresPlugin(provisionConfig)
-    provisionConfig.wallet_type = 'postgres_storage'
-    provisionConfig.storage_config = '{"url":"localhost:5432"}'
-    provisionConfig.storage_credentials = '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'
-    logger.info(`Running with PostreSQL wallet enabled! Config = ${provisionConfig.storage_config}`)
-  } else {
-    logger.info('Running with builtin wallet.')
+  const connectionName = `alice-${testRunId}`
+
+  const invitationString = await getInvitationString(options['autofetch-invitation-url'])
+  await vcxClient.connectionAccept(connectionName, invitationString)
+
+  const connectionToFaber = await vcxClient.connectionAutoupdate(connectionName)
+  if (!connectionToFaber) {
+    throw Error('Connection with alice was not established.')
   }
-  if (await isPortReachable(url.parse(optionalWebhook).port, { host: url.parse(optionalWebhook).hostname })) { // eslint-disable-line
-    provisionConfig.webhook_url = optionalWebhook
-    logger.info(`Running with webhook notifications enabled! Webhook url = ${optionalWebhook}`)
-  } else {
-    logger.info('Webhook url will not be used')
-  }
+  logger.info('Connection to alice was Accepted!')
 
-  logger.info('#8 Provision an agent and wallet, get back configuration details')
-  const config = await demoCommon.provisionAgentInAgency(provisionConfig)
-
-  logger.info('#9 Initialize libvcx with new configuration')
-  await demoCommon.initVcxWithProvisionedAgentConfig(config)
-
-  logger.info('Input faber.py invitation details')
-  const details = readlineSync.question('Enter your invite details: ')
-  const jdetails = JSON.parse(details)
-
-  logger.info('#10 Convert to valid json and string and create a connection to faber')
-  const connectionToFaber = await Connection.createWithInvite({ id: 'faber', invite: JSON.stringify(jdetails) })
-  await connectionToFaber.connect({ data: '{"use_public_did": true}' })
-  let connectionstate = await connectionToFaber.getState()
-  while (connectionstate !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await connectionToFaber.updateState()
-    connectionstate = await connectionToFaber.getState()
-  }
-
-  logger.info('#11 Wait for faber.py to issue a credential offer')
-  await sleepPromise(10000)
-  const offers = await Credential.getOffers(connectionToFaber)
-  logger.info(`Alice found ${offers.length} credential offers.`)
-  logger.debug(JSON.stringify(offers))
-
-  // Create a credential object from the credential offer
-  const credential = await Credential.create({ sourceId: 'credential', offer: JSON.stringify(offers[0]) })
-
-  logger.info('#15 After receiving credential offer, send credential request')
-  await credential.sendRequest({ connection: connectionToFaber, payment: 0 })
-
-  logger.info('#16 Poll agency and accept credential offer from faber')
-  let credentialState = await credential.getState()
-  while (credentialState !== StateType.Accepted) {
-    await sleepPromise(2000)
-    await credential.updateState()
-    credentialState = await credential.getState()
-  }
+  await vcxClient.waitForCredentialOfferAndAccept(connectionName)
 
   logger.info('#22 Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)
@@ -99,22 +81,36 @@ async function runAlice (options) {
     requests = await DisclosedProof.getRequests(connectionToFaber)
   }
   logger.info('#23 Create a Disclosed proof object from proof request')
+  logger.debug(`Received proof request = ${JSON.stringify(requests, null, 2)}`)
   const proof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(requests[0]) })
+  const requestInfo = JSON.parse(Buffer.from(requests[0]['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
+  logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const credentials = await proof.getCredentials()
+  const resolvedCreds = await proof.getCredentials()
+  const selectedCreds = { attrs: {} }
+  logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
 
-  // Use the first available credentials to satisfy the proof request
-  for (let i = 0; i < Object.keys(credentials.attrs).length; i++) {
-    const attr = Object.keys(credentials.attrs)[i]
-    credentials.attrs[attr] = {
-      credential: credentials.attrs[attr][0]
+  for (const attrName of Object.keys(resolvedCreds.attrs)) {
+    const attrCredInfo = resolvedCreds.attrs[attrName]
+    if (Array.isArray(attrCredInfo) === false) {
+      throw Error('Unexpected data, expected attrCredInfo to be an array.')
     }
-    credentials.attrs[attr].tails_file = '/tmp/tails'
+    if (attrCredInfo.length > 0) {
+      selectedCreds.attrs[attrName] = {
+        credential: resolvedCreds.attrs[attrName][0]
+      }
+      selectedCreds.attrs[attrName].tails_file = '/tmp/tails'
+    } else {
+      logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)
+    }
   }
+  const selfAttestedAttrs = { attribute_3: 'Smith' }
 
-  logger.info('#25 Generate the proof')
-  await proof.generateProof({ selectedCreds: credentials, selfAttestedAttrs: {} })
+  logger.info('#25 Generate the proof.')
+  logger.debug(`Proof is using wallet credentials:\n${JSON.stringify(selectedCreds, null, 2)}
+  \nProof is using self attested attributes: ${JSON.stringify(selfAttestedAttrs, null, 2)}`)
+  await proof.generateProof({ selectedCreds, selfAttestedAttrs })
 
   logger.info('#26 Send the proof to faber')
   await proof.sendProof(connectionToFaber)
@@ -138,16 +134,21 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'comm',
+    name: 'protocolType',
     type: String,
-    description: 'Communication method. Possible values: aries, legacy. Default is aries.',
-    defaultValue: 'aries'
+    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
+    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
     type: Boolean,
     description: 'If specified, postresql wallet will be used.',
     defaultValue: false
+  },
+  {
+    name: 'autofetch-invitation-url',
+    type: String,
+    description: 'If specified, the script will try to download invitation from specified url.'
   }
 ]
 
@@ -157,14 +158,13 @@ const usage = [
     optionList: optionDefinitions
   },
   {
-    content: 'Project home: {underline https://github.com/Patrik-Stas/indy-wallet-watch}'
+    content: 'Project home: {underline https://github.com/AbsaOSS/libvcx}'
   }
 ]
 
 function areOptionsValid (options) {
-  const allowedCommMethods = ['aries', 'legacy']
-  if (!(allowedCommMethods.includes(options.comm))) {
-    console.error(`Unknown communication method ${options.comm}. Only ${JSON.stringify(allowedCommMethods)} are allowed.`)
+  if (!(allowedProtocolTypes.includes(options.protocolType))) {
+    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
     return false
   }
   return true
