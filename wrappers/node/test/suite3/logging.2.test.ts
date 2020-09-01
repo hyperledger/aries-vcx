@@ -57,6 +57,6 @@ describe('Set Logger: ', () => {
     assert.equal(count, 0)
     setLogger(_logFn)
     errorMessage(1058)
-    assert.equal(count, 3)
+    assert.equal(count, 5)
   })
 })
