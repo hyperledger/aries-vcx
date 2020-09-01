@@ -122,7 +122,7 @@ pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
     trace!("vcx_agent_update_info(command_handle: {}, json: {})",
            command_handle, json);
 
-    let agent_info: UpdateAgentInfo = match serde_json::from_str(&json) {
+    let _agent_info: UpdateAgentInfo = match serde_json::from_str(&json) {
         Ok(x) => x,
         Err(e) => {
             return VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot deserialize agent info: {}", e)).into();

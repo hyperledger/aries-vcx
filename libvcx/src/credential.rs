@@ -903,7 +903,7 @@ pub mod tests {
 
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
-    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
+    use utils::libindy::payments::{build_test_address};
 
     pub fn create_credential(offer: &str) -> Credential {
         let mut credential = Credential::create("source_id");

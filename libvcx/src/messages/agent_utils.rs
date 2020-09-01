@@ -490,10 +490,10 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 
 #[cfg(test)]
 mod tests {
-    use std::env;
+    
     use super::*;
     use utils::devsetup::*;
-    use api::vcx::vcx_shutdown;
+    
 
     #[test]
     #[cfg(feature = "agency")]

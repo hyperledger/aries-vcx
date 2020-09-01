@@ -668,7 +668,7 @@ mod tests {
     use api::{ProofStateType, return_types_u32, VcxStateType};
     use utils::constants::*;
     use utils::devsetup::*;
-    use connection::tests::build_test_connection;
+    
     use utils::timeout::TimeoutUtils;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";

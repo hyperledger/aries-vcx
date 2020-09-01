@@ -664,7 +664,7 @@ pub mod tests {
     use connection::tests::build_test_connection;
     use utils::libindy::pool;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
+    
     use connection;
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
@@ -792,7 +792,7 @@ pub mod tests {
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
         let proof_data = to_string(handle).unwrap();
-        let hnadle2= from_string(&proof_data).unwrap();
+        let _hnadle2= from_string(&proof_data).unwrap();
         let proof_data2 = to_string(handle).unwrap();
         assert_eq!(proof_data, proof_data2);
     }
