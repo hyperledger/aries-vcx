@@ -458,9 +458,9 @@ impl ::std::string::ToString for ProtocolTypes {
 
 pub fn get_protocol_type() -> ProtocolTypes {
     ::std::env::var("CONFIG_PROTOCOL_TYPE")
-        .unwrap_or_else(|e| {
+        .unwrap_or_else(|_e| {
             warn!("Env variable CONFIG_PROTOCOL_TYPE was not set.");
-            get_config_value(CONFIG_PROTOCOL_TYPE).unwrap_or_else(|e| {
+            get_config_value(CONFIG_PROTOCOL_TYPE).unwrap_or_else(|_e| {
                 error!("Config CONFIG_PROTOCOL_TYPE was not set. Will use default value of 3.0");
                 "3.0".into()
             })

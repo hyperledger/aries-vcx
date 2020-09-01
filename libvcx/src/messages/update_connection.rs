@@ -3,8 +3,8 @@ use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
 use error::prelude::*;
-use utils::httpclient::AgencyMock;
-use utils::constants::DELETE_CONNECTION_RESPONSE;
+
+
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

@@ -836,7 +836,6 @@ pub mod tests {
     use std::ptr;
     use settings;
     use utils::{
-        constants::CREDENTIAL_REQ_RESPONSE_STR,
         get_temp_dir_path,
     };
     use api::{return_types_u32, VcxStateType};

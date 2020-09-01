@@ -1159,8 +1159,8 @@ pub mod tests {
 
     use super::*;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
-    use utils::constants;
+    
+    
 
     pub fn build_test_connection() -> u32 {
         let handle = create_connection("alice").unwrap();
@@ -1172,7 +1172,7 @@ pub mod tests {
         debug!("Institution is going to create connection.");
         ::utils::devsetup::set_institution();
         let faber_to_alice = create_connection("alice").unwrap();
-        let my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         connect(faber_to_alice, None).unwrap();
         update_state(faber_to_alice, None).unwrap();
         let details = get_invite_details(faber_to_alice, false).unwrap();

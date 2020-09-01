@@ -865,7 +865,7 @@ pub mod tests {
     use super::*;
     use serde_json::Value;
     use settings;
-    use connection::tests::build_test_connection;
+    
     use credential_request::CredentialRequest;
     #[allow(unused_imports)]
     use utils::{constants::*,
@@ -877,7 +877,7 @@ pub mod tests {
                 get_temp_dir_path,
     };
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
+    
     use credential_def::tests::create_cred_def_fake;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";

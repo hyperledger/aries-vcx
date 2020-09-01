@@ -249,7 +249,7 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
 #[cfg(test)]
 mod tests {
     use super::*;
-    use utils::constants::SEND_MESSAGE_RESPONSE;
+    
     use utils::devsetup::*;
 
     #[test]
