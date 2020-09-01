@@ -217,6 +217,10 @@ pub fn update_record_value(xtype: &str, id: &str, value: &str) -> VcxResult<()> 
 pub fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("add_record_tags >>> xtype: {}, id: {}, tags: {:?}", secret!(&xtype), secret!(&id), secret!(&tags));
 
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+
     wallet::add_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
         .wait()
         .map_err(VcxError::from)
@@ -224,6 +228,10 @@ pub fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
 
 pub fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("update_record_tags >>> xtype: {}, id: {}, tags: {}", secret!(&xtype), secret!(&id), secret!(&tags));
+
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
 
     wallet::update_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
         .wait()
@@ -233,6 +241,10 @@ pub fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
 pub fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxResult<()> {
     trace!("delete_record_tags >>> xtype: {}, id: {}, tag_names: {}", secret!(&xtype), secret!(&id), secret!(&tag_names));
 
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
+
     wallet::delete_wallet_record_tags(get_wallet_handle(), xtype, id, tag_names)
         .wait()
         .map_err(VcxError::from)
@@ -240,6 +252,10 @@ pub fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxResult<(
 
 pub fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<SearchHandle> {
     trace!("open_search >>> xtype: {}, query: {}, options: {}", secret!(&xtype), query, options);
+
+    if settings::indy_mocks_enabled() {
+        return Ok(1);
+    }
 
     wallet::open_wallet_search(get_wallet_handle(), xtype, query, options)
         .wait()
@@ -249,6 +265,10 @@ pub fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<SearchH
 pub fn fetch_next_records(search_handle: SearchHandle, count: usize) -> VcxResult<String> {
     trace!("fetch_next_records >>> search_handle: {}, count: {}", search_handle, count);
 
+    if settings::indy_mocks_enabled() {
+        return Ok(String::from("{}"));
+    }
+
     wallet::fetch_wallet_search_next_records(get_wallet_handle(), search_handle, count)
         .wait()
         .map_err(VcxError::from)
@@ -256,6 +276,10 @@ pub fn fetch_next_records(search_handle: SearchHandle, count: usize) -> VcxResul
 
 pub fn close_search(search_handle: SearchHandle) -> VcxResult<()> {
     trace!("close_search >>> search_handle: {}", search_handle);
+
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
 
     wallet::close_wallet_search(search_handle)
         .wait()

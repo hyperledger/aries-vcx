@@ -17,7 +17,7 @@ export interface IRecord {
   type_: string,
   id: string,
   value: any,
-  tags: any,
+  tags_json: any,
 }
 
 export interface IRecordUpdate {
@@ -50,13 +50,13 @@ export interface IGetRecordOptions {
 export interface IGerRecordData {
   type: string,
   id: string,
-  options: IGetRecordOptions
+  optionsJson: IGetRecordOptions
 }
 
 export interface IOpenSearchData {
   type: string,
   queryJson: string,
-  options: string
+  optionsJson: string
 }
 
 export interface ISearchNextRecordsOptions {
@@ -321,7 +321,7 @@ export class Wallet {
           const rc = rustAPI().vcx_wallet_add_record(commandHandle,
             record.type_,
             record.id, record.value,
-            JSON.stringify(record.tags),
+            JSON.stringify(record.tags_json),
             cb)
           if (rc) {
             reject(rc)
@@ -417,7 +417,7 @@ export class Wallet {
           const rc = rustAPI().vcx_wallet_update_record_tags(commandHandle,
             record.type_,
             record.id,
-            JSON.stringify(record.tags),
+            JSON.stringify(record.tags_json),
             cb)
           if (rc) {
             reject(rc)
@@ -470,7 +470,7 @@ export class Wallet {
           const rc = rustAPI().vcx_wallet_add_record_tags(commandHandle,
             record.type_,
             record.id,
-            JSON.stringify(record.tags),
+            JSON.stringify(record.tags_json),
             cb)
           if (rc) {
             reject(rc)
@@ -622,7 +622,7 @@ export class Wallet {
    * record = await Wallet.getReocrd({ type: 'TestType', id: 'RecordId'})
    * ```
    */
-  public static async getRecord ({ type, id, options }: IGerRecordData): Promise<string> {
+  public static async getRecord ({ type, id, optionsJson }: IGerRecordData): Promise<string> {
     const commandHandle = 0
     try {
       return await createFFICallbackPromise<string>(
@@ -630,7 +630,7 @@ export class Wallet {
           const rc = rustAPI().vcx_wallet_get_record(commandHandle,
             type,
             id,
-            JSON.stringify(options),
+            JSON.stringify(optionsJson),
             cb)
           if (rc) {
             reject(rc)
@@ -660,7 +660,7 @@ export class Wallet {
     * searchHandle = await openSearch({type: 'TestType'})
     * ```
     */
-  public static async openSearch ({ type, queryJson, options }: IOpenSearchData): Promise<number> {
+  public static async openSearch ({ type, queryJson, optionsJson }: IOpenSearchData): Promise<number> {
     const commandHandle = 0
     try {
       return await createFFICallbackPromise<number>(
@@ -668,7 +668,7 @@ export class Wallet {
           const rc = rustAPI().vcx_wallet_open_search(commandHandle,
             type,
             queryJson,
-            options,
+            optionsJson,
             cb)
           if (rc) {
             reject(rc)
