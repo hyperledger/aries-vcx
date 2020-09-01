@@ -247,7 +247,7 @@ pub extern fn vcx_download_agent_messages(command_handle: u32,
 
     spawn(move || {
         error!("vcx_download_agent_messages is not supported anymore");
-        cb(command_handle, error::NOT_READY.code_num, ptr::null_mut());
+        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
     });
 
