@@ -812,7 +812,7 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
         .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
             Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),

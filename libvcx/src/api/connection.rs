@@ -5,7 +5,6 @@ use utils::threadpool::spawn;
 use std::ptr;
 use connection::*;
 use error::prelude::*;
-use messages::get_message::Message;
 use indy_sys::CommandHandle;
 use v3::messages::a2a::A2AMessage;
 
@@ -598,12 +597,12 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
 
         let rc = match result {
             Ok(x) => {
-                trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
+                trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
                 x
             }
             Err(x) => {
-                warn!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
+                warn!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                       command_handle, x, connection_handle, get_state(connection_handle), source_id);
                 x.into()
             }
