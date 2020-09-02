@@ -850,7 +850,7 @@ mod tests {
         let _setup = SetupIndyMocks::init();
 
         let (result, url) = SendInviteBuilder::create().version(&Some(settings::ProtocolTypes::V1)).unwrap().parse_response(SEND_INVITE_RESPONSE.to_vec()).unwrap();
-        let invite = serde_json::from_str(INVITE_DETAIL_STRING).unwrap();
+        let invite = serde_json::from_str(INVITE_DETAIL_V1_STRING).unwrap();
 
         assert_eq!(result, invite);
         assert_eq!(url, "http://localhost:9001/agency/invite/WRUzXXuFVTYkT8CjSZpFvT?uid=NjcwOWU");
