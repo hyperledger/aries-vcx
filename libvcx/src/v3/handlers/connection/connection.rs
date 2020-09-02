@@ -92,11 +92,6 @@ impl Connection {
     pub fn update_state(&mut self, message: Option<&A2AMessage>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
-        // TODO: Remove - it should be SM logic to decide state transitions
-        if self.connection_sm.isInNullState() {
-            return Ok(());
-        }
-
         if let Some(message_) = message {
             return self.update_state_with_message(message_);
         }

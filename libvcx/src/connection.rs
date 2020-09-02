@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use rmp_serde;
 use serde_json;
-use serde_json::Value;
+
 
 use api::VcxStateType;
 use error::prelude::*;
 use messages;
 use messages::{GeneralMessage, MessageStatusCode, RemoteMessageType, SerializableObjectWithState};
-use messages::invite::{InviteDetail, RedirectDetail, SenderDetail, Payload as ConnectionPayload, AcceptanceDetails, RedirectionDetails};
+use messages::invite::{InviteDetail, RedirectDetail, SenderDetail, Payload as ConnectionPayload, AcceptanceDetails};
 use messages::payload::{Payloads, PayloadKinds};
 use messages::thread::Thread;
 use messages::send_message::SendMessageOptions;
@@ -227,12 +227,6 @@ impl Connection {
     fn get_endpoint(&self) -> &String { &self.endpoint }
     fn set_endpoint(&mut self, endpoint: &str) { self.endpoint = endpoint.to_string(); }
 
-    fn get_invite_detail(&self) -> &Option<InviteDetail> { &self.invite_detail }
-
-    #[allow(dead_code)]
-    fn get_redirect_detail(&self) -> &Option<RedirectDetail> { &self.redirect_detail }
-    fn set_redirect_detail(&mut self, rd: RedirectDetail) { self.redirect_detail = Some(rd); }
-
     fn get_version(&self) -> Option<settings::ProtocolTypes> {
         self.version.clone()
     }
@@ -284,54 +278,6 @@ impl Connection {
 
         Ok(error::SUCCESS.code_num)
     }
-
-    pub fn update_state(&mut self, _message: Option<String>) -> VcxResult<u32> {
-        debug!("updating state for connection {}", self.source_id);
-
-        if self.state == VcxStateType::VcxStateInitialized ||
-            self.state == VcxStateType::VcxStateAccepted ||
-            self.state == VcxStateType::VcxStateRedirected {
-            return Ok(error::SUCCESS.code_num);
-        }
-
-        let response =
-            messages::get_messages()
-                .to(&self.pw_did)?
-                .to_vk(&self.pw_verkey)?
-                .agent_did(&self.agent_did)?
-                .agent_vk(&self.agent_vk)?
-                .version(&self.version)?
-                .send_secure()
-                .map_err(|err| err.map(VcxErrorKind::PostMessageFailed, format!("Could not update state for connection {}", self.source_id)))?;
-
-        debug!("connection {} update state response: {:?}", self.source_id, response);
-        if self.state == VcxStateType::VcxStateOfferSent || self.state == VcxStateType::VcxStateInitialized {
-            for message in response {
-                if message.status_code == MessageStatusCode::Accepted && message.msg_type == RemoteMessageType::ConnReqAnswer {
-                    let rc = self.process_acceptance_message(&message);
-                    if rc.is_err() {
-                        self.force_v2_parse_acceptance_details(&message)?;
-                    }
-                } else {
-                    warn!("Unexpected message: {:?}", message);
-                }
-            }
-        };
-
-        Ok(error::SUCCESS.code_num)
-    }
-
-    pub fn process_acceptance_message(&mut self, message: &Message) -> VcxResult<u32> {
-        let details = parse_acceptance_details(message)
-            .map_err(|err| err.extend("Cannot parse acceptance details"))?;
-
-        self.set_their_pw_did(&details.did);
-        self.set_their_pw_verkey(&details.verkey);
-        self.set_state(VcxStateType::VcxStateAccepted);
-
-        Ok(error::SUCCESS.code_num)
-    }
-
 
     pub fn send_generic_message(&self, message: &str, msg_options: &str) -> VcxResult<String> {
         if self.state != VcxStateType::VcxStateAccepted {
@@ -683,76 +629,6 @@ pub fn parse_acceptance_details(message: &Message) -> VcxResult<SenderDetail> {
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize AcceptanceDetails: {}", err)))?;
 
             Ok(response.sender_detail)
-        }
-    }
-}
-
-impl Connection {
-    pub fn parse_redirection_details(&self, message: &Message) -> VcxResult<RedirectDetail> {
-        debug!("connection {} parsing redirect details for message {:?}", self.source_id, message);
-        let my_vk = settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
-
-        let payload = message.payload
-            .as_ref()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Payload not found"))?;
-
-        match payload {
-            MessagePayload::V1(payload) => {
-                // TODO: check returned verkey
-                let (_, payload) = crypto::parse_msg(&my_vk, &messages::to_u8(&payload))
-                    .map_err(|err| err.map(VcxErrorKind::InvalidMessagePack, "Cannot decrypt connection payload"))?;
-
-                let response: ConnectionPayload = rmp_serde::from_slice(&payload[..])
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot parse connection payload: {}", err)))?;
-
-                let payload = messages::to_u8(&response.msg);
-
-                let response: RedirectionDetails = rmp_serde::from_slice(&payload[..])
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot deserialize RedirectDetails: {}", err)))?;
-
-                Ok(response.redirect_detail)
-            }
-            MessagePayload::V2(payload) => {
-                let payload = Payloads::decrypt_payload_v2(&my_vk, &payload)?;
-                let response: RedirectionDetails = serde_json::from_str(&payload.msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RedirectDetails: {}", err)))?;
-
-                Ok(response.redirect_detail)
-            }
-        }
-    }
-
-    pub fn force_v2_parse_acceptance_details(&mut self, message: &Message) -> VcxResult<SenderDetail> {
-        debug!("forcing connection {} parsing acceptance details for message {:?}", self.source_id, message);
-        let my_vk = settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
-
-        let payload = message.payload
-            .as_ref()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Payload not found"))?;
-
-        match payload {
-            MessagePayload::V1(payload) => {
-                let vec = messages::to_u8(payload);
-                let json: Value = serde_json::from_slice(&vec[..])
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot deserialize SenderDetails: {}", err)))?;
-
-                let payload = Payloads::decrypt_payload_v12(&my_vk, &json)?;
-                let response: AcceptanceDetails = serde_json::from_value(payload.msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize AcceptanceDetails: {}", err)))?;
-
-                self.set_their_pw_did(&response.sender_detail.did);
-                self.set_their_pw_verkey(&response.sender_detail.verkey);
-                self.set_state(VcxStateType::VcxStateAccepted);
-
-                Ok(response.sender_detail)
-            }
-            MessagePayload::V2(payload) => {
-                let payload = Payloads::decrypt_payload_v2(&my_vk, &payload)?;
-                let response: AcceptanceDetails = serde_json::from_str(&payload.msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize AcceptanceDetails: {}", err)))?;
-
-                Ok(response.sender_detail)
-            }
         }
     }
 }

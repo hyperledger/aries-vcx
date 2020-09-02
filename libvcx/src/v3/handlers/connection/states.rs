@@ -323,14 +323,6 @@ impl DidExchangeSM {
         }
     }
 
-    pub fn isInNullState(&self) -> bool {
-        match self.state {
-            ActorDidExchangeState::Inviter(DidExchangeState::Null(_)) => true,
-            ActorDidExchangeState::Invitee(DidExchangeState::Null(_)) => true,
-            _ => false
-        }
-    }
-
     pub fn from(source_id: String, agent_info: AgentInfo, state: ActorDidExchangeState) -> Self {
         DidExchangeSM {
             source_id,
