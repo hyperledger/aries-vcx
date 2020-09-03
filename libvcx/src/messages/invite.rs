@@ -799,18 +799,6 @@ pub struct Payload {
     pub msg: Vec<i8>,
 }
 
-#[serde(rename_all = "camelCase")]
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct AcceptanceDetails {
-    pub sender_detail: SenderDetail,
-}
-
-#[serde(rename_all = "camelCase")]
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct RedirectionDetails {
-    pub redirect_detail: RedirectDetail,
-}
-
 #[cfg(test)]
 mod tests {
     use messages::send_invite;
