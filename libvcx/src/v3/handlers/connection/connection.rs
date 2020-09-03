@@ -93,7 +93,7 @@ impl Connection {
         trace!("Connection::update_state >>> message: {:?}", message);
 
         // TODO: Remove - it should be SM logic to decide state transitions
-        if self.connection_sm.isInNullState() {
+        if self.connection_sm.is_in_null_state() {
             return Ok(());
         }
 
