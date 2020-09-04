@@ -1,6 +1,6 @@
 const { runInteractive } = require('./vcxclient-interactive')
-const { runScript } = require('../common/script-comon')
-const { allowedProtocolTypes } = require('./common')
+const { runScript } = require('./script-common')
+const { allowedProtocolTypes } = require('vcxagent-core')
 
 const optionDefinitions = [
   {

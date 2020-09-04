@@ -1,18 +1,45 @@
-const {
-  initLibNullPay,
-  initRustApiAndLogger,
-  loadPostgresPlugin,
-  provisionAgentInAgency
-} = require('./common')
+const { initRustAPI, initVcxWithConfig, provisionAgent } = require('@absaoss/node-vcx-wrapper')
+const ffi = require('ffi-napi')
+const os = require('os')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
+const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
+const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
+
+module.exports.allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
+
+function getLibraryPath (libraryName) {
+  const platform = os.platform()
+  const postfix = extension[platform.toLowerCase()] || extension.linux
+  const libDir = libPath[platform.toLowerCase()] || libPath.linux
+  return `${libDir}${libraryName}${postfix}`
+}
+
+async function loadPostgresPlugin (provisionConfig) {
+  const myffi = ffi.Library(getLibraryPath('libindystrgpostgres'), { postgresstorage_init: ['void', []] })
+  await myffi.postgresstorage_init()
+}
+
+async function initLibNullPay () {
+  const myffi = ffi.Library(getLibraryPath('libnullpay'), { nullpay_init: ['void', []] })
+  await myffi.nullpay_init()
+}
+
+async function initRustApiAndLogger (logLevel) {
+  const rustApi = initRustAPI()
+  await rustApi.vcx_set_default_logger(logLevel)
+}
+
+async function initVcxWithProvisionedAgentConfig (config) {
+  await initVcxWithConfig(JSON.stringify(config))
+}
 
 async function initRustapi (logLevel = 'vcx=error') {
   await initLibNullPay()
   await initRustApiAndLogger(logLevel)
 }
 
-async function provisionAgent (agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger) {
+async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger) {
   if (!agentName) {
     throw Error('agentName not specified')
   }
@@ -57,7 +84,7 @@ async function provisionAgent (agentName, protocolType, agencyUrl, seed, webhook
   }
 
   logger.info(`Using following config to create agent provision: ${JSON.stringify(provisionConfig, null, 2)}`)
-  const agentProvision = await provisionAgentInAgency(provisionConfig)
+  const agentProvision = JSON.parse(await provisionAgent(JSON.stringify(provisionConfig)))
   agentProvision.institution_name = agentName
   agentProvision.institution_logo_url = 'https://example.org'
   agentProvision.genesis_path = `${__dirname}/docker.txn`
@@ -65,5 +92,9 @@ async function provisionAgent (agentName, protocolType, agencyUrl, seed, webhook
   return agentProvision
 }
 
-module.exports.provisionAgent = provisionAgent
+module.exports.loadPostgresPlugin = loadPostgresPlugin
+module.exports.initLibNullPay = initLibNullPay
+module.exports.initRustApiAndLogger = initRustApiAndLogger
+module.exports.initVcxWithProvisionedAgentConfig = initVcxWithProvisionedAgentConfig
+module.exports.provisionAgentInAgency = provisionAgentInAgency
 module.exports.initRustapi = initRustapi

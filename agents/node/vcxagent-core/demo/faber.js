@@ -1,14 +1,13 @@
-const { provisionAgent, initRustapi } = require('../client-vcx/vcx-workflows')
-const { Proof } = require('../dist/src/api/proof')
-const { StateType, ProofState } = require('../dist/src')
+const { provisionAgentInAgency, initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
+const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
-const { runScript } = require('../common/script-comon')
-const { createVcxClient } = require('../client-vcx/vcxclient')
-const logger = require('../common/logger')('Faber')
+const { runScript } = require('./script-common')
+const { createVcxAgent } = require('../vcx-agent')
+const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
-const { waitUntilAgencyIsReady, allowedProtocolTypes } = require('../client-vcx/common')
-const { createStorageService } = require('../client-vcx/storage-service')
+const { waitUntilAgencyIsReady } = require('../common')
+const { createStorageService } = require('../storage-service')
 const express = require('express')
 const bodyParser = require('body-parser')
 
@@ -33,12 +32,12 @@ async function runFaber (options) {
 
     const storageService = await createStorageService(agentName)
     if (!await storageService.agentProvisionExists()) {
-      const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+      const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
       await storageService.saveAgentProvision(agentProvision)
     }
     const agentProvision = await storageService.loadAgentProvision()
     const issuerDid = agentProvision.institution_did
-    const vcxClient = await createVcxClient(storageService, logger)
+    const vcxClient = await createVcxAgent(storageService, logger)
 
     if (acceptTaa) {
       await vcxClient.acceptTaa()
