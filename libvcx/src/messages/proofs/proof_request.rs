@@ -377,8 +377,10 @@ impl ProofRequestData {
     }
 
     pub fn set_format_version_for_did(mut self, my_did: &str, remote_did: &str) -> VcxResult<ProofRequestData> {
-        if qualifier::is_fully_qualified(&my_did) && qualifier::is_fully_qualified(&remote_did) {
-            self.ver = Some(ProofRequestVersion::V2)
+        if my_did.is_empty() || remote_did.is_empty() {
+            return Err(VcxError::from(VcxErrorKind::InvalidDid));
+        } else if qualifier::is_fully_qualified(&my_did) && qualifier::is_fully_qualified(&remote_did) {
+            self.ver = Some(ProofRequestVersion::V2);
         } else {
             let proof_request_json = serde_json::to_string(&self)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize ProofRequestData: {:?}", err)))?;
@@ -388,7 +390,7 @@ impl ProofRequestData {
             self = serde_json::from_str(&proof_request_json)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize ProofRequestData: {:?}", err)))?;
 
-            self.ver = Some(ProofRequestVersion::V1)
+            self.ver = Some(ProofRequestVersion::V1);
         }
         Ok(self)
     }

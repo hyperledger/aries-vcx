@@ -627,7 +627,7 @@ pub fn get_proof_uuid(handle: u32) -> VcxResult<String> {
         match obj {
             Proofs::Pending(ref obj) => Ok(obj.get_proof_uuid().clone()),
             Proofs::V1(ref obj) => Ok(obj.get_proof_uuid().clone()),
-            Proofs::V3(_) => Err(VcxError::from(VcxErrorKind::InvalidProofHandle))
+            Proofs::V3(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported))
         }
     })
 }
@@ -813,34 +813,25 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_send_proof_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_handle = build_test_connection();
-        connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
-        connection::set_agent_did(connection_handle, DID).unwrap();
-        connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
 
-        let handle = create_proof("1".to_string(),
+        let proof_handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
                                   REQUESTED_PREDICATES.to_owned(),
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "ntc2ytb");
+        assert_eq!(send_proof_request(proof_handle, connection_handle).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(proof_handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_send_proof_request_fails_with_no_pw() {
-        //This test has 2 purposes:
-        //1. when send_proof_request fails, Ok(c.send_proof_request(connection_handle)?) returns error instead of Ok(_)
-        //2. Test that when no PW connection exists, send message fails on invalid did
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_handle = build_test_connection();
         connection::set_pw_did(connection_handle, "").unwrap();
@@ -1006,7 +997,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_defs_json() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -1086,8 +1077,8 @@ pub mod tests {
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
     }
 
-    #[ignore]
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
         let _setup = SetupLibraryWallet::init();

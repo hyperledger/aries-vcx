@@ -76,6 +76,11 @@ impl AgencyMockDecrypted {
     pub fn has_decrypted_mock_messages() -> bool {
         AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.len() > 0
     }
+
+    pub fn clear_mocks() {
+        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.clear();
+        AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.clear();
+    }
 }
 
 //Todo: change this RC to a u32

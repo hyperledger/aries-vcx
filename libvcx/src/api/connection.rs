@@ -1461,7 +1461,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    // todo: uses v1 connection, migrate to aries
     fn test_vcx_connection_delete_connection() {
         let _setup = SetupAriesMocks::init();
 

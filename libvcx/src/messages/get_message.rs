@@ -450,8 +450,6 @@ pub fn download_messages(pairwise_dids: Option<Vec<String>>, status_codes: Optio
     trace!("download_messages >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
            pairwise_dids, status_codes, uids);
 
-    AgencyMock::set_next_response(constants::GET_ALL_MESSAGES_RESPONSE.to_vec());
-
     let status_codes = _parse_status_code(status_codes)?;
 
     let response =

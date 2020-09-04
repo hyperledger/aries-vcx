@@ -533,8 +533,8 @@ mod tests {
     use std::ffi::CString;
     use api::return_types_u32;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
-    use utils::constants::REGISTER_RESPONSE;
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::constants;
     use utils::timeout::TimeoutUtils;
 
     static CONFIG_V3: &'static str = r#"{"protocol_type": "3.0", "agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
@@ -606,7 +606,7 @@ mod tests {
     fn test_update_agent_fails() {
         let _setup = SetupMocks::init();
 
-        AgencyMock::set_next_response(REGISTER_RESPONSE.to_vec()); //set response garbage
+        AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec()); //set response garbage
 
         let json_string = r#"{"id":"123"}"#;
         let c_json = CString::new(json_string).unwrap().into_raw();
@@ -631,37 +631,32 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_messages_download() {
         let _setup = SetupAriesMocks::init();
 
+        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
+
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        // todo : restore this, must fix mock
-        // fails because download messages is mocking messages in legacy format, so
-        // the whole thing fails when running in 3.0 and trying to decrypt/parse the mocked message
         assert_eq!(vcx_messages_download(cb.command_handle, ptr::null_mut(), ptr::null_mut(), ptr::null_mut(), Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_messages_update_status() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
+
+        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let status = CString::new("MS-103").unwrap().into_raw();
         let json = CString::new(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#).unwrap().into_raw();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
-        // todo: again fails because mocked encrypted agency response in legacy format
-        // it would be easier to deal with agency mocks were defining the data already decrypted
-        // hence in case of test mode, we wouldn't try to decrypt message, we'd just straight mock up
-        // return final decrypted messages
         assert_eq!(vcx_messages_update_status(cb.command_handle,
                                               status,
                                               json,
                                               Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
+                                              error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 }

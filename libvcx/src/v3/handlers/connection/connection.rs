@@ -47,21 +47,17 @@ impl Connection {
 
     pub fn agent_info(&self) -> &AgentInfo { self.connection_sm.agent_info() }
 
-    pub fn remote_did(&self) -> VcxResult<String> {
-        self.connection_sm.remote_did()
-    }
+    pub fn set_pw_vk(&mut self, remote_vk: &str) { self.connection_sm.set_pw_vk(remote_vk) }
 
-    pub fn remote_vk(&self) -> VcxResult<String> {
-        self.connection_sm.remote_vk()
-    }
+    pub fn set_pw_did(&mut self, pw_did: &str) { self.connection_sm.set_pw_did(pw_did) }
 
-    pub fn state_object<'a>(&'a self) -> &'a ActorDidExchangeState {
-        &self.connection_sm.state_object()
-    }
+    pub fn remote_did(&self) -> VcxResult<String> { self.connection_sm.remote_did() }
 
-    pub fn get_source_id(&self) -> String {
-        self.connection_sm.source_id().to_string()
-    }
+    pub fn remote_vk(&self) -> VcxResult<String> { self.connection_sm.remote_vk() }
+
+    pub fn state_object<'a>(&'a self) -> &'a ActorDidExchangeState { &self.connection_sm.state_object() }
+
+    pub fn get_source_id(&self) -> String { self.connection_sm.source_id().to_string() }
 
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
