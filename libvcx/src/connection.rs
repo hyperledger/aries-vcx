@@ -227,16 +227,18 @@ impl Connection {
     fn get_endpoint(&self) -> &String { &self.endpoint }
     fn set_endpoint(&mut self, endpoint: &str) { self.endpoint = endpoint.to_string(); }
 
-    fn get_version(&self) -> Option<settings::ProtocolTypes> {
-        self.version.clone()
+    fn get_invite_detail(&self) -> &Option<InviteDetail> { &self.invite_detail }
+    fn set_invite_detail(&mut self, id: InviteDetail) {
+        self.version = match id.version.is_some() {
+            true => Some(settings::ProtocolTypes::from(id.version.clone().unwrap())),
+            false => Some(settings::get_connecting_protocol_version()),
+        };
+        self.invite_detail = Some(id);
     }
+
+    fn get_version(&self) -> Option<settings::ProtocolTypes> { self.version.clone() }
 
     fn get_source_id(&self) -> &String { &self.source_id }
-
-    #[allow(dead_code)]
-    fn ready_to_connect(&self) -> bool {
-        self.state != VcxStateType::VcxStateNone && self.state != VcxStateType::VcxStateAccepted
-    }
 
     fn create_agent_pairwise(&mut self) -> VcxResult<u32> {
         debug!("creating pairwise keys on agent for connection {}", self.source_id);
@@ -369,7 +371,7 @@ pub fn set_pw_did(handle: u32, did: &str) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
             Connections::V1(ref mut connection) => Ok(connection.set_pw_did(did)),
-            Connections::V3(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
+            Connections::V3(ref mut connection) => Ok(connection.set_pw_did(did))
         }
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
@@ -487,7 +489,7 @@ pub fn set_agent_verkey(handle: u32, verkey: &str) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(handle, |cxn| {
         match cxn {
             Connections::V1(ref mut connection) => Ok(connection.set_agent_verkey(verkey).clone()),
-            Connections::V3(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
+            Connections::V3(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported))
         }
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
@@ -1158,8 +1160,6 @@ pub mod tests {
         assert_eq!(set_uuid(1, "blah").unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
 
         assert_eq!(set_endpoint(1, "blah").unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-
-        assert_eq!(set_agent_verkey(1, "blah").unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
 
         assert_eq!(set_pw_verkey(1, "blah").unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }

@@ -849,9 +849,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_shutdown() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let data = r#"["name","male"]"#;
         let connection = ::connection::tests::build_test_connection();
@@ -1110,7 +1109,6 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    #[cfg(feature = "to_restore")]
     fn test_init_minimal_with_invalid_agency_config() {
         let _setup = SetupLibraryWalletPool::init();
 
