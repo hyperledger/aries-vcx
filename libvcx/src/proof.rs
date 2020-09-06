@@ -1149,36 +1149,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_get_proof_request_status_can_be_retried() {
-        let _setup = SetupMocks::init();
-
-        let _new_handle = 1;
-
-        let mut proof = create_boxed_proof(None, None, Some(build_test_connection()));
-
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
-        //httpclient::set_next_u8_response(GET_PROOF_OR_CREDENTIAL_RESPONSE.to_vec());
-
-        proof.get_proof_request_status(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-        assert_eq!(proof.get_proof_state(), ProofStateType::ProofInvalid as u32);
-
-        // Changing the state and proof state to show that validation happens again
-        // and resets the values to received and Invalid
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
-        proof.state = VcxStateType::VcxStateOfferSent;
-        proof.proof_state = ProofStateType::ProofUndefined;
-        proof.get_proof_request_status(None).unwrap();
-        proof.update_state(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-        assert_eq!(proof.get_proof_state(), ProofStateType::ProofInvalid as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_proof_errors() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1360,4 +1330,3 @@ pub mod tests {
         }
     }
 }
-
