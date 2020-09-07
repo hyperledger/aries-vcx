@@ -1045,73 +1045,25 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
-        let _setup = SetupLibraryWallet::init();
-
-        pool::tests::open_test_pool();
-        //Generated proof from a script using libindy's python wrapper
-
-        let proof_msg: ProofMessage = serde_json::from_str(PROOF_LIBINDY).unwrap();
-        let mut proof_req_msg = ProofRequestMessage::create();
-        proof_req_msg.proof_request_data = serde_json::from_str(PROOF_REQUEST).unwrap();
-        let mut proof = Proof {
-            source_id: "12".to_string(),
-            msg_uid: String::from("1234"),
-            ref_msg_id: String::new(),
-            requested_attrs: String::from("[]"),
-            requested_predicates: REQUESTED_PREDICATES.to_string(),
-            state: VcxStateType::VcxStateRequestReceived,
-            proof_state: ProofStateType::ProofUndefined,
-            name: String::new(),
-            version: String::from("1.0"),
-            nonce: generate_nonce().unwrap(),
-            my_did: None,
-            my_vk: None,
-            their_did: None,
-            their_vk: None,
-            agent_did: None,
-            agent_vk: None,
-            proof: Some(proof_msg),
-            proof_request: Some(proof_req_msg),
-            revocation_interval: RevocationInterval { from: None, to: None },
-            thread: Some(Thread::new()),
-        };
-        apply_agent_info(&mut proof, &default_agent_info(None));
-
-        let rc = proof.proof_validation();
-        assert!(rc.is_ok());
-        assert_eq!(proof.proof_state, ProofStateType::ProofValidated);
-
-        let proof_data = proof.get_proof().unwrap();
-        assert!(proof_data.contains(r#""schema_seq_no":694,"issuer_did":"DunkM3x1y7S4ECgSL4Wkru","credential_uuid":"claim::1f927d68-8905-4188-afd6-374b93202802","attr_info":{"name":"age","value":18,"type":"predicate","predicate_type":"GE"}}"#));
-    }
-
-    #[ignore]
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_send_proof_request_can_be_retried() {
-        let _setup = SetupLibraryWallet::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_handle = build_test_connection();
-        connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
-        connection::set_agent_did(connection_handle, DID).unwrap();
-        connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
 
-        let handle = create_proof("1".to_string(),
+        let mut proof = Verifier::create("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
                                   REQUESTED_PREDICATES.to_owned(),
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap_err().kind(), VcxErrorKind::TimeoutLibindy);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateInitialized as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "");
 
-        // Retry sending proof request
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap(), 0);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "ntc2ytb");
+        proof.send_presentation_request(connection_handle).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        proof.update_state_with_message(PROOF_RESPONSE_DECRYPTED).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
