@@ -658,7 +658,6 @@ public abstract class LibVcx {
     public static API api = null;
 
     static {
-
         try {
             init();
         } catch (UnsatisfiedLinkError ex) {

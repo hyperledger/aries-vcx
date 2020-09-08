@@ -48,15 +48,22 @@ allprojects {
 
 group = 'com.evernym.sdk'
 
-def versionMajor() {
-    return '1.0.0'
+def version() {
+    if (System.getenv('LIBVCX_VERSION')) {
+        return System.getenv('LIBVCX_VERSION')
+    } else {
+        return '1.0.0'
+    }
 }
 
-//TODO: consider removing buildtime from version number when the wrapper api is on par with vcx-rust api
-def buildTime() {
-    def df = new SimpleDateFormat("dd-MM-yyyy'T'HH-mm")
-    df.setTimeZone(TimeZone.getTimeZone("UTC"))
-    return df.format(new Date())
+def suffix() {
+    if (System.getenv('VERSION_SUFFIX')) {
+        return System.getenv('VERSION_SUFFIX')
+    } else {
+        def df = new SimpleDateFormat("dd-MM-yyyy'T'HH-mm")
+        df.setTimeZone(TimeZone.getTimeZone("UTC"))
+        return df.format(new Date())
+    }
 }
 
 def getKrakenPassFromEnv(){
@@ -67,11 +74,12 @@ def getKrakenUserFromEnv(){
     return System.getenv( 'KRAKEN_USER' )
 }
 
-version = "${versionMajor()}"
-
-// TODO: Remove build time on release?
 def fullVersionName() {
-    return "absa-vcx-${versionMajor()}-${buildTime()}"
+    if (System.getenv('FULL_VERSION_NAME')) {
+        return System.getenv('FULL_VERSION_NAME')
+    } else {
+        return "libvcx-android-${version()}-${suffix()}"
+    }
 }
 
 description = """vcx"""
@@ -115,7 +123,7 @@ android {
 
     defaultConfig {
         // minSdkVersion must match minSdkVersion of the client app using the built AAR
-        minSdkVersion 24
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
         versionName "${fullVersionName()}"
