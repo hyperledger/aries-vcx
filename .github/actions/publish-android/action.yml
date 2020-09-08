@@ -7,12 +7,6 @@ inputs:
   docker-img-name: 
     description: 'Name of the android image'
     required: true
-  cache-key:
-    description: 'Cache key under which the android image is stored'
-    required: true
-  rar-path:
-    description: 'Path where the image is stored'
-    default: /tmp/imgcache/img_android.rar
 
 env:
   DOCKER_BUILDKIT: 1
