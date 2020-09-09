@@ -1,4 +1,4 @@
-const { Connection } = require('../dist/src/api/connection')
+const { Connection } = require('@absaoss/node-vcx-wrapper')
 const { StateType } = require('../dist/src')
 const sleepPromise = require('sleep-promise')
 const demoCommon = require('./common')

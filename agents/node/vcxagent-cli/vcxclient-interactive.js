@@ -1,9 +1,6 @@
-const { provisionAgent, initRustapi } = require('./vcx-workflows')
 const readlineSync = require('readline-sync')
-const { createVcxClient } = require('./vcxclient')
-const logger = require('../common/logger')('VCX Client')
-const { waitUntilAgencyIsReady } = require('./common')
-const { createStorageService } = require('./storage-service')
+const { createStorageService, waitUntilAgencyIsReady, createVcxAgent, provisionAgentInAgency, initRustapi } = require('vcxagent-core')
+const logger = require('./logger')('VCX Client')
 
 async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustlog) {
   logger.debug('Initializing rust api')
@@ -22,10 +19,10 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
   await waitUntilAgencyIsReady(agencyUrl, logger)
 
   if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+    const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
     await storageService.saveAgentProvision(agentProvision)
   }
-  const vcxClient = await createVcxClient(storageService, logger)
+  const vcxClient = await createVcxAgent(storageService, logger)
 
   if (acceptTaa) {
     await vcxClient.acceptTaa()
