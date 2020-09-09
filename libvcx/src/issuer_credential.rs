@@ -879,6 +879,7 @@ pub mod tests {
     use utils::devsetup::*;
     
     use credential_def::tests::create_cred_def_fake;
+    use connection::tests::build_test_connection;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
     static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";

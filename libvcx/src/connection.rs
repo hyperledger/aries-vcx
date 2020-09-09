@@ -850,6 +850,7 @@ pub fn decode_message(handle: u32, message: Message) -> VcxResult<A2AMessage> {
 }
 
 pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
+    trace!("connection::send_message >>>");
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
             Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)),
@@ -910,6 +911,7 @@ pub mod tests {
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::constants;
+    use utils::mockdata_connection::ARIES_CONNECTION_INVITATION;
 
     pub fn build_test_connection() -> u32 {
         let handle = create_connection("alice").unwrap();
@@ -1118,10 +1120,10 @@ pub mod tests {
     fn test_create_with_valid_invite_details() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = create_connection_with_invite("alice", constants::INVITE_DETAIL_V3_STRING).unwrap();
+        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
         connect(handle, None).unwrap();
 
-        let handle_2 = create_connection_with_invite("alice", constants::INVITE_DETAIL_V3_STRING).unwrap();
+        let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
         connect(handle_2, None).unwrap();
     }
 
@@ -1172,7 +1174,7 @@ pub mod tests {
         assert_eq!(err.kind(), VcxErrorKind::ActionNotSupported);
 
         let _setup = SetupMocks::init();
-        let handle = create_connection_with_invite("alice", INVITE_DETAIL_V3_STRING).unwrap();
+        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
         CONNECTION_MAP.get_mut(handle, |connection| {
             match connection {

@@ -95,6 +95,10 @@ impl AgentInfo {
         for message in messages {
             a2a_messages.insert(message.uid.clone(), self.decode_message(&message)?);
         }
+        if ::std::env::var("INFOLOG_MSGS_RECEIVED").unwrap_or("true".to_string()) == "true"
+        {
+            info!("Fetched decrypted connection messages: {:?}", a2a_messages.values());
+        }
 
         Ok(a2a_messages)
     }

@@ -34,8 +34,8 @@ impl AgencyMock {
         }
     }
 
-    pub fn get_response() -> VcxResult<Vec<u8>> {
-        Ok(AGENCY_MOCK.lock().unwrap().responses.pop().unwrap_or_default())
+    pub fn get_response() -> Vec<u8> {
+        AGENCY_MOCK.lock().unwrap().responses.pop().unwrap_or_default()
     }
 }
 
@@ -96,8 +96,8 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             return Ok(vec!())
         }
         let mocked_response = AgencyMock::get_response();
-        warn!("Returning mocked agency response!");
-        return mocked_response;
+        debug!("Agenc returns mocked response of length {}", mocked_response.len());
+        return Ok(mocked_response);
     }
 
     //Setting SSL Certs location. This is needed on android platform. Or openssl will fail to verify the certs

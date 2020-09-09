@@ -32,12 +32,14 @@ use utils::libindy::payments::{pay_a_payee, PaymentTxn};
 use utils::{error, constants};
 
 use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
-use utils::httpclient::AgencyMock;
+use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 
 use v3::{
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
     handlers::issuance::Holder,
 };
+use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE};
+use utils::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Credentials> = ObjectCache::<Credentials>::new("credentials-cache");
@@ -483,6 +485,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     trace!("credential_create_with_msgid >>> source_id: {}, connection_handle: {}, msg_id: {}", source_id, connection_handle, secret!(&msg_id));
 
     let offer = get_credential_offer_msg(connection_handle, &msg_id)?;
+    trace!("credential_create_with_msgid ::: for msg_id {} found offer {}", msg_id, offer);
 
     let credential = if connection::is_v3_connection(connection_handle)? {
         create_credential_v3(source_id, &offer)?
@@ -642,6 +645,7 @@ pub fn generate_credential_request_msg(handle: u32, my_pw_did: &str, their_pw_di
 }
 
 pub fn send_credential_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
+    trace!("Credential::send_credential_request >>> credential_handle: {}, connection_handle: {}", handle, connection_handle);
     HANDLE_MAP.get_mut(handle, |credential| {
         let new_credential = match credential {
             Credentials::Pending(ref mut obj) => {
@@ -677,6 +681,9 @@ fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<S
     trace!("get_credential_offer_msg >>> connection_handle: {}, msg_id: {}", connection_handle, msg_id);
 
     if connection::is_v3_connection(connection_handle)? {
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+
         let credential_offer = Holder::get_credential_offer_message(connection_handle, msg_id)?;
 
         return serde_json::to_string(&credential_offer).
@@ -720,6 +727,10 @@ pub fn get_credential_offer_messages(connection_handle: u32) -> VcxResult<String
     trace!("Credential::get_credential_offer_messages >>> connection_handle: {}", connection_handle);
 
     if connection::is_v3_connection(connection_handle)? {
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+
         let credential_offers = Holder::get_credential_offer_messages(connection_handle)?;
 
         // strict aries protocol is set. Return aries formatted Credential Offers
@@ -901,7 +912,7 @@ pub mod tests {
 
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
-    use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL,
+    use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL_V1,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
     use utils::libindy::payments::{build_test_address};
 
@@ -916,7 +927,7 @@ pub mod tests {
     }
 
     fn create_credential_with_price(price: u64) -> Credential {
-        let mut cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
+        let mut cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         cred.payment_info = Some(PaymentInfo {
             payment_required: "one-time".to_string(),
             payment_addr: build_test_address("OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j"),
@@ -1059,7 +1070,7 @@ pub mod tests {
     fn test_pay_for_non_premium_credential() {
         let _setup = SetupMocks::init();
 
-        let cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
+        let cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         assert!(cred.payment_info.is_none());
         assert_eq!(cred.submit_payment().unwrap_err().kind(), VcxErrorKind::NoPaymentInformation);
     }
@@ -1081,7 +1092,7 @@ pub mod tests {
         let handle = from_string(DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED).unwrap();
         submit_payment(handle).unwrap();
         get_payment_information(handle).unwrap();
-        let handle2 = from_string(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
+        let handle2 = from_string(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         assert!(!is_payment_required(handle2).unwrap());
         let invalid_handle = 12345;
         assert_eq!(is_payment_required(invalid_handle).unwrap_err().kind(), VcxErrorKind::InvalidCredentialHandle);
@@ -1092,7 +1103,7 @@ pub mod tests {
     fn test_get_credential() {
         let _setup = SetupMocks::init();
 
-        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
+        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         let _offer_string = get_credential_offer(handle).unwrap();
 
         let handle = from_string(constants::FULL_CREDENTIAL_SERIALIZED).unwrap();
@@ -1125,7 +1136,7 @@ pub mod tests {
     fn test_get_cred_offer_returns_json_string_with_cred_offer_json_nested() {
         let _setup = SetupMocks::init();
 
-        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
+        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         let offer_string = get_credential_offer(handle).unwrap();
         let offer_value: serde_json::Value = serde_json::from_str(&offer_string).unwrap();
 

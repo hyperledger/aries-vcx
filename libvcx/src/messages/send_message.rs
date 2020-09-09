@@ -48,6 +48,7 @@ impl SendMessageBuilder {
     }
 
     pub fn msg_type(&mut self, msg: &RemoteMessageType) -> VcxResult<&mut Self> {
+        debug!("setting msg type");
         //Todo: validate msg??
         self.mtype = msg.clone();
         Ok(self)

@@ -39,6 +39,8 @@ macro_rules! map (
 pub mod error;
 pub mod httpclient;
 pub mod constants;
+pub mod mockdata_credex;
+pub mod mockdata_connection;
 pub mod timeout;
 pub mod openssl;
 pub mod json;
