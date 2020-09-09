@@ -92,10 +92,11 @@ jobs:
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
           CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-ubuntu.dockerfile') }}
           LIBVCX_NODE_WRAPPERS_HASH=${{ hashFiles('wrappers/node') }}
+          LIBVCX_NODE_AGENT_HASH=${{ hashFiles('agents/node') }}
           JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
 
-          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_NODE_WRAPPERS_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_NODE_WRAPPERS_HASH:0:15}-${LIBVCX_NODE_AGENT_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
@@ -585,6 +586,8 @@ jobs:
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && \
+                                npm install && \
                                 npm run test:integration)'
 
       - name: Run wrapper integration revocation test
@@ -595,6 +598,8 @@ jobs:
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && \
+                                npm install && \
                                 npm run test:integration:revocation)'
 
   # TODO: Add tests of iOS build

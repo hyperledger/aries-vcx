@@ -1,13 +1,12 @@
-const { provisionAgent, initRustapi } = require('../client-vcx/vcx-workflows')
-const { DisclosedProof } = require('../dist/src/api/disclosed-proof')
-const { StateType } = require('../dist/src')
+const { provisionAgentInAgency, initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
+const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
-const { createVcxClient } = require('../client-vcx/vcxclient')
-const { createStorageService } = require('../client-vcx/storage-service')
-const { waitUntilAgencyIsReady, allowedProtocolTypes } = require('../client-vcx/common')
+const { createVcxAgent } = require('../vcx-agent')
+const { createStorageService } = require('../storage-service')
+const { waitUntilAgencyIsReady } = require('../common')
 const sleepPromise = require('sleep-promise')
-const logger = require('../common/logger')('Alice')
-const { runScript } = require('../common/script-comon')
+const logger = require('./logger')('Alice')
+const { runScript } = require('./script-common')
 const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
@@ -56,10 +55,10 @@ async function runAlice (options) {
   const storageService = await createStorageService(agentName)
 
   if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgent(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
+    const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
     await storageService.saveAgentProvision(agentProvision)
   }
-  const vcxClient = await createVcxClient(storageService, logger)
+  const vcxClient = await createVcxAgent(storageService, logger)
 
   const connectionName = `alice-${testRunId}`
 

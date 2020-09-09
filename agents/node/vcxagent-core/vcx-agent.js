@@ -1,18 +1,18 @@
-const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('../dist/src')
+const { initVcxWithProvisionedAgentConfig } = require('./vcx-workflows')
+const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
 const {
-  getRandomInt,
-  initVcxWithProvisionedAgentConfig
+  getRandomInt
 } = require('./common')
-const { Schema } = require('../dist/src/api/schema')
-const { CredentialDef } = require('../dist/src/api/credential-def')
-const { Connection } = require('../dist/src/api/connection')
-const { StateType } = require('../dist/src')
-const { IssuerCredential } = require('../dist/src/api/issuer-credential')
-const { Credential } = require('../dist/src/api/credential')
+const { Schema } = require('@absaoss/node-vcx-wrapper')
+const { CredentialDef } = require('@absaoss/node-vcx-wrapper')
+const { Connection } = require('@absaoss/node-vcx-wrapper')
+const { StateType } = require('@absaoss/node-vcx-wrapper')
+const { IssuerCredential } = require('@absaoss/node-vcx-wrapper')
+const { Credential } = require('@absaoss/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { pollFunction } = require('./common')
 
-async function createVcxClient (storageService, logger) {
+async function createVcxAgent (storageService, logger) {
   const connections = {}
 
   function keepConnectionInMemory (connectionName, connection) {
@@ -262,4 +262,4 @@ async function createVcxClient (storageService, logger) {
   }
 }
 
-module.exports.createVcxClient = createVcxClient
+module.exports.createVcxAgent = createVcxAgent
