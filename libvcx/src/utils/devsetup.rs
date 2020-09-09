@@ -3,6 +3,7 @@ use ::{settings, utils};
 use std::fs;
 use utils::libindy::wallet::{reset_wallet_handle, delete_wallet, create_wallet};
 use utils::libindy::pool::reset_pool_handle;
+use utils::httpclient::AgencyMockDecrypted;
 use settings::set_defaults;
 use futures::Future;
 use std::sync::Once;
@@ -50,6 +51,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
+    AgencyMockDecrypted::clear_mocks();
 }
 
 impl SetupEmpty {
