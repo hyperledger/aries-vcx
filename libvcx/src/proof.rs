@@ -832,24 +832,6 @@ pub mod tests {
         assert_eq!(get_state(proof_handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_send_proof_request_fails_with_no_pw() {
-        let _setup = SetupAriesMocks::init();
-
-        let connection_handle = build_test_connection();
-        connection::set_pw_did(connection_handle, "").unwrap();
-
-        let handle = create_proof("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
-
-        assert!(send_proof_request(handle, connection_handle).is_err());
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_fails_with_no_proof() {
@@ -1042,6 +1024,32 @@ pub mod tests {
         assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
         assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    fn test_send_proof_request_can_be_retried() {
+        let _setup = SetupLibraryWallet::init();
+
+        let connection_handle = build_test_connection();
+        connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
+        connection::set_agent_did(connection_handle, DID).unwrap();
+        connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
+
+        let handle = create_proof("1".to_string(),
+                                  REQUESTED_ATTRS.to_owned(),
+                                  REQUESTED_PREDICATES.to_owned(),
+                                  r#"{"support_revocation":false}"#.to_string(),
+                                  "Optional".to_owned()).unwrap();
+        assert_eq!(send_proof_request(handle, connection_handle).unwrap_err().kind(), VcxErrorKind::TimeoutLibindy);
+        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_proof_uuid(handle).unwrap(), "");
+
+        // Retry sending proof request
+        assert_eq!(send_proof_request(handle, connection_handle).unwrap(), 0);
+        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
+        assert_eq!(get_proof_uuid(handle).unwrap(), "ntc2ytb");
     }
 
     #[test]

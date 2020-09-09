@@ -663,10 +663,6 @@ impl DidExchangeSM {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn set_pw_vk(&mut self, pw_vk: &str) { self.agent_info.pw_vk = String::from(pw_vk); }
-
-    pub fn set_pw_did(&mut self, pw_did: &str) { self.agent_info.pw_did = String::from(pw_did); }
-
     pub fn prev_agent_info(&self) -> Option<&AgentInfo> {
         match self.state {
             ActorDidExchangeState::Inviter(DidExchangeState::Responded(ref state)) => Some(&state.prev_agent_info),

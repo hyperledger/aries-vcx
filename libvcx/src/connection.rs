@@ -371,7 +371,7 @@ pub fn set_pw_did(handle: u32, did: &str) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection {
             Connections::V1(ref mut connection) => Ok(connection.set_pw_did(did)),
-            Connections::V3(ref mut connection) => Ok(connection.set_pw_did(did))
+            Connections::V3(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
         }
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }

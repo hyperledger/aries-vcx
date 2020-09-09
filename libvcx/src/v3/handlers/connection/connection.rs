@@ -47,10 +47,6 @@ impl Connection {
 
     pub fn agent_info(&self) -> &AgentInfo { self.connection_sm.agent_info() }
 
-    pub fn set_pw_vk(&mut self, remote_vk: &str) { self.connection_sm.set_pw_vk(remote_vk) }
-
-    pub fn set_pw_did(&mut self, pw_did: &str) { self.connection_sm.set_pw_did(pw_did) }
-
     pub fn remote_did(&self) -> VcxResult<String> { self.connection_sm.remote_did() }
 
     pub fn remote_vk(&self) -> VcxResult<String> { self.connection_sm.remote_vk() }
