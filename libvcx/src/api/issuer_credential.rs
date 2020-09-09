@@ -881,7 +881,9 @@ pub mod tests {
     };
     use api::{return_types_u32, VcxStateType};
     use utils::devsetup::*;
+    use utils::constants::*;
     use utils::timeout::TimeoutUtils;
+    use utils::httpclient::AgencyMockDecrypted;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
     static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
@@ -1045,6 +1047,40 @@ pub mod tests {
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateRequestReceived as u32);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_vcx_issuer_update_state_v2() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = ::connection::tests::build_test_connection();
+        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
+        let cb = return_types_u32::Return_U32::new().unwrap();
+
+        assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
+                                                    handle,
+                                                    connection_handle,
+                                                    Some(cb.get_callback())),
+                   error::SUCCESS.code_num);
+
+        cb.receive(TimeoutUtils::some_medium()).unwrap();
+
+        ::connection::release(connection_handle).unwrap();
+
+        let connection_handle = ::connection::tests::build_test_connection();
+        let cb = return_types_u32::Return_U32_U32::new().unwrap();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(CREDENTIAL_REQ_RESPONSE_STR_V2);
+
+        assert_eq!(vcx_v2_issuer_credential_update_state(cb.command_handle,
+                                                           handle,
+                                                           connection_handle,
+                                                           Some(cb.get_callback())), error::SUCCESS.code_num);
+        let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
+        assert_eq!(state, VcxStateType::VcxStateOfferSent as u32);
+    }
+
 
     #[test]
     #[cfg(feature = "general_test")]
