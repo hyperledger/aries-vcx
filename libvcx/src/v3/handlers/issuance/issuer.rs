@@ -67,12 +67,12 @@ impl IssuerSM {
         self.state.get_connection_handle()
     }
 
-    pub fn update_state(self) -> VcxResult<Self> {
+    pub fn update_state(self, connection_handle: Option<u32>) -> VcxResult<Self> {
         trace!("Issuer::update_state >>> ",);
 
         if self.is_terminal_state() { return Ok(self); }
 
-        let conn_handle = self.state.get_connection_handle();
+        let conn_handle = connection_handle.unwrap_or(self.state.get_connection_handle());
         let messages = get_messages(conn_handle)?;
 
         match self.find_message_to_handle(messages) {

@@ -314,7 +314,7 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, None) {
+        match issuer_credential::update_state(credential_handle, None, None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -322,6 +322,47 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
             }
             Err(x) => {
                 warn!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                      command_handle, credential_handle, x, 0, source_id);
+                cb(command_handle, x.into(), 0);
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandle,
+                                                    credential_handle: u32,
+                                                    connection_handle: u32,
+                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_v2_issuer_credential_update_state >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, credential_handle, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    }
+
+    spawn(move || {
+        match issuer_credential::update_state(credential_handle, None, Some(connection_handle)) {
+            Ok(x) => {
+                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
+                cb(command_handle, error::SUCCESS.code_num, x);
+            }
+            Err(x) => {
+                warn!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
@@ -370,7 +411,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, Some(message)) {
+        match issuer_credential::update_state(credential_handle, Some(message), None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
