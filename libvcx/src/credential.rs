@@ -915,6 +915,7 @@ pub mod tests {
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL_V1,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
     use utils::libindy::payments::{build_test_address};
+    use utils::mockdata_credex::ARIES_CREDENTIAL_RESPONSE;
 
     pub fn create_credential(offer: &str) -> Credential {
         let mut credential = Credential::create("source_id");
@@ -991,33 +992,35 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn full_credential_test() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        info!("full_credential_test:: going to build_test_connection");
+        let handle_conn = connection::tests::build_test_connection();
 
-        let offer = _get_offer(connection_h);
+        info!("full_credential_test:: going to _get_offer");
+        let offer = _get_offer(handle_conn);
 
-        let c_h = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(c_h).unwrap());
+        info!("full_credential_test:: going to credential_create_with_offer");
+        let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_cred).unwrap());
 
-        send_credential_request(c_h, connection_h).unwrap();
-        assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(c_h).unwrap());
+        info!("full_credential_test:: going to send_credential_request");
+        send_credential_request(handle_cred, handle_conn).unwrap();
+        assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_cred).unwrap());
 
-        assert_eq!(get_credential_id(c_h).unwrap(), "");
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
 
-        AgencyMock::set_next_response(::utils::constants::CREDENTIAL_RESPONSE.to_vec());
-        AgencyMock::set_next_response(::utils::constants::UPDATE_CREDENTIAL_RESPONSE.to_vec());
+        info!("full_credential_test:: going to update_state, should receive credential");
+        update_state(handle_cred, None).unwrap();
+        assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateAccepted as u32);
 
-        update_state(c_h, None).unwrap();
-        assert_eq!(get_state(c_h).unwrap(), VcxStateType::VcxStateAccepted as u32);
-
-        assert_eq!(get_credential_id(c_h).unwrap(), "cred_id"); // this is set in test mode
-
-        let msg = get_credential(c_h).unwrap();
+        info!("full_credential_test:: going to get_credential");
+        let msg = get_credential(handle_cred).unwrap();
         let msg_value: serde_json::Value = serde_json::from_str(&msg).unwrap();
 
+        info!("full_credential_test:: going to deserialize CredentialMessage");
         let _credential_struct: CredentialMessage = serde_json::from_str(msg_value["credential"].as_str().unwrap()).unwrap();
     }
 
