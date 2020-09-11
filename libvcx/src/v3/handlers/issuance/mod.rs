@@ -34,8 +34,8 @@ impl Issuer {
         self.step(CredentialIssuanceMessage::CredentialInit(connection_handle))
     }
 
-    pub fn send_credential(&mut self, _connection_handle: u32) -> VcxResult<()> { // TODO: should use connection_handle
-        self.step(CredentialIssuanceMessage::CredentialSend())
+    pub fn send_credential(&mut self, connection_handle: u32) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialSend(connection_handle))
     }
 
     pub fn get_state(&self) -> VcxResult<u32> {
