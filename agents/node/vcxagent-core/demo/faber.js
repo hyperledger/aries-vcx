@@ -23,7 +23,7 @@ async function runFaber (options) {
     const webhookUrl = `http://localhost:7209/notifications/${agentName}`
     const usePostgresWallet = false
     const acceptTaa = process.env.ACCEPT_TAA || false
-    const logLevel = 'error'
+    const logLevel = process.env.VCX_LOG_LEVEL || 'vcx=error'
 
     await initRustapi(logLevel)
 
@@ -48,36 +48,32 @@ async function runFaber (options) {
     await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
 
     const connectionName = `alice-${testRunId}`
-    const invitationString = await vcxClient.connectionCreate(connectionName)
-    logger.info('\n\n**invite details**')
-    logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
-    logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
-    logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
-    logger.info('\n******************\n\n')
-    logger.info(invitationString)
-    logger.info('\n\n******************\n\n')
-    if (options['expose-invitation-port']) {
-      const port = options['expose-invitation-port']
-      try {
-        const appCallbacks = express()
-        appCallbacks.use(bodyParser.json())
-        appCallbacks.get('/',
-          async function (req, res) {
-            res.status(200).send({ invitationString })
-          }
-        )
-        faberServer = appCallbacks.listen(port)
-        logger.info(`The invitation is also available on port ${port}`)
-      } catch (e) {
-        logger.error(`Error trying to expose connection invitation on port ${port}`)
-      }
-    }
+    let connectionToAlice = await vcxClient.inviterConnectionCreateAndAccept(connectionName, (invitationString) => {
+      logger.info('\n\n**invite details**')
+      logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
+      logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
+      logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
+      logger.info('\n******************\n\n')
+      logger.info(invitationString)
+      logger.info('\n\n******************\n\n')
 
-    const connectionToAlice = await vcxClient.connectionAutoupdate(connectionName, 30, 3000)
-    if (!connectionToAlice) {
-      throw Error('Connection with alice was not established.')
-    }
-    logger.info('Connection to alice was Accepted!')
+      if (options['expose-invitation-port']) {
+        const port = options['expose-invitation-port']
+        try {
+          const appCallbacks = express()
+          appCallbacks.use(bodyParser.json())
+          appCallbacks.get('/',
+            async function (req, res) {
+              res.status(200).send({ invitationString })
+            }
+          )
+          faberServer = appCallbacks.listen(port)
+          logger.info(`The invitation is also available on port ${port}`)
+        } catch (e) {
+          logger.error(`Error trying to expose connection invitation on port ${port}`)
+        }
+      }
+    })
 
     const schemaAttrs = {
       name: 'alice',

@@ -84,28 +84,38 @@ async function createVcxAgent (storageService, logger) {
     logger.info(`Connection ${connectionName} state=${connectionState}`)
   }
 
-  async function connectionCreate (connectionName) {
+  async function inviterConnectionCreateAndAccept (connectionName, cbInvitation) {
+    logger.info(`InviterConnectionSM creating connection ${connectionName}`)
     const connection = await Connection.create({ id: connectionName })
+    logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect('{}')
     await connection.updateState()
-    keepConnectionInMemory(connectionName, connection)
     const invitationString = await connection.inviteDetails()
+    logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(await connection.serialize())}`)
+    cbInvitation(invitationString)
+    await _progressConnectionToAcceptedState(connection, 20, 2000)
+    logger.debug(`InviterConnectionSM after connection was accepted:\n${JSON.stringify(await connection.serialize())}`)
     const connSerialized = await connection.serialize()
     await storageService.saveConnection(connectionName, connSerialized)
-    return invitationString
+    logger.info(`InviterConnectionSM has established connection ${connectionName}`)
+    return connection
   }
 
-  async function connectionAccept (connectionName, invitationString) {
+  async function inviteeConnectionAcceptFromInvitation (connectionName, invitationString) {
+    logger.info(`InviteeConnectionSM creating connection ${connectionName} from connection invitation.`)
     const connection = await Connection.createWithInvite({ id: connectionName, invite: invitationString })
-    keepConnectionInMemory(connectionName, connection)
+    logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect({ data: '{}' })
-    const connectionState = await connection.getState()
-    logger.info(`Created connection from invitation. Connection state = ${connectionState}`)
+    logger.debug(`InviteeConnectionSM sending connection request:\n${JSON.stringify(await connection.serialize())}`)
+    await _progressConnectionToAcceptedState(connection, 20, 2000)
+    logger.debug(`InviteeConnectionSM after connection was accepted:\n${JSON.stringify(await connection.serialize())}`)
     const connSerialized = await connection.serialize()
     await storageService.saveConnection(connectionName, connSerialized)
+    logger.info(`InviteeConnectionSM has established connection ${connectionName}`)
+    return connection
   }
 
-  async function _progressConnection (connection, attemptsThreshold, timeout) {
+  async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
       await connection.updateState()
       const connectionState = await connection.getState()
@@ -125,23 +135,12 @@ async function createVcxAgent (storageService, logger) {
     const connSerializedBefore = await storageService.loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
     keepConnectionInMemory(connectionName, connection)
-    await _progressConnection(connection, updateAttemptsThreshold, timeout)
+    await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeout)
 
     logger.info('Success! Connection was progressed to Accepted state.')
     const connSerialized = await connection.serialize()
     await storageService.saveConnection(connectionName, connSerialized)
     return connection
-  }
-
-  async function connectionUpdate (connectionName) {
-    const connSerializedBefore = await storageService.loadConnection(connectionName)
-    const connection = await Connection.deserialize(connSerializedBefore)
-    keepConnectionInMemory(connectionName, connection)
-    await connection.updateState()
-    const details = await connection.inviteDetails()
-    const connSerializedAfter = await connection.serialize()
-    await storageService.saveConnection(connectionName, connSerializedAfter)
-    logger.info(`Created connection, invitation\n:${JSON.stringify(details)}`)
   }
 
   async function getCredentialOffers (connectionName) {
@@ -154,11 +153,11 @@ async function createVcxAgent (storageService, logger) {
   }
 
   async function credentialIssue (schemaAttrs, credDefName, connectionNameReceiver, revoke) {
+    logger.info(`Going to issue credential from credential definition ${credDefName}`)
     const credDefSerialized = await storageService.loadCredentialDefinition(credDefName)
     const credDef = await CredentialDef.deserialize(credDefSerialized)
-    logger.info('#12 Create an IssuerCredential object using the schema and credential definition')
 
-    const credentialForAlice = await IssuerCredential.create({
+    const issuerCred = await IssuerCredential.create({
       attr: schemaAttrs,
       sourceId: 'alice_degree',
       credDefHandle: credDef.handle,
@@ -166,36 +165,30 @@ async function createVcxAgent (storageService, logger) {
       price: '0'
     })
 
+    logger.debug(`IssuerCredential created:\n${JSON.stringify(await issuerCred.serialize())}`)
+
     const connSerializedBefore = await storageService.loadConnection(connectionNameReceiver)
     const connectionToReceiver = await Connection.deserialize(connSerializedBefore)
 
-    logger.info('#13 Issue credential offer to alice')
-    await credentialForAlice.sendOffer(connectionToReceiver)
-    await credentialForAlice.updateState()
+    logger.info('Send credential offer to Alice')
+    await issuerCred.sendOffer(connectionToReceiver)
+    logger.debug(`IssuerCredential after offer was sent:\n${JSON.stringify(await issuerCred.serialize())}`)
 
-    logger.info('#14 Poll agency and wait for alice to send a credential request')
-    let credentialState = await credentialForAlice.getState()
-    while (credentialState !== StateType.RequestReceived) {
-      await sleepPromise(2000)
-      await credentialForAlice.updateState()
-      credentialState = await credentialForAlice.getState()
-    }
+    await _progressIssuerCredentialToState(issuerCred, StateType.RequestReceived, 10, 2000)
+    logger.debug(`IssuerCredential after credential request was received:\n${JSON.stringify(await issuerCred.serialize())}`)
 
-    logger.info('#17 Issue credential to alice')
-    await credentialForAlice.sendCredential(connectionToReceiver)
+    logger.info('Issue credential to Alice')
+    await issuerCred.sendCredential(connectionToReceiver)
+    logger.debug(`IssuerCredential after credential was sent:\n${JSON.stringify(await issuerCred.serialize())}`)
 
-    logger.info('#18 Wait for alice to accept credential')
-    await credentialForAlice.updateState()
-    credentialState = await credentialForAlice.getState()
-    while (credentialState !== StateType.Accepted) {
-      await sleepPromise(2000)
-      await credentialForAlice.updateState()
-      credentialState = await credentialForAlice.getState()
-    }
-    logger.info('Credential was issued.')
+    logger.info('Wait for alice to accept credential')
+    await _progressIssuerCredentialToState(issuerCred, StateType.Accepted, 10, 2000)
+    logger.debug(`IssuerCredential after credential was issued:\n${JSON.stringify(await issuerCred.serialize())}`)
+    logger.info(`Credential has been issued.`)
+
     if (revoke) {
       logger.info('#18.5 Revoking credential')
-      await credentialForAlice.revokeCredential()
+      await issuerCred.revokeCredential()
     }
   }
 
@@ -215,45 +208,72 @@ async function createVcxAgent (storageService, logger) {
     return offers
   }
 
-  async function _progressCredential (credential, attemptsThreshold, timeout) {
+  async function _progressCredentialToState (credential, credentialStateTarget, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
       await credential.updateState()
       const credentialState = await credential.getState()
-      if (credentialState !== StateType.Accepted) {
+      if (credentialState !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
       } else {
         return { result: null, isFinished: true }
       }
     }
-    const [error] = await pollFunction(progressToAcceptedState, 'Get credential', logger, attemptsThreshold, timeout)
+    const [error] = await pollFunction(progressToAcceptedState, `Progress CredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't progress credential to Accepted state. ${error}`)
     }
   }
 
+
+  async function _progressIssuerCredentialToState (issuerCredential, credentialStateTarget, attemptsThreshold, timeout) {
+    async function progressToAcceptedState () {
+      await issuerCredential.updateState()
+      const credentialState = await issuerCredential.getState()
+      if (credentialState !== credentialStateTarget) {
+        return { result: undefined, isFinished: false }
+      } else {
+        return { result: null, isFinished: true }
+      }
+    }
+    const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
+    if (error) {
+      throw Error(`Couldn't get credential offers. ${error}`)
+    }
+    return offers
+  }
+
+
   async function waitForCredentialOfferAndAccept (connectionName, attemptsThreshold = 10, timeout = 2000) {
+    logger.info(`Going to try fetch credential offer and receive credential.`)
     const connSerializedBefore = await storageService.loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
 
     const offers = await _getOffers(connection, attemptsThreshold, timeout)
-    logger.info(`Credential offers = ${JSON.stringify(offers)}`)
-    const credential = await Credential.create({ sourceId: 'credential', offer: JSON.stringify(offers[0]) })
+    logger.info(`Found ${offers.length} credential offers.`)
+
+    const pickedOffer = JSON.stringify(offers[0])
+    logger.debug(`Picked credential offer = ${pickedOffer}`)
+
+    const credential = await Credential.create({ sourceId: 'credential', offer: pickedOffer })
+    logger.debug(`CredentialSM created from credential offer:\n${JSON.stringify(await credential.serialize())}`)
 
     logger.info('#15 After receiving credential offer, send credential request')
     await credential.sendRequest({ connection, payment: 0 })
+    logger.debug(`CredentialSM after credential request was sent:\n${JSON.stringify(await credential.serialize())}`)
 
     logger.info('#16 Poll agency and accept credential offer from faber')
-    await _progressCredential(credential, attemptsThreshold, timeout)
+    await _progressCredentialToState(credential, StateType.Accepted, attemptsThreshold, timeout)
+    logger.debug(`CredentialSM after credential was received:\n${JSON.stringify(await credential.serialize())}`)
+    logger.info(`Credential has been received.`)
   }
 
   return {
-    connectionAccept,
+    inviterConnectionCreateAndAccept,
+    inviteeConnectionAcceptFromInvitation,
     connectionAutoupdate,
     acceptTaa,
     createCredentialDefinition,
     createSchema,
-    connectionCreate,
-    connectionUpdate,
     connectionsList,
     credentialIssue,
     waitForCredentialOfferAndAccept,
