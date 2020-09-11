@@ -40,7 +40,7 @@ use v3::{
 };
 
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCache<Credentials>  = Default::default();
+    static ref HANDLE_MAP: ObjectCache<Credentials> = ObjectCache::<Credentials>::new("credentials-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

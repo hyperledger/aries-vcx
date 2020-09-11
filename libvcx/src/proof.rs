@@ -26,7 +26,7 @@ use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
 use settings::get_config_value;
 
 lazy_static! {
-    static ref PROOF_MAP: ObjectCache<Proofs> = Default::default();
+    static ref PROOF_MAP: ObjectCache<Proofs> = ObjectCache::<Proofs>::new("proofs-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]

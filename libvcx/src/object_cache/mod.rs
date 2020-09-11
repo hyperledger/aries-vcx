@@ -1,32 +1,32 @@
-use rand::Rng;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::sync::Mutex;
+use std::sync::MutexGuard;
+
+use rand::Rng;
 
 use error::prelude::*;
 
 pub struct ObjectCache<T> {
+    pub cache_name: String,
     pub store: Mutex<HashMap<u32, Mutex<T>>>,
 }
 
-impl<T> Default for ObjectCache<T> {
-    fn default() -> ObjectCache<T>
-    {
+impl<T> ObjectCache<T> {
+    pub fn new(cache_name: &str) -> ObjectCache<T> {
         ObjectCache {
-            store: Default::default()
+            store: Default::default(),
+            cache_name: cache_name.to_string(),
         }
     }
-}
 
-impl<T> ObjectCache<T> {
     fn _lock_store(&self) -> VcxResult<MutexGuard<HashMap<u32, Mutex<T>>>> {
         match self.store.lock() {
             Ok(g) => Ok(g),
             Err(e) => {
                 error!("Unable to lock Object Store: {:?}", e);
-                Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("Unable to lock Object Store: {:?}", e)))
+                Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store: {:?}", self.cache_name, e)))
             }
         }
     }
@@ -45,9 +45,9 @@ impl<T> ObjectCache<T> {
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref()),
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), "Unable to lock Object Store")) //TODO better error
+                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("Object not found for handle: {}", handle)))
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
         }
     }
 
@@ -57,9 +57,9 @@ impl<T> ObjectCache<T> {
         match store.get_mut(&handle) {
             Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut()),
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), "Unable to lock Object Store")) //TODO better error
+                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("Object not found for handle: {}", handle)))
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
         }
     }
 
@@ -92,7 +92,7 @@ impl<T> ObjectCache<T> {
         let mut store = self._lock_store()?;
         match store.remove(&handle) {
             Some(_) => Ok(()),
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("Object not found for handle: {}", handle)))
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
         }
     }
 
@@ -112,7 +112,7 @@ mod tests {
     fn create_test() {
         let _setup = SetupDefaults::init();
 
-        let _c: ObjectCache<u32> = Default::default();
+        let _c: ObjectCache<u32> = ObjectCache::new("cache0-u32");
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod tests {
     fn get_closure() {
         let _setup = SetupDefaults::init();
 
-        let test: ObjectCache<u32> = Default::default();
+        let test: ObjectCache<u32> = ObjectCache::new("cache1-u32");
         let handle = test.add(2222).unwrap();
         let rtn = test.get(handle, |obj| Ok(obj.clone()));
         assert_eq!(2222, rtn.unwrap())
@@ -131,7 +131,7 @@ mod tests {
     fn to_string_test() {
         let _setup = SetupDefaults::init();
 
-        let test: ObjectCache<u32> = Default::default();
+        let test: ObjectCache<u32> = ObjectCache::new("cache2-u32");
         let handle = test.add(2222).unwrap();
         let string: String = test.get(handle, |_| {
             Ok(String::from("TEST"))
@@ -145,7 +145,7 @@ mod tests {
     fn mut_object_test() {
         let _setup = SetupDefaults::init();
 
-        let test: ObjectCache<String> = Default::default();
+        let test: ObjectCache<String> = ObjectCache::new("cache3-string");
         let handle = test.add(String::from("TEST")).unwrap();
 
         test.get_mut(handle, |obj| {

@@ -43,7 +43,7 @@ use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
 use utils::httpclient::AgencyMock;
 
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCache<DisclosedProofs>  = Default::default();
+    static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]

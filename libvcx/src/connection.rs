@@ -28,7 +28,7 @@ use v3::messages::connection::invite::Invitation as InvitationV3;
 use settings::ProtocolTypes;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connections> = Default::default();
+    static ref CONNECTION_MAP: ObjectCache<Connections> = ObjectCache::<Connections>::new("connections-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
