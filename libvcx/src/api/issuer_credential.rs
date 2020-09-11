@@ -884,7 +884,7 @@ pub mod tests {
     use utils::constants::*;
     use utils::timeout::TimeoutUtils;
     use utils::constants::CREDENTIAL_REQ_RESPONSE_STR;
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, ARIES_CREDENTIAL_REQUEST};
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
     use utils::httpclient::AgencyMockDecrypted;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
@@ -1100,21 +1100,23 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_issuer_send_a_credential() {
         let _setup = SetupMocks::init();
 
-        // create connection
-        let connection_handle = ::connection::tests::build_test_connection();
+        info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
+        let handle_conn = ::connection::tests::build_test_connection();
+        info!("test_vcx_issuer_send_a_credential:: created connection with handle {}", handle_conn);
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);
-        let handle = issuer_credential::from_string(&issuer_credential_state_accepted()).unwrap();
 
-        // send the credential
+        info!("test_vcx_issuer_send_a_credential:: going to create issuer credential in state 'credential request received'");
+        let handle_cred = issuer_credential::from_string(CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED).unwrap();
+
+        info!("test_vcx_issuer_send_a_credential:: going to send credential");
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_issuer_send_credential(cb.command_handle,
-                                              handle,
-                                              connection_handle,
+                                              handle_cred,
+                                              handle_conn,
                                               Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();

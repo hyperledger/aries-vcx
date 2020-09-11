@@ -14,6 +14,49 @@ pub const ARIES_CONNECTION_INVITATION: &str = r#"
     "serviceEndpoint": "http://localhost:8080/agency/msg"
 }"#;
 
+// Alice created and serialized connection created from received invitation
+pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
+{
+    "version": "2.0",
+    "data": {
+        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+        "pw_did": "",
+        "pw_verkey": "",
+        "state": 2,
+        "uuid": "",
+        "endpoint": "",
+        "invite_detail": null,
+        "redirect_detail": null,
+        "invite_url": null,
+        "agent_did": "",
+        "agent_vk": "",
+        "their_pw_did": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+        "their_pw_verkey": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw",
+        "public_did": null,
+        "their_public_did": null,
+        "version": "2.0"
+    },
+    "state": {
+        "Invitee": {
+            "Invited": {
+                "invitation": {
+                    "@id": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+                    "label": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
+                    "recipientKeys": [
+                        "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw"
+                    ],
+                    "routingKeys": [
+                        "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
+                        "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                    ],
+                    "serviceEndpoint": "http://localhost:8080/agency/msg"
+                }
+            }
+        }
+    }
+}"#;
+
+
 // Alice sends connection request to Faber
 pub const ARIES_CONNECTION_REQUEST: &str = r#"
 {
@@ -58,6 +101,109 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
     "label": "alice-157ea14b-4b7c-48a5-b536-d4ed6e027b84"
 }"#;
 
+// Alice sends connection request to Faber
+pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
+{
+    "version": "2.0",
+    "data": {
+        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+        "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
+        "pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
+        "state": 3,
+        "uuid": "",
+        "endpoint": "",
+        "invite_detail": null,
+        "redirect_detail": null,
+        "invite_url": null,
+        "agent_did": "Gqw6t57yDgzaG79h4HUVCf",
+        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
+        "their_pw_did": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+        "their_pw_verkey": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw",
+        "public_did": null,
+        "their_public_did": null,
+        "version": "2.0"
+    },
+    "state": {
+        "Invitee": {
+            "Requested": {
+                "request": {
+                    "@id": "8b58c65b-a585-4976-99e1-f9570a4bd097",
+                    "label": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+                    "connection": {
+                        "DID": "KC6NKcpXcpVnpjL8uKH3tV",
+                        "DIDDoc": {
+                            "@context": "https://w3id.org/did/v1",
+                            "id": "KC6NKcpXcpVnpjL8uKH3tV",
+                            "publicKey": [
+                                {
+                                    "id": "1",
+                                    "type": "Ed25519VerificationKey2018",
+                                    "controller": "KC6NKcpXcpVnpjL8uKH3tV",
+                                    "publicKeyBase58": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi"
+                                }
+                            ],
+                            "authentication": [
+                                {
+                                    "type": "Ed25519SignatureAuthentication2018",
+                                    "publicKey": "KC6NKcpXcpVnpjL8uKH3tV#1"
+                                }
+                            ],
+                            "service": [
+                                {
+                                    "id": "did:example:123456789abcdefghi;indy",
+                                    "type": "IndyAgent",
+                                    "priority": 0,
+                                    "recipientKeys": [
+                                        "KC6NKcpXcpVnpjL8uKH3tV#1"
+                                    ],
+                                    "routingKeys": [
+                                        "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
+                                        "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                                    ],
+                                    "serviceEndpoint": "http://localhost:8080/agency/msg"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "did_doc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "id": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+                    "publicKey": [
+                        {
+                            "id": "1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+                            "publicKeyBase58": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw"
+                        }
+                    ],
+                    "authentication": [
+                        {
+                            "type": "Ed25519SignatureAuthentication2018",
+                            "publicKey": "18ac5f5d-c81d-451a-be20-a0df4933513a#1"
+                        }
+                    ],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "type": "IndyAgent",
+                            "priority": 0,
+                            "recipientKeys": [
+                                "18ac5f5d-c81d-451a-be20-a0df4933513a#1"
+                            ],
+                            "routingKeys": [
+                                "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
+                                "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                            ],
+                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}"#;
+
 // Faber sends connection response to Alice, using thid value as was @id in connection request
 pub const ARIES_CONNECTION_RESPONSE: &str = r#"
 {
@@ -77,6 +223,70 @@ pub const ARIES_CONNECTION_RESPONSE: &str = r#"
     }
 }"#;
 
+// Alice (invitee) connection SM after Faber accepted connection by sending connection response
+pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
+{
+    "version": "2.0",
+    "data": {
+        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+        "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
+        "pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
+        "state": 4,
+        "uuid": "",
+        "endpoint": "",
+        "invite_detail": null,
+        "redirect_detail": null,
+        "invite_url": null,
+        "agent_did": "Gqw6t57yDgzaG79h4HUVCf",
+        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
+        "their_pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
+        "their_pw_verkey": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
+        "public_did": null,
+        "their_public_did": null,
+        "version": "2.0"
+    },
+    "state": {
+        "Invitee": {
+            "Completed": {
+                "did_doc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "id": "2ZHFFhzA2XtTD6hJqzL7ux",
+                    "publicKey": [
+                        {
+                            "id": "1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "2ZHFFhzA2XtTD6hJqzL7ux",
+                            "publicKeyBase58": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj"
+                        }
+                    ],
+                    "authentication": [
+                        {
+                            "type": "Ed25519SignatureAuthentication2018",
+                            "publicKey": "2ZHFFhzA2XtTD6hJqzL7ux#1"
+                        }
+                    ],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "type": "IndyAgent",
+                            "priority": 0,
+                            "recipientKeys": [
+                                "2ZHFFhzA2XtTD6hJqzL7ux#1"
+                            ],
+                            "routingKeys": [
+                                "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2",
+                                "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                            ],
+                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                        }
+                    ]
+                },
+                "protocols": null
+            }
+        }
+    }
+}"#;
+
 // Alice sends Ack to Faber
 pub const ARIES_CONNECTION_ACK: &str = r#"
 {
@@ -89,4 +299,69 @@ pub const ARIES_CONNECTION_ACK: &str = r#"
         "thid": "b5517062-303f-4267-9a29-09bc89497c06"
     }
 }"#;
+
+// Inviter (Faber) after finished connection protocol by sending connection ack
+pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
+{
+    "version": "2.0",
+    "data": {
+        "source_id": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
+        "pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
+        "pw_verkey": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
+        "state": 4,
+        "uuid": "",
+        "endpoint": "",
+        "invite_detail": null,
+        "redirect_detail": null,
+        "invite_url": null,
+        "agent_did": "EZrZyu4bfydm4ByNm56kPP",
+        "agent_vk": "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2",
+        "their_pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
+        "their_pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
+        "public_did": null,
+        "their_public_did": null,
+        "version": "2.0"
+    },
+    "state": {
+        "Inviter": {
+            "Completed": {
+                "did_doc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "id": "KC6NKcpXcpVnpjL8uKH3tV",
+                    "publicKey": [
+                        {
+                            "id": "1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "KC6NKcpXcpVnpjL8uKH3tV",
+                            "publicKeyBase58": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi"
+                        }
+                    ],
+                    "authentication": [
+                        {
+                            "type": "Ed25519SignatureAuthentication2018",
+                            "publicKey": "KC6NKcpXcpVnpjL8uKH3tV#1"
+                        }
+                    ],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "type": "IndyAgent",
+                            "priority": 0,
+                            "recipientKeys": [
+                                "KC6NKcpXcpVnpjL8uKH3tV#1"
+                            ],
+                            "routingKeys": [
+                                "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
+                                "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                            ],
+                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                        }
+                    ]
+                },
+                "protocols": null
+            }
+        }
+    }
+}"#;
+
 
