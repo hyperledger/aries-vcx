@@ -626,6 +626,8 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
     }).map_err(handle_err)
 }
 
+/// #Returns
+/// Credential request message serialized as String
 pub fn generate_credential_request_msg(handle: u32, my_pw_did: &str, their_pw_did: &str) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |obj| {
         match obj {
@@ -914,7 +916,7 @@ pub mod tests {
 
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL_V1,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
-    use utils::libindy::payments::{build_test_address};
+    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
     use utils::mockdata_credex::ARIES_CREDENTIAL_RESPONSE;
 
     pub fn create_credential(offer: &str) -> Credential {
@@ -1026,7 +1028,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
+    #[cfg(feature = "to_restore")] // todo: generate_credential_request_msg is not implemented for v3
     fn test_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -1045,7 +1047,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
@@ -1111,27 +1112,6 @@ pub mod tests {
 
         let handle = from_string(constants::FULL_CREDENTIAL_SERIALIZED).unwrap();
         let _cred_string = get_credential(handle).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_submit_payment_through_credential_request() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = connection::tests::build_test_connection();
-
-        let balance = get_wallet_token_info().unwrap().get_balance();
-        assert!(balance > 0);
-
-        let price = 5;
-        let mut cred = create_credential_with_price(price);
-
-        assert_eq!(cred.send_request(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(get_wallet_token_info().unwrap().get_balance(), balance);
-
-        cred.send_request(connection_h).unwrap();
-        assert_eq!(get_wallet_token_info().unwrap().get_balance(), balance); // test mode doesn't change balance?
     }
 
     #[test]
