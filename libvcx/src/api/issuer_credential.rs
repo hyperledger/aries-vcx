@@ -883,6 +883,8 @@ pub mod tests {
     use utils::devsetup::*;
     use utils::constants::*;
     use utils::timeout::TimeoutUtils;
+    use utils::constants::CREDENTIAL_REQ_RESPONSE_STR;
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, ARIES_CREDENTIAL_REQUEST};
     use utils::httpclient::AgencyMockDecrypted;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
@@ -1024,7 +1026,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_issuer_send_credential_offer() {
         let _setup = SetupMocks::init();
         let connection_handle = ::connection::tests::build_test_connection();
@@ -1042,7 +1043,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_issuer_credential_update_state_with_message(cb.command_handle,
                                                                    handle,
-                                                                   CString::new(CREDENTIAL_REQ_RESPONSE_STR).unwrap().into_raw(),
+                                                                   CString::new(ARIES_CREDENTIAL_REQUEST).unwrap().into_raw(),
                                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateRequestReceived as u32);

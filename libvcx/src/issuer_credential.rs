@@ -670,6 +670,10 @@ pub fn issuer_credential_create(cred_def_handle: u32,
         let issuer = Issuer::create(cred_def_handle, &credential_data, &source_id)?;
         return ISSUER_CREDENTIAL_MAP.add(IssuerCredentials::V3(issuer));
     }
+    if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"
+    {
+        panic!("Trying to create legacy credential.");
+    }
 
     let issuer_credential = IssuerCredential::create(cred_def_handle, source_id, issuer_did, credential_name, credential_data, price)?;
 
