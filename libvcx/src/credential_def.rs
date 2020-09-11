@@ -11,7 +11,7 @@ use utils::libindy::ledger;
 use utils::libindy::cache::update_rev_reg_ids_cache;
 
 lazy_static! {
-    static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = Default::default();
+    static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]

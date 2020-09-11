@@ -302,7 +302,7 @@ static mut INSTITUTION_CONFIG: u32 = 0;
 static mut CONSUMER_CONFIG: u32 = 0;
 
 lazy_static! {
-    static ref CONFIG_STRING: ObjectCache<String> = Default::default();
+    static ref CONFIG_STRING: ObjectCache<String> = ObjectCache::<String>::new("devsetup-config-cache");
 }
 
 /* dev */
