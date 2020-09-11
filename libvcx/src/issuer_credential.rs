@@ -23,7 +23,7 @@ use v3::handlers::issuance::Issuer;
 use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
 
 lazy_static! {
-    static ref ISSUER_CREDENTIAL_MAP: ObjectCache < IssuerCredentials > = Default::default();
+    static ref ISSUER_CREDENTIAL_MAP: ObjectCache<IssuerCredentials> = ObjectCache::<IssuerCredentials>::new("issuer-credentials-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]

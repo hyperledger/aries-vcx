@@ -45,7 +45,7 @@ async function runAlice (options) {
   const agentName = `alice-${testRunId}`
   const webhookUrl = `http://localhost:7209/notifications/${agentName}`
   const usePostgresWallet = false
-  const logLevel = 'error'
+  const logLevel = process.env.VCX_LOG_LEVEL || 'vcx=error'
 
   await initRustapi(logLevel)
 
@@ -63,9 +63,8 @@ async function runAlice (options) {
   const connectionName = `alice-${testRunId}`
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  await vcxClient.connectionAccept(connectionName, invitationString)
+  const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(connectionName, invitationString)
 
-  const connectionToFaber = await vcxClient.connectionAutoupdate(connectionName)
   if (!connectionToFaber) {
     throw Error('Connection with alice was not established.')
   }

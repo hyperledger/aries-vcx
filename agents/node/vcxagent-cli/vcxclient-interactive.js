@@ -32,9 +32,9 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
     0: 'ACCEPT_TAA',
     1: 'CREATE_SCHEMA',
     2: 'CREATE_CRED_DEF',
-    10: 'CONNECTION_CREATE',
-    11: 'CONNECTION_ACCEPT',
-    12: 'CONNECTION_FINISH',
+    10: 'CONNECTION_INVITER_CREATE',
+    11: 'CONNECTION_INVITEE_ACCEPT',
+    12: 'CONNECTION_PROGRESS',
     13: 'CONNECTION_INFO',
     14: 'CONNECTIONS_INFO',
     20: 'GET_CREDENTIAL_OFFERS'
@@ -59,14 +59,13 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
         logger.info(`Credential definition ${JSON.stringify(await credentialDef.serialize())}`)
       } else if (cmd === '10') {
         const connectionName = readlineSync.question('Enter connection name:\n')
-        const invitationString = await vcxClient.connectionCreate(connectionName)
-        logger.info(`Connection ${connectionName} created. Invitation String ${invitationString}`)
-        await vcxClient.connectionAutoupdate(connectionName)
+        await vcxClient.inviterConnectionCreateAndAccept(connectionName, (invitationString) => {
+          logger.info(`Connection ${connectionName} created. Invitation: ${invitationString}`)
+        })
       } else if (cmd === '11') {
         const connectionName = readlineSync.question('Enter connection name:\n')
         const invitationString = readlineSync.question('Enter invitation:\n')
-        await vcxClient.connectionAccept(connectionName, invitationString)
-        await vcxClient.connectionAutoupdate(connectionName)
+        await vcxClient.inviteeConnectionAcceptFromInvitation(connectionName, invitationString)
       } else if (cmd === '12') {
         const connectionName = readlineSync.question('Enter connection name:\n')
         await vcxClient.connectionAutoupdate(connectionName)

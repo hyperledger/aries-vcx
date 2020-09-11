@@ -30,7 +30,7 @@ use v3::messages::a2a::A2AMessage;
 use settings::ProtocolTypes;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connections> = Default::default();
+    static ref CONNECTION_MAP: ObjectCache<Connections> = ObjectCache::<Connections>::new("connections-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
