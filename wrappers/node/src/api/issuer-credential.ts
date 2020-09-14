@@ -2,7 +2,7 @@ import * as ffi from 'ffi-napi'
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { ISerializedData, StateType } from './common'
+import { ISerializedData } from './common'
 import { Connection } from './connection'
 import { VCXBaseWithState } from './vcx-base-with-state'
 import { PaymentManager } from './vcx-payment-txn'
@@ -110,20 +110,8 @@ export interface IIssuerCredentialParams {
  * This interface is expected as the type for deserialize's parameter and serialize's return value
  */
 export interface IIssuerCredentialData {
+  issuer_sm: object,
   source_id: string
-  handle: number
-  schema_seq_no: number
-  credential_attributes: string
-  credential_name: string
-  issuer_did: string
-  state: StateType
-  msg_uid: string
-  cred_def_id: string
-  cred_def_handle: number
-  price: string
-  tails_file?: string
-  cred_rev_id?: string
-  rev_reg_id?: string
 }
 
 // tslint:disable max-classes-per-file
@@ -169,17 +157,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
     }
   }
 
-  public static getParams (credentialData: ISerializedData<IIssuerCredentialData>): IIssuerCredentialParams {
-    const { data: { credential_name, price, credential_attributes, cred_def_handle } } = credentialData
-    const attr: IIssuerCredentialVCXAttributes = JSON.parse(credential_attributes)
-    return {
-      attr,
-      credDefHandle: cred_def_handle,
-      credentialName: credential_name,
-      price
-    }
-  }
-
   /**
    * Builds an Issuer credential object with defined attributes.
    *
@@ -195,12 +172,8 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
     try {
       const params: IIssuerCredentialParams = (() => {
         switch (credentialData.version) {
-          case '1.0':
-            return IssuerCredential.getParams(credentialData)
           case '2.0':
             return { attr: {}, credDefHandle: -1, credentialName: '', price: '0' }
-          case '3.0':
-            return IssuerCredential.getParams(credentialData)
           default:
             throw Error(`Unsupported version provided in serialized credential data: ${JSON.stringify(credentialData.version)}`)
         }
