@@ -52,6 +52,7 @@ pub mod messages;
 pub mod api;
 pub mod connection;
 pub mod issuer_credential;
+pub mod issuer_credential_utils;
 pub mod credential_request;
 pub mod proof;
 pub mod schema;
@@ -60,6 +61,7 @@ pub mod error;
 pub mod credential;
 pub mod object_cache;
 pub mod disclosed_proof;
+
 
 pub mod v3;
 

@@ -683,7 +683,7 @@ pub mod tests {
 
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let encoded_attributes = ::issuer_credential::encode_attributes(&credential_data).unwrap();
+        let encoded_attributes = ::issuer_credential_utils::encode_attributes(&credential_data).unwrap();
         let (rev_def_json, tails_file) = if revocation {
             let (_id, json) = get_rev_reg_def_json(&rev_reg_id.clone().unwrap()).unwrap();
             (Some(json), Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string().to_string()))

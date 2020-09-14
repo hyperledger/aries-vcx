@@ -9,7 +9,7 @@ use v3::messages::error::ProblemReport;
 use v3::messages::mime_type::MimeType;
 use error::{VcxResult, VcxError, VcxErrorKind};
 use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer};
-use issuer_credential::encode_attributes;
+use issuer_credential_utils::encode_attributes;
 use v3::messages::status::Status;
 use std::collections::HashMap;
 use connection::{send_message, get_messages};
@@ -41,6 +41,7 @@ impl IssuerSM {
     }
 
     pub fn revoke(&self, publish: bool) -> VcxResult<()> {
+        trace!("Issuer::revoke >>> publish={}", publish);
         match &self.state {
             IssuerState::Finished(state) => {
                 match &state.revocation_info_v1 {
@@ -53,6 +54,7 @@ impl IssuerSM {
                             }
                             Ok(())
                         } else {
+                            warn!("Missing data to perform revocation. rev_info={:?}", rev_info);
                             Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails))
                         }
                     },
