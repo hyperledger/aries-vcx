@@ -532,7 +532,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_cred_def() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (_, handle) = create_cred_def_real(false);
 
@@ -652,7 +652,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_cred_def_fake();
 
@@ -664,7 +664,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_cred_def_fake();
         let credentialdef_data = to_string(handle).unwrap();
@@ -684,7 +684,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let h1 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
         let h2 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();

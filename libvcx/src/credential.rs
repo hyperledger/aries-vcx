@@ -995,7 +995,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn full_credential_test() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
         let handle_conn = connection::tests::build_test_connection();
@@ -1030,7 +1030,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // todo: generate_credential_request_msg is not implemented for v3
     fn test_get_request_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection();
 
@@ -1049,7 +1049,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential_offer() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection();
 
@@ -1061,7 +1061,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_sufficient_funds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred = create_credential_with_price(1);
         assert!(cred.is_payment_required());
@@ -1072,7 +1072,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_pay_for_non_premium_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         assert!(cred.payment_info.is_none());
@@ -1082,7 +1082,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_insufficient_funds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred = create_credential_with_price(10000000000);
         assert!(cred.submit_payment().is_err());
@@ -1091,7 +1091,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_pay_for_credential_with_handle() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = from_string(DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED).unwrap();
         submit_payment(handle).unwrap();
@@ -1105,7 +1105,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         let _offer_string = get_credential_offer(handle).unwrap();
@@ -1117,7 +1117,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_cred_offer_returns_json_string_with_cred_offer_json_nested() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
         let offer_string = get_credential_offer(handle).unwrap();

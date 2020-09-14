@@ -974,7 +974,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -984,7 +984,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1004,7 +1004,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_serialize_deserialize() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -1030,7 +1030,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_send_credential_offer() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let connection_handle = ::connection::tests::build_test_connection();
@@ -1092,7 +1092,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // TODO: generate_credential_offer_msg() not implemented for V3 aries credential
     fn test_vcx_issuer_get_credential_offer_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -1112,7 +1112,7 @@ pub mod tests {
     // instead it should be using connection handle passed to vcx_issuer_send_credential
     // but in Aries, it's not doing so
     fn test_vcx_issuer_send_a_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
@@ -1137,7 +1137,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_get_credential_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = issuer_credential::from_string(&issuer_credential_state_accepted()).unwrap();
@@ -1155,7 +1155,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_credential_arguments_correct() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -1171,7 +1171,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_get_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -1188,7 +1188,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_revoke_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);
@@ -1206,7 +1206,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_release() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();

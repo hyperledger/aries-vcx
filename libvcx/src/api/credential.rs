@@ -937,7 +937,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert!(handle > 0);
@@ -946,7 +946,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let err = _vcx_credential_create_with_offer_c_closure(BAD_CREDENTIAL_OFFER).unwrap_err();
         assert_eq!(err, error::INVALID_JSON.code_num);
@@ -955,7 +955,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_serialize_and_deserialize() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
@@ -979,7 +979,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_send_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = credential::credential_create_with_offer("test_send_request", ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -994,7 +994,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_new_offers() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -1009,7 +1009,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -1025,7 +1025,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
@@ -1037,7 +1037,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_update_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle_conn = ::connection::tests::build_test_connection();
 
@@ -1064,7 +1064,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // Missing implementation for v3 in generate_credential_request_msg
     fn test_vcx_credential_get_request_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle_conn = ::connection::tests::build_test_connection();
 
@@ -1083,7 +1083,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = credential::from_string(FULL_CREDENTIAL_SERIALIZED).unwrap();
         let bad_handle = 1123;
@@ -1105,7 +1105,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = credential::from_string(::utils::constants::FULL_CREDENTIAL_SERIALIZED).unwrap();
 
@@ -1117,7 +1117,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_release() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 

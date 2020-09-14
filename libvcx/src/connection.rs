@@ -1169,11 +1169,11 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_different_protocol_version() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         let err = create_connection_with_invite("alice", INVITE_DETAIL_V1_STRING).unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::ActionNotSupported);
 
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
         CONNECTION_MAP.get_mut(handle, |connection| {

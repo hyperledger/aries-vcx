@@ -1018,7 +1018,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         assert!(create_proof("1", ::utils::constants::PROOF_REQUEST_JSON).unwrap() > 0);
     }
@@ -1026,7 +1026,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
@@ -1035,7 +1035,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_proof_cycle() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection();
 
@@ -1052,7 +1052,7 @@ mod tests {
     #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection();
 
@@ -1068,7 +1068,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_state_test() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let proof: DisclosedProof = Default::default();
         assert_eq!(VcxStateType::VcxStateNone as u32, proof.get_state());
@@ -1080,7 +1080,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn to_string_test() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("id", ::utils::constants::PROOF_REQUEST_JSON).unwrap();
 
@@ -1115,7 +1115,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_find_schemas() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         assert_eq!(DisclosedProof::build_schemas_json(&Vec::new()).unwrap(), "{}".to_string());
 
@@ -1170,7 +1170,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_find_credential_def() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             requested_attr: "height_1".to_string(),
@@ -1223,7 +1223,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_requested_credentials() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             requested_attr: "height_1".to_string(),
@@ -1288,7 +1288,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_get_proof_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection();
 
@@ -1734,7 +1734,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_generate_reject_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let proof: DisclosedProof = Default::default();
         let generated_reject = proof.generate_reject_proof_msg();
@@ -1744,7 +1744,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_states_json() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             requested_attr: "height".to_string(),

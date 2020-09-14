@@ -851,6 +851,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_shutdown() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let data = r#"["name","male"]"#;
         let connection = ::connection::tests::build_test_connection();
@@ -858,7 +859,7 @@ mod tests {
         let issuer_credential = ::issuer_credential::issuer_credential_create(credentialdef, "1".to_string(), "8XFh8yBzrpJQmNyZzgoTqB".to_owned(), "credential_name".to_string(), "{\"attr\":\"value\"}".to_owned(), 1).unwrap();
         let proof = ::proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
         let schema = ::schema::create_and_publish_schema("5", "VsKV7grR1BUE29mG2Fm2kX".to_string(), "name".to_string(), "0.1".to_string(), data.to_string()).unwrap();
-        let disclosed_proof = ::disclosed_proof::create_proof("id", ::utils::constants::PROOF_REQUEST_JSON).unwrap();
+        let disclosed_proof = ::disclosed_proof::create_proof("id", ::utils::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = ::credential::credential_create_with_offer("name", ::utils::mockdata_credex::ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);
@@ -875,7 +876,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_error_c_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(0)).unwrap().unwrap();
         assert_eq!(c_message, error::SUCCESS.message);
@@ -978,7 +979,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_set_active_txn_author_agreement_meta() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         assert!(&settings::get_config_value(::settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
@@ -1011,7 +1012,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_ledger_author_agreement() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
@@ -1079,7 +1080,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_no_agency_config() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let config = json!({
             "institution_name": "faber",

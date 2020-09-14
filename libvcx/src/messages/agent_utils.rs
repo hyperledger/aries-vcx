@@ -534,7 +534,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_connect_register_provision() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let agency_did = "Ab8TvZa3Q19VNkQVzAWVL7";
         let agency_vk = "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf";
@@ -610,7 +610,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_update_agent_info() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }

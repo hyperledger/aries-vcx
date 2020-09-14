@@ -559,7 +559,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_address() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         create_address(None).unwrap();
     }
@@ -568,7 +568,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_sign_with_address() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let res = sign_with_address("test", &[1, 2, 3]).unwrap();
         assert_eq!(res, vec![1, 2, 3])
@@ -577,7 +577,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verify_with_address() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let res = verify_with_address("test", &[1, 2, 3], &[1, 2, 3]).unwrap();
         assert!(res)
@@ -586,7 +586,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_addresses() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         create_address(None).unwrap();
         let _addresses = list_addresses().unwrap();
@@ -595,7 +595,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_wallet_token_info() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         create_address(None).unwrap();
         let balance = get_wallet_token_info().unwrap().to_string();
@@ -660,7 +660,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_ledger_fees() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let fees = get_ledger_fees().unwrap();
         assert!(fees.contains(r#""101":2"#));
@@ -693,7 +693,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_inputs() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let pay_addr_1 = build_test_address("1");
         let pay_addr_2 = build_test_address("2");
@@ -717,7 +717,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_gen_outputs_for_txn_fees() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut cost = 5;
         let (remainder, _, refund_address) = inputs(cost).unwrap();
@@ -735,7 +735,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_gen_outputs_for_transfer_of_tokens() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let payee_amount = 11;
         let payee_address = build_test_address("payee_address");
@@ -747,7 +747,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_txn_cost() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         assert_eq!(get_action_price(::utils::constants::CREATE_SCHEMA_ACTION, None).unwrap(), 2);
         assert_eq!(get_action_price(::utils::constants::CREATE_CRED_DEF_ACTION, None).unwrap(), 42);
@@ -759,7 +759,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_pay_for_txn() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         // Schema
         let create_schema_req = ::utils::constants::SCHEMA_CREATE_JSON.to_string();
@@ -973,7 +973,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_action_price_for_requester_match_to_constraint() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let requester_info = json!({
             "role": "0",
@@ -988,7 +988,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_action_price_for_requester_not_match_to_constraint() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let action_json = _action();
 

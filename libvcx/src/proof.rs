@@ -728,7 +728,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         create_proof("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
@@ -740,7 +740,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_revocation_details() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         // No Revocation
         create_proof("1".to_string(),
@@ -772,7 +772,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -789,7 +789,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -805,7 +805,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -835,7 +835,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_fails_with_no_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -867,7 +867,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut proof = create_boxed_proof(None, None, None);
         proof.update_state(Some(PROOF_RESPONSE_STR.to_string())).unwrap();
@@ -896,7 +896,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_credential_defs_json_with_multiple_credentials() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -921,7 +921,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_schemas_json_with_multiple_schemas() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -971,7 +971,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_json() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -996,7 +996,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut proof_msg_obj = ProofMessage::new();
         proof_msg_obj.libindy_proof = PROOF_JSON.to_string();
@@ -1011,7 +1011,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let h1 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
         let h2 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();

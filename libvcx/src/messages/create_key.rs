@@ -166,7 +166,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v1_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut builder = create_keys();
 
@@ -179,7 +179,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v2_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut builder = create_keys();
 

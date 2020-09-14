@@ -152,7 +152,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_data_post() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let name = "name";

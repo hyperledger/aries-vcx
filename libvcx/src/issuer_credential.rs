@@ -947,7 +947,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_issuer_credential_create_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _issuer_credential_create();
@@ -957,7 +957,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _issuer_credential_create();
@@ -968,7 +968,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_credential_offer() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection();
@@ -992,7 +992,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_retry_send_credential_offer() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let connection_handle = build_test_connection();
@@ -1014,7 +1014,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_credential_can_be_resent_after_failure() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection();
@@ -1042,7 +1042,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _issuer_credential_create();
@@ -1063,7 +1063,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection();
@@ -1079,7 +1079,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_bad_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection();
@@ -1096,7 +1096,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let h1 = _issuer_credential_create();
@@ -1125,7 +1125,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_cant_revoke_without_revocation_details() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection();

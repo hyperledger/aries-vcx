@@ -966,7 +966,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_cred_def() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (id, _) = generate_cred_def("did", SCHEMAS_JSON, "tag_1", None, Some(false)).unwrap();
         assert_eq!(id, CRED_DEF_ID);
@@ -1073,7 +1073,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn from_ledger_schema_id() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (id, retrieved_schema) = get_schema_json(SCHEMA_ID).unwrap();
         assert_eq!(&retrieved_schema, SCHEMA_JSON);

@@ -498,7 +498,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_get_messages_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let result = GetMessagesBuilder::create_v1().parse_response(GET_MESSAGES_RESPONSE.to_vec()).unwrap();
         assert_eq!(result.len(), 3)
@@ -507,7 +507,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_get_connection_messages_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
         assert_eq!(result.len(), 1)

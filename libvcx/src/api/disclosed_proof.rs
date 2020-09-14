@@ -956,7 +956,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert!(handle > 0);
@@ -965,7 +965,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let err = _vcx_disclosed_proof_create_with_request_c_closure(BAD_PROOF_REQUEST).unwrap_err();
         assert_eq!(err, error::INVALID_JSON.code_num);
@@ -975,7 +975,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_create_with_msgid() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -994,7 +994,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_release() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(vcx_disclosed_proof_release(handle + 1), error::INVALID_DISCLOSED_PROOF_HANDLE.code_num);
@@ -1005,7 +1005,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_serialize_and_deserialize() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
 
@@ -1031,7 +1031,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_generate_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
 
@@ -1046,7 +1046,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_vcx_send_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1062,7 +1062,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_vcx_reject_proof_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1078,7 +1078,7 @@ mod tests {
     #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_reject_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1094,7 +1094,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_vcx_proof_get_requests() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -1108,7 +1108,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
 
@@ -1121,7 +1121,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_retrieve_credentials() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
 
@@ -1136,7 +1136,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_generate_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
 

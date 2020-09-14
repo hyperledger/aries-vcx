@@ -106,7 +106,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_struct() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let offer = create_default_proof();
         assert_eq!(offer.from_did, Some(::settings::get_config_value(::settings::CONFIG_INSTITUTION_DID).unwrap()));
@@ -115,7 +115,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_reject() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let proof = ProofMessage::new_reject();
         assert_eq!(proof.state, Some(VcxStateType::VcxStateRejected));
@@ -135,7 +135,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential_data() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut proof = ProofMessage::new();
         proof.libindy_proof = "".to_string();
