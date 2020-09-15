@@ -29,6 +29,7 @@ pub mod tests {
         use v3::test::{Faber, Alice};
         use v3::messages::ack::tests::_ack;
         use v3::messages::a2a::A2AMessage;
+        use v3;
 
         #[test]
         #[cfg(feature = "aries")]
@@ -65,14 +66,14 @@ pub mod tests {
             let uid: String;
             let message = _ack();
 
-            // Send Message works
+            info!("test_connection_send_works:: Test if Send Message works");
             {
                 faber.activate();
                 ::connection::send_message(faber.connection_handle, message.to_a2a_message()).unwrap();
             }
 
             {
-                // Get Messages works
+                info!("test_connection_send_works:: Test if Get Messages works");
                 alice.activate();
 
                 let messages = ::connection::get_messages(alice.connection_handle).unwrap();
@@ -89,7 +90,7 @@ pub mod tests {
 
             let _res = ::messages::get_message::download_messages(None, None, Some(vec![uid.clone()])).unwrap();
 
-            // Get Message by id works
+            info!("test_connection_send_works:: Test if Get Message by id works");
             {
                 alice.activate();
 
@@ -101,7 +102,7 @@ pub mod tests {
                 }
             }
 
-            // Update Message Status works
+            info!("test_connection_send_works:: Test if Update Message Status works");
             {
                 alice.activate();
 
@@ -110,7 +111,7 @@ pub mod tests {
                 assert_eq!(0, messages.len());
             }
 
-            // Send Basic Message works
+            info!("test_connection_send_works:: Test if Send Basic Message works");
             {
                 faber.activate();
 
@@ -132,7 +133,7 @@ pub mod tests {
                 ::connection::update_message_status(alice.connection_handle, uid).unwrap();
             }
 
-            // Download Messages
+            info!("test_connection_send_works:: Test if Download Messages");
             {
                 use messages::get_message::{download_messages, MessageByConnection, Message};
 
@@ -147,13 +148,13 @@ pub mod tests {
                 let message: Message = messages[0].msgs[0].clone();
                 assert_eq!(::messages::RemoteMessageType::Other("aries".to_string()), message.msg_type);
                 let payload: ::messages::payload::PayloadV1 = ::serde_json::from_str(&message.decrypted_payload.unwrap()).unwrap();
-                let _payload: Vec<::issuer_credential::CredentialOffer> = ::serde_json::from_str(&payload.msg).unwrap();
+                let _payload: v3::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&payload.msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
             }
 
-            // Helpers
+            info!("test_connection_send_works:: Test Helpers");
             {
                 faber.activate();
 
