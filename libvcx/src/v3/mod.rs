@@ -151,8 +151,7 @@ pub mod test {
                 "wallet_key": "123",
                 "payment_method": "null",
                 "enterprise_seed": "000000000000000000000000Trustee1",
-                "protocol_type": "2.0",
-                "communication_method": "aries"
+                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();
@@ -330,8 +329,7 @@ pub mod test {
                 "wallet_name": wallet_name,
                 "wallet_key": "123",
                 "payment_method": "null",
-                "protocol_type": "2.0",
-                "communication_method": "aries"
+                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();
