@@ -498,7 +498,7 @@ jobs:
         run: |
           # docker run --rm -i --name test-android-build -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh armv7 arm64)'
+                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh armv7)'
 
   test-node-wrapper:
     runs-on: ubuntu-latest

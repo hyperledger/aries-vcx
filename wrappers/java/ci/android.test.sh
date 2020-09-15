@@ -57,7 +57,7 @@ execute_on_device(){
     set -x
 
     adb -e push \
-    "${TOOLCHAIN_DIR}/sysroot/usr/lib/${TRIPLET}/libc++_shared.so" "/data/local/tmp/libc++_shared.so"
+    "${TOOLCHAIN_DIR}/sysroot/usr/lib/${ANDROID_TRIPLET}/libc++_shared.so" "/data/local/tmp/libc++_shared.so"
 
     adb -e push \
     "${SODIUM_LIB_DIR}/libsodium.so" "/data/local/tmp/libsodium.so"

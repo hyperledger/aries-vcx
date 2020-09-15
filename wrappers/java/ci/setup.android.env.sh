@@ -37,6 +37,7 @@ accept_licenses(){
     yes | sdkmanager --licenses
 }
 
+# TODO: Recreating avd for more than a single arch doesn't work
 create_avd(){
     echo "${GREEN}Creating Android SDK${RESET}"
 
@@ -50,7 +51,8 @@ create_avd(){
                 "platforms;android-24" \
                 "system-images;android-24;default;${ABI}" > sdkmanager.install.emulator.and.tools.out 2>&1
 
-        # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator. Should be removed as soon as headless mode will be fixed.
+        # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
+        # Remove as soon as headless mode is fixed.
         mv /home/indy/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
