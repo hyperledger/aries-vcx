@@ -9,33 +9,18 @@ LIBVCX_DIR="${REPO_DIR}/libvcx"
 BUILD_TYPE="--release"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 
-TARGET_ARCH=$1
+TARGET_ARCHS="$@"
 
-if [ -z "${TARGET_ARCH}" ]; then
-    echo STDERR "Missing TARGET_ARCH argument"
-    echo STDERR "expecting one of: x86, x86_64, arm, arm7"
+source ${SCRIPT_DIR}/setup.android.env.sh
+
+if [ -z "${TARGET_ARCHS}" ]; then
+    echo STDERR "${RED}Missing TARGET_ARCHS argument${RESET}"
+    echo STDERR "${BLUE}e.g. a list of archs such as arm, armv7, x86 or arm64${RESET}"
     exit 1
 fi
 
 source ${SCRIPT_DIR}/setup.android.env.sh
 
-generate_arch_flags ${TARGET_ARCH}
-setup_dependencies_env_vars ${ABSOLUTE_ARCH}
-
-if [ -z "${INDY_DIR}" ] ; then
-        INDY_DIR="libindy_${TARGET_ARCH}"
-        if [ -d "${INDY_DIR}" ] ; then
-            echo "Found ${INDY_DIR}"
-        elif [ -n "$2" ] ; then
-            INDY_DIR=$2
-        else
-            echo STDERR "Missing INDY_DIR argument and environment variable"
-            echo STDERR "e.g. set INDY_DIR=<path> for environment or libindy_${TARGET_ARCH}"
-            exit 1
-        fi
-fi
-
-echo ">> in runner script"
 declare -a EXE_ARRAY
 
 build_test_artifacts(){
@@ -43,10 +28,6 @@ build_test_artifacts(){
         cargo clean
 
         SET_OF_TESTS=''
-
-        # RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        # LIBINDY_DIR=${INDY_LIB_DIR} \
-        #     cargo build ${BUILD_TYPE} --target=${TRIPLET}
 
         # This is needed to get the correct message if test are not built. Next call will just reuse old results and parse the response.
         RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
@@ -107,11 +88,18 @@ execute_on_device(){
 }
 
 
-recreate_avd
-set_env_vars
-create_standalone_toolchain_and_rust_target
-create_cargo_config
-build_test_artifacts &&
-check_if_emulator_is_running &&
-execute_on_device
-kill_avd
+for TARGET_ARCH in ${TARGET_ARCHS}
+do
+    prepare_dependencies ${TARGET_ARCH}
+    generate_arch_flags ${TARGET_ARCH}
+    setup_dependencies_env_vars ${TARGET_ARCH}
+
+    recreate_avd
+    set_env_vars
+    create_standalone_toolchain_and_rust_target
+    create_cargo_config
+    build_test_artifacts &&
+    check_if_emulator_is_running &&
+    execute_on_device
+    kill_avd
+done
