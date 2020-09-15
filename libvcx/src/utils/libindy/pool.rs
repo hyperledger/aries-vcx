@@ -21,6 +21,10 @@ pub fn get_pool_handle() -> VcxResult<i32> {
         .ok_or(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened"))
 }
 
+pub fn is_pool_open() -> bool {
+    get_pool_handle().is_ok()
+}
+
 pub fn reset_pool_handle() { set_pool_handle(None); }
 
 pub fn set_protocol_version() -> VcxResult<()> {
@@ -83,29 +87,26 @@ pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32>
     Ok(handle as u32)
 }
 
-pub fn init_pool() -> VcxResult<()> {
-    trace!("init_pool >>>");
+pub fn init_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
+    info!("init_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
-        .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-
-    let path: String = settings::get_config_value(settings::CONFIG_GENESIS_PATH)?;
-
-    trace!("opening pool {} with genesis_path: {}", pool_name, path);
+    trace!("init_pool ::: Opening pool {} with genesis_path: {}", pool_name, path);
 
     create_pool_ledger_config(&pool_name, &path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
-    debug!("Pool Config Created Successfully");
-    let pool_config: Option<String> = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
+    debug!("init_pool ::: Pool Config Created Successfully");
 
-    open_pool_ledger(&pool_name, pool_config.as_ref().map(String::as_str))
+    open_pool_ledger(&pool_name, pool_config)
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
+
+    info!("init_pool ::: Pool Opened Successfully");
 
     Ok(())
 }
+
 
 pub fn close() -> VcxResult<()> {
     let handle = get_pool_handle()?;
@@ -146,7 +147,7 @@ pub mod tests {
     use super::*;
 
     pub fn create_test_pool() {
-        create_genesis_txn_file();
+        create_tmp_genesis_txn_file();
         create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
     }
 
@@ -167,15 +168,17 @@ pub mod tests {
              format!(r#"{{"reqSignature":{{}},"txn":{{"data":{{"data":{{"alias":"Node4","blskey":"2zN3bHM1m4rLz54MJHYSwvqzPchYp8jkHswveCLAEJVcX6Mm1wHQD1SkPYMzUDTZvWvhuE6VNAkK3KxVeEmsanSmvjVkReDeBEMxeDaayjcZjFGPydyey1qxBHmTvAnBKoPydvuTAqx5f7YNNRAdeLmUi99gERUU7TD8KfAa6MpQ9bw","blskey_pop":"RPLagxaR5xdimFzwmzYnz4ZhWtYQEj8iR5ZU53T2gitPCyCHQneUn2Huc4oeLd2B2HzkGnjAff4hWTJT6C7qHYB1Mv2wU5iHHGFWkhnTX9WsEAbunJCV2qcaXScKj4tTfvdDKfLiVuU2av6hbsMztirRze7LvYBkRHV3tGwyCptsrP","client_ip":"{}","client_port":9708,"node_ip":"{}","node_port":9707,"services":["VALIDATOR"]}},"dest":"4PS3EDQ3dW1tci1Bp6543CfuuebjFrg36kLAUcskGfaA"}},"metadata":{{"from":"TWwCRQRZ2ZHMJFn9TzLp7W"}},"type":"0"}},"txnMetadata":{{"seqNo":4,"txnId":"aa5e817d7cc626170eca175822029339a444eb0ee8f0bd20d3b0b76e566fb008"}},"ver":"1"}}"#, test_pool_ip, test_pool_ip)]
     }
 
-    pub fn create_genesis_txn_file() {
+    pub fn create_tmp_genesis_txn_file() -> String {
         let test_pool_ip = ::std::env::var("TEST_POOL_IP").unwrap_or("127.0.0.1".to_string());
 
         let node_txns = get_txns(&test_pool_ip);
         let txn_file_data = node_txns[0..4].join("\n");
-        let mut f = fs::File::create(get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
+        let file_path = String::from(get_temp_dir_path(GENESIS_PATH).to_str().unwrap());
+        let mut f = fs::File::create(&file_path).unwrap();
         f.write_all(txn_file_data.as_bytes()).unwrap();
         f.flush().unwrap();
         f.sync_all().unwrap();
+        file_path
     }
 
     #[cfg(feature = "pool_tests")]

@@ -1,8 +1,24 @@
 const { getMessagesForPwDid } = require('./messages')
 const { provisionAgentInAgency, initRustapi } = require('./vcx-workflows')
-const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, Proof, DisclosedProof, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
+const {
+  Schema,
+  CredentialDef,
+  Connection,
+  StateType,
+  IssuerCredential,
+  Credential,
+  Proof,
+  DisclosedProof,
+  initVcxWithConfig,
+  initVcxCore,
+  openVcxWallet,
+  openVcxPool,
+  vcxUpdateWebhookUrl,
+  getLedgerAuthorAgreement,
+  setActiveTxnAuthorAgreementMeta
+} = require('@absaoss/node-vcx-wrapper')
 const { createStorageService } = require('./storage-service')
-const { pollFunction, waitUntilAgencyIsReady } = require('./common')
+const { pollFunction, waitUntilAgencyIsReady, getRandomInt } = require('./common')
 const { getFaberSchemaData } = require('./test/data')
 
 async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger }) {
@@ -23,10 +39,29 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     connections[connectionName] = connection
   }
 
-  async function initVcx (name = agentName) {
-    logger.info(`Initializing VCX of ${name}`)
+  /**
+   * Initializes libvcx configuration, open pool, open wallet, set webhook url if present in agent provison
+   */
+  async function initVcxOld (name = agentName) {
+    logger.info(`Initializing VCX agent ${name}`)
     logger.debug(`Using following agent provision to initialize VCX ${JSON.stringify(agentProvision, null, 2)}`)
     await initVcxWithConfig(JSON.stringify(agentProvision))
+  }
+
+  /**
+   * Performs the same as initVcxOld, except for the fact it ignores webhook_url in agent provision. You have to
+   * update webhook_url by calling function vcxUpdateWebhookUrl.
+   */
+  async function initVcx (name = agentName) {
+    logger.info(`Initializing VCX agent ${name}`)
+    logger.debug(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
+    await initVcxCore(JSON.stringify(agentProvision))
+    logger.debug('Opening wallet and pool')
+    const promises = []
+    promises.push(openVcxPool())
+    promises.push(openVcxWallet())
+    await Promise.all(promises)
+    logger.debug('LibVCX fully initialized')
   }
 
   async function acceptTaa () {
@@ -34,6 +69,11 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     const taaJson = JSON.parse(taa)
     const utime = Math.floor(new Date() / 1000)
     await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
+  }
+
+  async function updateWebhookUrl (webhookUrl) {
+    logger.info(`Updating webhook url to ${webhookUrl}`)
+    await vcxUpdateWebhookUrl({ webhookUrl })
   }
 
   async function createSchema (_schemaData) {
@@ -147,6 +187,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
         return { result: null, isFinished: true }
       }
     }
+
     const [error] = await pollFunction(progressToAcceptedState, 'Progress connection', logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't progress connection to Accepted state. ${error}`)
@@ -186,7 +227,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     logger.info(`Found ${offers.length} credential offers.`)
   }
 
-  async function sendOffer ({ schemaAttrs, credDefName, connectionNameReceiver, connection, skipProgress }) {
+  async function sendOffer ({ schemaAttrs, credDefName, connectionNameReceiver, connection, revoke, skipProgress }) {
     logger.info(`Going to issue credential from credential definition ${credDefName}`)
     const credDefSerialized = await storageService.loadCredentialDefinition(credDefName)
     const credDef = await CredentialDef.deserialize(credDefSerialized)
@@ -229,6 +270,8 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     await issuerCred.sendCredential(connectionToReceiver)
     logger.debug(`IssuerCredential after credential was sent:\n${JSON.stringify(await issuerCred.serialize())}`)
 
+    const serCredential = await issuerCred.serialize()
+
     if (!skipProgress) {
       logger.info('Wait for alice to accept credential')
       await _progressIssuerCredentialToState(issuerCred, StateType.Accepted, 10, 2000)
@@ -258,6 +301,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
         return { result: offers, isFinished: true }
       }
     }
+
     const [error, offers] = await pollFunction(findSomeCredOffer, 'Get credential offer', logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't get credential offers. ${error}`)
@@ -275,6 +319,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
         return { result: null, isFinished: true }
       }
     }
+
     const [error] = await pollFunction(progressToAcceptedState, `Progress CredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't progress credential to Accepted state. ${error}`)
@@ -291,6 +336,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
         return { result: null, isFinished: true }
       }
     }
+
     const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't get credential offers. ${error}`)
@@ -393,10 +439,11 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     getCredentialOffers,
     getInstitutionDid,
     createConnection,
-    initVcx,
+    initVcx: initVcxOld,
     createInvite,
     inviteeConnectionCreateFromInvite,
     storeConnection,
+    updateWebhookUrl,
     sendMessage,
     getMessages,
     verifierCreateProof,

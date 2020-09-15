@@ -19,7 +19,7 @@ use utils::libindy::wallet::init_wallet;
 use utils::logger::LibvcxDefaultLogger;
 use utils::plugins::init_plugin;
 
-pub struct SetupEmpty; // empty
+pub struct SetupEmpty; // clears settings, setups up logging
 
 pub struct SetupDefaults; // set default settings
 
@@ -31,7 +31,7 @@ pub struct SetupStrictAriesMocks; // set default settings, strict aries communic
 
 pub struct SetupIndyMocks; // set default settings and enable indy mode
 
-pub struct SetupWallet; // set default settings and create indy wallet
+pub struct SetupDefaultWallet; // set default settings and create indy wallet
 
 pub struct SetupWalletAndPool; // set default settings and create indy wallet/ pool
 
@@ -53,9 +53,17 @@ pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provisi
 
 pub struct SetupLibraryAgencyZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
+pub struct SetupWallet(String); // creates wallet with random name, configures wallet settings
+
 fn setup() {
     settings::clear_config();
     set_defaults();
+    threadpool::init();
+    init_test_logging();
+}
+
+fn setup_empty() {
+    settings::clear_config();
     threadpool::init();
     init_test_logging();
 }
@@ -69,8 +77,7 @@ fn tear_down() {
 
 impl SetupEmpty {
     pub fn init() {
-        setup();
-        settings::clear_config();
+        setup_empty();
     }
 }
 
@@ -82,7 +89,9 @@ impl Drop for SetupEmpty {
 
 impl SetupDefaults {
     pub fn init() {
+        debug!("SetupDefaults :: starting");
         setup();
+        debug!("SetupDefaults :: finished");
     }
 }
 
@@ -154,14 +163,43 @@ impl Drop for SetupLibraryWallet {
 
 impl SetupWallet {
     pub fn init() -> SetupWallet {
-        setup();
+        let wallet_name = &format!("testwallet_{}", uuid::Uuid::new_v4().to_string());
+        settings::set_config_value(settings::CONFIG_WALLET_NAME, wallet_name);
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-        create_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
-        SetupWallet
+        settings::set_config_value(settings::CONFIG_WALLET_KEY, settings::DEFAULT_WALLET_KEY);
+        settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, settings::DEFAULT_WALLET_KEY_DERIVATION);
+        settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
+
+        let name = settings::get_config_value(settings::CONFIG_WALLET_NAME).unwrap();
+        let key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();
+        let kdf = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap();
+        let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
+
+        info!("SetupWallet:: init :: CONFIG_WALLET_NAME={} CONFIG_WALLET_KEY={} CONFIG_WALLET_KEY_DERIVATION={} CONFIG_WALLET_BACKUP_KEY={}", name, key, kdf, backup_key);
+        create_wallet(&name, None, None, None).unwrap();
+        info!("SetupWallet:: init :: Wallet {} created", name);
+
+        SetupWallet(name.into())
     }
 }
 
 impl Drop for SetupWallet {
+    fn drop(&mut self) {
+        delete_wallet(&self.0, None, None, None).unwrap();
+        reset_wallet_handle();
+    }
+}
+
+impl SetupDefaultWallet {
+    pub fn init() -> SetupDefaultWallet {
+        setup();
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+        create_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+        SetupDefaultWallet
+    }
+}
+
+impl Drop for SetupDefaultWallet {
     fn drop(&mut self) {
         delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
         tear_down()
@@ -385,6 +423,19 @@ fn init_test_logging() {
 pub fn create_new_seed() -> String {
     let x = rand::random::<u32>();
     format!("{:032}", x)
+}
+
+pub fn configure_trustee_did () {
+    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+    ::utils::libindy::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
+    let (my_did, my_vk) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
+    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
+}
+
+pub fn setup_libnullpay_nofees() {
+    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
+    ::utils::libindy::payments::tests::token_setup(None, None, true);
 }
 
 pub fn setup_indy_env(use_zero_fees: bool) {

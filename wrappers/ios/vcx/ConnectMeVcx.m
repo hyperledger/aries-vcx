@@ -326,14 +326,49 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
             completion([NSError errorFromVcxError: ret]);
         });
     }
+}
 
+- (vcx_error_t) vcxInitCore:(NSString *)config
+{
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+    return vcx_init_core(config_char);
+}
+
+- (void) vcxOpenWallet:(void (^)(NSError *error)) completion
+{
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
+    vcx_error_t ret = vcx_open_wallet(handle, VcxWrapperCommonCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: vcxOpenWallet: calling completion");
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
+}
+
+- (void) vcxOpenPool:(void (^)(NSError *error)) completion
+{
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
+    vcx_error_t ret = vcx_open_pool(handle, VcxWrapperCommonCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: vcxOpenPool: calling completion");
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
 }
 
 - (void)agentProvisionAsync:(NSString *)config
                completion:(void (^)(NSError *error, NSString *config))completion
 {
     const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     vcx_error_t ret = vcx_agent_provision_async(handle, config_char, VcxWrapperCommonStringCallback);
     if( ret != 0 )
     {
@@ -344,13 +379,23 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
             completion([NSError errorFromVcxError: ret], false);
         });
     }
-
 }
 
-- (int)updateWebhookUrl:(NSString *) notification_webhook_url {
+- (void) updateWebhookUrl:(NSString *) notification_webhook_url
+           withCompletion:(void (^)(NSError *error))completion;
+{
     const char *notification_webhook_url_char = [notification_webhook_url cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    vcx_error_t ret = vcx_update_webhook_url(handle, notification_webhook_url_char, VcxWrapperCommonCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
 
-    return vcx_update_webhook_url(notification_webhook_url_char);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: vcx_update_webhook_url: calling completion");
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
 }
 
 - (NSString *)errorCMessage:(NSInteger) errorCode {
@@ -1524,7 +1569,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
         [mechanism UTF8String],
         timestamp
     );
-
 }
 
 @end

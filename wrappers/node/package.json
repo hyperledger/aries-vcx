@@ -3,7 +3,7 @@
   "name": "@absaoss/node-vcx-wrapper",
   "description": "NodeJS wrapper for Absa's fork of HL LibVCX",
   "license": "Apache-2.0",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "directories": {
     "test": "test",
     "build": "dist",

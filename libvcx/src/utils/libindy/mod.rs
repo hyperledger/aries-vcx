@@ -102,8 +102,11 @@ pub mod tests {
     #[test]
     fn test_init_pool_and_wallet() {
         let _setup = SetupWalletAndPool::init();
+        let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap();
+        let path = settings::get_config_value(settings::CONFIG_GENESIS_PATH).unwrap();
+        let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG);
 
-        pool::init_pool().unwrap();
+        pool::init_pool(&pool_name, &path, pool_config.ok().as_ref().map(String::as_str)).unwrap();
         wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
     }
 }

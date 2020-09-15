@@ -22,10 +22,10 @@ async function runFaber (options) {
       protocolType: options.protocolType,
       agencyUrl: 'http://localhost:8080',
       seed: '000000000000000000000000Trustee1',
-      webhookUrl: `http://localhost:7209/notifications/${agentName}`,
       usePostgresWallet: false,
       logger
     })
+    await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
     if (process.env.ACCEPT_TAA || false) {
       await vcxClient.acceptTaa()
