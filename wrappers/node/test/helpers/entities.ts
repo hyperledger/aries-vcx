@@ -3,6 +3,7 @@ import '../module-resolver-helper'
 import { assert } from 'chai'
 import * as uuid from 'uuid'
 import {
+  ARIES_CREDENTIAL_OFFER, ARIES_PROOF_REQUEST,
   Connection,
   Credential,
   CredentialDef,
@@ -85,38 +86,11 @@ export const credentialDefPrepareForEndorser = async (data = dataCredentialDefPr
   return credentialDef
 }
 
-export const credentialOffer = [
-  {
-    claim_id: 'defaultCredentialId',
-    claim_name: 'Credential',
-    cred_def_id: 'id',
-    credential_attrs: {
-      address1: ['101 Tela Lane'],
-      address2: ['101 Wilson Lane'],
-      city: ['SLC'],
-      state: ['UT'],
-      zip: ['87121']
-    },
-    from_did: '8XFh8yBzrpJQmNyZzgoTqB',
-    libindy_offer: '{}',
-    msg_ref_id: '123',
-    msg_type: 'CLAIM_OFFER',
-    schema_seq_no: 1487,
-    to_did: '8XFh8yBzrpJQmNyZzgoTqB',
-    version: '0.1'
-  },
-  {
-    payment_addr: 'pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j',
-    payment_required: 'one-time',
-    price: 5
-  }
-]
-
 export const dataCredentialCreateWithOffer = async (): Promise<ICredentialCreateWithOffer> => {
   const connection = await connectionCreateConnect()
   return {
     connection,
-    offer: JSON.stringify(credentialOffer),
+    offer: ARIES_CREDENTIAL_OFFER,
     sourceId: 'testCredentialSourceId'
   }
 }
@@ -151,40 +125,11 @@ export const credentialCreateWithMsgId = async (data?: ICredentialCreateWithMsgI
   return credential
 }
 
-const disclosedProofRequest = {
-  '@topic': {
-    mid: 9,
-    tid: 1
-  },
-  '@type': {
-    name: 'PROOF_REQUEST',
-    version: '1.0'
-  },
-  'msg_ref_id': 'abcd',
-  'proof_request_data': {
-    name: 'Account Certificate',
-    nonce: '838186471541979035208225',
-    requested_attributes: {
-      business_2: {
-        name: 'business'
-      },
-      email_1: {
-        name: 'email'
-      },
-      name_0: {
-        name: 'name'
-      }
-    },
-    requested_predicates: {},
-    version: '0.1'
-  }
-}
-
 export const dataDisclosedProofCreateWithRequest = async (): Promise<IDisclosedProofCreateData> => {
   const connection = await connectionCreateConnect()
   return {
     connection,
-    request: JSON.stringify(disclosedProofRequest),
+    request: ARIES_PROOF_REQUEST,
     sourceId: 'testDisclousedProofSourceId'
   }
 }
@@ -263,10 +208,10 @@ export const dataProofCreate = (): IProofCreateData => ({
     { name: 'attr2' },
     { names: ['attr3', 'attr4'] }
   ],
+  name: 'Proof',
   preds: [
     { name: 'pred1', p_type: 'GE', p_value: 123 }
   ],
-  name: 'Proof',
   revocationInterval: {
     from: undefined,
     to: undefined

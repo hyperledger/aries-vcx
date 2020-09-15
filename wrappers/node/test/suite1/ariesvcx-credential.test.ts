@@ -6,16 +6,22 @@ import {
   connectionCreateConnect,
   credentialCreateWithMsgId,
   credentialCreateWithOffer,
-  credentialOffer,
   dataCredentialCreateWithMsgId,
   dataCredentialCreateWithOffer
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
-import { Credential, CredentialPaymentManager, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
-import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
+import {
+  Credential,
+  CredentialPaymentManager,
+  StateType,
+  VCXCode,
+  VCXMock,
+  VCXMockMessage
+} from 'src'
+import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('Credential:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
+  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
 
   describe('create:', () => {
     it('success', async () => {
@@ -86,10 +92,6 @@ describe('Credential:', () => {
       assert.ok(serialized)
       assert.property(serialized, 'version')
       assert.property(serialized, 'data')
-      const { data, version } = serialized
-      assert.ok(data)
-      assert.ok(version)
-      assert.equal(data.source_id, credential.sourceId)
     })
 
     it('throws: not initialized', async () => {
@@ -105,7 +107,6 @@ describe('Credential:', () => {
       const credential1 = await credentialCreateWithOffer()
       const data1 = await credential1.serialize()
       const credential2 = await Credential.deserialize(data1)
-      assert.equal(credential2.sourceId, credential1.sourceId)
       const data2 = await credential2.serialize()
       assert.deepEqual(data1, data2)
     })
@@ -124,10 +125,13 @@ describe('Credential:', () => {
       assert.equal(await credential.getState(), StateType.None)
     })
 
-    it(`returns ${StateType.RequestReceived}: created`, async () => {
-      const credential = await credentialCreateWithOffer()
-      await credential.updateState()
+    it(`returns status requestReceived`, async () => {
+      const connection = await connectionCreateConnect()
+      const data = await dataCredentialCreateWithOffer()
+      const credential = await Credential.create(data)
       assert.equal(await credential.getState(), StateType.RequestReceived)
+      credential.sendRequest({ connection, payment: 0 })
+      assert.equal(await credential.getState(), StateType.OfferSent)
     })
   })
 
@@ -214,21 +218,6 @@ describe('Credential:', () => {
         assert.equal(await credential.getState(), StateType.Accepted)
         const paymentTxn = await credential.paymentManager.getPaymentTxn()
         validatePaymentTxn(paymentTxn)
-      })
-
-      it.skip('throws: no paymentTxn', async () => {
-        const data = await dataCredentialCreateWithOffer()
-        data.offer = JSON.stringify([credentialOffer[0]])
-        const credential = await credentialCreateWithOffer(data)
-        await credential.sendRequest({ connection: data.connection, payment: 0 })
-        assert.equal(await credential.getState(), StateType.OfferSent)
-        VCXMock.setVcxMock(VCXMockMessage.CredentialResponse)
-        VCXMock.setVcxMock(VCXMockMessage.UpdateIssuerCredential)
-        await credential.updateState()
-        assert.equal(await credential.getState(), StateType.Accepted)
-        const error = await shouldThrow(() => credential.paymentManager.getPaymentTxn())
-        // Change to equal a specific payment related code
-        assert.equal(error.vcxCode, VCXCode.NO_PAYMENT_INFORMATION)
       })
     })
   })
