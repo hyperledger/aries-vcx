@@ -124,7 +124,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             return Ok(vec!());
         }
         let mocked_response = AgencyMock::get_response();
-        debug!("Agenc returns mocked response of length {}", mocked_response.len());
+        debug!("Agency returns mocked response of length {}", mocked_response.len());
         return Ok(mocked_response);
     }
 

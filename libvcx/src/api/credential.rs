@@ -1041,7 +1041,6 @@ mod tests {
 
         let handle_conn = ::connection::tests::build_test_connection();
 
-        // let handle_cred = credential::from_string(SERIALIZED_CREDENTIAL_V2_OFFER_RECEIVED).unwrap();
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
         debug!("credential handle = {}", handle_cred);

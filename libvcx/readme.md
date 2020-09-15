@@ -22,3 +22,11 @@ Run integration tests:
 ```
 TEST_POOL_IP=127.0.0.1 cargo test  --features "pool_tests" -- --test-threads=1
 ```
+
+## Environment variables
+
+- `WARNLOG_MSGS_RECEIVED` - if set to `true` log received E2E connection messages
+- `DISALLOW_V1` - if set to `true` process panics whenever one of following is attempted:
+  - run legacy V1 onboarding
+  - create V1 connection  
+  - create legacy issuer credential object
