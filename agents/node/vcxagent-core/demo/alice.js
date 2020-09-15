@@ -1,9 +1,7 @@
-const { provisionAgentInAgency, initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
+const { allowedProtocolTypes } = require('../vcx-workflows')
 const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
 const { createVcxAgent } = require('../vcx-agent')
-const { createStorageService } = require('../storage-service')
-const { waitUntilAgencyIsReady } = require('../common')
 const sleepPromise = require('sleep-promise')
 const logger = require('./logger')('Alice')
 const { runScript } = require('./script-common')
@@ -39,40 +37,30 @@ async function getInvitationString (fetchInviteUrl) {
 
 async function runAlice (options) {
   logger.info('Starting.')
-  const testRunId = uuid.v4()
-  const seed = '000000000000000000000000Trustee1'
-  const protocolType = options.protocolType
-  const agentName = `alice-${testRunId}`
-  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
-  const usePostgresWallet = false
-  const logLevel = process.env.VCX_LOG_LEVEL || 'vcx=error'
 
-  await initRustapi(logLevel)
-
-  const agencyUrl = 'http://localhost:8080'
-  await waitUntilAgencyIsReady(agencyUrl, logger)
-
-  const storageService = await createStorageService(agentName)
-
-  if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
-    await storageService.saveAgentProvision(agentProvision)
-  }
-  const vcxClient = await createVcxAgent(storageService, logger)
-
-  const connectionName = `alice-${testRunId}`
+  const agentName = `alice-${uuid.v4()}`
+  const vcxClient = await createVcxAgent({
+    agentName,
+    protocolType: options.protocolType,
+    agencyUrl: 'http://localhost:8080',
+    seed: '000000000000000000000000Trustee1',
+    webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    usePostgresWallet: false,
+    logger,
+    rustLogLevel: process.env.VCX_LOG_LEVEL || 'vcx=error'
+  })
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(connectionName, invitationString)
+  const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(agentName, invitationString)
 
   if (!connectionToFaber) {
     throw Error('Connection with alice was not established.')
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxClient.waitForCredentialOfferAndAccept(connectionName)
+  await vcxClient.waitForCredentialOfferAndAccept(agentName)
 
-  logger.info('#22 Poll agency for a proof request')
+  logger.info('Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)
   while (requests.length === 0) {
     await sleepPromise(2000)
@@ -105,15 +93,15 @@ async function runAlice (options) {
   }
   const selfAttestedAttrs = { attribute_3: 'Smith' }
 
-  logger.info('#25 Generate the proof.')
+  logger.info('Generate the proof.')
   logger.debug(`Proof is using wallet credentials:\n${JSON.stringify(selectedCreds, null, 2)}
   \nProof is using self attested attributes: ${JSON.stringify(selfAttestedAttrs, null, 2)}`)
   await proof.generateProof({ selectedCreds, selfAttestedAttrs })
 
-  logger.info('#26 Send the proof to faber')
+  logger.info('Send the proof to faber')
   await proof.sendProof(connectionToFaber)
 
-  logger.info('#27 Wait for Faber to receive the proof')
+  logger.info('Wait for Faber to receive the proof')
   let proofState = await proof.getState()
   while (proofState !== StateType.Accepted && proofState !== StateType.None) {
     await sleepPromise(2000)

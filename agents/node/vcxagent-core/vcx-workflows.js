@@ -8,6 +8,13 @@ const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\win
 
 module.exports.allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
 
+module.exports.protocolTypes = {
+  v1: '1.0',
+  v2: '2.0',
+  v3: '3.0',
+  v4: '4.0'
+}
+
 function getLibraryPath (libraryName) {
   const platform = os.platform()
   const postfix = extension[platform.toLowerCase()] || extension.linux
