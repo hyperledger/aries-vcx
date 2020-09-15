@@ -1220,11 +1220,7 @@ pub mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::WALLET_RECORD_NOT_FOUND.code_num));
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_record_value_success() {
-        let _setup = SetupLibraryWallet::init();
-
+    pub fn _test_add_and_get_wallet_record() {
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
         let value = CStringUtils::string_to_cstring("Record Value".to_string());
@@ -1245,7 +1241,7 @@ pub mod tests {
                                          tags.as_ptr(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
+        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_get_record(cb.command_handle,
@@ -1254,7 +1250,15 @@ pub mod tests {
                                          options.as_ptr(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
+        let record_value = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
+        assert!(record_value.contains("Record Value"));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_record_value_success() {
+        let _setup = SetupLibraryWallet::init();
+        _test_add_and_get_wallet_record();
     }
 
     #[test]
