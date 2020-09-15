@@ -627,7 +627,7 @@ pub fn get_proof_uuid(handle: u32) -> VcxResult<String> {
         match obj {
             Proofs::Pending(ref obj) => Ok(obj.get_proof_uuid().clone()),
             Proofs::V1(ref obj) => Ok(obj.get_proof_uuid().clone()),
-            Proofs::V3(_) => Err(VcxError::from(VcxErrorKind::InvalidProofHandle))
+            Proofs::V3(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported))
         }
     })
 }
@@ -664,7 +664,12 @@ pub mod tests {
     use connection::tests::build_test_connection;
     use utils::libindy::pool;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
+    use utils::httpclient::AgencyMockDecrypted;
+    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
+    use v3::handlers::connection as connection_v3;
+    use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use messages::proofs::proof_request;
+
     use connection;
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
@@ -776,7 +781,8 @@ pub mod tests {
                                   "Optional".to_owned()).unwrap();
         let proof_string = to_string(handle).unwrap();
         let s: Value = serde_json::from_str(&proof_string).unwrap();
-        assert_eq!(s["version"], PENDING_OBJECT_SERIALIZE_VERSION);
+        assert_eq!(s["version"], V3_OBJECT_SERIALIZE_VERSION);
+        assert!(s["data"]["verifier_sm"].is_object());
         assert!(!proof_string.is_empty());
     }
 
@@ -791,12 +797,9 @@ pub mod tests {
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
         let proof_data = to_string(handle).unwrap();
-        let proof1: Proof = Proof::from_str(&proof_data).unwrap();
-        assert!(release(handle).is_ok());
-
-        let new_handle = from_string(&proof_data).unwrap();
-        let proof2: Proof = Proof::from_str(&to_string(new_handle).unwrap()).unwrap();
-        assert_eq!(proof1, proof2);
+        let _hnadle2= from_string(&proof_data).unwrap();
+        let proof_data2 = to_string(handle).unwrap();
+        assert_eq!(proof_data, proof_data2);
     }
 
     #[test]
@@ -816,42 +819,17 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_proof_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_handle = build_test_connection();
-        connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
-        connection::set_agent_did(connection_handle, DID).unwrap();
-        connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
 
-        let handle = create_proof("1".to_string(),
+        let proof_handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
                                   REQUESTED_PREDICATES.to_owned(),
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "ntc2ytb");
-    }
-
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_send_proof_request_fails_with_no_pw() {
-        //This test has 2 purposes:
-        //1. when send_proof_request fails, Ok(c.send_proof_request(connection_handle)?) returns error instead of Ok(_)
-        //2. Test that when no PW connection exists, send message fails on invalid did
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection();
-        connection::set_pw_did(connection_handle, "").unwrap();
-
-        let handle = create_proof("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
-
-        assert!(send_proof_request(handle, connection_handle).is_err());
+        assert_eq!(send_proof_request(proof_handle, connection_handle).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(proof_handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 
     #[test]
@@ -870,40 +848,20 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_update_state_with_pending_proof() {
-        let _setup = SetupMocks::init();
+    fn test_send_presentation_request() {
+        let _setup = SetupAriesMocks::init();
 
-        let connection_h = Some(build_test_connection());
-        let mut proof = Proof {
-            source_id: "12".to_string(),
-            msg_uid: String::from("1234"),
-            ref_msg_id: String::new(),
-            requested_attrs: String::from("[]"),
-            requested_predicates: String::from("[]"),
-            state: VcxStateType::VcxStateOfferSent,
-            proof_state: ProofStateType::ProofUndefined,
-            name: String::new(),
-            version: String::from("1.0"),
-            nonce: generate_nonce().unwrap(),
-            proof: None,
-            proof_request: None,
-            my_did: None,
-            my_vk: None,
-            their_did: None,
-            their_vk: None,
-            agent_did: None,
-            agent_vk: None,
-            revocation_interval: RevocationInterval { from: None, to: None },
-            thread: Some(Thread::new()),
-        };
+        let connection_handle = build_test_connection();
 
-        apply_agent_info(&mut proof, &default_agent_info(connection_h));
+        let mut proof = Verifier::create("1".to_string(),
+                                  REQUESTED_ATTRS.to_owned(),
+                                  REQUESTED_PREDICATES.to_owned(),
+                                  r#"{"support_revocation":false}"#.to_string(),
+                                  "Optional".to_owned()).unwrap();
 
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
+        proof.send_presentation_request(connection_handle).unwrap();
 
-        proof.update_state(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
     }
 
     #[test]
@@ -919,35 +877,20 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_reject_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let connection_handle = build_test_connection();
-        let mut proof = create_boxed_proof(Some(VcxStateType::VcxStateOfferSent),
-                                           Some(ProofStateType::ProofUndefined),
-                                           Some(connection_handle));
 
-        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR.to_string())).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRejected as u32);
-    }
+        let mut proof = Verifier::create("1".to_string(),
+                                  REQUESTED_ATTRS.to_owned(),
+                                  REQUESTED_PREDICATES.to_owned(),
+                                  r#"{"support_revocation":false}"#.to_string(),
+                                  "Optional".to_owned()).unwrap();
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_proof_returns_proof_when_proof_state_invalid() {
-        let _setup = SetupMocks::init();
+        proof.send_presentation_request(connection_handle);
 
-        let mut proof = create_boxed_proof(Some(VcxStateType::VcxStateOfferSent),
-                                           None,
-                                           Some(build_test_connection()));
-
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
-
-        proof.update_state(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-        assert_eq!(proof.get_proof_state(), ProofStateType::ProofInvalid as u32);
-        let proof_data = proof.get_proof().unwrap();
-        assert!(proof_data.contains(r#""cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0""#));
-        assert!(proof_data.contains(r#""schema_id":"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0""#));
+        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2)).unwrap();
+        assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 
     #[test]
@@ -1003,7 +946,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_defs_json() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -1083,53 +1026,9 @@ pub mod tests {
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
     }
 
-    #[ignore]
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_proof_validation_with_predicate() {
-        let _setup = SetupLibraryWallet::init();
-
-        pool::tests::open_test_pool();
-        //Generated proof from a script using libindy's python wrapper
-
-        let proof_msg: ProofMessage = serde_json::from_str(PROOF_LIBINDY).unwrap();
-        let mut proof_req_msg = ProofRequestMessage::create();
-        proof_req_msg.proof_request_data = serde_json::from_str(PROOF_REQUEST).unwrap();
-        let mut proof = Proof {
-            source_id: "12".to_string(),
-            msg_uid: String::from("1234"),
-            ref_msg_id: String::new(),
-            requested_attrs: String::from("[]"),
-            requested_predicates: REQUESTED_PREDICATES.to_string(),
-            state: VcxStateType::VcxStateRequestReceived,
-            proof_state: ProofStateType::ProofUndefined,
-            name: String::new(),
-            version: String::from("1.0"),
-            nonce: generate_nonce().unwrap(),
-            my_did: None,
-            my_vk: None,
-            their_did: None,
-            their_vk: None,
-            agent_did: None,
-            agent_vk: None,
-            proof: Some(proof_msg),
-            proof_request: Some(proof_req_msg),
-            revocation_interval: RevocationInterval { from: None, to: None },
-            thread: Some(Thread::new()),
-        };
-        apply_agent_info(&mut proof, &default_agent_info(None));
-
-        let rc = proof.proof_validation();
-        assert!(rc.is_ok());
-        assert_eq!(proof.proof_state, ProofStateType::ProofValidated);
-
-        let proof_data = proof.get_proof().unwrap();
-        assert!(proof_data.contains(r#""schema_seq_no":694,"issuer_did":"DunkM3x1y7S4ECgSL4Wkru","credential_uuid":"claim::1f927d68-8905-4188-afd6-374b93202802","attr_info":{"name":"age","value":18,"type":"predicate","predicate_type":"GE"}}"#));
-    }
-
-    #[ignore]
-    #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_send_proof_request_can_be_retried() {
         let _setup = SetupLibraryWallet::init();
 
@@ -1155,31 +1054,24 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof_request_status_can_be_retried() {
-        let _setup = SetupMocks::init();
+    fn test_proof_validation_with_predicate() {
+        let _setup = SetupAriesMocks::init();
 
-        let _new_handle = 1;
+        let connection_handle = build_test_connection();
 
-        let mut proof = create_boxed_proof(None, None, Some(build_test_connection()));
+        let mut proof = Verifier::create("1".to_string(),
+                                  REQUESTED_ATTRS.to_owned(),
+                                  REQUESTED_PREDICATES.to_owned(),
+                                  r#"{"support_revocation":false}"#.to_string(),
+                                  "Optional".to_owned()).unwrap();
 
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
-        //httpclient::set_next_u8_response(GET_PROOF_OR_CREDENTIAL_RESPONSE.to_vec());
+        proof.send_presentation_request(connection_handle).unwrap();
 
-        proof.get_proof_request_status(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-        assert_eq!(proof.get_proof_state(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        // Changing the state and proof state to show that validation happens again
-        // and resets the values to received and Invalid
-        AgencyMock::set_next_response(PROOF_RESPONSE.to_vec());
-        AgencyMock::set_next_response(UPDATE_PROOF_RESPONSE.to_vec());
-        proof.state = VcxStateType::VcxStateOfferSent;
-        proof.proof_state = ProofStateType::ProofUndefined;
-        proof.get_proof_request_status(None).unwrap();
-        proof.update_state(None).unwrap();
-        assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-        assert_eq!(proof.get_proof_state(), ProofStateType::ProofInvalid as u32);
+        proof.update_state_with_message(PROOF_RESPONSE_DECRYPTED).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
@@ -1365,4 +1257,3 @@ pub mod tests {
         }
     }
 }
-

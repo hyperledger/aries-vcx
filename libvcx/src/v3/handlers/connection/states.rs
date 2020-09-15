@@ -323,7 +323,7 @@ impl DidExchangeSM {
         }
     }
 
-    pub fn isInNullState(&self) -> bool {
+    pub fn is_in_null_state(&self) -> bool {
         match self.state {
             ActorDidExchangeState::Inviter(DidExchangeState::Null(_)) => true,
             ActorDidExchangeState::Invitee(DidExchangeState::Null(_)) => true,

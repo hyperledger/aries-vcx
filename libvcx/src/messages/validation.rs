@@ -16,8 +16,8 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
         let check_did = String::from(did);
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length")),
-            Err(x) => Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid DID: {}", x))),
+            Ok(_) => { warn!("ok(_)"); return Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length")) },
+            Err(x) => { warn!("Err(x)"); return Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid DID: {}", x)))},
         }
     }
 }

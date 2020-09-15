@@ -122,7 +122,7 @@ pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
     trace!("vcx_agent_update_info(command_handle: {}, json: {})",
            command_handle, json);
 
-    let agent_info: UpdateAgentInfo = match serde_json::from_str(&json) {
+    let _agent_info: UpdateAgentInfo = match serde_json::from_str(&json) {
         Ok(x) => x,
         Err(e) => {
             return VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot deserialize agent info: {}", e)).into();
@@ -130,19 +130,8 @@ pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match messages::agent_utils::update_agent_info(&agent_info.id, &agent_info.value) {
-            Ok(()) => {
-                trace!("vcx_agent_update_info_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
-                cb(command_handle, error::SUCCESS.code_num);
-            }
-            Err(e) => {
-                error!("vcx_agent_update_info_cb(command_handle: {}, rc: {})",
-                       command_handle, e);
-                cb(command_handle, e.into());
-            }
-        };
-
+        error!("vcx_agent_update_info is not supported anymore");
+        cb(command_handle, error::NOT_READY.code_num);
         Ok(())
     });
 
@@ -257,33 +246,8 @@ pub extern fn vcx_download_agent_messages(command_handle: u32,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::messages::get_message::download_agent_messages(message_status, uids) {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, x);
-
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
-                        warn!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                              command_handle, err, "null");
-
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                };
-            }
-            Err(e) => {
-                warn!("vcx_download_agent_messages(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, e, "null");
-
-                cb(command_handle, e.into(), ptr::null_mut());
-            }
-        };
-
+        error!("vcx_download_agent_messages is not supported anymore");
+        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
     });
 
@@ -569,11 +533,11 @@ mod tests {
     use std::ffi::CString;
     use api::return_types_u32;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
-    use utils::constants::REGISTER_RESPONSE;
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::constants;
     use utils::timeout::TimeoutUtils;
 
-    static CONFIG: &'static str = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
+    static CONFIG_V3: &'static str = r#"{"protocol_type": "3.0", "agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -591,7 +555,7 @@ mod tests {
     fn test_provision_agent() {
         let _setup = SetupMocks::init();
 
-        let c_json = CString::new(CONFIG).unwrap().into_raw();
+        let c_json = CString::new(CONFIG_V3).unwrap().into_raw();
 
         let result = vcx_provision_agent(c_json);
 
@@ -601,10 +565,10 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_agent() {
+    fn test_provision_agent_async_c_closure() {
         let _setup = SetupMocks::init();
 
-        let result = _vcx_agent_provision_async_c_closure(CONFIG).unwrap();
+        let result = _vcx_agent_provision_async_c_closure(CONFIG_V3).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
     }
 
@@ -639,23 +603,10 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_update_agent_info() {
-        let _setup = SetupMocks::init();
-
-        let json_string = r#"{"id":"123","value":"value"}"#;
-        let c_json = CString::new(json_string).unwrap().into_raw();
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        let _result = vcx_agent_update_info(cb.command_handle, c_json, Some(cb.get_callback()));
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_update_agent_fails() {
         let _setup = SetupMocks::init();
 
-        AgencyMock::set_next_response(REGISTER_RESPONSE.to_vec()); //set response garbage
+        AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec()); //set response garbage
 
         let json_string = r#"{"id":"123"}"#;
         let c_json = CString::new(json_string).unwrap().into_raw();
@@ -681,7 +632,9 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_messages_download() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
+
+        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_messages_download(cb.command_handle, ptr::null_mut(), ptr::null_mut(), ptr::null_mut(), Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -691,7 +644,9 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_messages_update_status() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
+
+        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let status = CString::new("MS-103").unwrap().into_raw();
         let json = CString::new(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#).unwrap().into_raw();
@@ -701,7 +656,7 @@ mod tests {
                                               status,
                                               json,
                                               Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
+                                              error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 }

@@ -48,34 +48,6 @@ export async function provisionAgent (configAgent: string, options: IInitVCXOpti
   }
 }
 
-export async function updateAgentInfo (options: string): Promise<void> {
-  /**
-   * Update information on the agent (ie, comm method and type)
-   */
-  try {
-    return await createFFICallbackPromise<void>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_agent_update_info(0, options, cb)
-        if (rc) {
-          reject(rc)
-        }
-      },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve()
-        })
-    )
-  } catch (err) {
-    throw new VCXInternalError(err)
-  }
-}
-
 export function getVersion (): string {
   return rustAPI().vcx_version()
 }

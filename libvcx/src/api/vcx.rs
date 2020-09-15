@@ -39,6 +39,7 @@ pub extern fn vcx_init_with_config(command_handle: CommandHandle,
     if config == "ENABLE_TEST_MODE" {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::set_defaults();
+        warn!("Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
     } else {
         match settings::process_config_string(&config, true) {
             Err(e) => {
@@ -85,6 +86,7 @@ pub extern fn vcx_init(command_handle: CommandHandle,
         if config_path == "ENABLE_TEST_MODE" {
             settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
             settings::set_defaults();
+            warn!("vcx_init:: Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
         } else {
             match settings::process_config_file(&config_path) {
                 Err(_) => {
@@ -107,6 +109,7 @@ pub extern fn vcx_init(command_handle: CommandHandle,
 }
 
 fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("_finish_init: Going to finish VCX Init.");
     ::utils::threadpool::init();
 
     settings::log_settings();
@@ -129,9 +132,10 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
 
-    trace!("libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
+    info!("_finish_init: absafork libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
 
     spawn(move || {
+        info!("_finish_init: initializing pool");
         if settings::get_config_value(settings::CONFIG_GENESIS_PATH).is_ok() {
             match init_pool() {
                 Ok(()) => (),
@@ -143,6 +147,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
             }
         }
 
+        info!("_finish_init: opening wallet");
         match wallet::open_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str),
                                   storage_config.as_ref().map(String::as_str), storage_creds.as_ref().map(String::as_str)) {
             Ok(_) => debug!("Init Wallet Successful"),
@@ -153,6 +158,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
             }
         }
 
+        info!("_finish_init: getting and setting webhook url");
         match settings::get_config_value(settings::CONFIG_WEBHOOK_URL) {
             Ok(webhook_url) => match ::messages::agent_utils::update_agent_webhook(&webhook_url) {
                 Ok(()) => {
@@ -844,7 +850,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_shutdown() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let data = r#"["name","male"]"#;
         let connection = ::connection::tests::build_test_connection();

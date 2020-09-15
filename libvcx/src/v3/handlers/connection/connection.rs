@@ -4,7 +4,7 @@ use error::prelude::*;
 use messages::get_message::Message;
 use v3::handlers::connection::agent::AgentInfo;
 use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM};
+use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM, DidExchangeState};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::basic_message::message::BasicMessage;
 use v3::messages::connection::did_doc::DidDoc;
@@ -47,21 +47,13 @@ impl Connection {
 
     pub fn agent_info(&self) -> &AgentInfo { self.connection_sm.agent_info() }
 
-    pub fn remote_did(&self) -> VcxResult<String> {
-        self.connection_sm.remote_did()
-    }
+    pub fn remote_did(&self) -> VcxResult<String> { self.connection_sm.remote_did() }
 
-    pub fn remote_vk(&self) -> VcxResult<String> {
-        self.connection_sm.remote_vk()
-    }
+    pub fn remote_vk(&self) -> VcxResult<String> { self.connection_sm.remote_vk() }
 
-    pub fn state_object<'a>(&'a self) -> &'a ActorDidExchangeState {
-        &self.connection_sm.state_object()
-    }
+    pub fn state_object<'a>(&'a self) -> &'a ActorDidExchangeState { &self.connection_sm.state_object() }
 
-    pub fn get_source_id(&self) -> String {
-        self.connection_sm.source_id().to_string()
-    }
+    pub fn get_source_id(&self) -> String { self.connection_sm.source_id().to_string() }
 
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
@@ -89,10 +81,11 @@ impl Connection {
         self.step(DidExchangeMessages::Connect())
     }
 
-    pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
+    pub fn update_state(&mut self, message: Option<&A2AMessage>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
-        if  self.connection_sm.isInNullState() { // nothing to do
+        // TODO: Remove - it should be SM logic to decide state transitions
+        if self.connection_sm.is_in_null_state() {
             return Ok(());
         }
 
@@ -101,22 +94,26 @@ impl Connection {
         }
 
         let messages = self.get_messages()?;
-        let agent_info = self.agent_info().clone();
+        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 
         if let Some((uid, message)) = self.connection_sm.find_message_to_handle(messages) {
+            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
             self.handle_message(message.into())?;
-            agent_info.update_message_status(uid)?;
-        };
-
-        if let Some(prev_agent_info) = self.connection_sm.prev_agent_info().cloned() {
+            self.agent_info().clone().update_message_status(uid)?;
+        } else if let Some(prev_agent_info) = self.connection_sm.prev_agent_info().cloned() {
+            trace!("Connection::update_state >>> getting messages from bootstrap agent: {:?}", prev_agent_info);
             let messages = prev_agent_info.get_messages()?;
 
+            trace!("Connection::update_state >>> handling obtained messages: {:?}", messages);
             if let Some((uid, message)) = self.connection_sm.find_message_to_handle(messages) {
                 self.handle_message(message.into())?;
                 prev_agent_info.update_message_status(uid)?;
             }
+        } else {
+            trace!("Connection::update_state >>> found no message to handle");
         }
 
+        trace!("Connection::update_state >>> done");
         Ok(())
     }
 
@@ -125,14 +122,10 @@ impl Connection {
         self.connection_sm.agent_info().update_message_status(uid)
     }
 
-    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<()> {
-        trace!("Connection: update_state_with_message: {}", message);
+    pub fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
+        trace!("Connection: update_state_with_message: {:?}", message);
 
-        let message: A2AMessage = ::serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption,
-                                              format!("Cannot updated state with messages: Message deserialization failed: {:?}", err)))?;
-
-        self.handle_message(message.into())?;
+        self.handle_message(message.clone().into())?;
 
         Ok(())
     }
@@ -167,6 +160,13 @@ impl Connection {
 
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection::send_message >>> message: {:?}", message);
+
+        match self.state_object() {
+            ActorDidExchangeState::Inviter(ref state) | ActorDidExchangeState::Invitee(ref state) => match state {
+                DidExchangeState::Completed(_) => {},
+                _ => warn!("Sending message to connection in incomplete state!")
+            }
+        }
 
         let did_doc = self.connection_sm.did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
