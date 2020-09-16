@@ -1025,7 +1025,7 @@ pub mod tests {
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string())).unwrap();
+        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string()), Some(handle_conn)).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         // First attempt to send credential fails
@@ -1072,7 +1072,7 @@ pub mod tests {
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string())).unwrap();
+        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string()), Some(handle_conn)).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
     }
 
@@ -1089,7 +1089,7 @@ pub mod tests {
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
         // try to update state with nonsense message
-        issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK.to_string()));
+        issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK.to_string()), Some(handle_conn));
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 
@@ -1136,7 +1136,7 @@ pub mod tests {
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string())).unwrap();
+        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST.to_string()), Some(handle_conn)).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         issuer_credential::send_credential(handle_cred, handle_conn).unwrap();

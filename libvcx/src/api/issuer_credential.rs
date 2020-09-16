@@ -1058,6 +1058,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_update_state_v2() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let connection_handle = ::connection::tests::build_test_connection();
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();

@@ -1015,7 +1015,7 @@ pub mod tests {
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
 
         info!("full_credential_test:: going to update_state, should receive credential");
-        update_state(handle_cred, None).unwrap();
+        update_state(handle_cred, None, Some(handle_conn)).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateAccepted as u32);
 
         info!("full_credential_test:: going to get_credential");
