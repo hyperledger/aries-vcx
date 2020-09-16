@@ -34,8 +34,8 @@ impl Issuer {
         self.step(CredentialIssuanceMessage::CredentialInit(connection_handle))
     }
 
-    pub fn send_credential(&mut self, _connection_handle: u32) -> VcxResult<()> { // TODO: should use connection_handle
-        self.step(CredentialIssuanceMessage::CredentialSend())
+    pub fn send_credential(&mut self, connection_handle: u32) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialSend(connection_handle))
     }
 
     pub fn get_state(&self) -> VcxResult<u32> {
@@ -50,7 +50,7 @@ impl Issuer {
         self.issuer_sm.revoke(publish)
     }
 
-    pub fn update_status(&mut self, msg: Option<String>) -> VcxResult<()> {
+    pub fn update_status(&mut self, msg: Option<String>, connection_handle: Option<u32>) -> VcxResult<()> {
         match msg {
             Some(msg) => {
                 let message: A2AMessage = ::serde_json::from_str(&msg)
@@ -59,7 +59,7 @@ impl Issuer {
                 self.step(message.into())
             }
             None => {
-                self.issuer_sm = self.issuer_sm.clone().update_state()?;
+                self.issuer_sm = self.issuer_sm.clone().update_state(connection_handle)?;
                 Ok(())
             }
         }
@@ -95,7 +95,7 @@ impl Holder {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(connection_handle))
     }
 
-    pub fn update_state(&mut self, msg: Option<String>) -> VcxResult<()> {
+    pub fn update_state(&mut self, msg: Option<String>, connection_handle: Option<u32>) -> VcxResult<()> {
         match msg {
             Some(msg) => {
                 let message: A2AMessage = ::serde_json::from_str(&msg)
@@ -104,7 +104,7 @@ impl Holder {
                 self.step(message.into())
             }
             None => {
-                self.holder_sm = self.holder_sm.clone().update_state()?;
+                self.holder_sm = self.holder_sm.clone().update_state(connection_handle)?;
                 Ok(())
             }
         }

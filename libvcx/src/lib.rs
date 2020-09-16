@@ -191,14 +191,14 @@ mod tests {
 
     fn send_credential(issuer_handle: u32, connection: u32, credential_handle: u32) {
         set_institution();
-        issuer_credential::update_state(issuer_handle, None).unwrap();
+        issuer_credential::update_state(issuer_handle, None, None).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(issuer_handle).unwrap());
         println!("sending credential");
         issuer_credential::send_credential(issuer_handle, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
         // AS CONSUMER STORE CREDENTIAL
         ::utils::devsetup::set_consumer();
-        credential::update_state(credential_handle, None).unwrap();
+        credential::update_state(credential_handle, None, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         println!("storing credential");
         credential::get_credential_id(credential_handle).unwrap();

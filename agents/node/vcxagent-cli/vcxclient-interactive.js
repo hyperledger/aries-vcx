@@ -1,28 +1,19 @@
 const readlineSync = require('readline-sync')
-const { createStorageService, waitUntilAgencyIsReady, createVcxAgent, provisionAgentInAgency, initRustapi } = require('vcxagent-core')
+const { createVcxAgent } = require('vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
 async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustlog) {
-  logger.debug('Initializing rust api')
-  await initRustapi(rustlog)
-  logger.debug('Rust api initialized')
-
   logger.info(`Creating interactive client ${agentName} seed=${seed} protocolType=${protocolType}`)
-
-  const webhookUrl = `http://localhost:7209/notifications/${agentName}`
-  const usePostgresWallet = false
-  const agencyUrl = 'http://localhost:8080'
-
-  logger.info(`Created interactive client for agent ${agentName}.`)
-  const storageService = await createStorageService(agentName)
-
-  await waitUntilAgencyIsReady(agencyUrl, logger)
-
-  if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
-    await storageService.saveAgentProvision(agentProvision)
-  }
-  const vcxClient = await createVcxAgent(storageService, logger)
+  const vcxClient = await createVcxAgent({
+    agentName,
+    protocolType,
+    agencyUrl: 'http://localhost:8080',
+    seed,
+    webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    usePostgresWallet: false,
+    logger,
+    rustLogLevel: 'error'
+  })
 
   if (acceptTaa) {
     await vcxClient.acceptTaa()

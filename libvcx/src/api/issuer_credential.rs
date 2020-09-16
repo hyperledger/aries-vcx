@@ -314,7 +314,7 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, None) {
+        match issuer_credential::update_state(credential_handle, None, None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -322,6 +322,47 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
             }
             Err(x) => {
                 warn!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                      command_handle, credential_handle, x, 0, source_id);
+                cb(command_handle, x.into(), 0);
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandle,
+                                                    credential_handle: u32,
+                                                    connection_handle: u32,
+                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_v2_issuer_credential_update_state >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, credential_handle, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    }
+
+    spawn(move || {
+        match issuer_credential::update_state(credential_handle, None, Some(connection_handle)) {
+            Ok(x) => {
+                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
+                cb(command_handle, error::SUCCESS.code_num, x);
+            }
+            Err(x) => {
+                warn!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
@@ -370,7 +411,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, Some(message)) {
+        match issuer_credential::update_state(credential_handle, Some(message), None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -840,7 +881,9 @@ pub mod tests {
     };
     use api::{return_types_u32, VcxStateType};
     use utils::devsetup::*;
+    use utils::constants::*;
     use utils::timeout::TimeoutUtils;
+    use utils::httpclient::AgencyMockDecrypted;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
     static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
@@ -1004,6 +1047,40 @@ pub mod tests {
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateRequestReceived as u32);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_vcx_issuer_update_state_v2() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = ::connection::tests::build_test_connection();
+        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
+        let cb = return_types_u32::Return_U32::new().unwrap();
+
+        assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
+                                                    handle,
+                                                    connection_handle,
+                                                    Some(cb.get_callback())),
+                   error::SUCCESS.code_num);
+
+        cb.receive(TimeoutUtils::some_medium()).unwrap();
+
+        ::connection::release(connection_handle).unwrap();
+
+        let connection_handle = ::connection::tests::build_test_connection();
+        let cb = return_types_u32::Return_U32_U32::new().unwrap();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(CREDENTIAL_REQ_RESPONSE_STR_V2);
+
+        assert_eq!(vcx_v2_issuer_credential_update_state(cb.command_handle,
+                                                           handle,
+                                                           connection_handle,
+                                                           Some(cb.get_callback())), error::SUCCESS.code_num);
+        let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
+        assert_eq!(state, VcxStateType::VcxStateOfferSent as u32);
+    }
+
 
     #[test]
     #[cfg(feature = "general_test")]

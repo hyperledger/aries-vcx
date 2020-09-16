@@ -1,4 +1,4 @@
-const { provisionAgentInAgency, initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
+const { provisionAgentInAgency, initRustapi, protocolTypes } = require('../vcx-workflows')
 const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
@@ -6,8 +6,6 @@ const { createVcxAgent } = require('../vcx-agent')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
-const { waitUntilAgencyIsReady } = require('../common')
-const { createStorageService } = require('../storage-service')
 const express = require('express')
 const bodyParser = require('body-parser')
 
@@ -16,30 +14,19 @@ async function runFaber (options) {
   let faberServer
   let exitcode = 0
   try {
-    const testRunId = uuid.v4()
-    const seed = '000000000000000000000000Trustee1'
-    const protocolType = options.protocolType
-    const agentName = `alice-${testRunId}`
-    const webhookUrl = `http://localhost:7209/notifications/${agentName}`
-    const usePostgresWallet = false
-    const acceptTaa = process.env.ACCEPT_TAA || false
-    const logLevel = process.env.VCX_LOG_LEVEL || 'vcx=error'
+    const agentName = `faber-${uuid.v4()}`
+    const vcxClient = await createVcxAgent({
+      agentName,
+      protocolType: options.protocolType,
+      agencyUrl: 'http://localhost:8080',
+      seed: '000000000000000000000000Trustee1',
+      webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+      usePostgresWallet: false,
+      logger,
+      rustLogLevel: process.env.VCX_LOG_LEVEL || 'vcx=error'
+    })
 
-    await initRustapi(logLevel)
-
-    const agencyUrl = 'http://localhost:8080'
-    await waitUntilAgencyIsReady(agencyUrl, logger)
-
-    const storageService = await createStorageService(agentName)
-    if (!await storageService.agentProvisionExists()) {
-      const agentProvision = await provisionAgentInAgency(agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger)
-      await storageService.saveAgentProvision(agentProvision)
-    }
-    const agentProvision = await storageService.loadAgentProvision()
-    const issuerDid = agentProvision.institution_did
-    const vcxClient = await createVcxAgent(storageService, logger)
-
-    if (acceptTaa) {
+    if (process.env.ACCEPT_TAA || false) {
       await vcxClient.acceptTaa()
     }
 
@@ -47,8 +34,7 @@ async function runFaber (options) {
     const schemaId = await schema.getSchemaId()
     await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
 
-    const connectionName = `alice-${testRunId}`
-    let connectionToAlice = await vcxClient.inviterConnectionCreateAndAccept(connectionName, (invitationString) => {
+    const { connection: connectionToAlice } = await vcxClient.inviterConnectionCreateAndAccept(agentName, (invitationString) => {
       logger.info('\n\n**invite details**')
       logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
       logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
@@ -84,16 +70,16 @@ async function runFaber (options) {
       age: '25'
     }
 
-    await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', connectionName, options.revocation)
+    await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', agentName, options.revocation)
 
     const proofAttributes = [
       {
         names: ['name', 'last_name', 'sex'],
-        restrictions: [{ issuer_did: issuerDid }]
+        restrictions: [{ issuer_did: vcxClient.getInstitutionDid() }]
       },
       {
         name: 'date',
-        restrictions: { issuer_did: issuerDid }
+        restrictions: { issuer_did: vcxClient.getInstitutionDid() }
       },
       {
         name: 'degree',
@@ -106,7 +92,7 @@ async function runFaber (options) {
     ]
 
     const proofPredicates = [
-      { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: agentProvision.institution_did }] }
+      { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: vcxClient.getInstitutionDid() }] }
     ]
 
     logger.info('#19 Create a Proof object')
@@ -211,8 +197,8 @@ const usage = [
 ]
 
 function areOptionsValid (options) {
-  if (!(allowedProtocolTypes.includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
+  if (!(Object.values(protocolTypes).includes(options.protocolType))) {
+    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(Object.values(protocolTypes))} are allowed.`)
     return false
   }
   return true

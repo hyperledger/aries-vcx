@@ -497,7 +497,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     Ok((handle, offer))
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |obj| {
         match obj {
             Credentials::Pending(ref mut obj) => {
@@ -511,7 +511,7 @@ pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
                 Ok(error::SUCCESS.code_num)
             }
             Credentials::V3(ref mut obj) => {
-                obj.update_state(message.clone())?;
+                obj.update_state(message.clone(), connection_handle)?;
                 Ok(error::SUCCESS.code_num)
             }
         }

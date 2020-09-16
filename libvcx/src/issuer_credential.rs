@@ -679,7 +679,7 @@ pub fn issuer_credential_create(cred_def_handle: u32,
     Ok(handle)
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |obj| {
         match obj {
             IssuerCredentials::Pending(ref mut obj) => {
@@ -691,7 +691,7 @@ pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
                     .or_else(|_| Ok(obj.get_state()))
             }
             IssuerCredentials::V3(ref mut obj) => {
-                obj.update_status(message.clone())?;
+                obj.update_status(message.clone(), connection_handle)?;
                 obj.get_state()
             }
         }

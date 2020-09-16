@@ -536,6 +536,7 @@ jobs:
                                 npm run compile && \
                                 npm run test:aries)'
 
+  # TODO: Run in parallel once https://github.com/actions/runner/issues/646 is ready
   test-integration-node-wrapper:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
@@ -597,24 +598,26 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
-                                cd $HOME/wrappers/node && \
-                                npm install && \
-                                npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && \
-                                npm install && \
-                                npm run test:integration)'
+                                cd $HOME/wrappers/node && npm install && npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:integration)'
 
       - name: Run wrapper integration revocation test
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
-                                cd $HOME/wrappers/node && \
-                                npm install && \
-                                npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && \
-                                npm install && \
-                                npm run test:integration:revocation)'
+                                cd $HOME/wrappers/node && npm install && npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:integration:revocation)'
+
+      - name: Run wrapper api v2 integration test
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(
+                                cd $HOME/wrappers/node && npm install && npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && npm install && \
+                                cd $HOME/agents/node/vcxagent-cli && npm install && \
+                                cd $HOME/agents/node/vcxagent-core && npm run test:update-state)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:

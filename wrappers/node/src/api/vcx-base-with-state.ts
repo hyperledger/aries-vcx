@@ -2,10 +2,12 @@ import * as ffi from 'ffi-napi'
 import { VCXInternalError } from '../errors'
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers'
 import { StateType } from './common'
+import { Connection } from './connection'
 import { VCXBase } from './vcx-base'
 
 export abstract class VCXBaseWithState<SerializedData> extends VCXBase<SerializedData> {
   protected abstract _updateStFn: (commandHandle: number, handle: number, cb: ICbRef) => number
+  protected abstract _updateStFnV2: (commandHandle: number, handle: number, connHandle: number, cb: ICbRef) => number
   protected abstract _updateStWithMessageFn: (commandHandle: number, handle: number,
                                               message: string, cb: ICbRef) => number
   protected abstract _getStFn: (commandHandle: number, handle: number, cb: ICbRef) => number
@@ -26,6 +28,31 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
       await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = this._updateStFn(commandHandle, this.handle, cb)
+          if (rc) {
+            resolve(StateType.None)
+          }
+        },
+        (resolve, reject) => ffi.Callback(
+          'void',
+          ['uint32', 'uint32', 'uint32'],
+          (handle: number, err: any, state: StateType) => {
+            if (err) {
+              reject(err)
+            }
+            resolve(state)
+          })
+      )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async updateStateV2 (connection: Connection): Promise<void> {
+    try {
+      const commandHandle = 0
+      await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = this._updateStFnV2(commandHandle, this.handle, connection.handle, cb)
           if (rc) {
             resolve(StateType.None)
           }
