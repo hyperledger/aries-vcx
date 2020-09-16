@@ -268,10 +268,10 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     trace!("Issuer::_append_credential_preview >>> cred_offer_msg: {:?}, credential_json: {:?}", cred_offer_msg, credential_json);
 
     let cred_values: serde_json::Value = serde_json::from_str(credential_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Credential Preview Json: {:?}", err)))?;
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json={} error={:?}", credential_json, err)))?;
 
     let values_map = cred_values.as_object()
-        .ok_or_else(|| VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Credential Preview Json".to_string()))?;
+        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Credential Preview is not object. credential_json={}", credential_json)))?;
 
     let mut new_offer = cred_offer_msg;
     for item in values_map.iter() {
@@ -279,7 +279,7 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
         new_offer = new_offer.add_credential_preview_data(
             key,
             value.as_str()
-                .ok_or_else(|| VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Credential Preview Json".to_string()))?,
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Problem adding credential preview data {}:{:?}", key, value.as_str())))?,
             MimeType::Plain,
         )?;
     }

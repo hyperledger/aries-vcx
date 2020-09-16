@@ -12,6 +12,7 @@ use messages::payload::{PayloadKinds, Payloads};
 use messages::thread::Thread;
 use object_cache::ObjectCache;
 use settings;
+use settings::get_protocol_type;
 use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
 use utils::constants::CRED_MSG;
 use utils::error;

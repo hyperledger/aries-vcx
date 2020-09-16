@@ -756,7 +756,8 @@ pub fn generate_reject_proof_msg(handle: u32) -> VcxResult<String> {
                 obj.generate_reject_proof_msg()
             }
             DisclosedProofs::V3(_) => {
-                Err(VcxError::from(VcxErrorKind::ActionNotSupported))
+                Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported,
+                                       "Action generate_reject_proof_msg is not for V3 disclosed proof."))
             }
         }
     })

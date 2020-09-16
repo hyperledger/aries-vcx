@@ -626,7 +626,11 @@ pub fn get_proof_uuid(handle: u32) -> VcxResult<String> {
         match obj {
             Proofs::Pending(ref obj) => Ok(obj.get_proof_uuid().clone()),
             Proofs::V1(ref obj) => Ok(obj.get_proof_uuid().clone()),
-            Proofs::V3(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported))
+            Proofs::V3(_) => {
+                // todo: delete this?
+                Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported,
+                                       "Action get_proof_uuid is not supported for V3 proof."))
+            }
         }
     })
 }
