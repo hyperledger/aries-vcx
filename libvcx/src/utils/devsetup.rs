@@ -270,7 +270,7 @@ impl Drop for SetupLibraryAgencyV2 {
 impl SetupLibraryAgencyV2ZeroFees  {
     pub fn init() -> SetupLibraryAgencyV2ZeroFees  {
         setup();
-        setup_agency_env("2.0", true);
+        setup_agency_env("4.0", true);
         SetupLibraryAgencyV2ZeroFees
     }
 }
@@ -584,10 +584,9 @@ mod tests {
     use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     pub fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV1ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
         let (_faber, _alice) = ::connection::tests::create_connected_connections();
         let (_faber, _alice) = ::connection::tests::create_connected_connections();
