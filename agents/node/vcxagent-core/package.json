@@ -15,7 +15,7 @@
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:integration": "node demo/integration-test.js",
     "test:integration:revocation": "REVOCATION=true node demo/integration-test.js",
-    "test:update-state": "jest --env=node --runInBand test/issuer-update-state-v2.spec.js"
+    "test:update-state": "jest --forceExit --env=node --runInBand test/issuer-update-state-v2.spec.js"
   },
   "author": "Absa Group Limited",
   "license": "Apache-2.0",

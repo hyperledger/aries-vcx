@@ -609,16 +609,15 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run test:integration:revocation)'
 
-      # TODO: Enable this test once segmentation fault in jest due to incompatible openssl version in node 12 is fixed
-      # - name: Run wrapper api v2 integration test
-      #   run: |
-      #     set -x
-      #     docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
-      #                         bash -c '(
-      #                           cd $HOME/wrappers/node && npm install && npm run compile && \
-      #                           cd $HOME/agents/node/vcxagent-core && npm install && \
-      #                           cd $HOME/agents/node/vcxagent-cli && npm install && \
-      #                           cd $HOME/agents/node/vcxagent-core && npm run test:update-state)'
+      - name: Run wrapper api v2 integration test
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(
+                                cd $HOME/wrappers/node && npm install && npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && npm install && \
+                                cd $HOME/agents/node/vcxagent-cli && npm install && \
+                                cd $HOME/agents/node/vcxagent-core && npm run test:update-state)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
