@@ -14,29 +14,31 @@
     "demo:alice:sign": "node demo/alice-signature.js",
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:integration": "node demo/integration-test.js",
-    "test:integration:revocation": "REVOCATION=true node demo/integration-test.js"
+    "test:integration:revocation": "REVOCATION=true node demo/integration-test.js",
+    "test:update-state": "jest --forceExit --env=node --runInBand test/issuer-update-state-v2.spec.js"
   },
   "author": "Absa Group Limited",
   "license": "Apache-2.0",
   "dependencies": {
+    "@absaoss/node-vcx-wrapper": "file:../../../wrappers/node",
     "ffi-napi": "^2.4.7",
     "fs-extra": "^4.0.2",
+    "jest": "^26.4.2",
     "lodash": "^4.17.11",
     "mkdirp": "^1.0.4",
-    "uuid": "^8.3.0",
-    "@absaoss/node-vcx-wrapper": "file:../../../wrappers/node"
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
     "axios": "^0.20.0",
     "body-parser": "^1.19.0",
+    "command-line-args": "^5.1.1",
+    "command-line-usage": "^5.0.5",
     "express": "^4.17.1",
     "is-port-reachable": "^2.0.1",
     "node-persist": "^3.1.0",
     "readline-sync": "^1.4.10",
     "sleep-promise": "^8.0.1",
     "standard": "^14.3.1",
-    "winston": "^3.2.1",
-    "command-line-args": "^5.1.1",
-    "command-line-usage": "^5.0.5"
+    "winston": "^3.3.3"
   }
 }

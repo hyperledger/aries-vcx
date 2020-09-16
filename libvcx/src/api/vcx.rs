@@ -1101,9 +1101,9 @@ mod tests {
         let (offer, _) = ::issuer_credential::generate_credential_offer_msg(cred_handle).unwrap();
         let mycred = ::credential::credential_create_with_offer("test1", &offer).unwrap();
         let request = ::credential::generate_credential_request_msg(mycred, &my_pw_did, &their_pw_did).unwrap();
-        ::issuer_credential::update_state(cred_handle, Some(request)).unwrap();
+        ::issuer_credential::update_state(cred_handle, Some(request), None).unwrap();
         let cred = ::issuer_credential::generate_credential_msg(cred_handle, &my_pw_did).unwrap();
-        ::credential::update_state(mycred, Some(cred)).unwrap();
+        ::credential::update_state(mycred, Some(cred), None).unwrap();
         assert_eq!(::credential::get_state(mycred).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
