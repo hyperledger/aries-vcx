@@ -623,16 +623,25 @@ jobs:
   publish-ios-wrapper:
     needs: [workflow-setup, build-image-libvcx]
     runs-on: macos-10.15
+    env:
+      LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
     steps:
     - name: Git checkout
       uses: actions/checkout@v2
+    - name: Load env. variables
+      run: |
+        echo ::set-env name=PUBLISH_VERSION::${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
     - name: Build iOS wrapper
       run: |
           ./wrappers/ios/ci/build.sh
     - uses: actions/upload-artifact@v2
       with:
-        name: libvcx-ios-universal
-        path: /tmp/artifacts/vcx
+        name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
+        path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
+        path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
   # test-android-wrapper:
   #   runs-on: ubuntu-16.04
@@ -674,6 +683,10 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v2
 
+      - name: Load env. variables
+        run: |
+          echo ::set-env name=FULL_VERSION_NAME::libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
+
       - name: Load android image cache
         id: load-cached-android-image
         uses: actions/cache@v2
@@ -693,11 +706,12 @@ jobs:
         with:
           abis: "armv7 arm64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
+          full-version-name: ${{ env.FULL_VERSION_NAME }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: libvcx-android-device
-          path: /tmp/artifacts/aar
+          name: ${{ env.FULL_VERSION_NAME }}
+          path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
 
   publish-android-wrapper-emulator:
     runs-on: ubuntu-16.04
@@ -707,6 +721,10 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
+
+      - name: Load env. variables
+        run: |
+          echo ::set-env name=FULL_VERSION_NAME::libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-emulator
 
       - name: Load android image cache
         id: load-cached-android-image
@@ -727,11 +745,12 @@ jobs:
         with:
           abis: "x86 x86_64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
+          full-version-name: ${{ env.FULL_VERSION_NAME }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: libvcx-android-emulator
-          path: /tmp/artifacts/aar
+          name: ${{ env.FULL_VERSION_NAME }}
+          path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
 
   publish-libvcx:
     runs-on: ubuntu-16.04
@@ -836,19 +855,19 @@ jobs:
 
   make-release:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, test-libvcx-image, test-android-build, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image, test-android-build, test-node-wrapper, test-integration-node-wrapper]
     if: needs.workflow-setup.outputs.RELEASE == 'true'
+    outputs:
+      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
     steps:
-      - name: Load env. variables
-        run: |
-          echo ::set-env name=PUBLISH_VERSION::$(echo ${{needs.workflow-setup.outputs.PUBLISH_VERSION}})
       - name: Git checkout
         uses: actions/checkout@v2
+
       - name: Generate changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          futureRelease: ${{ env.PUBLISH_VERSION }}
+          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: master
           pullRequests: true
           unreleased: true
@@ -857,13 +876,88 @@ jobs:
           prWoLabels: true
           stripGeneratorNotice: true
           stripHeaders: true
+
       - name: Create a new release
+        id: create-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.PUBLISH_VERSION }}
-          release_name: Release ${{ env.PUBLISH_VERSION }}
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           body_path: ./CHANGELOG.md
           draft: false
           prerelease: false
+
+  release-android-device:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    steps:
+      - name: Fetch android device build from artifacts
+        uses: actions/download-artifact@v2
+        with: 
+          name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
+          asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
+          asset_content_type: application/aar
+
+
+  release-android-emulator:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    steps:
+      - name: Fetch android emulator build from artifacts
+        uses: actions/download-artifact@v2
+        with: 
+          name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator.aar
+          asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-emulator.aar
+          asset_content_type: application/aar
+
+  release-ios-device:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    steps:
+      - name: Fetch iOS device build from artifacts
+        uses: actions/download-artifact@v2
+        with: 
+          name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
+          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
+          asset_content_type: application/zip
+
+  release-ios-universal:
+    runs-on: ubuntu-16.04
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    steps:
+      - name: Fetch iOS universal build from artifacts
+        uses: actions/download-artifact@v2
+        with: 
+          name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
+          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
+          asset_content_type: application/zip
