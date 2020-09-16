@@ -112,10 +112,7 @@ impl CreateKeyBuilder {
     }
 
     fn parse_response(&self, response: &Vec<u8>) -> VcxResult<(String, String)> {
-        trace!("parse_response >>>");
-
         let mut response = parse_response_from_agency(response, &self.version)?;
-
         match response.remove(0) {
             A2AMessage::Version1(A2AMessageV1::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),

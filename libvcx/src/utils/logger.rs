@@ -143,7 +143,7 @@ impl LibvcxDefaultLogger {
     }
 
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
-        trace!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
+        info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
 
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {

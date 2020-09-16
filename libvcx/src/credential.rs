@@ -40,7 +40,7 @@ use v3::{
 };
 
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCache<Credentials>  = Default::default();
+    static ref HANDLE_MAP: ObjectCache<Credentials> = ObjectCache::<Credentials>::new("credentials-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -903,7 +903,7 @@ pub mod tests {
 
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
-    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
+    use utils::libindy::payments::{build_test_address};
 
     pub fn create_credential(offer: &str) -> Credential {
         let mut credential = Credential::create("source_id");
@@ -980,6 +980,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn full_credential_test() {
         let _setup = SetupMocks::init();
 
@@ -1011,6 +1012,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_get_request_msg() {
         let _setup = SetupMocks::init();
 
@@ -1029,6 +1031,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
@@ -1098,6 +1101,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_submit_payment_through_credential_request() {
         let _setup = SetupMocks::init();
 

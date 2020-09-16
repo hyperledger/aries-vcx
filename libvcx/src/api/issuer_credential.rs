@@ -836,7 +836,6 @@ pub mod tests {
     use std::ptr;
     use settings;
     use utils::{
-        constants::CREDENTIAL_REQ_RESPONSE_STR,
         get_temp_dir_path,
     };
     use api::{return_types_u32, VcxStateType};
@@ -982,6 +981,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_issuer_send_credential_offer() {
         let _setup = SetupMocks::init();
         let connection_handle = ::connection::tests::build_test_connection();
@@ -1022,6 +1022,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_issuer_send_a_credential() {
         let _setup = SetupMocks::init();
 

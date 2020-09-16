@@ -24,9 +24,9 @@ pub extern fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
 
     trace!("vcx_set_default_logger(pattern: {:?})", pattern);
 
-    match LibvcxDefaultLogger::init(pattern) {
+    match LibvcxDefaultLogger::init(pattern.clone()) {
         Ok(()) => {
-            debug!("Logger Successfully Initialized");
+            info!("Logger Successfully Initialized with pattern {:?}", &pattern);
             SUCCESS.code_num
         }
         Err(ec) => {

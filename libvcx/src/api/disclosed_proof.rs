@@ -930,13 +930,13 @@ mod tests {
 
     use super::*;
     use std::ffi::CString;
-    use connection;
+    
     use api::VcxStateType;
     use utils::constants::PENDING_OBJECT_SERIALIZE_VERSION;
     use api::return_types_u32;
     use serde_json::Value;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
+    
     use utils::timeout::TimeoutUtils;
 
     pub const BAD_PROOF_REQUEST: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
@@ -973,6 +973,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
@@ -1043,6 +1044,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_send_proof() {
         let _setup = SetupMocks::init();
 
@@ -1058,6 +1060,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_reject_proof_request() {
         let _setup = SetupMocks::init();
 
@@ -1072,6 +1075,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_reject_msg() {
         let _setup = SetupMocks::init();
@@ -1088,6 +1092,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 

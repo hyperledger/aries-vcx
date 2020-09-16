@@ -88,8 +88,8 @@ mod tests {
     };
     use utils::devsetup::*;
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_delete_connection() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();
@@ -326,8 +326,8 @@ mod tests {
         println!("proof validated!");
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_real_proof() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();
@@ -335,8 +335,8 @@ mod tests {
         _real_proof_demo();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_real_proof_with_revocation() {
         let _setup = SetupLibraryAgencyV1ZeroFees::init();

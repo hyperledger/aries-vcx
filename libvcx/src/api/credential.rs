@@ -855,18 +855,18 @@ mod tests {
 
     use super::*;
     use std::ffi::CString;
-    use connection;
+    
     use api::VcxStateType;
     use api::return_types_u32;
     use serde_json::Value;
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL, FULL_CREDENTIAL_SERIALIZED, PENDING_OBJECT_SERIALIZE_VERSION};
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMock;
+    
     use utils::timeout::TimeoutUtils;
 
     use ::credential::tests::BAD_CREDENTIAL_OFFER;
     use utils::constants;
-    use credential_request::CredentialRequest;
+    
 
     fn _vcx_credential_create_with_offer_c_closure(offer: &str) -> Result<u32, u32> {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -925,6 +925,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_send_request() {
         let _setup = SetupMocks::init();
@@ -941,6 +942,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
@@ -955,6 +957,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
@@ -984,6 +987,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
@@ -1004,6 +1008,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_credential_get_request_msg() {
         let _setup = SetupMocks::init();
 

@@ -9,7 +9,7 @@ use utils::libindy::{wallet, anoncreds};
 use utils::libindy::signus::create_and_store_my_did;
 use utils::option_util::get_or_default;
 use error::prelude::*;
-use utils::httpclient::AgencyMock;
+use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -292,7 +292,7 @@ pub fn parse_config(config: &str) -> VcxResult<Config> {
 }
 
 pub fn connect_register_provision(config: &str) -> VcxResult<String> {
-    trace!("connect_register_provision >>> config: {:?}", config);
+    debug!("connect_register_provision >>> config: {:?}", config);
     let my_config = parse_config(config)?;
 
     trace!("***Configuring Library");
@@ -300,6 +300,8 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
     trace!("***Configuring Wallet");
     let (my_did, my_vk, wallet_name) = configure_wallet(&my_config)?;
+
+    debug!("connect_register_provision:: Final settings: {:?}", settings::settings_as_string());
 
     trace!("Connecting to Agency");
     let (agent_did, agent_vk) = match my_config.protocol_type {
@@ -317,6 +319,13 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 }
 
 fn onboarding_v1(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
+    error!("Running onbarding_v1");
+    if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"
+    {
+        panic!("Trying to onboard V1 agency.");
+    }
+
+    // panic!("Tried to perform v1 onboarding");
     /* STEP 1 - CONNECT */
     AgencyMock::set_next_response(constants::CONNECTED_RESPONSE.to_vec());
 
@@ -392,6 +401,7 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Str
 
 // it will be changed next
 fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
+    AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
     let (agency_pw_did, _) = connect_v2(my_did, my_vk, agency_did)?;
 
     /* STEP 2 - REGISTER */
@@ -399,6 +409,7 @@ fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Stri
         A2AMessageV2::SignUp(SignUp::build())
     );
 
+    AgencyMockDecrypted::set_next_decrypted_response(constants::REGISTER_RESPONSE_DECRYPTED);
     let mut response = send_message_to_agency(&message, &agency_pw_did)?;
 
     let _response: SignUpResponse =
@@ -411,7 +422,7 @@ fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Stri
     let message = A2AMessage::Version2(
         A2AMessageV2::CreateAgent(CreateAgent::build())
     );
-
+    AgencyMockDecrypted::set_next_decrypted_response(constants::AGENT_CREATED_DECRYPTED);
     let mut response = send_message_to_agency(&message, &agency_pw_did)?;
 
     let response: CreateAgentResponse =
@@ -423,49 +434,8 @@ fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Stri
     Ok((response.from_did, response.from_vk))
 }
 
-pub fn update_agent_info(id: &str, value: &str) -> VcxResult<()> {
-    trace!("update_agent_info >>> id: {}, value: {}", id, value);
-
-    let to_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
-
-    let com_method = ComMethod {
-        id: id.to_string(),
-        e_type: ComMethodType::A2A,
-        value: value.to_string(),
-    };
-
-    match settings::get_protocol_type() {
-        settings::ProtocolTypes::V1 => {
-            update_agent_info_v1(&to_did, com_method)
-        }
-        settings::ProtocolTypes::V2 |
-        settings::ProtocolTypes::V3 |
-        settings::ProtocolTypes::V4 => {
-            update_agent_info_v2(&to_did, com_method)
-        }
-    }
-}
-
-fn update_agent_info_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec());
-
-    let message = A2AMessage::Version1(
-        A2AMessageV1::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, to_did)?;
-    Ok(())
-}
-
-fn update_agent_info_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
-    let message = A2AMessage::Version2(
-        A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
-    );
-    send_message_to_agency(&message, to_did)?;
-    Ok(())
-}
-
 pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
-    trace!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
+    info!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
 
     let com_method: ComMethod = ComMethod {
         id: String::from("123"),
@@ -488,6 +458,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 }
 
 fn update_agent_webhook_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
+    error!("> update_agent_webhook_v1");
     if settings::agency_mocks_enabled() { return Ok(()) }
 
     let message = A2AMessage::Version1(
@@ -498,6 +469,9 @@ fn update_agent_webhook_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()>
 }
 
 fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
+    info!("> update_agent_webhook_v2");
+    if settings::agency_mocks_enabled() { return Ok(()) }
+    
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
     );
@@ -516,17 +490,17 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 
 #[cfg(test)]
 mod tests {
-    use std::env;
+    
     use super::*;
     use utils::devsetup::*;
-    use api::vcx::vcx_shutdown;
+    
 
     #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "agency")]
     fn test_connect_register_provision_config_path() {
-        let agency_did = "LTjTWsezEmV4wJYD5Ufxvk";
-        let agency_vk = "BcCSmgdfChLqmtBkkA26YotWVFBNnyY45WCnQziF4cqN";
-        let host = "https://eas.pdev.evernym.com";
+        let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
+        let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
+        let host = "http://localhost:8080";
         let wallet_key = "test_key";
 
         let path = if cfg!(target_os = "android") {
@@ -537,6 +511,7 @@ mod tests {
 
         let config = json!({
             "wallet_name": "test_wallet",
+            "protocol_type": "3.0",
             "storage_config": json!({
                 "path": path
             }).to_string(),
@@ -570,6 +545,7 @@ mod tests {
             "agency_did": agency_did.to_string(),
             "agency_verkey": agency_vk.to_string(),
             "wallet_key": wallet_key.to_string(),
+            "protocol_type": "3.0"
         });
 
         let result = connect_register_provision(&config.to_string()).unwrap();
@@ -583,9 +559,9 @@ mod tests {
             "institution_logo_url":"<CHANGE_ME>",
             "institution_name":"<CHANGE_ME>",
             "institution_verkey":"91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "protocol_type":"1.0",
-            "remote_to_sdk_did":"A4a69qafqZHPLPPu5JFQrc",
-            "remote_to_sdk_verkey":"5wTKXrdfUiTQ7f3sZJzvHpcS7XHHxiBkFtPCsynZtv4k",
+            "protocol_type":"3.0",
+            "remote_to_sdk_did":"DnEpUQJLupa5rKPkrKUpFd", // taken from mock constants::CONNECTED_RESPONSE_DECRYPTED
+            "remote_to_sdk_verkey":"7y118tRW2EMJn18qs9MY5NJWYW2PLwV5QpaLyfoLHtgF", // taken from mock constants::CONNECTED_RESPONSE_DECRYPTED
             "sdk_to_remote_did":"FhrSrYtQcw3p9xwf7NYemf",
             "sdk_to_remote_verkey":"91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
             "wallet_key":"test_key",
@@ -632,19 +608,19 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_update_agent_info() {
         let _setup = SetupMocks::init();
-
+        // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }
 
-    #[cfg(feature = "agency")]
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
-    fn test_update_agent_info_real() {
-        let _setup = SetupLibraryAgencyV1::init();
+    fn test_update_agent_webhook_real() {
+        let _setup = SetupLibraryAgencyV2::init();
 
         ::utils::devsetup::set_consumer();
-        update_agent_info("7b7f97f2", "FCM:Value").unwrap();
+        update_agent_webhook("https://example.org").unwrap();
     }
 }

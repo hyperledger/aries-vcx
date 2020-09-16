@@ -37,6 +37,7 @@ accept_licenses(){
     yes | sdkmanager --licenses
 }
 
+# TODO: Recreating avd for more than a single arch doesn't work
 create_avd(){
     echo "${GREEN}Creating Android SDK${RESET}"
 
@@ -50,7 +51,8 @@ create_avd(){
                 "platforms;android-24" \
                 "system-images;android-24;default;${ABI}" > sdkmanager.install.emulator.and.tools.out 2>&1
 
-        # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator. Should be removed as soon as headless mode will be fixed.
+        # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
+        # Remove as soon as headless mode is fixed.
         mv /home/indy/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
@@ -65,8 +67,8 @@ create_avd(){
             --name ${ABSOLUTE_ARCH} \
             --package "system-images;android-24;default;${ABI}" \
             -f \
-            -c 4096M
-    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 4096 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
+            -c 3000M
+    ANDROID_SDK_ROOT=${ANDROID_SDK} ANDROID_HOME=${ANDROID_SDK} ${ANDROID_HOME}/tools/emulator -avd ${ABSOLUTE_ARCH} -netdelay none -partition-size 3000 -netspeed full -no-audio -no-window -no-snapshot -no-accel &
 }
 
 kill_avd(){
@@ -292,7 +294,4 @@ copy_libraries_to_jni(){
     mkdir -p $LIB_PATH
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
     cp ${INDY_LIB_DIR}/* ${LIB_PATH}
-    # cp ${OPENSSL_LIB_DIR}/* ${LIB_PATH}
-    # cp ${SODIUM_LIB_DIR}/* ${LIB_PATH}
-    # cp ${LIBZMQ_LIB_DIR}/* ${LIB_PATH}
 }

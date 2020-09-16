@@ -12,7 +12,7 @@ use messages::ObjectWithVersion;
 use error::prelude::*;
 
 lazy_static! {
-    static ref SCHEMA_MAP: ObjectCache<CreateSchema> = Default::default();
+    static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

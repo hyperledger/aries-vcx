@@ -43,7 +43,7 @@ use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
 use utils::httpclient::AgencyMock;
 
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCache<DisclosedProofs>  = Default::default();
+    static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -1033,6 +1033,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
@@ -1048,6 +1049,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
@@ -1284,6 +1286,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
