@@ -2,6 +2,7 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import {
+  connectionCreateConnect,
   dataDisclosedProofCreateWithMsgId,
   dataDisclosedProofCreateWithRequest,
   disclosedProofCreateWithMsgId,
@@ -9,7 +10,7 @@ import {
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { mapValues } from 'lodash'
-import {DisclosedProof, StateType, VCXCode} from 'src'
+import { DisclosedProof, StateType, VCXCode } from 'src'
 import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('DisclosedProof', () => {
@@ -117,6 +118,32 @@ describe('DisclosedProof', () => {
 
     it(`returns ${StateType.RequestReceived}: created`, async () => {
       const disclosedProof = await disclosedProofCreateWithRequest()
+      await disclosedProof.updateState()
+      assert.equal(await disclosedProof.getState(), StateType.RequestReceived)
+    })
+  })
+
+  describe('sendProof:', () => {
+    it.skip('success', async () => {
+      const data = await dataDisclosedProofCreateWithRequest()
+      const disclosedProof = await disclosedProofCreateWithRequest(data)
+      await disclosedProof.sendProof(data.connection)
+      assert.equal(await disclosedProof.getState(), StateType.Accepted)
+    })
+  })
+
+  describe('getRequests:', async () => {
+    it.skip('success', async () => {
+      const connection = await connectionCreateConnect()
+      const requests = await DisclosedProof.getRequests(connection)
+      assert.ok(requests)
+      assert.ok(requests.length)
+      const request = requests[0]
+      const disclosedProof = await disclosedProofCreateWithRequest({
+        connection,
+        request: JSON.stringify(request),
+        sourceId: 'disclosedProofTestSourceId'
+      })
       await disclosedProof.updateState()
       assert.equal(await disclosedProof.getState(), StateType.RequestReceived)
     })

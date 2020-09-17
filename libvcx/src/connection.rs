@@ -17,7 +17,6 @@ use object_cache::ObjectCache;
 use settings;
 use utils::error;
 use utils::libindy::signus::create_and_store_my_did;
-use utils::libindy::crypto;
 
 use utils::json::KeyMatch;
 

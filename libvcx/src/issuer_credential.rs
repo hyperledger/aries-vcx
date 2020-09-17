@@ -1,6 +1,5 @@
 use serde_json;
 
-use std::collections::HashMap;
 use api::VcxStateType;
 use messages;
 use settings;

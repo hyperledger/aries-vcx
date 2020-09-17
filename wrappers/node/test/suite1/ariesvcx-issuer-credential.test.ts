@@ -72,7 +72,6 @@ describe('IssuerCredential:', () => {
       const issuerCredential = await issuerCredentialCreate()
       const serialized = await issuerCredential.serialize()
       assert.ok(serialized)
-      console.log(serialized)
       assert.property(serialized, 'version')
       assert.property(serialized, 'data')
       const { data, version } = serialized

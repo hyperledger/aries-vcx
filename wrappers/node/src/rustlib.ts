@@ -427,7 +427,7 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_set_logger: [FFI_ERROR_CODE, [FFI_VOID_POINTER, FFI_CALLBACK_PTR, FFI_CALLBACK_PTR, FFI_CALLBACK_PTR]],
 
   // mock
-  vcx_set_next_agency_response: [FFI_VOID, [FFI_STRING]],
+  vcx_set_next_agency_response: [FFI_VOID, [FFI_UNSIGNED_INT]],
 
   // schema
   vcx_schema_get_attributes: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_SOURCE_ID, FFI_STRING_DATA, FFI_CALLBACK_PTR]],

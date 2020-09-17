@@ -92,7 +92,8 @@ impl AgentInfo {
         for message in messages {
             a2a_messages.insert(message.uid.clone(), self.decode_message(&message)?);
         }
-        if ::std::env::var("WARNLOG_MSGS_RECEIVED").map_or(false, |val| val == "true")
+
+        #[cfg(feature = "warnlog_fetched_messages")]
         {
             for message in a2a_messages.values() {
                 let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));

@@ -7,6 +7,8 @@ You can filter out tests by specifying features they require / use.
 - aries        :: group of quick unit tests related to aries
 - agency       :: tests using mocked legacy agency
 - pool_legacy_agency_tests :: requires pool and legacy agency
+- warnlog_fetched_messages :: if enabled, fetched connection messages will be logged in warn log level. This is useful
+                              for producing mock data by running integration tests from NodeJS.
 ```
 
 Run quick unit tests:
