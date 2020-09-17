@@ -9,7 +9,7 @@ use utils::libindy::payments;
 use std::thread;
 use error::prelude::*;
 use indy_sys::CommandHandle;
-use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
+use utils::httpclient::{AgencyMock};
 use utils::constants::*;
 
 #[derive(Deserialize, Debug, Clone)]

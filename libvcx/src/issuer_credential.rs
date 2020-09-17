@@ -12,7 +12,6 @@ use credential_request::CredentialRequest;
 use utils::error;
 use utils::libindy::{payments, anoncreds};
 use utils::constants::CRED_MSG;
-use utils::openssl::encode;
 use utils::libindy::payments::PaymentTxn;
 use utils::qualifier;
 use object_cache::ObjectCache;

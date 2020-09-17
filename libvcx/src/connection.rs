@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use rmp_serde;
 use serde_json;
 
 
@@ -8,11 +7,11 @@ use api::VcxStateType;
 use error::prelude::*;
 use messages;
 use messages::{GeneralMessage, MessageStatusCode, RemoteMessageType, SerializableObjectWithState};
-use messages::invite::{InviteDetail, RedirectDetail, SenderDetail, Payload as ConnectionPayload};
-use messages::payload::{Payloads, PayloadKinds};
+use messages::invite::{InviteDetail, RedirectDetail};
+use messages::payload::{PayloadKinds};
 use messages::thread::Thread;
 use messages::send_message::SendMessageOptions;
-use messages::get_message::{Message, MessagePayload};
+use messages::get_message::{Message};
 use object_cache::ObjectCache;
 use settings;
 use utils::error;
@@ -225,15 +224,6 @@ impl Connection {
 
     fn get_endpoint(&self) -> &String { &self.endpoint }
     fn set_endpoint(&mut self, endpoint: &str) { self.endpoint = endpoint.to_string(); }
-
-    fn get_invite_detail(&self) -> &Option<InviteDetail> { &self.invite_detail }
-    fn set_invite_detail(&mut self, id: InviteDetail) {
-        self.version = match id.version.is_some() {
-            true => Some(settings::ProtocolTypes::from(id.version.clone().unwrap())),
-            false => Some(settings::get_connecting_protocol_version()),
-        };
-        self.invite_detail = Some(id);
-    }
 
     fn get_version(&self) -> Option<settings::ProtocolTypes> { self.version.clone() }
 
