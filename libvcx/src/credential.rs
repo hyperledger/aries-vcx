@@ -917,7 +917,7 @@ pub mod tests {
     use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL_V1,
                            DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
     use utils::libindy::payments::{build_test_address, get_wallet_token_info};
-    use utils::mockdata_credex::ARIES_CREDENTIAL_RESPONSE;
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_OFFER_RECEIVED, CREDENTIAL_SM_FINISHED};
 
     pub fn create_credential(offer: &str) -> Credential {
         let mut credential = Credential::create("source_id");
@@ -927,16 +927,6 @@ pub mod tests {
         credential.state = VcxStateType::VcxStateRequestReceived;
         apply_agent_info(&mut credential, &get_agent_info().unwrap());
         credential
-    }
-
-    fn create_credential_with_price(price: u64) -> Credential {
-        let mut cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
-        cred.payment_info = Some(PaymentInfo {
-            payment_required: "one-time".to_string(),
-            payment_addr: build_test_address("OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j"),
-            price,
-        });
-        cred
     }
 
     fn _get_offer(handle: u32) -> String {
@@ -1060,69 +1050,23 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_pay_for_credential_with_sufficient_funds() {
+    #[cfg(feature = "to_restore")] // get_credential_offer not implemented for aries
+    fn test_get_credential_offer_and_deserialize() {
         let _setup = SetupAriesMocks::init();
 
-        let cred = create_credential_with_price(1);
-        assert!(cred.is_payment_required());
-        let (payment, _receipt): (PaymentTxn, String) = cred.submit_payment().unwrap();
-        assert!(payment.amount > 0);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_pay_for_non_premium_credential() {
-        let _setup = SetupAriesMocks::init();
-
-        let cred: Credential = Credential::from_str(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
-        assert!(cred.payment_info.is_none());
-        assert_eq!(cred.submit_payment().unwrap_err().kind(), VcxErrorKind::NoPaymentInformation);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_pay_for_credential_with_insufficient_funds() {
-        let _setup = SetupAriesMocks::init();
-
-        let cred = create_credential_with_price(10000000000);
-        assert!(cred.submit_payment().is_err());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_pay_for_credential_with_handle() {
-        let _setup = SetupAriesMocks::init();
-
-        let handle = from_string(DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED).unwrap();
-        submit_payment(handle).unwrap();
-        get_payment_information(handle).unwrap();
-        let handle2 = from_string(DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
-        assert!(!is_payment_required(handle2).unwrap());
-        let invalid_handle = 12345;
-        assert_eq!(is_payment_required(invalid_handle).unwrap_err().kind(), VcxErrorKind::InvalidCredentialHandle);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_credential() {
-        let _setup = SetupAriesMocks::init();
-
-        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
-        let _offer_string = get_credential_offer(handle).unwrap();
-
-        let handle = from_string(constants::FULL_CREDENTIAL_SERIALIZED).unwrap();
-        let _cred_string = get_credential(handle).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_cred_offer_returns_json_string_with_cred_offer_json_nested() {
-        let _setup = SetupAriesMocks::init();
-
-        let handle = from_string(constants::DEFAULT_SERIALIZED_CREDENTIAL_V1).unwrap();
+        let handle = from_string(CREDENTIAL_SM_OFFER_RECEIVED).unwrap();
         let offer_string = get_credential_offer(handle).unwrap();
-        let offer_value: serde_json::Value = serde_json::from_str(&offer_string).unwrap();
+        serde_json::Value::from(offer_string);
+    }
 
-        let _offer_struct: CredentialOffer = serde_json::from_value(offer_value["credential_offer"].clone()).unwrap();
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_credential_and_deserialize() {
+        let _setup = SetupAriesMocks::init();
+
+        let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
+        let cred_string: String = get_credential(handle).unwrap();
+        let cred_value: Value = serde_json::from_str(&cred_string).unwrap();
+        let credential_value: CredentialMessage = serde_json::from_str(cred_value["credential"].as_str().unwrap()).unwrap();
     }
 }
