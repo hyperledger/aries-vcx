@@ -1,10 +1,9 @@
 use futures::Future;
-use indy::{wallet, ErrorCode};
-
-use settings;
+use indy::{ErrorCode, wallet};
+use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 
 use error::prelude::*;
-use indy::{WalletHandle, SearchHandle, INVALID_WALLET_HANDLE};
+use settings;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletRecord {
@@ -313,10 +312,11 @@ pub fn import(config: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use utils::get_temp_dir_path;
-    use utils::devsetup::{SetupLibraryWallet, SetupDefaults, TempFile, SetupEmpty};
     use ::utils::libindy::signus::create_and_store_my_did;
+    use utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
+    use utils::get_temp_dir_path;
+
+    use super::*;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")

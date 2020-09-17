@@ -12,7 +12,7 @@ pub enum MessageFamilies {
     TrustPing,
     DiscoveryFeatures,
     Basicmessage,
-    Unknown(String)
+    Unknown(String),
 }
 
 impl MessageFamilies {

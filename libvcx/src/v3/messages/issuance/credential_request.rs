@@ -1,7 +1,7 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::attachment::{Attachments, AttachmentId};
 use error::VcxResult;
 use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::attachment::{AttachmentId, Attachments};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -12,7 +12,7 @@ pub struct CredentialRequest {
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Thread
+    pub thread: Thread,
 }
 
 impl CredentialRequest {
@@ -36,8 +36,9 @@ a2a_message!(CredentialRequest);
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::issuance::credential_offer::tests::{thread, thread_id};
+
+    use super::*;
 
     fn _attachment() -> ::serde_json::Value {
         json!({

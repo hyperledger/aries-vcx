@@ -1,5 +1,5 @@
 use messages::thread::Thread;
-use v3::messages::a2a::{MessageId, A2AMessage};
+use v3::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ack {
@@ -17,7 +17,7 @@ pub enum AckStatus {
     #[serde(rename = "FAIL")]
     Fail,
     #[serde(rename = "PENDING")]
-    Pending
+    Pending,
 }
 
 impl Default for AckStatus {
@@ -55,8 +55,9 @@ macro_rules! please_ack (($type:ident) => (
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::response::tests::*;
+
+    use super::*;
 
     pub fn _ack() -> Ack {
         Ack {

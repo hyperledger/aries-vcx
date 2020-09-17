@@ -1,10 +1,8 @@
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
-use error::prelude::*;
-
-
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -165,8 +163,9 @@ impl GeneralMessage for DeleteConnectionBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

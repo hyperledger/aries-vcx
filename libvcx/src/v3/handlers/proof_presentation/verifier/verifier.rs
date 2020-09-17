@@ -1,15 +1,14 @@
-use error::prelude::*;
 use std::convert::TryInto;
 
 use ::{connection, settings};
-use v3::messages::proof_presentation::presentation_request::*;
-use v3::messages::proof_presentation::presentation::Presentation;
-use v3::handlers::proof_presentation::verifier::states::VerifierSM;
-use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use v3::messages::a2a::A2AMessage;
-
-use messages::proofs::proof_request::ProofRequestMessage;
+use error::prelude::*;
 use messages::proofs::proof_message::ProofMessage;
+use messages::proofs::proof_request::ProofRequestMessage;
+use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use v3::handlers::proof_presentation::verifier::states::VerifierSM;
+use v3::messages::a2a::A2AMessage;
+use v3::messages::proof_presentation::presentation::Presentation;
+use v3::messages::proof_presentation::presentation_request::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Verifier {
@@ -103,13 +102,13 @@ impl Verifier {
 
         // strict aries protocol is set. return aries formatted Proof Request
         if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof_request).to_string())
+            return Ok(json!(proof_request).to_string());
         }
 
         // convert Proof Request into proprietary format
         let proof_request: ProofRequestMessage = proof_request.try_into()?;
 
-        return Ok(json!(proof_request).to_string())
+        return Ok(json!(proof_request).to_string());
     }
 
     pub fn get_presentation(&self) -> VcxResult<String> {
@@ -119,13 +118,13 @@ impl Verifier {
 
         // strict aries protocol is set. return aries formatted Proof
         if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string())
+            return Ok(json!(proof).to_string());
         }
 
         // convert Proof into proprietary format
         let proof: ProofMessage = proof.try_into()?;
 
-        return Ok(json!(proof).to_string())
+        return Ok(json!(proof).to_string());
     }
 
     pub fn step(&mut self, message: VerifierMessages) -> VcxResult<()> {

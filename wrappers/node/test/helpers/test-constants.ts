@@ -1,4 +1,5 @@
 export const PROTOCOL_TYPE_ARIES: string = '3.0'
+export const PROTOCOL_TYPE_ARIES_STRICT: string = '4.0'
 // eslint-disable-next-line no-multi-str
 export const INVITE_ACCEPTED_MESSAGE: string = '{ "statusCode": "MS-104", "payload": \
 [ -126, -91, 64, 116, 121, 112, 101, -125, -92, 110, 97, 109, 101, -83, 67, 111, \

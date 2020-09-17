@@ -41,8 +41,9 @@ impl Into<DidDoc> for Service {
 
 #[cfg(test)]
 pub mod tests {
+    use v3::messages::connection::did_doc::tests::{_recipient_keys, _routing_keys, _service_endpoint};
+
     use super::*;
-    use v3::messages::connection::did_doc::tests::{_service_endpoint, _recipient_keys, _routing_keys};
 
     pub fn _service() -> Service {
         Service {

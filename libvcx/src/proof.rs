@@ -1,29 +1,28 @@
-use serde_json;
-use serde_json::Value;
 use openssl;
 use openssl::bn::{BigNum, BigNumRef};
+use serde_json;
+use serde_json::Value;
 
-use settings;
-use api::{VcxStateType, ProofStateType};
-use messages;
-use messages::proofs::proof_message::{ProofMessage, CredInfo};
-use messages::{RemoteMessageType, GeneralMessage};
-use messages::payload::{Payloads, PayloadKinds};
-use messages::thread::Thread;
-use messages::get_message::get_ref_msg;
-use messages::proofs::proof_request::{ProofRequestMessage, ProofRequestVersion};
-use utils::error;
-use utils::constants::*;
-use utils::libindy::anoncreds;
-use object_cache::ObjectCache;
+use api::{ProofStateType, VcxStateType};
 use error::prelude::*;
+use messages;
+use messages::{GeneralMessage, RemoteMessageType};
+use messages::get_message::get_ref_msg;
+use messages::payload::{PayloadKinds, Payloads};
+use messages::proofs::proof_message::{CredInfo, ProofMessage};
+use messages::proofs::proof_message::get_credential_info;
+use messages::proofs::proof_request::{ProofRequestMessage, ProofRequestVersion};
+use messages::thread::Thread;
+use object_cache::ObjectCache;
+use settings;
+use settings::get_config_value;
+use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
+use utils::constants::*;
+use utils::error;
+use utils::libindy::anoncreds;
 use utils::openssl::encode;
 use utils::qualifier;
-use messages::proofs::proof_message::get_credential_info;
-
 use v3::handlers::proof_presentation::verifier::verifier::Verifier;
-use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
-use settings::get_config_value;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Proofs> = ObjectCache::<Proofs>::new("proofs-cache");
@@ -660,17 +659,18 @@ pub fn generate_nonce() -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
+    use connection;
     use connection::tests::build_test_connection;
-    use utils::libindy::pool;
+    use messages::proofs::proof_request;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
+    use utils::libindy::pool;
+    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use v3::handlers::connection as connection_v3;
+    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
     use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-    use messages::proofs::proof_request;
 
-    use connection;
+    use super::*;
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
         if let Some(h) = connection_handle { get_agent_info().unwrap().pw_info(h).unwrap() } else {
@@ -728,7 +728,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         create_proof("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
@@ -740,7 +740,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_revocation_details() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         // No Revocation
         create_proof("1".to_string(),
@@ -772,7 +772,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -789,7 +789,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -797,7 +797,7 @@ pub mod tests {
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
         let proof_data = to_string(handle).unwrap();
-        let _hnadle2= from_string(&proof_data).unwrap();
+        let _hnadle2 = from_string(&proof_data).unwrap();
         let proof_data2 = to_string(handle).unwrap();
         assert_eq!(proof_data, proof_data2);
     }
@@ -805,7 +805,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -824,10 +824,10 @@ pub mod tests {
         let connection_handle = build_test_connection();
 
         let proof_handle = create_proof("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
+                                        REQUESTED_ATTRS.to_owned(),
+                                        REQUESTED_PREDICATES.to_owned(),
+                                        r#"{"support_revocation":false}"#.to_string(),
+                                        "Optional".to_owned()).unwrap();
         assert_eq!(send_proof_request(proof_handle, connection_handle).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(proof_handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
@@ -835,7 +835,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_fails_with_no_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -854,10 +854,10 @@ pub mod tests {
         let connection_handle = build_test_connection();
 
         let mut proof = Verifier::create("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
 
         proof.send_presentation_request(connection_handle).unwrap();
 
@@ -867,7 +867,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut proof = create_boxed_proof(None, None, None);
         proof.update_state(Some(PROOF_RESPONSE_STR.to_string())).unwrap();
@@ -882,10 +882,10 @@ pub mod tests {
         let connection_handle = build_test_connection();
 
         let mut proof = Verifier::create("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
 
         proof.send_presentation_request(connection_handle);
 
@@ -896,7 +896,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_credential_defs_json_with_multiple_credentials() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -921,7 +921,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_schemas_json_with_multiple_schemas() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -971,7 +971,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_json() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cred1 = CredInfo {
             schema_id: "schema_key1".to_string(),
@@ -996,7 +996,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut proof_msg_obj = ProofMessage::new();
         proof_msg_obj.libindy_proof = PROOF_JSON.to_string();
@@ -1011,7 +1011,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let h1 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
         let h2 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
@@ -1060,16 +1060,16 @@ pub mod tests {
         let connection_handle = build_test_connection();
 
         let mut proof = Verifier::create("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
 
         proof.send_presentation_request(connection_handle).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        proof.update_state_with_message(PROOF_RESPONSE_DECRYPTED).unwrap();
+        proof.update_state_with_message(ARIES_PROOF_PRESENTATION).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }

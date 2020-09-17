@@ -1,17 +1,15 @@
-use error::prelude::*;
-use utils::libindy::anoncreds;
 use std::convert::TryInto;
 
-use v3::handlers::proof_presentation::prover::states::ProverSM;
+use ::{connection, settings};
+use error::prelude::*;
+use messages::proofs::proof_message::ProofMessage;
+use utils::libindy::anoncreds;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
+use v3::handlers::proof_presentation::prover::states::ProverSM;
 use v3::messages::a2a::A2AMessage;
+use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
-use ::{connection, settings};
-
-use messages::proofs::proof_message::ProofMessage;
-
-use v3::messages::proof_presentation::presentation::Presentation;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Prover {
@@ -51,13 +49,13 @@ impl Prover {
 
         // strict aries protocol is set. return aries formatted Proof
         if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string())
+            return Ok(json!(proof).to_string());
         }
 
         // convert Proof into proprietary format
         let proof: ProofMessage = proof.try_into()?;
 
-        return Ok(json!(proof).to_string())
+        return Ok(json!(proof).to_string());
     }
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {

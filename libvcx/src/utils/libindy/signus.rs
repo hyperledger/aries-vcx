@@ -1,9 +1,9 @@
 use futures::Future;
 use indy::did;
 
+use error::prelude::*;
 use settings;
 use utils::libindy::wallet::get_wallet_handle;
-use error::prelude::*;
 
 pub fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {

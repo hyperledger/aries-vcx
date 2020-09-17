@@ -1,5 +1,6 @@
-use openssl::sha::sha256;
 use openssl::bn::BigNum;
+use openssl::sha::sha256;
+
 use error::prelude::*;
 
 pub fn encode(s: &str) -> VcxResult<String> {

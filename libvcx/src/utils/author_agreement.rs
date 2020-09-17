@@ -1,5 +1,6 @@
-use error::{VcxError, VcxErrorKind, VcxResult};
 use serde_json;
+
+use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -12,7 +13,7 @@ pub struct TxnAuthorAgreementAcceptanceData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub taa_digest: Option<String>,
     pub acceptance_mechanism_type: String,
-    pub time_of_acceptance: u64
+    pub time_of_acceptance: u64,
 }
 
 pub fn set_txn_author_agreement(text: Option<String>,
@@ -49,8 +50,9 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     const TEXT: &str = "indy agreement";
     const VERSION: &str = "1.0.0";

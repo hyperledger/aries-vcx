@@ -1,12 +1,12 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::attachment::{Attachments, AttachmentId};
-use v3::messages::ack::PleaseAck;
-use error::{VcxError, VcxResult, VcxErrorKind};
-use messages::thread::Thread;
-use issuer_credential::CredentialMessage;
-use messages::payload::PayloadKinds;
 use std::convert::TryInto;
 
+use error::{VcxError, VcxErrorKind, VcxResult};
+use issuer_credential::CredentialMessage;
+use messages::payload::PayloadKinds;
+use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::ack::PleaseAck;
+use v3::messages::attachment::{AttachmentId, Attachments};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct Credential {
@@ -78,8 +78,9 @@ impl TryInto<CredentialMessage> for Credential {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::issuance::credential_offer::tests::{thread, thread_id};
+
+    use super::*;
 
     fn _attachment() -> ::serde_json::Value {
         json!({

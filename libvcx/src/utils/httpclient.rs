@@ -1,15 +1,18 @@
-use settings;
+use std::env;
 use std::io::Read;
 use std::sync::Mutex;
+
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
-use std::env;
+
 use error::prelude::*;
+use settings;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
     static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
     static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> = Mutex::new(AgencyMockDecryptedMessages::default());
+    static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
 }
 
 #[derive(Default)]
@@ -20,6 +23,11 @@ pub struct AgencyMock {
 #[derive(Default)]
 pub struct AgencyMockDecrypted {
     responses: Vec<String>
+}
+
+#[derive(Default)]
+pub struct HttpClientMockResponse {
+    responses: Vec<VcxResult<Vec<u8>>>
 }
 
 #[derive(Default)]
@@ -34,8 +42,24 @@ impl AgencyMock {
         }
     }
 
+    pub fn get_response() -> Vec<u8> {
+        AGENCY_MOCK.lock().unwrap().responses.pop().unwrap_or_default()
+    }
+}
+
+impl HttpClientMockResponse {
+    pub fn set_next_response(response: VcxResult<Vec<u8>>) {
+        if settings::agency_mocks_enabled() {
+            HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
+        }
+    }
+
+    pub fn has_response() -> bool {
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+    }
+
     pub fn get_response() -> VcxResult<Vec<u8>> {
-        Ok(AGENCY_MOCK.lock().unwrap().responses.pop().unwrap_or_default())
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
     }
 }
 
@@ -91,13 +115,17 @@ pub fn post_u8(body_content: &Vec<u8>) -> VcxResult<Vec<u8>> {
 
 pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     if settings::agency_mocks_enabled() {
+        if HttpClientMockResponse::has_response() {
+            warn!("HttpClient has mocked response");
+            return HttpClientMockResponse::get_response();
+        }
         if AgencyMockDecrypted::has_decrypted_mock_responses() {
             warn!("Agency requests returns empty response, decrypted mock response is available");
-            return Ok(vec!())
+            return Ok(vec!());
         }
         let mocked_response = AgencyMock::get_response();
-        warn!("Returning mocked agency response!");
-        return mocked_response;
+        debug!("Agency returns mocked response of length {}", mocked_response.len());
+        return Ok(mocked_response);
     }
 
     //Setting SSL Certs location. This is needed on android platform. Or openssl will fail to verify the certs

@@ -1,10 +1,10 @@
-use futures::Future;
-use indy::{pool, ErrorCode};
-
 use std::sync::RwLock;
 
-use settings;
+use futures::Future;
+use indy::{ErrorCode, pool};
+
 use error::prelude::*;
+use settings;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -133,15 +133,17 @@ pub fn delete(pool_name: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use std::fs;
     use std::io::Write;
+
     use utils::{
-        constants::{POOL, GENESIS_PATH},
+        constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
     };
     #[cfg(feature = "pool_tests")]
     use utils::devsetup::SetupLibraryWalletPoolZeroFees;
+
+    use super::*;
 
     pub fn create_test_pool() {
         create_genesis_txn_file();

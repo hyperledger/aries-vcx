@@ -6,7 +6,7 @@ pub struct Request {
     #[serde(rename = "@id")]
     pub id: MessageId,
     pub label: String,
-    pub connection: ConnectionData
+    pub connection: ConnectionData,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -48,8 +48,9 @@ a2a_message!(Request, ConnectionRequest);
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::did_doc::tests::*;
+
+    use super::*;
 
     fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
@@ -61,7 +62,7 @@ pub mod tests {
             label: _label(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc()
+                did_doc: _did_doc(),
             },
         }
     }

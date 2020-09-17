@@ -1,3 +1,6 @@
+use std::env;
+use std::path::PathBuf;
+
 #[macro_use]
 mod ccallback;
 
@@ -39,6 +42,9 @@ macro_rules! map (
 pub mod error;
 pub mod httpclient;
 pub mod constants;
+pub mod mockdata_credex;
+pub mod mockdata_connection;
+pub mod mockdata_proof;
 pub mod timeout;
 pub mod openssl;
 pub mod json;
@@ -56,9 +62,6 @@ pub mod plugins;
 
 #[macro_use]
 pub mod logger;
-
-use std::path::PathBuf;
-use std::env;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();

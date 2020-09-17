@@ -4,13 +4,13 @@ import { assert } from 'chai'
 import { connectionCreate, connectionCreateConnect, dataConnectionCreate } from 'helpers/entities'
 import {
   INVITE_ACCEPTED_MESSAGE,
-  PROTOCOL_TYPE_ARIES
+  PROTOCOL_TYPE_ARIES_STRICT
 } from 'helpers/test-constants'
 import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils'
 import { Connection, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 
 describe('Connection:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
+  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
 
   describe('create:', () => {
     it('success', async () => {

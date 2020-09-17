@@ -1,14 +1,14 @@
-extern crate tokio_threadpool;
 extern crate futures;
+extern crate tokio_threadpool;
 
-use self::tokio_threadpool::{Builder, ThreadPool};
-use self::futures::Future;
-
-use std::sync::Once;
-use std::sync::Mutex;
 use std::collections::HashMap;
-use std::thread;
 use std::ops::FnOnce;
+use std::sync::Mutex;
+use std::sync::Once;
+use std::thread;
+
+use self::futures::Future;
+use self::tokio_threadpool::{Builder, ThreadPool};
 
 lazy_static! {
     static ref THREADPOOL: Mutex<HashMap<u32, ThreadPool>> = Default::default();
@@ -35,28 +35,26 @@ pub fn init() {
 }
 
 pub fn spawn<F>(future: F)
-where
-    F: FnOnce() -> Result<(), ()> + Send + 'static {
-        let handle;
-        unsafe { handle = TP_HANDLE; }
-        if ::settings::get_threadpool_size() == 0 || handle == 0{
-            thread::spawn(future);
-        }
-        else {
-            spawn_thread_in_pool(futures::lazy(future));
-        }
-
+    where
+        F: FnOnce() -> Result<(), ()> + Send + 'static {
+    let handle;
+    unsafe { handle = TP_HANDLE; }
+    if ::settings::get_threadpool_size() == 0 || handle == 0 {
+        thread::spawn(future);
+    } else {
+        spawn_thread_in_pool(futures::lazy(future));
+    }
 }
 
 fn spawn_thread_in_pool<F>(future: F)
-where
-    F: Future<Item = (), Error = ()> + Send + 'static {
+    where
+        F: Future<Item=(), Error=()> + Send + 'static {
     let handle;
     unsafe { handle = TP_HANDLE; }
     match THREADPOOL.lock().unwrap().get(&handle) {
         Some(x) => {
-            let _n= x.spawn(future);
-        },
+            let _n = x.spawn(future);
+        }
         None => panic!("no threadpool!"),
     }
 }

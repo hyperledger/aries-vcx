@@ -1,4 +1,3 @@
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct CredentialRequest {
     pub libindy_cred_req: String,
@@ -23,7 +22,7 @@ impl CredentialRequest {
             libindy_cred_req: String::new(),
             libindy_cred_req_meta: String::new(),
             cred_def_id: String::new(),
-            msg_ref_id: None
+            msg_ref_id: None,
         }
     }
 }
@@ -31,10 +30,12 @@ impl CredentialRequest {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json;
-    use utils::constants::{CREDENTIAL_REQ_STRING, CRED_REQ, CRED_REQ_META};
+
+    use utils::constants::{CRED_REQ, CRED_REQ_META, CREDENTIAL_REQ_STRING};
     use utils::devsetup::*;
+
+    use super::*;
 
     fn create_credential_req() -> CredentialRequest {
         let _setup = SetupDefaults::init();

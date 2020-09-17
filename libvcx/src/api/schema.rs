@@ -1,13 +1,15 @@
-use serde_json;
-use libc::c_char;
-use utils::cstring::CStringUtils;
-use utils::error;
 use std::ptr;
+
+use indy_sys::CommandHandle;
+use libc::c_char;
+use serde_json;
+
+use error::prelude::*;
 use schema;
 use settings;
+use utils::cstring::CStringUtils;
+use utils::error;
 use utils::threadpool::spawn;
-use error::prelude::*;
-use indy_sys::CommandHandle;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -179,7 +181,7 @@ pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
            command_handle, schema_handle, source_id);
 
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     };
 
     spawn(move || {
@@ -289,7 +291,7 @@ pub extern fn vcx_schema_get_schema_id(command_handle: CommandHandle,
 
     trace!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {})", command_handle, schema_handle);
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     }
 
     spawn(move || {
@@ -531,19 +533,22 @@ mod tests {
     extern crate serde_json;
     extern crate rand;
 
-    use super::*;
+    use std::ffi::CString;
+
     #[allow(unused_imports)]
     use rand::Rng;
-    use std::ffi::CString;
-    use settings;
-    #[allow(unused_imports)]
-    use utils::constants::{SCHEMA_ID, SCHEMA_WITH_VERSION, DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME};
+
     use api::return_types_u32;
-    use utils::devsetup::*;
-    use schema::tests::prepare_schema_data;
     #[cfg(feature = "pool_tests")]
     use schema::CreateSchema;
+    use schema::tests::prepare_schema_data;
+    use settings;
+    #[allow(unused_imports)]
+    use utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use utils::devsetup::*;
     use utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     fn vcx_schema_create_c_closure(name: &str, version: &str, data: &str) -> Result<u32, u32> {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -572,7 +577,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_create_schema_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -611,7 +616,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_serialize() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -622,7 +627,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_deserialize_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_schema_deserialize(cb.command_handle, CString::new(SCHEMA_WITH_VERSION).unwrap().into_raw(), Some(cb.get_callback()));
@@ -634,7 +639,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_schema_id_succeeds() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let schema_handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -648,7 +653,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_attrs() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
@@ -666,7 +671,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
 
@@ -696,7 +701,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_release() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -708,7 +713,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_prepare_schema_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
@@ -729,7 +734,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (handle, _) = schema::prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();

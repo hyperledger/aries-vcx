@@ -1,9 +1,9 @@
-use settings;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
-use utils::{httpclient, constants};
-use error::prelude::*;
+use settings;
 use settings::ProtocolTypes;
+use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -91,7 +91,7 @@ impl CreateKeyBuilder {
                     A2AMessageV1::CreateKey(CreateKey {
                         msg_type: MessageTypes::MessageTypeV1(MessageTypes::build_v1(A2AMessageKinds::CreateKey)),
                         for_did: self.for_did.to_string(),
-                        for_verkey: self.for_verkey.to_string()
+                        for_verkey: self.for_verkey.to_string(),
                     })
                 ),
             settings::ProtocolTypes::V2 |
@@ -101,7 +101,7 @@ impl CreateKeyBuilder {
                     A2AMessageV2::CreateKey(CreateKey {
                         msg_type: MessageTypes::MessageTypeV2(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
                         for_did: self.for_did.to_string(),
-                        for_verkey: self.for_verkey.to_string()
+                        for_verkey: self.for_verkey.to_string(),
                     })
                 ),
         };
@@ -123,12 +123,13 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED, CREATE_KEYS_V2_RESPONSE};
-    use utils::constants::CREATE_KEYS_RESPONSE;
-    use utils::libindy::signus::create_and_store_my_did;
     use messages::create_keys;
+    use utils::constants::{CREATE_KEYS_V2_RESPONSE, MY1_SEED, MY2_SEED, MY3_SEED};
+    use utils::constants::CREATE_KEYS_RESPONSE;
     use utils::devsetup::*;
+    use utils::libindy::signus::create_and_store_my_did;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -166,7 +167,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v1_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut builder = create_keys();
 
@@ -179,7 +180,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_create_keys_v2_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let mut builder = create_keys();
 

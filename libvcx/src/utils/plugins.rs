@@ -1,5 +1,6 @@
-use settings;
 use indy::ErrorCode;
+
+use settings;
 
 static INIT_PLUGIN: std::sync::Once = std::sync::Once::new();
 

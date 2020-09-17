@@ -1,8 +1,8 @@
-use settings;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
-use utils::{httpclient, constants};
-use error::prelude::*;
+use settings;
+use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -11,7 +11,7 @@ pub struct UpdateMessageStatusByConnections {
     #[serde(rename = "@type")]
     msg_type: MessageTypes,
     status_code: Option<MessageStatusCode>,
-    uids_by_conns: Vec<UIDsByConn>
+    uids_by_conns: Vec<UIDsByConn>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -20,7 +20,7 @@ pub struct UpdateMessageStatusByConnectionsResponse {
     #[serde(rename = "@type")]
     msg_type: MessageTypes,
     status_code: Option<String>,
-    updated_uids_by_conns: Vec<UIDsByConn>
+    updated_uids_by_conns: Vec<UIDsByConn>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -44,7 +44,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         UpdateMessageStatusByConnectionsBuilder {
             status_code: None,
             uids_by_conns: Vec::new(),
-            version: settings::get_protocol_type()
+            version: settings::get_protocol_type(),
         }
     }
 
@@ -154,16 +154,15 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
 
 #[cfg(test)]
 mod tests {
-    
-    
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::thread;
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
+
     #[test]
     #[cfg(feature = "to_restore")]
     fn test_parse_parse_update_messages_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         // todo: need to set arias compatible mock, this is legacy so we get parsing failure
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&::utils::constants::UPDATE_MESSAGES_RESPONSE.to_vec()).unwrap();
     }

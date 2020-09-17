@@ -1,12 +1,23 @@
-use utils::{threadpool, get_temp_dir_path};
-use ::{settings, utils};
 use std::fs;
-use utils::libindy::wallet::{reset_wallet_handle, delete_wallet, create_wallet};
-use utils::libindy::pool::reset_pool_handle;
-use utils::httpclient::AgencyMockDecrypted;
-use settings::set_defaults;
-use futures::Future;
 use std::sync::Once;
+
+use futures::Future;
+use indy::WalletHandle;
+
+use ::{settings, utils};
+use object_cache::ObjectCache;
+use settings::set_defaults;
+use utils::{get_temp_dir_path, threadpool};
+use utils::constants;
+use utils::file::write_file;
+use utils::httpclient::AgencyMockDecrypted;
+use utils::libindy::pool::reset_pool_handle;
+use utils::libindy::pool::tests::{create_test_pool, delete_test_pool, open_test_pool};
+use utils::libindy::wallet::{create_wallet, delete_wallet, reset_wallet_handle};
+use utils::libindy::wallet;
+use utils::libindy::wallet::init_wallet;
+use utils::logger::LibvcxDefaultLogger;
+use utils::plugins::init_plugin;
 
 pub struct SetupEmpty; // empty
 
@@ -267,30 +278,30 @@ impl Drop for SetupLibraryAgencyV2 {
     }
 }
 
-impl SetupLibraryAgencyV2ZeroFees  {
-    pub fn init() -> SetupLibraryAgencyV2ZeroFees  {
+impl SetupLibraryAgencyV2ZeroFees {
+    pub fn init() -> SetupLibraryAgencyV2ZeroFees {
         setup();
-        setup_agency_env("2.0", true);
+        setup_agency_env("4.0", true);
         SetupLibraryAgencyV2ZeroFees
     }
 }
 
-impl Drop for SetupLibraryAgencyV2ZeroFees  {
+impl Drop for SetupLibraryAgencyV2ZeroFees {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()
     }
 }
 
-impl SetupLibraryAgencyZeroFees  {
-    pub fn init(protocol_type: &str) -> SetupLibraryAgencyZeroFees  {
+impl SetupLibraryAgencyZeroFees {
+    pub fn init(protocol_type: &str) -> SetupLibraryAgencyZeroFees {
         setup();
         setup_agency_env(&protocol_type, true);
         SetupLibraryAgencyZeroFees
     }
 }
 
-impl Drop for SetupLibraryAgencyZeroFees  {
+impl Drop for SetupLibraryAgencyZeroFees {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()
@@ -306,17 +317,6 @@ macro_rules! assert_match {
         })
     );
 }
-
-use utils::constants;
-use utils::libindy::wallet;
-use object_cache::ObjectCache;
-
-use indy::WalletHandle;
-use utils::libindy::wallet::init_wallet;
-use utils::plugins::init_plugin;
-use utils::libindy::pool::tests::{open_test_pool, delete_test_pool, create_test_pool};
-use utils::file::write_file;
-use utils::logger::LibvcxDefaultLogger;
 
 static mut INSTITUTION_CONFIG: u32 = 0;
 static mut CONSUMER_CONFIG: u32 = 0;
@@ -359,7 +359,7 @@ lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
 }
 
-fn init_test_logging(){
+fn init_test_logging() {
     TEST_LOGGING_INIT.call_once(|| {
         LibvcxDefaultLogger::init_testing_logger();
     })
@@ -584,10 +584,9 @@ mod tests {
     use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     pub fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV1ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
         let (_faber, _alice) = ::connection::tests::create_connected_connections();
         let (_faber, _alice) = ::connection::tests::create_connected_connections();

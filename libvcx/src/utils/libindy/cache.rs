@@ -1,7 +1,7 @@
 use serde_json;
 
-use utils::libindy::wallet::{add_record, get_record, update_record_value, delete_record};
-use error::{VcxErrorKind, VcxError, VcxResult};
+use error::{VcxError, VcxErrorKind, VcxResult};
+use utils::libindy::wallet::{add_record, delete_record, get_record, update_record_value};
 
 static CACHE_TYPE: &str = "cache";
 static REV_REG_CACHE_PREFIX: &str = "rev_reg:";
@@ -24,6 +24,7 @@ pub struct RevState {
     pub timestamp: u64,
     pub value: String,
 }
+
 ///
 ///
 /// Cache object for rev reg delta cache
@@ -63,14 +64,14 @@ pub fn get_rev_reg_cache(rev_reg_id: &str, cred_rev_id: &str) -> RevRegCache {
                 .and_then(|x: serde_json::Value| {
                     serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))
                 })
-                {
+            {
                 Ok(cache) => cache,
                 Err(err) => {
                     warn!("Unable to convert rev reg cache for rev_reg_id: {}, json: {}, error: {}", rev_reg_id, json, err);
                     RevRegCache::default()
                 }
             }
-        },
+        }
         Err(err) => {
             warn!("Unable to get rev_reg cache for rev_reg_id: {}, error: {}", rev_reg_id, err);
             RevRegCache::default()
@@ -95,7 +96,7 @@ pub fn set_rev_reg_cache(rev_reg_id: &str, cred_rev_id: &str, cache: &RevRegCach
             if result.is_err() {
                 warn!("Error when saving rev reg cache {:?}, error: {:?}", cache, result);
             }
-        },
+        }
         Err(err) => {
             warn!("Unable to convert to JSON rev reg cache {:?}, error: {:?}", cache, err);
         }
@@ -109,10 +110,10 @@ fn set_rev_reg_ids_cache(cred_def_id: &str, cache: &str) -> VcxResult<()> {
             let wallet_id = format!("{}{}", REV_REG_IDS_CACHE_PREFIX, cred_def_id);
             match update_record_value(CACHE_TYPE, &wallet_id, &json)
                 .or(add_record(CACHE_TYPE, &wallet_id, &json, None)) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(err)
-                }
-        },
+                Ok(_) => Ok(()),
+                Err(err) => Err(err)
+            }
+        }
         Err(_) => {
             Err(VcxError::from(VcxErrorKind::SerializationError))
         }
@@ -126,7 +127,7 @@ fn get_rev_reg_ids_cache(cred_def_id: &str) -> Option<RevRegIdsCache> {
     match get_record(CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()) {
         Ok(json) => {
             match serde_json::from_str(&json)
-                .and_then(|x: serde_json::Value| 
+                .and_then(|x: serde_json::Value|
                     serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))) {
                 Ok(cache) => cache,
                 Err(err) => {
@@ -134,7 +135,7 @@ fn get_rev_reg_ids_cache(cred_def_id: &str) -> Option<RevRegIdsCache> {
                     None
                 }
             }
-        },
+        }
         Err(err) => {
             warn!("Unable to get rev_reg_ids cache for cred_def_id: {}, error: {}", cred_def_id, err);
             None
@@ -158,7 +159,7 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
     match get_record(CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()) {
         Ok(json) => {
             match serde_json::from_str(&json)
-                .and_then(|x: serde_json::Value| 
+                .and_then(|x: serde_json::Value|
                     serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or(""))) {
                 Ok(cache) => cache,
                 Err(err) => {
@@ -166,7 +167,7 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
                     None
                 }
             }
-        },
+        }
         Err(err) => {
             warn!("Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}", rev_reg_id, err);
             None
@@ -176,14 +177,14 @@ pub fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
 
 pub fn update_rev_reg_ids_cache(cred_def_id: &str, rev_reg_id: &str) -> VcxResult<()> {
     debug!("Setting rev_reg_ids cache for cred_def_id {}, rev_reg_id {}", cred_def_id, rev_reg_id);
-	match get_rev_reg_ids_cache(cred_def_id) {
+    match get_rev_reg_ids_cache(cred_def_id) {
         Some(mut old_vec) => {
             old_vec.rev_reg_ids.push(String::from(rev_reg_id));
             match serde_json::to_string(&old_vec) {
                 Ok(ser_new_vec) => set_rev_reg_ids_cache(cred_def_id, ser_new_vec.as_str()),
                 Err(_) => Err(VcxError::from(VcxErrorKind::SerializationError))
             }
-        },
+        }
         None => {
             match serde_json::to_string(&vec![rev_reg_id]) {
                 Ok(ser_new_vec) => set_rev_reg_ids_cache(cred_def_id, ser_new_vec.as_str()),
@@ -209,10 +210,10 @@ pub fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) -> VcxResult<()> {
             let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
             match update_record_value(CACHE_TYPE, &wallet_id, &json)
                 .or(add_record(CACHE_TYPE, &wallet_id, &json, None)) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(err)
-                }
-        },
+                Ok(_) => Ok(()),
+                Err(err) => Err(err)
+            }
+        }
         Err(_) => {
             Err(VcxError::from(VcxErrorKind::SerializationError))
         }
@@ -243,8 +244,9 @@ pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use utils::devsetup::SetupLibraryWallet;
+
+    use super::*;
 
     fn _rev_reg_id() -> &'static str {
         "test-rev-reg-id"
@@ -342,5 +344,4 @@ pub mod tests {
         let result = get_rev_reg_cache(_rev_reg_id(), _cred_rev_id());
         assert_eq!(result, data2);
     }
-
 }

@@ -1,13 +1,15 @@
-use serde_json;
+use std::ptr;
+
+use indy_sys::CommandHandle;
 use libc::c_char;
-use utils::cstring::CStringUtils;
-use utils::error;
+use serde_json;
+
 use connection;
 use credential;
-use std::ptr;
-use utils::threadpool::spawn;
 use error::prelude::*;
-use indy_sys::CommandHandle;
+use utils::cstring::CStringUtils;
+use utils::error;
+use utils::threadpool::spawn;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -212,7 +214,7 @@ pub extern fn vcx_get_credential(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -262,7 +264,7 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -362,11 +364,11 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -422,7 +424,7 @@ pub extern fn vcx_credential_get_request_msg(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -472,7 +474,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     trace!("vcx_credential_get_offers(command_handle: {}, connection_handle: {})",
@@ -521,7 +523,7 @@ pub extern fn vcx_credential_update_state(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -559,19 +561,19 @@ pub extern fn vcx_credential_update_state(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
-                                          credential_handle: u32,
-                                          connection_handle: u32,
-                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                             credential_handle: u32,
+                                             connection_handle: u32,
+                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_credential_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -606,6 +608,7 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
+
 /// Update the state of the credential based on the given message.
 ///
 /// #Params
@@ -630,7 +633,7 @@ pub extern fn vcx_credential_update_state_with_message(command_handle: CommandHa
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
@@ -689,7 +692,7 @@ pub extern fn vcx_credential_get_state(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(handle).unwrap_or_default();
@@ -737,7 +740,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential::is_valid_handle(handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
     let source_id = credential::get_source_id(handle).unwrap_or_default();
@@ -902,20 +905,22 @@ pub extern fn vcx_credential_get_payment_txn(command_handle: CommandHandle,
 mod tests {
     extern crate serde_json;
 
-    use super::*;
     use std::ffi::CString;
-    
-    use api::VcxStateType;
-    use api::return_types_u32;
+
     use serde_json::Value;
-    use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL, FULL_CREDENTIAL_SERIALIZED, PENDING_OBJECT_SERIALIZE_VERSION};
-    use utils::devsetup::*;
-    
-    use utils::timeout::TimeoutUtils;
 
     use ::credential::tests::BAD_CREDENTIAL_OFFER;
+    use api::return_types_u32;
+    use api::VcxStateType;
+    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, PENDING_OBJECT_SERIALIZE_VERSION, V3_OBJECT_SERIALIZE_VERSION};
     use utils::constants;
-    
+    use utils::devsetup::*;
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use utils::timeout::TimeoutUtils;
+    use v3::messages::issuance::credential_request::CredentialRequest;
+
+    use super::*;
 
     fn _vcx_credential_create_with_offer_c_closure(offer: &str) -> Result<u32, u32> {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -934,16 +939,16 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_success() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = _vcx_credential_create_with_offer_c_closure(constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert!(handle > 0);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create_with_offer_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let err = _vcx_credential_create_with_offer_c_closure(BAD_CREDENTIAL_OFFER).unwrap_err();
         assert_eq!(err, error::INVALID_JSON.code_num);
@@ -952,9 +957,9 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_serialize_and_deserialize() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = _vcx_credential_create_with_offer_c_closure(constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_serialize(cb.command_handle,
@@ -963,7 +968,7 @@ mod tests {
         let credential_json = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
 
         let object: Value = serde_json::from_str(&credential_json).unwrap();
-        assert_eq!(object["version"], PENDING_OBJECT_SERIALIZE_VERSION);
+        assert_eq!(object["version"], V3_OBJECT_SERIALIZE_VERSION);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credential_deserialize(cb.command_handle,
@@ -974,12 +979,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_send_request() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = credential::credential_create_with_offer("test_send_request", ::utils::constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = credential::credential_create_with_offer("test_send_request", ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         let connection_handle = connection::tests::build_test_connection();
@@ -991,9 +995,8 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_credential_get_new_offers() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -1006,10 +1009,9 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_create() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cxn = ::connection::tests::build_test_connection();
 
@@ -1025,9 +1027,9 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = _vcx_credential_create_with_offer_c_closure(constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credential_get_state(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1036,46 +1038,43 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_credential_update_state() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let handle_conn = ::connection::tests::build_test_connection();
 
-        let handle = credential::from_string(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
-
-        AgencyMock::set_next_response(::utils::constants::NEW_CREDENTIAL_OFFER_RESPONSE.to_vec());
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credential_update_state(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
-        assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
+        let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
+        assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
+        debug!("credential handle = {}", handle_cred);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_credential_send_request(cb.command_handle, handle, cxn, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
+        assert_eq!(vcx_credential_send_request(cb.command_handle, handle_cred, handle_conn, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
+        assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
+        let cb = return_types_u32::Return_U32_U32::new().unwrap();
+        assert_eq!(vcx_credential_update_state(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_medium()).unwrap();
+        assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
+    #[cfg(feature = "to_restore")] // Missing implementation for v3 in generate_credential_request_msg
     fn test_vcx_credential_get_request_msg() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let handle_conn = ::connection::tests::build_test_connection();
 
-        let my_pw_did = CString::new(::connection::get_pw_did(cxn).unwrap()).unwrap().into_raw();
-        let their_pw_did = CString::new(::connection::get_their_pw_did(cxn).unwrap()).unwrap().into_raw();
+        let my_pw_did = CString::new(::connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
+        let their_pw_did = CString::new(::connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();
 
-        let handle = credential::from_string(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
-
-        AgencyMock::set_next_response(::utils::constants::NEW_CREDENTIAL_OFFER_RESPONSE.to_vec());
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credential_update_state(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
-        assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
+        let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_credential_get_request_msg(cb.command_handle, handle, my_pw_did, their_pw_did, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
+        assert_eq!(vcx_credential_get_request_msg(cb.command_handle, handle_cred, my_pw_did, their_pw_did, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
         let msg = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
         ::serde_json::from_str::<CredentialRequest>(&msg).unwrap();
@@ -1084,43 +1083,24 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = credential::from_string(FULL_CREDENTIAL_SERIALIZED).unwrap();
-        let bad_handle = 1123;
-
+        let handle_cred1 = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_get_credential(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
+        assert_eq!(vcx_get_credential(cb.command_handle, handle_cred1, Some(cb.get_callback())), error::SUCCESS.code_num);
+        let foo = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
+        let bad_handle = 1123;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())), error::INVALID_CREDENTIAL_HANDLE.code_num);
-
-        let handle = credential::from_string(DEFAULT_SERIALIZED_CREDENTIAL).unwrap();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_get_credential(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
-        assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::INVALID_STATE.code_num));
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_payment_txn() {
-        let _setup = SetupMocks::init();
-
-        let handle = credential::from_string(::utils::constants::FULL_CREDENTIAL_SERIALIZED).unwrap();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        vcx_credential_get_payment_txn(cb.command_handle, handle, Some(cb.get_callback()));
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credential_release() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
-        let handle = _vcx_credential_create_with_offer_c_closure(constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
         assert_eq!(vcx_credential_release(handle + 1), error::INVALID_CREDENTIAL_HANDLE.code_num);
 

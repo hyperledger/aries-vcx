@@ -7,22 +7,24 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 
 #[cfg(test)]
 pub mod test {
+    use indy_sys::WalletHandle;
     use rand;
     use rand::Rng;
-    use utils::devsetup::*;
+
     use messages::agent_utils::connect_register_provision;
-    use utils::libindy::wallet::*;
-    use indy_sys::WalletHandle;
-    use utils::plugins::init_plugin;
     use messages::payload::PayloadV1;
+    use utils::devsetup::*;
+    use utils::libindy::wallet::*;
+    use utils::plugins::init_plugin;
 
     pub fn source_id() -> String {
         String::from("test source id")
     }
 
     pub mod setup {
-        use settings::{CONFIG_WALLET_KEY_DERIVATION, DEFAULT_WALLET_KEY};
         use indy_sys::WalletHandle;
+
+        use settings::{CONFIG_WALLET_KEY_DERIVATION, DEFAULT_WALLET_KEY};
 
         pub fn base_config() -> ::serde_json::Value {
             json!({
@@ -115,13 +117,13 @@ pub mod test {
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
-        for message in  messages.msgs.into_iter(){
+        for message in messages.msgs.into_iter() {
             let payload: PayloadV1 = serde_json::from_str(&message.decrypted_payload.clone().unwrap()).unwrap();
             if payload.type_.name == type_ {
-                return Message{
+                return Message {
                     uid: message.uid,
-                    message: payload.msg
-                }
+                    message: payload.msg,
+                };
             }
         }
         panic!("Message not found")
@@ -151,8 +153,7 @@ pub mod test {
                 "wallet_key": "123",
                 "payment_method": "null",
                 "enterprise_seed": "000000000000000000000000Trustee1",
-                "protocol_type": "2.0",
-                "communication_method": "aries"
+                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();
@@ -330,8 +331,7 @@ pub mod test {
                 "wallet_name": wallet_name,
                 "wallet_key": "123",
                 "payment_method": "null",
-                "protocol_type": "2.0",
-                "communication_method": "aries"
+                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();

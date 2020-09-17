@@ -1,19 +1,21 @@
-use libc::c_char;
+use std::collections::HashMap;
+use std::fmt::Display;
+use std::ops::Deref;
+use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::RecvTimeoutError;
-use utils::libindy::next_command_handle;
-use utils::libindy::callback_u32 as callback;
-use utils::libindy::callback::POISON_MSG;
-use utils::libindy::error_codes::map_indy_error;
-use utils::timeout::TimeoutUtils;
-use utils::error;
-use std::sync::mpsc::channel;
-use std::fmt::Display;
-use std::time::Duration;
-use std::collections::HashMap;
 use std::sync::Mutex;
-use std::ops::Deref;
+use std::time::Duration;
+
 use indy_sys::CommandHandle;
+use libc::c_char;
+
+use utils::error;
+use utils::libindy::callback::POISON_MSG;
+use utils::libindy::callback_u32 as callback;
+use utils::libindy::error_codes::map_indy_error;
+use utils::libindy::next_command_handle;
+use utils::timeout::TimeoutUtils;
 
 fn log_error<T: Display>(e: T) {
     warn!("Unable to send through libindy callback in vcx: {}", e);
@@ -28,7 +30,7 @@ fn insert_closure<T>(closure: T, map: &Mutex<HashMap<CommandHandle, T>>) -> Comm
     command_handle
 }
 
-pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T, u32>{
+pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T, u32> {
     let timeout_val = timeout.unwrap_or(TimeoutUtils::medium_timeout());
 
     match receiver.recv_timeout(timeout_val) {
@@ -37,7 +39,7 @@ pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T
             RecvTimeoutError::Timeout => {
                 warn!("Timed Out waiting for call back");
                 Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
-            },
+            }
             RecvTimeoutError::Disconnected => {
                 warn!("Channel to libindy was disconnected unexpectedly");
                 Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
@@ -55,7 +57,7 @@ pub struct Return_U32 {
 impl Return_U32 {
     pub fn new() -> Result<Return_U32, u32> {
         let (sender, receiver) = channel();
-        let closure: Box<dyn FnMut(u32) + Send> = Box::new(move |err | {
+        let closure: Box<dyn FnMut(u32) + Send> = Box::new(move |err| {
             sender.send(err).unwrap_or_else(log_error);
         });
 
@@ -82,10 +84,11 @@ pub struct Return_U32_U32 {
     pub command_handle: CommandHandle,
     pub receiver: Receiver<(u32, u32)>,
 }
+
 impl Return_U32_U32 {
     pub fn new() -> Result<Return_U32_U32, u32> {
         let (sender, receiver) = channel();
-        let closure: Box<dyn FnMut(u32, u32) + Send> = Box::new(move |err, arg1 | {
+        let closure: Box<dyn FnMut(u32, u32) + Send> = Box::new(move |err, arg1| {
             sender.send((err, arg1)).unwrap_or_else(log_error);
         });
 
@@ -97,7 +100,7 @@ impl Return_U32_U32 {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn (command_handle: CommandHandle, arg1: u32, arg2: u32) {
+    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: u32) {
         callback::call_cb_u32_u32
     }
 
@@ -113,10 +116,11 @@ pub struct Return_U32_STR {
     pub command_handle: CommandHandle,
     receiver: Receiver<(u32, Option<String>)>,
 }
+
 impl Return_U32_STR {
     pub fn new() -> Result<Return_U32_STR, u32> {
         let (sender, receiver) = channel();
-        let closure:Box<dyn FnMut(u32, Option<String>) + Send> = Box::new(move |err, str | {
+        let closure: Box<dyn FnMut(u32, Option<String>) + Send> = Box::new(move |err, str| {
             sender.send((err, str)).unwrap_or_else(log_error);
         });
 
@@ -148,7 +152,7 @@ pub struct Return_U32_U32_STR {
 impl Return_U32_U32_STR {
     pub fn new() -> Result<Return_U32_U32_STR, u32> {
         let (sender, receiver) = channel();
-        let closure:Box<dyn FnMut(u32, u32, Option<String>) + Send> = Box::new(move |err, arg1,  arg2 | {
+        let closure: Box<dyn FnMut(u32, u32, Option<String>) + Send> = Box::new(move |err, arg1, arg2| {
             sender.send((err, arg1, arg2)).unwrap_or_else(log_error);
         });
 
@@ -176,10 +180,11 @@ pub struct Return_U32_STR_STR {
     pub command_handle: CommandHandle,
     receiver: Receiver<(u32, Option<String>, Option<String>)>,
 }
+
 impl Return_U32_STR_STR {
     pub fn new() -> Result<Return_U32_STR_STR, u32> {
         let (sender, receiver) = channel();
-        let closure:Box<dyn FnMut(u32, Option<String>, Option<String>) + Send> = Box::new(move |err, str1, str2 | {
+        let closure: Box<dyn FnMut(u32, Option<String>, Option<String>) + Send> = Box::new(move |err, str1, str2| {
             sender.send((err, str1, str2)).unwrap_or_else(log_error);
         });
 
@@ -216,7 +221,7 @@ pub struct Return_U32_BOOL {
 impl Return_U32_BOOL {
     pub fn new() -> Result<Return_U32_BOOL, u32> {
         let (sender, receiver) = channel();
-        let closure: Box<dyn FnMut(u32, bool) + Send> = Box::new(move |err, arg1 | {
+        let closure: Box<dyn FnMut(u32, bool) + Send> = Box::new(move |err, arg1| {
             sender.send((err, arg1)).unwrap_or_else(log_error);
         });
 
@@ -228,7 +233,7 @@ impl Return_U32_BOOL {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn (command_handle: CommandHandle, arg1: u32, arg2: bool) {
+    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: bool) {
         callback::call_cb_u32_bool
     }
 
@@ -261,7 +266,7 @@ impl Return_U32_BIN {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn (command_handle: CommandHandle, arg1: u32, *const u8, u32) {
+    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, *const u8, u32) {
         callback::call_cb_u32_bin
     }
 
@@ -293,7 +298,7 @@ impl Return_U32_OPTSTR_BIN {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn (command_handle: CommandHandle, arg1: u32, arg2: *const c_char, arg3: *const u8, arg4: u32) {
+    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char, arg3: *const u8, arg4: u32) {
         callback::call_cb_u32_str_bin
     }
 
@@ -314,7 +319,7 @@ pub struct Return_U32_U32_STR_STR_STR {
 impl Return_U32_U32_STR_STR_STR {
     pub fn new() -> Result<Return_U32_U32_STR_STR_STR, u32> {
         let (sender, receiver) = channel();
-        let closure:Box<dyn FnMut(u32, u32, Option<String>, Option<String>, Option<String>) + Send> = Box::new(move |err, arg1,  arg2,  arg3,  arg4 | {
+        let closure: Box<dyn FnMut(u32, u32, Option<String>, Option<String>, Option<String>) + Send> = Box::new(move |err, arg1, arg2, arg3, arg4| {
             sender.send((err, arg1, arg2, arg3, arg4)).unwrap_or_else(log_error);
         });
 
@@ -339,9 +344,10 @@ impl Return_U32_U32_STR_STR_STR {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CString;
     use std::ptr;
+
+    use super::*;
 
     fn cstring(str_val: &String) -> CString {
         CString::new(str_val.clone()).unwrap()
@@ -400,6 +406,5 @@ mod tests {
         let val = rtn.receive(None);
         assert!(val.is_err());
     }
-
 }
 

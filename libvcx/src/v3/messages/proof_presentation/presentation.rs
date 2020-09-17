@@ -1,11 +1,11 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::attachment::{Attachments, AttachmentId};
-use v3::messages::ack::PleaseAck;
-use messages::thread::Thread;
-use messages::proofs::proof_message::ProofMessage;
 use std::convert::TryInto;
 
 use error::prelude::*;
+use messages::proofs::proof_message::ProofMessage;
+use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::ack::PleaseAck;
+use v3::messages::attachment::{AttachmentId, Attachments};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -19,7 +19,7 @@ pub struct Presentation {
     pub thread: Thread,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub please_ack: Option<PleaseAck>
+    pub please_ack: Option<PleaseAck>,
 }
 
 impl Presentation {
@@ -33,7 +33,7 @@ impl Presentation {
     }
 
     pub fn set_presentations_attach(mut self, presentations: String) -> VcxResult<Presentation> {
-        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation,::serde_json::Value::String(presentations))?;
+        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation, ::serde_json::Value::String(presentations))?;
         Ok(self)
     }
 }
@@ -66,8 +66,9 @@ impl TryInto<ProofMessage> for Presentation {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+
+    use super::*;
 
     fn _attachment() -> ::serde_json::Value {
         json!({"presentation": {}})
@@ -79,7 +80,7 @@ pub mod tests {
 
     pub fn _presentation() -> Presentation {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation,_attachment()).unwrap();
+        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
 
         Presentation {
             id: MessageId::id(),

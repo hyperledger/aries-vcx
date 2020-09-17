@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use serde_json;
 use futures::Future;
-use indy::ledger;
 use indy::cache;
+use indy::ledger;
+use serde_json;
 
+use error::prelude::*;
 use settings;
 use utils::libindy::pool::get_pool_handle;
 use utils::libindy::wallet::get_wallet_handle;
-use error::prelude::*;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -120,18 +120,19 @@ pub fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> 
 }
 
 pub mod auth_rule {
-    use super::*;
     use std::collections::HashMap;
-    use std::sync::Once;
     use std::sync::Mutex;
+    use std::sync::Once;
 
     use indy::future::Future;
 
+    use super::*;
+
     /**
-    Structure for parsing GET_AUTH_RULE response
-     # parameters
-        result - the payload containing data relevant to the GET_AUTH_RULE transaction
-    */
+        Structure for parsing GET_AUTH_RULE response
+         # parameters
+            result - the payload containing data relevant to the GET_AUTH_RULE transaction
+        */
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     pub struct GetAuthRuleResponse {
@@ -236,7 +237,7 @@ pub mod auth_rule {
         field: String,
         old_value: Option<String>,
         new_value: Option<String>,
-        constraint: Constraint
+        constraint: Constraint,
     }
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -434,8 +435,9 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use utils::devsetup::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -483,7 +485,7 @@ pub struct Request {
     pub identifier: String,
     pub signature: Option<String>,
     pub signatures: Option<HashMap<String, String>>,
-    pub endorser: Option<String>
+    pub endorser: Option<String>,
 }
 
 #[serde(tag = "op")]
@@ -507,7 +509,7 @@ pub struct Reject {
 #[serde(untagged)]
 pub enum Reply {
     ReplyV0(ReplyV0),
-    ReplyV1(ReplyV1)
+    ReplyV1(ReplyV1),
 }
 
 #[derive(Debug, Deserialize)]
@@ -522,5 +524,5 @@ pub struct ReplyV1 {
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1 {
-    pub  result: serde_json::Value
+    pub result: serde_json::Value
 }

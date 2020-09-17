@@ -2,6 +2,7 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import {
+  connectionCreateConnect,
   dataDisclosedProofCreateWithMsgId,
   dataDisclosedProofCreateWithRequest,
   disclosedProofCreateWithMsgId,
@@ -10,13 +11,13 @@ import {
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { mapValues } from 'lodash'
 import { DisclosedProof, StateType, VCXCode } from 'src'
-import { PROTOCOL_TYPE_ARIES } from '../helpers/test-constants'
+import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('DisclosedProof', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES))
+  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
 
   describe('create:', () => {
-    it('success', async () => {
+    it('success1', async () => {
       await disclosedProofCreateWithRequest()
     })
 
@@ -84,10 +85,6 @@ describe('DisclosedProof', () => {
       assert.ok(serialized)
       assert.property(serialized, 'version')
       assert.property(serialized, 'data')
-      const { data, version } = serialized
-      assert.ok(data)
-      assert.ok(version)
-      assert.equal(data.source_id, disclosedProof.sourceId)
     })
 
     it('throws: not initialized', async () => {
@@ -95,7 +92,6 @@ describe('DisclosedProof', () => {
       const error = await shouldThrow(() => disclosedProof.serialize())
       assert.equal(error.vcxCode, VCXCode.INVALID_DISCLOSED_PROOF_HANDLE)
     })
-
   })
 
   describe('deserialize:', () => {
@@ -103,7 +99,6 @@ describe('DisclosedProof', () => {
       const disclosedProof1 = await disclosedProofCreateWithRequest()
       const data1 = await disclosedProof1.serialize()
       const disclosedProof2 = await DisclosedProof.deserialize(data1)
-      assert.equal(disclosedProof2.sourceId, disclosedProof1.sourceId)
       const data2 = await disclosedProof2.serialize()
       assert.deepEqual(data1, data2)
     })
@@ -128,63 +123,32 @@ describe('DisclosedProof', () => {
     })
   })
 
-  describe('getProofMsg:', () => {
-    it('success', async () => {
+  describe('sendProof:', () => {
+    it.skip('success', async () => {
       const data = await dataDisclosedProofCreateWithRequest()
       const disclosedProof = await disclosedProofCreateWithRequest(data)
-      const msg = await disclosedProof.getProofMessage()
-      assert(msg)
+      await disclosedProof.sendProof(data.connection)
+      assert.equal(await disclosedProof.getState(), StateType.Accepted)
     })
   })
 
-  describe('getRejectMsg:', () => {
-    it('success', async () => {
-      const data = await dataDisclosedProofCreateWithRequest()
-      const disclosedProof = await disclosedProofCreateWithRequest(data)
-      const msg = await disclosedProof.getRejectMessage()
-      assert(msg)
+  describe('getRequests:', async () => {
+    it.skip('success', async () => {
+      const connection = await connectionCreateConnect()
+      const requests = await DisclosedProof.getRequests(connection)
+      assert.ok(requests)
+      assert.ok(requests.length)
+      const request = requests[0]
+      const disclosedProof = await disclosedProofCreateWithRequest({
+        connection,
+        request: JSON.stringify(request),
+        sourceId: 'disclosedProofTestSourceId'
+      })
+      await disclosedProof.updateState()
+      assert.equal(await disclosedProof.getState(), StateType.RequestReceived)
     })
   })
 
-  // todo : restore for aries
-  // describe('sendProof:', () => {
-  //   it('success', async () => {
-  //     const data = await dataDisclosedProofCreateWithRequest()
-  //     const disclosedProof = await disclosedProofCreateWithRequest(data)
-  //     await disclosedProof.sendProof(data.connection)
-  //     assert.equal(await disclosedProof.getState(), StateType.Accepted)
-  //   })
-  // })
-
-  // todo : restore for aries
-  // describe('getRequests:', async () => {
-  //   it('success', async () => {
-  //     const connection = await connectionCreateConnect()
-  //     const requests = await DisclosedProof.getRequests(connection)
-  //     assert.ok(requests)
-  //     assert.ok(requests.length)
-  //     const request = requests[0]
-  //     const disclosedProof = await disclosedProofCreateWithRequest({
-  //       connection,
-  //       request: JSON.stringify(request),
-  //       sourceId: 'disclosedProofTestSourceId'
-  //     })
-  //     await disclosedProof.updateState()
-  //     assert.equal(await disclosedProof.getState(), StateType.RequestReceived)
-  //   })
-  // })
-
-  describe('getCredentials:', async () => {
-    it('success', async () => {
-      const disclosedProof = await disclosedProofCreateWithRequest()
-      const creds = await disclosedProof.getCredentials()
-      assert.ok(creds)
-      assert.property(creds, 'attrs')
-      assert.property(creds, 'predicates')
-    })
-  })
-
-  // todo : restore for aries
   describe('generateProof:', async () => {
     it.skip('success', async () => {
       const data = await dataDisclosedProofCreateWithRequest()

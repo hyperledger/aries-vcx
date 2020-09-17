@@ -1,15 +1,15 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use settings;
-use messages::{A2AMessage, A2AMessageV1, A2AMessageV2, A2AMessageKinds, prepare_message_for_agency, parse_response_from_agency};
+use error::prelude::*;
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
 use messages::message_type::MessageTypes;
-use utils::{error, httpclient, constants};
-use utils::libindy::{wallet, anoncreds};
+use settings;
+use utils::{constants, error, httpclient};
+use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
+use utils::libindy::{anoncreds, wallet};
 use utils::libindy::signus::create_and_store_my_did;
 use utils::option_util::get_or_default;
-use error::prelude::*;
-use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -103,7 +103,7 @@ pub struct UpdateComMethod {
 #[derive(Debug, PartialEq)]
 pub enum ComMethodType {
     A2A,
-    Webhook
+    Webhook,
 }
 
 impl Serialize for ComMethodType {
@@ -440,7 +440,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
     let com_method: ComMethod = ComMethod {
         id: String::from("123"),
         e_type: ComMethodType::Webhook,
-        value: String::from(webhook_url)
+        value: String::from(webhook_url),
     };
 
     match settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID) {
@@ -451,7 +451,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
                 settings::ProtocolTypes::V3 |
                 settings::ProtocolTypes::V4 => update_agent_webhook_v2(&to_did, com_method)?,
             }
-        },
+        }
         Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
     }
     Ok(())
@@ -459,7 +459,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 
 fn update_agent_webhook_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
     error!("> update_agent_webhook_v1");
-    if settings::agency_mocks_enabled() { return Ok(()) }
+    if settings::agency_mocks_enabled() { return Ok(()); }
 
     let message = A2AMessage::Version1(
         A2AMessageV1::UpdateComMethod(UpdateComMethod::build(com_method))
@@ -470,8 +470,8 @@ fn update_agent_webhook_v1(to_did: &str, com_method: ComMethod) -> VcxResult<()>
 
 fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
     info!("> update_agent_webhook_v2");
-    if settings::agency_mocks_enabled() { return Ok(()) }
-    
+    if settings::agency_mocks_enabled() { return Ok(()); }
+
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
     );
@@ -490,10 +490,9 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 
 #[cfg(test)]
 mod tests {
-    
-    use super::*;
     use utils::devsetup::*;
-    
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "agency")]
@@ -534,7 +533,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_connect_register_provision() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let agency_did = "Ab8TvZa3Q19VNkQVzAWVL7";
         let agency_vk = "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf";
@@ -610,7 +609,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_update_agent_info() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
         // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }

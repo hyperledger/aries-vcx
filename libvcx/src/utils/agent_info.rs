@@ -1,8 +1,8 @@
+use connection::{get_agent_did, get_agent_verkey, get_pw_did, get_pw_verkey, get_their_pw_did, get_their_pw_verkey, get_version};
+use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
-use error::{VcxResult, VcxErrorKind, VcxError};
+use settings::{CONFIG_AGENCY_DID, CONFIG_AGENCY_VERKEY, CONFIG_REMOTE_TO_SDK_DID, CONFIG_REMOTE_TO_SDK_VERKEY, get_config_value, ProtocolTypes};
 use utils::option_util::get_or_err;
-use connection::{get_pw_did, get_pw_verkey, get_their_pw_did, get_their_pw_verkey, get_agent_did, get_agent_verkey, get_version};
-use settings::{ProtocolTypes, get_config_value, CONFIG_REMOTE_TO_SDK_DID, CONFIG_REMOTE_TO_SDK_VERKEY, CONFIG_AGENCY_DID, CONFIG_AGENCY_VERKEY};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MyAgentInfo {
@@ -42,7 +42,7 @@ impl MyAgentInfo {
 
     pub fn my_pw_did(&self) -> VcxResult<String> { self.retrieve(&self.my_pw_did, get_pw_did) }
 
-    pub fn my_pw_vk(&self) -> VcxResult<String> {  self.retrieve(&self.my_pw_vk, get_pw_verkey) }
+    pub fn my_pw_vk(&self) -> VcxResult<String> { self.retrieve(&self.my_pw_vk, get_pw_verkey) }
 
     pub fn their_pw_did(&self) -> VcxResult<String> { self.retrieve(&self.their_pw_did, get_their_pw_did) }
 

@@ -1,21 +1,18 @@
-use messages::update_message::{UIDsByConn, update_messages as update_messages_status};
-use messages::MessageStatusCode;
-use messages::get_message::{Message, get_connection_messages};
-use messages::update_connection::send_delete_connection_message;
-
-use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::a2a::A2AMessage;
-
-use v3::utils::encryption_envelope::EncryptionEnvelope;
-
 use std::collections::HashMap;
 
 use connection::create_agent_keys;
+use error::prelude::*;
+use messages::get_message::{get_connection_messages, Message};
+use messages::MessageStatusCode;
+use messages::update_connection::send_delete_connection_message;
+use messages::update_message::{UIDsByConn, update_messages as update_messages_status};
+use settings;
+use settings::ProtocolTypes;
 use utils::httpclient;
 use utils::libindy::signus::create_and_store_my_did;
-use settings;
-use error::prelude::*;
-use settings::ProtocolTypes;
+use v3::messages::a2a::A2AMessage;
+use v3::messages::connection::did_doc::DidDoc;
+use v3::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {
@@ -96,6 +93,13 @@ impl AgentInfo {
             a2a_messages.insert(message.uid.clone(), self.decode_message(&message)?);
         }
 
+        #[cfg(feature = "warnlog_fetched_messages")]
+            {
+                for message in a2a_messages.values() {
+                    let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+                    warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+                }
+            }
         Ok(a2a_messages)
     }
 
@@ -122,7 +126,7 @@ impl AgentInfo {
 
     pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
         trace!("Agent::decode_message >>> message = {:?}", json!(&message).to_string());
- 
+
         EncryptionEnvelope::open(message.payload()?)
     }
 

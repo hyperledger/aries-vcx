@@ -1,15 +1,15 @@
-use settings;
-use connection;
 use api::VcxStateType;
+use connection;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
-use messages::payload::{Payloads, PayloadKinds};
+use messages::payload::{PayloadKinds, Payloads};
 use messages::thread::Thread;
-use utils::{httpclient, constants};
-use utils::uuid::uuid;
-use error::prelude::*;
+use settings;
+use utils::{constants, httpclient};
 use utils::agent_info::get_agent_info;
 use utils::httpclient::AgencyMock;
+use utils::uuid::uuid;
 
 #[derive(Debug)]
 pub struct SendMessageBuilder {
@@ -48,6 +48,7 @@ impl SendMessageBuilder {
     }
 
     pub fn msg_type(&mut self, msg: &RemoteMessageType) -> VcxResult<&mut Self> {
+        debug!("setting msg type");
         //Todo: validate msg??
         self.mtype = msg.clone();
         Ok(self)
@@ -231,7 +232,7 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
                                 &agent_info.their_pw_vk()?,
                                 &msg,
                                 PayloadKinds::Other(msg_options.msg_type.clone()),
-                                None
+                                None,
             )?
             .agent_did(&agent_info.pw_agent_did()?)?
             .agent_vk(&agent_info.pw_agent_vk()?)?
@@ -248,14 +249,14 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    
     use utils::devsetup::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_msgpack() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         trace!("test_msgpack :: initialized, going to build message");
         let mut message = SendMessageBuilder {
@@ -303,7 +304,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_send_message_bad_response() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let result = SendMessageBuilder::create().parse_response(::utils::constants::UPDATE_PROFILE_RESPONSE.to_vec());
         assert!(result.is_err());
@@ -377,7 +378,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_send_generic_message_fails_with_invalid_connection() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let handle = ::connection::tests::build_test_connection();
 

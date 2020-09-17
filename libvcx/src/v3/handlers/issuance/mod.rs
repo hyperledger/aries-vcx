@@ -1,16 +1,16 @@
+use connection;
+use error::prelude::*;
+use v3::handlers::issuance::holder::HolderSM;
+use v3::handlers::issuance::issuer::IssuerSM;
+use v3::handlers::issuance::messages::CredentialIssuanceMessage;
+use v3::messages::a2a::A2AMessage;
+use v3::messages::issuance::credential::Credential;
+use v3::messages::issuance::credential_offer::CredentialOffer;
+
 pub mod issuer;
 pub mod states;
 pub mod messages;
 pub mod holder;
-
-use error::prelude::*;
-use v3::messages::a2a::A2AMessage;
-use v3::handlers::issuance::issuer::IssuerSM;
-use v3::handlers::issuance::messages::CredentialIssuanceMessage;
-use v3::handlers::issuance::holder::HolderSM;
-use v3::messages::issuance::credential::Credential;
-use v3::messages::issuance::credential_offer::CredentialOffer;
-use connection;
 
 // Issuer
 

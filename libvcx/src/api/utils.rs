@@ -1,16 +1,18 @@
-use serde_json;
-use libc::c_char;
-use messages;
 use std::ptr;
+use std::thread;
+
+use indy_sys::CommandHandle;
+use libc::c_char;
+use serde_json;
+
+use error::prelude::*;
+use messages;
+use utils::constants::*;
 use utils::cstring::CStringUtils;
 use utils::error;
-use utils::threadpool::spawn;
-use utils::libindy::payments;
-use std::thread;
-use error::prelude::*;
-use indy_sys::CommandHandle;
 use utils::httpclient::AgencyMock;
-use utils::constants::*;
+use utils::libindy::payments;
+use utils::threadpool::spawn;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -426,8 +428,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { ::utils::libindy::pool::set_pool_handle(None); }
-    else { ::utils::libindy::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { ::utils::libindy::pool::set_pool_handle(None); } else { ::utils::libindy::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -529,21 +530,23 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CString;
+
     use api::return_types_u32;
+    use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::constants;
     use utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     static CONFIG_V3: &'static str = r#"{"protocol_type": "3.0", "agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_agent_provision_async(cb.command_handle,
-                                               CString::new(config).unwrap().into_raw(),
-        Some(cb.get_callback()));
+                                           CString::new(config).unwrap().into_raw(),
+                                           Some(cb.get_callback()));
         if rc != error::SUCCESS.code_num {
             return Err(rc);
         }
@@ -553,7 +556,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_provision_agent() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let c_json = CString::new(CONFIG_V3).unwrap().into_raw();
 
@@ -566,7 +569,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_provision_agent_async_c_closure() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let result = _vcx_agent_provision_async_c_closure(CONFIG_V3).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -575,7 +578,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_agent_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let config = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":null}"#;
 
@@ -604,7 +607,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_agent_fails() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec()); //set response garbage
 
@@ -621,7 +624,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_ledger_fees() {
-        let _setup = SetupMocks::init();
+        let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_ledger_get_fees(cb.command_handle,
@@ -656,7 +659,7 @@ mod tests {
                                               status,
                                               json,
                                               Some(cb.get_callback())),
-                                              error::SUCCESS.code_num);
+                   error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 }
