@@ -1,19 +1,20 @@
-extern crate url;
 extern crate serde_json;
+extern crate url;
 
+use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::sync::RwLock;
-use utils::{get_temp_dir_path, error};
 use std::path::Path;
-use url::Url;
-use messages::validation;
+use std::sync::RwLock;
+
+use indy_sys::INVALID_WALLET_HANDLE;
 use serde_json::Value;
 use strum::IntoEnumIterator;
-use std::borrow::Borrow;
+use url::Url;
 
 use error::prelude::*;
+use messages::validation;
+use utils::{error, get_temp_dir_path};
 use utils::file::read_file;
-use indy_sys::INVALID_WALLET_HANDLE;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_PROTOCOL_TYPE: &str = "protocol_type";
@@ -22,11 +23,13 @@ pub static CONFIG_AGENCY_DID: &str = "agency_did";
 pub static CONFIG_AGENCY_VERKEY: &str = "agency_verkey";
 pub static CONFIG_REMOTE_TO_SDK_DID: &str = "remote_to_sdk_did";
 pub static CONFIG_REMOTE_TO_SDK_VERKEY: &str = "remote_to_sdk_verkey";
-pub static CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";// functionally not used
+pub static CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";
+// functionally not used
 pub static CONFIG_SDK_TO_REMOTE_VERKEY: &str = "sdk_to_remote_verkey";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
-pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";// functionally not used
+pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
+// functionally not used
 pub static CONFIG_INSTITUTION_NAME: &str = "institution_name";
 pub static CONFIG_INSTITUTION_LOGO_URL: &str = "institution_logo_url";
 pub static CONFIG_WEBHOOK_URL: &str = "webhook_url";
@@ -50,8 +53,10 @@ pub static CONFIG_TXN_AUTHOR_AGREEMENT: &'static str = "author_agreement";
 pub static CONFIG_USE_LATEST_PROTOCOLS: &'static str = "use_latest_protocols";
 pub static CONFIG_POOL_CONFIG: &'static str = "pool_config";
 pub static CONFIG_DID_METHOD: &str = "did_method";
-pub static COMMUNICATION_METHOD: &str = "communication_method";// proprietary or aries
-pub static CONFIG_ACTORS: &str = "actors"; // inviter, invitee, issuer, holder, prover, verifier, sender, receiver
+pub static COMMUNICATION_METHOD: &str = "communication_method";
+// proprietary or aries
+pub static CONFIG_ACTORS: &str = "actors";
+// inviter, invitee, issuer, holder, prover, verifier, sender, receiver
 pub static MOCK_INDY_PROOF_VALIDATION: &str = "mock_indy_proof_validation";
 
 pub static DEFAULT_PROTOCOL_VERSION: usize = 2;
@@ -187,6 +192,7 @@ pub fn validate_payment_method() -> VcxResult<u32> {
     validate_mandatory_config_val(get_config_value(CONFIG_PAYMENT_METHOD).ok().as_ref(),
                                   VcxErrorKind::MissingPaymentMethod, validation::validate_payment_method)
 }
+
 pub fn settings_as_string() -> HashMap<String, String> {
     SETTINGS.read().unwrap().to_string()
 }
@@ -476,8 +482,9 @@ pub fn clear_config() {
 
 #[cfg(test)]
 pub mod tests {
+    use utils::devsetup::{SetupDefaults, TempFile};
+
     use super::*;
-    use utils::devsetup::{TempFile, SetupDefaults};
 
     fn _institution_name() -> String {
         "enterprise".to_string()

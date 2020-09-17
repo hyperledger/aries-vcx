@@ -1,11 +1,11 @@
-use settings;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
 use messages::MessageStatusCode;
 use messages::payload::Payloads;
-use utils::{httpclient, constants};
-use error::prelude::*;
+use settings;
 use settings::ProtocolTypes;
+use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -152,11 +152,11 @@ impl GetMessagesBuilder {
             A2AMessage::Version1(A2AMessageV1::GetMessagesResponse(res)) => {
                 trace!("Interpreting response as V1");
                 Ok(res.msgs)
-            },
+            }
             A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
-            },
+            }
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
         }
     }
@@ -487,13 +487,15 @@ pub fn download_agent_messages(status_codes: Option<Vec<String>>, uids: Option<V
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use utils::constants::{GET_MESSAGES_RESPONSE, GET_ALL_MESSAGES_RESPONSE};
     #[cfg(feature = "agency_pool_tests")]
     use std::thread;
     #[cfg(feature = "agency_pool_tests")]
     use std::time::Duration;
+
+    use utils::constants::{GET_ALL_MESSAGES_RESPONSE, GET_MESSAGES_RESPONSE};
     use utils::devsetup::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

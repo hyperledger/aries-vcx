@@ -1,15 +1,15 @@
-use serde_json;
-
 use std::string::ToString;
 
+use serde_json;
+
 use api::PublicEntityStateType;
+use error::prelude::*;
+use messages::ObjectWithVersion;
+use object_cache::ObjectCache;
+use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::ledger;
 use utils::libindy::payments::PaymentTxn;
-use utils::constants::DEFAULT_SERIALIZE_VERSION;
-use object_cache::ObjectCache;
-use messages::ObjectWithVersion;
-use error::prelude::*;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
@@ -212,18 +212,19 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 pub mod tests {
     extern crate rand;
 
-    use settings;
-
-    use super::*;
     use rand::Rng;
+
+    use settings;
+    #[cfg(feature = "pool_tests")]
+    use utils::constants;
     use utils::constants::SCHEMA_ID;
     use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]
-    use utils::libindy::payments::add_new_did;
-    #[cfg(feature = "pool_tests")]
     use utils::libindy::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
-    use utils::constants;
+    use utils::libindy::payments::add_new_did;
+
+    use super::*;
 
     fn data() -> Vec<String> {
         vec!["address1".to_string(), "address2".to_string(), "zip".to_string(), "city".to_string(), "state".to_string()]

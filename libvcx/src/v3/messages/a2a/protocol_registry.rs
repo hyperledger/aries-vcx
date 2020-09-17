@@ -1,9 +1,9 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
+use settings::Actors;
 use v3::messages::a2a::message_family::MessageFamilies;
 use v3::messages::discovery::disclose::ProtocolDescriptor;
-use settings::Actors;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>
@@ -41,13 +41,13 @@ impl ProtocolRegistry {
             Some((actor_1, actor_2)) => {
                 match (actors.contains(&actor_1), actors.contains(&actor_2)) {
                     (true, true) => {
-                        self.protocols.push( ProtocolDescriptor { pid: family.id(), roles: None } )
+                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: None })
                     }
                     (true, false) => {
-                        self.protocols.push( ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_1]) } )
+                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_1]) })
                     }
                     (false, true) => {
-                        self.protocols.push( ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_2]) } )
+                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_2]) })
                     }
                     (false, false) => {}
                 }
@@ -68,15 +68,16 @@ impl ProtocolRegistry {
         }
     }
 
-    pub fn protocols(&self) -> Vec<ProtocolDescriptor>{
+    pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
         self.protocols.clone()
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use utils::devsetup::SetupEmpty;
+
+    use super::*;
 
     fn _protocols() -> Vec<ProtocolDescriptor> {
         vec![

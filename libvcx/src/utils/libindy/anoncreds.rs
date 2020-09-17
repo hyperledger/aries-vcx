@@ -1,17 +1,17 @@
 use futures::Future;
+use indy::{anoncreds, blob_storage, ledger};
 use serde_json;
 use serde_json::{map::Map, Value};
-use indy::{anoncreds, blob_storage, ledger};
 use time;
 
-use settings;
-use utils::constants::{LIBINDY_CRED_OFFER, REQUESTED_ATTRIBUTES, PROOF_REQUESTED_PREDICATES, ATTRS, REV_STATE_JSON};
-use utils::libindy::{wallet::get_wallet_handle, LibindyMock};
-use utils::libindy::cache::{get_rev_reg_delta_cache, set_rev_reg_delta_cache, clear_rev_reg_delta_cache};
-use utils::libindy::payments::{pay_for_txn, PaymentTxn};
-use utils::libindy::ledger::*;
-use utils::constants::{SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, REVOC_REG_TYPE, rev_def_json, REV_REG_ID, REV_REG_DELTA_JSON, REV_REG_JSON};
 use error::prelude::*;
+use settings;
+use utils::constants::{ATTRS, LIBINDY_CRED_OFFER, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON};
+use utils::constants::{CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
+use utils::libindy::{LibindyMock, wallet::get_wallet_handle};
+use utils::libindy::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
+use utils::libindy::ledger::*;
+use utils::libindy::payments::{pay_for_txn, PaymentTxn};
 
 const BLOB_STORAGE_TYPE: &str = "default";
 const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
@@ -249,8 +249,7 @@ pub fn libindy_prover_store_credential(cred_id: Option<&str>,
         .map_err(VcxError::from)
 }
 
-pub fn libindy_prover_delete_credential(cred_id: &str) -> VcxResult<()>{
-
+pub fn libindy_prover_delete_credential(cred_id: &str) -> VcxResult<()> {
     anoncreds::prover_delete_credential(get_wallet_handle(),
                                         cred_id)
         .wait()
@@ -596,21 +595,22 @@ pub fn generate_nonce() -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use utils::get_temp_dir_path;
-
-    extern crate serde_json;
-    extern crate rand;
-
-    use rand::Rng;
-    use settings;
-    use utils::constants::*;
     use std::thread;
     use std::time::Duration;
+
+    use rand::Rng;
+
+    use settings;
+    use utils::constants::*;
     #[cfg(feature = "pool_tests")]
     use utils::constants::TEST_TAILS_FILE;
     use utils::devsetup::*;
+    use utils::get_temp_dir_path;
 
+    use super::*;
+
+    extern crate serde_json;
+    extern crate rand;
 
     pub fn create_schema(attr_list: &str) -> (String, String) {
         let data = attr_list.to_string();

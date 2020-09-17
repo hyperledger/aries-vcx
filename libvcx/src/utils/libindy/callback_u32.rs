@@ -1,10 +1,11 @@
-use libc::c_char;
 use std::collections::HashMap;
-use std::sync::Mutex;
 use std::ops::Deref;
+use std::sync::Mutex;
 
-use utils::libindy::callback::{get_cb, build_string, build_buf};
 use indy_sys::CommandHandle;
+use libc::c_char;
+
+use utils::libindy::callback::{build_buf, build_string, get_cb};
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();
@@ -95,9 +96,11 @@ pub extern "C" fn call_cb_u32_u32_str_str_str(command_handle: CommandHandle, arg
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CString;
+
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     fn cstring(str_val: &String) -> CString {
         CString::new(str_val.clone()).unwrap()

@@ -1,6 +1,7 @@
 extern crate log;
 
 use indy::logger;
+
 use error::prelude::*;
 
 pub fn set_logger(logger: &'static dyn log::Log) -> VcxResult<()> {

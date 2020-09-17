@@ -1,8 +1,8 @@
-use v3::messages::a2a::{A2AMessage, MessageId};
-use v3::messages::a2a::message_type::MessageType;
-use v3::messages::a2a::message_family::MessageFamilies;
-use v3::messages::mime_type::MimeType;
 use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::a2a::message_family::MessageFamilies;
+use v3::messages::a2a::message_type::MessageType;
+use v3::messages::mime_type::MimeType;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -46,6 +46,7 @@ pub struct Predicate {
 fn default_presentation_preview_type() -> MessageType {
     MessageType::build(MessageFamilies::CredentialIssuance, "presentation-preview")
 }
+
 impl PresentationProposal {
     pub fn create() -> Self {
         PresentationProposal::default()
@@ -67,8 +68,9 @@ a2a_message!(PresentationProposal);
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+
+    use super::*;
 
     fn _attachment() -> ::serde_json::Value {
         json!({"presentation": {}})
@@ -85,7 +87,7 @@ pub mod tests {
                 cred_def_id: None,
                 mime_type: None,
                 value: None,
-                filter: None
+                filter: None,
             }],
             predicates: vec![],
             ..Default::default()

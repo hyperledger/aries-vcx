@@ -163,7 +163,7 @@ impl Connection {
 
         match self.state_object() {
             ActorDidExchangeState::Inviter(ref state) | ActorDidExchangeState::Invitee(ref state) => match state {
-                DidExchangeState::Completed(ref _state) => {},
+                DidExchangeState::Completed(ref _state) => {}
                 _ => warn!("Sending message to connection in incomplete state {}!", self.state())
             }
         }

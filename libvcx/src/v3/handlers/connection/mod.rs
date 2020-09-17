@@ -5,8 +5,8 @@ pub mod messages;
 
 #[cfg(test)]
 pub mod tests {
-    use v3::messages::connection::invite::tests::_invitation_json;
     use utils::devsetup::SetupEmpty;
+    use v3::messages::connection::invite::tests::_invitation_json;
 
     pub fn mock_connection() -> u32 {
         let connection_handle = ::connection::create_connection_with_invite("source_id", &_invitation_json()).unwrap();
@@ -24,12 +24,12 @@ pub mod tests {
     }
 
     mod aries {
-        use super::*;
-
-        use v3::test::{Faber, Alice};
-        use v3::messages::ack::tests::_ack;
-        use v3::messages::a2a::A2AMessage;
         use v3;
+        use v3::messages::a2a::A2AMessage;
+        use v3::messages::ack::tests::_ack;
+        use v3::test::{Alice, Faber};
+
+        use super::*;
 
         #[test]
         #[cfg(feature = "aries")]
@@ -151,7 +151,6 @@ pub mod tests {
                 let _payload: v3::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&payload.msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
-
             }
 
             info!("test_connection_send_works:: Test Helpers");

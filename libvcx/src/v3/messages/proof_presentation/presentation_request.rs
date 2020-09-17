@@ -1,10 +1,10 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::attachment::{Attachments, AttachmentId};
-use v3::messages::connection::service::Service;
-use error::prelude::*;
 use std::convert::TryInto;
 
-pub use messages::proofs::proof_request::{ProofRequestMessage, ProofRequestData, ProofRequestVersion};
+use error::prelude::*;
+pub use messages::proofs::proof_request::{ProofRequestData, ProofRequestMessage, ProofRequestVersion};
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::attachment::{AttachmentId, Attachments};
+use v3::messages::connection::service::Service;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -42,7 +42,6 @@ impl PresentationRequest {
     pub fn set_service(mut self, service: Option<Service>) -> Self {
         self.service = service;
         self
-
     }
     pub fn to_json(&self) -> VcxResult<String> {
         serde_json::to_string(self)
@@ -88,9 +87,10 @@ pub type PresentationRequestData = ProofRequestData;
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use messages::thread::Thread;
     use v3::messages::connection::service::tests::_service;
+
+    use super::*;
 
     pub fn _presentation_request_data() -> PresentationRequestData {
         PresentationRequestData::default()
@@ -99,7 +99,7 @@ pub mod tests {
 
     fn _attachment() -> Attachments {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::PresentationRequest,json!(_presentation_request_data())).unwrap();
+        attachment.add_base64_encoded_json_attachment(AttachmentId::PresentationRequest, json!(_presentation_request_data())).unwrap();
         attachment
     }
 

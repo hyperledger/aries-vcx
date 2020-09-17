@@ -3,10 +3,10 @@ use messages::*;
 use messages::message_type::{MessageTypes, MessageTypeV1, MessageTypeV2};
 use messages::thread::Thread;
 use settings;
-use utils::httpclient;
 use utils::constants::*;
-use utils::uuid::uuid;
+use utils::httpclient;
 use utils::httpclient::AgencyMock;
+use utils::uuid::uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct SendInviteMessageDetails {
@@ -802,9 +802,10 @@ pub struct Payload {
 #[cfg(test)]
 mod tests {
     use messages::send_invite;
-    use utils::libindy::signus::create_and_store_my_did;
-    use super::*;
     use utils::devsetup::*;
+    use utils::libindy::signus::create_and_store_my_did;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

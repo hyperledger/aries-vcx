@@ -1,8 +1,8 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::issuance::CredentialPreviewData;
-use v3::messages::mime_type::MimeType;
 use error::VcxResult;
 use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::issuance::CredentialPreviewData;
+use v3::messages::mime_type::MimeType;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialProposal {
@@ -15,7 +15,7 @@ pub struct CredentialProposal {
     pub cred_def_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>
+    pub thread: Option<Thread>,
 }
 
 impl CredentialProposal {
@@ -53,8 +53,9 @@ a2a_message!(CredentialProposal);
 
 #[cfg(test)]
 pub mod tests {
+    use v3::messages::issuance::credential_offer::tests::{_value, thread, thread_id};
+
     use super::*;
-    use v3::messages::issuance::credential_offer::tests::{thread, thread_id, _value};
 
     fn _attachment() -> ::serde_json::Value {
         json!({"credential offer": {}})

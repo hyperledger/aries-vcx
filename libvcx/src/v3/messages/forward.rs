@@ -21,15 +21,16 @@ impl Forward {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::ack::tests::*;
+
+    use super::*;
 
     fn _to() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
     }
 
     fn _msg() -> ::serde_json::Value {
-       json!(_ack())
+        json!(_ack())
     }
 
     fn _forward() -> Forward {

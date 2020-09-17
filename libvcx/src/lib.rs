@@ -2,46 +2,33 @@
 #![crate_name = "vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
-extern crate serde;
-extern crate rand;
-extern crate reqwest;
-extern crate url;
-extern crate openssl;
-extern crate indyrs as indy;
+extern crate base64;
+extern crate chrono;
+extern crate failure;
 extern crate futures;
-
-#[macro_use]
-extern crate log;
-
-extern crate libc;
-
-#[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
-extern crate serde_json;
-
+extern crate indy_sys;
+extern crate indyrs as indy;
 #[macro_use]
 extern crate lazy_static;
-
-extern crate time;
-
+extern crate libc;
+#[macro_use]
+extern crate log;
+extern crate openssl;
+extern crate rand;
 extern crate regex;
-
-extern crate uuid;
-
-extern crate failure;
-
+extern crate reqwest;
 extern crate rmp_serde;
-extern crate indy_sys;
-
-extern crate base64;
-
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
-
-extern crate chrono;
+extern crate time;
+extern crate url;
+extern crate uuid;
 
 #[macro_use]
 pub mod utils;
@@ -69,26 +56,28 @@ pub mod v3;
 #[allow(dead_code)]
 #[cfg(test)]
 mod tests {
-
-    use super::*;
-    use settings;
-    use connection;
-    use credential;
-    use issuer_credential;
-    use disclosed_proof;
-    use proof;
-    use api::VcxStateType;
-    use api::ProofStateType;
-    use serde_json::Value;
-    use rand::Rng;
     use std::thread;
     use std::time::Duration;
+
+    use rand::Rng;
+    use serde_json::Value;
+
+    use api::ProofStateType;
+    use api::VcxStateType;
+    use connection;
+    use credential;
+    use disclosed_proof;
+    use issuer_credential;
+    use proof;
+    use settings;
     use utils::{
-        devsetup::{set_institution, set_consumer},
         constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_FILE},
-        get_temp_dir_path
+        devsetup::{set_consumer, set_institution},
+        get_temp_dir_path,
     };
     use utils::devsetup::*;
+
+    use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
     #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
@@ -103,7 +92,6 @@ mod tests {
     }
 
 
-
     fn attr_names() -> (String, String, String, String, String) {
         let address1 = "Address1".to_string();
         let address2 = "address2".to_string();
@@ -112,6 +100,7 @@ mod tests {
         let zip = "zip".to_string();
         (address1, address2, city, state, zip)
     }
+
     fn requested_attrs(did: &str, schema_id: &str, cred_def_id: &str, from: Option<u64>, to: Option<u64>) -> Value {
         let (address1, address2, city, state, zip) = attr_names();
         json!([
@@ -161,11 +150,9 @@ mod tests {
                }]
            }
         ])
-
     }
 
     fn send_cred_offer(did: &str, cred_def_handle: u32, connection: u32, credential_data: &str) -> u32 {
-
         let credential_offer = issuer_credential::issuer_credential_create(cred_def_handle,
                                                                            "1".to_string(),
                                                                            did.to_string(),
@@ -257,7 +244,6 @@ mod tests {
                "predicates":{
                }
             })
-
     }
 
     fn revoke_credential(issuer_handle: u32, rev_reg_id: Option<String>) {

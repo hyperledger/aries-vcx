@@ -1,9 +1,9 @@
-use settings;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
-use utils::httpclient;
+use settings;
 use utils::constants::*;
-use error::prelude::*;
+use utils::httpclient;
 use utils::httpclient::AgencyMock;
 
 #[derive(Debug)]
@@ -24,7 +24,7 @@ pub struct ConfigOption {
 pub struct UpdateConfigs {
     #[serde(rename = "@type")]
     msg_type: MessageTypes,
-    configs: Vec<ConfigOption>
+    configs: Vec<ConfigOption>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -41,7 +41,7 @@ impl UpdateProfileDataBuilder {
             to_did: String::new(),
             configs: Vec::new(),
             agent_payload: String::new(),
-            version: settings::get_protocol_type()
+            version: settings::get_protocol_type(),
         }
     }
 
@@ -109,7 +109,7 @@ impl UpdateProfileDataBuilder {
                     A2AMessageV1::UpdateConfigs(
                         UpdateConfigs {
                             msg_type: MessageTypes::build(A2AMessageKinds::UpdateConfigs),
-                            configs: self.configs.clone()
+                            configs: self.configs.clone(),
                         }
                     )
                 ),
@@ -144,10 +144,11 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use messages::update_data;
-    use utils::libindy::signus::create_and_store_my_did;
     use utils::devsetup::*;
+    use utils::libindy::signus::create_and_store_my_did;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

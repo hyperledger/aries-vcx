@@ -1,11 +1,12 @@
-use messages::message_type::*;
-use messages::to_u8;
-use messages::get_message::MessagePayload;
-use settings::{ProtocolTypes, get_protocol_type};
-use utils::libindy::crypto;
-use error::prelude::*;
-use messages::thread::Thread;
 use serde_json::Value;
+
+use error::prelude::*;
+use messages::get_message::MessagePayload;
+use messages::message_type::*;
+use messages::thread::Thread;
+use messages::to_u8;
+use settings::{get_protocol_type, ProtocolTypes};
+use utils::libindy::crypto;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(untagged)]
@@ -27,7 +28,7 @@ pub struct PayloadV12 {
     #[serde(rename = "@type")]
     type_: PayloadTypeV2,
     #[serde(rename = "@msg")]
-    pub msg: Value
+    pub msg: Value,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -183,7 +184,7 @@ pub enum PayloadKinds {
     Cred,
     Proof,
     ProofRequest,
-    Other(String)
+    Other(String),
 }
 
 impl PayloadKinds {

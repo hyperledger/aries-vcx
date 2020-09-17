@@ -1,19 +1,17 @@
-use api::VcxStateType;
+use std::collections::HashMap;
 
+use api::VcxStateType;
 use connection;
+use disclosed_proof::DisclosedProof;
+use error::prelude::*;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
 use v3::messages::a2a::A2AMessage;
-use v3::messages::proof_presentation::presentation_request::PresentationRequest;
-use v3::messages::proof_presentation::presentation_proposal::{PresentationProposal, PresentationPreview};
+use v3::messages::error::ProblemReport;
 use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_ack::PresentationAck;
-use v3::messages::error::ProblemReport;
+use v3::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
+use v3::messages::proof_presentation::presentation_request::PresentationRequest;
 use v3::messages::status::Status;
-
-use std::collections::HashMap;
-use disclosed_proof::DisclosedProof;
-
-use error::prelude::*;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -426,15 +424,15 @@ impl ProverSM {
 
 #[cfg(test)]
 pub mod test {
-    use super::*;
-
     use utils::devsetup::SetupAriesMocks;
     use v3::handlers::connection::tests::mock_connection;
-    use v3::test::source_id;
-    use v3::messages::proof_presentation::test::{_ack, _problem_report};
-    use v3::messages::proof_presentation::presentation_request::tests::{_presentation_request, _presentation_request_with_service};
     use v3::messages::proof_presentation::presentation::tests::_presentation;
-    use v3::messages::proof_presentation::presentation_proposal::tests::{_presentation_proposal, _presentation_preview};
+    use v3::messages::proof_presentation::presentation_proposal::tests::{_presentation_preview, _presentation_proposal};
+    use v3::messages::proof_presentation::presentation_request::tests::{_presentation_request, _presentation_request_with_service};
+    use v3::messages::proof_presentation::test::{_ack, _problem_report};
+    use v3::test::source_id;
+
+    use super::*;
 
     pub fn _prover_sm() -> ProverSM {
         ProverSM::new(_presentation_request(), source_id())
@@ -484,9 +482,9 @@ pub mod test {
     mod new {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_new() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_new() {
             let _setup = SetupAriesMocks::init();
 
             let prover_sm = _prover_sm();
@@ -499,18 +497,18 @@ pub mod test {
     mod step {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_init() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_init() {
             let _setup = SetupAriesMocks::init();
 
             let prover_sm = _prover_sm();
             assert_match!(ProverState::Initiated(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_prepare_presentation_message_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_prepare_presentation_message_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -519,9 +517,9 @@ pub mod test {
             assert_match!(ProverState::PresentationPrepared(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_prepare_presentation_message_from_initiated_state_for_invalid_credentials() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_prepare_presentation_message_from_initiated_state_for_invalid_credentials() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -530,9 +528,9 @@ pub mod test {
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_reject_presentation_request_message_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_reject_presentation_request_message_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -541,9 +539,9 @@ pub mod test {
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_propose_presentation_message_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_propose_presentation_message_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -552,9 +550,9 @@ pub mod test {
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -566,9 +564,9 @@ pub mod test {
             assert_match!(ProverState::Initiated(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_send_presentation_message_from_presentation_prepared_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_message_from_presentation_prepared_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -578,9 +576,9 @@ pub mod test {
             assert_match!(ProverState::PresentationSent(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_send_presentation_message_from_presentation_prepared_state_for_presentation_request_contains_service_decorator() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_message_from_presentation_prepared_state_for_presentation_request_contains_service_decorator() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = ProverSM::new(_presentation_request_with_service(), source_id());
@@ -590,9 +588,9 @@ pub mod test {
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_presentation_prepared_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_presentation_prepared_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
@@ -604,9 +602,9 @@ pub mod test {
             assert_match!(ProverState::PresentationPrepared(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_reject_presentation_request_message_from_presentation_prepared_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_reject_presentation_request_message_from_presentation_prepared_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
@@ -615,9 +613,9 @@ pub mod test {
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_propose_presentation_message_from_presentation_prepared_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_propose_presentation_message_from_presentation_prepared_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
@@ -626,9 +624,9 @@ pub mod test {
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_send_presentation_message_from_presentation_preparation_failed_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_message_from_presentation_preparation_failed_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -640,9 +638,9 @@ pub mod test {
             assert_eq!(Status::Failed(ProblemReport::default()).code(), prover_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_presentation_preparation_failed_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_presentation_preparation_failed_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -655,9 +653,9 @@ pub mod test {
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_ack_message_from_presentation_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_ack_message_from_presentation_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -669,9 +667,9 @@ pub mod test {
             assert_eq!(Status::Success.code(), prover_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_reject_presentation_request_message_from_presentation_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_reject_presentation_request_message_from_presentation_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let prover_sm = _prover_sm().to_presentation_sent_state();
@@ -679,9 +677,9 @@ pub mod test {
             assert_eq!(VcxErrorKind::ActionNotSupported, err.kind());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_presentation_reject_message_from_presentation_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_presentation_reject_message_from_presentation_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -693,9 +691,9 @@ pub mod test {
             assert_eq!(Status::Failed(ProblemReport::create()).code(), prover_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_presentation_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_presentation_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -709,9 +707,9 @@ pub mod test {
             assert_match!(ProverState::PresentationSent(_), prover_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_messages_from_finished_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_messages_from_finished_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -730,9 +728,9 @@ pub mod test {
     mod find_message_to_handle {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_find_message_to_handle_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_find_message_to_handle_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let prover = _prover_sm();
@@ -751,9 +749,9 @@ pub mod test {
             }
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_find_message_to_handle_from_presentation_prepared_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_find_message_to_handle_from_presentation_prepared_state() {
             let _setup = SetupAriesMocks::init();
 
             let prover = _prover_sm().to_presentation_prepared_state();
@@ -772,9 +770,9 @@ pub mod test {
             }
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_find_message_to_handle_from_presentation_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_find_message_to_handle_from_presentation_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let prover = _prover_sm().to_presentation_sent_state();

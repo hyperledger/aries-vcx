@@ -1,14 +1,14 @@
 use serde_json;
 
 use api::PublicEntityStateType;
-use object_cache::ObjectCache;
-use messages::ObjectWithVersion;
 use error::prelude::*;
+use messages::ObjectWithVersion;
+use object_cache::ObjectCache;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
-use utils::libindy::payments::PaymentTxn;
 use utils::libindy::anoncreds;
-use utils::libindy::ledger;
 use utils::libindy::cache::update_rev_reg_ids_cache;
+use utils::libindy::ledger;
+use utils::libindy::payments::PaymentTxn;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
@@ -23,7 +23,7 @@ struct RevocationRegistry {
     max_creds: u32,
     tag: u32,
     rev_reg_def_payment_txn: Option<PaymentTxn>,
-    rev_reg_delta_payment_txn: Option<PaymentTxn>
+    rev_reg_delta_payment_txn: Option<PaymentTxn>,
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
@@ -36,7 +36,7 @@ pub struct CredentialDef {
     cred_def_payment_txn: Option<PaymentTxn>,
     rev_reg: Option<RevocationRegistry>,
     #[serde(default)]
-    state: PublicEntityStateType
+    state: PublicEntityStateType,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -146,7 +146,7 @@ impl CredentialDef {
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
 
                 let (rev_reg_delta_payment_txn, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
-                        .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+                    .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
                 let new_rev_reg = RevocationRegistry {
                     rev_reg_id,
@@ -156,12 +156,12 @@ impl CredentialDef {
                     max_creds: *max_creds,
                     tag: rev_reg.tag + 1,
                     rev_reg_delta_payment_txn,
-                    rev_reg_def_payment_txn
+                    rev_reg_def_payment_txn,
                 };
                 self.rev_reg = Some(new_rev_reg.clone());
 
                 Ok(new_rev_reg)
-            },
+            }
             _ => Err(VcxError::from_msg(VcxErrorKind::RevRegDefNotFound, "No revocation registry definitions associated with this credential definition"))
         }
     }
@@ -256,7 +256,7 @@ pub fn prepare_credentialdef_for_endorser(source_id: String,
                 rev_reg_def_payment_txn: None,
                 rev_reg_delta_payment_txn: None,
             })
-        },
+        }
         _ => None
     };
 
@@ -319,7 +319,7 @@ pub fn create_and_publish_credentialdef(source_id: String,
                 rev_reg_def_payment_txn: rev_def_payment,
                 rev_reg_delta_payment_txn: rev_delta_payment,
             })
-        },
+        }
         _ => None
     };
 
@@ -448,7 +448,7 @@ pub fn rotate_rev_reg_def(handle: u32) -> VcxResult<String> {
                     Ok(()) => s.to_string(),
                     Err(err) => Err(err)
                 }
-            },
+            }
             // TODO: Better error
             None => Err(VcxError::from(VcxErrorKind::InvalidCredentialHandle))
         }
@@ -458,19 +458,21 @@ pub fn rotate_rev_reg_def(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use utils::{
-        constants::SCHEMA_ID,
-        get_temp_dir_path,
-    };
-    use super::*;
-    use settings;
     use std::{
         thread::sleep,
         time::Duration,
     };
+
+    use settings;
+    use utils::{
+        constants::SCHEMA_ID,
+        get_temp_dir_path,
+    };
     use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::payments::add_new_did;
+
+    use super::*;
 
     static CREDENTIAL_DEF_NAME: &str = "Test Credential Definition";
     static ISSUER_DID: &str = "4fUDR9R7fjwELRvH9JT6HH";

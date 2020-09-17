@@ -2,30 +2,27 @@ use std::collections::HashMap;
 
 use serde_json;
 
-
 use api::VcxStateType;
 use error::prelude::*;
 use messages;
 use messages::{GeneralMessage, MessageStatusCode, RemoteMessageType, SerializableObjectWithState};
+use messages::get_message::Message;
 use messages::invite::{InviteDetail, RedirectDetail};
-use messages::payload::{PayloadKinds};
-use messages::thread::Thread;
+use messages::payload::PayloadKinds;
 use messages::send_message::SendMessageOptions;
-use messages::get_message::{Message};
+use messages::thread::Thread;
 use object_cache::ObjectCache;
 use settings;
+use settings::ProtocolTypes;
 use utils::error;
-use utils::libindy::signus::create_and_store_my_did;
-
 use utils::json::KeyMatch;
-
+use utils::libindy::signus::create_and_store_my_did;
+use v3::handlers::connection::agent::AgentInfo;
 use v3::handlers::connection::connection::Connection as ConnectionV3;
 use v3::handlers::connection::states::ActorDidExchangeState;
-use v3::handlers::connection::agent::AgentInfo;
-use v3::messages::connection::invite::Invitation as InvitationV3;
-use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::a2a::A2AMessage;
-use settings::ProtocolTypes;
+use v3::messages::connection::did_doc::DidDoc;
+use v3::messages::connection::invite::Invitation as InvitationV3;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connections> = ObjectCache::<Connections>::new("connections-cache");
@@ -895,12 +892,12 @@ pub mod tests {
 
     use messages::get_message::*;
     use utils::constants::*;
-
-    use super::*;
+    use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::constants;
-    use utils::mockdata_connection::{ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, ARIES_CONNECTION_ACK};
+    use utils::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST};
+
+    use super::*;
 
     pub fn build_test_connection() -> u32 {
         let handle = create_connection("alice").unwrap();
@@ -920,7 +917,7 @@ pub mod tests {
         ::utils::devsetup::set_consumer();
         debug!("Consumer is going to accept connection invitation.");
         let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
-        connect(alice_to_faber,  None).unwrap();
+        connect(alice_to_faber, None).unwrap();
         update_state(alice_to_faber, None).unwrap();
         // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
 

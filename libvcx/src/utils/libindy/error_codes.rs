@@ -1,10 +1,11 @@
 extern crate num_traits;
 
-use self::num_traits::int::PrimInt;
-
 use indy::IndyError;
-use utils::error;
+
 use error::prelude::{VcxError, VcxErrorKind};
+use utils::error;
+
+use self::num_traits::int::PrimInt;
 
 impl From<IndyError> for VcxError {
     fn from(error: IndyError) -> Self {
@@ -68,9 +69,11 @@ pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use indy::ErrorCode;
+
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

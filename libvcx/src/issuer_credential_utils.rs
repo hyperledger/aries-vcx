@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use error::{VcxResult, VcxErrorKind, VcxError};
+
+use error::{VcxError, VcxErrorKind, VcxResult};
 use utils::error;
 use utils::openssl::encode;
 
@@ -56,28 +57,28 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use serde_json::Value;
-    use ::{settings, issuer_credential};
 
+    use ::{issuer_credential, settings};
+    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
+    use connection::tests::build_test_connection;
+    use credential_def::tests::create_cred_def_fake;
     use credential_request::CredentialRequest;
     #[allow(unused_imports)]
     use utils::{constants::*,
-                libindy::{LibindyMock,
-                          anoncreds::{libindy_create_and_store_credential_def,
+                get_temp_dir_path,
+                libindy::{anoncreds::{libindy_create_and_store_credential_def,
                                       libindy_issuer_create_credential_offer,
                                       libindy_prover_create_credential_req},
-                          wallet::get_wallet_handle, wallet},
-                get_temp_dir_path,
+                          LibindyMock,
+                          wallet, wallet::get_wallet_handle},
     };
     use utils::devsetup::*;
-
-    use credential_def::tests::create_cred_def_fake;
-    use connection::tests::build_test_connection;
-    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
-    use utils::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata_connection::ARIES_CONNECTION_ACK;
+    use utils::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+
+    use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
     static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";

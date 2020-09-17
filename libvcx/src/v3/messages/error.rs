@@ -1,6 +1,7 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use messages::thread::Thread;
 use std::collections::HashMap;
+
+use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -31,7 +32,7 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub problem_items: Option<HashMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>
+    pub comment: Option<String>,
 }
 
 impl ProblemReport {
@@ -42,7 +43,7 @@ impl ProblemReport {
     pub fn set_description(mut self, code: u32) -> Self {
         self.description = Some(Description {
             en: None,
-            code
+            code,
         });
         self
     }
@@ -73,7 +74,7 @@ pub enum WhoRetries {
     #[serde(rename = "both")]
     Both,
     #[serde(rename = "none")]
-    None
+    None,
 }
 
 impl Default for WhoRetries {
@@ -96,13 +97,14 @@ pub enum Impact {
     #[serde(rename = "thread")]
     Thread,
     #[serde(rename = "connection")]
-    Connection
+    Connection,
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::response::tests::*;
+
+    use super::*;
 
     fn _code() -> u32 { 0 }
 

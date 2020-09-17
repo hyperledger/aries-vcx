@@ -2,9 +2,9 @@
 use futures::Future;
 use indy::crypto;
 
-use utils::libindy::LibindyMock;
-use settings;
 use error::prelude::*;
+use settings;
+use utils::libindy::LibindyMock;
 
 pub fn prep_msg(sender_vk: &str, recipient_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {

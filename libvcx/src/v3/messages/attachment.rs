@@ -1,7 +1,8 @@
 use std::str::from_utf8;
+
 use serde_json;
 
-use error::{VcxResult, VcxError, VcxErrorKind};
+use error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Attachments(pub Vec<Attachment>);
@@ -63,7 +64,7 @@ pub enum AttachmentId {
     #[serde(rename = "libindy-request-presentation-0")]
     PresentationRequest,
     #[serde(rename = "libindy-presentation-0")]
-    Presentation
+    Presentation,
 }
 
 impl Json {

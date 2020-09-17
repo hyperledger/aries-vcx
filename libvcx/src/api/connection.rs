@@ -1,11 +1,13 @@
+use std::ptr;
+
+use indy_sys::CommandHandle;
 use libc::c_char;
+
+use connection::*;
+use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::threadpool::spawn;
-use std::ptr;
-use connection::*;
-use error::prelude::*;
-use indy_sys::CommandHandle;
 use v3::messages::a2a::A2AMessage;
 
 /*
@@ -358,19 +360,19 @@ pub extern fn vcx_connection_redirect(command_handle: CommandHandle,
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_redirect - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     if !is_valid_handle(redirect_connection_handle) {
         error!("vcx_connection_redirect - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_redirect(command_handle: {}, connection_handle: {}, redirect_connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, redirect_connection_handle, source_id);
 
-    spawn(move|| {
+    spawn(move || {
         error!("Action not supported");
         cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num);
         Ok(())
@@ -393,10 +395,10 @@ pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_get_redirect_details - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         error!("Action not supported");
         cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
@@ -592,7 +594,7 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
         Err(_) => return VcxError::from(VcxErrorKind::InvalidJson).into(),
     };
 
-    spawn(move|| {
+    spawn(move || {
         let result = update_state_with_message(connection_handle, message);
 
         let rc = match result {
@@ -1202,22 +1204,22 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         match get_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            },
+            }
             Err(x) => {
                 warn!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
                       command_handle, connection_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
-            },
+            }
         };
 
         Ok(())
@@ -1251,22 +1253,22 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         match get_their_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            },
+            }
             Err(x) => {
                 warn!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",
                       command_handle, connection_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
-            },
+            }
         };
 
         Ok(())
@@ -1277,18 +1279,20 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CString;
     use std::ptr;
-    use connection::tests::build_test_connection;
-    use utils::error;
+
     use api::{return_types_u32, VcxStateType};
-    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, DELETE_CONNECTION_DECRYPTED_RESPONSE};
-    use utils::error::SUCCESS;
+    use connection::tests::build_test_connection;
+    use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use utils::devsetup::*;
+    use utils::error;
+    use utils::error::SUCCESS;
     use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST};
     use utils::timeout::TimeoutUtils;
-    use utils::mockdata_connection::{ARIES_CONNECTION_REQUEST, ARIES_CONNECTION_ACK};
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -1297,8 +1301,8 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let _rc = vcx_connection_create(cb.command_handle,
-                                       CString::new("test_create").unwrap().into_raw(),
-                                       Some(cb.get_callback()));
+                                        CString::new("test_create").unwrap().into_raw(),
+                                        Some(cb.get_callback()));
 
         assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
     }

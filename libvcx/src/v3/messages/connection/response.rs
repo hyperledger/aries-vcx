@@ -1,14 +1,14 @@
-use error::prelude::*;
-use utils::libindy::crypto;
 use base64;
 use time;
 
+use error::prelude::*;
 use messages::thread::Thread;
-use v3::messages::connection::did_doc::*;
+use utils::libindy::crypto;
 use v3::messages::a2a::{A2AMessage, MessageId};
 use v3::messages::a2a::message_family::MessageFamilies;
 use v3::messages::a2a::message_type::MessageType;
 use v3::messages::ack::PleaseAck;
+use v3::messages::connection::did_doc::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -19,7 +19,7 @@ pub struct Response {
     pub connection: ConnectionData,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub please_ack: Option<PleaseAck>
+    pub please_ack: Option<PleaseAck>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -40,7 +40,7 @@ pub struct SignedResponse {
     pub connection_sig: ConnectionSignature,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub please_ack: Option<PleaseAck>
+    pub please_ack: Option<PleaseAck>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -152,9 +152,10 @@ impl Default for ConnectionSignature {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use v3::messages::connection::did_doc::tests::*;
     use utils::libindy::tests::test_setup;
+    use v3::messages::connection::did_doc::tests::*;
+
+    use super::*;
 
     fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
@@ -178,7 +179,7 @@ pub mod tests {
             thread: _thread(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc()
+                did_doc: _did_doc(),
             },
             please_ack: None,
         }

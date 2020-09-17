@@ -1,9 +1,9 @@
 use v3::messages::a2a::MessageId;
-use v3::messages::issuance::credential_request::CredentialRequest;
-use v3::messages::issuance::credential_offer::CredentialOffer;
-use v3::messages::issuance::credential::Credential;
-use v3::messages::status::Status;
 use v3::messages::error::ProblemReport;
+use v3::messages::issuance::credential::Credential;
+use v3::messages::issuance::credential_offer::CredentialOffer;
+use v3::messages::issuance::credential_request::CredentialRequest;
+use v3::messages::status::Status;
 
 // Possible Transitions:
 // Initial -> OfferSent
@@ -17,7 +17,7 @@ pub enum IssuerState {
     OfferSent(OfferSentState),
     RequestReceived(RequestReceivedState),
     CredentialSent(CredentialSentState),
-    Finished(FinishedState)
+    Finished(FinishedState),
 }
 
 impl IssuerState {
@@ -48,7 +48,7 @@ impl InitialState {
             cred_def_id: cred_def_id.to_string(),
             credential_json: credential_json.to_string(),
             rev_reg_id,
-            tails_file
+            tails_file,
         }
     }
 }
@@ -68,7 +68,7 @@ pub struct OfferSentState {
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
     pub connection_handle: u32,
-    pub thread_id: String
+    pub thread_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -79,21 +79,21 @@ pub struct RequestReceivedState {
     pub tails_file: Option<String>,
     pub connection_handle: u32,
     pub request: CredentialRequest,
-    pub thread_id: String
+    pub thread_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationInfoV1 {
-	pub cred_rev_id: Option<String>,
-	pub rev_reg_id: Option<String>,
-	pub tails_file: Option<String>
+    pub cred_rev_id: Option<String>,
+    pub rev_reg_id: Option<String>,
+    pub tails_file: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {
     pub connection_handle: u32,
     pub revocation_info_v1: Option<RevocationInfoV1>,
-    pub thread_id: String
+    pub thread_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -101,7 +101,7 @@ pub struct FinishedState {
     pub cred_id: Option<String>,
     pub thread_id: String,
     pub revocation_info_v1: Option<RevocationInfoV1>,
-    pub status: Status
+    pub status: Status,
 }
 
 impl From<(InitialState, String, u32, MessageId)> for OfferSentState {
@@ -240,7 +240,7 @@ impl From<CredentialSentState> for FinishedState {
 pub enum HolderState {
     OfferReceived(OfferReceivedState),
     RequestSent(RequestSentState),
-    Finished(FinishedHolderState)
+    Finished(FinishedHolderState),
 }
 
 impl HolderState {
@@ -257,7 +257,7 @@ impl HolderState {
 pub struct RequestSentState {
     pub req_meta: String,
     pub cred_def_json: String,
-    pub connection_handle: u32
+    pub connection_handle: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -279,7 +279,7 @@ pub struct FinishedHolderState {
     pub cred_id: Option<String>,
     pub credential: Option<Credential>,
     pub status: Status,
-    pub rev_reg_def_json: Option<String>
+    pub rev_reg_def_json: Option<String>,
 }
 
 impl From<(OfferReceivedState, String, String, u32)> for RequestSentState {
@@ -300,7 +300,7 @@ impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHo
             cred_id: Some(cred_id),
             credential: Some(credential),
             status: Status::Success,
-            rev_reg_def_json: rev_reg_def_json
+            rev_reg_def_json: rev_reg_def_json,
         }
     }
 }
@@ -312,7 +312,7 @@ impl From<(RequestSentState, ProblemReport)> for FinishedHolderState {
             cred_id: None,
             credential: None,
             status: Status::Failed(problem_report),
-            rev_reg_def_json: None
+            rev_reg_def_json: None,
         }
     }
 }
@@ -324,7 +324,7 @@ impl From<(OfferReceivedState, ProblemReport)> for FinishedHolderState {
             cred_id: None,
             credential: None,
             status: Status::Failed(problem_report),
-            rev_reg_def_json: None
+            rev_reg_def_json: None,
         }
     }
 }

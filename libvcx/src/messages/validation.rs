@@ -1,12 +1,14 @@
-extern crate rust_base58;
 extern crate openssl;
+extern crate rust_base58;
+
+use url::Url;
+
+use error::prelude::*;
+use settings::Actors;
+use utils::qualifier;
 
 use self::openssl::bn::BigNum;
 use self::rust_base58::FromBase58;
-use utils::qualifier;
-use url::Url;
-use error::prelude::*;
-use settings::Actors;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
@@ -16,8 +18,14 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
         let check_did = String::from(did);
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => { warn!("ok(_)"); return Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length")) },
-            Err(x) => { warn!("Err(x)"); return Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid DID: {}", x)))},
+            Ok(_) => {
+                warn!("ok(_)");
+                return Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length"));
+            }
+            Err(x) => {
+                warn!("Err(x)");
+                return Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid DID: {}", x)));
+            }
         }
     }
 }
@@ -71,8 +79,9 @@ pub fn validate_payment_method(payment_method: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,25 +1,24 @@
 use serde_json;
 
 use api::VcxStateType;
-use messages;
-use settings;
-use messages::{RemoteMessageType, MessageStatusCode, GeneralMessage};
-use messages::payload::{Payloads, PayloadKinds};
-use messages::thread::Thread;
-use messages::get_message::get_ref_msg;
 use connection;
 use credential_request::CredentialRequest;
-use utils::error;
-use utils::libindy::{payments, anoncreds};
+use error::prelude::*;
+use issuer_credential_utils::encode_attributes;
+use messages;
+use messages::{GeneralMessage, MessageStatusCode, RemoteMessageType};
+use messages::get_message::get_ref_msg;
+use messages::payload::{PayloadKinds, Payloads};
+use messages::thread::Thread;
+use object_cache::ObjectCache;
+use settings;
+use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
 use utils::constants::CRED_MSG;
+use utils::error;
+use utils::libindy::{anoncreds, payments};
 use utils::libindy::payments::PaymentTxn;
 use utils::qualifier;
-use object_cache::ObjectCache;
-use error::prelude::*;
-
 use v3::handlers::issuance::Issuer;
-use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
-use issuer_credential_utils::encode_attributes;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<IssuerCredentials> = ObjectCache::<IssuerCredentials>::new("issuer-credentials-cache");
@@ -783,7 +782,6 @@ pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
             IssuerCredentials::V3(ref mut obj) => obj.revoke_credential(false)
         }
     })
-
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
@@ -816,28 +814,28 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use serde_json::Value;
-    use ::{settings, issuer_credential};
-    
+
+    use ::{issuer_credential, settings};
+    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
+    use connection::tests::build_test_connection;
+    use credential_def::tests::create_cred_def_fake;
     use credential_request::CredentialRequest;
     #[allow(unused_imports)]
     use utils::{constants::*,
-                libindy::{LibindyMock,
-                          anoncreds::{libindy_create_and_store_credential_def,
+                get_temp_dir_path,
+                libindy::{anoncreds::{libindy_create_and_store_credential_def,
                                       libindy_issuer_create_credential_offer,
                                       libindy_prover_create_credential_req},
-                          wallet::get_wallet_handle, wallet},
-                get_temp_dir_path,
+                          LibindyMock,
+                          wallet, wallet::get_wallet_handle},
     };
     use utils::devsetup::*;
-    
-    use credential_def::tests::create_cred_def_fake;
-    use connection::tests::build_test_connection;
-    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
-    use utils::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata_connection::ARIES_CONNECTION_ACK;
+    use utils::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+
+    use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
     static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";

@@ -1,14 +1,16 @@
+use std::ptr::null;
+use std::thread;
+
+use indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
+
+use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
-use utils::libindy::payments::{pay_a_payee, get_wallet_token_info, create_address, sign_with_address, verify_with_address};
-use utils::libindy::wallet::{export, import, get_wallet_handle};
+use utils::libindy::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
+use utils::libindy::wallet::{export, get_wallet_handle, import};
 use utils::libindy::wallet;
 use utils::threadpool::spawn;
-use std::thread;
-use std::ptr::null;
-use error::prelude::*;
-use indy::{CommandHandle, SearchHandle, WalletHandle};
 
 /// Get the total balance from all addresses contained in the configured wallet
 ///
@@ -697,12 +699,12 @@ pub extern fn vcx_wallet_send_tokens(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub  extern fn vcx_wallet_open_search(command_handle: CommandHandle,
-                                      type_: *const c_char,
-                                      query_json: *const c_char,
-                                      options_json: *const c_char,
-                                      cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
-                                                           search_handle: SearchHandle)>) -> u32 {
+pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
+                                     type_: *const c_char,
+                                     query_json: *const c_char,
+                                     options_json: *const c_char,
+                                     cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
+                                                          search_handle: SearchHandle)>) -> u32 {
     info!("vcx_wallet_open_search >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
@@ -756,11 +758,11 @@ pub  extern fn vcx_wallet_open_search(command_handle: CommandHandle,
 ///   }],
 /// }
 #[no_mangle]
-pub  extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
-                                              wallet_search_handle: SearchHandle,
-                                              count: usize,
-                                              cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
-                                                                   records_json: *const c_char)>) -> u32 {
+pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
+                                             wallet_search_handle: SearchHandle,
+                                             count: usize,
+                                             cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
+                                                                  records_json: *const c_char)>) -> u32 {
     info!("vcx_wallet_search_next_records >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -944,9 +946,9 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub  extern fn vcx_wallet_validate_payment_address(command_handle: i32,
-                                                   payment_address: *const c_char,
-                                                   cb: Option<extern fn(command_handle_: i32, err: u32)>) -> u32 {
+pub extern fn vcx_wallet_validate_payment_address(command_handle: i32,
+                                                  payment_address: *const c_char,
+                                                  cb: Option<extern fn(command_handle_: i32, err: u32)>) -> u32 {
     info!("vcx_wallet_validate_payment_address >>>");
 
     check_useful_c_str!(payment_address,  VcxErrorKind::InvalidOption);
@@ -980,16 +982,18 @@ pub extern fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
 pub mod tests {
     extern crate serde_json;
 
-    use super::*;
-    use api::return_types_u32;
-    use std::ptr;
     use std::ffi::CString;
-    use utils::libindy::wallet::{delete_wallet, init_wallet};
+    use std::ptr;
+
+    use api::return_types_u32;
+    use settings;
+    use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::payments::build_test_address;
-    use utils::devsetup::*;
-    use settings;
+    use utils::libindy::wallet::{delete_wallet, init_wallet};
     use utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -1096,21 +1100,21 @@ pub mod tests {
 
         let res_sign = vcx_wallet_sign_with_address(cb_sign.command_handle,
                                                     addr_raw.into_raw(),
-                                                         msg_raw.as_ptr() as *const u8,
-                                                         msg_len as u32,
-                                                         Some(cb_sign.get_callback()));
+                                                    msg_raw.as_ptr() as *const u8,
+                                                    msg_len as u32,
+                                                    Some(cb_sign.get_callback()));
         assert_eq!(res_sign, error::SUCCESS.code_num);
 
         let addr_raw = CString::new(addr).unwrap();
         let sig = cb_sign.receive(TimeoutUtils::some_medium()).unwrap();
 
         let res_verify = vcx_wallet_verify_with_address(cb_verify.command_handle,
-                                                      addr_raw.into_raw(),
-                                                      msg_raw.as_ptr() as *const u8,
-                                                      msg_len as u32,
-                                                      sig.as_ptr(),
-                                                      sig.len() as u32,
-                                                      Some(cb_verify.get_callback()));
+                                                        addr_raw.into_raw(),
+                                                        msg_raw.as_ptr() as *const u8,
+                                                        msg_len as u32,
+                                                        sig.as_ptr(),
+                                                        sig.len() as u32,
+                                                        Some(cb_verify.get_callback()));
         assert_eq!(res_verify, error::SUCCESS.code_num);
         let valid = cb_verify.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(valid);

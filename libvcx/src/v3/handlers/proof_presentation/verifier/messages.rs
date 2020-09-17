@@ -1,7 +1,7 @@
-use v3::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use v3::messages::proof_presentation::presentation::Presentation;
-use v3::messages::error::ProblemReport;
 use v3::messages::a2a::A2AMessage;
+use v3::messages::error::ProblemReport;
+use v3::messages::proof_presentation::presentation::Presentation;
+use v3::messages::proof_presentation::presentation_proposal::PresentationProposal;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum VerifierMessages {
@@ -9,7 +9,7 @@ pub enum VerifierMessages {
     VerifyPresentation(Presentation),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),
-    Unknown
+    Unknown,
 }
 
 impl From<A2AMessage> for VerifierMessages {

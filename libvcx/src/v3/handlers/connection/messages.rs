@@ -1,14 +1,13 @@
+use v3::messages::a2a::A2AMessage;
+use v3::messages::ack::Ack;
 use v3::messages::connection::invite::Invitation;
+use v3::messages::connection::problem_report::ProblemReport;
 use v3::messages::connection::request::Request;
 use v3::messages::connection::response::SignedResponse;
-use v3::messages::connection::problem_report::ProblemReport;
+use v3::messages::discovery::disclose::Disclose;
+use v3::messages::discovery::query::Query;
 use v3::messages::trust_ping::ping::Ping;
 use v3::messages::trust_ping::ping_response::PingResponse;
-use v3::messages::ack::Ack;
-use v3::messages::discovery::query::Query;
-use v3::messages::discovery::disclose::Disclose;
-use v3::messages::a2a::A2AMessage;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DidExchangeMessages {
@@ -24,7 +23,7 @@ pub enum DidExchangeMessages {
     DiscoverFeatures((Option<String>, Option<String>)),
     QueryReceived(Query),
     DiscloseReceived(Disclose),
-    Unknown
+    Unknown,
 }
 
 impl From<A2AMessage> for DidExchangeMessages {

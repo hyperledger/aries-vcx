@@ -1,9 +1,11 @@
 extern crate serde;
 extern crate serde_json;
 
-use serde_json::Value;
-use serde_json::Map;
 use std::string::String;
+
+use serde_json::Map;
+use serde_json::Value;
+
 use error::prelude::*;
 
 pub trait KeyMatch {
@@ -28,10 +30,10 @@ pub fn mapped_key_rewrite<T: KeyMatch>(val: Value, remap: &Vec<(T, String)>) -> 
 
 fn _mapped_key_rewrite<T: KeyMatch>(val: Value, context: &mut Vec<String>, remap: &Vec<(T, String)>) -> VcxResult<Value> {
     if let Value::Object(mut map) = val {
-        let mut keys:Vec<String> = _collect_keys(&map);
+        let mut keys: Vec<String> = _collect_keys(&map);
 
         while let Some(k) = keys.pop() {
-            let mut value = map.remove(&k).ok_or_else(||{
+            let mut value = map.remove(&k).ok_or_else(|| {
                 warn!("Unexpected key value mutation");
                 VcxError::from_msg(VcxErrorKind::InvalidJson, "Unexpected key value mutation")
             })?;
@@ -52,14 +54,13 @@ fn _mapped_key_rewrite<T: KeyMatch>(val: Value, context: &mut Vec<String>, remap
             map.insert(new_k, value);
         }
         Ok(Value::Object(map))
-    }
-    else {
+    } else {
         Ok(val)
     }
 }
 
-fn _collect_keys(map:&Map<String, Value>) -> Vec<String>{
-    let mut rtn:Vec<String> = Default::default();
+fn _collect_keys(map: &Map<String, Value>) -> Vec<String> {
+    let mut rtn: Vec<String> = Default::default();
     for key in map.keys() {
         rtn.push(key.clone());
     }
@@ -70,7 +71,6 @@ fn _collect_keys(map:&Map<String, Value>) -> Vec<String>{
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     #[cfg(feature = "general_test")]

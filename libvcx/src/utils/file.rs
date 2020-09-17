@@ -1,6 +1,7 @@
+use std::fs::{DirBuilder, File, OpenOptions};
 use std::io::{Read, Write};
-use std::path::{PathBuf, Path};
-use std::fs::{File, DirBuilder, OpenOptions};
+use std::path::{Path, PathBuf};
+
 use error::prelude::*;
 
 pub fn read_file<P: AsRef<Path>>(file: P) -> VcxResult<String> {

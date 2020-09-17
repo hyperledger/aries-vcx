@@ -1,8 +1,8 @@
-use libc::c_char;
-
 use std::ffi::CStr;
-use std::str::Utf8Error;
 use std::ffi::CString;
+use std::str::Utf8Error;
+
+use libc::c_char;
 
 pub struct CStringUtils {}
 

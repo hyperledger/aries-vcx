@@ -1,4 +1,4 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
+use v3::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Query {
@@ -7,7 +7,7 @@ pub struct Query {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment: Option<String>
+    pub comment: Option<String>,
 }
 
 impl Query {

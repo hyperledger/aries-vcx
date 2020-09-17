@@ -1,46 +1,44 @@
-use serde_json;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-use object_cache::ObjectCache;
-use api::VcxStateType;
-use error::prelude::*;
+use serde_json;
+use serde_json::Value;
 
+use api::VcxStateType;
 use connection;
+use error::prelude::*;
 use messages::{
     self,
     GeneralMessage,
-    RemoteMessageType,
-    payload::{
-        Payloads,
-        PayloadKinds,
-    },
-    thread::Thread,
     get_message::Message,
+    payload::{
+        PayloadKinds,
+        Payloads,
+    },
+    RemoteMessageType,
+    thread::Thread,
 };
 use messages::proofs::{
     proof_message::ProofMessage,
     proof_request::{
-        ProofRequestMessage,
-        ProofRequestData,
         NonRevokedInterval,
+        ProofRequestData,
+        ProofRequestMessage,
     },
 };
+use object_cache::ObjectCache;
 use settings;
-use utils::error;
+use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
 use utils::constants::{CREDS_FROM_PROOF_REQ, DEFAULT_GENERATED_PROOF, DEFAULT_REJECTED_PROOF, NEW_PROOF_REQUEST_RESPONSE};
-use utils::libindy::cache::{get_rev_reg_cache, set_rev_reg_cache, RevRegCache, RevState};
+use utils::error;
+use utils::httpclient::AgencyMock;
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-
+use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 use v3::{
-    messages::proof_presentation::presentation_request::PresentationRequest,
     handlers::proof_presentation::prover::prover::Prover,
+    messages::proof_presentation::presentation_request::PresentationRequest,
 };
-
-use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
-use utils::httpclient::AgencyMock;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
@@ -182,73 +180,73 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfo>) -> Vcx
 
                 let cache = get_rev_reg_cache(&rev_reg_id, &cred_rev_id);
 
-                let (rev_state_json, timestamp) = 
+                let (rev_state_json, timestamp) =
                     if let (Some(cached_rev_state), Some(to)) = (cache.rev_state, to) {
-                    if cached_rev_state.timestamp >= from.unwrap_or(0)
-                        && cached_rev_state.timestamp <= to {
-                        (cached_rev_state.value, cached_rev_state.timestamp)
-                    } else {
-                        let from = match from {
-                            Some(from) if from >= cached_rev_state.timestamp => {
-                                Some(cached_rev_state.timestamp)
-                            }
-                            _ => None
-                        };
+                        if cached_rev_state.timestamp >= from.unwrap_or(0)
+                            && cached_rev_state.timestamp <= to {
+                            (cached_rev_state.value, cached_rev_state.timestamp)
+                        } else {
+                            let from = match from {
+                                Some(from) if from >= cached_rev_state.timestamp => {
+                                    Some(cached_rev_state.timestamp)
+                                }
+                                _ => None
+                            };
 
+                            let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
+
+                            let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
+                                &rev_reg_id,
+                                from,
+                                Some(to),
+                            )?;
+
+                            let rev_state_json = anoncreds::libindy_prover_update_revocation_state(
+                                &rev_reg_def_json,
+                                &cached_rev_state.value,
+                                &rev_reg_delta_json,
+                                &cred_rev_id,
+                                &tails_file,
+                            )?;
+
+                            if timestamp > cached_rev_state.timestamp {
+                                let new_cache = RevRegCache {
+                                    rev_state: Some(RevState {
+                                        timestamp,
+                                        value: rev_state_json.clone(),
+                                    })
+                                };
+                                set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
+                            }
+
+                            (rev_state_json, timestamp)
+                        }
+                    } else {
                         let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
 
                         let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
                             &rev_reg_id,
-                            from,
-                            Some(to),
+                            None,
+                            to,
                         )?;
 
-                        let rev_state_json = anoncreds::libindy_prover_update_revocation_state(
+                        let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
                             &rev_reg_def_json,
-                            &cached_rev_state.value,
                             &rev_reg_delta_json,
                             &cred_rev_id,
                             &tails_file,
                         )?;
 
-                        if timestamp > cached_rev_state.timestamp {
-                            let new_cache = RevRegCache {
-                                rev_state: Some(RevState {
-                                    timestamp,
-                                    value: rev_state_json.clone(),
-                                })
-                            };
-                            set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-                        }
+                        let new_cache = RevRegCache {
+                            rev_state: Some(RevState {
+                                timestamp,
+                                value: rev_state_json.clone(),
+                            })
+                        };
+                        set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
 
                         (rev_state_json, timestamp)
-                    }
-                } else {
-                    let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
-
-                    let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                        &rev_reg_id,
-                        None,
-                        to,
-                    )?;
-
-                    let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
-                        &rev_reg_def_json,
-                        &rev_reg_delta_json,
-                        &cred_rev_id,
-                        &tails_file,
-                    )?;
-
-                    let new_cache = RevRegCache {
-                        rev_state: Some(RevState {
-                            timestamp,
-                            value: rev_state_json.clone(),
-                        })
                     };
-                    set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-
-                    (rev_state_json, timestamp)
-                };
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RevocationState: {}", err)))?;
@@ -980,17 +978,19 @@ pub fn get_presentation_status(handle: u32) -> VcxResult<u32> {
 mod tests {
     extern crate serde_json;
 
-    use super::*;
     use serde_json::Value;
-    use utils::{
-        constants::{ADDRESS_CRED_ID, LICENCE_CRED_ID, ADDRESS_SCHEMA_ID,
-                    ADDRESS_CRED_DEF_ID, CRED_DEF_ID, SCHEMA_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, REV_REG_ID, CRED_REV_ID, TEST_TAILS_FILE, REV_STATE_JSON},
-        get_temp_dir_path,
-    };
     #[cfg(feature = "pool_tests")]
     use time;
+
+    use utils::{
+        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
+                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
+                    LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
+        get_temp_dir_path,
+    };
     use utils::devsetup::*;
+
+    use super::*;
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({

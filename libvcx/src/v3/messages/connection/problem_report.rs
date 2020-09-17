@@ -1,6 +1,6 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::localization::Localization;
 use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::localization::Localization;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -15,7 +15,7 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub localization: Option<Localization>,
     #[serde(rename = "~thread")]
-    pub thread: Thread
+    pub thread: Thread,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -28,7 +28,7 @@ pub enum ProblemCode {
     #[serde(rename = "response_not_accepted")]
     ResponseNotAccepted,
     #[serde(rename = "response_processing_error")]
-    ResponseProcessingError
+    ResponseProcessingError,
 }
 
 impl ProblemReport {
@@ -60,8 +60,9 @@ impl Default for ProblemCode {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::response::tests::*;
+
+    use super::*;
 
     fn _problem_code() -> ProblemCode {
         ProblemCode::ResponseProcessingError

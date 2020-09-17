@@ -141,7 +141,7 @@ pub static CREDENTIAL_STORED_IN_WALLET: &str = r#"{"claim":{"account_num":["8BEa
 pub static DEFAULT_SEARCH_HANDLE: u32 = 1;
 pub static DEFAULT_SEARCH_RECORD: &str = r#"{"id":"RecordId","type":null,"value":"RecordValue","tags":"{\"tagName1\":\"str1\",\"tagName2\":\"5\",\"tagName3\":\"12\"}"}"#;
 pub static SCHEMA_TXN_TYPE: &str = r#"101"#;
-pub static CREATE_SCHEMA_ACTION: (&str, &str, &str, Option<&str>,Option<&str>) = (SCHEMA_TXN_TYPE, "ADD", "*", None, Some("*"));
+pub static CREATE_SCHEMA_ACTION: (&str, &str, &str, Option<&str>, Option<&str>) = (SCHEMA_TXN_TYPE, "ADD", "*", None, Some("*"));
 pub static CRED_DEF_TXN_TYPE: &str = r#"102"#;
 pub static CREATE_CRED_DEF_ACTION: (&str, &str, &str, Option<&str>, Option<&str>) = (CRED_DEF_TXN_TYPE, "ADD", "*", None, Some("*"));
 pub static REV_REG_DEF_TXN_TYPE: &str = r#"113"#;
@@ -170,6 +170,7 @@ pub static REV_STATE_JSON: &str = r#"{"V4SGRU86Z58d6TV7PBUe6f:4:V4SGRU86Z58d6TV7
 pub static REV_REG_JSON: &str = r#"{"ver":"1.0","value":{"accum":"2 0204F2D2B1F2B705A11AAFEEE73C9BA084C12AF1179294529AC4D14CA54E87F3 2 222BAE38FAF2673F7BCBB86D8DE1A327F5065BDC892E9A122164260C97BC0C63 2 1565105F8BA53037978B66E0CC9F53205F189DEEB6B7168744456DD98D2F4E88 2 1AC9E76B2868141A42329778831C14AEAAF7A9981209C1D96AECA4E69CAFB243 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000"}}"#;
 pub static TEST_TAILS_FILE: &str = r#"tails_file"#;
 pub static REQUEST_WITH_ENDORSER: &str = r#"{"seqNo":344,"reqId":1522866729726860308,"identifier":"VsKV7grR1BUE29mG2Fm2kX","txnTime":1516284381,"type":"101","endorser":"V4SGRU86Z58d6TV7PBUe6f"}"#;
+
 pub fn rev_def_json() -> String {
     use utils::get_temp_dir_path;
     json!({
@@ -191,4 +192,5 @@ pub fn rev_def_json() -> String {
         }
     }).to_string()
 }
+
 pub static DEFAULT_AUTHOR_AGREEMENT: &str = r#"{"text":"Default indy agreement", "version":"1.0.0", "aml": {"acceptance mechanism label1": "description"}}"#;

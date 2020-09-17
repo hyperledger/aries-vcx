@@ -1,15 +1,15 @@
+use std::collections::HashMap;
+use std::fmt;
+
 use futures::Future;
 use indy::payments;
 use serde_json::Value;
 
-use std::fmt;
-use std::collections::HashMap;
-
-use utils::libindy::wallet::get_wallet_handle;
-use utils::libindy::ledger::{libindy_submit_request, libindy_sign_and_submit_request, libindy_sign_request, append_txn_author_agreement_to_request, auth_rule};
-use utils::constants::{SUBMIT_SCHEMA_RESPONSE, CREATE_TRANSFER_ACTION};
-use settings;
 use error::prelude::*;
+use settings;
+use utils::constants::{CREATE_TRANSFER_ACTION, SUBMIT_SCHEMA_RESPONSE};
+use utils::libindy::ledger::{append_txn_author_agreement_to_request, auth_rule, libindy_sign_and_submit_request, libindy_sign_request, libindy_submit_request};
+use utils::libindy::wallet::get_wallet_handle;
 
 static DEFAULT_FEES: &str = r#"{"0":0, "1":0, "3":0, "100":0, "101":2, "102":42, "103":0, "104":0, "105":0, "107":0, "108":0, "109":0, "110":0, "111":0, "112":0, "113":2, "114":2, "115":0, "116":0, "117":0, "118":0, "119":0, "10001":0}"#;
 
@@ -106,7 +106,7 @@ pub fn create_address(seed: Option<String>) -> VcxResult<String> {
 pub fn sign_with_address(address: &str, message: &[u8]) -> VcxResult<Vec<u8>> {
     trace!("sign_with_address >>> address: {:?}, message: {:?}", address, message);
 
-    if settings::indy_mocks_enabled() {return Ok(Vec::from(message).to_owned()); }
+    if settings::indy_mocks_enabled() { return Ok(Vec::from(message).to_owned()); }
 
     payments::sign_with_address(get_wallet_handle(), address, message).wait().map_err(VcxError::from)
 }
@@ -314,7 +314,7 @@ pub fn pay_a_payee(price: u64, address: &str) -> VcxResult<(PaymentTxn, String)>
     if settings::indy_mocks_enabled() {
         let inputs = vec![build_test_address("9UFgyjuJxi1i1HD")];
 
-        let outputs = vec![Output { source: None, recipient: build_test_address("xkIsxem0YNtHrRO"), amount: 1, extra: None}];
+        let outputs = vec![Output { source: None, recipient: build_test_address("xkIsxem0YNtHrRO"), amount: 1, extra: None }];
         return Ok((PaymentTxn::from_parts(inputs, outputs, 1, false), SUBMIT_SCHEMA_RESPONSE.to_string()));
     }
 
@@ -345,7 +345,7 @@ pub fn pay_a_payee(price: u64, address: &str) -> VcxResult<(PaymentTxn, String)>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct RequestInfo {
     pub price: u64,
-    pub requirements: Vec<::serde_json::Value>
+    pub requirements: Vec<::serde_json::Value>,
 }
 
 fn get_request_info(get_auth_rule_resp_json: &str, requester_info_json: &str, fees_json: &str) -> VcxResult<RequestInfo> {
@@ -432,7 +432,7 @@ pub fn inputs(cost: u64) -> VcxResult<(u64, Vec<String>, String)> {
             if balance < cost {
                 inputs.push(utxo.source.clone().ok_or(VcxErrorKind::InsufficientTokenAmount)?.to_string());
                 balance += utxo.amount;
-            } else { break 'outer }
+            } else { break 'outer; }
         }
     }
 
@@ -540,8 +540,9 @@ pub fn add_new_did(role: Option<&str>) -> (String, String) {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use utils::devsetup::*;
+
+    use super::*;
 
     static ZERO_FEES: &str = r#"{"0":0, "1":0, "101":0, "10001":0, "102":0, "103":0, "104":0, "105":0, "107":0, "108":0, "109":0, "110":0, "111":0, "112":0, "113":0, "114":0, "115":0, "116":0, "117":0, "118":0, "119":0}"#;
 

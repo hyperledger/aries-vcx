@@ -1,15 +1,15 @@
-use settings;
-use connection;
 use api::VcxStateType;
+use connection;
+use error::prelude::*;
 use messages::*;
 use messages::message_type::MessageTypes;
-use messages::payload::{Payloads, PayloadKinds};
+use messages::payload::{PayloadKinds, Payloads};
 use messages::thread::Thread;
-use utils::{httpclient, constants};
-use utils::uuid::uuid;
-use error::prelude::*;
+use settings;
+use utils::{constants, httpclient};
 use utils::agent_info::get_agent_info;
 use utils::httpclient::AgencyMock;
+use utils::uuid::uuid;
 
 #[derive(Debug)]
 pub struct SendMessageBuilder {
@@ -232,7 +232,7 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
                                 &agent_info.their_pw_vk()?,
                                 &msg,
                                 PayloadKinds::Other(msg_options.msg_type.clone()),
-                                None
+                                None,
             )?
             .agent_did(&agent_info.pw_agent_did()?)?
             .agent_vk(&agent_info.pw_agent_vk()?)?
@@ -249,9 +249,9 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    
     use utils::devsetup::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

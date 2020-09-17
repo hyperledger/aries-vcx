@@ -1,5 +1,5 @@
 use messages::thread::Thread;
-use v3::messages::a2a::{MessageId, A2AMessage};
+use v3::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
@@ -39,8 +39,9 @@ a2a_message!(Ping);
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::response::tests::*;
+
+    use super::*;
 
     fn _comment() -> String {
         String::from("comment")

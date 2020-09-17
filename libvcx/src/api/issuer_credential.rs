@@ -1,14 +1,16 @@
-use serde_json;
+use std::ptr;
+
+use indy_sys::CommandHandle;
 use libc::c_char;
+use serde_json;
+
+use connection;
+use error::prelude::*;
+use issuer_credential;
+use settings;
 use utils::cstring::CStringUtils;
 use utils::error;
-use connection;
-use settings;
-use issuer_credential;
-use std::ptr;
 use utils::threadpool::spawn;
-use error::prelude::*;
-use indy_sys::CommandHandle;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -139,11 +141,11 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
     };
 
     if !::credential_def::is_valid_handle(cred_def_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
     if !::credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
-        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the Published State yet").into()
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the Published State yet").into();
     }
 
     trace!("vcx_issuer_create_credential(command_handle: {}, source_id: {}, cred_def_handle: {}, issuer_did: {}, credential_data: {}, credential_name: {})",
@@ -203,11 +205,11 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
            command_handle, credential_handle, connection_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     spawn(move || {
@@ -256,7 +258,7 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
            command_handle, credential_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     spawn(move || {
@@ -310,7 +312,7 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
            command_handle, credential_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     spawn(move || {
@@ -347,11 +349,11 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
            command_handle, credential_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     spawn(move || {
@@ -407,7 +409,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
            command_handle, credential_handle, message, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     spawn(move || {
@@ -459,7 +461,7 @@ pub extern fn vcx_issuer_credential_get_state(command_handle: CommandHandle,
            command_handle, credential_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     spawn(move || {
@@ -517,11 +519,11 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
@@ -573,7 +575,7 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
     check_useful_c_str!(my_pw_did, VcxErrorKind::InvalidOption);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
@@ -626,7 +628,7 @@ pub extern fn vcx_issuer_credential_serialize(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
@@ -803,7 +805,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
@@ -834,12 +836,12 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
-                                                               credential_handle: u32,
-                                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+                                                 credential_handle: u32,
+                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
@@ -872,19 +874,19 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
 pub mod tests {
     extern crate serde_json;
 
-    use super::*;
     use std::ffi::CString;
     use std::ptr;
-    use settings;
-    use utils::{
-        get_temp_dir_path,
-    };
+
     use api::{return_types_u32, VcxStateType};
-    use utils::devsetup::*;
+    use settings;
+    use utils::get_temp_dir_path;
     use utils::constants::*;
-    use utils::timeout::TimeoutUtils;
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
     static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
@@ -957,13 +959,13 @@ pub mod tests {
     fn _vcx_issuer_create_credential_c_closure() -> Result<u32, u32> {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_issuer_create_credential(cb.command_handle,
-                                     CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                     ::credential_def::tests::create_cred_def_fake(),
-                                     CString::new(DEFAULT_DID).unwrap().into_raw(),
-                                     CString::new(DEFAULT_ATTR).unwrap().into_raw(),
-                                     CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                     CString::new("1").unwrap().into_raw(),
-                                     Some(cb.get_callback()));
+                                              CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
+                                              ::credential_def::tests::create_cred_def_fake(),
+                                              CString::new(DEFAULT_DID).unwrap().into_raw(),
+                                              CString::new(DEFAULT_ATTR).unwrap().into_raw(),
+                                              CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
+                                              CString::new("1").unwrap().into_raw(),
+                                              Some(cb.get_callback()));
         if rc != error::SUCCESS.code_num {
             return Err(rc);
         }
@@ -1080,9 +1082,9 @@ pub mod tests {
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);
 
         assert_eq!(vcx_v2_issuer_credential_update_state(cb.command_handle,
-                                                           handle,
-                                                           connection_handle,
-                                                           Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                         handle,
+                                                         connection_handle,
+                                                         Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateOfferSent as u32);
     }

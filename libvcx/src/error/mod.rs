@@ -1,16 +1,16 @@
 use std::cell::RefCell;
-use std::fmt;
 use std::ffi::CString;
+use std::fmt;
 use std::ptr;
 
-use failure::{Context, Backtrace, Fail};
+use failure::{Backtrace, Context, Fail};
 use libc::c_char;
 
-use utils::error;
 use utils::cstring::CStringUtils;
+use utils::error;
 
 pub mod prelude {
-    pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt, get_current_error_c_json};
+    pub use super::{err_msg, get_current_error_c_json, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]

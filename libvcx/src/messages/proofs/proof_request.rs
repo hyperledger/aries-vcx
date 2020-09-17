@@ -1,10 +1,10 @@
-use serde_json;
-
 use std::collections::HashMap;
 use std::vec::Vec;
 
-use messages::validation;
+use serde_json;
+
 use error::prelude::*;
+use messages::validation;
 use utils::libindy::anoncreds;
 use utils::qualifier;
 use v3::messages::connection::service::Service;
@@ -44,7 +44,7 @@ pub struct AttrInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub self_attest_allowed: Option<bool>
+    pub self_attest_allowed: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -196,8 +196,8 @@ impl ProofRequestMessage {
             let attr_name = match (attr.name.as_ref(), attr.names.as_ref()) {
                 (Some(name), None) => { name.clone() }
                 (None, Some(names)) => {
-                    if names.is_empty(){
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest, "Proof Request validation failed: there is empty request attribute names"))
+                    if names.is_empty() {
+                        return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest, "Proof Request validation failed: there is empty request attribute names"));
                     }
                     names.join(",")
                 }
@@ -426,10 +426,11 @@ impl Default for ProofRequestVersion {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use messages::proof_request;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use utils::devsetup::SetupDefaults;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

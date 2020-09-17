@@ -1,3 +1,30 @@
+use std::u8;
+
+use log;
+use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
+use serde_json::Value;
+
+use error::prelude::*;
+use settings;
+use settings::ProtocolTypes;
+use utils::httpclient::AgencyMockDecrypted;
+use utils::libindy::crypto;
+
+use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
+use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
+use self::invite::{
+    AcceptInviteBuilder, AcceptInviteMessageDetails, ConnectionRequest, ConnectionRequestAnswer, ConnectionRequestAnswerResponse,
+    ConnectionRequestRedirect, ConnectionRequestRedirectResponse, ConnectionRequestResponse,
+    RedirectConnectionBuilder, RedirectConnectionMessageDetails, SendInviteBuilder, SendInviteMessageDetails, SendInviteMessageDetailsResponse,
+};
+use self::message_type::*;
+use self::proofs::proof_request::ProofRequestMessage;
+use self::send_message::SendMessageBuilder;
+use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
+use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
+use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
+
 pub mod create_key;
 pub mod invite;
 pub mod validation;
@@ -12,31 +39,6 @@ pub mod message_type;
 pub mod payload;
 #[macro_use]
 pub mod thread;
-
-use std::u8;
-use settings;
-use log;
-use utils::libindy::crypto;
-use self::create_key::{CreateKeyBuilder, CreateKey, CreateKeyResponse};
-use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
-use self::update_profile::{UpdateProfileDataBuilder, UpdateConfigs, UpdateConfigsResponse};
-use self::invite::{
-    SendInviteBuilder, ConnectionRequest, SendInviteMessageDetails, SendInviteMessageDetailsResponse, ConnectionRequestResponse,
-    RedirectConnectionMessageDetails, ConnectionRequestRedirect, ConnectionRequestRedirectResponse,
-    AcceptInviteBuilder, RedirectConnectionBuilder, ConnectionRequestAnswer, AcceptInviteMessageDetails, ConnectionRequestAnswerResponse,
-};
-use self::get_message::{GetMessagesBuilder, GetMessages, GetMessagesResponse, MessagesByConnections};
-use self::send_message::SendMessageBuilder;
-use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use self::proofs::proof_request::ProofRequestMessage;
-use self::agent_utils::{Connect, ConnectResponse, SignUp, SignUpResponse, CreateAgent, CreateAgentResponse, UpdateComMethod, ComMethodUpdated};
-use self::message_type::*;
-use error::prelude::*;
-
-use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
-use serde_json::Value;
-use settings::ProtocolTypes;
-use utils::httpclient::AgencyMockDecrypted;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -1137,8 +1139,9 @@ pub fn proof_request() -> ProofRequestMessage { ProofRequestMessage::create() }
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use utils::devsetup::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,12 +1,13 @@
-use v3::messages::a2a::{MessageId, A2AMessage};
-use v3::messages::issuance::CredentialPreviewData;
-use v3::messages::attachment::{Attachments, AttachmentId};
-use v3::messages::mime_type::MimeType;
-use error::{VcxError, VcxResult, VcxErrorKind};
-use messages::thread::Thread;
+use std::convert::TryInto;
+
+use error::{VcxError, VcxErrorKind, VcxResult};
 use issuer_credential::CredentialOffer as CredentialOfferV1;
 use messages::payload::PayloadKinds;
-use std::convert::TryInto;
+use messages::thread::Thread;
+use v3::messages::a2a::{A2AMessage, MessageId};
+use v3::messages::attachment::{AttachmentId, Attachments};
+use v3::messages::issuance::CredentialPreviewData;
+use v3::messages::mime_type::MimeType;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialOffer {
@@ -19,7 +20,7 @@ pub struct CredentialOffer {
     pub offers_attach: Attachments,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>
+    pub thread: Option<Thread>,
 }
 
 impl CredentialOffer {
@@ -110,8 +111,9 @@ impl TryInto<CredentialOfferV1> for CredentialOffer {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use v3::messages::connection::response::tests::*;
+
+    use super::*;
 
     fn _attachment() -> ::serde_json::Value {
         json!({

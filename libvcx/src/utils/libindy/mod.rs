@@ -1,3 +1,10 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Mutex;
+
+use indy_sys::CommandHandle;
+
+use settings;
+
 pub mod ledger;
 pub mod anoncreds;
 pub mod signus;
@@ -11,12 +18,6 @@ pub mod cache;
 pub mod logger;
 
 pub mod error_codes;
-
-use std::sync::Mutex;
-use settings;
-
-use std::sync::atomic::{AtomicUsize, Ordering};
-use indy_sys::CommandHandle;
 
 static COMMAND_HANDLE_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
@@ -48,16 +49,19 @@ impl LibindyMock {
 #[allow(unused_imports)]
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use futures::Future;
-    use utils::devsetup::*;
+
     use settings;
+    use utils::devsetup::*;
+
+    use super::*;
 
     // TODO:  Is used for Aries tests...try to remove and use one of devsetup's
     pub mod test_setup {
-        use super::*;
         use indy;
         use rand::Rng;
+
+        use super::*;
 
         pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
         pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;

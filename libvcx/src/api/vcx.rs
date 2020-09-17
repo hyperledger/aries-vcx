@@ -1,14 +1,16 @@
-use utils::version_constants;
-use libc::c_char;
-use utils::cstring::CStringUtils;
-use utils::libindy::{wallet, pool, ledger};
-use utils::error;
-use settings;
 use std::ffi::CString;
-use utils::threadpool::spawn;
+
+use indy::{CommandHandle, INVALID_WALLET_HANDLE};
+use libc::c_char;
+
 use error::prelude::*;
-use indy::{INVALID_WALLET_HANDLE, CommandHandle};
+use settings;
+use utils::cstring::CStringUtils;
+use utils::error;
+use utils::libindy::{ledger, pool, wallet};
 use utils::libindy::pool::init_pool;
+use utils::threadpool::spawn;
+use utils::version_constants;
 
 /// Initializes VCX with config settings
 ///
@@ -358,13 +360,13 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
         match ::messages::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
-                        command_handle, error::SUCCESS.message);
+                       command_handle, error::SUCCESS.message);
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
                 warn!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
-                        command_handle, err);
+                      command_handle, err);
 
                 cb(command_handle, err.into());
             }
@@ -513,27 +515,30 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ptr;
+
+    use indy::WalletHandle;
+    #[cfg(feature = "pool_tests")]
+    use indy_sys::INVALID_POOL_HANDLE;
+
+    use api::return_types_u32;
+    use api::VcxStateType;
     use utils::{
         libindy::{
             wallet::{import, tests::export_test_wallet},
             pool::get_pool_handle,
         }
     };
-    use api::VcxStateType;
-    use api::return_types_u32;
-    use indy::WalletHandle;
+    use utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use utils::get_temp_dir_path;
-    use utils::devsetup::*;
-    #[cfg(feature = "pool_tests")]
-    use indy_sys::INVALID_POOL_HANDLE;
-    #[cfg(feature = "pool_tests")]
-    use utils::libindy::wallet::get_wallet_handle;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::pool::tests::delete_test_pool;
+    #[cfg(feature = "pool_tests")]
+    use utils::libindy::wallet::get_wallet_handle;
     use utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     fn config() -> String {

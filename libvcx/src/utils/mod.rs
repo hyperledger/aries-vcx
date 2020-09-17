@@ -1,3 +1,6 @@
+use std::env;
+use std::path::PathBuf;
+
 #[macro_use]
 mod ccallback;
 
@@ -59,9 +62,6 @@ pub mod plugins;
 
 #[macro_use]
 pub mod logger;
-
-use std::path::PathBuf;
-use std::env;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();

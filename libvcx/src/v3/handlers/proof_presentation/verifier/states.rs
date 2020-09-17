@@ -33,7 +33,7 @@ impl VerifierSM {
 pub enum VerifierState {
     Initiated(InitialState),
     PresentationRequestSent(PresentationRequestSentState),
-    Finished(FinishedState)
+    Finished(FinishedState),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -50,7 +50,7 @@ pub struct PresentationRequestSentState {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RevocationStatus {
     Revoked,
-    NonRevoked
+    NonRevoked,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -59,7 +59,7 @@ pub struct FinishedState {
     presentation_request: PresentationRequest,
     presentation: Option<Presentation>,
     status: Status,
-    revocation_status: Option<RevocationStatus>
+    revocation_status: Option<RevocationStatus>,
 }
 
 impl From<(InitialState, PresentationRequest, u32)> for PresentationRequestSentState {
@@ -77,7 +77,7 @@ impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for Fi
             presentation_request: state.presentation_request,
             presentation: Some(presentation),
             status: Status::Success,
-            revocation_status: Some(was_revoked)
+            revocation_status: Some(was_revoked),
         }
     }
 }
@@ -90,7 +90,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
             presentation_request: state.presentation_request,
             presentation: None,
             status: Status::Failed(problem_report),
-            revocation_status: None
+            revocation_status: None,
         }
     }
 }
@@ -266,14 +266,12 @@ impl VerifierSM {
                             Some(RevocationStatus::Revoked) => {
                                 let problem_report = ProblemReport::create().set_comment(String::from("Revoked credential was used."));
                                 Status::Failed(problem_report).code()
-                            },
+                            }
                         }
                     }
                     _ => state.status.code(),
                 }
-
-
-            },
+            }
             _ => Status::Undefined.code()
         }
     }
@@ -349,9 +347,9 @@ pub mod test {
     mod new {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verifier_new() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_verifier_new() {
             let _setup = SetupAriesMocks::init();
 
             let verifier_sm = _verifier_sm();
@@ -362,22 +360,23 @@ pub mod test {
     }
 
     mod step {
-        use super::*;
-        use settings::set_config_value;
         use settings;
+        use settings::set_config_value;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verifier_init() {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_verifier_init() {
             let _setup = SetupAriesMocks::init();
 
             let verifier_sm = _verifier_sm();
             assert_match!(VerifierState::Initiated(_), verifier_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_send_presentation_request_message_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_request_message_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -386,9 +385,9 @@ pub mod test {
             assert_match!(VerifierState::PresentationRequestSent(_), verifier_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -400,9 +399,9 @@ pub mod test {
             assert_match!(VerifierState::Initiated(_), verifier_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -413,9 +412,9 @@ pub mod test {
             assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_invalid_presentation_message() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_invalid_presentation_message() {
             let _setup = SetupAriesMocks::init();
             set_config_value(settings::MOCK_INDY_PROOF_VALIDATION, "false");
 
@@ -440,9 +439,9 @@ pub mod test {
         //        assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
         //    }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -453,9 +452,9 @@ pub mod test {
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -466,9 +465,9 @@ pub mod test {
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_other_messages_from_presentation_request_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -478,9 +477,9 @@ pub mod test {
             assert_match!(VerifierState::PresentationRequestSent(_), verifier_sm.state);
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_prover_handle_messages_from_presentation_finished_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupAriesMocks::init();
 
             let mut verifier_sm = _verifier_sm();
@@ -498,9 +497,9 @@ pub mod test {
     mod find_message_to_handle {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verifier_find_message_to_handle_from_initiated_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_verifier_find_message_to_handle_from_initiated_state() {
             let _setup = SetupAriesMocks::init();
 
             let verifier = _verifier_sm();
@@ -519,9 +518,9 @@ pub mod test {
             }
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verifier_find_message_to_handle_from_presentation_request_sent_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_verifier_find_message_to_handle_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
 
             let verifier = _verifier_sm().to_presentation_request_sent_state();
@@ -587,9 +586,9 @@ pub mod test {
             }
         }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verifier_find_message_to_handle_from_finished_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_verifier_find_message_to_handle_from_finished_state() {
             let _setup = SetupAriesMocks::init();
 
             let verifier = _verifier_sm().to_finished_state();
@@ -612,9 +611,9 @@ pub mod test {
     mod get_state {
         use super::*;
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_state() {
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_state() {
             let _setup = SetupAriesMocks::init();
 
             assert_eq!(VcxStateType::VcxStateInitialized as u32, _verifier_sm().state());

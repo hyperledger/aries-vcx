@@ -1,45 +1,44 @@
-use ::{serde_json, settings};
-use serde_json::Value;
 use std::convert::TryInto;
 
-use error::prelude::*;
-use object_cache::ObjectCache;
+use serde_json::Value;
+
+use ::{serde_json, settings};
 use api::VcxStateType;
-use issuer_credential::{CredentialOffer, CredentialMessage, PaymentInfo};
+use connection;
 use credential_request::CredentialRequest;
+use error::prelude::*;
+use issuer_credential::{CredentialMessage, CredentialOffer, PaymentInfo};
 use messages::{
     self,
     GeneralMessage,
-    RemoteMessageType,
-    payload::{
-        Payloads,
-        PayloadKinds,
-    },
-    thread::Thread,
     get_message::{
-        get_ref_msg,
         get_connection_messages,
+        get_ref_msg,
         MessagePayload,
     },
+    payload::{
+        PayloadKinds,
+        Payloads,
+    },
+    RemoteMessageType,
+    thread::Thread,
 };
-use connection;
+use object_cache::ObjectCache;
+use utils::{constants, error};
+use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
+use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 use utils::libindy::anoncreds::{
+    get_cred_def_json,
     libindy_prover_create_credential_req,
     libindy_prover_store_credential,
-    get_cred_def_json,
 };
 use utils::libindy::payments::{pay_a_payee, PaymentTxn};
-use utils::{error, constants};
-
-use utils::agent_info::{get_agent_info, MyAgentInfo, get_agent_attr};
-use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
-
-use v3::{
-    messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
-    handlers::issuance::Holder,
-};
-use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE};
 use utils::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use v3::{
+    handlers::issuance::Holder,
+    messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
+};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Credentials> = ObjectCache::<Credentials>::new("credentials-cache");
@@ -729,7 +728,6 @@ pub fn get_credential_offer_messages(connection_handle: u32) -> VcxResult<String
     trace!("Credential::get_credential_offer_messages >>> connection_handle: {}", connection_handle);
 
     if connection::is_v3_connection(connection_handle)? {
-
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
 
@@ -908,14 +906,14 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use api::VcxStateType;
     use utils::devsetup::*;
+    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
+    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+
+    use super::*;
 
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
-
-    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_OFFER_RECEIVED, CREDENTIAL_SM_FINISHED};
 
     pub fn create_credential(offer: &str) -> Credential {
         let mut credential = Credential::create("source_id");

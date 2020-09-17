@@ -1,7 +1,8 @@
 use serde_json;
 use serde_json::Value;
-use error::prelude::*;
+
 use api::VcxStateType;
+use error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofMessage {
@@ -30,7 +31,7 @@ impl ProofMessage {
             from_did: None,
             proof_request_id: None,
             libindy_proof: String::new(),
-            state: None
+            state: None,
         }
     }
 
@@ -41,7 +42,7 @@ impl ProofMessage {
             from_did: None,
             proof_request_id: None,
             libindy_proof: String::new(),
-            state: Some(VcxStateType::VcxStateRejected)
+            state: Some(VcxStateType::VcxStateRejected),
         }
     }
 
@@ -92,9 +93,10 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfo>> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use ::utils::constants::{SCHEMA_ID, CRED_DEF_ID, REV_REG_ID};
+    use ::utils::constants::{CRED_DEF_ID, REV_REG_ID, SCHEMA_ID};
     use utils::devsetup::*;
+
+    use super::*;
 
     pub fn create_default_proof() -> ProofMessage {
         let mut proof = ProofMessage::new();
@@ -164,7 +166,7 @@ pub mod tests {
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
-            timestamp: None
+            timestamp: None,
         };
         assert_eq!(&proof.get_credential_info().unwrap()[0], &cred_info);
 

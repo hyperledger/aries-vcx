@@ -1,28 +1,26 @@
-extern crate env_logger;
-extern crate log;
-extern crate libc;
-extern crate indy_sys;
-
 #[cfg(target_os = "android")]
 extern crate android_logger;
+extern crate env_logger;
+extern crate indy_sys;
+extern crate libc;
+extern crate log;
 
-use std::io::Write;
-use self::env_logger::Builder as EnvLoggerBuilder;
-use self::log::{Level, LevelFilter, Metadata, Record};
-use self::libc::{c_char};
 use std::env;
-use std::ptr;
-pub use self::indy_sys::{CVoid, logger::{EnabledCB, LogCB, FlushCB}};
 use std::ffi::CString;
+use std::io::Write;
+use std::ptr;
+
+use error::prelude::*;
+use utils::cstring::CStringUtils;
+use utils::libindy;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
-use utils::cstring::CStringUtils;
-use error::prelude::*;
-
-
-use utils::libindy;
+use self::env_logger::Builder as EnvLoggerBuilder;
+pub use self::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
+use self::libc::c_char;
+use self::log::{Level, LevelFilter, Metadata, Record};
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();
@@ -148,7 +146,7 @@ impl LibvcxDefaultLogger {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
-            let log_filter = match pattern.as_ref() {
+                let log_filter = match pattern.as_ref() {
                 Some(val) => match val.to_lowercase().as_ref() {
                     "error" => Filter::default().with_min_level(log::Level::Error),
                     "warn" => Filter::default().with_min_level(log::Level::Warn),
@@ -162,7 +160,7 @@ impl LibvcxDefaultLogger {
 
             //Set logging to off when deploying production android app.
             #[cfg(target_os = "android")]
-            android_logger::init_once(log_filter);
+                android_logger::init_once(log_filter);
             info!("Logging for Android");
         } else {
             // This calls
@@ -177,7 +175,7 @@ impl LibvcxDefaultLogger {
                 Ok(()) => {}
                 Err(e) => {
                     error!("Error in logging init: {:?}", e);
-                    return Err(VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", e)))
+                    return Err(VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", e)));
                 }
             }
         }
