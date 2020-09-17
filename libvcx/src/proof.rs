@@ -671,6 +671,7 @@ pub mod tests {
     use messages::proofs::proof_request;
 
     use connection;
+    use utils::mockdata_proof::{ARIES_PROOF_PRESENTATION};
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
         if let Some(h) = connection_handle { get_agent_info().unwrap().pw_info(h).unwrap() } else {
@@ -1069,7 +1070,7 @@ pub mod tests {
 
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        proof.update_state_with_message(PROOF_RESPONSE_DECRYPTED).unwrap();
+        proof.update_state_with_message(ARIES_PROOF_PRESENTATION).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }

@@ -1283,11 +1283,12 @@ mod tests {
     use connection::tests::build_test_connection;
     use utils::error;
     use api::{return_types_u32, VcxStateType};
-    use utils::constants::{ACK_RESPONSE, CONNECTION_REQUEST, GET_MESSAGES_DECRYPTED_RESPONSE, DELETE_CONNECTION_DECRYPTED_RESPONSE};
+    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, DELETE_CONNECTION_DECRYPTED_RESPONSE};
     use utils::error::SUCCESS;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::timeout::TimeoutUtils;
+    use utils::mockdata_connection::{ARIES_CONNECTION_REQUEST, ARIES_CONNECTION_ACK};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -1346,7 +1347,7 @@ mod tests {
         connect(handle, None).unwrap();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(CONNECTION_REQUEST);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
@@ -1354,7 +1355,7 @@ mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ACK_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
@@ -1372,12 +1373,12 @@ mod tests {
         connect(handle, None).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let rc = vcx_connection_update_state_with_message(cb.command_handle, handle, CString::new(CONNECTION_REQUEST).unwrap().into_raw(), Some(cb.get_callback()));
+        let rc = vcx_connection_update_state_with_message(cb.command_handle, handle, CString::new(ARIES_CONNECTION_REQUEST).unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let rc = vcx_connection_update_state_with_message(cb.command_handle, handle, CString::new(ACK_RESPONSE).unwrap().into_raw(), Some(cb.get_callback()));
+        let rc = vcx_connection_update_state_with_message(cb.command_handle, handle, CString::new(ARIES_CONNECTION_ACK).unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
@@ -1447,7 +1448,7 @@ mod tests {
         let handle = build_test_connection();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(CONNECTION_REQUEST);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let _rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));

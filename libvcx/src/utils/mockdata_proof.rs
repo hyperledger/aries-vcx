@@ -37,4 +37,3 @@ pub const ARIES_PROOF_PRESENTATION: &str = r#"
     }
 }
 "#;
-

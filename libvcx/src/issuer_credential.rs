@@ -1089,7 +1089,8 @@ pub mod tests {
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
         // try to update state with nonsense message
-        issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK.to_string()), Some(handle_conn));
+        let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK.to_string()), Some(handle_conn));
+        assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 

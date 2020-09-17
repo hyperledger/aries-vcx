@@ -914,8 +914,6 @@ pub mod tests {
 
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
-    use utils::constants::{DEFAULT_SERIALIZED_CREDENTIAL_V1,
-                           DEFAULT_SERIALIZED_CREDENTIAL_PAYMENT_REQUIRED};
     use utils::libindy::payments::{build_test_address, get_wallet_token_info};
     use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_OFFER_RECEIVED, CREDENTIAL_SM_FINISHED};
 
@@ -950,7 +948,7 @@ pub mod tests {
     fn test_credential_create_with_offer() {
         let _setup = SetupDefaults::init();
 
-        let handle = credential_create_with_offer("test_credential_create_with_offer", constants::CREDENTIAL_OFFER_JSON).unwrap();
+        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
         assert!(handle > 0);
     }
 
@@ -968,18 +966,17 @@ pub mod tests {
     fn test_credential_serialize_deserialize() {
         let _setup = SetupDefaults::init();
 
-        let handle = credential_create_with_offer("test_credential_serialize_deserialize", constants::CREDENTIAL_OFFER_JSON).unwrap();
-        let credential_string = to_string(handle).unwrap();
-        release(handle).unwrap();
+        let handle1 = credential_create_with_offer("test_credential_serialize_deserialize", ARIES_CREDENTIAL_OFFER).unwrap();
+        let cred_original_state = get_state(handle1).unwrap();
+        let cred_original_serialized = to_string(handle1).unwrap();
+        release(handle1).unwrap();
 
-        let handle = from_string(&credential_string).unwrap();
-        let cred1: Credential = Credential::from_str(&credential_string).unwrap();
-        assert_eq!(cred1.get_state(), 3);
+        let handle2 = from_string(&cred_original_serialized).unwrap();
+        let cred_restored_serialized = to_string(handle2).unwrap();
+        let cred_restored_state = get_state(handle2).unwrap();
 
-        let cred2: Credential = Credential::from_str(&to_string(handle).unwrap()).unwrap();
-        assert!(!cred1.is_payment_required());
-
-        assert_eq!(cred1, cred2);
+        assert_eq!(cred_original_state, cred_restored_state);
+        assert_eq!(cred_original_serialized, cred_restored_serialized);
     }
 
     #[test]

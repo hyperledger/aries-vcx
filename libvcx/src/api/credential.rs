@@ -908,7 +908,7 @@ mod tests {
     use api::VcxStateType;
     use api::return_types_u32;
     use serde_json::Value;
-    use utils::constants::{PENDING_OBJECT_SERIALIZE_VERSION, GET_MESSAGES_DECRYPTED_RESPONSE, CREDENTIAL_OFFER_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    use utils::constants::{PENDING_OBJECT_SERIALIZE_VERSION, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use utils::devsetup::*;
     
     use utils::timeout::TimeoutUtils;

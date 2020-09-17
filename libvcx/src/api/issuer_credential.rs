@@ -883,7 +883,6 @@ pub mod tests {
     use utils::devsetup::*;
     use utils::constants::*;
     use utils::timeout::TimeoutUtils;
-    use utils::constants::CREDENTIAL_REQ_RESPONSE_STR;
     use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
     use utils::httpclient::AgencyMockDecrypted;
 
@@ -1078,7 +1077,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(CREDENTIAL_REQ_RESPONSE_STR_V2);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);
 
         assert_eq!(vcx_v2_issuer_credential_update_state(cb.command_handle,
                                                            handle,

@@ -911,7 +911,7 @@ pub mod tests {
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::constants;
-    use utils::mockdata_connection::ARIES_CONNECTION_INVITATION;
+    use utils::mockdata_connection::{ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, ARIES_CONNECTION_ACK};
 
     pub fn build_test_connection() -> u32 {
         let handle = create_connection("alice").unwrap();
@@ -968,12 +968,12 @@ pub mod tests {
         assert_eq!(get_pw_verkey(handle).unwrap(), constants::VERKEY);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(constants::CONNECTION_REQUEST);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
         update_state(handle, None).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(constants::ACK_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
         update_state(handle, None).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
@@ -1133,7 +1133,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
 
         let handle = create_connection("test_process_acceptance_message").unwrap();
-        let message = serde_json::from_str(constants::CONNECTION_REQUEST).unwrap();
+        let message = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
         assert_eq!(error::SUCCESS.code_num, update_state_with_message(handle, message).unwrap());
     }
 
