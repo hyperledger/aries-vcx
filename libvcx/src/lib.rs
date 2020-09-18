@@ -80,10 +80,10 @@ mod tests {
     use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
+    #[cfg(feature = "to_restore")] // message type spec/pairwise/1.0/UPDATE_CONN_STATUS no implemented in nodevcx agency
     #[test]
     fn test_delete_connection() {
-        let _setup = SetupLibraryAgencyV1ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
         let alice = connection::create_connection("alice").unwrap();
         connection::connect(alice, None).unwrap();
@@ -152,34 +152,41 @@ mod tests {
         ])
     }
 
-    fn send_cred_offer(did: &str, cred_def_handle: u32, connection: u32, credential_data: &str) -> u32 {
-        let credential_offer = issuer_credential::issuer_credential_create(cred_def_handle,
-                                                                           "1".to_string(),
-                                                                           did.to_string(),
-                                                                           "credential_name".to_string(),
-                                                                           credential_data.to_string(),
-                                                                           1).unwrap();
-        println!("sending credential offer");
-        issuer_credential::send_credential_offer(credential_offer, connection).unwrap();
+    fn create_and_send_cred_offer(did: &str, cred_def_handle: u32, connection: u32, credential_data: &str) -> u32 {
+        info!("create_and_send_cred_offer >> creating issuer credential");
+        let handle_cred = issuer_credential::issuer_credential_create(cred_def_handle,
+                                                                      "1".to_string(),
+                                                                      did.to_string(),
+                                                                      "credential_name".to_string(),
+                                                                      credential_data.to_string(),
+                                                                      1).unwrap();
+        info!("create_and_send_cred_offer :: sending credential offer");
+        issuer_credential::send_credential_offer(handle_cred, connection).unwrap();
+        info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
-        credential_offer
+        handle_cred
     }
 
     fn send_cred_req(connection: u32) -> u32 {
+        info!("send_cred_req >>> switching to consumer");
         set_consumer();
+        info!("send_cred_req :: getting offers");
         let credential_offers = credential::get_credential_offer_messages(connection).unwrap();
         let offers: Value = serde_json::from_str(&credential_offers).unwrap();
         let offers = serde_json::to_string(&offers[0]).unwrap();
+        info!("send_cred_req :: creating credential from offer");
         let credential = credential::credential_create_with_offer("TEST_CREDENTIAL", &offers).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, credential::get_state(credential).unwrap());
-        println!("sending credential request");
+        info!("send_cred_req :: sending credential request");
         credential::send_credential_request(credential, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
         credential
     }
 
     fn send_credential(issuer_handle: u32, connection: u32, credential_handle: u32) {
+        info!("send_credential >>> switching to institution");
         set_institution();
+        info!("send_credential >>> getting offers");
         issuer_credential::update_state(issuer_handle, None, None).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(issuer_handle).unwrap());
         println!("sending credential");
@@ -190,63 +197,45 @@ mod tests {
         credential::update_state(credential_handle, None, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         println!("storing credential");
-        credential::get_credential_id(credential_handle).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
     }
 
-    fn send_proof_request(connection_handle: u32, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, log_msg: &str) -> (u32, String) {
+    fn send_proof_request(connection_handle: u32, requested_attrs: &str, requested_preds: &str, revocation_interval: &str) -> u32 {
         let proof_req_handle = proof::create_proof("1".to_string(),
                                                    requested_attrs.to_string(),
                                                    requested_preds.to_string(),
                                                    revocation_interval.to_string(),
                                                    "name".to_string()).unwrap();
-        println!("sending proof request {}", log_msg);
         proof::send_proof_request(proof_req_handle, connection_handle).unwrap();
-        let req_uuid = proof::get_proof_uuid(proof_req_handle).unwrap();
         thread::sleep(Duration::from_millis(2000));
-        (proof_req_handle, req_uuid)
+        proof_req_handle
     }
 
-    fn create_proof(connection_handle: u32, msg_uid: &str) -> u32 {
+    fn create_proof(connection_handle: u32) -> u32 {
         set_consumer();
+        info!("create_proof >>> getting proof request messages");
         let requests = disclosed_proof::get_proof_request_messages(connection_handle, None).unwrap();
+        info!("create_proof :: get proof request messages returned {}", requests);
         let requests: Value = serde_json::from_str(&requests).unwrap();
-        let mut req = None;
-        for _req in requests.as_array().unwrap() {
-            if _req["msg_ref_id"] == json!(msg_uid) { req = Some(_req); }
-        }
-        let requests = serde_json::to_string(req.unwrap()).unwrap();
+        let requests = serde_json::to_string(&requests.as_array().unwrap()[0]).unwrap();
         disclosed_proof::create_proof(::utils::constants::DEFAULT_PROOF_NAME, &requests).unwrap()
     }
 
-    fn generate_and_send_proof(proof_handle: u32, connection_handle: u32, selected_credentials: Value) {
+    fn generate_and_send_proof(proof_handle: u32, connection_handle: u32, selected_credentials: &str) {
         set_consumer();
-        disclosed_proof::generate_proof(proof_handle, selected_credentials.to_string(), "{}".to_string()).unwrap();
-        println!("sending proof");
+        info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
+        disclosed_proof::generate_proof(proof_handle, selected_credentials.into(), "{}".to_string()).unwrap();
+
+        info!("generate_and_send_proof :: proof generated, sending proof");
         disclosed_proof::send_proof(proof_handle, connection_handle).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, disclosed_proof::get_state(proof_handle).unwrap());
+        info!("generate_and_send_proof :: proof sent");
+
+        assert_eq!(VcxStateType::VcxStateOfferSent as u32, disclosed_proof::get_state(proof_handle).unwrap());
         thread::sleep(Duration::from_millis(5000));
     }
 
-    fn default_selected_credentials(proof_handle: u32) -> Value {
-        println!("retrieving matching credentials");
-        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle).unwrap();
-        let matching_credentials: Value = serde_json::from_str(&retrieved_credentials).unwrap();
-        let (address1, address2, city, state, zip) = attr_names();
-        json!({
-               "attrs":{
-                  address1.to_string():{"credential": matching_credentials["attrs"][address1][0], "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()},
-                  address2.to_string():{"credential": matching_credentials["attrs"][address2][0], "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()},
-                  city.to_string():{"credential": matching_credentials["attrs"][city][0], "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()},
-                  state.to_string():{"credential": matching_credentials["attrs"][state][0], "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()},
-                  zip.to_string():{"credential": matching_credentials["attrs"][zip][0], "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()},
-               },
-               "predicates":{
-               }
-            })
-    }
-
     fn revoke_credential(issuer_handle: u32, rev_reg_id: Option<String>) {
+        set_institution();
         // GET REV REG DELTA BEFORE REVOCATION
         let (_, delta, timestamp) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
         println!("revoking credential");
@@ -255,15 +244,143 @@ mod tests {
         assert_ne!(delta, delta_after_revoke);
     }
 
-    fn _real_proof_demo() {
-        info!(">>> _real_proof_demo");
+    fn _issue_address_credential(faber: u32, alice: u32, institution_did: &str) -> (String, String, Option<String>, u32, u32) {
+        info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
+        let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) =
+            ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
+
+        info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
+        let (address1, address2, city, state, zip) = attr_names();
+        let credential_data = json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
+
+        info!("test_real_proof_with_revocation :: generated credential data: {}", credential_data);
+        let credential_offer = create_and_send_cred_offer(institution_did, cred_def_handle, alice, &credential_data);
+
+        info!("test_real_proof_with_revocation :: AS CONSUMER SEND CREDENTIAL REQUEST");
+        let credential = send_cred_req(faber);
+
+        info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL");
+        send_credential(credential_offer, alice, credential);
+        (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer)
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_basic_revocation() {
+        let _setup = SetupLibraryAgencyV2::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (faber, alice) = ::connection::tests::create_connected_connections();
+        let (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
+
+        let time_before_revocation = time::get_time().sec as u64;
+        info!("test_basic_revocation :: verifier :: Going to revoke credential");
+        revoke_credential(credential_offer, rev_reg_id);
+        thread::sleep(Duration::from_millis(2000));
+        let time_after_revocation = time::get_time().sec as u64;
+
+        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, Some(time_after_revocation));
+        let interval = json!({"from": time_before_revocation - 100, "to": time_after_revocation}).to_string();
+        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+
+        info!("test_basic_revocation :: Going to seng proof request with attributes {}", &requested_attrs_string);
+        let proof_handle_verifier = send_proof_request(alice, &requested_attrs_string, "[]", &interval);
+
+        info!("test_basic_revocation :: Going to create proof");
+        let proof_handle_prover = create_proof(faber);
+        info!("test_basic_revocation :: retrieving matching credentials");
+
+        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
+        info!("test_basic_revocation :: prover :: based on proof, retrieved credentials: {}", &retrieved_credentials);
+
+        let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
+        let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
+        info!("test_basic_revocation :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
+        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str);
+
+        info!("test_basic_revocation :: verifier :: going to verify proof");
+        set_institution();
+        proof::update_state(proof_handle_verifier, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_revoked_credential_might_still_work() {
+        let _setup = SetupLibraryAgencyV2::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (faber, alice) = ::connection::tests::create_connected_connections();
+        let (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
+
+        thread::sleep(Duration::from_millis(1000));
+        let time_before_revocation = time::get_time().sec as u64;
+        thread::sleep(Duration::from_millis(2000));
+        info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
+        revoke_credential(credential_offer, rev_reg_id);
+        thread::sleep(Duration::from_millis(2000));
+
+        let from = time_before_revocation - 100;
+        let to = time_before_revocation;
+        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
+        let interval = json!({"from": from, "to": to}).to_string();
+        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+
+        info!("test_revoked_credential_might_still_work :: Going to seng proof request with attributes {}", &requested_attrs_string);
+        let proof_handle_verifier = send_proof_request(alice, &requested_attrs_string, "[]", &interval);
+
+        info!("test_revoked_credential_might_still_work :: Going to create proof");
+        let proof_handle_prover = create_proof(faber);
+        info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
+
+        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
+        info!("test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}", &retrieved_credentials);
+
+        let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
+        let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
+        info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
+        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str);
+
+        info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
+        set_institution();
+        proof::update_state(proof_handle_verifier, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+    }
+
+    fn retrieved_to_selected_credentials_simple(retrieved_credentials: &str, with_tails: bool) -> Value {
+        info!("test_real_proof >>> retrieved matching credentials {}", retrieved_credentials);
+        let data: Value = serde_json::from_str(retrieved_credentials).unwrap();
+        let mut credentials_mapped: Value = json!({"attrs":{}, "predicates":{}});
+
+        for (key, val) in data["attrs"].as_object().unwrap().iter() {
+            let cred_array = val.as_array().unwrap();
+            if cred_array.len() > 0 {
+                let first_cred = &cred_array[0];
+                credentials_mapped["attrs"][key]["credential"] = first_cred.clone();
+                if with_tails {
+                    credentials_mapped["attrs"][key]["tails_file"] = Value::from(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap());
+                }
+            }
+        }
+        return credentials_mapped;
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    fn test_real_proof() {
+        let _setup = SetupLibraryAgencyV2::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+
+        info!("test_real_proof >>>");
         let number_of_attributes = 10;
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections();
 
-        // AS INSTITUTION SEND CREDENTIAL OFFER
-        info!("creating schema/credential_def and paying fees");
+        info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let mut attrs_list: Value = serde_json::Value::Array(vec![]);
         for i in 1..number_of_attributes {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
@@ -272,18 +389,20 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
-            credential_data[format!("key{}", i)] = json!([format!("value{}",i)]);
+            credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
         }
+        info!("test_real_proof :: sending credential offer");
         let credential_data = credential_data.to_string();
-        let credential_offer = send_cred_offer(&institution_did, cred_def_handle, alice, &credential_data);
+        info!("test_real_proof :: generated credential data: {}", credential_data);
+        let credential_offer = create_and_send_cred_offer(&institution_did, cred_def_handle, alice, &credential_data);
 
-        // AS CONSUMER SEND CREDENTIAL REQUEST
+        info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
         let credential = send_cred_req(faber);
 
-        // AS INSTITUTION SEND CREDENTIAL
+        info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
         send_credential(credential_offer, alice, credential);
 
-        // AS INSTITUTION SEND PROOF REQUEST
+        info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         ::utils::devsetup::set_institution();
 
         let restrictions = json!({ "issuer_did": institution_did, "schema_id": schema_id, "cred_def_id": cred_def_id, });
@@ -291,128 +410,23 @@ mod tests {
         for i in 1..number_of_attributes {
             attrs.as_array_mut().unwrap().push(json!({ "name":format!("key{}", i), "restrictions": [restrictions]}));
         }
-        let (proof_req_handle, req_uuid) = send_proof_request(alice, &attrs.to_string(), "[]", "{}", "");
+        let requested_attrs = attrs.to_string();
+        info!("test_real_proof :: Going to seng proof request with attributes {}", requested_attrs);
+        let proof_req_handle = send_proof_request(alice, &requested_attrs, "[]", "{}");
 
-        let proof_handle = create_proof(faber, &req_uuid);
-        println!("retrieving matching credentials");
+        info!("test_real_proof :: Going to create proof");
+        let proof_handle = create_proof(faber);
+        info!("test_real_proof :: retrieving matching credentials");
+
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle).unwrap();
-        let matching_credentials: Value = serde_json::from_str(&retrieved_credentials).unwrap();
-        let mut credentials: Value = json!({"attrs":{}, "predicates":{}});
+        let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
-        for i in 1..number_of_attributes {
-            credentials["attrs"][format!("key{}", i)] = json!({
-                "credential": matching_credentials["attrs"][format!("key{}",i)][0].clone(),
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string(),
-            });
-        };
-        generate_and_send_proof(proof_handle, faber, credentials);
+        info!("test_real_proof :: generating and sending proof");
+        generate_and_send_proof(proof_handle, faber, &serde_json::to_string(&selected_credentials).unwrap());
 
-        // AS INSTITUTION VALIDATE PROOF
+        info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         set_institution();
         proof::update_state(proof_req_handle, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_req_handle).unwrap(), ProofStateType::ProofValidated as u32);
-        println!("proof validated!");
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
-    fn test_real_proof() {
-        let _setup = SetupLibraryAgencyV1ZeroFees::init();
-
-        _real_proof_demo();
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
-    fn test_real_proof_with_revocation() {
-        let _setup = SetupLibraryAgencyV1ZeroFees::init();
-
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = ::connection::tests::create_connected_connections();
-
-        // CREATE SCHEMA AND CRED DEF
-        println!("creating schema/credential_def and paying fees");
-        let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
-
-        // AS INSTITUTION SEND CREDENTIAL OFFER
-        let (address1, address2, city, state, zip) = attr_names();
-        let credential_data = json!({address1: ["123 Main St"], address2: ["Suite 3"], city: ["Draper"], state: ["UT"], zip: ["84000"]}).to_string();
-        let credential_offer = send_cred_offer(&institution_did, cred_def_handle, alice, &credential_data);
-
-        // AS CONSUMER SEND CREDENTIAL REQUEST
-        let credential = send_cred_req(faber);
-
-        // AS INSTITUTION SEND CREDENTIAL
-        send_credential(credential_offer, alice, credential);
-
-        // AS INSTITUTION SEND PROOF REQUEST
-        ::utils::devsetup::set_institution();
-
-        let time_before_revocation = time::get_time().sec as u64;
-        let mut _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, Some(time_before_revocation));
-        let (proof_req_handle, req_uuid) = send_proof_request(alice, &_requested_attrs.to_string(), "[]", "{}", "");
-
-        //AS Consumer - (Prover) GET PROOF REQ AND ASSOCIATED CREDENTIALS, GENERATE AND SEND PROOF
-        let proof_handle = create_proof(faber, &req_uuid);
-        let _selected_credentials = default_selected_credentials(proof_handle);
-        generate_and_send_proof(proof_handle, faber, _selected_credentials);
-
-        // AS INSTITUTION VALIDATE PROOF
-        set_institution();
-        proof::update_state(proof_req_handle, None).unwrap();
-        assert_eq!(proof::get_proof_state(proof_req_handle).unwrap(), ProofStateType::ProofValidated as u32);
-        println!("proof validated!");
-        let _wallet = ::utils::libindy::payments::get_wallet_token_info().unwrap();
-
-        // AS INSTITUTION REVOKE CRED
-        revoke_credential(credential_offer, rev_reg_id);
-
-        // VERIFIER SEND NEW PROOF REQ, Expected revoked proof
-        let requested_time = time::get_time().sec as u64;
-        let mut _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, Some(requested_time));
-        _requested_attrs[0]["non_revoked"] = json!({"from": requested_time+1});
-        let interval = json!({"from": time::get_time().sec+1}).to_string();
-        let (proof_req_handle2, req_uuid2) = send_proof_request(alice, &_requested_attrs.to_string(), "[]", &interval, "- revoked creds");
-
-        //AS Consumer - (Prover) Generate Proof with revoked credentials
-        let revoked_proof = create_proof(faber, &req_uuid2);
-        let _selected_credentials = default_selected_credentials(revoked_proof);
-        generate_and_send_proof(revoked_proof, faber, _selected_credentials);
-
-        // AS INSTITUTION VALIDATE REVOKED PROOF
-        set_institution();
-        proof::update_state(proof_req_handle2, None).unwrap();
-        assert_eq!(proof::get_proof_state(proof_req_handle2).unwrap(), ProofStateType::ProofInvalid as u32);
-        println!("proof invalid - revoked!");
-
-        // VERIFIER SENDS PROOF_REQ WITH INTERVAL BEFORE REVOCATION
-        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, Some(time_before_revocation));
-        let (proof_req_handle3, req_uuid3) = send_proof_request(alice, &_requested_attrs.to_string(), "[]", "{}", "");
-
-        //AS Consumer - (Prover) Generate Proof with revoked credentials but valid interval
-        let valid_interval_proof = create_proof(faber, &req_uuid3);
-        let _selected_credentials = default_selected_credentials(valid_interval_proof);
-        generate_and_send_proof(valid_interval_proof, faber, _selected_credentials);
-
-        // AS INSTITUTION VALIDATE REVOKED PROOF - VALID
-        set_institution();
-        proof::update_state(proof_req_handle3, None).unwrap();
-        assert_eq!(proof::get_proof_state(proof_req_handle3).unwrap(), ProofStateType::ProofValidated as u32);
-        println!("proof valid for specified interval!");
-    }
-
-    #[cfg(feature = "pool_legacy_agency_tests")]
-    // this test is using legacy msgtype did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_REQUEST
-    // which is not supported by vcxnode-agency
-    // todo: update this test
-    #[test]
-    fn test_real_proof_for_protocol_type_v2() {
-        let _setup = SetupLibraryAgencyV2::init();
-
-        _real_proof_demo();
     }
 }

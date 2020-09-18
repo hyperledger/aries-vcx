@@ -265,7 +265,7 @@ impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
-        setup_agency_env("3.0", false);
+        setup_agency_env("4.0", false);
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
     }
