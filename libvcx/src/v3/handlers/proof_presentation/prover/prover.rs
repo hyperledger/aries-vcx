@@ -68,17 +68,21 @@ impl Prover {
         self.step(ProverMessages::SendPresentation(connection_handle))
     }
 
-    pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
-        trace!("Prover::update_state >>> message: {:?}", message);
+    pub fn update_state(&mut self, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<()> {
+        trace!("Prover::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
 
-        if !self.prover_sm.has_transitions() { return Ok(()); }
+        if !self.prover_sm.has_transitions() { 
+            trace!("Prover::update_state >> found no available transition");
+            return Ok(());
+        }
 
         if let Some(message_) = message {
             return self.update_state_with_message(message_);
         }
 
-        let connection_handle = self.prover_sm.connection_handle()?;
+        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
         let messages = connection::get_messages(connection_handle)?;
+        trace!("Prover::update_state >>> found messages: {:?}", messages);
 
         if let Some((uid, message)) = self.prover_sm.find_message_to_handle(messages) {
             self.handle_message(message.into())?;

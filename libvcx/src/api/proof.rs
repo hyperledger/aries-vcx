@@ -207,15 +207,56 @@ pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    spawn(move || {
-        match proof::update_state(proof_handle, None) {
+    spawn(move|| {
+        match proof::update_state(proof_handle, None, None) {
             Ok(x) => {
                 trace!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                warn!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
+                error!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
+                      command_handle, x, proof_handle, 0, source_id);
+                cb(command_handle, x.into(), 0);
+            }
+        }
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
+                                     proof_handle: u32,
+                                     connection_handle: u32,
+                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_v2_proof_update_state >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_v2_proof_update_state(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
+          command_handle, proof_handle, connection_handle, source_id);
+
+    if !proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidProofHandle).into()
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    }
+
+    spawn(move|| {
+        match proof::update_state(proof_handle, None, Some(connection_handle)) {
+            Ok(x) => {
+                trace!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
+                      command_handle, error::SUCCESS.message, proof_handle, x, source_id);
+                cb(command_handle, error::SUCCESS.code_num, x);
+            },
+            Err(x) => {
+                error!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
@@ -263,8 +304,8 @@ pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    spawn(move || {
-        match proof::update_state(proof_handle, Some(message)) {
+    spawn(move|| {
+        match proof::update_state(proof_handle, Some(message), None) {
             Ok(x) => {
                 trace!("vcx_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);
@@ -622,7 +663,7 @@ fn proof_to_cb(command_handle: CommandHandle,
     spawn(move || {
         let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
         //update the state to see if proof has come, ignore any errors
-        let _ = proof::update_state(proof_handle, None);
+        let _ = proof::update_state(proof_handle, None, None);
 
         match proof::get_proof(proof_handle) {
             Ok(x) => {
@@ -665,10 +706,13 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use api::{ProofStateType, return_types_u32, VcxStateType};
     use proof;
+    use connection::tests::build_test_connection;
+    use api::{ProofStateType, return_types_u32, VcxStateType};
+    use utils::httpclient::AgencyMockDecrypted;
     use utils::constants::*;
     use utils::devsetup::*;
+
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -715,7 +759,7 @@ mod tests {
 
         let dp = ::disclosed_proof::create_proof("test", &request).unwrap();
         let p = ::disclosed_proof::generate_proof_msg(dp).unwrap();
-        ::proof::update_state(ph, Some(p)).unwrap();
+        ::proof::update_state(ph, Some(p), None).unwrap();
         assert_eq!(::proof::get_state(ph).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 

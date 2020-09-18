@@ -49,7 +49,7 @@ impl Verifier {
         self.verifier_sm.presentation_status()
     }
 
-    pub fn update_state(&mut self, message: Option<&str>) -> VcxResult<()> {
+    pub fn update_state(&mut self, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<()> {
         trace!("Verifier::update_state >>> message: {:?}", message);
 
         if !self.verifier_sm.has_transitions() { return Ok(()); }
@@ -58,7 +58,7 @@ impl Verifier {
             return self.update_state_with_message(message_);
         }
 
-        let connection_handle = self.verifier_sm.connection_handle()?;
+        let connection_handle = connection_handle.unwrap_or(self.verifier_sm.connection_handle()?);
         let messages = connection::get_messages(connection_handle)?;
 
         if let Some((uid, message)) = self.verifier_sm.find_message_to_handle(messages) {

@@ -375,6 +375,7 @@ impl ProverSM {
     }
 
     pub fn has_transitions(&self) -> bool {
+        trace!("Prover::states::has_transitions >> state: {:?}", self.state);
         match self.state {
             ProverState::Initiated(_) => false,
             ProverState::PresentationPrepared(_) => true,

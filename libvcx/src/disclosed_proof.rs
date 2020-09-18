@@ -659,7 +659,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |obj| {
         match obj {
             DisclosedProofs::Pending(obj) => {
@@ -671,7 +671,7 @@ pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
                 Ok(obj.get_state())
             }
             DisclosedProofs::V3(ref mut obj) => {
-                obj.update_state(message.as_ref().map(String::as_str))?;
+                obj.update_state(message.as_ref().map(String::as_str), connection_handle)?;
                 Ok(obj.state())
             }
         }
@@ -890,7 +890,10 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
 
 //TODO one function with credential
 pub fn get_proof_request_messages(connection_handle: u32, match_name: Option<&str>) -> VcxResult<String> {
+    trace!("get_proof_request_messages >>> connection_handle: {}, match_name: {:?}", connection_handle, match_name);
+
     if connection::is_v3_connection(connection_handle)? {
+
         let presentation_requests = Prover::get_presentation_request_messages(connection_handle, match_name)?;
 
         // strict aries protocol is set. return aries formatted Proof Request.
@@ -908,8 +911,6 @@ pub fn get_proof_request_messages(connection_handle: u32, match_name: Option<&st
                 VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize ProofRequestMessage: {:?}", err))
             });
     }
-
-    trace!("get_proof_request_messages >>> connection_handle: {}, match_name: {:?}", connection_handle, match_name);
 
     let agent_info = get_agent_info()?.pw_info(connection_handle)?;
 
@@ -984,11 +985,15 @@ mod tests {
     use time;
 
     use utils::{
-        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, CRED_DEF_ID, CRED_REV_ID,
-                    LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
+        constants::{ADDRESS_CRED_ID, LICENCE_CRED_ID, ADDRESS_SCHEMA_ID,
+                    ADDRESS_CRED_DEF_ID, CRED_DEF_ID, SCHEMA_ID, ADDRESS_CRED_REV_ID,
+                    ADDRESS_REV_REG_ID, REV_REG_ID, CRED_REV_ID, TEST_TAILS_FILE, REV_STATE_JSON,
+                    GET_MESSAGES_DECRYPTED_RESPONSE, ARIES_PRESENTATION_REQUEST, ARIES_PROOF_PRESENTATION_ACK, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS},
         get_temp_dir_path,
     };
+    use utils::httpclient::AgencyMockDecrypted;
+    #[cfg(feature = "pool_tests")]
+    use time;
     use utils::devsetup::*;
 
     use super::*;
@@ -1048,6 +1053,38 @@ mod tests {
         send_proof(handle, connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_proof_update_state_v2() {
+        let _setup = SetupStrictAriesMocks::init();
+
+        let connection_handle = connection::tests::build_test_connection();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PRESENTATION_REQUEST);
+
+        let request = _get_proof_request_messages(connection_handle);
+
+        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
+
+        generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string());
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
+
+        send_proof(handle, connection_handle).unwrap();
+        assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle).unwrap());
+
+        ::connection::release(connection_handle);
+        let connection_handle = connection::tests::build_test_connection();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_PRESENTATION_ACK);
+
+        update_state(handle, None, Some(connection_handle));
+        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
+    }
+
 
     #[test]
     #[cfg(feature = "to_restore")]
