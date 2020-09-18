@@ -97,12 +97,12 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
 }
 
 #[no_mangle]
-pub extern fn vcx_init_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_init_pool >>>");
+pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("vcx_open_pool >>>");
     let path = match settings::get_config_value(settings::CONFIG_GENESIS_PATH) {
         Ok(result) => result,
         Err(_) => {
-            error!("vcx_init_pool :: failed to init pool because CONFIG_GENESIS_PATH was not set");
+            error!("vcx_open_pool :: failed to init pool because CONFIG_GENESIS_PATH was not set");
             return error::INVALID_CONFIGURATION.code_num;
         }
     };
@@ -112,11 +112,11 @@ pub extern fn vcx_init_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     spawn(move || {
         match init_pool_v2(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
             Ok(()) => {
-                info!("vcx_init_pool :: Vcx Pool Init Successful");
+                info!("vcx_open_pool :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             },
             Err(e) => {
-                error!("vcx_init_pool :: Vcx Pool Init Error {}.", e);
+                error!("vcx_open_pool :: Vcx Pool Init Error {}.", e);
                 cb(command_handle, e.into());
                 return Ok(());
             }
@@ -127,16 +127,16 @@ pub extern fn vcx_init_pool(command_handle: CommandHandle, cb: extern fn(xcomman
 }
 
 #[no_mangle]
-pub extern fn vcx_init_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_init_wallet >>>");
+pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("vcx_open_wallet >>>");
     if wallet::get_wallet_handle() != INVALID_WALLET_HANDLE {
-        error!("vcx_init_wallet :: Wallet was already initialized.");
+        error!("vcx_open_wallet :: Wallet was already initialized.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Wallet was already initialized").into();
     }
     let wallet_name = match settings::get_config_value(settings::CONFIG_WALLET_NAME) {
         Ok(x) => x,
         Err(_) => {
-            error!("vcx_init_wallet :: Value of setting {} was not set.", settings::CONFIG_WALLET_NAME);
+            error!("vcx_open_wallet :: Value of setting {} was not set.", settings::CONFIG_WALLET_NAME);
             return error::INVALID_CONFIGURATION.code_num
         }
     };
@@ -149,11 +149,11 @@ pub extern fn vcx_init_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
         match wallet::open_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str),
                                   storage_config.as_ref().map(String::as_str), storage_creds.as_ref().map(String::as_str)) {
             Ok(_) => {
-                info!("vcx_init_wallet :: Init Vcx Wallet Successful");
+                info!("vcx_open_wallet :: Init Vcx Wallet Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             },
             Err(e) => {
-                error!("vcx_init_wallet :: Init Vcx Wallet Error {}.", e);
+                error!("vcx_open_wallet :: Init Vcx Wallet Error {}.", e);
                 cb(command_handle, e.into());
                 return Ok(());
             }
@@ -220,7 +220,7 @@ pub extern fn vcx_init(command_handle: CommandHandle,
 }
 
 // Todo: Either deprecate function using this, or refactor this so it would resue code int
-// vcx_init_wallet and vcx_init_pool
+// vcx_open_wallet and vcx_open_pool
 fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("_finish_init: Going to finish VCX Init.");
     ::utils::threadpool::init();
@@ -308,7 +308,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_init_minimal(config: *const c_char) -> u32 {
-    // todo: Consider deprecating this, we now have more fine-grained init functions  - vcx_init_core, vcx_init_wallet, vcx_init_pool
+    // todo: Consider deprecating this, we now have more fine-grained init functions  - vcx_init_core, vcx_open_wallet, vcx_open_pool
     check_useful_c_str!(config,VcxErrorKind::InvalidOption);
 
     trace!("vcx_init_minimal(config: {:?})", config);
@@ -1234,7 +1234,7 @@ mod tests {
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, &genesis_path);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
-        let rc = vcx_init_pool(cb.command_handle, cb.get_callback());
+        let rc = vcx_open_pool(cb.command_handle, cb.get_callback());
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_short());
 
@@ -1248,7 +1248,7 @@ mod tests {
         let _setup = SetupWallet::init();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
-        let rc = vcx_init_wallet(cb.command_handle, cb.get_callback());
+        let rc = vcx_open_wallet(cb.command_handle, cb.get_callback());
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_custom(3));
 
@@ -1292,16 +1292,16 @@ mod tests {
         let cstring_config = CString::new(config.to_string()).unwrap().into_raw();
         assert_eq!(vcx_init_core(cstring_config), error::SUCCESS.code_num);
         {
-            info!("test_init_composed :: going to vcx_init_pool");
+            info!("test_init_composed :: going to vcx_open_pool");
             let cb = return_types_u32::Return_U32::new().unwrap();
-            let rc = vcx_init_pool(cb.command_handle, cb.get_callback());
+            let rc = vcx_open_pool(cb.command_handle, cb.get_callback());
             assert_eq!(rc, error::SUCCESS.code_num);
             assert!(cb.receive(TimeoutUtils::some_short()).is_ok());
         }
         {
-            info!("test_init_composed :: going to vcx_init_wallet");
+            info!("test_init_composed :: going to vcx_open_wallet");
             let cb = return_types_u32::Return_U32::new().unwrap();
-            let rc = vcx_init_wallet(cb.command_handle, cb.get_callback());
+            let rc = vcx_open_wallet(cb.command_handle, cb.get_callback());
             assert_eq!(rc, error::SUCCESS.code_num);
             assert!(cb.receive(TimeoutUtils::some_short()).is_ok());
         }
