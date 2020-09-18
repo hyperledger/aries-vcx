@@ -22,11 +22,16 @@ public abstract class LibVcx {
         public int vcx_init(int command_handle, String config_path, Callback cb);
         public int vcx_init_minimal(String config);
 
+        public int vcx_init_core(String config);
+        public int vcx_open_pool(int command_handle, Callback cb);
+        public int vcx_open_wallet(int command_handle, Callback cb);
+        public int vcx_update_webhook_url(int command_handle, String notification_webhook_url, Callback cb);
+
         public String vcx_error_c_message(int error_code);
         public String vcx_version();
         public int vcx_shutdown(boolean delete);
         public int vcx_reset();
-        public int vcx_update_webhook_url(int command_handle, String notification_webhook_url, Callback cb);
+
 
     /**
      * Helper API for testing purposes.
