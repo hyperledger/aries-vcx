@@ -885,6 +885,9 @@ pub mod tests {
 
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
+        ::connection::release(connection_handle);
+        let connection_handle = build_test_connection();
+
         proof.update_state(Some(PROOF_RESPONSE_DECRYPTED), Some(connection_handle)).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);

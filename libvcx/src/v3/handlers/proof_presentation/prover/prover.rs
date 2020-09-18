@@ -76,11 +76,13 @@ impl Prover {
             return Ok(());
         }
 
+        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
+        self.prover_sm.set_connection_handle(connection_handle)?;
+
         if let Some(message_) = message {
             return self.update_state_with_message(message_);
         }
 
-        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
         let messages = connection::get_messages(connection_handle)?;
         trace!("Prover::update_state >>> found messages: {:?}", messages);
 

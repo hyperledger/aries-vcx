@@ -402,6 +402,22 @@ impl ProverSM {
         }
     }
 
+    pub fn set_connection_handle(&mut self, connection_handle: u32) -> VcxResult<()> {
+        match self.state {
+            ProverState::Initiated(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot set connection handle in this state")),
+            ProverState::PresentationPrepared(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot set connection handle in this state")),
+            ProverState::PresentationPreparationFailed(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot set connection handle in this state")),
+            ProverState::PresentationSent(ref mut state) => {
+                state.connection_handle = connection_handle;
+            },
+            ProverState::Finished(ref mut state) => {
+                state.connection_handle = connection_handle;
+            }
+        };
+        Ok(())
+    }
+
+
     pub fn presentation_request(&self) -> &PresentationRequest {
         match self.state {
             ProverState::Initiated(ref state) => &state.presentation_request,
