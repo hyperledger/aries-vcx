@@ -1,9 +1,23 @@
-const { provisionAgentInAgency, initRustapi } = require('./vcx-workflows')
-const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
-const { createStorageService } = require('./storage-service')
-const { pollFunction, waitUntilAgencyIsReady, getRandomInt } = require('./common')
+const {provisionAgentInAgency, initRustapi} = require('./vcx-workflows')
+const {
+  Schema,
+  CredentialDef,
+  Connection,
+  StateType,
+  IssuerCredential,
+  Credential,
+  initVcxWithConfig,
+  initVcxCore,
+  openVcxWallet,
+  openVcxPool,
+  vcxUpdateWebhookUrl,
+  getLedgerAuthorAgreement,
+  setActiveTxnAuthorAgreementMeta
+} = require('@absaoss/node-vcx-wrapper')
+const {createStorageService} = require('./storage-service')
+const {pollFunction, waitUntilAgencyIsReady, getRandomInt} = require('./common')
 
-async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger, rustLogLevel }) {
+async function createVcxAgent ({agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger, rustLogLevel}) {
   await initRustapi(rustLogLevel)
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
@@ -23,10 +37,33 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     connections[connectionName] = connection
   }
 
-  async function initVcx (name = agentName) {
-    logger.info(`Initializing VCX of ${name}`)
+  /**
+   * Initializes setting in memory, open pool, open wallet, set webhook url if present in agent provison
+   * @param name
+   * @returns {Promise<void>}
+   */
+  async function initVcxOld (name = agentName) {
+    logger.info(`Initializing VCX agent ${name}`)
     logger.debug(`Using following agent provision to initialize VCX ${JSON.stringify(agentProvision, null, 2)}`)
     await initVcxWithConfig(JSON.stringify(agentProvision))
+  }
+
+  /**
+   * Performs the same as initVcxOld, except for the fact it ignores webhook_url in agent provision. You have to
+   * update webhook_url by yourself if needed.
+   * @param name
+   * @returns {Promise<void>}
+   */
+  async function initVcx (name = agentName) {
+    logger.info(`Initializing VCX agent ${name}`)
+    logger.debug(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
+    await initVcxCore(JSON.stringify(agentProvision))
+    logger.debug(`Opening wallet and pool`)
+    let promises = []
+    promises.push(openVcxPool())
+    promises.push(openVcxWallet())
+    await Promise.all(promises)
+    logger.debug(`LibVCX fully initialized`)
   }
 
   async function acceptTaa () {
@@ -91,7 +128,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
   async function createConnection (connectionName) {
     logger.info(`InviterConnectionSM creating connection ${connectionName}`)
-    const connection = await Connection.create({ id: connectionName })
+    const connection = await Connection.create({id: connectionName})
     logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect('{}')
     await connection.updateState()
@@ -106,11 +143,11 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
   async function createInvite (connectionName) {
     const connection = await createConnection(connectionName)
     const invite = await connection.inviteDetails()
-    return { invite, connection }
+    return {invite, connection}
   }
 
   async function inviterConnectionCreateAndAccept (connectionName, cbInvitation, skipProgress) {
-    const { invite, connection } = await createInvite(connectionName)
+    const {invite, connection} = await createInvite(connectionName)
     logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(await connection.serialize())}`)
     if (cbInvitation) {
       cbInvitation(invite)
@@ -121,14 +158,14 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     }
     await storeConnection(connection, connectionName)
     logger.info(`InviterConnectionSM has established connection ${connectionName}`)
-    return { invite, connection }
+    return {invite, connection}
   }
 
   async function inviteeConnectionCreateFromInvite (id, invite) {
     logger.info(`InviteeConnectionSM creating connection ${id} from connection invitation.`)
-    const connection = await Connection.createWithInvite({ id, invite })
+    const connection = await Connection.createWithInvite({id, invite})
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(await connection.serialize())}`)
-    await connection.connect({ data: '{}' })
+    await connection.connect({data: '{}'})
     await connection.updateState()
     return connection
   }
@@ -151,11 +188,12 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       await connection.updateState()
       const connectionState = await connection.getState()
       if (connectionState !== StateType.Accepted) {
-        return { result: undefined, isFinished: false }
+        return {result: undefined, isFinished: false}
       } else {
-        return { result: null, isFinished: true }
+        return {result: null, isFinished: true}
       }
     }
+
     const [error] = await pollFunction(progressToAcceptedState, 'Progress connection', logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't progress connection to Accepted state. ${error}`)
@@ -229,18 +267,19 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       await issuerCred.revokeCredential()
     }
 
-    return { serCred: serCredential, serConn: await connectionToReceiver.serialize() }
+    return {serCred: serCredential, serConn: await connectionToReceiver.serialize()}
   }
 
   async function _getOffers (connection, attemptsThreshold, timeout) {
     async function findSomeCredOffer () {
       const offers = await Credential.getOffers(connection)
       if (offers.length === 0) {
-        return { result: undefined, isFinished: false }
+        return {result: undefined, isFinished: false}
       } else {
-        return { result: offers, isFinished: true }
+        return {result: offers, isFinished: true}
       }
     }
+
     const [error, offers] = await pollFunction(findSomeCredOffer, 'Get credential offer', logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't get credential offers. ${error}`)
@@ -253,11 +292,12 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       await credential.updateState()
       const credentialState = await credential.getState()
       if (credentialState !== credentialStateTarget) {
-        return { result: undefined, isFinished: false }
+        return {result: undefined, isFinished: false}
       } else {
-        return { result: null, isFinished: true }
+        return {result: null, isFinished: true}
       }
     }
+
     const [error] = await pollFunction(progressToAcceptedState, `Progress CredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't progress credential to Accepted state. ${error}`)
@@ -269,11 +309,12 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       await issuerCredential.updateState()
       const credentialState = await issuerCredential.getState()
       if (credentialState !== credentialStateTarget) {
-        return { result: undefined, isFinished: false }
+        return {result: undefined, isFinished: false}
       } else {
-        return { result: null, isFinished: true }
+        return {result: null, isFinished: true}
       }
     }
+
     const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
     if (error) {
       throw Error(`Couldn't get credential offers. ${error}`)
@@ -293,11 +334,11 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     const pickedOffer = JSON.stringify(offers[0])
     logger.debug(`Picked credential offer = ${pickedOffer}`)
 
-    const credential = await Credential.create({ sourceId: 'credential', offer: pickedOffer })
+    const credential = await Credential.create({sourceId: 'credential', offer: pickedOffer})
     logger.debug(`CredentialSM created from credential offer:\n${JSON.stringify(await credential.serialize())}`)
 
     logger.info('After receiving credential offer, send credential request')
-    await credential.sendRequest({ connection, payment: 0 })
+    await credential.sendRequest({connection, payment: 0})
     logger.debug(`CredentialSM after credential request was sent:\n${JSON.stringify(await credential.serialize())}`)
 
     if (!skipProgress) {
@@ -326,7 +367,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     getCredentialOffers,
     getInstitutionDid,
     createConnection,
-    initVcx,
+    initVcx: initVcxOld,
     createInvite,
     inviteeConnectionCreateFromInvite,
     storeConnection
