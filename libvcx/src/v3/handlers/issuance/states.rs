@@ -1,3 +1,5 @@
+use error::prelude::*;
+
 use v3::messages::a2a::MessageId;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential::Credential;
@@ -29,6 +31,17 @@ impl IssuerState {
             IssuerState::CredentialSent(state) => state.connection_handle,
             IssuerState::Finished(_) => 0
         }
+    }
+
+    pub fn set_connection_handle(&mut self, connection_handle: u32) -> VcxResult<()> {
+        match self {
+            IssuerState::Initial(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Connection handle isn't set")),
+            IssuerState::OfferSent(state) => { state.connection_handle = connection_handle; },
+            IssuerState::RequestReceived(state) => { state.connection_handle = connection_handle; },
+            IssuerState::CredentialSent(state) => { state.connection_handle = connection_handle; },
+            IssuerState::Finished(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Connection handle isn't set"))
+        };
+        Ok(())
     }
 
     pub fn thread_id(&self) -> String {
@@ -249,6 +262,17 @@ impl HolderState {
             HolderState::OfferReceived(_) => 0,
             HolderState::RequestSent(state) => state.connection_handle,
             HolderState::Finished(_) => 0
+        }
+    }
+
+    pub fn set_connection_handle(&mut self, connection_handle: u32) -> VcxResult<()> {
+        match self {
+            HolderState::OfferReceived(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot to set connection handle in this state")),
+            HolderState::RequestSent(ref mut state) => {
+                state.connection_handle = connection_handle;
+                Ok(())
+            }
+            HolderState::Finished(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot to set connection handle in this state"))
         }
     }
 }
