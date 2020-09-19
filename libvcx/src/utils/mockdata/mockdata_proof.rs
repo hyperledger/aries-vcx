@@ -37,3 +37,33 @@ pub const ARIES_PROOF_PRESENTATION: &str = r#"
     }
 }
 "#;
+
+pub static ARIES_PRESENTATION_REQUEST: &str = r#"
+{
+  "@id": "c0431961-f755-4c3e-9bf6-0216019e560c",
+  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "comment": "faber-2110edd8-98f3-4164-9aa8-9f6e7a1a0658 wants you to share proofForAlice",
+  "request_presentations~attach": [
+    {
+      "@id": "libindy-request-presentation-0",
+      "data": {
+        "base64": "eyJuYW1lIjoicHJvb2ZGb3JBbGljZSIsIm5vbl9yZXZva2VkIjp7ImZyb20iOm51bGwsInRvIjoxNjAwMzU2ODk1MTE1fSwibm9uY2UiOiI4OTMxMDc4OTczMTA3MzY0NDEyNDk5NzUiLCJyZXF1ZXN0ZWRfYXR0cmlidXRlcyI6eyJhdHRyaWJ1dGVfMCI6eyJuYW1lcyI6WyJuYW1lIiwibGFzdF9uYW1lIiwic2V4Il0sInJlc3RyaWN0aW9ucyI6eyIkb3IiOlt7Imlzc3Vlcl9kaWQiOiJWNFNHUlU4Nlo1OGQ2VFY3UEJVZTZmIn1dfX0sImF0dHJpYnV0ZV8xIjp7Im5hbWUiOiJkYXRlIiwicmVzdHJpY3Rpb25zIjp7Imlzc3Vlcl9kaWQiOiJWNFNHUlU4Nlo1OGQ2VFY3UEJVZTZmIn19LCJhdHRyaWJ1dGVfMiI6eyJuYW1lIjoiZGVncmVlIiwicmVzdHJpY3Rpb25zIjp7ImF0dHI6OmRlZ3JlZTo6dmFsdWUiOiJtYXRocyJ9fSwiYXR0cmlidXRlXzMiOnsibmFtZSI6Im5pY2tuYW1lIn19LCJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6eyJwcmVkaWNhdGVfMCI6eyJuYW1lIjoiYWdlIiwicF90eXBlIjoiPj0iLCJwX3ZhbHVlIjoyMCwicmVzdHJpY3Rpb25zIjp7IiRvciI6W3siaXNzdWVyX2RpZCI6IlY0U0dSVTg2WjU4ZDZUVjdQQlVlNmYifV19fX0sInZlciI6IjEuMCIsInZlcnNpb24iOiIxLjAifQ=="
+      },
+      "mime-type": "application/json"
+    }
+  ]
+}
+"#;
+
+pub static ARIES_PROOF_PRESENTATION_ACK: &str = r#"
+{
+  "@id": "c4c2685d-e0b4-49f4-8a3e-7fe4bb3c0c8f",
+  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/ack",
+  "status": "OK",
+  "~thread": {
+    "received_orders": {},
+    "sender_order": 0,
+    "thid": "c0431961-f755-4c3e-9bf6-0216019e560c"
+  }
+}
+"#;

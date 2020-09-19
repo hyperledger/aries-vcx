@@ -988,12 +988,11 @@ mod tests {
         constants::{ADDRESS_CRED_ID, LICENCE_CRED_ID, ADDRESS_SCHEMA_ID,
                     ADDRESS_CRED_DEF_ID, CRED_DEF_ID, SCHEMA_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, REV_REG_ID, CRED_REV_ID, TEST_TAILS_FILE, REV_STATE_JSON,
-                    GET_MESSAGES_DECRYPTED_RESPONSE, ARIES_PRESENTATION_REQUEST, ARIES_PROOF_PRESENTATION_ACK, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS},
+                    GET_MESSAGES_DECRYPTED_RESPONSE, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS},
         get_temp_dir_path,
     };
+    use utils::mockdata::mockdata_proof;
     use utils::httpclient::AgencyMockDecrypted;
-    #[cfg(feature = "pool_tests")]
-    use time;
     use utils::devsetup::*;
 
     use super::*;
@@ -1062,7 +1061,7 @@ mod tests {
         let connection_handle = connection::tests::build_test_connection();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PRESENTATION_REQUEST);
+        AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
 
         let request = _get_proof_request_messages(connection_handle);
 
@@ -1079,7 +1078,7 @@ mod tests {
         let connection_handle = connection::tests::build_test_connection();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_PRESENTATION_ACK);
+        AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
 
         update_state(handle, None, Some(connection_handle));
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());

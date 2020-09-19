@@ -667,9 +667,10 @@ pub mod tests {
     use connection::tests::build_test_connection;
     use messages::proofs::proof_request;
     use utils::devsetup::*;
+    use utils::mockdata::mockdata_proof;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::libindy::pool;
-    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use v3::handlers::connection as connection_v3;
     use v3::handlers::proof_presentation::verifier::verifier::Verifier;
     use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
@@ -888,7 +889,7 @@ pub mod tests {
         ::connection::release(connection_handle);
         let connection_handle = build_test_connection();
 
-        proof.update_state(Some(PROOF_RESPONSE_DECRYPTED), Some(connection_handle)).unwrap();
+        proof.update_state(Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }

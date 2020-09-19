@@ -34,7 +34,7 @@ use utils::libindy::anoncreds::{
     libindy_prover_store_credential,
 };
 use utils::libindy::payments::{pay_a_payee, PaymentTxn};
-use utils::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use v3::{
     handlers::issuance::Holder,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
@@ -909,7 +909,7 @@ pub mod tests {
     use api::VcxStateType;
     use utils::devsetup::*;
     use utils::libindy::payments::{build_test_address, get_wallet_token_info};
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
 
     use super::*;
 
