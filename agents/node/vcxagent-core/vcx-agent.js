@@ -52,7 +52,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
   /**
    * Performs the same as initVcxOld, except for the fact it ignores webhook_url in agent provision. You have to
-   * update webhook_url by yourself if needed.
+   * update webhook_url by calling function vcxUpdateWebhookUrl.
    * @param name
    * @returns {Promise<void>}
    */
@@ -60,12 +60,12 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     logger.info(`Initializing VCX agent ${name}`)
     logger.debug(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
     await initVcxCore(JSON.stringify(agentProvision))
-    logger.debug(`Opening wallet and pool`)
-    let promises = []
+    logger.debug('Opening wallet and pool')
+    const promises = []
     promises.push(openVcxPool())
     promises.push(openVcxWallet())
     await Promise.all(promises)
-    logger.debug(`LibVCX fully initialized`)
+    logger.debug('LibVCX fully initialized')
   }
 
   async function acceptTaa () {
@@ -73,6 +73,11 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     const taaJson = JSON.parse(taa)
     const utime = Math.floor(new Date() / 1000)
     await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
+  }
+
+  async function updateWebhookUrl (webhookUrl) {
+    logger.info(`Updating webhook url to ${webhookUrl}`)
+    await vcxUpdateWebhookUrl({ webhookUrl })
   }
 
   async function createSchema (_schemaData) {
@@ -442,6 +447,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     createInvite,
     inviteeConnectionCreateFromInvite,
     storeConnection,
+    updateWebhookUrl,
     sendMessage,
     getMessages,
     verifierCreateProof,
