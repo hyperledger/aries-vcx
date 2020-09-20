@@ -83,36 +83,12 @@ pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32>
     Ok(handle as u32)
 }
 
-pub fn init_pool() -> VcxResult<()> {
-    trace!("init_pool >>>");
-
-    if settings::indy_mocks_enabled() { return Ok(()); }
-
-    let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
-        .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-
-    let path: String = settings::get_config_value(settings::CONFIG_GENESIS_PATH)?;
-
-    trace!("opening pool {} with genesis_path: {}", pool_name, path);
-
-    create_pool_ledger_config(&pool_name, &path)
-        .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
-
-    debug!("Pool Config Created Successfully");
-    let pool_config: Option<String> = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
-
-    open_pool_ledger(&pool_name, pool_config.as_ref().map(String::as_str))
-        .map_err(|err| err.extend("Can not open Pool Ledger"))?;
-
-    Ok(())
-}
-
-pub fn init_pool_v2(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
+pub fn init_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
     info!("init_pool_v2 >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    trace!("init_pool_v2 ::: opening pool {} with genesis_path: {}", pool_name, path);
+    trace!("init_pool_v2 ::: Opening pool {} with genesis_path: {}", pool_name, path);
 
     create_pool_ledger_config(&pool_name, &path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
@@ -163,7 +139,6 @@ pub mod tests {
     };
     #[cfg(feature = "pool_tests")]
     use utils::devsetup::SetupLibraryWalletPoolZeroFees;
-    use std::fs::File;
 
     use super::*;
 

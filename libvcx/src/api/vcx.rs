@@ -8,7 +8,7 @@ use settings;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::libindy::{ledger, pool, wallet};
-use utils::libindy::pool::{init_pool, init_pool_v2};
+use utils::libindy::pool::{init_pool};
 use utils::threadpool::spawn;
 use utils::version_constants;
 
@@ -110,7 +110,7 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
 
     spawn(move || {
-        match init_pool_v2(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
+        match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
             Ok(()) => {
                 info!("vcx_open_pool :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
@@ -244,13 +244,22 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
     let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
-
-    info!("_finish_init: absafork libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
+    let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
+        .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+    let path = match settings::get_config_value(settings::CONFIG_GENESIS_PATH) {
+        Ok(path) => path,
+        Err(_) => {
+            error!("Config {} was not set", settings::CONFIG_GENESIS_PATH);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+    let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
 
     spawn(move || {
         info!("_finish_init: initializing pool");
         if settings::get_config_value(settings::CONFIG_GENESIS_PATH).is_ok() {
-            match init_pool() {
+
+            match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
                 Ok(()) => (),
                 Err(e) => {
                     error!("Init Pool Error {}.", e);
