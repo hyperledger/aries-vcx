@@ -134,3 +134,73 @@ impl Verifier {
         Ok(())
     }
 }
+
+#[cfg(test)]
+pub mod tests {
+    use api::VcxStateType;
+    use connection::tests::build_test_connection_inviter_requested;
+    use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
+    use utils::devsetup::SetupAriesMocks;
+    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
+
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_proof_validation_with_predicate() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = build_test_connection_inviter_requested();
+
+        let mut proof = Verifier::create("1".to_string(),
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
+
+        proof.send_presentation_request(connection_handle).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        proof.update_state_with_message(ARIES_PROOF_PRESENTATION).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_send_presentation_request() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = build_test_connection_inviter_requested();
+
+        let mut proof = Verifier::create("1".to_string(),
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
+
+        proof.send_presentation_request(connection_handle).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_update_state_with_reject_message() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = build_test_connection_inviter_requested();
+
+        let mut proof = Verifier::create("1".to_string(),
+                                         REQUESTED_ATTRS.to_owned(),
+                                         REQUESTED_PREDICATES.to_owned(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
+
+        proof.send_presentation_request(connection_handle);
+
+        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2)).unwrap();
+        assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
+    }
+}

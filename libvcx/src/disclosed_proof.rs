@@ -29,9 +29,9 @@ use messages::proofs::{
 use object_cache::ObjectCache;
 use settings;
 use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
-use utils::constants::{CREDS_FROM_PROOF_REQ, DEFAULT_GENERATED_PROOF, DEFAULT_REJECTED_PROOF, NEW_PROOF_REQUEST_RESPONSE};
+use utils::constants::{CREDS_FROM_PROOF_REQ, DEFAULT_GENERATED_PROOF, DEFAULT_REJECTED_PROOF, NEW_PROOF_REQUEST_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
 use utils::error;
-use utils::httpclient::AgencyMock;
+use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
@@ -39,6 +39,8 @@ use v3::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
+use utils::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+use settings::indy_mocks_enabled;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
@@ -617,6 +619,10 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
         let proof = Prover::create(source_id, presentation_request)?;
         return HANDLE_MAP.add(DisclosedProofs::V3(proof));
     }
+    if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"
+    {
+        panic!("Trying to use legacy disclosed proof.");
+    }
 
     let proof =
         match create_proof_v3(source_id, &proof_req)? {
@@ -859,6 +865,11 @@ pub fn is_valid_handle(handle: u32) -> bool {
 //TODO one function with credential
 fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
     if connection::is_v3_connection(connection_handle)? {
+        if indy_mocks_enabled() {
+            AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+            AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
+        }
+
         let presentation_request = Prover::get_presentation_request(connection_handle, msg_id)?;
         return serde_json::to_string_pretty(&presentation_request)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)));
@@ -1024,8 +1035,9 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_proof() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        assert!(create_proof("1", ::utils::constants::PROOF_REQUEST_JSON).unwrap() > 0);
+        assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
     }
 
     #[test]
@@ -1038,19 +1050,24 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_proof_cycle() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
+        let connection_h = connection::tests::build_test_connection_inviter_requested();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
 
         let request = _get_proof_request_messages(connection_h);
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
+        let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_proof).unwrap());
 
-        send_proof(handle, connection_h).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
+        // todo: mock dependencies to make generate_proof work
+        // generate_proof(proof_handle, selected_credentials.into(), "{}".to_string()).unwrap();
+        // send_proof(handle_proof, connection_h).unwrap();
+        // assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
     }
 
     #[test]
@@ -1086,12 +1103,15 @@ mod tests {
 
 
     #[test]
-    #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
+        let connection_h = connection::tests::build_test_connection_inviter_requested();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
 
         let request = _get_proof_request_messages(connection_h);
 
@@ -1099,18 +1119,16 @@ mod tests {
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
 
         reject_proof(handle, connection_h).unwrap();
-        assert_eq!(VcxStateType::VcxStateRejected as u32, get_state(handle).unwrap());
+        assert_eq!(VcxStateType::VcxStateNone as u32, get_state(handle).unwrap());
     }
 
     #[test]
     #[cfg(feature = "general_test")]
     fn get_state_test() {
         let _setup = SetupAriesMocks::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let proof: DisclosedProof = Default::default();
-        assert_eq!(VcxStateType::VcxStateNone as u32, proof.get_state());
-
-        let handle = create_proof("id", ::utils::constants::PROOF_REQUEST_JSON).unwrap();
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap())
     }
 
@@ -1118,12 +1136,13 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn to_string_test() {
         let _setup = SetupAriesMocks::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle = create_proof("id", ::utils::constants::PROOF_REQUEST_JSON).unwrap();
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         let serialized = to_string(handle).unwrap();
         let j: Value = serde_json::from_str(&serialized).unwrap();
-        assert_eq!(j["version"], ::utils::constants::PENDING_OBJECT_SERIALIZE_VERSION);
+        assert_eq!(j["version"], ::utils::constants::V3_OBJECT_SERIALIZE_VERSION);
 
         let handle_2 = from_string(&serialized).unwrap();
         assert_ne!(handle, handle_2);
@@ -1141,12 +1160,12 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle = create_proof("id", ::utils::constants::PROOF_REQUEST_JSON).unwrap();
+        let handle_1 = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
-        let serialized = to_string(handle).unwrap();
-        let p = DisclosedProof::from_str(&serialized).unwrap();
-        assert_eq!(p.proof_request.unwrap().proof_request_data.requested_attributes.get("attr1_referent").unwrap().self_attest_allowed, Some(true))
+        let serialized = to_string(handle_1).unwrap();
+        let handle_2 = from_string(&serialized);
     }
 
     #[test]
@@ -1323,14 +1342,14 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_get_proof_request() {
         let _setup = SetupAriesMocks::init();
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = get_proof_request(connection_h, "123").unwrap();
-        let _request: ProofRequestMessage = serde_json::from_str(&request).unwrap();
+        let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
     }
 
     #[cfg(feature = "pool_tests")]

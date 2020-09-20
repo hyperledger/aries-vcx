@@ -667,15 +667,16 @@ pub mod tests {
     use connection::tests::build_test_connection_inviter_requested;
     use messages::proofs::proof_request;
     use utils::devsetup::*;
-    use utils::mockdata::mockdata_proof;
-    use utils::httpclient::AgencyMockDecrypted;
+    use utils::httpclient::{AgencyMockDecrypted, HttpClientMockResponse};
     use utils::libindy::pool;
+    use utils::mockdata::mockdata_proof;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use v3::handlers::connection as connection_v3;
     use v3::handlers::proof_presentation::verifier::verifier::Verifier;
     use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
     use super::*;
+    use std::io::ErrorKind;
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
         if let Some(h) = connection_handle { get_agent_info().unwrap().pw_info(h).unwrap() } else {
@@ -853,24 +854,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_send_presentation_request() {
-        let _setup = SetupAriesMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested();
-
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        proof.send_presentation_request(connection_handle).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_proof_update_state_v2() {
         let _setup = SetupAriesMocks::init();
 
@@ -893,7 +876,7 @@ pub mod tests {
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
-    
+
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
@@ -902,28 +885,6 @@ pub mod tests {
         let mut proof = create_boxed_proof(None, None, None);
         proof.update_state(Some(PROOF_RESPONSE_STR.to_string())).unwrap();
         assert_eq!(proof.get_state(), VcxStateType::VcxStateRequestReceived as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_update_state_with_reject_message() {
-        let _setup = SetupAriesMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested();
-
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        ::connection::release(connection_handle);
-        let connection_handle = build_test_connection_inviter_requested();
-
-        proof.send_presentation_request(connection_handle);
-
-        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2), None).unwrap();
-        assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 
     #[test]
@@ -1061,50 +1022,46 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_send_proof_request_can_be_retried() {
-        let _setup = SetupLibraryWallet::init();
+        let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_handle = build_test_connection_inviter_requested();
-        connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
-        connection::set_agent_did(connection_handle, DID).unwrap();
-        connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
+        let handle_conn = build_test_connection_inviter_requested();
 
-        let handle = create_proof("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap_err().kind(), VcxErrorKind::TimeoutLibindy);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateInitialized as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "");
+        let handle_proof = create_proof("1".to_string(),
+                                        REQUESTED_ATTRS.to_owned(),
+                                        REQUESTED_PREDICATES.to_owned(),
+                                        r#"{"support_revocation":false}"#.to_string(),
+                                        "Optional".to_owned()).unwrap();
+        let request = generate_proof_request_msg(handle_proof).unwrap();
+        assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
+
+        HttpClientMockResponse::set_next_response(VcxResult::Err(VcxError::from_msg(VcxErrorKind::IOError, "Sending message timeout.")));
+        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap_err().kind(), VcxErrorKind::IOError);
+        assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
         // Retry sending proof request
-        assert_eq!(send_proof_request(handle, connection_handle).unwrap(), 0);
-        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
-        assert_eq!(get_proof_uuid(handle).unwrap(), "ntc2ytb");
+        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), 0);
+        assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateOfferSent as u32);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_proof_validation_with_predicate() {
+    fn test_proof_accepted() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested();
 
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        proof.send_presentation_request(connection_handle).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
-
-        proof.update_state_with_message(ARIES_PROOF_PRESENTATION).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
+        let hande_proof = create_proof("1".to_string(),
+                                       REQUESTED_ATTRS.to_owned(),
+                                       REQUESTED_PREDICATES.to_owned(),
+                                       r#"{"support_revocation":false}"#.to_string(),
+                                       "Optional".to_owned()).unwrap();
+        let request = generate_proof_request_msg(hande_proof).unwrap();
+        send_proof_request(hande_proof, handle_conn).unwrap();
+        update_state(hande_proof, Some(ARIES_PROOF_PRESENTATION.to_string())).unwrap();
+        assert_eq!(::proof::get_state(hande_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
