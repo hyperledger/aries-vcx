@@ -40,9 +40,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
   }
 
   /**
-   * Initializes setting in memory, open pool, open wallet, set webhook url if present in agent provison
-   * @param name
-   * @returns {Promise<void>}
+   * Initializes libvcx configuration, open pool, open wallet, set webhook url if present in agent provison
    */
   async function initVcxOld (name = agentName) {
     logger.info(`Initializing VCX agent ${name}`)
@@ -53,8 +51,6 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
   /**
    * Performs the same as initVcxOld, except for the fact it ignores webhook_url in agent provision. You have to
    * update webhook_url by calling function vcxUpdateWebhookUrl.
-   * @param name
-   * @returns {Promise<void>}
    */
   async function initVcx (name = agentName) {
     logger.info(`Initializing VCX agent ${name}`)
