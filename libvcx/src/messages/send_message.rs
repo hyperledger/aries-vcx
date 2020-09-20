@@ -310,16 +310,4 @@ mod tests {
         let uid = response.get_msg_uid().unwrap_err();
         assert_eq!(VcxErrorKind::InvalidJson, uid.kind());
     }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_send_generic_message_fails_with_invalid_connection() {
-        let _setup = SetupAriesMocks::init();
-
-        let handle = ::connection::tests::build_test_connection();
-
-        let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::NotReady);
-    }
 }

@@ -610,12 +610,12 @@ impl DidExchangeSM {
         Ok(DidExchangeSM { source_id, agent_info, state })
     }
 
-    pub fn did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             ActorDidExchangeState::Inviter(ref state) =>
                 match state {
                     DidExchangeState::Null(_) => None,
-                    DidExchangeState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
+                    DidExchangeState::Invited(ref state) => None,
                     DidExchangeState::Requested(ref state) => Some(state.did_doc.clone()),
                     DidExchangeState::Responded(ref state) => Some(state.did_doc.clone()),
                     DidExchangeState::Completed(ref state) => Some(state.did_doc.clone()),
@@ -652,13 +652,13 @@ impl DidExchangeSM {
     }
 
     pub fn remote_did(&self) -> VcxResult<String> {
-        self.did_doc()
+        self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id.clone())
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection DID is not set"))
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        self.did_doc()
+        self.their_did_doc()
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
