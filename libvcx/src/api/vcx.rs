@@ -96,6 +96,15 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
     error::SUCCESS.code_num
 }
 
+/// Opens pool based on vcx configuration previously set via vcx_init_core
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// cb: Callback that provides error status of initialization
+///
+/// #Returns
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_pool >>>");
@@ -126,6 +135,15 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     error::SUCCESS.code_num
 }
 
+/// Opens wallet based on vcx configuration previously set via vcx_init_core
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// cb: Callback that provides error status of initialization
+///
+/// #Returns
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_wallet >>>");
@@ -317,7 +335,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_init_minimal(config: *const c_char) -> u32 {
-    // todo: Consider deprecating this, we now have more fine-grained init functions  - vcx_init_core, vcx_open_wallet, vcx_open_pool
+    // todo: Consider deprecating this, we now have more fine-grained init functions - vcx_init_core, vcx_open_wallet, vcx_open_pool
     check_useful_c_str!(config,VcxErrorKind::InvalidOption);
 
     trace!("vcx_init_minimal(config: {:?})", config);
