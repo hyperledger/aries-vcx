@@ -296,7 +296,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
 
   protected _releaseFn = rustAPI().vcx_disclosed_proof_release
   protected _updateStFn = rustAPI().vcx_disclosed_proof_update_state
-  protected _updateStFnV2 = rustAPI().vcx_disclosed_proof_update_state // TODO: Implement
+  protected _updateStFnV2 = rustAPI().vcx_v2_proof_update_state
   protected _updateStWithMessageFn = rustAPI().vcx_disclosed_proof_update_state_with_message
   protected _getStFn = rustAPI().vcx_disclosed_proof_get_state
   protected _serializeFn = rustAPI().vcx_disclosed_proof_serialize

@@ -349,7 +349,7 @@ export class Proof extends VCXBaseWithState<IProofData> {
 
   protected _releaseFn = rustAPI().vcx_proof_release
   protected _updateStFn = rustAPI().vcx_proof_update_state
-  protected _updateStFnV2 = rustAPI().vcx_proof_update_state // TODO: Implement
+  protected _updateStFnV2 = rustAPI().vcx_v2_proof_update_state
   protected _updateStWithMessageFn = rustAPI(). vcx_proof_update_state_with_message
   protected _getStFn = rustAPI().vcx_proof_get_state
   protected _serializeFn = rustAPI().vcx_proof_serialize
