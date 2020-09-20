@@ -520,24 +520,19 @@ mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
 
-        info!("test_download_messages :: going send message from faber to alice");
         send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
-        info!("test_download_messages :: messge sent");
         send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
-
-        thread::sleep(Duration::from_millis(1000));
 
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer();
         send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
 
-        info!("test_download_messages :: going to download all messages");
+        // make sure messages has bee delivered
+        thread::sleep(Duration::from_millis(1000));
+
         let all_messages = download_messages(None, None, None).unwrap();
-        info!("_all_messages = {}", serde_json::to_string(&all_messages).unwrap());
         assert_eq!(all_messages.len(), 1);
         assert_eq!(all_messages[0].msgs.len(), 3);
         assert!(all_messages[0].msgs[0].decrypted_payload.is_some());

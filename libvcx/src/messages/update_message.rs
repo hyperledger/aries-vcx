@@ -158,45 +158,58 @@ mod tests {
     use std::thread;
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
+    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
+    use utils::httpclient::AgencyMockDecrypted;
+    use messages::update_message::{UpdateMessageStatusByConnectionsBuilder, UIDsByConn, update_agency_messages};
+    use utils::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    use connection::send_generic_message;
+    use messages::get_message::download_messages;
+    use messages::MessageStatusCode;
 
     #[test]
-    #[cfg(feature = "to_restore")]
+    #[cfg(feature = "general_test")]
     fn test_parse_parse_update_messages_response() {
         let _setup = SetupAriesMocks::init();
-        // todo: need to set arias compatible mock, this is legacy so we get parsing failure
-        UpdateMessageStatusByConnectionsBuilder::create().parse_response(&::utils::constants::UPDATE_MESSAGES_RESPONSE.to_vec()).unwrap();
+        AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
+        UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).unwrap();
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
     fn test_update_agency_messages() {
-        let _setup = SetupLibraryAgencyV1::init();
+        let _setup = SetupLibraryAgencyV2::init();
+        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
 
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
+        send_generic_message(faber_to_alice, "Hello 1", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "Hello 2", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "Hello 3", &json!({"msg_type": "toalice", "msg_title": "msg3"}).to_string()).unwrap();
 
-        let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
-
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let credential_offer = ::issuer_credential::issuer_credential_create(cred_def_handle,
-                                                                             "1".to_string(),
-                                                                             institution_did.clone(),
-                                                                             "credential_name".to_string(),
-                                                                             credential_data.to_owned(),
-                                                                             1).unwrap();
-
-        ::issuer_credential::send_credential_offer(credential_offer, alice).unwrap();
-        thread::sleep(Duration::from_millis(2000));
-        // AS CONSUMER GET MESSAGES
+        thread::sleep(Duration::from_millis(1000));
         ::utils::devsetup::set_consumer();
-        let pending = ::messages::get_message::download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
-        assert!(pending.len() > 0);
-        let did = pending[0].pairwise_did.clone();
-        let uid = pending[0].msgs[0].uid.clone();
-        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: did, uids: vec![uid] }]).unwrap();
+
+        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 3);
+        let pairwise_did = received[0].pairwise_did.clone();
+        let uid = received[0].msgs[0].uid.clone();
+
+        let reviewed = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_before = reviewed[0].msgs.len();
+
+        // update status
+        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
         update_agency_messages("MS-106", &message).unwrap();
-        let updated = ::messages::get_message::download_messages(None, Some(vec!["MS-106".to_string()]), None).unwrap();
-        assert_eq!(pending[0].msgs[0].uid, updated[0].msgs[0].uid);
+
+        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+
+        let reviewed = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_after = reviewed[0].msgs.len();
+        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
+
+        let specific_review = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
+        assert_eq!(specific_review[0].msgs[0].uid, uid);
+
     }
 }
