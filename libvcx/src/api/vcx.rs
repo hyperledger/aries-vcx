@@ -259,34 +259,30 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
         }
     };
 
-    let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
-    let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
-    let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
-    let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
-        .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-    let path = match settings::get_config_value(settings::CONFIG_GENESIS_PATH) {
-        Ok(path) => path,
-        Err(_) => {
-            error!("Config {} was not set", settings::CONFIG_GENESIS_PATH);
-            return error::INVALID_CONFIGURATION.code_num
-        }
-    };
-    let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
-
     spawn(move || {
         info!("_finish_init: initializing pool");
-        if settings::get_config_value(settings::CONFIG_GENESIS_PATH).is_ok() {
-
-            match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
-                Ok(()) => (),
-                Err(e) => {
-                    error!("Init Pool Error {}.", e);
-                    cb(command_handle, e.into());
-                    return Ok(());
+        match settings::get_config_value(settings::CONFIG_GENESIS_PATH).ok() {
+            Some(path) => {
+                let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
+                    .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+                let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
+                match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        error!("Init Pool Error {}.", e);
+                        cb(command_handle, e.into());
+                        return Ok(());
+                    }
                 }
+            },
+            None => {
+                warn!("Skipping pool initialization because config {} was not provided", settings::CONFIG_GENESIS_PATH);
             }
-        }
+        };
 
+        let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
+        let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
+        let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
         info!("_finish_init: opening wallet");
         match wallet::open_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str),
                                   storage_config.as_ref().map(String::as_str), storage_creds.as_ref().map(String::as_str)) {
@@ -949,7 +945,7 @@ mod tests {
         let content = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION
         }).to_string();
 
         _vcx_init_with_config_c_closure(&content).unwrap();
