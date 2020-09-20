@@ -311,33 +311,6 @@ mod tests {
         assert_eq!(VcxErrorKind::InvalidJson, uid.kind());
     }
 
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
-    fn test_send_message_and_download_response() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let (faber, alice) = ::connection::tests::create_connected_connections();
-
-        let msg_id = send_generic_message(alice, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap();
-
-        ::utils::devsetup::set_consumer();
-        let msg1 = get_message::download_messages(None, None, Some(vec![msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&msg1).unwrap());
-        let msg_id_response = send_generic_message(faber, "this is the response", &json!({"msg_type":"response type", "msg_title": "test response", "ref_msg_id":msg_id}).to_string()).unwrap();
-
-        ::utils::devsetup::set_institution();
-        let msg1 = get_message::download_messages(None, None, Some(vec![msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&msg1).unwrap());
-
-        let ref_msg_id = msg1[0].clone().msgs[0].clone().ref_msg_id.unwrap();
-        assert_eq!(ref_msg_id, msg_id_response);
-
-        let response = get_message::download_messages(None, None, Some(vec![ref_msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&response).unwrap());
-        assert_eq!(response[0].clone().msgs[0].clone().msg_type, RemoteMessageType::Other("response type".to_string()));
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
