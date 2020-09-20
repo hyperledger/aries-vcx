@@ -905,8 +905,10 @@ pub mod tests {
     use super::*;
 
     pub fn build_test_connection() -> u32 {
-        let handle = create_connection("alice").unwrap();
+        let handle = create_connection("faber_to_alice").unwrap();
         connect(handle, Some("{}".to_string())).unwrap();
+        let msg : A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
+        update_state_with_message(handle, msg).unwrap();
         handle
     }
 
