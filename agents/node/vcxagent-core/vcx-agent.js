@@ -1,4 +1,4 @@
-const { messagesGetForPwDid } = require('./messages')
+const { getMessagesForPwDid } = require('./messages')
 const { provisionAgentInAgency, initRustapi } = require('./vcx-workflows')
 const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
 const { createStorageService } = require('./storage-service')
@@ -184,7 +184,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
   async function getMessages (connectionName, filterStatuses= [], filterUids= []) {
     const serConnection = await storageService.loadConnection(connectionName)
     const pwDid = serConnection.data.pw_did
-    return messagesGetForPwDid(pwDid, [], filterStatuses, filterUids)
+    return getMessagesForPwDid(pwDid, [], filterStatuses, filterUids)
   }
 
   async function getCredentialOffers (connectionName) {

@@ -42,7 +42,7 @@ const optionDefinitions = [
     name: 'RUST_LOG',
     type: String,
     description: 'Agent name',
-    defaultValue: 'vcx=trace'
+    defaultValue: 'vcx=error'
   }
 ]
 

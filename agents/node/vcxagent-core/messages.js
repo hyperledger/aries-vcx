@@ -1,36 +1,34 @@
 const _ = require('lodash')
 const { downloadMessages } = require('@absaoss/node-vcx-wrapper')
 
-module.exports.messagesGetForPwDid = async function messagesGetForPwDid (
+module.exports.getMessagesForPwDid = async function getMessagesForPwDid (
   pwDid,
-  filterTypes = [],
   filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
   filterUids = []
 ) {
   filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
   const messages = []
-  const donwloadInstructions = {
+  const downloadInstructions = {
     pairwiseDids: pwDid
   }
   if (filterStatuses && filterStatuses.length > 0) {
-    donwloadInstructions.status = filterStatuses.join(',')
+    downloadInstructions.status = filterStatuses.join(',')
   }
   if (filterUids && filterUids.length > 0) {
-    donwloadInstructions.uids = filterUids.join(',')
+    downloadInstructions.uids = filterUids.join(',')
   }
-  const res = JSON.parse(await downloadMessages(donwloadInstructions))
+  const res = JSON.parse(await downloadMessages(downloadInstructions))
   if (res && res.length > 1) {
-    throw Error('Unexpected to get more than 1 items from download messages for single pairwise did')
+    throw Error(`Expected to receive messages for single connection, but received messages for ${res.length} connection. This is agency bug.`)
   }
   if (res && res.length === 0) {
-    throw Error('Expected to get at least 1 item in download message response.')
+    throw Error('Expected to receive messages for single connection, but received messages for none.')
   }
   if (!res[0].msgs) {
-    throw Error('message item was expected to have msgs field')
+    throw Error(`Invalid response, field 'msgs' is missing in response. This is agency bug. Received response = ${JSON.stringify(res)}`)
   }
   if (res[0].msgs.length > 0) {
     await messages.push(res[0].msgs)
   }
-  const flattened = _.flatten(messages)
-  return (filterTypes && filterTypes.length > 0) ? flattened.filter(msg => filterTypes.includes(msg.type)) : flattened
+  return _.flatten(messages)
 }

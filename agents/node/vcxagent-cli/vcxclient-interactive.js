@@ -78,7 +78,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
       } else if (cmd === '31') {
         const connectionName = readlineSync.question('Enter connection name:\n')
         let messages = await vcxClient.getMessages(connectionName, [], [])
-        logger.info(`Found messages\:${JSON.stringify(messages, null, 2)}`)
+        logger.info(`Found messages\n:${JSON.stringify(messages, null, 2)}`)
       } else {
         logger.error(`Unknown command ${cmd}`)
       }
