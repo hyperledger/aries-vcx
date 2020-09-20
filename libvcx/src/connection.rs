@@ -1187,4 +1187,53 @@ pub mod tests {
         let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_send_and_download_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
+
+        send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
+
+        // AS CONSUMER GET MESSAGES
+        ::utils::devsetup::set_consumer();
+        send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
+
+        // make sure messages has bee delivered
+        thread::sleep(Duration::from_millis(1000));
+
+        let all_messages = download_messages(None, None, None).unwrap();
+        assert_eq!(all_messages.len(), 1);
+        assert_eq!(all_messages[0].msgs.len(), 3);
+        assert!(all_messages[0].msgs[0].decrypted_payload.is_some());
+        assert!(all_messages[0].msgs[1].decrypted_payload.is_some());
+
+        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+        assert!(received[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
+        assert!(received[0].msgs[1].decrypted_payload.is_some());
+
+        // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
+        let reviewed = download_messages(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        assert_eq!(reviewed.len(), 1);
+        assert_eq!(reviewed[0].msgs.len(), 1);
+        assert!(reviewed[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
+
+        let rejected = download_messages(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
+        assert_eq!(rejected.len(), 1);
+        assert_eq!(rejected[0].msgs.len(), 0);
+
+        let specific = download_messages(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
+        assert_eq!(specific.len(), 1);
+        assert_eq!(specific[0].msgs.len(), 1);
+
+        let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
+        let empty = download_messages(Some(vec![unknown_did]), None, None).unwrap();
+        assert_eq!(empty.len(), 0);
+    }
 }
