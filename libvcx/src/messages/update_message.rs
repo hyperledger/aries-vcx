@@ -210,6 +210,5 @@ mod tests {
 
         let specific_review = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
         assert_eq!(specific_review[0].msgs[0].uid, uid);
-
     }
 }

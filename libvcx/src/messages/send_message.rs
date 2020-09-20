@@ -280,28 +280,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
-    fn test_parse_send_message_response() {
-        // let _setup = SetupAriesMocks::init();
-        let _setup = SetupLibraryAgencyZeroFees::init("4.0");
-
-        // todo: need to set arias compatible mock, this is legacy so we get parsing failure
-
-        let data = prepare_request()?;
-
-        let response = httpclient::post_u8(&data)?;
-
-        let result = SendMessageBuilder::create().send_secure();
-        warn!("Agency responded: {:?}", result);
-        // let result = SendMessageBuilder::create().parse_response(SEND_MESSAGE_RESPONSE.to_vec()).unwrap();
-        // let expected = SendResponse {
-        //     uid: None,
-        //     uids: vec!["ntc2ytb".to_string()],
-        // };
-        // assert_eq!(expected, result);
-    }
-
-    #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_send_message_bad_response() {
         let _setup = SetupAriesMocks::init();

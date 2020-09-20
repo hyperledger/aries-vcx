@@ -268,6 +268,11 @@ impl Connection {
     }
 
     pub fn send_generic_message(&self, message: &str, msg_options: &str) -> VcxResult<String> {
+        if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"
+        {
+            panic!("Trying to use legacy strategy for sending generic message");
+        }
+
         if self.state != VcxStateType::VcxStateAccepted {
             return Err(VcxError::from(VcxErrorKind::NotReady));
         }
