@@ -605,15 +605,6 @@ mod tests {
         assert!(result.len() > 0);
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_update_agent_info() {
-        let _setup = SetupAriesMocks::init();
-        // todo: Need to mock agency v2 response, only agency v1 mocking works
-        update_agent_info("123", "value").unwrap();
-    }
-
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_update_agent_webhook_real() {

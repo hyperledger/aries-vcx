@@ -496,6 +496,7 @@ mod tests {
     use utils::devsetup::*;
 
     use super::*;
+    use connection::send_generic_message;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -539,55 +540,56 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: failing on "invalid credential preview"
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
+        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
 
-        let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
-
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let credential_offer = ::issuer_credential::issuer_credential_create(cred_def_handle,
-                                                                             "1".to_string(),
-                                                                             institution_did.clone(),
-                                                                             "credential_name".to_string(),
-                                                                             credential_data.to_owned(),
-                                                                             1).unwrap();
-
-        ::issuer_credential::send_credential_offer(credential_offer, alice).unwrap();
+        info!("test_download_messages :: going send message from faber to alice");
+        send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
+        info!("test_download_messages :: messge sent");
+        send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
 
         thread::sleep(Duration::from_millis(1000));
 
-        let hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
-
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer();
+        send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
 
-        let _all_messages = download_messages(None, None, None).unwrap();
+        info!("test_download_messages :: going to download all messages");
+        let all_messages = download_messages(None, None, None).unwrap();
+        info!("_all_messages = {}", serde_json::to_string(&all_messages).unwrap());
+        assert_eq!(all_messages.len(), 1);
+        assert_eq!(all_messages[0].msgs.len(), 3);
+        assert!(all_messages[0].msgs[0].decrypted_payload.is_some());
+        assert!(all_messages[0].msgs[1].decrypted_payload.is_some());
 
-        let pending = download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
-        assert_eq!(pending.len(), 1);
-        assert!(pending[0].msgs[0].decrypted_payload.is_some());
+        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+        assert!(received[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
+        assert!(received[0].msgs[1].decrypted_payload.is_some());
 
-        let accepted = download_messages(None, Some(vec!["MS-104".to_string()]), None).unwrap();
-        assert_eq!(accepted[0].msgs.len(), 2);
+        // there should be review aries message connections/1.0/response from Aries-Faber connection protocol
+        let reviewed = download_messages(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        assert_eq!(reviewed.len(), 1);
+        assert_eq!(reviewed[0].msgs.len(), 1);
+        assert!(reviewed[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
 
-        let specific = download_messages(None, None, Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
+        let rejected = download_messages(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
+        assert_eq!(rejected.len(), 1);
+        assert_eq!(rejected[0].msgs.len(), 0);
+
+        let specific = download_messages(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
         assert_eq!(specific.len(), 1);
+        assert_eq!(specific[0].msgs.len(), 1);
 
-        // No pending will return empty list
-        let empty = download_messages(None, Some(vec!["MS-103".to_string()]), Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(empty.len(), 1);
-
-        let hello_msg = download_messages(None, None, Some(vec![hello_uid])).unwrap();
-        assert_eq!(hello_msg[0].msgs[0].decrypted_payload, Some("{\"@type\":{\"name\":\"hello\",\"ver\":\"1.0\",\"fmt\":\"json\"},\"@msg\":\"hello\"}".to_string()));
-
-        // Agency returns a bad request response for invalid dids
-        let invalid_did = "abc".to_string();
-        let bad_req = download_messages(Some(vec![invalid_did]), None, None);
-        assert_eq!(bad_req.unwrap_err().kind(), VcxErrorKind::PostMessageFailed);
+        let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
+        let empty = download_messages(Some(vec![unknown_did]), None, None).unwrap();
+        assert_eq!(empty.len(), 0);
     }
 }
