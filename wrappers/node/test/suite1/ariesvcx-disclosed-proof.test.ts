@@ -2,7 +2,7 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import {
-  connectionCreateConnect,
+  createConnectionInviterRequested,
   dataDisclosedProofCreateWithMsgId,
   dataDisclosedProofCreateWithRequest,
   disclosedProofCreateWithMsgId,
@@ -134,7 +134,7 @@ describe('DisclosedProof', () => {
 
   describe('getRequests:', async () => {
     it.skip('success', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const requests = await DisclosedProof.getRequests(connection)
       assert.ok(requests)
       assert.ok(requests.length)

@@ -3,7 +3,7 @@ import '../module-resolver-helper'
 import { assert } from 'chai'
 import { validatePaymentTxn } from 'helpers/asserts'
 import {
-  connectionCreateConnect,
+  createConnectionInviterRequested,
   credentialCreateWithMsgId,
   credentialCreateWithOffer,
   dataCredentialCreateWithMsgId,
@@ -126,7 +126,7 @@ describe('Credential:', () => {
     })
 
     it(`returns status requestReceived`, async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const data = await dataCredentialCreateWithOffer()
       const credential = await Credential.create(data)
       assert.equal(await credential.getState(), StateType.RequestReceived)
@@ -177,7 +177,7 @@ describe('Credential:', () => {
   // todo : restore for aries
   describe('getOffers:', () => {
     it.skip('success', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const offers = await Credential.getOffers(connection)
       assert.ok(offers)
       assert.ok(offers.length)
