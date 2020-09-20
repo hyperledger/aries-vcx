@@ -1,4 +1,3 @@
-// Alice receives invitation via out of band channel
 pub const AGENCY_MSG_STATUS_UPDATED_BY_CONNS: &str = r#"
 {
     "@type": "did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS",
@@ -12,3 +11,10 @@ pub const AGENCY_MSG_STATUS_UPDATED_BY_CONNS: &str = r#"
         }
     ]
 }"#;
+
+pub const AGENCY_CONFIGS_UPDATED: &str = r#"
+{
+	"@type": "did:sov:123456789abcdefghi1234;spec/configs/1.0/CONFIGS_UPDATED"
+}"#;
+
+

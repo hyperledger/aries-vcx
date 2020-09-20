@@ -149,6 +149,8 @@ mod tests {
     use utils::libindy::signus::create_and_store_my_did;
 
     use super::*;
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata_agency::{AGENCY_CONFIGS_UPDATED};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -188,10 +190,9 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_parse_update_profile_response() {
-        let _setup = SetupIndyMocks::init();
-        // todo: need to set arias compatible mock, this is legacy so we get parsing failure
-        UpdateProfileDataBuilder::create().parse_response(UPDATE_PROFILE_RESPONSE.to_vec()).unwrap();
+        let _setup = SetupAriesMocks::init();
+        AgencyMockDecrypted::set_next_decrypted_response(AGENCY_CONFIGS_UPDATED);
+        UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).unwrap();
     }
 }
