@@ -2,7 +2,7 @@ const readlineSync = require('readline-sync')
 const { createVcxAgent } = require('vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
-async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustlog) {
+async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustLogLevel) {
   logger.info(`Creating interactive client ${agentName} seed=${seed} protocolType=${protocolType}`)
   const vcxClient = await createVcxAgent({
     agentName,
@@ -12,7 +12,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
     usePostgresWallet: false,
     logger,
-    rustLogLevel: 'error'
+    rustLogLevel
   })
 
   if (acceptTaa) {
@@ -28,7 +28,9 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
     12: 'CONNECTION_PROGRESS',
     13: 'CONNECTION_INFO',
     14: 'CONNECTIONS_INFO',
-    20: 'GET_CREDENTIAL_OFFERS'
+    20: 'GET_CREDENTIAL_OFFERS',
+    30: 'SEND_MESSAGE',
+    31: 'GET_MESSAGE'
   }
 
   while (true) {
@@ -69,6 +71,14 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
       } else if (cmd === '20') {
         const connectionName = readlineSync.question('Enter connection name:\n')
         await vcxClient.getCredentialOffers(connectionName)
+      } else if (cmd === '30') {
+        const connectionName = readlineSync.question('Enter connection name:\n')
+        const message = readlineSync.question('Enter message to send:\n')
+        await vcxClient.sendMessage(connectionName, message)
+      } else if (cmd === '31') {
+        const connectionName = readlineSync.question('Enter connection name:\n')
+        let messages = await vcxClient.getMessages(connectionName, [], [])
+        logger.info(`Found messages\:${JSON.stringify(messages, null, 2)}`)
       } else {
         logger.error(`Unknown command ${cmd}`)
       }

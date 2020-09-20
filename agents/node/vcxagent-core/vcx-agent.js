@@ -1,3 +1,4 @@
+const { messagesGetForPwDid } = require('./messages')
 const { provisionAgentInAgency, initRustapi } = require('./vcx-workflows')
 const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
 const { createStorageService } = require('./storage-service')
@@ -174,6 +175,18 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     return connection
   }
 
+  async function sendMessage (connectionName, payload) {
+    const serConnection = await storageService.loadConnection(connectionName)
+    const connection = await Connection.deserialize(serConnection)
+    await connection.sendMessage({msg: payload, msg_title: "msg_title", msg_type: "msg_type", ref_msg_id: "ref_msg_id"})
+  }
+
+  async function getMessages (connectionName, filterStatuses= [], filterUids= []) {
+    const serConnection = await storageService.loadConnection(connectionName)
+    const pwDid = serConnection.data.pw_did
+    return messagesGetForPwDid(pwDid, [], filterStatuses, filterUids)
+  }
+
   async function getCredentialOffers (connectionName) {
     const connSerializedBefore = await storageService.loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
@@ -329,7 +342,9 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     initVcx,
     createInvite,
     inviteeConnectionCreateFromInvite,
-    storeConnection
+    storeConnection,
+    sendMessage,
+    getMessages
   }
 }
 
