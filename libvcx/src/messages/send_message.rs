@@ -314,20 +314,6 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
     #[test]
-    fn test_send_generic_message() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
-
-        send_generic_message(alice, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap();
-
-        ::utils::devsetup::set_consumer();
-        let _all_messages = get_message::download_messages(None, None, None).unwrap();
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
     fn test_send_message_and_download_response() {
         let _setup = SetupLibraryAgencyV1::init();
 
