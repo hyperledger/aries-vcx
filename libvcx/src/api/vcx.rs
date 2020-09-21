@@ -8,9 +8,10 @@ use settings;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::libindy::{ledger, pool, wallet};
-use utils::libindy::pool::{init_pool};
+use utils::libindy::pool::{init_pool, is_pool_open};
 use utils::threadpool::spawn;
 use utils::version_constants;
+use indy_sys::INVALID_POOL_HANDLE;
 
 /// Initializes VCX with config settings
 ///
@@ -108,10 +109,14 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
 #[no_mangle]
 pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_pool >>>");
+    if is_pool_open() {
+        error!("vcx_open_pool :: Pool connection is already open.");
+        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
+    }
     let path = match settings::get_config_value(settings::CONFIG_GENESIS_PATH) {
         Ok(result) => result,
         Err(_) => {
-            error!("vcx_open_pool :: failed to init pool because CONFIG_GENESIS_PATH was not set");
+            error!("vcx_open_pool :: Failed to init pool because CONFIG_GENESIS_PATH was not set");
             return error::INVALID_CONFIGURATION.code_num;
         }
     };
@@ -678,6 +683,7 @@ mod tests {
     use utils::libindy::wallet::delete_wallet;
     use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
     use api::wallet::tests::_test_add_and_get_wallet_record;
+    use utils::libindy::pool::reset_pool_handle;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     fn config() -> String {
@@ -1261,6 +1267,7 @@ mod tests {
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_short());
 
+        pool::close();
         delete_test_pool();
         settings::set_defaults();
     }
@@ -1338,6 +1345,7 @@ mod tests {
         assert!(schema_id.len() > 0);
 
         info!("test_init_composed :: going to cleanup");
+        pool::close();
         delete_test_pool();
         settings::set_defaults();
     }

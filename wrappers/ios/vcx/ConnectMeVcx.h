@@ -78,6 +78,10 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)initWithConfig:(NSString *)config
             completion:(void (^)(NSError *error))completion;
 
+- (vcx_error_t) vcxInitCore:(NSString *)config;
+- (void) vcxOpenWallet:(void (^)(NSError *error)) completion;
+- (void) vcxOpenPool:(void (^)(NSError *error)) completion;
+
 - (void)agentProvisionAsync:(NSString *)config
                  completion:(void (^)(NSError *error, NSString *config))completion;
 

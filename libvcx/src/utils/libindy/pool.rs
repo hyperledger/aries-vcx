@@ -21,6 +21,10 @@ pub fn get_pool_handle() -> VcxResult<i32> {
         .ok_or(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened"))
 }
 
+pub fn is_pool_open() -> bool {
+    get_pool_handle().is_ok()
+}
+
 pub fn reset_pool_handle() { set_pool_handle(None); }
 
 pub fn set_protocol_version() -> VcxResult<()> {
@@ -84,21 +88,21 @@ pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32>
 }
 
 pub fn init_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
-    info!("init_pool_v2 >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
+    info!("init_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    trace!("init_pool_v2 ::: Opening pool {} with genesis_path: {}", pool_name, path);
+    trace!("init_pool ::: Opening pool {} with genesis_path: {}", pool_name, path);
 
     create_pool_ledger_config(&pool_name, &path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
-    debug!("init_pool_v2 ::: Pool Config Created Successfully");
+    debug!("init_pool ::: Pool Config Created Successfully");
 
     open_pool_ledger(&pool_name, pool_config)
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
 
-    info!("init_pool_v2 ::: Pool Opened Successfully");
+    info!("init_pool ::: Pool Opened Successfully");
 
     Ok(())
 }
