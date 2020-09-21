@@ -4,7 +4,6 @@
   "description": "NodeJS wrapper for Absa's fork of HL LibVCX",
   "license": "Apache-2.0",
   "version": "0.9.1",
-  "typings": "dist/index.d.ts",
   "directories": {
     "test": "test",
     "build": "dist",
@@ -89,5 +88,6 @@
     "test:logging1": "              TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 -gc --expose-gc --exit --recursive --use_strict --require ts-node/register ./test/suite3/logging.1.test.ts",
     "test:logging2": "              TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 -gc --expose-gc --exit --recursive --use_strict --require ts-node/register ./test/suite3/logging.2.test.ts"
   },
-  "main": "dist/src/index.js"
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts"
 }
