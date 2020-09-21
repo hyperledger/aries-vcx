@@ -664,7 +664,7 @@ pub fn generate_nonce() -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use connection;
-    use connection::tests::build_test_connection;
+    use connection::tests::build_test_connection_inviter_requested;
     use messages::proofs::proof_request;
     use utils::devsetup::*;
     use utils::mockdata::mockdata_proof;
@@ -826,7 +826,7 @@ pub mod tests {
     fn test_send_proof_request() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let proof_handle = create_proof("1".to_string(),
                                         REQUESTED_ATTRS.to_owned(),
@@ -856,7 +856,7 @@ pub mod tests {
     fn test_send_presentation_request() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = Verifier::create("1".to_string(),
                                          REQUESTED_ATTRS.to_owned(),
@@ -909,7 +909,7 @@ pub mod tests {
     fn test_update_state_with_reject_message() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = Verifier::create("1".to_string(),
                                          REQUESTED_ATTRS.to_owned(),
@@ -1065,7 +1065,7 @@ pub mod tests {
     fn test_send_proof_request_can_be_retried() {
         let _setup = SetupLibraryWallet::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
         connection::set_agent_verkey(connection_handle, VERKEY).unwrap();
         connection::set_agent_did(connection_handle, DID).unwrap();
         connection::set_their_pw_verkey(connection_handle, VERKEY).unwrap();
@@ -1090,7 +1090,7 @@ pub mod tests {
     fn test_proof_validation_with_predicate() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = Verifier::create("1".to_string(),
                                          REQUESTED_ATTRS.to_owned(),

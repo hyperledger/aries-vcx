@@ -904,9 +904,14 @@ pub mod tests {
 
     use super::*;
 
-    pub fn build_test_connection() -> u32 {
+    pub fn build_test_connection_inviter_invited() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
         connect(handle, Some("{}".to_string())).unwrap();
+        handle
+    }
+
+    pub fn build_test_connection_inviter_requested() -> u32 {
+        let handle = build_test_connection_inviter_invited();
         let msg : A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
         update_state_with_message(handle, msg).unwrap();
         handle
@@ -1184,7 +1189,7 @@ pub mod tests {
     fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = ::connection::tests::build_test_connection();
+        let handle = ::connection::tests::build_test_connection_inviter_invited();
 
         let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);

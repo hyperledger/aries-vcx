@@ -61,7 +61,7 @@ pub mod tests {
 
     use ::{issuer_credential, settings};
     use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
-    use connection::tests::build_test_connection;
+    use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
     use credential_request::CredentialRequest;
     #[allow(unused_imports)]

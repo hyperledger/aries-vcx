@@ -819,7 +819,7 @@ pub mod tests {
 
     use ::{issuer_credential, settings};
     use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
-    use connection::tests::build_test_connection;
+    use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
     use credential_request::CredentialRequest;
     #[allow(unused_imports)]
@@ -968,7 +968,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_conn = build_test_connection();
+        let handle_conn = build_test_connection_inviter_requested();
 
         let handle_cred = _issuer_credential_create();
 
@@ -992,7 +992,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let handle = _issuer_credential_create();
         assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateInitialized as u32);
@@ -1014,7 +1014,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_conn = build_test_connection();
+        let handle_conn = build_test_connection_inviter_requested();
 
         let handle_cred = _issuer_credential_create();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateInitialized as u32);
@@ -1063,7 +1063,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_conn = build_test_connection();
+        let handle_conn = build_test_connection_inviter_requested();
         let mut handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
@@ -1079,7 +1079,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_conn = build_test_connection();
+        let handle_conn = build_test_connection_inviter_requested();
         let mut handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
@@ -1126,7 +1126,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_conn = build_test_connection();
+        let handle_conn = build_test_connection_inviter_requested();
 
         let handle_cred = _issuer_credential_create();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateInitialized as u32);

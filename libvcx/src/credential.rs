@@ -983,7 +983,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
-        let handle_conn = connection::tests::build_test_connection();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested();
 
         info!("full_credential_test:: going to _get_offer");
         let offer = _get_offer(handle_conn);
@@ -1017,7 +1017,7 @@ pub mod tests {
     fn test_get_request_msg() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let offer = _get_offer(connection_h);
 
@@ -1036,7 +1036,7 @@ pub mod tests {
     fn test_get_credential_offer() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let offer = get_credential_offer_messages(connection_h).unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();

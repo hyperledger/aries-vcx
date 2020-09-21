@@ -1021,7 +1021,7 @@ mod tests {
     fn test_create_with_msgid() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let cxn = ::connection::tests::build_test_connection_inviter_invited();
 
         AgencyMock::set_next_response(::utils::constants::NEW_PROOF_REQUEST_RESPONSE.to_vec());
 
@@ -1095,7 +1095,7 @@ mod tests {
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
-        let connection_handle = connection::tests::build_test_connection();
+        let connection_handle = connection::tests::build_test_connection_inviter_invited();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_disclosed_proof_send_proof(cb.command_handle, handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1111,7 +1111,7 @@ mod tests {
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
-        let connection_handle = connection::tests::build_test_connection();
+        let connection_handle = connection::tests::build_test_connection_inviter_invited();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_disclosed_proof_reject_proof(cb.command_handle, handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1127,7 +1127,7 @@ mod tests {
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(::utils::constants::PROOF_REQUEST_JSON).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
-        let _connection_handle = connection::tests::build_test_connection();
+        let _connection_handle = connection::tests::build_test_connection_inviter_invited();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_disclosed_proof_get_reject_msg(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1140,7 +1140,7 @@ mod tests {
     fn test_vcx_proof_get_requests() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let cxn = ::connection::tests::build_test_connection_inviter_invited();
 
         AgencyMock::set_next_response(::utils::constants::NEW_PROOF_REQUEST_RESPONSE.to_vec());
 

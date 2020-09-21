@@ -1042,7 +1042,7 @@ mod tests {
     fn test_proof_cycle() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = _get_proof_request_messages(connection_h);
 
@@ -1091,7 +1091,7 @@ mod tests {
     fn test_proof_reject_cycle() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = _get_proof_request_messages(connection_h);
 
@@ -1327,7 +1327,7 @@ mod tests {
     fn test_get_proof_request() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: ProofRequestMessage = serde_json::from_str(&request).unwrap();
