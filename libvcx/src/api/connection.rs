@@ -1431,10 +1431,11 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_connection_deserialize_succeeds() {
         let _setup = SetupAriesMocks::init();
 
-        let string = ::utils::constants::DEFAULT_CONNECTION;
+        let string = ::utils::constants::DEFAULT_CONNECTION; // TODO: This is a legacy connection
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_connection_deserialize(cb.command_handle,
                                              CString::new(string).unwrap().into_raw(),
