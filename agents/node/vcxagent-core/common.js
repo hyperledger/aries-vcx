@@ -1,12 +1,6 @@
 const sleepPromise = require('sleep-promise')
 const axios = require('axios')
 
-function getRandomInt (min, max) {
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  return Math.floor(Math.random() * (max - min)) + min
-}
-
 async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   let agencyReady = false
   while (!agencyReady) {
@@ -36,6 +30,5 @@ async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 
   return [null, result]
 }
 
-module.exports.getRandomInt = getRandomInt
 module.exports.waitUntilAgencyIsReady = waitUntilAgencyIsReady
 module.exports.pollFunction = pollFunction

@@ -302,7 +302,7 @@ mod tests {
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         set_institution();
-        proof::update_state(proof_handle_verifier, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -346,7 +346,7 @@ mod tests {
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         set_institution();
-        proof::update_state(proof_handle_verifier, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -426,7 +426,7 @@ mod tests {
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         set_institution();
-        proof::update_state(proof_req_handle, None).unwrap();
+        proof::update_state(proof_req_handle, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_req_handle).unwrap(), ProofStateType::ProofValidated as u32);
     }
 }

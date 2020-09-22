@@ -42,9 +42,6 @@ macro_rules! map (
 pub mod error;
 pub mod httpclient;
 pub mod constants;
-pub mod mockdata_credex;
-pub mod mockdata_connection;
-pub mod mockdata_proof;
 pub mod timeout;
 pub mod openssl;
 pub mod json;
@@ -56,6 +53,7 @@ pub mod qualifier;
 pub mod file;
 pub mod option_util;
 pub mod agent_info;
+pub mod mockdata;
 
 #[cfg(test)]
 pub mod plugins;

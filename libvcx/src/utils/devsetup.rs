@@ -27,6 +27,8 @@ pub struct SetupMocks; // set default settings and enable test mode
 
 pub struct SetupAriesMocks; // set default settings, aries communication protocol and enable test mode
 
+pub struct SetupStrictAriesMocks; // set default settings, strict aries communication protocol and enable test mode
+
 pub struct SetupIndyMocks; // set default settings and enable indy mode
 
 pub struct SetupWallet; // set default settings and create indy wallet
@@ -114,6 +116,21 @@ impl SetupAriesMocks {
 }
 
 impl Drop for SetupAriesMocks {
+    fn drop(&mut self) {
+        tear_down()
+    }
+}
+
+impl SetupStrictAriesMocks {
+    pub fn init() -> SetupAriesMocks {
+        setup();
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        SetupAriesMocks
+    }
+}
+
+impl Drop for SetupStrictAriesMocks {
     fn drop(&mut self) {
         tear_down()
     }

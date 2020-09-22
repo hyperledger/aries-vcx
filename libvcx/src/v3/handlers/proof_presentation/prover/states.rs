@@ -375,6 +375,7 @@ impl ProverSM {
     }
 
     pub fn has_transitions(&self) -> bool {
+        trace!("Prover::states::has_transitions >> state: {:?}", self.state);
         match self.state {
             ProverState::Initiated(_) => false,
             ProverState::PresentationPrepared(_) => true,
@@ -400,6 +401,19 @@ impl ProverSM {
             ProverState::Finished(ref state) => Ok(state.connection_handle),
         }
     }
+
+    pub fn set_connection_handle(&mut self, connection_handle: u32) {
+        match self.state {
+            ProverState::PresentationSent(ref mut state) => {
+                state.connection_handle = connection_handle;
+            },
+            ProverState::Finished(ref mut state) => {
+                state.connection_handle = connection_handle;
+            },
+            _ => {}
+        }
+    }
+
 
     pub fn presentation_request(&self) -> &PresentationRequest {
         match self.state {

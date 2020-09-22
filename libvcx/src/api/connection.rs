@@ -1289,7 +1289,7 @@ mod tests {
     use utils::error;
     use utils::error::SUCCESS;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST};
     use utils::timeout::TimeoutUtils;
 
     use super::*;

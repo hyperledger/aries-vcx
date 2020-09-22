@@ -498,7 +498,7 @@ pub extern fn vcx_disclosed_proof_update_state(command_handle: CommandHandle,
            command_handle, proof_handle, source_id);
 
     spawn(move || {
-        match disclosed_proof::update_state(proof_handle, None) {
+        match disclosed_proof::update_state(proof_handle, None, None) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, s, source_id);
@@ -506,6 +506,47 @@ pub extern fn vcx_disclosed_proof_update_state(command_handle: CommandHandle,
             }
             Err(e) => {
                 error!("vcx_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, e, 0, source_id);
+                cb(command_handle, e.into(), 0)
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
+                                               proof_handle: u32,
+                                               connection_handle: u32,
+                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_v2_disclosed_proof_update_state >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !disclosed_proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into()
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    }
+
+    let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_v2_disclosed_proof_update_state(command_handle: {} proof_handle: {}, connection_handle: {}) source_id: {}",
+           command_handle, proof_handle, connection_handle, source_id);
+
+    spawn(move || {
+        match disclosed_proof::update_state(proof_handle, None, Some(connection_handle)) {
+            Ok(s) => {
+                trace!("vcx_v2_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, error::SUCCESS.message, s, source_id);
+                cb(command_handle, error::SUCCESS.code_num, s)
+            }
+            Err(e) => {
+                error!("vcx_v2_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, e, 0, source_id);
                 cb(command_handle, e.into(), 0)
             }
@@ -549,7 +590,7 @@ pub extern fn vcx_disclosed_proof_update_state_with_message(command_handle: Comm
            command_handle, proof_handle, source_id);
 
     spawn(move || {
-        match disclosed_proof::update_state(proof_handle, Some(message)) {
+        match disclosed_proof::update_state(proof_handle, Some(message), None) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_update_state__with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, s, source_id);

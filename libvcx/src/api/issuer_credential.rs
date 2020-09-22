@@ -345,8 +345,8 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}) source_id: {}",
-           command_handle, credential_handle, source_id);
+    trace!("vcx_v2_issuer_credential_update_state(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
+           command_handle, credential_handle, connection_handle, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
@@ -359,13 +359,13 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
     spawn(move || {
         match issuer_credential::update_state(credential_handle, None, Some(connection_handle)) {
             Ok(x) => {
-                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
+                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, credential_handle, connection_handle, error::SUCCESS.message, x, source_id);
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                warn!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                      command_handle, credential_handle, x, 0, source_id);
+                warn!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
+                      command_handle, credential_handle, connection_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
         };
@@ -883,7 +883,7 @@ pub mod tests {
     use utils::constants::*;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
     use utils::timeout::TimeoutUtils;
 
     use super::*;

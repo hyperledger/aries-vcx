@@ -833,8 +833,8 @@ pub mod tests {
     };
     use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;
-    use utils::mockdata_connection::ARIES_CONNECTION_ACK;
-    use utils::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
+    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use super::*;
 

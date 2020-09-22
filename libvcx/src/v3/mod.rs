@@ -285,7 +285,7 @@ pub mod test {
             assert_eq!(1, ::proof::get_state(self.presentation_handle).unwrap());
 
             ::proof::send_proof_request(self.presentation_handle, self.connection_handle).unwrap();
-            ::proof::update_state(self.presentation_handle, None).unwrap();
+            ::proof::update_state(self.presentation_handle, None, None).unwrap();
 
             assert_eq!(2, ::proof::get_state(self.presentation_handle).unwrap());
         }
@@ -298,7 +298,7 @@ pub mod test {
         pub fn update_proof_state(&self, expected_state: u32, expected_status: u32) {
             self.activate();
 
-            ::proof::update_state(self.presentation_handle, None).unwrap();
+            ::proof::update_state(self.presentation_handle, None, None).unwrap();
             assert_eq!(expected_state, ::proof::get_state(self.presentation_handle).unwrap());
             assert_eq!(expected_status, ::proof::get_proof_state(self.presentation_handle).unwrap());
         }
@@ -464,7 +464,7 @@ pub mod test {
 
         pub fn ensure_presentation_verified(&self) {
             self.activate();
-            ::disclosed_proof::update_state(self.presentation_handle, None).unwrap();
+            ::disclosed_proof::update_state(self.presentation_handle, None, None).unwrap();
             assert_eq!(::v3::messages::status::Status::Success.code(), ::disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
         }
     }

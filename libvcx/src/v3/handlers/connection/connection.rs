@@ -84,7 +84,6 @@ impl Connection {
     pub fn update_state(&mut self, message: Option<&A2AMessage>) -> VcxResult<()> {
         trace!("Connection::update_state >>> message: {:?}", message);
 
-        // TODO: Remove - it should be SM logic to decide state transitions
         if self.connection_sm.is_in_null_state() {
             return Ok(());
         }
@@ -160,13 +159,6 @@ impl Connection {
 
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection::send_message >>> message: {:?}", message);
-
-        match self.state_object() {
-            ActorDidExchangeState::Inviter(ref state) | ActorDidExchangeState::Invitee(ref state) => match state {
-                DidExchangeState::Completed(ref _state) => {}
-                _ => warn!("Sending message to connection in incomplete state {}!", self.state())
-            }
-        }
 
         let did_doc = self.connection_sm.did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;

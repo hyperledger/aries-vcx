@@ -48,12 +48,14 @@ impl HolderSM {
         }
     }
 
-    pub fn update_state(self, connection_handle: Option<u32>) -> VcxResult<Self> {
+    pub fn update_state(mut self, connection_handle: Option<u32>) -> VcxResult<Self> {
         trace!("Holder::update_state >>> ");
 
         if self.is_terminal_state() { return Ok(self); }
 
         let conn_handle = connection_handle.unwrap_or(self.state.get_connection_handle());
+        self.state.set_connection_handle(conn_handle);
+
         let messages = connection::get_messages(conn_handle)?;
 
         match self.find_message_to_handle(messages) {

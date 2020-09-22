@@ -895,7 +895,7 @@ pub mod tests {
     use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST};
 
     use super::*;
 

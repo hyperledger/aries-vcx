@@ -1,4 +1,4 @@
-const { allowedProtocolTypes } = require('../vcx-workflows')
+const { initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
 const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
 const { createVcxAgent } = require('../vcx-agent')
@@ -38,6 +38,7 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const vcxClient = await createVcxAgent({
     agentName,
@@ -46,8 +47,7 @@ async function runAlice (options) {
     seed: '000000000000000000000000Trustee1',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
     usePostgresWallet: false,
-    logger,
-    rustLogLevel: process.env.VCX_LOG_LEVEL || 'vcx=error'
+    logger
   })
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
@@ -58,7 +58,7 @@ async function runAlice (options) {
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxClient.waitForCredentialOfferAndAccept(agentName)
+  await vcxClient.waitForCredentialOfferAndAccept({ connectionName: agentName })
 
   logger.info('Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)
@@ -73,24 +73,7 @@ async function runAlice (options) {
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const resolvedCreds = await proof.getCredentials()
-  const selectedCreds = { attrs: {} }
-  logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
-
-  for (const attrName of Object.keys(resolvedCreds.attrs)) {
-    const attrCredInfo = resolvedCreds.attrs[attrName]
-    if (Array.isArray(attrCredInfo) === false) {
-      throw Error('Unexpected data, expected attrCredInfo to be an array.')
-    }
-    if (attrCredInfo.length > 0) {
-      selectedCreds.attrs[attrName] = {
-        credential: resolvedCreds.attrs[attrName][0]
-      }
-      selectedCreds.attrs[attrName].tails_file = '/tmp/tails'
-    } else {
-      logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)
-    }
-  }
+  const selectedCreds = await vcxClient.holderSelectCredentialsForProof(proof)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
 
   logger.info('Generate the proof.')

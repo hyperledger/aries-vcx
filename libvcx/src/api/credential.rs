@@ -916,7 +916,7 @@ mod tests {
     use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use utils::timeout::TimeoutUtils;
     use v3::messages::issuance::credential_request::CredentialRequest;
 

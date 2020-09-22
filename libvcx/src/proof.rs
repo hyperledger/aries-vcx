@@ -504,7 +504,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
-pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |obj| {
         match obj {
             Proofs::Pending(ref mut obj) => {
@@ -516,7 +516,7 @@ pub fn update_state(handle: u32, message: Option<String>) -> VcxResult<u32> {
                     .or_else(|_| Ok(obj.get_state()))
             }
             Proofs::V3(ref mut obj) => {
-                obj.update_state(message.as_ref().map(String::as_str))?;
+                obj.update_state(message.as_ref().map(String::as_str), connection_handle)?;
                 Ok(obj.state())
             }
         }
@@ -667,9 +667,10 @@ pub mod tests {
     use connection::tests::build_test_connection;
     use messages::proofs::proof_request;
     use utils::devsetup::*;
+    use utils::mockdata::mockdata_proof;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::libindy::pool;
-    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use v3::handlers::connection as connection_v3;
     use v3::handlers::proof_presentation::verifier::verifier::Verifier;
     use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
@@ -870,6 +871,31 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    fn test_proof_update_state_v2() {
+        let _setup = SetupAriesMocks::init();
+
+        let connection_handle = build_test_connection();
+
+        let mut proof = Verifier::create("1".to_string(),
+                                  REQUESTED_ATTRS.to_owned(),
+                                  REQUESTED_PREDICATES.to_owned(),
+                                  r#"{"support_revocation":false}"#.to_string(),
+                                  "Optional".to_owned()).unwrap();
+
+        proof.send_presentation_request(connection_handle).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        ::connection::release(connection_handle);
+        let connection_handle = build_test_connection();
+
+        proof.update_state(Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
+
+        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
+    }
+    
+    #[test]
+    #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
         let _setup = SetupAriesMocks::init();
 
@@ -891,9 +917,12 @@ pub mod tests {
                                          r#"{"support_revocation":false}"#.to_string(),
                                          "Optional".to_owned()).unwrap();
 
+        ::connection::release(connection_handle);
+        let connection_handle = build_test_connection();
+
         proof.send_presentation_request(connection_handle);
 
-        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2)).unwrap();
+        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2), None).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 

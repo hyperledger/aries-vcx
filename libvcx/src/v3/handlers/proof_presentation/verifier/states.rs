@@ -284,6 +284,14 @@ impl VerifierSM {
         }
     }
 
+    pub fn set_connection_handle(&mut self, connection_handle: u32) {
+        match self.state {
+            VerifierState::Initiated(_) => {},
+            VerifierState::PresentationRequestSent(ref mut state) => { state.connection_handle = connection_handle; },
+            VerifierState::Finished(ref mut state) => { state.connection_handle = connection_handle; },
+        }
+    }
+
     pub fn presentation_request_data(&self) -> VcxResult<&PresentationRequestData> {
         match self.state {
             VerifierState::Initiated(ref state) => Ok(&state.presentation_request_data),
