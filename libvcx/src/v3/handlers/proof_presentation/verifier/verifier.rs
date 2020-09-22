@@ -55,7 +55,7 @@ impl Verifier {
         if !self.verifier_sm.has_transitions() { return Ok(()); }
 
         let connection_handle = connection_handle.unwrap_or(self.verifier_sm.connection_handle()?);
-        self.verifier_sm.set_connection_handle(connection_handle)?;
+        self.verifier_sm.set_connection_handle(connection_handle);
 
         if let Some(message_) = message {
             return self.update_state_with_message(message_);

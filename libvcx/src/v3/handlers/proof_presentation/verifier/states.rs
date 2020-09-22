@@ -284,17 +284,12 @@ impl VerifierSM {
         }
     }
 
-    pub fn set_connection_handle(&mut self, connection_handle: u32) -> VcxResult<()> {
+    pub fn set_connection_handle(&mut self, connection_handle: u32) {
         match self.state {
-            VerifierState::Initiated(_) => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot to set connection handle in this state")),
-            VerifierState::PresentationRequestSent(ref mut state) => {
-                state.connection_handle = connection_handle;
-            },
-            VerifierState::Finished(ref mut state) => {
-                state.connection_handle = connection_handle;
-            },
-        };
-        Ok(())
+            VerifierState::Initiated(_) => {},
+            VerifierState::PresentationRequestSent(ref mut state) => { state.connection_handle = connection_handle; },
+            VerifierState::Finished(ref mut state) => { state.connection_handle = connection_handle; },
+        }
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<&PresentationRequestData> {

@@ -1,4 +1,4 @@
-const { provisionAgentInAgency, initRustapi, protocolTypes } = require('../vcx-workflows')
+const { initRustapi, protocolTypes } = require('../vcx-workflows')
 const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
@@ -8,9 +8,11 @@ const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
+const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/data')
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   let faberServer
   let exitcode = 0
   try {
@@ -22,8 +24,7 @@ async function runFaber (options) {
       seed: '000000000000000000000000Trustee1',
       webhookUrl: `http://localhost:7209/notifications/${agentName}`,
       usePostgresWallet: false,
-      logger,
-      rustLogLevel: process.env.VCX_LOG_LEVEL || 'vcx=error'
+      logger
     })
 
     if (process.env.ACCEPT_TAA || false) {
@@ -32,7 +33,7 @@ async function runFaber (options) {
 
     const schema = await vcxClient.createSchema()
     const schemaId = await schema.getSchemaId()
-    await vcxClient.createCredentialDefinition(schemaId, 'DemoCredential123', logger)
+    await vcxClient.createCredentialDefinition(schemaId, getFaberCredDefName())
 
     const { connection: connectionToAlice } = await vcxClient.inviterConnectionCreateAndAccept(agentName, (invitationString) => {
       logger.info('\n\n**invite details**')
@@ -61,48 +62,10 @@ async function runFaber (options) {
       }
     })
 
-    const schemaAttrs = {
-      name: 'alice',
-      last_name: 'clark',
-      sex: 'female',
-      date: '05-2018',
-      degree: 'maths',
-      age: '25'
-    }
-
-    await vcxClient.credentialIssue(schemaAttrs, 'DemoCredential123', agentName, options.revocation)
-
-    const proofAttributes = [
-      {
-        names: ['name', 'last_name', 'sex'],
-        restrictions: [{ issuer_did: vcxClient.getInstitutionDid() }]
-      },
-      {
-        name: 'date',
-        restrictions: { issuer_did: vcxClient.getInstitutionDid() }
-      },
-      {
-        name: 'degree',
-        restrictions: { 'attr::degree::value': 'maths' }
-      },
-      {
-        name: 'nickname',
-        self_attest_allowed: true
-      }
-    ]
-
-    const proofPredicates = [
-      { name: 'age', p_type: '>=', p_value: 20, restrictions: [{ issuer_did: vcxClient.getInstitutionDid() }] }
-    ]
+    await vcxClient.credentialIssue({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionNameReceiver: agentName, revoke: options.revocation })
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create({
-      sourceId: '213',
-      attrs: proofAttributes,
-      preds: proofPredicates,
-      name: 'proofForAlice',
-      revocationInterval: { to: Date.now() }
-    })
+    const vcxProof = await Proof.create(getFaberProofData(vcxClient.getInstitutionDid()))
 
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)

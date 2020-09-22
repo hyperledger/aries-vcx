@@ -54,7 +54,7 @@ impl HolderSM {
         if self.is_terminal_state() { return Ok(self); }
 
         let conn_handle = connection_handle.unwrap_or(self.state.get_connection_handle());
-        self.state.set_connection_handle(conn_handle)?;
+        self.state.set_connection_handle(conn_handle);
 
         let messages = connection::get_messages(conn_handle)?;
 

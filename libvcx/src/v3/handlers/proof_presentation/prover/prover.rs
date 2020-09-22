@@ -77,7 +77,7 @@ impl Prover {
         }
 
         let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
-        self.prover_sm.set_connection_handle(connection_handle)?;
+        self.prover_sm.set_connection_handle(connection_handle);
 
         if let Some(message_) = message {
             return self.update_state_with_message(message_);

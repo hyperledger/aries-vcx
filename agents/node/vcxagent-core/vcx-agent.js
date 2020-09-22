@@ -1,12 +1,11 @@
 const { getMessagesForPwDid } = require('./messages')
 const { provisionAgentInAgency, initRustapi } = require('./vcx-workflows')
-const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
+const { Schema, CredentialDef, Connection, StateType, IssuerCredential, Credential, Proof, DisclosedProof, initVcxWithConfig, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
 const { createStorageService } = require('./storage-service')
-const { pollFunction, waitUntilAgencyIsReady, getRandomInt } = require('./common')
+const { pollFunction, waitUntilAgencyIsReady } = require('./common')
+const { getFaberSchemaData } = require('./test/data')
 
-async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger, rustLogLevel }) {
-  await initRustapi(rustLogLevel)
-
+async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger }) {
   await waitUntilAgencyIsReady(agencyUrl, logger)
 
   const storageService = await createStorageService(agentName)
@@ -37,18 +36,9 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
   }
 
-  async function createSchema () {
-    const version = `${getRandomInt(1, 101)}.${getRandomInt(1, 101)}.${getRandomInt(1, 101)}`
-    const schemaData = {
-      data: {
-        attrNames: ['name', 'last_name', 'sex', 'date', 'degree', 'age'],
-        name: 'FaberVcx',
-        version
-      },
-      paymentHandle: 0,
-      sourceId: `your-identifier-fabervcx-${version}`
-    }
-    logger.info(`Create a new schema on the ledger: ${JSON.stringify(schemaData, null, 2)}`)
+  async function createSchema (_schemaData) {
+    const schemaData = _schemaData || getFaberSchemaData()
+    logger.info(`Creating a new schema on the ledger: ${JSON.stringify(schemaData, null, 2)}`)
 
     const schema = await Schema.create(schemaData)
     const schemaId = await schema.getSchemaId()
@@ -196,7 +186,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     logger.info(`Found ${offers.length} credential offers.`)
   }
 
-  async function credentialIssue (schemaAttrs, credDefName, connectionNameReceiver, revoke, skipProgress) {
+  async function sendOffer ({ schemaAttrs, credDefName, connectionNameReceiver, connection, skipProgress }) {
     logger.info(`Going to issue credential from credential definition ${credDefName}`)
     const credDefSerialized = await storageService.loadCredentialDefinition(credDefName)
     const credDef = await CredentialDef.deserialize(credDefSerialized)
@@ -211,8 +201,15 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
     logger.debug(`IssuerCredential created:\n${JSON.stringify(await issuerCred.serialize())}`)
 
-    const connSerializedBefore = await storageService.loadConnection(connectionNameReceiver)
-    const connectionToReceiver = await Connection.deserialize(connSerializedBefore)
+    let connectionToReceiver
+    if (connectionNameReceiver && !connection) {
+      const connSerializedBefore = await storageService.loadConnection(connectionNameReceiver)
+      connectionToReceiver = await Connection.deserialize(connSerializedBefore)
+    } else if (!connectionNameReceiver && connection) {
+      connectionToReceiver = connection
+    } else {
+      throw Error('Either connection or connection name are allowed as parameters, not both or none')
+    }
     await connectionToReceiver.updateState()
 
     logger.info('Send credential offer to Alice')
@@ -224,16 +221,18 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       logger.debug(`IssuerCredential after credential request was received:\n${JSON.stringify(await issuerCred.serialize())}`)
     }
 
-    logger.info('Issue credential to Alice')
+    return { issuerCred, connectionToReceiver }
+  }
+
+  async function sendCredential ({ issuerCred, connectionToReceiver, revoke, skipProgress }) {
+    logger.info('Issuing credential to Alice')
     await issuerCred.sendCredential(connectionToReceiver)
     logger.debug(`IssuerCredential after credential was sent:\n${JSON.stringify(await issuerCred.serialize())}`)
-
-    const serCredential = await issuerCred.serialize()
 
     if (!skipProgress) {
       logger.info('Wait for alice to accept credential')
       await _progressIssuerCredentialToState(issuerCred, StateType.Accepted, 10, 2000)
-      logger.debug(`IssuerCredential after credential was issued:\n${JSON.stringify(serCredential)}`)
+      logger.debug(`IssuerCredential after credential was issued:\n${JSON.stringify(await issuerCred.serialize())}`)
       logger.info('Credential has been issued.')
     }
 
@@ -241,8 +240,13 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       logger.info('Revoking credential')
       await issuerCred.revokeCredential()
     }
+  }
 
-    return { serCred: serCredential, serConn: await connectionToReceiver.serialize() }
+  async function credentialIssue ({ schemaAttrs, credDefName, connectionNameReceiver, revoke, skipProgress }) {
+    const { issuerCred, connectionToReceiver } = await sendOffer({ schemaAttrs, credDefName, connectionNameReceiver, skipProgress })
+    await sendCredential({ issuerCred, connectionToReceiver, revoke, skipProgress })
+
+    return { serCred: await issuerCred.serialize(), serConn: await connectionToReceiver.serialize() }
   }
 
   async function _getOffers (connection, attemptsThreshold, timeout) {
@@ -294,23 +298,29 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     return offers
   }
 
-  async function waitForCredentialOfferAndAccept (connectionName, skipProgress = false, attemptsThreshold = 10, timeout = 2000) {
+  async function waitForCredentialOfferAndAccept ({ connectionName, connection, skipProgress, attemptsThreshold = 10, timeout = 2000 }) {
     logger.info('Going to try fetch credential offer and receive credential.')
-    const connSerializedBefore = await storageService.loadConnection(connectionName)
-    const connection = await Connection.deserialize(connSerializedBefore)
+    let _connection
+    if (connectionName && !_connection) {
+      const connSerializedBefore = await storageService.loadConnection(connectionName)
+      _connection = await Connection.deserialize(connSerializedBefore)
+    } else if (!connectionName && connection) {
+      _connection = connection
+    } else {
+      throw Error('Either connection or connection name are allowed as parameters, not both or none')
+    }
 
-    await connection.updateState()
-    const offers = await _getOffers(connection, attemptsThreshold, timeout)
+    await _connection.updateState()
+    const offers = await _getOffers(_connection, attemptsThreshold, timeout)
     logger.info(`Found ${offers.length} credential offers.`)
 
     const pickedOffer = JSON.stringify(offers[0])
     logger.debug(`Picked credential offer = ${pickedOffer}`)
 
     const credential = await Credential.create({ sourceId: 'credential', offer: pickedOffer })
-    logger.debug(`CredentialSM created from credential offer:\n${JSON.stringify(await credential.serialize())}`)
 
     logger.info('After receiving credential offer, send credential request')
-    await credential.sendRequest({ connection, payment: 0 })
+    await credential.sendRequest({ connection: _connection, payment: 0 })
     logger.debug(`CredentialSM after credential request was sent:\n${JSON.stringify(await credential.serialize())}`)
 
     if (!skipProgress) {
@@ -319,10 +329,52 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
       logger.debug(`CredentialSM after credential was received:\n${JSON.stringify(await credential.serialize())}`)
       logger.info('Credential has been received.')
     }
+
+    return { credential, serCred: await credential.serialize() }
   }
 
   function getInstitutionDid () {
     return agentProvision.institution_did
+  }
+
+  async function verifierCreateProof ({ sourceId, attrs, preds, name, revocationInterval }) {
+    return Proof.create({ sourceId, attrs, preds, name, revocationInterval })
+  }
+
+  async function verifierCreateProofRequest (connection, verifierProof) {
+    await verifierProof.requestProof(connection)
+    return verifierProof.getProofRequestMessage()
+  }
+
+  async function holderCreateProofFromRequest (request, sourceId = '123') {
+    return DisclosedProof.create({ request, sourceId })
+  }
+
+  async function holderGetRequests (connection) {
+    return DisclosedProof.getRequests(connection)
+  }
+
+  async function holderSelectCredentialsForProof (holderProof) {
+    const resolvedCreds = await holderProof.getCredentials()
+    const selectedCreds = { attrs: {} }
+    logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
+
+    for (const attrName of Object.keys(resolvedCreds.attrs)) {
+      const attrCredInfo = resolvedCreds.attrs[attrName]
+      if (Array.isArray(attrCredInfo) === false) {
+        throw Error('Unexpected data, expected attrCredInfo to be an array.')
+      }
+      if (attrCredInfo.length > 0) {
+        selectedCreds.attrs[attrName] = {
+          credential: resolvedCreds.attrs[attrName][0]
+        }
+        selectedCreds.attrs[attrName].tails_file = '/tmp/tails'
+      } else {
+        logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)
+      }
+    }
+    logger.debug(`Selected credentials:\n${JSON.stringify(selectedCreds, null, 2)}`)
+    return selectedCreds
   }
 
   return {
@@ -334,6 +386,8 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     createSchema,
     connectionsList,
     credentialIssue,
+    sendOffer,
+    sendCredential,
     waitForCredentialOfferAndAccept,
     connectionPrintInfo,
     getCredentialOffers,
@@ -344,7 +398,12 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     inviteeConnectionCreateFromInvite,
     storeConnection,
     sendMessage,
-    getMessages
+    getMessages,
+    verifierCreateProof,
+    verifierCreateProofRequest,
+    holderCreateProofFromRequest,
+    holderSelectCredentialsForProof,
+    holderGetRequests
   }
 }
 
