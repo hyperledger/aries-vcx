@@ -141,9 +141,9 @@ pub mod tests {
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use utils::devsetup::SetupAriesMocks;
-    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
 
     use super::*;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -200,7 +200,7 @@ pub mod tests {
 
         proof.send_presentation_request(connection_handle);
 
-        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2)).unwrap();
+        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2), Some(connection_handle)).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 }

@@ -706,8 +706,7 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use proof;
-    use connection::tests::{build_test_connection_inviter_requested};
+    use ::{proof, settings};
     use api::{ProofStateType, return_types_u32, VcxStateType};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::constants::*;
@@ -716,8 +715,8 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use utils::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use connection::tests::build_test_connection_inviter_requested;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 

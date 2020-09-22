@@ -39,8 +39,8 @@ use v3::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
-use utils::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use settings::indy_mocks_enabled;
+use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
@@ -1007,6 +1007,7 @@ mod tests {
     use utils::devsetup::*;
 
     use super::*;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -1044,6 +1045,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_fails() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
@@ -1165,7 +1167,7 @@ mod tests {
         let handle_1 = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         let serialized = to_string(handle_1).unwrap();
-        let handle_2 = from_string(&serialized);
+        from_string(&serialized).unwrap();
     }
 
     #[test]

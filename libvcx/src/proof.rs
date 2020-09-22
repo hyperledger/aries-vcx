@@ -1060,7 +1060,7 @@ pub mod tests {
                                        "Optional".to_owned()).unwrap();
         let request = generate_proof_request_msg(hande_proof).unwrap();
         send_proof_request(hande_proof, handle_conn).unwrap();
-        update_state(hande_proof, Some(ARIES_PROOF_PRESENTATION.to_string())).unwrap();
+        update_state(hande_proof, Some(ARIES_PROOF_PRESENTATION.to_string()), Some(handle_conn)).unwrap();
         assert_eq!(::proof::get_state(hande_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 

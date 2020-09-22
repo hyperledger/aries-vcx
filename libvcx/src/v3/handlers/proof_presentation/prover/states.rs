@@ -223,7 +223,6 @@ impl ProverSM {
 
         let ProverSM { source_id, state, thread_id } = self;
 
-        info!("Currently in state = {:?}", state);
         let state = match state {
             ProverState::Initiated(state) => {
                 match message {
@@ -267,18 +266,13 @@ impl ProverSM {
             ProverState::PresentationPrepared(state) => {
                 match message {
                     ProverMessages::SendPresentation(connection_handle) => {
-                        info!("sending presentation");
                         match state.presentation_request.service.clone() {
                             None => {
-                                info!("via send_message");
                                 connection::send_message(connection_handle, state.presentation.to_a2a_message())?;
-                                info!("moving to PresentationSent");
                                 ProverState::PresentationSent((state, connection_handle).into())
                             }
                             Some(service) => {
-                                info!("via self_endpoint");
                                 connection::send_message_to_self_endpoint(state.presentation.to_a2a_message(), &service.into())?;
-                                info!("moving to Finished");
                                 ProverState::Finished(state.into())
                             }
                         }
