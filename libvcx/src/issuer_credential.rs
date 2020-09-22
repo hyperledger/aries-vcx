@@ -857,23 +857,6 @@ pub mod tests {
         libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).unwrap();
     }
 
-    fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
-        MyAgentInfo {
-            my_pw_did: Some("8XFh8yBzrpJQmNyZzgoTqB".to_string()),
-            my_pw_vk: Some(VERKEY.to_string()),
-            their_pw_did: Some(DID.to_string()),
-            their_pw_vk: Some(VERKEY.to_string()),
-            pw_agent_did: Some(DID.to_string()),
-            pw_agent_vk: Some(VERKEY.to_string()),
-            agent_did: DID.to_string(),
-            agent_vk: VERKEY.to_string(),
-            agency_did: DID.to_string(),
-            agency_vk: VERKEY.to_string(),
-            version: None,
-            connection_handle,
-        }
-    }
-
     pub fn create_full_issuer_credential() -> (IssuerCredential, ::credential::Credential) {
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(true);
