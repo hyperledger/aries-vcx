@@ -17,7 +17,8 @@ public class VcxApi extends VcxJava.API {
     private VcxApi() {
     }
 
-    private static Callback vcxIniWithConfigCB = new Callback() {
+
+    private static Callback cmdHandleErrCodeCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int commandHandle, int err) {
             logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "]");
@@ -38,7 +39,6 @@ public class VcxApi extends VcxJava.API {
             if (!checkCallback(future, err)) return;
             int result = err;
             future.complete(result);
-
         }
     };
 
@@ -51,11 +51,43 @@ public class VcxApi extends VcxJava.API {
         int result = LibVcx.api.vcx_init_with_config(
                 commandHandle,
                 configJson,
-                vcxIniWithConfigCB);
+                cmdHandleErrCodeCB);
         checkResult(result);
 
         return future;
+    }
 
+    public static void vcxInitCore(String configJson) throws VcxException {
+        ParamGuard.notNullOrWhiteSpace(configJson, "configJson");
+        logger.debug("vcxInitCore() called with: configJson = [****]");
+        int result = LibVcx.api.vcx_init_core(configJson);
+        checkResult(result);
+    }
+
+    public static CompletableFuture<Integer> vcxOpenPool() throws VcxException {
+        logger.debug("vcxOpenPool()");
+        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_open_pool(
+                commandHandle,
+                cmdHandleErrCodeCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    public static CompletableFuture<Integer> vcxOpenWallet() throws VcxException {
+        logger.debug("vcxOpenWallet()");
+        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_open_wallet(
+                commandHandle,
+                cmdHandleErrCodeCB);
+        checkResult(result);
+
+        return future;
     }
 
     public static CompletableFuture<Integer> vcxInit(String configPath) throws VcxException {
