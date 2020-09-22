@@ -2,17 +2,14 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use api::VcxStateType;
 use error::prelude::*;
 use messages;
 use messages::SerializableObjectWithState;
 use messages::get_message::Message;
-use messages::invite::{InviteDetail, RedirectDetail};
 use object_cache::ObjectCache;
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
-use utils::json::KeyMatch;
 use v3::handlers::connection::connection::Connection as ConnectionV3;
 use v3::handlers::connection::states::ActorDidExchangeState;
 use v3::handlers::connection::agent::AgentInfo;
@@ -21,46 +18,10 @@ use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation as InvitationV3;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connections> = ObjectCache::<Connections>::new("connections-cache");
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "version")]
-enum Connections {
-    #[serde(rename = "1.0")]
-    V1(Connection),
-    #[serde(rename = "2.0")]
-    V3(ConnectionV3),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ConnectionOptions {
-    #[serde(default)]
-    pub connection_type: Option<String>,
-    #[serde(default)]
-    pub phone: Option<String>,
-    pub use_public_did: Option<bool>,
-}
-
-impl Default for ConnectionOptions {
-    fn default() -> Self {
-        ConnectionOptions {
-            connection_type: None,
-            phone: None,
-            use_public_did: None,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct Connection {
+    static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
 }
 
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
-    /*
-        Create User Pairwise Agent in old way.
-        Send Messages corresponding to V2 Protocol version to avoid code changes on Agency side.
-    */
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
     let (agent_did, agent_verkey) = messages::create_keys()
@@ -75,11 +36,8 @@ pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxR
 
 pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => connection.remote_vk()
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        connection.remote_vk()
+    })
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -88,92 +46,66 @@ pub fn is_valid_handle(handle: u32) -> bool {
 
 pub fn get_agent_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => Ok(connection.agent_info().agent_did.to_string())
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        Ok(connection.agent_info().agent_did.to_string())
+    })
 }
 
 pub fn get_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => Ok(connection.agent_info().pw_did.to_string())
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        Ok(connection.agent_info().pw_did.to_string())
+    })
 }
 
 pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => connection.remote_did()
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        connection.remote_did()
+    })
 }
 
 pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => Ok(connection.agent_info().agent_vk.clone())
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.agent_info().agent_vk.clone())
+    })
 }
 
 pub fn get_version(handle: u32) -> VcxResult<Option<ProtocolTypes>> {
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(_) => Ok(Some(settings::get_protocol_type()))
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    Ok(Some(settings::get_protocol_type()))
 }
 
 pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => Ok(connection.agent_info().pw_vk.clone())
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.agent_info().pw_vk.clone())
+    })
 }
 
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Ok(0),
-            Connections::V3(ref connection) => Ok(connection.state())
-        }
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.state())
     }).unwrap_or(0)
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => Ok(connection.get_source_id())
-        }
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.get_source_id())
+    })
 }
 
-fn store_connection(connection: Connections) -> VcxResult<u32> {
+fn store_connection(connection: ConnectionV3) -> VcxResult<u32> {
     CONNECTION_MAP.add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
 }
 
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connections::V3(ConnectionV3::create(source_id));
+    let connection = ConnectionV3::create(source_id);
     return store_connection(connection)
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = Connections::V3(ConnectionV3::create_with_invite(source_id, invitation)?);
+        let connection = ConnectionV3::create_with_invite(source_id, invitation)?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
@@ -182,48 +114,28 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
 
 pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => connection.send_generic_message(msg, msg_options)
-        }
-    })
+        connection.send_generic_message(msg, msg_options)
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => {
-                connection.update_state(Some(&message))?;
-                Ok(error::SUCCESS.code_num)
-            }
-        }
-    })
-        .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        connection.update_state(Some(&message))?;
+        Ok(error::SUCCESS.code_num)
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => {
-                connection.update_state(message.as_ref())?;
-                Ok(error::SUCCESS.code_num)
-            }
-        }
-    })
-        .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        connection.update_state(message.as_ref())?;
+        Ok(error::SUCCESS.code_num)
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn delete_connection(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => {
-                connection.delete()?;
-                Ok(error::SUCCESS.code_num)
-            }
-        }
+        connection.delete()?;
+        Ok(error::SUCCESS.code_num)
     })
         .map(|_| error::SUCCESS.code_num)
         .or(Err(VcxError::from(VcxErrorKind::DeleteConnection)))
@@ -233,29 +145,19 @@ pub fn delete_connection(handle: u32) -> VcxResult<u32> {
 
 pub fn connect(handle: u32, _options: Option<String>) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => {
-                connection.connect()?;
-                Ok(error::SUCCESS.code_num)
-            }
-        }
-    })
+        connection.connect()?;
+        Ok(error::SUCCESS.code_num)
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => {
-                let (state, data, source_id) = connection.to_owned().into();
-                let object = SerializableObjectWithState::V3 { data, state, source_id };
+        let (state, data, source_id) = connection.to_owned().into();
+        let object = SerializableObjectWithState::V3 { data, state, source_id };
 
-                ::serde_json::to_string(&object)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
-            }
-        }
-    })
+        ::serde_json::to_string(&object)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
@@ -264,7 +166,7 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
 
     let handle = match object {
         SerializableObjectWithState::V3 { data, state, source_id } => {
-            CONNECTION_MAP.add(Connections::V3((state, data, source_id).into()))?
+            CONNECTION_MAP.add((state, data, source_id).into())?
         },
         _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
     };
@@ -282,56 +184,8 @@ pub fn release_all() {
 
 pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => connection.get_invite_details()
-        }
+        connection.get_invite_details()
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
-}
-
-//**********
-// Code to convert InviteDetails to Abbreviated String
-//**********
-
-impl KeyMatch for (String, Option<String>) {
-    fn matches(&self, key: &String, context: &Vec<String>) -> bool {
-        if key.eq(&self.0) {
-            match context.last() {
-                Some(parent) => {
-                    if let Some(ref expected_parent) = self.1 {
-                        return parent.eq(expected_parent);
-                    }
-                }
-                None => {
-                    return self.1.is_none();
-                }
-            }
-        }
-        false
-    }
-}
-
-
-lazy_static! {
-    static ref ABBREVIATIONS: Vec<(String, String)> = {
-        vec![
-        ("statusCode".to_string(),          "sc".to_string()),
-        ("connReqId".to_string(),           "id".to_string()),
-        ("senderDetail".to_string(),        "s".to_string()),
-        ("name".to_string(),                "n".to_string()),
-        ("agentKeyDlgProof".to_string(),    "dp".to_string()),
-        ("agentDID".to_string(),            "d".to_string()),
-        ("agentDelegatedKey".to_string(),   "k".to_string()),
-        ("signature".to_string(),           "s".to_string()),
-        ("DID".to_string(), "d".to_string()),
-        ("logoUrl".to_string(), "l".to_string()),
-        ("verKey".to_string(), "v".to_string()),
-        ("senderAgencyDetail".to_string(), "sa".to_string()),
-        ("endpoint".to_string(), "e".to_string()),
-        ("targetName".to_string(), "t".to_string()),
-        ("statusMsg".to_string(), "sm".to_string()),
-        ]
-    };
 }
 
 impl Into<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
@@ -348,47 +202,32 @@ impl From<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
 
 pub fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V3(ref mut connection) => connection.get_messages(),
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
-        }
+        connection.get_messages()
     })
 }
 
 pub fn update_message_status(handle: u32, uid: String) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V3(ref mut connection) => connection.update_message_status(uid.clone()),
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
-        }
+        connection.update_message_status(uid.clone())
     })
 }
 
 pub fn get_message_by_id(handle: u32, msg_id: String) -> VcxResult<A2AMessage> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V3(ref mut connection) => connection.get_message_by_id(&msg_id),
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
-        }
+        connection.get_message_by_id(&msg_id)
     })
 }
 
 pub fn decode_message(handle: u32, message: Message) -> VcxResult<A2AMessage> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V3(ref mut connection) => connection.decode_message(&message),
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle))
-        }
+        connection.decode_message(&message)
     })
 }
 
 pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
     CONNECTION_MAP.get_mut(handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)),
-            Connections::V3(ref mut connection) => connection.send_message(&message)
-        }
+        connection.send_message(&message)
     })
 }
 
@@ -397,38 +236,26 @@ pub fn send_message_to_self_endpoint(message: A2AMessage, did_doc: &DidDoc) -> V
 }
 
 pub fn is_v3_connection(connection_handle: u32) -> VcxResult<bool> {
-    CONNECTION_MAP.get(connection_handle, |connection| {
-        match connection {
-            Connections::V1(_) => Ok(false),
-            Connections::V3(_) => Ok(true)
-        }
+    CONNECTION_MAP.get(connection_handle, |_| {
+        Ok(true)
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub fn send_ping(connection_handle: u32, comment: Option<String>) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(connection_handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => connection.send_ping(comment.clone())
-        }
+        connection.send_ping(comment.clone())
     })
 }
 
 pub fn send_discovery_features(connection_handle: u32, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(connection_handle, |connection| {
-        match connection {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref mut connection) => connection.send_discovery_features(query.clone(), comment.clone())
-        }
+        connection.send_discovery_features(query.clone(), comment.clone())
     })
 }
 
 pub fn get_connection_info(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |cxn| {
-        match cxn {
-            Connections::V1(_) => Err(VcxError::from(VcxErrorKind::ActionNotSupported)),
-            Connections::V3(ref connection) => connection.get_connection_info()
-        }
+    CONNECTION_MAP.get(handle, |connection| {
+        connection.get_connection_info()
     })
 }
 
@@ -437,6 +264,7 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
+    use api::VcxStateType;
     use messages::get_message::*;
     use utils::constants::*;
     use utils::constants;
@@ -571,7 +399,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = to_string(0);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[test]
@@ -697,11 +525,9 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
+        // TODO: Test it is v3 connection
         CONNECTION_MAP.get_mut(handle, |connection| {
-            match connection {
-                Connections::V1(_) => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "It is suppose to be V3")),
-                Connections::V3(_) => Ok(()),
-            }
+            Ok(())
         }).unwrap();
 
         let _serialized = to_string(handle).unwrap();
