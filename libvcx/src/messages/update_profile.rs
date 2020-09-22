@@ -150,7 +150,7 @@ mod tests {
 
     use super::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata_agency::{AGENCY_CONFIGS_UPDATED};
+    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     #[test]
     #[cfg(feature = "general_test")]

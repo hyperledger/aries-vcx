@@ -874,7 +874,7 @@ pub mod tests {
     fn test_proof_update_state_v2() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = Verifier::create("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -887,7 +887,7 @@ pub mod tests {
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
         ::connection::release(connection_handle);
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         proof.update_state(Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
 
@@ -918,7 +918,7 @@ pub mod tests {
                                          "Optional".to_owned()).unwrap();
 
         ::connection::release(connection_handle);
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         proof.send_presentation_request(connection_handle);
 

@@ -187,7 +187,6 @@ describe('Connection:', () => {
     it('success', async () => {
       const connection = await createConnectionInviterInvited()
       const details = await connection.inviteDetails(true)
-      console.log(details)
       const parsedInvitation = JSON.parse(details)
       assert.isString(parsedInvitation['@id'])
       assert.equal(parsedInvitation['@type'], 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation')

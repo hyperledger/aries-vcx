@@ -161,7 +161,7 @@ mod tests {
     use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
     use utils::httpclient::AgencyMockDecrypted;
     use messages::update_message::{UpdateMessageStatusByConnectionsBuilder, UIDsByConn, update_agency_messages};
-    use utils::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
     use connection::send_generic_message;
     use messages::get_message::download_messages;
     use messages::MessageStatusCode;
