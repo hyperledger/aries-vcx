@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 ARG USER_ID=1000
 
@@ -6,7 +6,6 @@ ARG USER_ID=1000
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       pkg-config \
-      libssl-dev \
       libgmp3-dev \
       curl \
       build-essential \
@@ -15,12 +14,11 @@ RUN apt-get update && \
       apt-transport-https \
       ca-certificates \
       debhelper \
-      wget \
       devscripts \
-      libncursesw5-dev \
       libzmq3-dev \
       zip \
       unzip \
+      python3-distutils \
       jq
 
 # Add indy user to sudoers

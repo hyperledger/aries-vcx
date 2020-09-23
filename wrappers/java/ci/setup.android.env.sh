@@ -56,6 +56,7 @@ create_avd(){
         mv /home/indy/emu.zip emu.zip
         mv emulator emulator_backup
         unzip emu.zip
+        rm "emu.zip"
     else
         echo "Skipping sdkmanager activity"
     fi
@@ -278,9 +279,15 @@ build_libvcx(){
     echo "**************************************************"
     LIBVCX_DIR=$1
     pushd ${LIBVCX_DIR}
+        ls -lah ||:
+        du -h --max-depth=3 ||:
         rm -rf target/${TRIPLET}
         cargo clean
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
+        rm -rf target/${TRIPLET}/release/deps
+        rm -rf target/${TRIPLET}/release/build
+        rm -rf target/release/deps
+        rm -rf target/release/build
     popd
 }
 

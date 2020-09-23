@@ -24,14 +24,15 @@ prepare_artifacts(){
     AAR_DIR=${HOME}/artifacts/aar
     mkdir -p ${PACKAGE_DIR}/{include,lib} ${ZIP_DIR} ${AAR_DIR}
 
-    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
+    mv ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
+    rm -r ${LIBVCX_DIR}/target
 
     if [ -z "${LIBVCX_VERSION}" ]; then
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}.zip ${PACKAGE_DIR}
     else
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}_${LIBVCX_VERSION}.zip ${PACKAGE_DIR}
     fi
-    cp $(ls -r -t1 ${JAVA_WRAPPER_DIR}/android/build/outputs/aar/* | head -n 1) ${AAR_DIR}
+    mv $(ls -r -t1 ${JAVA_WRAPPER_DIR}/android/build/outputs/aar/* | head -n 1) ${AAR_DIR}
 }
 
 build_android_wrapper(){
