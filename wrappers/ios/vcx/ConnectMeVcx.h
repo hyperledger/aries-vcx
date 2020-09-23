@@ -81,11 +81,11 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (vcx_error_t) vcxInitCore:(NSString *)config;
 - (void) vcxOpenWallet:(void (^)(NSError *error)) completion;
 - (void) vcxOpenPool:(void (^)(NSError *error)) completion;
+- (void) updateWebhookUrl:(NSString *) notification_webhook_url
+           withCompletion:(void (^)(NSError *error))completion;
 
 - (void)agentProvisionAsync:(NSString *)config
                  completion:(void (^)(NSError *error, NSString *config))completion;
-
-- (int)updateWebhookUrl:(NSString *) notification_webhook_url;
 
 - (NSString *)errorCMessage:(NSInteger) errorCode;
 

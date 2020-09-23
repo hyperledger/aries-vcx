@@ -65,14 +65,13 @@ vcx_error_t vcx_init_with_config(vcx_command_handle_t handle, const char *config
 vcx_error_t vcx_init_core(const char *config);
 vcx_error_t vcx_open_pool(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_open_wallet(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
+vcx_error_t vcx_update_webhook_url(vcx_command_handle_t handle, const char *notification_webhook_url, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 
 vcx_error_t vcx_init(vcx_command_handle_t handle, const char *config_path, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 //pub extern fn vcx_init (command_handle: u32, config_path:*const c_char, cb: Option<extern fn(xcommand_handle: u32, err: u32)>) -> u32
 
 vcx_error_t vcx_create_agent(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *xconfig));
 vcx_error_t vcx_update_agent_info(vcx_command_handle_t handle, const char *info, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
-
-vcx_error_t vcx_update_webhook_url(const char *notification_webhook_url);
 
 const char *vcx_error_c_message(int);
 const char *vcx_version();

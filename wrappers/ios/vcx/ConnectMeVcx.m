@@ -381,10 +381,21 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
-- (int)updateWebhookUrl:(NSString *) notification_webhook_url {
+- (void) updateWebhookUrl:(NSString *) notification_webhook_url
+           withCompletion:(void (^)(NSError *error))completion;
+{
     const char *notification_webhook_url_char = [notification_webhook_url cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
+    vcx_error_t ret = vcx_agent_provision_async(handle, config_char, VcxWrapperCommonStringCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
 
-    return vcx_update_webhook_url(notification_webhook_url_char);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: vcx_update_webhook_url: calling completion");
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
 }
 
 - (NSString *)errorCMessage:(NSInteger) errorCode {
