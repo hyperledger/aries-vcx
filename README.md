@@ -37,4 +37,3 @@ If the library works with an agency `vcx_agent_provision` function must be calle
 The result of this function is <configuration> JSON which can be extended and used for initialization.
 
 To change <configuration> a user must call `vcx_shutdown` and then call initialization function again.
-
