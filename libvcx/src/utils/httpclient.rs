@@ -73,11 +73,11 @@ impl AgencyMockDecrypted {
     }
 
     pub fn get_next_decrypted_response() -> String {
-        if !Self::has_decrypted_mock_responses() && Self::has_decrypted_mock_messages() {
+        if Self::has_decrypted_mock_responses()  {
+            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.pop().unwrap()
+        } else {
             debug!("Attempting to obtain decrypted response when none were set, but decrypted messages available - returning empty response...");
             String::new()
-        } else {
-            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.pop().unwrap()
         }
     }
 

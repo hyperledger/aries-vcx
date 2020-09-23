@@ -1034,7 +1034,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_handle = ::connection::tests::build_test_connection();
+        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1061,7 +1061,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_handle = ::connection::tests::build_test_connection();
+        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         let cb = return_types_u32::Return_U32::new().unwrap();
 
@@ -1075,7 +1075,7 @@ pub mod tests {
 
         ::connection::release(connection_handle).unwrap();
 
-        let connection_handle = ::connection::tests::build_test_connection();
+        let connection_handle = ::connection::tests::build_test_connection_inviter_invited();
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
@@ -1118,7 +1118,7 @@ pub mod tests {
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
-        let handle_conn = ::connection::tests::build_test_connection();
+        let handle_conn = ::connection::tests::build_test_connection_inviter_invited();
         info!("test_vcx_issuer_send_a_credential:: created connection with handle {}", handle_conn);
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);

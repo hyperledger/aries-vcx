@@ -1283,7 +1283,7 @@ mod tests {
     use std::ptr;
 
     use api::{return_types_u32, VcxStateType};
-    use connection::tests::build_test_connection;
+    use connection::tests::{build_test_connection_inviter_requested, build_test_connection_inviter_invited};
     use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use utils::devsetup::*;
     use utils::error;
@@ -1331,7 +1331,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1346,7 +1346,7 @@ mod tests {
     fn test_vcx_connection_update_state() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_invited();
         assert!(handle > 0);
         connect(handle, None).unwrap();
 
@@ -1372,7 +1372,7 @@ mod tests {
     fn test_vcx_connection_update_state_with_message() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
         connect(handle, None).unwrap();
 
@@ -1401,7 +1401,7 @@ mod tests {
     fn test_vcx_connection_serialize() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1416,7 +1416,7 @@ mod tests {
     fn test_vcx_connection_release() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_requested();
 
         let rc = vcx_connection_release(handle);
         assert_eq!(rc, error::SUCCESS.code_num);
@@ -1449,7 +1449,7 @@ mod tests {
     fn test_vcx_connection_get_state() {
         let _setup = SetupAriesMocks::init();
 
-        let handle = build_test_connection();
+        let handle = build_test_connection_inviter_invited();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
@@ -1469,7 +1469,7 @@ mod tests {
     fn test_vcx_connection_delete_connection() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         AgencyMockDecrypted::set_next_decrypted_response(DELETE_CONNECTION_DECRYPTED_RESPONSE);
 
@@ -1485,7 +1485,7 @@ mod tests {
     fn test_send_message() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let msg = CString::new("MESSAGE").unwrap().into_raw();
         let send_msg_options = CString::new(json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap().into_raw();
@@ -1499,7 +1499,7 @@ mod tests {
     fn test_sign() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection();
+        let connection_handle = ::connection::tests::build_test_connection_inviter_invited();
 
         let msg = format!("My message");
         let msg_len = msg.len();
@@ -1518,7 +1518,7 @@ mod tests {
     fn test_verify_signature() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection();
+        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
 
         let msg = format!("My message");
         let msg_len = msg.len();

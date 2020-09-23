@@ -2,7 +2,7 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import {
-  connectionCreateConnect,
+  createConnectionInviterRequested,
   dataProofCreate,
   proofCreate
 } from 'helpers/entities'
@@ -115,7 +115,7 @@ describe('Proof:', () => {
 
   describe('requestProof:', () => {
     it('success', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const proof = await proofCreate()
       await proof.requestProof(connection)
       assert.equal(await proof.getState(), StateType.OfferSent)
@@ -129,7 +129,7 @@ describe('Proof:', () => {
 
     // todo: adjust for aries, need to use aries data mocks
     it.skip('success -> received', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const proof = await proofCreate()
       await proof.requestProof(connection)
       assert.equal(await proof.getState(), StateType.OfferSent)
@@ -146,7 +146,7 @@ describe('Proof:', () => {
 
     // todo: adjust for aries, need to use aries data mocks
     it.skip('success via message-> received', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const proof = await proofCreate()
       const request = await proof.getProofRequestMessage()
       const disProof = await DisclosedProof.create({ connection, sourceId: 'name', request })
@@ -161,7 +161,7 @@ describe('Proof:', () => {
     })
 
     it('throws: not initialized', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       const proof = new Proof(null as any, {} as any)
       const error = await shouldThrow(() => proof.requestProof(connection))
       assert.equal(error.vcxCode, VCXCode.INVALID_PROOF_HANDLE)

@@ -64,7 +64,7 @@ impl Connection {
         trace!("Connection::get_invite_details >>>");
         if let Some(invitation) = self.connection_sm.get_invitation() {
             return Ok(json!(invitation.to_a2a_message()).to_string());
-        } else if let Some(did_doc) = self.connection_sm.did_doc() {
+        } else if let Some(did_doc) = self.connection_sm.their_did_doc() {
             let info = json!(Invitation::from(did_doc));
             return Ok(info.to_string());
         } else {
@@ -160,9 +160,10 @@ impl Connection {
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection::send_message >>> message: {:?}", message);
 
-        let did_doc = self.connection_sm.did_doc()
+        let did_doc = self.connection_sm.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
 
+        warn!("Connection resolved did_doc = {:?}", did_doc);
         self.agent_info().send_message(message, &did_doc)
     }
 
@@ -224,7 +225,7 @@ impl Connection {
             protocols: Some(self.connection_sm.get_protocols()),
         };
 
-        let remote = match self.connection_sm.did_doc() {
+        let remote = match self.connection_sm.their_did_doc() {
             Some(did_doc) =>
                 Some(SideConnectionInfo {
                     did: did_doc.id.clone(),

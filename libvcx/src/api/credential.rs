@@ -986,7 +986,7 @@ mod tests {
         let handle = credential::credential_create_with_offer("test_send_request", ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
-        let connection_handle = connection::tests::build_test_connection();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_credential_send_request(cb.command_handle, handle, connection_handle, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -998,7 +998,7 @@ mod tests {
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let cxn = ::connection::tests::build_test_connection_inviter_invited();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_offers(cb.command_handle,
@@ -1013,7 +1013,7 @@ mod tests {
     fn test_vcx_credential_create() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection();
+        let cxn = ::connection::tests::build_test_connection_inviter_invited();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_create_with_msgid(cb.command_handle,
@@ -1041,7 +1041,7 @@ mod tests {
     fn test_vcx_credential_update_state() {
         let _setup = SetupAriesMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection();
+        let handle_conn = ::connection::tests::build_test_connection_inviter_requested();
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1066,7 +1066,7 @@ mod tests {
     fn test_vcx_credential_get_request_msg() {
         let _setup = SetupAriesMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection();
+        let handle_conn = ::connection::tests::build_test_connection_inviter_invited();
 
         let my_pw_did = CString::new(::connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
         let their_pw_did = CString::new(::connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();

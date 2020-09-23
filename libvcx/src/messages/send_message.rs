@@ -280,28 +280,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "to_restore")]
-    fn test_parse_send_message_response() {
-        // let _setup = SetupAriesMocks::init();
-        let _setup = SetupLibraryAgencyZeroFees::init("4.0");
-
-        // todo: need to set arias compatible mock, this is legacy so we get parsing failure
-
-        let data = prepare_request()?;
-
-        let response = httpclient::post_u8(&data)?;
-
-        let result = SendMessageBuilder::create().send_secure();
-        warn!("Agency responded: {:?}", result);
-        // let result = SendMessageBuilder::create().parse_response(SEND_MESSAGE_RESPONSE.to_vec()).unwrap();
-        // let expected = SendResponse {
-        //     uid: None,
-        //     uids: vec!["ntc2ytb".to_string()],
-        // };
-        // assert_eq!(expected, result);
-    }
-
-    #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_send_message_bad_response() {
         let _setup = SetupAriesMocks::init();
@@ -331,58 +309,5 @@ mod tests {
 
         let uid = response.get_msg_uid().unwrap_err();
         assert_eq!(VcxErrorKind::InvalidJson, uid.kind());
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
-    fn test_send_generic_message() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
-
-        send_generic_message(alice, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap();
-
-        ::utils::devsetup::set_consumer();
-        let _all_messages = get_message::download_messages(None, None, None).unwrap();
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: use local agency, migrate to v2 agency
-    #[test]
-    fn test_send_message_and_download_response() {
-        let _setup = SetupLibraryAgencyV1::init();
-
-        let (faber, alice) = ::connection::tests::create_connected_connections();
-
-        let msg_id = send_generic_message(alice, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap();
-
-        ::utils::devsetup::set_consumer();
-        let msg1 = get_message::download_messages(None, None, Some(vec![msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&msg1).unwrap());
-        let msg_id_response = send_generic_message(faber, "this is the response", &json!({"msg_type":"response type", "msg_title": "test response", "ref_msg_id":msg_id}).to_string()).unwrap();
-
-        ::utils::devsetup::set_institution();
-        let msg1 = get_message::download_messages(None, None, Some(vec![msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&msg1).unwrap());
-
-        let ref_msg_id = msg1[0].clone().msgs[0].clone().ref_msg_id.unwrap();
-        assert_eq!(ref_msg_id, msg_id_response);
-
-        let response = get_message::download_messages(None, None, Some(vec![ref_msg_id.clone()])).unwrap();
-        println!("{}", serde_json::to_string(&response).unwrap());
-        assert_eq!(response[0].clone().msgs[0].clone().msg_type, RemoteMessageType::Other("response type".to_string()));
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_send_generic_message_fails_with_invalid_connection() {
-        let _setup = SetupAriesMocks::init();
-
-        let handle = ::connection::tests::build_test_connection();
-
-        let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
 }

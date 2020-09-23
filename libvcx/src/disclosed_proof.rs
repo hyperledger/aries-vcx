@@ -1042,7 +1042,7 @@ mod tests {
     fn test_proof_cycle() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = _get_proof_request_messages(connection_h);
 
@@ -1058,7 +1058,7 @@ mod tests {
     fn test_proof_update_state_v2() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
@@ -1075,7 +1075,7 @@ mod tests {
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle).unwrap());
 
         ::connection::release(connection_handle);
-        let connection_handle = connection::tests::build_test_connection();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
@@ -1091,7 +1091,7 @@ mod tests {
     fn test_proof_reject_cycle() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = _get_proof_request_messages(connection_h);
 
@@ -1327,7 +1327,7 @@ mod tests {
     fn test_get_proof_request() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection();
+        let connection_h = connection::tests::build_test_connection_inviter_invited();
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: ProofRequestMessage = serde_json::from_str(&request).unwrap();

@@ -268,6 +268,11 @@ impl Connection {
     }
 
     pub fn send_generic_message(&self, message: &str, msg_options: &str) -> VcxResult<String> {
+        if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"
+        {
+            panic!("Trying to use legacy strategy for sending generic message");
+        }
+
         if self.state != VcxStateType::VcxStateAccepted {
             return Err(VcxError::from(VcxErrorKind::NotReady));
         }
@@ -899,9 +904,16 @@ pub mod tests {
 
     use super::*;
 
-    pub fn build_test_connection() -> u32 {
-        let handle = create_connection("alice").unwrap();
+    pub fn build_test_connection_inviter_invited() -> u32 {
+        let handle = create_connection("faber_to_alice").unwrap();
         connect(handle, Some("{}".to_string())).unwrap();
+        handle
+    }
+
+    pub fn build_test_connection_inviter_requested() -> u32 {
+        let handle = build_test_connection_inviter_invited();
+        let msg : A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
+        update_state_with_message(handle, msg).unwrap();
         handle
     }
 
@@ -1170,5 +1182,65 @@ pub mod tests {
         }).unwrap();
 
         let _serialized = to_string(handle).unwrap();
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_send_generic_message_fails_with_invalid_connection() {
+        let _setup = SetupAriesMocks::init();
+
+        let handle = ::connection::tests::build_test_connection_inviter_invited();
+
+        let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
+        assert_eq!(err.kind(), VcxErrorKind::NotReady);
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_send_and_download_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
+
+        send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
+
+        // AS CONSUMER GET MESSAGES
+        ::utils::devsetup::set_consumer();
+        send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
+
+        // make sure messages has bee delivered
+        thread::sleep(Duration::from_millis(1000));
+
+        let all_messages = download_messages(None, None, None).unwrap();
+        assert_eq!(all_messages.len(), 1);
+        assert_eq!(all_messages[0].msgs.len(), 3);
+        assert!(all_messages[0].msgs[0].decrypted_payload.is_some());
+        assert!(all_messages[0].msgs[1].decrypted_payload.is_some());
+
+        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+        assert!(received[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
+        assert!(received[0].msgs[1].decrypted_payload.is_some());
+
+        // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
+        let reviewed = download_messages(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        assert_eq!(reviewed.len(), 1);
+        assert_eq!(reviewed[0].msgs.len(), 1);
+        assert!(reviewed[0].msgs[0].decrypted_payload.is_some());
+        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
+
+        let rejected = download_messages(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
+        assert_eq!(rejected.len(), 1);
+        assert_eq!(rejected[0].msgs.len(), 0);
+
+        let specific = download_messages(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
+        assert_eq!(specific.len(), 1);
+        assert_eq!(specific[0].msgs.len(), 1);
+
+        let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
+        let empty = download_messages(Some(vec![unknown_did]), None, None).unwrap();
+        assert_eq!(empty.len(), 0);
     }
 }

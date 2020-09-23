@@ -707,7 +707,7 @@ mod tests {
     use std::str;
 
     use proof;
-    use connection::tests::build_test_connection;
+    use connection::tests::{build_test_connection_inviter_requested};
     use api::{ProofStateType, return_types_u32, VcxStateType};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::constants::*;
@@ -847,7 +847,7 @@ mod tests {
 
         assert_eq!(proof::get_state(proof_handle).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
-        let connection_handle = build_test_connection();
+        let connection_handle = build_test_connection_inviter_requested();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_proof_send_request(cb.command_handle,

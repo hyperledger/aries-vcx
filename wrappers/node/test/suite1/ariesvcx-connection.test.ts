@@ -1,7 +1,12 @@
 import '../module-resolver-helper'
 
 import { assert } from 'chai'
-import { connectionCreate, connectionCreateConnect, dataConnectionCreate } from 'helpers/entities'
+import {
+  connectionCreateInviterNull,
+  createConnectionInviterInvited,
+  createConnectionInviterRequested,
+  dataConnectionCreate
+} from 'helpers/entities'
 import {
   INVITE_ACCEPTED_MESSAGE,
   PROTOCOL_TYPE_ARIES_STRICT
@@ -14,19 +19,19 @@ describe('Connection:', () => {
 
   describe('create:', () => {
     it('success', async () => {
-      await connectionCreate()
+      await connectionCreateInviterNull()
     })
 
     it('success: parallel', async () => {
       const numConnections = 50
       const data = dataConnectionCreate()
-      await Promise.all(new Array(numConnections).fill(0).map(() => connectionCreate(data)))
+      await Promise.all(new Array(numConnections).fill(0).map(() => connectionCreateInviterNull(data)))
     })
   })
 
   describe('connect:', () => {
     it('success: without phone', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       const inviteDetails = await connection.connect({ data: '{}' })
       assert.notEqual(inviteDetails, '')
     })
@@ -41,7 +46,7 @@ describe('Connection:', () => {
   // todo : restore for aries
   describe('sendMessage:', () => {
     it.skip('success: sends message', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       await connection.connect({ data: '{"connection_type":"QR"}' })
       const error = await shouldThrow(() => connection.sendMessage({ msg: 'msg', type: 'msg', title: 'title' }))
       assert.equal(error.vcxCode, VCXCode.NOT_READY)
@@ -50,7 +55,7 @@ describe('Connection:', () => {
 
   describe('signData:', () => {
     it('success: signs data', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       await connection.connect({ data: '{}' })
       const signature = await connection.signData(new Buffer('random string'))
       assert(signature)
@@ -59,8 +64,7 @@ describe('Connection:', () => {
 
   describe('verifySignature', () => {
     it('success: verifies the signature', async () => {
-      const connection = await connectionCreate()
-      await connection.connect({ data: '{}' })
+      const connection = await createConnectionInviterRequested()
       const valid = await connection.verifySignature({data: new Buffer('random string'),
         signature: new Buffer('random string')})
       assert(valid)
@@ -69,7 +73,7 @@ describe('Connection:', () => {
 
   describe('serialize:', () => {
     it('success', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       const serialized = await connection.serialize()
       assert.ok(serialized)
       assert.property(serialized, 'version')
@@ -97,7 +101,7 @@ describe('Connection:', () => {
 
     // TODO: Is this op supported in 3.0?
     it.skip('throws: connection deleted', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       await connection.connect({ data: '{"connection_type":"QR"}' })
       await connection.delete()
       const error = await shouldThrow(() => connection.serialize())
@@ -107,7 +111,7 @@ describe('Connection:', () => {
 
   describe('deserialize:', () => {
     it('success', async () => {
-      const connection1 = await connectionCreate()
+      const connection1 = await connectionCreateInviterNull()
       const data1 = await connection1.serialize()
       const connection2 = await Connection.deserialize(data1)
       assert.equal(connection2.sourceId, connection1.sourceId)
@@ -130,14 +134,14 @@ describe('Connection:', () => {
     })
 
     it(`returns ${StateType.Initialized}: not connected`, async () => {
-      const connection = await connectionCreate({ id: 'alice' })
+      const connection = await connectionCreateInviterNull({ id: 'alice' })
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Initialized)
     })
 
     // todo : restore for aries
     it.skip(`returns ${StateType.OfferSent}: connected`, async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       VCXMock.setVcxMock(VCXMockMessage.AcceptInvite) // todo: must return Aries mock data
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Accepted)
@@ -145,7 +149,7 @@ describe('Connection:', () => {
 
     // todo : restore for aries
     it.skip(`returns ${StateType.Accepted}: mocked accepted`, async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       VCXMock.setVcxMock(VCXMockMessage.GetMessages)
       await connection.updateState()
       assert.equal(await connection.getState(), StateType.Accepted)
@@ -153,7 +157,7 @@ describe('Connection:', () => {
 
     // todo : restore for aries
     it.skip(`returns ${StateType.Accepted}: mocked accepted`, async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterRequested()
       await connection.updateStateWithMessage(INVITE_ACCEPTED_MESSAGE)
       assert.equal(await connection.getState(), StateType.Accepted)
     })
@@ -164,7 +168,7 @@ describe('Connection:', () => {
       const interval = 50
       const sleepTime = 100
       const connectionsWithTimers = await Promise.all(new Array(numConnections).fill(0).map(async () => {
-        const connection = await connectionCreate()
+        const connection = await connectionCreateInviterNull()
         const timer = setInterval(() => connection.updateState(), interval)
         return { connection, timer }
       }))
@@ -181,7 +185,7 @@ describe('Connection:', () => {
 
   describe('inviteDetails:', () => {
     it('success', async () => {
-      const connection = await connectionCreateConnect()
+      const connection = await createConnectionInviterInvited()
       const details = await connection.inviteDetails(true)
       const parsedInvitation = JSON.parse(details)
       assert.isString(parsedInvitation['@id'])
@@ -197,14 +201,14 @@ describe('Connection:', () => {
 
   describe('sendPing:', () => {
     it('success: send ping', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       await connection.sendPing('ping')
     })
   })
 
   describe('sendDiscoveryFeatures:', () => {
     it('success: send discovery features', async () => {
-      const connection = await connectionCreate()
+      const connection = await connectionCreateInviterNull()
       await connection.sendDiscoveryFeatures('*', 'comment')
     })
   })
