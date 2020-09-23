@@ -1053,15 +1053,15 @@ pub mod tests {
 
         let handle_conn = build_test_connection_inviter_requested();
 
-        let hande_proof = create_proof("1".to_string(),
-                                       REQUESTED_ATTRS.to_owned(),
-                                       REQUESTED_PREDICATES.to_owned(),
-                                       r#"{"support_revocation":false}"#.to_string(),
-                                       "Optional".to_owned()).unwrap();
-        let request = generate_proof_request_msg(hande_proof).unwrap();
-        send_proof_request(hande_proof, handle_conn).unwrap();
-        update_state(hande_proof, Some(ARIES_PROOF_PRESENTATION.to_string()), Some(handle_conn)).unwrap();
-        assert_eq!(::proof::get_state(hande_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
+        let handle_proof = create_proof("1".to_string(),
+                                        REQUESTED_ATTRS.to_owned(),
+                                        REQUESTED_PREDICATES.to_owned(),
+                                        r#"{"support_revocation":false}"#.to_string(),
+                                        "Optional".to_owned()).unwrap();
+        let request = generate_proof_request_msg(handle_proof).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
+        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION.to_string()), Some(handle_conn)).unwrap();
+        assert_eq!(::proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]

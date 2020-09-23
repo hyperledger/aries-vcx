@@ -48,7 +48,7 @@ pub mod error;
 pub mod credential;
 pub mod object_cache;
 pub mod disclosed_proof;
-
+pub mod mock_settings;
 
 pub mod v3;
 

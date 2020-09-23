@@ -35,9 +35,6 @@ impl Prover {
     pub fn retrieve_credentials(&self) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.prover_sm.presentation_request().request_presentations_attach.content()?;
-        if settings::indy_mocks_enabled() {
-            return Ok(CREDS_FROM_PROOF_REQ.to_string());
-        }
         anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request)
     }
 

@@ -41,6 +41,7 @@ use v3::{
 };
 use settings::indy_mocks_enabled;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+use mock_settings::get_mock_generate_indy_proof;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
@@ -303,7 +304,6 @@ impl DisclosedProof {
 
     fn retrieve_credentials(&self) -> VcxResult<String> {
         trace!("DisclosedProof::set_state >>>");
-        if settings::indy_mocks_enabled() { return Ok(CREDS_FROM_PROOF_REQ.to_string()); }
 
         let proof_req = self.proof_request
             .as_ref()
@@ -405,6 +405,16 @@ impl DisclosedProof {
     }
 
     pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
+        trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
+
+        match get_mock_generate_indy_proof() {
+            None => {}
+            Some(mocked_indy_proof) => {
+                warn!("generate_indy_proof :: returning mocked response");
+                return Ok(mocked_indy_proof)
+            }
+        }
+
         let proof_request: ProofRequestData = serde_json::from_str(&proof_req_data_json)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
 
@@ -1007,7 +1017,8 @@ mod tests {
     use utils::devsetup::*;
 
     use super::*;
-    use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+    use utils::mockdata::mockdata_proof::{ARIES_PROOF_REQUEST_PRESENTATION, ARIES_PROOF_PRESENTATION_ACK};
+    use mock_settings::{set_mock_generate_indy_proof, reset_mock_settings};
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -1066,10 +1077,14 @@ mod tests {
         let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_proof).unwrap());
 
-        // todo: mock dependencies to make generate_proof work
-        // generate_proof(proof_handle, selected_credentials.into(), "{}".to_string()).unwrap();
-        // send_proof(handle_proof, connection_h).unwrap();
-        // assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
+        set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
+        generate_proof(handle_proof, String::from("{\"selected\":\"credentials\"}"), "{}".to_string()).unwrap();
+        send_proof(handle_proof, connection_h).unwrap();
+        assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_proof).unwrap());
+
+        update_state(handle_proof, Some(String::from(ARIES_PROOF_PRESENTATION_ACK)), Some(connection_h)).unwrap();
+        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
+        reset_mock_settings()
     }
 
     #[test]
@@ -1164,9 +1179,9 @@ mod tests {
         let _setup = SetupDefaults::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let handle_1 = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
-        let serialized = to_string(handle_1).unwrap();
+        let serialized = to_string(handle).unwrap();
         from_string(&serialized).unwrap();
     }
 

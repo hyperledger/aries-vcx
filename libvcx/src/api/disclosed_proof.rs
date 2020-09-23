@@ -977,7 +977,7 @@ mod tests {
 
     use api::return_types_u32;
     use api::VcxStateType;
-    use utils::constants::{PENDING_OBJECT_SERIALIZE_VERSION, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use utils::constants::{PENDING_OBJECT_SERIALIZE_VERSION, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION, CREDS_FROM_PROOF_REQ};
     use utils::devsetup::*;
     use utils::timeout::TimeoutUtils;
 
@@ -985,6 +985,7 @@ mod tests {
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION, ARIES_PROOF_REQUEST_PRESENTATION};
     use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use mock_settings::set_mock_creds_retrieved_for_proof_request;
 
     pub const BAD_PROOF_REQUEST: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
@@ -1184,6 +1185,7 @@ mod tests {
     fn test_vcx_disclosed_proof_retrieve_credentials() {
         let _setup = SetupAriesMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
         let proof_handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
