@@ -4,7 +4,7 @@ use error::prelude::*;
 use messages::get_message::Message;
 use v3::handlers::connection::agent::AgentInfo;
 use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM, DidExchangeState};
+use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::basic_message::message::BasicMessage;
 use v3::messages::connection::did_doc::DidDoc;

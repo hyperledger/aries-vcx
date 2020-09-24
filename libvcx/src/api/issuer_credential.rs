@@ -883,7 +883,7 @@ pub mod tests {
     use utils::constants::*;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST};
     use utils::timeout::TimeoutUtils;
 
     use super::*;

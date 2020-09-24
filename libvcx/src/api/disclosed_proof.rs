@@ -977,13 +977,13 @@ mod tests {
 
     use api::return_types_u32;
     use api::VcxStateType;
-    use utils::constants::{PENDING_OBJECT_SERIALIZE_VERSION, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION, CREDS_FROM_PROOF_REQ};
+    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION, CREDS_FROM_PROOF_REQ};
     use utils::devsetup::*;
     use utils::timeout::TimeoutUtils;
 
     use super::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION, ARIES_PROOF_REQUEST_PRESENTATION};
+    use utils::mockdata::mockdata_proof::{ARIES_PROOF_REQUEST_PRESENTATION};
     use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use utils::mockdata::mock_settings::MockBuilder;
 
@@ -1184,7 +1184,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_retrieve_credentials() {
         let _setup = SetupAriesMocks::init();
-        let mock_builder = MockBuilder::init().
+        let _mock_builder = MockBuilder::init().
             set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 

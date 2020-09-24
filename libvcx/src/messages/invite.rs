@@ -1,4 +1,4 @@
-use error::prelude::*;
+
 use messages::*;
 use messages::message_type::{MessageTypes, MessageTypeV1, MessageTypeV2};
 use messages::thread::Thread;

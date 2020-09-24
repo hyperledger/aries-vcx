@@ -29,7 +29,7 @@ use messages::proofs::{
 use object_cache::ObjectCache;
 use settings;
 use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
-use utils::constants::{CREDS_FROM_PROOF_REQ, DEFAULT_GENERATED_PROOF, DEFAULT_REJECTED_PROOF, NEW_PROOF_REQUEST_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
+use utils::constants::{DEFAULT_GENERATED_PROOF, DEFAULT_REJECTED_PROOF, NEW_PROOF_REQUEST_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
 use utils::error;
 use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
 use utils::libindy::anoncreds;
@@ -1077,7 +1077,7 @@ mod tests {
         let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_proof).unwrap());
 
-        let mock_builder = MockBuilder::init().
+        let _mock_builder = MockBuilder::init().
             set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
 
         generate_proof(handle_proof, String::from("{\"selected\":\"credentials\"}"), "{}".to_string()).unwrap();

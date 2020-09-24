@@ -1,4 +1,4 @@
-use error::prelude::*;
+
 use messages::*;
 use messages::message_type::MessageTypes;
 use messages::MessageStatusCode;
@@ -521,7 +521,7 @@ mod tests {
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
 
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
 
         info!("test_download_messages :: going send message from faber to alice");
