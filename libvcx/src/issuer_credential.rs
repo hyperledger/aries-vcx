@@ -874,64 +874,6 @@ pub mod tests {
         }
     }
 
-    pub fn create_full_issuer_credential() -> (IssuerCredential, ::credential::Credential) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(true);
-        let cred_def_id = ::credential_def::get_cred_def_id(cred_def_handle).unwrap();
-        let rev_reg_id = ::credential_def::get_rev_reg_id(cred_def_handle).unwrap();
-        let tails_file = ::credential_def::get_tails_file(cred_def_handle).unwrap();
-        let rev_reg_def_json = ::credential_def::get_rev_reg_def(cred_def_handle).unwrap();
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-
-        let mut issuer_credential = IssuerCredential {
-            source_id: "source_id".to_string(),
-            msg_uid: String::new(),
-            credential_attributes: credential_data.to_string(),
-            issuer_did: issuer_did.to_string(),
-            state: VcxStateType::VcxStateNone,
-            //Todo: Take out schema
-            schema_seq_no: 0,
-            credential_request: None,
-            credential_offer: None,
-            credential_name: "cred_name".to_string(),
-            credential_id: String::new(),
-            ref_msg_id: None,
-            rev_reg_id,
-            rev_reg_def_json,
-            cred_rev_id: None,
-            rev_cred_payment_txn: None,
-            tails_file,
-            price: 1,
-            payment_address: None,
-            cred_def_id,
-            cred_def_handle,
-            thread: Some(Thread::new()),
-            my_did: None,
-            my_vk: None,
-            their_did: None,
-            their_vk: None,
-            agent_did: None,
-            agent_vk: None,
-        };
-
-        apply_agent_info(&mut issuer_credential, &get_agent_info().unwrap());
-
-        let payment = issuer_credential.generate_payment_info().unwrap();
-        let their_did = &issuer_credential.their_did.clone().unwrap_or_default();
-        let credential_offer = issuer_credential.generate_credential_offer().unwrap();
-        let cred_json = json!(credential_offer);
-        let mut payload = Vec::new();
-
-        if payment.is_some() { payload.push(json!(payment.unwrap())); }
-        payload.push(cred_json);
-        let payload = serde_json::to_string(&payload).unwrap();
-
-        issuer_credential.credential_offer = Some(issuer_credential.generate_credential_offer().unwrap());
-        let credential = ::credential::tests::create_credential(&payload);
-        issuer_credential.credential_request = Some(credential.build_request(&issuer_credential.issuer_did, &their_did).unwrap());
-        (issuer_credential, credential)
-    }
-
     fn _issuer_credential_create() -> u32 {
         issuer_credential_create(create_cred_def_fake(),
                                  "1".to_string(),
@@ -977,6 +919,7 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "to_restore")]
     #[test]
     fn test_generate_cred_offer() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();

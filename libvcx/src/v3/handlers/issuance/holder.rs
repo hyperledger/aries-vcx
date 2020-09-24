@@ -4,7 +4,7 @@ use api::VcxStateType;
 use connection;
 use credential;
 use error::prelude::*;
-use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential};
+use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
 use v3::handlers::issuance::messages::CredentialIssuanceMessage;
 use v3::handlers::issuance::states::{HolderState, OfferReceivedState};
 use v3::messages::a2a::A2AMessage;
@@ -263,14 +263,22 @@ fn _delete_credential(cred_id: &str) -> VcxResult<()> {
     libindy_prover_delete_credential(cred_id)
 }
 
+    pub fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
+        let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id)?;
+
+        libindy_prover_create_credential_req(&prover_did,
+                                             &cred_offer,
+                                             &cred_def_json)
+            .map_err(|err| err.extend("Cannot create credential request")).map(|(s1, s2)| (s1, s2, cred_def_id, cred_def_json))
+    }
+
 fn _make_credential_request(conn_handle: u32, offer: &CredentialOffer) -> VcxResult<(CredentialRequest, String, String)> {
     trace!("Holder::_make_credential_request >>> conn_handle: {:?}, offer: {:?}", conn_handle, offer);
 
     let my_did = connection::get_pw_did(conn_handle)?;
     let cred_offer = offer.offers_attach.content()?;
     let cred_def_id = _parse_cred_def_from_cred_offer(&cred_offer)?;
-    let (req, req_meta, _cred_def_id, cred_def_json) =
-        credential::Credential::create_credential_request(&cred_def_id, &my_did, &cred_offer)?;
+    let (req, req_meta, _cred_def_id, cred_def_json) = create_credential_request(&cred_def_id, &my_did, &cred_offer)?;
     Ok((CredentialRequest::create().set_requests_attach(req)?, req_meta, cred_def_json))
 }
 
