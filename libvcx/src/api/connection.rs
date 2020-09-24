@@ -1289,7 +1289,7 @@ mod tests {
     use utils::error;
     use utils::error::SUCCESS;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIAlIZED_CONNECTION};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -1436,7 +1436,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_connection_deserialize(cb.command_handle,
-                                             CString::new(DEFAULT_SERIAlIZED_CONNECTION).unwrap().into_raw(),
+                                             CString::new(DEFAULT_SERIALIZED_CONNECTION).unwrap().into_raw(),
                                              Some(cb.get_callback()));
         assert_eq!(err, SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();

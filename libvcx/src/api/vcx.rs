@@ -1369,7 +1369,7 @@ mod tests {
         assert_eq!(init_res, error::SUCCESS.code_num);
 
         let cred_handle = ::issuer_credential::from_string(&::api::issuer_credential::tests::issuer_credential_state_accepted()).unwrap();
-        let connection_handle = ::connection::from_string(mockdata_connection::DEFAULT_SERIAlIZED_CONNECTION).unwrap();
+        let connection_handle = ::connection::from_string(mockdata_connection::DEFAULT_SERIALIZED_CONNECTION).unwrap();
         let my_pw_did = ::connection::get_pw_did(connection_handle).unwrap();
         let their_pw_did = ::connection::get_their_pw_did(connection_handle).unwrap();
 

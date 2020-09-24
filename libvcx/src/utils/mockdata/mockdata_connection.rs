@@ -364,7 +364,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
     }
 }"#;
 
-pub const DEFAULT_SERIAlIZED_CONNECTION: &str = r#"
+pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
 {
   "version": "3.0",
   "data": {

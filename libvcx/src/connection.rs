@@ -265,6 +265,7 @@ pub mod tests {
     use std::time::Duration;
 
     use api::VcxStateType;
+    use messages::MessageStatusCode;
     use messages::get_message::*;
     use utils::constants::*;
     use utils::constants;
