@@ -1117,6 +1117,8 @@ pub enum SerializableObjectWithState<T, P> {
     V1 { data: T },
     #[serde(rename = "2.0")]
     V2 { data: T, state: P },
+    #[serde(rename = "3.0")]
+    V3 { data: T, state: P, source_id: String },
 }
 
 pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }

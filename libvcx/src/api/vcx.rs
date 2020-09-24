@@ -677,6 +677,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use utils::libindy::wallet::get_wallet_handle;
     use utils::timeout::TimeoutUtils;
+    use utils::mockdata::mockdata_connection;
 
     use super::*;
     use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
@@ -1352,6 +1353,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_no_agency_config() {
         let _setup = SetupAriesMocks::init();
 
@@ -1368,7 +1370,7 @@ mod tests {
         assert_eq!(init_res, error::SUCCESS.code_num);
 
         let cred_handle = ::issuer_credential::from_string(&::api::issuer_credential::tests::issuer_credential_state_accepted()).unwrap();
-        let connection_handle = ::connection::from_string(::utils::constants::DEFAULT_CONNECTION).unwrap();
+        let connection_handle = ::connection::from_string(mockdata_connection::DEFAULT_SERIALIZED_CONNECTION).unwrap();
         let my_pw_did = ::connection::get_pw_did(connection_handle).unwrap();
         let their_pw_did = ::connection::get_their_pw_did(connection_handle).unwrap();
 
