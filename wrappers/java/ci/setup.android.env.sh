@@ -279,8 +279,6 @@ build_libvcx(){
     echo "**************************************************"
     LIBVCX_DIR=$1
     pushd ${LIBVCX_DIR}
-        ls -lah ||:
-        du -h --max-depth=3 ||:
         rm -rf target/${TRIPLET}
         cargo clean
         LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}

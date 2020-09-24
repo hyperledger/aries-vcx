@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint:fix": "standard --fix",
-    "demo:notifyserver": "node notification-server.js",
+    "demo:notifyserver": "node demo/notification-server.js",
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
     "demo:faber:rev": "node demo/faber.js --revocation",
