@@ -54,39 +54,8 @@ describe('Credential:', () => {
     })
   })
 
-  describe('createWithMsgId', () => {
-    // TODO: to enable this test, credential offer must be mocked in aries code of get_credential_offer_msg
-    it.skip('createWithMsgIdsuccess', async () => {
-      await credentialCreateWithMsgId()
-    })
-
-    it('throws: missing sourceId', async () => {
-      const { connection, msgId } = await dataCredentialCreateWithMsgId()
-      const error = await shouldThrow(() => Credential.createWithMsgId({ connection, msgId } as any))
-      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
-    })
-
-    it('throws: missing offer', async () => {
-      const { connection, sourceId } = await dataCredentialCreateWithMsgId()
-      const error = await shouldThrow(() => Credential.createWithMsgId({ connection, sourceId } as any))
-      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
-    })
-
-    it('throws: missing connection', async () => {
-      const { connection, ...data } = await dataCredentialCreateWithMsgId()
-      const error = await shouldThrow(() => Credential.createWithMsgId(data as any))
-      assert.equal(error.vcxCode, VCXCode.UNKNOWN_ERROR)
-    })
-
-    it('throws: missing connection handle', async () => {
-      const { connection, ...data } = await dataCredentialCreateWithMsgId()
-      const error = await shouldThrow(() => Credential.createWithMsgId({ connection: {} as any, ...data }))
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE)
-    })
-  })
-
   describe('serialize:', () => {
-    it('success', async () => {
+    it('success credential', async () => {
       const credential = await credentialCreateWithOffer()
       const serialized = await credential.serialize()
       assert.ok(serialized)
@@ -191,7 +160,7 @@ describe('Credential:', () => {
   })
 
   describe('getPaymentInfo:', () => {
-    it('success', async () => {
+    it.skip('success', async () => {
       const credential = await credentialCreateWithOffer()
       const paymentInfo = await credential.getPaymentInfo()
       assert.ok(paymentInfo)
@@ -219,6 +188,37 @@ describe('Credential:', () => {
         const paymentTxn = await credential.paymentManager.getPaymentTxn()
         validatePaymentTxn(paymentTxn)
       })
+    })
+  })
+
+  describe('createWithMsgId', () => {
+    // TODO: to enable this test, credential offer must be mocked in aries code of get_credential_offer_msg
+    it.skip('createWithMsgIdsuccess', async () => {
+      await credentialCreateWithMsgId()
+    })
+
+    it('throws: missing sourceId', async () => {
+      const { connection, msgId } = await dataCredentialCreateWithMsgId()
+      const error = await shouldThrow(() => Credential.createWithMsgId({ connection, msgId } as any))
+      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
+    })
+
+    it('throws: missing offer', async () => {
+      const { connection, sourceId } = await dataCredentialCreateWithMsgId()
+      const error = await shouldThrow(() => Credential.createWithMsgId({ connection, sourceId } as any))
+      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION)
+    })
+
+    it('throws: missing connection', async () => {
+      const { connection, ...data } = await dataCredentialCreateWithMsgId()
+      const error = await shouldThrow(() => Credential.createWithMsgId(data as any))
+      assert.equal(error.vcxCode, VCXCode.UNKNOWN_ERROR)
+    })
+
+    it('throws: missing connection handle', async () => {
+      const { connection, ...data } = await dataCredentialCreateWithMsgId()
+      const error = await shouldThrow(() => Credential.createWithMsgId({ connection: {} as any, ...data }))
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE)
     })
   })
 
