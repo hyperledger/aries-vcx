@@ -48,7 +48,19 @@ setup() {
 
     echo "Update Homebrew"
     # brew doctor || 1
-    brew update
+
+    tries=0
+    threshold=5
+    while ! brew update;
+    do
+      tries=$(( $tries + 1 ))
+      echo echo "Brew update attempt ${tries}/${threshold} failed.";
+      if [ "$tries" -eq "${threshold}" ]; then
+          echo "Failed to update brew after ${threshold} attempts. Terminating."
+          exit 1
+      fi;
+      sleep 5;
+    done
 
     echo "Install required native libraries and utilities"
     which pkg-config &>/dev/null || brew install pkg-config
