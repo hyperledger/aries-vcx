@@ -1353,6 +1353,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_no_agency_config() {
         let _setup = SetupAriesMocks::init();
 
