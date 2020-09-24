@@ -1,3 +1,7 @@
+# ** Heads up: Looking for Python maintainer **
+- **Python wrapper for LibVCX is not being maintained by Absa**. We don't run Python tests in CI.
+- If you would like to use Python wrapper for LibVCX, we encourage you to become maintainer for Python wrapper.
+
 # VCX for Python
 
 This is a Python wrapper for VCX library. 
