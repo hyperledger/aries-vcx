@@ -68,7 +68,7 @@ pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn get_version(handle: u32) -> VcxResult<Option<ProtocolTypes>> {
+pub fn get_version(_handle: u32) -> VcxResult<Option<ProtocolTypes>> {
     Ok(Some(settings::get_protocol_type()))
 }
 
@@ -115,21 +115,21 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
 pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
         connection.send_generic_message(msg, msg_options)
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    })
 }
 
 pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.update_state(Some(&message))?;
         Ok(error::SUCCESS.code_num)
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    })
 }
 
 pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.update_state(message.as_ref())?;
         Ok(error::SUCCESS.code_num)
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    })
 }
 
 pub fn delete_connection(handle: u32) -> VcxResult<u32> {
@@ -147,7 +147,7 @@ pub fn connect(handle: u32, _options: Option<String>) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.connect()?;
         Ok(error::SUCCESS.code_num)
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    })
 }
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
@@ -157,7 +157,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 
         ::serde_json::to_string(&object)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
-    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    })
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
@@ -399,7 +399,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = to_string(0);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
     #[test]
