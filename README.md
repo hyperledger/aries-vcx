@@ -23,18 +23,15 @@ all these demos depends on.
 -  [Building LibVCX on OSX, Linux](./docs/build-general.md)
 -  [Building LibVCX on mobile](./docs/build-mobile.md)
 
-# Library initialization
-Libvcx library must be initialized with one of the functions:
-* `vcx_init_with_config` -  initializes with <configuration> passed as JSON string. 
-* `vcx_init` -  initializes with a path to the file containing <configuration>. 
-* `vcx_init_minimal` - initializes with the minimal <configuration> (without any agency configuration).
+# Artifacts
+- In Github Actions CI, we are producing number of Artifacts:
+    - Alpine based docker image with precompiled LibVCX
+    - iOS and Android builds of LibVCX  
+    - Node wrapper
+    
+- The artifacts are produced from every PR (unless it's coming from a forked repository due to limitations of Github Actions).
 
-Each library function will use this <configuration> data after the initialization. 
-The list of options can be find [here](../docs/configuration.md#vcx)
-An example of <configuration> file can be found [here](../vcx/libvcx/sample_config/config.json)
-
-If the library works with an agency `vcx_agent_provision` function must be called before initialization to populate configuration and wallet for this agent.
-The result of this function is <configuration> JSON which can be extended and used for initialization.
-
-To change <configuration> a user must call `vcx_shutdown` and then call initialization function again.
-
+- NodeJS wrappers are published on [npmjs](https://www.npmjs.com/package/@absaoss/node-vcx-wrapper)
+- Docker images are in [Github Packages](https://github.com/AbsaOSS/libvcx/packages/332720/versions)
+- Mobile artifacts are attached to [CI runs](https://github.com/AbsaOSS/libvcx/actions) (click on particular CI run to
+  see the artifacts)
