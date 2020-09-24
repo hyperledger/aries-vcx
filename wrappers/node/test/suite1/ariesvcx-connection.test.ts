@@ -79,17 +79,16 @@ describe('Connection:', () => {
       assert.property(serialized, 'version')
       assert.property(serialized, 'data')
       assert.property(serialized, 'state')
-      assert.property(serialized.data, 'source_id')
+      assert.property(serialized, 'source_id')
       assert.property(serialized.data, 'pw_did')
-      assert.property(serialized.data, 'pw_verkey')
-      assert.property(serialized.data, 'endpoint')
-      assert.property(serialized.data, 'their_pw_did')
-      assert.property(serialized.data, 'their_pw_verkey')
-      const { data, version } = serialized
+      assert.property(serialized.data, 'pw_vk')
+      assert.property(serialized.data, 'agent_did')
+      assert.property(serialized.data, 'agent_vk')
+      const { data, version, source_id } = serialized
       assert.ok(data)
       assert.ok(version)
-      assert.equal(data.source_id, connection.sourceId)
-      assert.equal(data.state, StateType.Initialized)
+      assert.ok(source_id)
+      assert.equal(source_id, connection.sourceId)
     })
 
     // TODO: restore for aries
