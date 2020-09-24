@@ -39,6 +39,7 @@ use v3::{
     handlers::issuance::Holder,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
 };
+use settings::indy_mocks_enabled;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Credentials> = ObjectCache::<Credentials>::new("credentials-cache");
@@ -682,9 +683,10 @@ fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<S
     trace!("get_credential_offer_msg >>> connection_handle: {}, msg_id: {}", connection_handle, msg_id);
 
     if connection::is_v3_connection(connection_handle)? {
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
-
+        if indy_mocks_enabled() {
+            AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+            AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+        }
         let credential_offer = Holder::get_credential_offer_message(connection_handle, msg_id)?;
 
         return serde_json::to_string(&credential_offer).

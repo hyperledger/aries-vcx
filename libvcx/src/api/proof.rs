@@ -706,8 +706,7 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use proof;
-    use connection::tests::{build_test_connection_inviter_requested};
+    use ::{proof, settings};
     use api::{ProofStateType, return_types_u32, VcxStateType};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::constants::*;
@@ -716,6 +715,8 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     use super::*;
+    use connection::tests::build_test_connection_inviter_requested;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 
@@ -741,26 +742,6 @@ mod tests {
 
         let handle = create_proof_util().unwrap();
         assert!(handle > 0);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_proof_no_agency() {
-        let _setup = SetupAriesMocks::init();
-
-        let ph = create_proof_util().unwrap();
-        let request = ::proof::generate_proof_request_msg(ph).unwrap();
-        // todo: with 3.0 / 4.0 protocol enabled, the test fail because in order to progress
-        // the state machine, send proof request must be called. To do that we need to have
-        // a connection. So you first need to build a connection so you can use its handle in
-        // the following method. After that the final assert in test should pass
-        // ::proof::send_proof_request(ph).unwrap();
-
-        let dp = ::disclosed_proof::create_proof("test", &request).unwrap();
-        let p = ::disclosed_proof::generate_proof_msg(dp).unwrap();
-        ::proof::update_state(ph, Some(p), None).unwrap();
-        assert_eq!(::proof::get_state(ph).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
@@ -839,9 +820,9 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_proof_send_request() {
         let _setup = SetupAriesMocks::init();
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let proof_handle = create_proof_util().unwrap();
 
@@ -862,7 +843,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_update_state_with_message(cb.command_handle,
                                                        proof_handle,
-                                                       CString::new(PROOF_RESPONSE_STR).unwrap().into_raw(),
+                                                       CString::new(ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
                                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();

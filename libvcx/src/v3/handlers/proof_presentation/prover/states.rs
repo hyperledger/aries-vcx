@@ -510,6 +510,8 @@ pub mod test {
 
     mod step {
         use super::*;
+        use utils::constants::CREDS_FROM_PROOF_REQ;
+        use utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -535,6 +537,8 @@ pub mod test {
         #[cfg(feature = "general_test")]
         fn test_prover_handle_prepare_presentation_message_from_initiated_state_for_invalid_credentials() {
             let _setup = SetupAriesMocks::init();
+            let mock_builder = MockBuilder::init().
+                set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm();
             prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested()))).unwrap();
@@ -642,6 +646,8 @@ pub mod test {
         #[cfg(feature = "general_test")]
         fn test_prover_handle_send_presentation_message_from_presentation_preparation_failed_state() {
             let _setup = SetupAriesMocks::init();
+            let mock_builder = MockBuilder::init().
+                set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm();
             prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested()))).unwrap();
@@ -656,6 +662,8 @@ pub mod test {
         #[cfg(feature = "general_test")]
         fn test_prover_handle_other_messages_from_presentation_preparation_failed_state() {
             let _setup = SetupAriesMocks::init();
+            let mock_builder = MockBuilder::init().
+                set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm();
             prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested()))).unwrap();
