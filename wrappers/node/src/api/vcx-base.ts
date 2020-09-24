@@ -122,5 +122,4 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
     )
     this._setHandle(objHandle)
   }
-
 }

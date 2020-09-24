@@ -22,10 +22,10 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
    * ```
    * @returns {Promise<void>}
    */
-  public async updateState (): Promise<void> {
+  public async updateState (): Promise<number> {
     try {
       const commandHandle = 0
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = this._updateStFn(commandHandle, this.handle, cb)
           if (rc) {
@@ -35,22 +35,23 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
         (resolve, reject) => ffi.Callback(
           'void',
           ['uint32', 'uint32', 'uint32'],
-          (handle: number, err: any, state: StateType) => {
+          (handle: number, err: any, _state: StateType) => {
             if (err) {
               reject(err)
             }
-            resolve(state)
+            resolve(_state)
           })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }
   }
 
-  public async updateStateV2 (connection: Connection): Promise<void> {
+  public async updateStateV2 (connection: Connection): Promise<number> {
     try {
       const commandHandle = 0
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = this._updateStFnV2(commandHandle, this.handle, connection.handle, cb)
           if (rc) {
@@ -60,13 +61,14 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
         (resolve, reject) => ffi.Callback(
           'void',
           ['uint32', 'uint32', 'uint32'],
-          (handle: number, err: any, state: StateType) => {
+          (handle: number, err: any, _state: StateType) => {
             if (err) {
               reject(err)
             }
-            resolve(state)
+            resolve(_state)
           })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }
@@ -82,10 +84,10 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
    * ```
    * @returns {Promise<void>}
    */
-  public async updateStateWithMessage (message: string): Promise<void> {
+  public async updateStateWithMessage (message: string): Promise<number> {
     try {
       const commandHandle = 0
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = this._updateStWithMessageFn(commandHandle, this.handle, message, cb)
           if (rc) {
@@ -95,13 +97,14 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
         (resolve, reject) => ffi.Callback(
           'void',
           ['uint32', 'uint32', 'uint32'],
-          (handle: number, err: any, state: StateType) => {
+          (handle: number, err: any, _state: StateType) => {
             if (err) {
               reject(err)
             }
-            resolve(state)
+            resolve(_state)
           })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }

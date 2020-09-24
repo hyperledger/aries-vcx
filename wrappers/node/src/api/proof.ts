@@ -374,12 +374,12 @@ export class Proof extends VCXBaseWithState<IProofData> {
    * ```
    * await object.updateStateWithMessage(message)
    * ```
-   * @returns {Promise<void>}
+   * @returns {Promise<number>}
    */
-  public async updateStateWithMessage (message: string): Promise<void> {
+  public async updateStateWithMessage (message: string): Promise<number> {
     try {
       const commandHandle = 0
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_proof_update_state_with_message(commandHandle, this.handle, message, cb)
           if (rc) {
@@ -389,13 +389,14 @@ export class Proof extends VCXBaseWithState<IProofData> {
       (resolve, reject) => ffi.Callback(
         'void',
         ['uint32', 'uint32', 'uint32'],
-        (handle: number, err: any, state: StateType) => {
+        (handle: number, err: any, _state: StateType) => {
           if (err) {
             reject(err)
           }
-          resolve(state)
+          resolve(_state)
         })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }
