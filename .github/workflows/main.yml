@@ -1013,7 +1013,7 @@ jobs:
         with:
           upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
           asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
-          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
+          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
           asset_content_type: application/zip
 
   release-ios-universal:
@@ -1031,5 +1031,5 @@ jobs:
         with:
           upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
           asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
-          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
+          asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
           asset_content_type: application/zip
