@@ -41,7 +41,7 @@ use v3::{
 };
 use settings::indy_mocks_enabled;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-use mock_settings::get_mock_generate_indy_proof;
+use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<DisclosedProofs> = ObjectCache::<DisclosedProofs>::new("disclosed-proofs-cache");
@@ -1018,7 +1018,7 @@ mod tests {
 
     use super::*;
     use utils::mockdata::mockdata_proof::{ARIES_PROOF_REQUEST_PRESENTATION, ARIES_PROOF_PRESENTATION_ACK};
-    use mock_settings::{set_mock_generate_indy_proof, reset_mock_settings};
+    use utils::mockdata::mock_settings::MockBuilder;
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -1077,14 +1077,15 @@ mod tests {
         let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_proof).unwrap());
 
-        set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
+        let mock_builder = MockBuilder::init().
+            set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
+
         generate_proof(handle_proof, String::from("{\"selected\":\"credentials\"}"), "{}".to_string()).unwrap();
         send_proof(handle_proof, connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_proof).unwrap());
 
         update_state(handle_proof, Some(String::from(ARIES_PROOF_PRESENTATION_ACK)), Some(connection_h)).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
-        reset_mock_settings()
     }
 
     #[test]

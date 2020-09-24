@@ -12,7 +12,7 @@ use utils::libindy::{LibindyMock, wallet::get_wallet_handle};
 use utils::libindy::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use utils::libindy::ledger::*;
 use utils::libindy::payments::{pay_for_txn, PaymentTxn};
-use mock_settings::get_mock_creds_retrieved_for_proof_request;
+use utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 
 const BLOB_STORAGE_TYPE: &str = "default";
 const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
@@ -146,6 +146,7 @@ fn close_search_handle(search_handle: i32) -> VcxResult<()> {
 }
 
 pub fn libindy_prover_get_credentials_for_proof_req(proof_req: &str) -> VcxResult<String> {
+    trace!("libindy_prover_get_credentials_for_proof_req >>> proof_req={}", proof_req);
     match get_mock_creds_retrieved_for_proof_request() {
         None => {}
         Some(mocked_creds) => {
