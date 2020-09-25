@@ -788,8 +788,10 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
+    // TODO: Need a valid serialized proof
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_proof_deserialize_succeeds() {
         let _setup = SetupAriesMocks::init();
 
@@ -867,8 +869,10 @@ mod tests {
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
 
+    // TODO: Need v3 mock of invalid proof
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupAriesMocks::init();
 
@@ -887,8 +891,10 @@ mod tests {
         assert_eq!(vcx_proof_release(proof_handle), error::INVALID_PROOF_HANDLE.code_num);
     }
 
+    // TODO: Need v3 mock of invalid proof
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_connection_get_state() {
         let _setup = SetupAriesMocks::init();
 
