@@ -910,8 +910,8 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 pub mod tests {
     use api::VcxStateType;
     use utils::devsetup::*;
-    use utils::libindy::payments::{build_test_address, get_wallet_token_info};
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
 
     use super::*;
 
@@ -1064,6 +1064,6 @@ pub mod tests {
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();
         let cred_value: Value = serde_json::from_str(&cred_string).unwrap();
-        let credential_value: CredentialMessage = serde_json::from_str(cred_value["credential"].as_str().unwrap()).unwrap();
+        let _credential_value: CredentialMessage = serde_json::from_str(cred_value["credential"].as_str().unwrap()).unwrap();
     }
 }

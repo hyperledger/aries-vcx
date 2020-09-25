@@ -1,6 +1,6 @@
 use api::VcxStateType;
 use connection;
-use error::prelude::*;
+
 use messages::*;
 use messages::message_type::MessageTypes;
 use messages::payload::{PayloadKinds, Payloads};

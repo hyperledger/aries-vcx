@@ -12,7 +12,7 @@ use messages::payload::{PayloadKinds, Payloads};
 use messages::thread::Thread;
 use object_cache::ObjectCache;
 use settings;
-use settings::get_protocol_type;
+
 use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
 use utils::constants::CRED_MSG;
 use utils::error;
@@ -815,13 +815,13 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use serde_json::Value;
+    
 
     use ::{issuer_credential, settings};
-    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
+    
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
-    use credential_request::CredentialRequest;
+    
     #[allow(unused_imports)]
     use utils::{constants::*,
                 get_temp_dir_path,
@@ -1047,7 +1047,7 @@ pub mod tests {
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection_inviter_requested();
-        let mut handle_cred = _issuer_credential_create();
+        let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
@@ -1063,7 +1063,7 @@ pub mod tests {
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection_inviter_requested();
-        let mut handle_cred = _issuer_credential_create();
+        let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);

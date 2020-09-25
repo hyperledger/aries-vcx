@@ -708,7 +708,7 @@ mod tests {
 
     use ::{proof, settings};
     use api::{ProofStateType, return_types_u32, VcxStateType};
-    use utils::httpclient::AgencyMockDecrypted;
+    
     use utils::constants::*;
     use utils::devsetup::*;
 

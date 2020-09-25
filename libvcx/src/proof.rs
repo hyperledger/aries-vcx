@@ -663,20 +663,20 @@ pub fn generate_nonce() -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use connection;
+    
     use connection::tests::build_test_connection_inviter_requested;
-    use messages::proofs::proof_request;
+    
     use utils::devsetup::*;
-    use utils::httpclient::{AgencyMockDecrypted, HttpClientMockResponse};
-    use utils::libindy::pool;
+    use utils::httpclient::{HttpClientMockResponse};
+    
     use utils::mockdata::mockdata_proof;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
-    use v3::handlers::connection as connection_v3;
+    
     use v3::handlers::proof_presentation::verifier::verifier::Verifier;
-    use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    
 
     use super::*;
-    use std::io::ErrorKind;
+    
 
     fn default_agent_info(connection_handle: Option<u32>) -> MyAgentInfo {
         if let Some(h) = connection_handle { get_agent_info().unwrap().pw_info(h).unwrap() } else {
@@ -1033,7 +1033,7 @@ pub mod tests {
                                         REQUESTED_PREDICATES.to_owned(),
                                         r#"{"support_revocation":false}"#.to_string(),
                                         "Optional".to_owned()).unwrap();
-        let request = generate_proof_request_msg(handle_proof).unwrap();
+        let _request = generate_proof_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
         HttpClientMockResponse::set_next_response(VcxResult::Err(VcxError::from_msg(VcxErrorKind::IOError, "Sending message timeout.")));
@@ -1058,7 +1058,7 @@ pub mod tests {
                                         REQUESTED_PREDICATES.to_owned(),
                                         r#"{"support_revocation":false}"#.to_string(),
                                         "Optional".to_owned()).unwrap();
-        let request = generate_proof_request_msg(handle_proof).unwrap();
+        let _request = generate_proof_request_msg(handle_proof).unwrap();
         send_proof_request(handle_proof, handle_conn).unwrap();
         update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION.to_string()), Some(handle_conn)).unwrap();
         assert_eq!(::proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
