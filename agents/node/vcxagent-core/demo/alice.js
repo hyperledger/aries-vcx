@@ -45,10 +45,10 @@ async function runAlice (options) {
     protocolType: options.protocolType,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
-    webhookUrl: `http://localhost:7209/notifications/${agentName}`,
     usePostgresWallet: false,
     logger
   })
+  await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
   const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(agentName, invitationString)

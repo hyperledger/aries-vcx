@@ -59,9 +59,6 @@ async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed,
   if (!seed) {
     throw Error('seed not specified')
   }
-  if (!webhookUrl) {
-    throw Error('webhookUrl not specified')
-  }
   const provisionConfig = {
     agency_url: agencyUrl,
     agency_did: 'VsKV7grR1BUE29mG2Fm2kX',
@@ -81,13 +78,6 @@ async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed,
     logger.info(`Running with PostreSQL wallet enabled! Config = ${provisionConfig.storage_config}`)
   } else {
     logger.info('Running with builtin wallet.')
-  }
-
-  if (await isPortReachable(url.parse(webhookUrl).port, { host: url.parse(webhookUrl).hostname })) { // eslint-disable-line
-    provisionConfig.webhook_url = webhookUrl
-    logger.info(`Running with webhook notifications enabled! Webhook url = ${webhookUrl}`)
-  } else {
-    logger.info('Webhook url will not be used')
   }
 
   logger.info(`Using following config to create agent provision: ${JSON.stringify(provisionConfig, null, 2)}`)
