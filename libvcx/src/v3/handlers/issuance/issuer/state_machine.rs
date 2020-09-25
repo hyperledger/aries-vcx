@@ -6,8 +6,6 @@ use connection;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer};
 use v3::handlers::issuance::messages::CredentialIssuanceMessage;
-use v3::handlers::issuance::states::{InitialState, IssuerState};
-use v3::handlers::issuance::utils::encode_attributes;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential::Credential;
@@ -15,6 +13,65 @@ use v3::messages::issuance::credential_offer::CredentialOffer;
 use v3::messages::issuance::credential_request::CredentialRequest;
 use v3::messages::mime_type::MimeType;
 use v3::messages::status::Status;
+use v3::handlers::issuance::issuer::states::initial::InitialState;
+use v3::handlers::issuance::issuer::states::offer_sent::OfferSentState;
+use v3::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
+use v3::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
+use v3::handlers::issuance::issuer::states::finished::FinishedState;
+use v3::handlers::issuance::issuer::utils::encode_attributes;
+
+// Possible Transitions:
+// Initial -> OfferSent
+// Initial -> Finished
+// OfferSent -> CredentialSent
+// OfferSent -> Finished
+// CredentialSent -> Finished
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum IssuerState {
+    Initial(InitialState),
+    OfferSent(OfferSentState),
+    RequestReceived(RequestReceivedState),
+    CredentialSent(CredentialSentState),
+    Finished(FinishedState),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RevocationInfoV1 {
+    pub cred_rev_id: Option<String>,
+    pub rev_reg_id: Option<String>,
+    pub tails_file: Option<String>,
+}
+
+impl IssuerState {
+    pub fn get_connection_handle(&self) -> u32 {
+        match self {
+            IssuerState::Initial(_) => 0,
+            IssuerState::OfferSent(state) => state.connection_handle,
+            IssuerState::RequestReceived(state) => state.connection_handle,
+            IssuerState::CredentialSent(state) => state.connection_handle,
+            IssuerState::Finished(_) => 0
+        }
+    }
+
+    pub fn set_connection_handle(&mut self, connection_handle: u32) {
+        match self {
+            IssuerState::OfferSent(state) => { state.connection_handle = connection_handle; },
+            IssuerState::RequestReceived(state) => { state.connection_handle = connection_handle; },
+            IssuerState::CredentialSent(state) => { state.connection_handle = connection_handle; },
+            _ => {}
+        }
+    }
+
+    pub fn thread_id(&self) -> String {
+        match self {
+            IssuerState::Initial(_) => String::new(),
+            IssuerState::OfferSent(state) => state.thread_id.clone(),
+            IssuerState::RequestReceived(state) => state.thread_id.clone(),
+            IssuerState::CredentialSent(state) => state.thread_id.clone(),
+            IssuerState::Finished(state) => state.thread_id.clone(),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct IssuerSM {
@@ -264,6 +321,7 @@ impl IssuerSM {
         }
     }
 }
+
 
 fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: &str) -> VcxResult<CredentialOffer> {
     trace!("Issuer::_append_credential_preview >>> cred_offer_msg: {:?}, credential_json: {:?}", cred_offer_msg, credential_json);

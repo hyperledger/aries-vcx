@@ -4,7 +4,7 @@ use error::prelude::*;
 use object_cache::ObjectCache;
 
 use utils::error;
-use v3::handlers::issuance::Issuer;
+use v3::handlers::issuance::issuer::issuer::Issuer;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");

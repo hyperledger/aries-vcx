@@ -11,11 +11,11 @@ use settings;
 use settings::ProtocolTypes;
 use utils::error;
 use v3::handlers::connection::connection::Connection as ConnectionV3;
-use v3::handlers::connection::states::ActorDidExchangeState;
-use v3::handlers::connection::agent::AgentInfo;
+use v3::handlers::connection::agent_info::AgentInfo;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation as InvitationV3;
+use v3::handlers::connection::state_machine::ActorDidExchangeState;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
@@ -161,7 +161,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<AgentInfo, ::v3::handlers::connection::states::ActorDidExchangeState> = ::serde_json::from_str(connection_data)
+    let object: SerializableObjectWithState<AgentInfo, ActorDidExchangeState> = ::serde_json::from_str(connection_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {

@@ -2,14 +2,14 @@ use std::collections::HashMap;
 
 use error::prelude::*;
 use messages::get_message::Message;
-use v3::handlers::connection::agent::AgentInfo;
+use v3::handlers::connection::agent_info::AgentInfo;
 use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::handlers::connection::states::{Actor, ActorDidExchangeState, DidExchangeSM};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::basic_message::message::BasicMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
 use v3::messages::discovery::disclose::ProtocolDescriptor;
+use v3::handlers::connection::state_machine::{DidExchangeSM, Actor, ActorDidExchangeState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -51,7 +51,7 @@ impl Connection {
 
     pub fn remote_vk(&self) -> VcxResult<String> { self.connection_sm.remote_vk() }
 
-    pub fn state_object<'a>(&'a self) -> &'a ActorDidExchangeState { &self.connection_sm.state_object() }
+    pub fn state_object(&self) -> &ActorDidExchangeState { &self.connection_sm.state_object() }
 
     pub fn get_source_id(&self) -> String { self.connection_sm.source_id().to_string() }
 

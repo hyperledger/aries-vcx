@@ -5,12 +5,12 @@ use utils::error;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use utils::httpclient::AgencyMockDecrypted;
+use settings::indy_mocks_enabled;
 use v3::{
-    handlers::issuance::Holder,
+    handlers::issuance::holder::holder::Holder,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
     messages::issuance::credential::Credential as CredentialV3
 };
-use settings::indy_mocks_enabled;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");

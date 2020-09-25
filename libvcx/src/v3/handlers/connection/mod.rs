@@ -1,7 +1,10 @@
-pub mod agent;
+pub mod agent_info;
 pub mod states;
 pub mod connection;
 pub mod messages;
+pub mod state_machine;
+mod state_machine_inviter;
+mod state_machine_invitee;
 
 #[cfg(test)]
 pub mod tests {
