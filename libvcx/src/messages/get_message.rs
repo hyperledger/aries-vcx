@@ -343,23 +343,15 @@ impl Message {
     fn _decrypt_v3_message(&self) -> VcxResult<::messages::payload::PayloadV1> {
         use v3::messages::a2a::A2AMessage;
         use v3::utils::encryption_envelope::EncryptionEnvelope;
-        use ::messages::proofs::proof_message::ProofMessage;
         use ::messages::payload::{PayloadTypes, PayloadV1, PayloadKinds};
-        use std::convert::TryInto;
 
         let a2a_message = EncryptionEnvelope::open(self.payload()?)?;
 
         let (kind, msg) = match a2a_message.clone() {
-            A2AMessage::PresentationRequest(_) => {
-                convert_aries_message!(a2a_message, ProofRequest)
-            }
+            A2AMessage::PresentationRequest(_) => (PayloadKinds::ProofRequest, json!(&a2a_message).to_string()),
             A2AMessage::CredentialOffer(offer) => (PayloadKinds::CredOffer, json!(&offer).to_string()),
-            A2AMessage::Credential(_) => {
-                convert_aries_message!(a2a_message, Cred)
-            }
-            A2AMessage::Presentation(_) => {
-                convert_aries_message!(a2a_message, Proof)
-            }
+            A2AMessage::Credential(_) => (PayloadKinds::Cred, json!(&a2a_message).to_string()),
+            A2AMessage::Presentation(_) => (PayloadKinds::Proof, json!(&a2a_message).to_string()),
             msg => {
                 let msg = json!(&msg).to_string();
                 (PayloadKinds::Other(String::from("aries")), msg)

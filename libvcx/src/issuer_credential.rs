@@ -10,7 +10,6 @@ lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
 }
 
-// This enum is left only to avoid making breaking serialization changes
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "version", content = "data")]
 enum IssuerCredentials {

@@ -709,8 +709,8 @@ pub extern fn vcx_issuer_credential_get_payment_txn(command_handle: CommandHandl
     trace!("vcx_issuer_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
 
     spawn(move || {
-        cb(command_handle, 1, ptr::null());
         error!("Payments not supported yet");
+        cb(command_handle, 1, ptr::null());
         Ok(())
     });
 
