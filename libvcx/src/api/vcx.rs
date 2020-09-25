@@ -1351,38 +1351,6 @@ mod tests {
         settings::set_defaults();
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_no_agency_config() {
-        let _setup = SetupAriesMocks::init();
-
-        let config = json!({
-            "institution_name": "faber",
-            "institution_did": "44x8p4HubxzUK1dwxcc5FU",
-            "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
-        }).to_string();
-
-        ::api::wallet::vcx_wallet_set_handle(WalletHandle(1));
-        ::api::utils::vcx_pool_set_handle(1);
-
-        let init_res = _vcx_init_minimal_c_closure(&config);
-        assert_eq!(init_res, error::SUCCESS.code_num);
-
-        let cred_handle = ::issuer_credential::from_string(&::api::issuer_credential::tests::issuer_credential_state_accepted()).unwrap();
-        let connection_handle = ::connection::from_string(mockdata_connection::DEFAULT_SERIALIZED_CONNECTION).unwrap();
-        let my_pw_did = ::connection::get_pw_did(connection_handle).unwrap();
-        let their_pw_did = ::connection::get_their_pw_did(connection_handle).unwrap();
-
-        let (offer, _) = ::issuer_credential::generate_credential_offer_msg(cred_handle).unwrap();
-        let mycred = ::credential::credential_create_with_offer("test1", &offer).unwrap();
-        let request = ::credential::generate_credential_request_msg(mycred, &my_pw_did, &their_pw_did).unwrap();
-        ::issuer_credential::update_state(cred_handle, Some(request), None).unwrap();
-        let cred = ::issuer_credential::generate_credential_msg(cred_handle, &my_pw_did).unwrap();
-        ::credential::update_state(mycred, Some(cred), None).unwrap();
-        assert_eq!(::credential::get_state(mycred).unwrap(), VcxStateType::VcxStateAccepted as u32);
-    }
-
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_minimal_with_invalid_agency_config() {

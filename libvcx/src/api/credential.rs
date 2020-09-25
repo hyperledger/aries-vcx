@@ -20,16 +20,6 @@ use utils::threadpool::spawn;
     The set of object states, messages and transitions depends on the communication method is used.
     There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
     The communication method can be specified as a config option on one of *_init functions.
-
-    proprietary:
-        VcxStateType::VcxStateRequestReceived - once `vcx_credential_create_with_offer` (create Credential object) is called.
-
-        VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `CRED_REQ` message) is called.
-
-        VcxStateType::VcxStateAccepted - once `CRED` messages is received.
-                                         use `vcx_credential_update_state` or `vcx_credential_update_state_with_message` functions for state updates.
-
-    aries:
         VcxStateType::VcxStateRequestReceived - once `vcx_credential_create_with_offer` (create Credential object) is called.
 
         VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `CredentialRequest` message) is called.
@@ -39,15 +29,7 @@ use utils::threadpool::spawn;
                                                 use `vcx_credential_update_state` or `vcx_credential_update_state_with_message` functions for state updates.
 
     # Transitions
-
-    proprietary:
-        VcxStateType::None - `vcx_credential_create_with_offer` - VcxStateType::VcxStateRequestReceived
-
-        VcxStateType::VcxStateRequestReceived - `vcx_credential_send_request` - VcxStateType::VcxStateOfferSent
-
-        VcxStateType::VcxStateOfferSent - received `CRED` - VcxStateType::VcxStateAccepted
-
-    aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
+    RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
         VcxStateType::None - `vcx_credential_create_with_offer` - VcxStateType::VcxStateRequestReceived
 
         VcxStateType::VcxStateRequestReceived - `vcx_issuer_send_credential_offer` - VcxStateType::VcxStateOfferSent
@@ -56,13 +38,6 @@ use utils::threadpool::spawn;
         VcxStateType::VcxStateOfferSent - received `ProblemReport` - VcxStateType::None
 
     # Messages
-
-    proprietary:
-        CredentialOffer (`CRED_OFFER`)
-        CredentialRequest (`CRED_REQ`)
-        Credential (`CRED`)
-
-    aries:
         CredentialProposal - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#propose-credential
         CredentialOffer - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#offer-credential
         CredentialRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#request-credential
@@ -102,29 +77,8 @@ pub extern fn vcx_credential_get_payment_info(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     spawn(move || {
-        match credential::get_payment_information(credential_handle) {
-            Ok(p) => {
-                match p {
-                    Some(p) => {
-                        let info = p.to_string().unwrap_or("{}".to_string());
-                        trace!("vcx_credential_get_payment_info(command_handle: {}, rc: {}, msg: {})", command_handle, error::SUCCESS.code_num, info.clone());
-                        let msg = CStringUtils::string_to_cstring(info);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    None => {
-                        let msg = CStringUtils::string_to_cstring(format!("{{}}"));
-                        trace!("vcx_credential_get_payment_info(command_handle: {}, rc: {}, msg: {})", command_handle, error::SUCCESS.code_num, "{}");
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                }
-            }
-            Err(e) => {
-                warn!("vcx_credential_get_payment_info(command_handle: {}, rc: {}, msg: {})",
-                      command_handle, e, "{}");
-                cb(command_handle, e.into(), ptr::null_mut());
-            }
-        };
-
+        error!("Payments not supported anymore");
+        cb(command_handle, 1, ptr::null());
         Ok(())
     });
 
@@ -840,24 +794,6 @@ pub extern fn vcx_credential_release(handle: u32) -> u32 {
     }
 }
 
-/// Retrieve the payment transaction associated with this credential. This can be used to get the txn that
-/// was used to pay the issuer from the prover.  This could be considered a receipt of payment from the payer to
-/// the issuer.
-///
-/// #param
-/// handle: credential handle that was provided during creation.  Used to access credential object.
-///
-/// #Callback returns
-/// PaymentTxn json
-/// example: {
-///         "amount":25,
-///         "inputs":[
-///             "pay:null:1_3FvPC7dzFbQKzfG"
-///         ],
-///         "outputs":[
-///             {"recipient":"pay:null:FrSVC3IrirScyRh","amount":5,"extra":null}
-///         ]
-///     }
 #[no_mangle]
 pub extern fn vcx_credential_get_payment_txn(command_handle: CommandHandle,
                                              handle: u32,
@@ -870,31 +806,8 @@ pub extern fn vcx_credential_get_payment_txn(command_handle: CommandHandle,
     trace!("vcx_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
 
     spawn(move || {
-        match credential::get_payment_txn(handle) {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_credential_get_payment_txn_cb(command_handle: {}, rc: {}, : {}), source_id: {}",
-                               command_handle, error::SUCCESS.message, x, credential::get_source_id(handle).unwrap_or_default());
-
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, 0, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize payment txn: {:?}", e));
-                        error!("vcx_credential_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}), source_id: {}",
-                               command_handle, err, "null", credential::get_source_id(handle).unwrap_or_default());
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                }
-            }
-            Err(x) => {
-                error!("vcx_credential_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}), source_id: {}",
-                       command_handle, x, "null", credential::get_source_id(handle).unwrap_or_default());
-                cb(command_handle, x.into(), ptr::null());
-            }
-        };
-
+        error!("Payments not supported yet");
+        cb(command_handle, 1, ptr::null());
         Ok(())
     });
 
@@ -966,6 +879,7 @@ mod tests {
                                             handle,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         let credential_json = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
+        println!("Serialized credential: ${:?}", credential_json);
 
         let object: Value = serde_json::from_str(&credential_json).unwrap();
         assert_eq!(object["version"], V3_OBJECT_SERIALIZE_VERSION);
@@ -1085,10 +999,10 @@ mod tests {
     fn test_get_credential() {
         let _setup = SetupAriesMocks::init();
 
-        let handle_cred1 = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
+        let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_get_credential(cb.command_handle, handle_cred1, Some(cb.get_callback())), error::SUCCESS.code_num);
-        let _foo = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
+        assert_eq!(vcx_get_credential(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
         let bad_handle = 1123;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
