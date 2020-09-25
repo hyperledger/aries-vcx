@@ -4,10 +4,10 @@ use api::VcxStateType;
 use connection::{get_messages, send_message};
 use connection;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use issuer_credential_utils::encode_attributes;
 use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer};
 use v3::handlers::issuance::messages::CredentialIssuanceMessage;
 use v3::handlers::issuance::states::{InitialState, IssuerState};
+use v3::handlers::issuance::utils::encode_attributes;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential::Credential;
@@ -264,7 +264,6 @@ impl IssuerSM {
         }
     }
 }
-
 
 fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: &str) -> VcxResult<CredentialOffer> {
     trace!("Issuer::_append_credential_preview >>> cred_offer_msg: {:?}, credential_json: {:?}", cred_offer_msg, credential_json);
