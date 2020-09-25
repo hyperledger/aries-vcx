@@ -120,8 +120,10 @@ describe('IssuerCredential:', () => {
   describe('updateState:', () => {
     it(`returns state none`, async () => {
       const issuerCredential = new IssuerCredential(null as any, {} as any)
-      await issuerCredential.updateState()
-      assert.equal(await issuerCredential.getState(), StateType.None)
+      const state1 = await issuerCredential.updateState()
+      const state2 = await issuerCredential.getState()
+      assert.equal(state1, state2)
+      assert.equal(state2, StateType.None)
     })
 
     it(`returns state offer sent`, async () => {

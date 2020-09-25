@@ -129,8 +129,10 @@ describe('Connection:', () => {
   describe('updateState:', () => {
     it(`returns ${StateType.None}: not initialized`, async () => {
       const connection = new (Connection as any)()
-      await connection.updateState()
-      assert.equal(await connection.getState(), StateType.None)
+      const state1 = await connection.updateState()
+      const state2 = await connection.getState()
+      assert.equal(state1, state2)
+      assert.equal(state2, StateType.None)
     })
 
     it(`returns ${StateType.Initialized}: not connected`, async () => {

@@ -92,8 +92,10 @@ describe('CredentialDef:', () => {
     it(`success`, async () => {
       const credentialDef = await credentialDefPrepareForEndorser()
       assert.equal(await credentialDef.getState(), CredentialDefState.Built)
-      await credentialDef.updateState()
-      assert.equal(await credentialDef.getState(), CredentialDefState.Published)
+      const state1 = await credentialDef.updateState()
+      const state2 = await credentialDef.getState()
+      assert.equal(state1, state2)
+      assert.equal(state1, CredentialDefState.Published)
     })
   })
 })

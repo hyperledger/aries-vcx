@@ -102,8 +102,10 @@ describe('Proof:', () => {
   describe('updateState:', () => {
     it(`returns ${StateType.None}: not initialized`, async () => {
       const proof = new Proof(null as any, {} as any)
-      await proof.updateState()
-      assert.equal(await proof.getState(), StateType.None)
+      const state1 = await proof.updateState()
+      const state2 = await proof.getState()
+      assert.equal(state1, state2)
+      assert.equal(state2, StateType.None)
     })
 
     it(`returns ${StateType.Initialized}: created`, async () => {
