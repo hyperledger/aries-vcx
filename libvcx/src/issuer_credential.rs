@@ -1,21 +1,9 @@
 use serde_json;
 
-use api::VcxStateType;
-use credential_request::CredentialRequest;
 use error::prelude::*;
-use issuer_credential_utils::encode_attributes;
-use messages::get_message::get_ref_msg;
-use messages::payload::{PayloadKinds, Payloads};
-use messages::thread::Thread;
 use object_cache::ObjectCache;
-use settings;
 
-use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
-use utils::constants::CRED_MSG;
 use utils::error;
-use utils::libindy::{anoncreds, payments};
-use utils::libindy::payments::PaymentTxn;
-use utils::qualifier;
 use v3::handlers::issuance::Issuer;
 
 lazy_static! {
@@ -158,6 +146,7 @@ pub mod tests {
     
 
     use ::{issuer_credential, settings};
+    use api::VcxStateType;
     
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;

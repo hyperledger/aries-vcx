@@ -1,33 +1,10 @@
-use std::convert::TryInto;
-
-use serde_json::Value;
-
-use ::{serde_json, settings};
-use api::VcxStateType;
-use connection;
+use ::{serde_json};
 use error::prelude::*;
-use messages::{
-    self,
-    get_message::{
-        get_connection_messages,
-        get_ref_msg,
-        MessagePayload,
-    },
-    payload::{
-        PayloadKinds,
-        Payloads,
-    },
-    RemoteMessageType,
-    thread::Thread,
-};
 use object_cache::ObjectCache;
-use utils::{constants, error};
-use utils::agent_info::{get_agent_attr, get_agent_info, MyAgentInfo};
+use utils::error;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use utils::httpclient::{AgencyMock, AgencyMockDecrypted};
-use credential_request::CredentialRequest;
-use utils::libindy::payments::{pay_a_payee, PaymentTxn};
 use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use utils::httpclient::AgencyMockDecrypted;
 use v3::{
     handlers::issuance::Holder,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
@@ -230,12 +207,6 @@ pub fn is_payment_required(handle: u32) -> VcxResult<bool> {
     }).map_err(handle_err)
 }
 
-pub fn submit_payment(handle: u32) -> VcxResult<(PaymentTxn, String)> {
-    HANDLE_MAP.get(handle, |_| {
-        Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Aries protocol currently doesn't support payments"))
-    }).map_err(handle_err)
-}
-
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| {
         credential.get_credential_status()
@@ -246,6 +217,9 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 pub mod tests {
     use super::*;
     use utils::devsetup::*;
+    use api::VcxStateType;
+    use connection;
+    use credential_request::CredentialRequest;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
 
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
@@ -378,7 +352,7 @@ pub mod tests {
 
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();
-        let cred_value: Value = serde_json::from_str(&cred_string).unwrap();
+        let cred_value: serde_json::Value = serde_json::from_str(&cred_string).unwrap();
         let _credential_struct: CredentialV3 = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
     }
 }
