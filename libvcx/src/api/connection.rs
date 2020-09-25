@@ -1283,7 +1283,7 @@ mod tests {
     use std::ptr;
 
     use api::{return_types_u32, VcxStateType};
-    use connection::tests::{build_test_connection_inviter_requested, build_test_connection_inviter_invited};
+    use connection::tests::{build_test_connection_inviter_requested, build_test_connection_inviter_invited, build_test_connection_inviter_null};
     use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use utils::devsetup::*;
     use utils::error;
@@ -1331,7 +1331,8 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
-        let handle = build_test_connection_inviter_requested();
+
+        let handle = build_test_connection_inviter_null();
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

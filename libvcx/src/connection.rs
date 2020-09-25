@@ -4,18 +4,17 @@ use serde_json;
 
 use error::prelude::*;
 use messages;
-use messages::SerializableObjectWithState;
 use messages::get_message::Message;
+use messages::SerializableObjectWithState;
 use object_cache::ObjectCache;
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
-use v3::handlers::connection::connection::Connection as ConnectionV3;
 use v3::handlers::connection::agent_info::AgentInfo;
+use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnection, SmConnectionState};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation as InvitationV3;
-use v3::handlers::connection::state_machine::ActorDidExchangeState;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
@@ -99,7 +98,7 @@ fn store_connection(connection: ConnectionV3) -> VcxResult<u32> {
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = ConnectionV3::create(source_id);
-    return store_connection(connection)
+    return store_connection(connection);
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
@@ -161,13 +160,13 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<AgentInfo, ActorDidExchangeState> = ::serde_json::from_str(connection_data)
+    let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = ::serde_json::from_str(connection_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
         SerializableObjectWithState::V3 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
-        },
+        }
         _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
     };
     Ok(handle)
@@ -188,14 +187,14 @@ pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> 
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-impl Into<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
-    fn into(self) -> (ActorDidExchangeState, AgentInfo, String) {
-        (self.state_object().to_owned(), self.agent_info().to_owned(), self.source_id())
+impl Into<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
+    fn into(self) -> (SmConnectionState, AgentInfo, String) {
+        (self.state_object(), self.agent_info().to_owned(), self.source_id())
     }
 }
 
-impl From<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
-    fn from((state, agent_info, source_id): (ActorDidExchangeState, AgentInfo, String)) -> ConnectionV3 {
+impl From<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
+    fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> ConnectionV3 {
         ConnectionV3::from_parts(source_id, agent_info, state)
     }
 }
@@ -264,16 +263,24 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
+    use serde::Serialize;
+    use serde_json::Value;
+
     use api::VcxStateType;
-    use messages::MessageStatusCode;
     use messages::get_message::*;
+    use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
+
+    pub fn build_test_connection_inviter_null() -> u32 {
+        let handle = create_connection("faber_to_alice").unwrap();
+        handle
+    }
 
     pub fn build_test_connection_inviter_invited() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -283,7 +290,7 @@ pub mod tests {
 
     pub fn build_test_connection_inviter_requested() -> u32 {
         let handle = build_test_connection_inviter_invited();
-        let msg : A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
+        let msg: A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
         update_state_with_message(handle, msg).unwrap();
         handle
     }
@@ -416,6 +423,42 @@ pub mod tests {
         assert!(details.contains("\"serviceEndpoint\":"));
 
         assert_eq!(get_invite_details(0, true).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_connection_inviter_completed() {
+        let _setup = SetupAriesMocks::init();
+
+        let handle = from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
+        let second_string = to_string(handle).unwrap();
+
+        assert_eq!(get_pw_did(handle).unwrap(), "2ZHFFhzA2XtTD6hJqzL7ux");
+        assert_eq!(get_pw_verkey(handle).unwrap(), "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
+        assert_eq!(get_agent_did(handle).unwrap(), "EZrZyu4bfydm4ByNm56kPP");
+        assert_eq!(get_agent_verkey(handle).unwrap(), "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
+        assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
+        assert!(release(handle).is_ok());
+    }
+
+    fn test_deserialize_and_serialize(sm_serialized: &str) {
+        let mut original_object: Value = serde_json::from_str(sm_serialized).unwrap();
+        let handle_conn = from_string(sm_serialized).unwrap();
+        let reserialized = to_string(handle_conn).unwrap();
+        let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
+
+        assert_eq!(original_object, reserialized_object);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        let _setup = SetupAriesMocks::init();
+
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
     }
 
     #[test]

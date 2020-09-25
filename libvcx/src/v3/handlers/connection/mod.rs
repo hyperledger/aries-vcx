@@ -1,20 +1,18 @@
 pub mod agent_info;
-pub mod states;
 pub mod connection;
 pub mod messages;
-pub mod state_machine;
-mod state_machine_inviter;
-mod state_machine_invitee;
+mod invitee;
+mod inviter;
+mod util;
 
 #[cfg(test)]
 pub mod tests {
     use utils::devsetup::SetupEmpty;
     use v3::messages::connection::invite::tests::_invitation_json;
+    use connection::tests::build_test_connection_inviter_requested;
 
     pub fn mock_connection() -> u32 {
-        let connection_handle = ::connection::create_connection_with_invite("source_id", &_invitation_json()).unwrap();
-        ::connection::connect(connection_handle, None).unwrap();
-        connection_handle
+        build_test_connection_inviter_requested()
     }
 
     fn _setup() {
