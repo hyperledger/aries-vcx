@@ -47,11 +47,10 @@ async function run () {
   logger.info('\n\n******************\n\n')
 
   logger.info('#4 Polling agency and waiting for alice to accept the invitation. (start alice.py now)')
-  let connectionState = await connectionToAlice.getState()
+  let connectionState = await connectionToAlice.updateState()
   while (connectionState !== StateType.Accepted) {
     await sleepPromise(2000)
-    await connectionToAlice.updateState()
-    connectionState = await connectionToAlice.getState()
+    connectionState = await connectionToAlice.updateState()
   }
   logger.info('Connection to alice was Accepted!')
 

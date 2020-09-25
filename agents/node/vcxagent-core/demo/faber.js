@@ -71,14 +71,12 @@ async function runFaber (options) {
     await vcxProof.requestProof(connectionToAlice)
 
     logger.info('#21 Poll agency and wait for alice to provide proof')
-    let proofProtocolState = await vcxProof.getState()
+    let proofProtocolState = await vcxProof.updateState()
     logger.debug(`vcxProof = ${JSON.stringify(vcxProof)}`)
     logger.debug(`proofState = ${proofProtocolState}`)
-    while (proofProtocolState !== StateType.Accepted) {
-      // even if revoked credential was used, vcxProof.getState() should in final state return StateType.Accepted
+    while (proofProtocolState !== StateType.Accepted) { // even if revoked credential was used, state should in final state be StateType.Accepted
       await sleepPromise(2000)
-      await vcxProof.updateState()
-      proofProtocolState = await vcxProof.getState()
+      proofProtocolState = await vcxProof.updateState()
       logger.info(`proofState=${proofProtocolState}`)
     }
 
