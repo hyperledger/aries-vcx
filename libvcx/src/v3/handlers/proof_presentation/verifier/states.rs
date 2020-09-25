@@ -312,12 +312,11 @@ impl VerifierSM {
 
     pub fn presentation(&self) -> VcxResult<Presentation> {
         match self.state {
-            VerifierState::Initiated(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not received yet")),
-            VerifierState::PresentationRequestSent(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not received yet")),
             VerifierState::Finished(ref state) => {
                 state.presentation.clone()
                     .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle))
             }
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not received yet"))
         }
     }
 }

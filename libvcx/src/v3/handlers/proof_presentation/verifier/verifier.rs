@@ -117,16 +117,7 @@ impl Verifier {
         trace!("Verifier::get_presentation >>>");
 
         let proof = self.verifier_sm.presentation()?;
-
-        // strict aries protocol is set. return aries formatted Proof
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string());
-        }
-
-        // convert Proof into proprietary format
-        let proof: ProofMessage = proof.try_into()?;
-
-        return Ok(json!(proof).to_string());
+        Ok(json!(proof).to_string())
     }
 
     pub fn step(&mut self, message: VerifierMessages) -> VcxResult<()> {
