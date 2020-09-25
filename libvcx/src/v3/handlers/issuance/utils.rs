@@ -58,11 +58,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
-
     use ::{settings};
-    
-    
-    
     
     #[allow(unused_imports)]
     use utils::{constants::*,
