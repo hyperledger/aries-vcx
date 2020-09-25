@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 
 use error::{VcxError, VcxErrorKind, VcxResult};
-use issuer_credential::CredentialMessage;
 use messages::payload::PayloadKinds;
 use messages::thread::Thread;
 use v3::messages::a2a::{A2AMessage, MessageId};
@@ -42,39 +41,6 @@ impl Credential {
 please_ack!(Credential);
 threadlike!(Credential);
 a2a_message!(Credential);
-
-impl TryInto<Credential> for CredentialMessage {
-    type Error = VcxError;
-
-    fn try_into(self) -> Result<Credential, Self::Error> {
-        Credential::create()
-            .set_thread_id(&self.claim_offer_id)
-            .set_credential(self.libindy_cred)
-    }
-}
-
-impl TryInto<CredentialMessage> for Credential {
-    type Error = VcxError;
-
-    fn try_into(self) -> Result<CredentialMessage, Self::Error> {
-        let indy_credential_json = self.credentials_attach.content()?;
-
-        let indy_credential: ::serde_json::Value = ::serde_json::from_str(&indy_credential_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Indy Credential: {:?}", err)))?;
-
-        Ok(CredentialMessage {
-            msg_type: PayloadKinds::Cred.name().to_string(),
-            libindy_cred: self.credentials_attach.content()?,
-            claim_offer_id: self.thread.thid.clone().unwrap_or_default(),
-            cred_revoc_id: None,
-            revoc_reg_delta_json: None,
-            version: String::from("0.1"),
-            from_did: String::new(),
-            cred_def_id: indy_credential["cred_def_id"].as_str().map(String::from).unwrap_or_default(),
-            rev_reg_def_json: String::new(),
-        })
-    }
-}
 
 #[cfg(test)]
 pub mod tests {

@@ -6,7 +6,6 @@ use ::{serde_json, settings};
 use api::VcxStateType;
 use connection;
 use error::prelude::*;
-use issuer_credential::{CredentialMessage, CredentialOffer, PaymentInfo};
 use messages::{
     self,
     get_message::{
@@ -190,46 +189,6 @@ pub fn get_credential_offer_messages(connection_handle: u32) -> VcxResult<String
     Ok(json!(credential_offers).to_string())
 }
 
-fn _set_cred_offer_ref_message(payload: &MessagePayload, my_vk: &str, msg_id: &str) -> VcxResult<Vec<Value>> {
-    let (offer, thread) = Payloads::decrypt(my_vk, payload)?;
-
-    let (mut offer, payment_info) = parse_json_offer(&offer)?;
-
-    offer.msg_ref_id = Some(msg_id.to_owned());
-    if let Some(tr) = thread {
-        offer.thread_id = tr.thid.clone();
-    }
-
-    let mut payload = Vec::new();
-    payload.push(json!(offer));
-    if let Some(p) = payment_info { payload.push(json!(p)); }
-
-    Ok(payload)
-}
-
-pub fn parse_json_offer(offer: &str) -> VcxResult<(CredentialOffer, Option<PaymentInfo>)> {
-    let paid_offer: Value = serde_json::from_str(offer)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize offer: {}", err)))?;
-
-    let mut payment: Option<PaymentInfo> = None;
-    let mut offer: Option<CredentialOffer> = None;
-
-    if let Some(i) = paid_offer.as_array() {
-        for entry in i.iter() {
-            if entry.get("libindy_offer").is_some() {
-                offer = Some(serde_json::from_value(entry.clone())
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize offer: {}", err)))?);
-            }
-
-            if entry.get("payment_addr").is_some() {
-                payment = Some(serde_json::from_value(entry.clone())
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize payment address: {}", err)))?);
-            }
-        }
-    }
-    Ok((offer.ok_or(VcxError::from(VcxErrorKind::InvalidJson))?, payment))
-}
-
 pub fn release(handle: u32) -> VcxResult<()> {
     HANDLE_MAP.release(handle).map_err(handle_err)
 }
@@ -274,12 +233,6 @@ pub fn is_payment_required(handle: u32) -> VcxResult<bool> {
 pub fn submit_payment(handle: u32) -> VcxResult<(PaymentTxn, String)> {
     HANDLE_MAP.get(handle, |_| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Aries protocol currently doesn't support payments"))
-    }).map_err(handle_err)
-}
-
-pub fn get_payment_information(handle: u32) -> VcxResult<Option<PaymentInfo>> {
-    HANDLE_MAP.get(handle, |_| {
-        Ok(None)
     }).map_err(handle_err)
 }
 
@@ -370,7 +323,7 @@ pub mod tests {
         let msg = get_credential(handle_cred).unwrap();
         let msg_value: serde_json::Value = serde_json::from_str(&msg).unwrap();
 
-        info!("full_credential_test:: going to deserialize CredentialMessage: {:?}", msg_value);
+        info!("full_credential_test:: going to deserialize credential: {:?}", msg_value);
         let _credential_struct: CredentialV3 = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
     }
 

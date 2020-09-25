@@ -303,15 +303,27 @@ pub struct Message {
 
 #[macro_export]
 macro_rules! convert_aries_message {
-    ($message:ident, $a2a_msg:ident, $target_type:ident, $kind:ident) => (
-        if settings::is_strict_aries_protocol_set() {
-             (PayloadKinds::$kind, json!(&$a2a_msg).to_string())
-        } else {
-            let converted_message: $target_type = $message.try_into()?;
-            (PayloadKinds::$kind, json!(&converted_message).to_string())
-        }
+    ($a2a_msg:ident, $kind:ident) => (
+         (PayloadKinds::$kind, json!(&$a2a_msg).to_string())
     )
 }
+
+// TODO: Remove?
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct CredentialMessage {
+    pub libindy_cred: String,
+    pub rev_reg_def_json: String,
+    pub cred_def_id: String,
+    pub msg_type: String,
+    pub claim_offer_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cred_revoc_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revoc_reg_delta_json: Option<String>,
+    pub version: String,
+    pub from_did: String,
+}
+
 
 impl Message {
     pub fn payload<'a>(&'a self) -> VcxResult<Vec<u8>> {
@@ -348,7 +360,6 @@ impl Message {
     fn _decrypt_v3_message(&self) -> VcxResult<::messages::payload::PayloadV1> {
         use v3::messages::a2a::A2AMessage;
         use v3::utils::encryption_envelope::EncryptionEnvelope;
-        use ::issuer_credential::{CredentialOffer, CredentialMessage};
         use ::messages::proofs::proof_message::ProofMessage;
         use ::messages::payload::{PayloadTypes, PayloadV1, PayloadKinds};
         use std::convert::TryInto;
@@ -356,22 +367,15 @@ impl Message {
         let a2a_message = EncryptionEnvelope::open(self.payload()?)?;
 
         let (kind, msg) = match a2a_message.clone() {
-            A2AMessage::PresentationRequest(presentation_request) => {
-                convert_aries_message!(presentation_request, a2a_message, ProofRequestMessage, ProofRequest)
+            A2AMessage::PresentationRequest(_) => {
+                convert_aries_message!(a2a_message, ProofRequest)
             }
-            A2AMessage::CredentialOffer(offer) => {
-                if settings::is_strict_aries_protocol_set() {
-                    (PayloadKinds::CredOffer, json!(&offer).to_string())
-                } else {
-                    let cred_offer: CredentialOffer = offer.try_into()?;
-                    (PayloadKinds::CredOffer, json!(vec![cred_offer]).to_string())
-                }
+            A2AMessage::CredentialOffer(offer) => (PayloadKinds::CredOffer, json!(&offer).to_string()),
+            A2AMessage::Credential(_) => {
+                convert_aries_message!(a2a_message, Cred)
             }
-            A2AMessage::Credential(credential) => {
-                convert_aries_message!(credential, a2a_message, CredentialMessage, Cred)
-            }
-            A2AMessage::Presentation(presentation) => {
-                convert_aries_message!(presentation, a2a_message, ProofMessage, Proof)
+            A2AMessage::Presentation(_) => {
+                convert_aries_message!(a2a_message, Proof)
             }
             msg => {
                 let msg = json!(&msg).to_string();

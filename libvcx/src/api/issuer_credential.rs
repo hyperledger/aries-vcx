@@ -724,26 +724,6 @@ pub extern fn vcx_issuer_credential_release(credential_handle: u32) -> u32 {
     }
 }
 
-/// Retrieve the payment transaction associated with this credential. This can be used to get the txn that
-/// was used to pay the issuer from the holder.
-/// This could be considered a receipt of payment from the payer to the issuer.
-///
-/// #param
-/// handle: issuer_credential handle that was provided during creation.  Used to access issuer_credential object.
-///
-/// #Callback returns
-/// PaymentTxn json
-/// example: {
-///         "amount":25,
-///         "inputs":[
-///             "pay:null:1_3FvPC7dzFbQKzfG",
-///             "pay:null:1_lWVGKc07Pyc40m6"
-///         ],
-///         "outputs":[
-///             {"recipient":"pay:null:FrSVC3IrirScyRh","amount":5,"extra":null},
-///             {"recipient":"pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j","amount":25,"extra":null}
-///         ]
-///     }
 #[no_mangle]
 pub extern fn vcx_issuer_credential_get_payment_txn(command_handle: CommandHandle,
                                                     handle: u32,
@@ -756,31 +736,8 @@ pub extern fn vcx_issuer_credential_get_payment_txn(command_handle: CommandHandl
     trace!("vcx_issuer_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
 
     spawn(move || {
-        match issuer_credential::get_payment_txn(handle) {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_issuer_credential_get_payment_txn_cb(command_handle: {}, rc: {}, : {}) source_id: {}",
-                               command_handle, error::SUCCESS.message, x, source_id);
-
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, 0, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize payment txn: {}", e));
-                        error!("vcx_issuer_credential_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}) source_id: {}",
-                               command_handle, err, "null", source_id);
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                }
-            }
-            Err(x) => {
-                error!("vcx_issuer_credential_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}) source_id: {}",
-                       command_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null());
-            }
-        };
-
+        cb(command_handle, 1, ptr::null());
+        error!("Payments not supported yet");
         Ok(())
     });
 
@@ -883,7 +840,7 @@ pub mod tests {
     use utils::constants::*;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST};
+    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -975,8 +932,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_success() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         assert!(handle > 0);
@@ -985,8 +941,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_create_credential_fails() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_issuer_create_credential(cb.command_handle,
@@ -1005,8 +960,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_serialize_deserialize() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1031,8 +985,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_send_credential_offer() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
 
@@ -1058,8 +1011,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_update_state_v2() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
@@ -1094,8 +1046,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // TODO: generate_credential_offer_msg() not implemented for V3 aries credential
     fn test_vcx_issuer_get_credential_offer_msg() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1114,8 +1065,7 @@ pub mod tests {
     // instead it should be using connection handle passed to vcx_issuer_send_credential
     // but in Aries, it's not doing so
     fn test_vcx_issuer_send_a_credential() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
         let handle_conn = ::connection::tests::build_test_connection_inviter_invited();
@@ -1136,11 +1086,12 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
+    // TODO: get_credential_msg not implemented yet for v3
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_vcx_issuer_get_credential_msg() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = issuer_credential::from_string(&issuer_credential_state_accepted()).unwrap();
 
@@ -1157,8 +1108,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_credential_arguments_correct() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1173,8 +1123,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_get_state() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1190,11 +1139,10 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_revoke_credential() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);
-        let handle = issuer_credential::from_string(&issuer_credential_state_accepted()).unwrap();
+        let handle = issuer_credential::from_string(CREDENTIAL_ISSUER_SM_FINISHED).unwrap();
 
         // send the credential
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1208,8 +1156,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_issuer_credential_release() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         assert_eq!(vcx_issuer_credential_release(handle + 1), error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num);
