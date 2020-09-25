@@ -1289,7 +1289,7 @@ mod tests {
     use utils::error;
     use utils::error::SUCCESS;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -1434,10 +1434,9 @@ mod tests {
     fn test_vcx_connection_deserialize_succeeds() {
         let _setup = SetupAriesMocks::init();
 
-        let string = ::utils::constants::DEFAULT_CONNECTION;
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_connection_deserialize(cb.command_handle,
-                                             CString::new(string).unwrap().into_raw(),
+                                             CString::new(DEFAULT_SERIALIZED_CONNECTION).unwrap().into_raw(),
                                              Some(cb.get_callback()));
         assert_eq!(err, SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
@@ -1477,7 +1476,7 @@ mod tests {
         assert_eq!(vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(::connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(::connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
     #[test]

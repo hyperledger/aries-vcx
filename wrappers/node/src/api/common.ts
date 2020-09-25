@@ -138,5 +138,6 @@ export interface IPaymentOutput {
 
 export interface ISerializedData<T> {
   version: string,
-  data: T
+  data: T,
+  source_id: string
 }

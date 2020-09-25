@@ -1,4 +1,4 @@
-use error::prelude::*;
+
 use messages::*;
 use messages::message_type::MessageTypes;
 use messages::MessageStatusCode;

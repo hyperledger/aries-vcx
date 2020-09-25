@@ -825,13 +825,13 @@ mod tests {
     use ::credential::tests::BAD_CREDENTIAL_OFFER;
     use api::return_types_u32;
     use api::VcxStateType;
-    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, PENDING_OBJECT_SERIALIZE_VERSION, V3_OBJECT_SERIALIZE_VERSION};
-    use utils::constants;
+    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use utils::timeout::TimeoutUtils;
-    use v3::messages::issuance::credential_request::CredentialRequest;
+    
 
     use super::*;
 
@@ -1002,7 +1002,7 @@ mod tests {
         let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_credential(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
-        let foo = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
+        cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
         let bad_handle = 1123;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

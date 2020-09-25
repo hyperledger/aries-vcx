@@ -10,7 +10,7 @@ use v3::messages::a2a::A2AMessage;
 use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
-use utils::constants::CREDS_FROM_PROOF_REQ;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Prover {

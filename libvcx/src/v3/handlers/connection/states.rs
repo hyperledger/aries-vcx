@@ -615,7 +615,7 @@ impl DidExchangeSM {
             ActorDidExchangeState::Inviter(ref state) =>
                 match state {
                     DidExchangeState::Null(_) => None,
-                    DidExchangeState::Invited(ref state) => None,
+                    DidExchangeState::Invited(_state) => None,
                     DidExchangeState::Requested(ref state) => Some(state.did_doc.clone()),
                     DidExchangeState::Responded(ref state) => Some(state.did_doc.clone()),
                     DidExchangeState::Completed(ref state) => Some(state.did_doc.clone()),

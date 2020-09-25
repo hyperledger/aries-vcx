@@ -59,11 +59,11 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use ::{issuer_credential, settings};
-    use api::issuer_credential::{vcx_issuer_credential_update_state, vcx_issuer_credential_update_state_with_message};
-    use connection::tests::build_test_connection_inviter_requested;
-    use credential_def::tests::create_cred_def_fake;
-    use credential_request::CredentialRequest;
+    use ::{settings};
+    
+    
+    
+    
     #[allow(unused_imports)]
     use utils::{constants::*,
                 get_temp_dir_path,
@@ -74,9 +74,9 @@ pub mod tests {
                           wallet, wallet::get_wallet_handle},
     };
     use utils::devsetup::*;
-    use utils::httpclient::HttpClientMockResponse;
-    use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
-    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    
+    
+    
 
     use super::*;
 

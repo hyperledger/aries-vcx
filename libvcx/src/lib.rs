@@ -272,7 +272,7 @@ mod tests {
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections();
-        let (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -313,7 +313,7 @@ mod tests {
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections();
-        let (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;

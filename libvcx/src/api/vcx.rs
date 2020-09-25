@@ -677,6 +677,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use utils::libindy::wallet::get_wallet_handle;
     use utils::timeout::TimeoutUtils;
+    use utils::mockdata::mockdata_connection;
 
     use super::*;
     use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
