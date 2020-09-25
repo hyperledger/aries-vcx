@@ -112,8 +112,10 @@ describe('DisclosedProof', () => {
   describe('updateState:', () => {
     it(`returns ${StateType.None}: not initialized`, async () => {
       const disclosedProof = new (DisclosedProof as any)()
-      await disclosedProof.updateState()
-      assert.equal(await disclosedProof.getState(), StateType.None)
+      const state1 = await disclosedProof.updateState()
+      const state2 = await disclosedProof.getState()
+      assert.equal(state1, state2)
+      assert.equal(state2, StateType.None)
     })
 
     it(`returns ${StateType.RequestReceived}: created`, async () => {

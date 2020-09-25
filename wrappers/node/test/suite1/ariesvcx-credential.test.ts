@@ -90,8 +90,10 @@ describe('Credential:', () => {
   describe('updateState:', () => {
     it(`returns ${StateType.None}: not initialized`, async () => {
       const credential = new Credential(null as any)
-      await credential.updateState()
-      assert.equal(await credential.getState(), StateType.None)
+      const state1 = await credential.updateState()
+      const state2 = await credential.getState()
+      assert.equal(state1, state2)
+      assert.equal(state2, StateType.None)
     })
 
     it(`returns status requestReceived`, async () => {

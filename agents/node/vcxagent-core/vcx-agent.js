@@ -179,9 +179,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
   async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
-      await connection.updateState()
-      const connectionState = await connection.getState()
-      if (connectionState !== StateType.Accepted) {
+      if (await connection.updateState() !== StateType.Accepted) {
         return { result: undefined, isFinished: false }
       } else {
         return { result: null, isFinished: true }
@@ -311,9 +309,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
   async function _progressCredentialToState (credential, credentialStateTarget, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
-      await credential.updateState()
-      const credentialState = await credential.getState()
-      if (credentialState !== credentialStateTarget) {
+      if (await credential.updateState() !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
       } else {
         return { result: null, isFinished: true }
@@ -328,9 +324,7 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
 
   async function _progressIssuerCredentialToState (issuerCredential, credentialStateTarget, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
-      await issuerCredential.updateState()
-      const credentialState = await issuerCredential.getState()
-      if (credentialState !== credentialStateTarget) {
+      if (await issuerCredential.updateState() !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
       } else {
         return { result: null, isFinished: true }

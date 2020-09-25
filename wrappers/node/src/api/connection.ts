@@ -309,10 +309,10 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
    * ```
    * @returns {Promise<void>}
    */
-  public async updateStateWithMessage (message: string): Promise<void> {
+  public async updateStateWithMessage (message: string): Promise<number> {
     try {
       const commandHandle = 0
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_connection_update_state_with_message(commandHandle, this.handle, message, cb)
           if (rc) {
@@ -322,13 +322,14 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
         (resolve, reject) => ffi.Callback(
           'void',
           ['uint32', 'uint32', 'uint32'],
-          (handle: number, err: any, state: StateType) => {
+          (handle: number, err: any, _state: StateType) => {
             if (err) {
               reject(err)
             }
-            resolve(state)
+            resolve(_state)
           })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }
