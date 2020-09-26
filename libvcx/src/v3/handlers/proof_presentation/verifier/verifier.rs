@@ -204,10 +204,10 @@ pub mod tests {
     // TODO: Should fail but passes for some reason
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
+    // #[cfg(feature = "to_restore")]
     fn test_proof_resetrictions() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let connection_handle = build_test_connection_inviter_requested();
@@ -227,10 +227,11 @@ pub mod tests {
                                             }),
                                          ]).to_string(),
                                          json!([]).to_string(),
-                                         r#"{"support_revocation":false}"#.to_string(),
+                                         r#"{"support_revocation":true}"#.to_string(),
                                          "Optional".to_owned()).unwrap();
 
         let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
+        println!("{:?}", proof_req_json);
 
         ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
 
@@ -243,7 +244,7 @@ pub mod tests {
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
-                   "attribute_3": "my_self_attested_val"
+                   "attribute_2": "my_self_attested_val"
                 },
                 "requested_attributes":{
                    "attribute_0": {"cred_id": cred_id, "revealed": true},
@@ -255,6 +256,7 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(),
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).unwrap();
+        println!("{:?}", prover_proof_json);
 
         ver_proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
