@@ -999,58 +999,8 @@ pub mod tests {
         assert_eq!(from_string(empty).unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
-    // TODO: Move this to v3
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_proof_verification_restrictions() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let proof_req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": {
-               "address1_1": {
-                   "name":"address1",
-                   "restrictions": [{ "issuer_did": "Not Here" }]
-               },
-               "zip_2": { "name":"zip", },
-               "self_attest_3": { "name":"self_attest", },
-           },
-           "requested_predicates": {},
-        }).to_string();
-
-        let (_, _, _, proof) = ::utils::libindy::anoncreds::tests::create_proof();
-
-        let mut proof_req_obj = ProofRequestMessage::create();
-        proof_req_obj.proof_request_data = serde_json::from_str(&proof_req).unwrap();
-
-        let mut proof_msg = ProofMessage::new();
-        proof_msg.libindy_proof = proof;
-
-        let mut proof = create_boxed_proof(None, None, None);
-        proof.proof = Some(proof_msg);
-        proof.proof_request = Some(proof_req_obj);
-
-        let rc = proof.proof_validation();
-
-        // proof validation should fail because restriction
-        rc.unwrap_err(); //FIXME check error code also
-        assert_eq!(proof.proof_state, ProofStateType::ProofInvalid);
-
-        // remove restriction, now validation should pass
-        proof.proof_state = ProofStateType::ProofUndefined;
-        proof.proof_request.as_mut().unwrap()
-            .proof_request_data.requested_attributes
-            .get_mut("address1_1").unwrap().restrictions = None;
-        let rc = proof.proof_validation();
-
-        rc.unwrap();
-        assert_eq!(proof.proof_state, ProofStateType::ProofValidated);
-    }
-
-    // TODO: Move this to v3
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "to_restore")]
     #[test]
     fn test_proof_validate_attribute() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();

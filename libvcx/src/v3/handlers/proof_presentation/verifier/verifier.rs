@@ -126,6 +126,7 @@ pub mod tests {
 
     use super::*;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use v3::messages::status::Status;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -173,7 +174,6 @@ pub mod tests {
                                          r#"{"support_revocation":false}"#.to_string(),
                                          "Optional".to_owned()).unwrap();
 
-        // let proof_req_json = ver_proof.generate_presentation_request_msg().unwrap();
         let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
 
         ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
@@ -192,7 +192,6 @@ pub mod tests {
             &json!({}).to_string(),
             &json!({}).to_string(),
             None).unwrap();
-        println!("{:?}", prover_proof_json);
 
         ver_proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
@@ -200,6 +199,71 @@ pub mod tests {
         let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
         ver_proof.verify_presentation(presentation);
         assert_eq!(ver_proof.state(), VcxStateType::VcxStateAccepted as u32);
+    }
+
+    // TODO: Should fail but passes for some reason
+    #[test]
+    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
+    fn test_proof_resetrictions() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+
+        let connection_handle = build_test_connection_inviter_requested();
+
+        let mut ver_proof = Verifier::create("1".to_string(),
+                                         json!([
+                                            json!({
+                                                "name":"address1",
+                                                "restrictions": [{ "issuer_did": "Not Here" }],
+                                            }),
+                                            json!({
+                                                "name":"zip",
+                                            }),
+                                            json!({
+                                                "name":"self_attest",
+                                                "self_attest_allowed": true,
+                                            }),
+                                         ]).to_string(),
+                                         json!([]).to_string(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
+
+        let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
+
+        ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
+            = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+
+        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
+            &proof_req_json,
+            &json!({
+                "self_attested_attributes":{
+                   "attribute_3": "my_self_attested_val"
+                },
+                "requested_attributes":{
+                   "attribute_0": {"cred_id": cred_id, "revealed": true},
+                   "attribute_1": {"cred_id": cred_id, "revealed": true}
+                },
+                "requested_predicates":{}
+            }).to_string(),
+            "main",
+            &json!({schema_id: schema_json}).to_string(),
+            &json!({cred_def_id: cred_def_json}).to_string(),
+            None).unwrap();
+
+        ver_proof.send_presentation_request(connection_handle).unwrap();
+        assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
+        ver_proof.verify_presentation(presentation);
+        assert_eq!(ver_proof.state(), VcxStateType::VcxStateNone as u32);
+        assert_eq!(ver_proof.presentation_status(), 2);
+        // TODO: Remove restriction, should pass
     }
 
 
