@@ -1,9 +1,7 @@
 use std::convert::TryInto;
 
-use ::{connection, settings};
+use ::{connection};
 use error::prelude::*;
-use messages::proofs::proof_message::ProofMessage;
-use messages::proofs::proof_request::ProofRequestMessage;
 use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use v3::handlers::proof_presentation::verifier::states::VerifierSM;
 use v3::messages::a2a::A2AMessage;
@@ -102,15 +100,7 @@ impl Verifier {
 
         let proof_request = self.verifier_sm.presentation_request()?;
 
-        // strict aries protocol is set. return aries formatted Proof Request
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof_request).to_string());
-        }
-
-        // convert Proof Request into proprietary format
-        let proof_request: ProofRequestMessage = proof_request.try_into()?;
-
-        return Ok(json!(proof_request).to_string());
+        Ok(json!(proof_request).to_string())
     }
 
     pub fn get_presentation(&self) -> VcxResult<String> {
@@ -131,7 +121,8 @@ pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::*;
+    use settings;
 
     use super::*;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
@@ -157,6 +148,60 @@ pub mod tests {
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_proof_self_attested_proof_validation() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+
+        let connection_handle = build_test_connection_inviter_requested();
+
+        let mut ver_proof = Verifier::create("1".to_string(),
+                                         json!([
+                                            json!({
+                                                "name":"address1",
+                                                "self_attest_allowed": true,
+                                            }),
+                                            json!({
+                                                "name":"zip",
+                                                "self_attest_allowed": true,
+                                            }),
+                                         ]).to_string(),
+                                         json!([]).to_string(),
+                                         r#"{"support_revocation":false}"#.to_string(),
+                                         "Optional".to_owned()).unwrap();
+
+        // let proof_req_json = ver_proof.generate_presentation_request_msg().unwrap();
+        let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
+
+        ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
+
+        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
+            &proof_req_json,
+            &json!({
+              "self_attested_attributes":{
+                 "attribute_0": "my_self_attested_address",
+                 "attribute_1": "my_self_attested_zip"
+              },
+              "requested_attributes":{},
+              "requested_predicates":{}
+            }).to_string(),
+            "main",
+            &json!({}).to_string(),
+            &json!({}).to_string(),
+            None).unwrap();
+        println!("{:?}", prover_proof_json);
+
+        ver_proof.send_presentation_request(connection_handle).unwrap();
+        assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
+        ver_proof.verify_presentation(presentation);
+        assert_eq!(ver_proof.state(), VcxStateType::VcxStateAccepted as u32);
+    }
+
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1002,30 +1002,6 @@ pub mod tests {
     // TODO: Move this to v3
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_self_attested_proof_verification() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (proof_req, proof) = ::utils::libindy::anoncreds::tests::create_self_attested_proof();
-
-        let mut proof_req_obj = ProofRequestMessage::create();
-        proof_req_obj.proof_request_data = serde_json::from_str(&proof_req).unwrap();
-
-        let mut proof_msg = ProofMessage::new();
-        proof_msg.libindy_proof = proof;
-
-        let mut proof = create_boxed_proof(None, None, None);
-        proof.proof = Some(proof_msg);
-        proof.proof_request = Some(proof_req_obj);
-
-        let rc = proof.proof_validation();
-
-        assert!(rc.is_ok());
-        assert_eq!(proof.proof_state, ProofStateType::ProofValidated);
-    }
-
-    // TODO: Move this to v3
-    #[cfg(feature = "pool_tests")]
-    #[test]
     fn test_proof_verification_restrictions() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
