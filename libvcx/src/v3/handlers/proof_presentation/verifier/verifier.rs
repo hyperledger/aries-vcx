@@ -204,13 +204,14 @@ pub mod tests {
     // TODO: Should fail but passes for some reason
     #[test]
     #[cfg(feature = "general_test")]
-    // #[cfg(feature = "to_restore")]
+    #[cfg(feature = "to_restore")]
     fn test_proof_resetrictions() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let connection_handle = build_test_connection_inviter_requested();
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
 
         let mut ver_proof = Verifier::create("1".to_string(),
                                          json!([
@@ -253,7 +254,7 @@ pub mod tests {
                 "requested_predicates":{}
             }).to_string(),
             "main",
-            &json!({schema_id: schema_json}).to_string(),
+            &json!({schema_id: schema_json}).to_string(), // TODO: invalid type: string, expected internally tagged enum
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).unwrap();
         println!("{:?}", prover_proof_json);
