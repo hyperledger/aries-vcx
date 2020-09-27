@@ -120,13 +120,13 @@ impl Verifier {
 pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
+    use proof::Proof;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use utils::devsetup::*;
     use settings;
 
     use super::*;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
-    use v3::messages::status::Status;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -201,17 +201,11 @@ pub mod tests {
         assert_eq!(ver_proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
-    // TODO: Should fail but passes for some reason
     #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
+    #[cfg(feature = "pool_tests")]
     fn test_proof_resetrictions() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        let connection_handle = build_test_connection_inviter_requested();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let mut ver_proof = Verifier::create("1".to_string(),
                                          json!([
@@ -232,14 +226,13 @@ pub mod tests {
                                          "Optional".to_owned()).unwrap();
 
         let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
-        println!("{:?}", proof_req_json);
 
         ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
             = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
+        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
         let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
@@ -257,18 +250,9 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(), // TODO: invalid type: string, expected internally tagged enum
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).unwrap();
-        println!("{:?}", prover_proof_json);
-
-        ver_proof.send_presentation_request(connection_handle).unwrap();
-        assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
-
-        let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
-        ver_proof.verify_presentation(presentation);
-        assert_eq!(ver_proof.state(), VcxStateType::VcxStateNone as u32);
-        assert_eq!(ver_proof.presentation_status(), 2);
+        assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected error code
         // TODO: Remove restriction, should pass
     }
-
 
     #[test]
     #[cfg(feature = "general_test")]
