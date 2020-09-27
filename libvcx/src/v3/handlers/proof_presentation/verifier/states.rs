@@ -4,7 +4,7 @@ use api::VcxStateType;
 use connection::{get_pw_did, get_their_pw_verkey};
 use connection;
 use error::prelude::*;
-use proof::Proof;
+use proof::validate_indy_proof;
 use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
@@ -25,10 +25,6 @@ impl VerifierSM {
     }
 }
 
-// Possible Transitions:
-//
-// Initial -> PresentationRequestSent
-// SendPresentationRequest -> Finished
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VerifierState {
     Initiated(InitialState),
@@ -98,7 +94,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
 
 impl PresentationRequestSentState {
     fn verify_presentation(&self, presentation: &Presentation) -> VcxResult<()> {
-        let valid = Proof::validate_indy_proof(&presentation.presentations_attach.content()?,
+        let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                                &self.presentation_request.request_presentations_attach.content()?)?;
 
         if !valid {

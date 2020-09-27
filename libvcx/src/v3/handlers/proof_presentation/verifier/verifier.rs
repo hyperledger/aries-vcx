@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use ::{connection};
 use error::prelude::*;
 use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
@@ -120,7 +118,7 @@ impl Verifier {
 pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
-    use proof::Proof;
+    use proof::validate_indy_proof;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use utils::devsetup::*;
     use settings;
@@ -250,11 +248,11 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(), 
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).unwrap();
-        assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected
+        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
         proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-        assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true); // AnoncredsProofRejected
+        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true); // AnoncredsProofRejected
     }
 
     #[test]
@@ -308,20 +306,20 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(),
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).unwrap();
-        assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap(), true);
+        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap(), true);
 
         let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json).unwrap();
         {
             proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
-            assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
+            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
         }
         {
             proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["encoded"] = json!("1111111111111111111111111111111111111111111111111111111111");
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
-            assert_eq!(Proof::validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
+            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
         }
     }
 
