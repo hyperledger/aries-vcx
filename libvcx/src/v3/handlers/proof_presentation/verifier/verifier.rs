@@ -149,7 +149,7 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "pool_tests")]
     fn test_proof_self_attested_proof_validation() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
@@ -252,7 +252,7 @@ pub mod tests {
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
         proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true); // AnoncredsProofRejected
+        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true);
     }
 
     #[test]

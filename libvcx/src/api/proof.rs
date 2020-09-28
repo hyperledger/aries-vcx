@@ -868,14 +868,12 @@ mod tests {
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
 
-    // TODO: Need v3 mock of invalid proof
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupAriesMocks::init();
 
-        let proof_handle = proof::from_string(PROOF_WITH_INVALID_STATE).unwrap();
+        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_get_proof(cb.command_handle,
