@@ -275,7 +275,6 @@ pub mod tests {
                                   REQUESTED_PREDICATES.to_owned(),
                                   r#"{"support_revocation":false}"#.to_string(),
                                   "Optional".to_owned()).unwrap();
-        // let handle = PROOF_MAP.add(proof).unwrap();
         return proof
     }
 

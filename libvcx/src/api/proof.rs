@@ -890,15 +890,13 @@ mod tests {
         assert_eq!(vcx_proof_release(proof_handle), error::INVALID_PROOF_HANDLE.code_num);
     }
 
-    // TODO: Need v3 mock of invalid proof
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_connection_get_state() {
         let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let handle = proof::from_string(PROOF_OFFER_SENT).unwrap();
+        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).unwrap();
 
         let rc = vcx_proof_get_state(cb.command_handle, handle, Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
