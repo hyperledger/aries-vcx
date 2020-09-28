@@ -152,10 +152,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     fn test_proof_self_attested_proof_validation() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
-        let connection_handle = build_test_connection_inviter_requested();
 
         let mut ver_proof = Verifier::create("1".to_string(),
                                          json!([
@@ -191,8 +188,11 @@ pub mod tests {
             &json!({}).to_string(),
             None).unwrap();
 
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        let connection_handle = build_test_connection_inviter_requested();
         ver_proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
 
         let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
         ver_proof.verify_presentation(presentation);
