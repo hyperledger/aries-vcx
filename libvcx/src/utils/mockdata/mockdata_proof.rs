@@ -67,3 +67,94 @@ pub static ARIES_PROOF_PRESENTATION_ACK: &str = r#"
   }
 }
 "#;
+
+pub static SERIALIZIED_PROOF_INITIATED: &str = r#"
+{
+  "version": "2.0",
+  "data": {
+    "verifier_sm": {
+      "source_id": "PROOF_NAME",
+      "state": {
+        "Initiated": {
+          "presentation_request_data": {
+            "nonce": "953886567052794155092952",
+            "name": "optional",
+            "version": "1.0",
+            "requested_attributes": {
+              "attribute_0": {
+                "name": "age",
+                "restrictions": [
+                  {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  },
+                  {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  }
+                ]
+              },
+              "attribute_1": {
+                "name": "name",
+                "restrictions": [
+                  {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  },
+                  {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  }
+                ]
+              }
+            },
+            "requested_predicates": {
+              "predicate_0": {
+                "name": "age",
+                "p_type": "GE",
+                "p_value": 22,
+                "restrictions": [
+                  {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  },
+                  {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                  }
+                ]
+              }
+            },
+            "non_revoked": null,
+            "ver": null
+          }
+        }
+      }
+    }
+  }
+}
+"#;

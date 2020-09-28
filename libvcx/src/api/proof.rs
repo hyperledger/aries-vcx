@@ -716,7 +716,7 @@ mod tests {
 
     use super::*;
     use connection::tests::build_test_connection_inviter_requested;
-    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mockdata_proof;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 
@@ -785,19 +785,18 @@ mod tests {
                                        proof_handle,
                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
+        let _ser = cb.receive(TimeoutUtils::some_medium()).unwrap();
+        println!("Serialize proof: {:?}", _ser);
     }
 
-    // TODO: Need a valid serialized proof
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
     fn test_vcx_proof_deserialize_succeeds() {
         let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_deserialize(cb.command_handle,
-                                         CString::new(PROOF_WITH_INVALID_STATE).unwrap().into_raw(),
+                                         CString::new(mockdata_proof::SERIALIZIED_PROOF_INITIATED).unwrap().into_raw(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -845,7 +844,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_update_state_with_message(cb.command_handle,
                                                        proof_handle,
-                                                       CString::new(ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
+                                                       CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
                                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();
