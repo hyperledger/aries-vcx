@@ -54,9 +54,8 @@ async function createFaber () {
     await faberVcxControl.initVcx()
 
     const connectionFaberToAlice = await Connection.deserialize(serConn)
-    await connectionFaberToAlice.updateState()
+    expect(await connectionFaberToAlice.updateState()).toBe(StateType.RequestReceived)
     serConn = await connectionFaberToAlice.serialize()
-    expect(await connectionFaberToAlice.getState()).toBe(StateType.RequestReceived)
 
     logger.info('Shutting down Faber VCX session.')
     await shutdownVcx()
@@ -69,8 +68,7 @@ async function createFaber () {
     logger.info('Reinitialized Faber VCX session.')
 
     const connectionFaberToAlice = await Connection.deserialize(serConn)
-    await connectionFaberToAlice.updateState()
-    expect(await connectionFaberToAlice.getState()).toBe(StateType.Accepted)
+    expect(await connectionFaberToAlice.updateState()).toBe(StateType.Accepted)
     serConn = await connectionFaberToAlice.serialize()
 
     logger.info('Shutting down Faber VCX session.')
@@ -115,13 +113,12 @@ async function createFaber () {
 
     const issuerVcxCred = await IssuerCredential.deserialize(serCred)
     const connectionFaberToAlice = await Connection.deserialize(serConn)
-    await issuerVcxCred.updateStateV2(connectionFaberToAlice)
-    expect(await issuerVcxCred.getState()).toBe(3)
+    expect(await issuerVcxCred.updateStateV2(connectionFaberToAlice)).toBe(StateType.RequestReceived)
 
     logger.info('Issuer sending credential')
     await issuerVcxCred.sendCredential(connectionFaberToAlice)
     logger.info('Credential sent')
-    expect(await issuerVcxCred.getState()).toBe(4)
+    expect(await issuerVcxCred.getState()).toBe(StateType.Accepted)
 
     logger.info('Shutting down Faber VCX session.')
     await shutdownVcx()
@@ -152,8 +149,7 @@ async function createFaber () {
     const connectionFaberToAlice = await Connection.deserialize(serConn)
     expect(await connectionFaberToAlice.getState()).toBe(StateType.Accepted)
     const verifierProof = await Proof.deserialize(serProof)
-    await verifierProof.updateStateV2(connectionFaberToAlice)
-    expect(await verifierProof.getState()).toBe(StateType.Accepted)
+    expect(await verifierProof.updateStateV2(connectionFaberToAlice)).toBe(StateType.Accepted)
 
     logger.info('Shutting down Faber VCX session.')
     await shutdownVcx()
@@ -186,8 +182,7 @@ async function createAlice () {
     logger.info('Reinitialized Alice VCX session.')
 
     const connectionAliceToFaber = await aliceVcxControl.inviteeConnectionAcceptFromInvitation(connectionIdAtAlice, invite, true)
-    await connectionAliceToFaber.updateState()
-    expect(await connectionAliceToFaber.getState()).toBe(StateType.RequestReceived)
+    expect(await connectionAliceToFaber.updateState()).toBe(StateType.RequestReceived)
     serConn = await connectionAliceToFaber.serialize()
 
     logger.info('Shutting down Alice VCX session.')
@@ -201,8 +196,7 @@ async function createAlice () {
     logger.info('Reinitialized Alice VCX session.')
 
     const connectionAliceToFaber = await Connection.deserialize(serConn)
-    await connectionAliceToFaber.updateState()
-    expect(await connectionAliceToFaber.getState()).toBe(StateType.Accepted)
+    expect(await connectionAliceToFaber.updateState()).toBe(StateType.Accepted)
     serConn = await connectionAliceToFaber.serialize()
 
     logger.info('Shutting down Alice VCX session.')
@@ -248,8 +242,7 @@ async function createAlice () {
 
     const holderProof = await DisclosedProof.deserialize(serProof)
     const connectionAliceToFaber = await Connection.deserialize(serConn)
-    await holderProof.updateStateV2(connectionAliceToFaber)
-    expect(await holderProof.getState()).toBe(StateType.Accepted)
+    expect(await holderProof.updateStateV2(connectionAliceToFaber)).toBe(StateType.Accepted)
 
     logger.info('Shutting down Alice VCX session.')
     await shutdownVcx()
@@ -262,8 +255,7 @@ async function createAlice () {
     const holderVcxCred = await Credential.deserialize(serCred)
     const connectionAliceToFaber = await Connection.deserialize(serConn)
     expect(await holderVcxCred.getState()).toBe(StateType.OfferSent)
-    await holderVcxCred.updateStateV2(connectionAliceToFaber)
-    expect(await holderVcxCred.getState()).toBe(StateType.Accepted)
+    expect(await holderVcxCred.updateStateV2(connectionAliceToFaber)).toBe(StateType.Accepted)
 
     logger.info('Shutting down Alice VCX session.')
     await shutdownVcx()

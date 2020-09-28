@@ -319,9 +319,9 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * ```
    * @returns {Promise<void>}
    */
-  public async updateState (): Promise<void> {
+  public async updateState (): Promise<CredentialDefState> {
     try {
-      await createFFICallbackPromise<number>(
+      const state = await createFFICallbackPromise<CredentialDefState>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_credentialdef_update_state(0, this.handle, cb)
           if (rc) {
@@ -331,13 +331,14 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
         (resolve, reject) => ffi.Callback(
           'void',
           ['uint32', 'uint32', 'uint32'],
-          (handle: number, err: any, state: CredentialDefState) => {
+          (handle: number, err: any, _state: CredentialDefState) => {
             if (err) {
               reject(err)
             }
-            resolve(state)
+            resolve(_state)
           })
       )
+      return state
     } catch (err) {
       throw new VCXInternalError(err)
     }

@@ -85,11 +85,10 @@ async function runAlice (options) {
   await proof.sendProof(connectionToFaber)
 
   logger.info('Wait for Faber to receive the proof')
-  let proofState = await proof.getState()
+  let proofState = await proof.updateState()
   while (proofState !== StateType.Accepted && proofState !== StateType.None) {
     await sleepPromise(2000)
-    await proof.updateState()
-    proofState = await proof.getState()
+    proofState = await proof.updateState()
   }
   logger.info('Faber received the proof')
   process.exit(0)
