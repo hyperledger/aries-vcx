@@ -1,7 +1,13 @@
 name: 'Generate code coverage'
 
 inputs:
-  docker-img-name: 
+  codecov-img-name: 
+    description: 'Name of the codecov image'
+    required: true
+  agency-img-name: 
+    description: 'Name of the codecov image'
+    required: true
+  pool-img-name: 
     description: 'Name of the codecov image'
     required: true
   cov-file-path: 
@@ -14,20 +20,31 @@ env:
 runs:
   using: 'composite'
   steps:
-    - name: Run quick unit tests and generate coverage
+    - name: Start services for integration tests
       run: |
         set -x
-        docker run --name libvcx-codecov-unit --network host \
+        docker images
+        docker run --rm -d --name indypool --network host ${{ inputs.pool-img-name }}
+        docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+        docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}
+      shell: bash
+
+    - name: Run all tests and generate coverage
+      run: |
+        set -x
+        docker ps
+        docker run --name libvcx-codecov --network host \
+          -e RUST_LOG=vcx=trace \
           -e RUST_TEST_THREADS=1 \
           -e TEST_POOL_IP=127.0.0.1 \
           -e CARGO_INCREMENTAL=0 \
           -e RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           -e RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          ${{ inputs.docker-img-name }} \
+          ${{ inputs.codecov-img-name }} \
           bash -c '(cd $HOME/libvcx && \
-              cargo test --features "general_test aries" && \
+              cargo test --features "general_test aries pool_tests agency_v2 agency_pool_tests" && \
               grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ./target/debug/coverage.lcov)'
-        docker_id=$(docker ps -a | grep libvcx-codecov-unit | grep Exited | tail -n 1 | cut -d ' ' -f 1)
+        docker_id=$(docker ps -a | grep libvcx-codecov | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep codecov | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
         docker cp ${docker_id}:/home/indy/libvcx/target/debug/coverage.lcov ${{ inputs.cov-file-path }}
         docker rm ${docker_id} > /dev/null
