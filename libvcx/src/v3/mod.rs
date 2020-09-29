@@ -218,7 +218,7 @@ pub mod test {
             self.activate();
             self.connection_handle = ::connection::create_connection("alice").unwrap();
             ::connection::connect(self.connection_handle, None).unwrap();
-            ::connection::update_state(self.connection_handle, None).unwrap();
+            ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(2, ::connection::get_state(self.connection_handle));
 
             ::connection::get_invite_details(self.connection_handle, false).unwrap()
@@ -226,7 +226,7 @@ pub mod test {
 
         pub fn update_state(&self, expected_state: u32) {
             self.activate();
-            ::connection::update_state(self.connection_handle, None).unwrap();
+            ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(expected_state, ::connection::get_state(self.connection_handle));
         }
 
@@ -358,13 +358,13 @@ pub mod test {
             self.activate();
             self.connection_handle = ::connection::create_connection_with_invite("faber", invite).unwrap();
             ::connection::connect(self.connection_handle, None).unwrap();
-            ::connection::update_state(self.connection_handle, None).unwrap();
+            ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(3, ::connection::get_state(self.connection_handle));
         }
 
         pub fn update_state(&self, expected_state: u32) {
             self.activate();
-            ::connection::update_state(self.connection_handle, None).unwrap();
+            ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(expected_state, ::connection::get_state(self.connection_handle));
         }
 

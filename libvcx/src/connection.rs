@@ -119,14 +119,14 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
 
 pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_state(Some(&message))?;
+        connection.update_state_with_message(&message)?;
         Ok(error::SUCCESS.code_num)
     })
 }
 
-pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
+pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_state(message.as_ref())?;
+        connection.update_state()?;
         Ok(error::SUCCESS.code_num)
     })
 }
@@ -301,30 +301,30 @@ pub mod tests {
         let faber_to_alice = create_connection("alice").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         connect(faber_to_alice, None).unwrap();
-        update_state(faber_to_alice, None).unwrap();
+        update_state(faber_to_alice).unwrap();
         let details = get_invite_details(faber_to_alice, false).unwrap();
 
         ::utils::devsetup::set_consumer();
         debug!("Consumer is going to accept connection invitation.");
         let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
         connect(alice_to_faber, None).unwrap();
-        update_state(alice_to_faber, None).unwrap();
+        update_state(alice_to_faber).unwrap();
         // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
 
         debug!("Institution is going to process connection request.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice, None).unwrap();
+        update_state(faber_to_alice).unwrap();
 
         debug!("Consumer is going to complete the connection protocol.");
         ::utils::devsetup::set_consumer();
-        update_state(alice_to_faber, None).unwrap();
+        update_state(alice_to_faber).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(alice_to_faber));
 
         debug!("Institution is going to complete the connection protocol.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice, None).unwrap();
+        update_state(faber_to_alice).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(faber_to_alice));
 
         (alice_to_faber, faber_to_alice)
@@ -345,12 +345,12 @@ pub mod tests {
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
-        update_state(handle, None).unwrap();
+        update_state(handle).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
-        update_state(handle, None).unwrap();
+        update_state(handle).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);

@@ -536,7 +536,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        let rc = match update_state(connection_handle, None) {
+        let rc = match update_state(connection_handle) {
             Ok(x) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);

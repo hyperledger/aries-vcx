@@ -220,8 +220,8 @@ impl Connection {
     }
 
     /**
-    If called on Inviter, returns invitation to connect with him
-    If called on Invitee, returns invitee supplied at creation
+    If called on Inviter in Invited state returns invitation to connect with him. Returns error in other states.
+    If called on Invitee, returns error
      */
     pub fn get_invite_details(&self) -> VcxResult<String> {
         trace!("Connection::get_invite_details >>>");
@@ -232,7 +232,7 @@ impl Connection {
                 Ok(json!(invitation.to_a2a_message()).to_string())
             }
             SmConnection::Invitee(_sm_invitee) => {
-                Ok(json!({}).to_string())
+                Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Can't retrieve invitation for invitee side of connection.")))
             }
         }
     }
@@ -258,18 +258,17 @@ impl Connection {
     }
 
     /**
-    If message is supplied, tries to use to perform state machine transition.
-    If message is not supplied, tries to find relevant message in agency and use it to perform state machine transition.
+    Tries to update state of connection state machine in 3 steps:
+      1. find relevant message in agency,
+      2. use it to update connection state and possibly send response over network,
+      3. update state of used message in agency to "Reviewed".
      */
-    pub fn update_state(&mut self, message: Option<&A2AMessage>) -> VcxResult<()> {
-        trace!("Connection::update_state >>> message: {:?}", message);
+    pub fn update_state(&mut self) -> VcxResult<()> {
+        trace!("Connection::update_state >>>");
 
         if self.is_in_null_state() {
+            warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
-        }
-
-        if let Some(message_) = message {
-            return self.update_state_with_message(message_);
         }
 
         let messages = self.get_messages()?;
@@ -277,25 +276,18 @@ impl Connection {
 
         if let Some((uid, message)) = self.find_message_to_handle(messages) {
             trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-            self.handle_message(message.into())?;
+            self.update_state_with_message(&message);
             self.agent_info().clone().update_message_status(uid)?;
+        } else if let SmConnection::Inviter(sm_inviter) = &self.connection_sm {
+            trace!("Connection::update_state >>> Inviter found no message to handel on main connection agent. Will check bootstrap agent.");
+            if let Some((messages, bootstrap_agent_info)) = sm_inviter.get_bootstrap_agent_messages()? {
+                if let Some((uid, message)) = self.find_message_to_handle(messages) {
+                    trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
+                    self.update_state_with_message(&message);
+                    bootstrap_agent_info.update_message_status(uid)?;
+                }
+            }
         }
-
-        // Todo: decide what to do with this. Previously inviter was also trying to fetch messages to handle
-        // from previous agent. Maybe it was trying to be forgiving towards incorrectly implemented
-        // counterparty Aries clients which wouldn't respect updated DDO on connection response?
-        // else if let Some(prev_agent_info) = self.connection_sm.prev_agent_info().cloned() {
-        //     trace!("Connection::update_state >>> getting messages from bootstrap agent: {:?}", prev_agent_info);
-        //     let messages = prev_agent_info.get_messages()?;
-        //
-        //     trace!("Connection::update_state >>> handling obtained messages: {:?}", messages);
-        //     if let Some((uid, message)) = self.connection_sm.find_message_to_handle(messages) {
-        //         self.handle_message(message.into())?;
-        //         prev_agent_info.update_message_status(uid)?;
-        //     }
-        // } else {
-        //     trace!("Connection::update_state >>> found no message to handle");
-        // }
 
         trace!("Connection::update_state >>> done");
         Ok(())
@@ -306,6 +298,10 @@ impl Connection {
      */
     pub fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection: update_state_with_message: {:?}", message);
+        if self.is_in_null_state() {
+            warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
+            return Ok(());
+        }
 
         self.handle_message(message.clone().into())?;
 

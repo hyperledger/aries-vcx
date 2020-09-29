@@ -154,10 +154,6 @@ impl SmConnectionInvitee {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn prev_agent_info(&self) -> Option<&AgentInfo> {
-        None
-    }
-
     pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviteeState::Requested(_) => {
