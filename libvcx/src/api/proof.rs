@@ -717,6 +717,7 @@ mod tests {
     use super::*;
     use connection::tests::build_test_connection_inviter_requested;
     use utils::mockdata::mockdata_proof;
+    use utils::mockdata::mock_settings::MockBuilder;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 
@@ -823,6 +824,8 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_send_request() {
         let _setup = SetupAriesMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let proof_handle = create_proof_util().unwrap();

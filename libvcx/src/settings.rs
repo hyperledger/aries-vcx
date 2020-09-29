@@ -56,8 +56,6 @@ pub static CONFIG_DID_METHOD: &str = "did_method";
 pub static COMMUNICATION_METHOD: &str = "communication_method";
 // proprietary or aries
 pub static CONFIG_ACTORS: &str = "actors";
-// inviter, invitee, issuer, holder, prover, verifier, sender, receiver
-pub static MOCK_INDY_PROOF_VALIDATION: &str = "mock_indy_proof_validation";
 
 pub static DEFAULT_PROTOCOL_VERSION: usize = 2;
 pub static MAX_SUPPORTED_PROTOCOL_VERSION: usize = 2;

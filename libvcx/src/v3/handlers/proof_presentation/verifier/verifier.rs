@@ -118,18 +118,20 @@ impl Verifier {
 pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
-    use proof::validate_indy_proof;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use utils::devsetup::*;
     use settings;
 
     use super::*;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mock_settings::MockBuilder;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
         let _setup = SetupAriesMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
 
         let connection_handle = build_test_connection_inviter_requested();
 
@@ -146,181 +148,6 @@ pub mod tests {
         proof.update_state_with_message(ARIES_PROOF_PRESENTATION).unwrap();
 
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "pool_tests")]
-    fn test_proof_self_attested_proof_validation() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
-        let mut ver_proof = Verifier::create("1".to_string(),
-                                         json!([
-                                            json!({
-                                                "name":"address1",
-                                                "self_attest_allowed": true,
-                                            }),
-                                            json!({
-                                                "name":"zip",
-                                                "self_attest_allowed": true,
-                                            }),
-                                         ]).to_string(),
-                                         json!([]).to_string(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
-
-        ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
-
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
-            &proof_req_json,
-            &json!({
-              "self_attested_attributes":{
-                 "attribute_0": "my_self_attested_address",
-                 "attribute_1": "my_self_attested_zip"
-              },
-              "requested_attributes":{},
-              "requested_predicates":{}
-            }).to_string(),
-            "main",
-            &json!({}).to_string(),
-            &json!({}).to_string(),
-            None).unwrap();
-
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        let connection_handle = build_test_connection_inviter_requested();
-        ver_proof.send_presentation_request(connection_handle).unwrap();
-        assert_eq!(ver_proof.state(), VcxStateType::VcxStateOfferSent as u32);
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-
-        let presentation = Presentation::create().set_presentations_attach(prover_proof_json).unwrap();
-        ver_proof.verify_presentation(presentation);
-        assert_eq!(ver_proof.state(), VcxStateType::VcxStateAccepted as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "pool_tests")]
-    fn test_proof_resetrictions() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
-        let mut ver_proof = Verifier::create("1".to_string(),
-                                         json!([
-                                            json!({
-                                                "name":"address1",
-                                                "restrictions": [{ "issuer_did": "Not Here" }],
-                                            }),
-                                            json!({
-                                                "name":"zip",
-                                            }),
-                                            json!({
-                                                "name":"self_attest",
-                                                "self_attest_allowed": true,
-                                            }),
-                                         ]).to_string(),
-                                         json!([]).to_string(),
-                                         r#"{"support_revocation":true}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
-
-        ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
-
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
-        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
-            &proof_req_json,
-            &json!({
-                "self_attested_attributes":{
-                   "attribute_2": "my_self_attested_val"
-                },
-                "requested_attributes":{
-                   "attribute_0": {"cred_id": cred_id, "revealed": true},
-                   "attribute_1": {"cred_id": cred_id, "revealed": true}
-                },
-                "requested_predicates":{}
-            }).to_string(),
-            "main",
-            &json!({schema_id: schema_json}).to_string(), 
-            &json!({cred_def_id: cred_def_json}).to_string(),
-            None).unwrap();
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected
-
-        let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
-        proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true);
-    }
-
-    #[test]
-    #[cfg(feature = "pool_tests")]
-    fn test_proof_validate_attribute() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let mut ver_proof = Verifier::create("1".to_string(),
-                                         json!([
-                                            json!({
-                                                "name":"address1",
-                                                "restrictions": [json!({ "issuer_did": did })]
-                                            }),
-                                            json!({
-                                                "name":"zip",
-                                                "restrictions": [json!({ "issuer_did": did })]
-                                            }),
-                                            json!({
-                                                "name":"self_attest",
-                                                "self_attest_allowed": true,
-                                            }),
-                                         ]).to_string(),
-                                         json!([]).to_string(),
-                                         r#"{"support_revocation":true}"#.to_string(),
-                                         "optional".to_owned()).unwrap();
-
-        let proof_req_json = serde_json::to_string(ver_proof.verifier_sm.presentation_request_data().unwrap()).unwrap();
-
-        ::utils::libindy::anoncreds::libindy_prover_get_credentials_for_proof_req(&proof_req_json).unwrap();
-
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
-        let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
-            &proof_req_json,
-            &json!({
-                "self_attested_attributes":{
-                   "attribute_2": "my_self_attested_val"
-                },
-                "requested_attributes":{
-                   "attribute_0": {"cred_id": cred_id, "revealed": true},
-                   "attribute_1": {"cred_id": cred_id, "revealed": true}
-                },
-                "requested_predicates":{}
-            }).to_string(),
-            "main",
-            &json!({schema_id: schema_json}).to_string(),
-            &json!({cred_def_id: cred_def_json}).to_string(),
-            None).unwrap();
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap(), true);
-
-        let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json).unwrap();
-        {
-            proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
-            let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
-
-            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
-        }
-        {
-            proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["encoded"] = json!("1111111111111111111111111111111111111111111111111111111111");
-            let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
-
-            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).unwrap_err().kind(), VcxErrorKind::InvalidProof);
-        }
     }
 
     #[test]

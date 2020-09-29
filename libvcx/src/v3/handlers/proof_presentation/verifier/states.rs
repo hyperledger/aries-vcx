@@ -4,7 +4,6 @@ use api::VcxStateType;
 use connection::{get_pw_did, get_their_pw_verkey};
 use connection;
 use error::prelude::*;
-use proof::validate_indy_proof;
 use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
@@ -12,6 +11,7 @@ use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_ack::PresentationAck;
 use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 use v3::messages::status::Status;
+use proof_utils::validate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VerifierSM {
@@ -367,6 +367,7 @@ pub mod test {
         use settings::set_config_value;
 
         use super::*;
+        use utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -406,6 +407,8 @@ pub mod test {
         #[cfg(feature = "general_test")]
         fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
             let _setup = SetupAriesMocks::init();
+            let _mock_builder = MockBuilder::init().
+                set_mock_result_for_validate_indy_proof(Ok(true));
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -419,7 +422,8 @@ pub mod test {
         #[cfg(feature = "general_test")]
         fn test_prover_handle_invalid_presentation_message() {
             let _setup = SetupAriesMocks::init();
-            set_config_value(settings::MOCK_INDY_PROOF_VALIDATION, "false");
+            let _mock_builder = MockBuilder::init().
+                set_mock_result_for_validate_indy_proof(Ok(false));
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -613,11 +617,14 @@ pub mod test {
 
     mod get_state {
         use super::*;
+        use utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]
         fn test_get_state() {
             let _setup = SetupAriesMocks::init();
+            let _mock_builder = MockBuilder::init().
+                set_mock_result_for_validate_indy_proof(Ok(true));
 
             assert_eq!(VcxStateType::VcxStateInitialized as u32, _verifier_sm().state());
             assert_eq!(VcxStateType::VcxStateOfferSent as u32, _verifier_sm().to_presentation_request_sent_state().state());
