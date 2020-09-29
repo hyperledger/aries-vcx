@@ -716,7 +716,8 @@ mod tests {
 
     use super::*;
     use connection::tests::build_test_connection_inviter_requested;
-    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mockdata_proof;
+    use utils::mockdata::mock_settings::MockBuilder;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 
@@ -785,7 +786,8 @@ mod tests {
                                        proof_handle,
                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
+        let _ser = cb.receive(TimeoutUtils::some_medium()).unwrap();
+        println!("Serialize proof: {:?}", _ser);
     }
 
     #[test]
@@ -795,7 +797,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_deserialize(cb.command_handle,
-                                         CString::new(PROOF_WITH_INVALID_STATE).unwrap().into_raw(),
+                                         CString::new(mockdata_proof::SERIALIZIED_PROOF_INITIATED).unwrap().into_raw(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -822,6 +824,8 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_send_request() {
         let _setup = SetupAriesMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let proof_handle = create_proof_util().unwrap();
@@ -843,7 +847,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_update_state_with_message(cb.command_handle,
                                                        proof_handle,
-                                                       CString::new(ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
+                                                       CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
                                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -872,7 +876,7 @@ mod tests {
     fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupAriesMocks::init();
 
-        let proof_handle = proof::from_string(PROOF_WITH_INVALID_STATE).unwrap();
+        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_get_proof(cb.command_handle,
@@ -893,7 +897,7 @@ mod tests {
         let _setup = SetupAriesMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let handle = proof::from_string(PROOF_OFFER_SENT).unwrap();
+        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).unwrap();
 
         let rc = vcx_proof_get_state(cb.command_handle, handle, Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);

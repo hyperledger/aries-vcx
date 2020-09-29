@@ -1,9 +1,5 @@
-use std::convert::TryInto;
-
-use ::{connection, settings};
+use ::{connection};
 use error::prelude::*;
-use messages::proofs::proof_message::ProofMessage;
-use messages::proofs::proof_request::ProofRequestMessage;
 use v3::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use v3::handlers::proof_presentation::verifier::states::VerifierSM;
 use v3::messages::a2a::A2AMessage;
@@ -102,31 +98,14 @@ impl Verifier {
 
         let proof_request = self.verifier_sm.presentation_request()?;
 
-        // strict aries protocol is set. return aries formatted Proof Request
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof_request).to_string());
-        }
-
-        // convert Proof Request into proprietary format
-        let proof_request: ProofRequestMessage = proof_request.try_into()?;
-
-        return Ok(json!(proof_request).to_string());
+        Ok(json!(proof_request).to_string())
     }
 
     pub fn get_presentation(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
 
         let proof = self.verifier_sm.presentation()?;
-
-        // strict aries protocol is set. return aries formatted Proof
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string());
-        }
-
-        // convert Proof into proprietary format
-        let proof: ProofMessage = proof.try_into()?;
-
-        return Ok(json!(proof).to_string());
+        Ok(json!(proof).to_string())
     }
 
     pub fn step(&mut self, message: VerifierMessages) -> VcxResult<()> {
@@ -140,15 +119,19 @@ pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::*;
+    use settings;
 
     use super::*;
     use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use utils::mockdata::mock_settings::MockBuilder;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
         let _setup = SetupAriesMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
 
         let connection_handle = build_test_connection_inviter_requested();
 
