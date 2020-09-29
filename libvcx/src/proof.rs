@@ -130,11 +130,11 @@ pub mod tests {
         return proof
     }
 
-    fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32) {
+    fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32, proof_presentation: &str) {
         proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        proof.update_state(Some(mockdata_proof::ARIES_PROOF_PRESENTATION), None).unwrap();
+        proof.update_state(Some(proof_presentation), None).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
@@ -281,7 +281,7 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = create_default_proof();
-        progress_proof_to_final_state(&mut proof, connection_handle);
+        progress_proof_to_final_state(&mut proof, connection_handle, mockdata_proof::ARIES_PROOF_PRESENTATION);
     }
 
     #[test]
@@ -293,11 +293,12 @@ pub mod tests {
 
         let connection_handle = build_test_connection_inviter_requested();
         let mut proof = create_default_proof();
-        progress_proof_to_final_state(&mut proof, connection_handle);
+        progress_proof_to_final_state(&mut proof, connection_handle, mockdata_proof::ARIES_PROOF_PRESENTATION);
 
         let handle = PROOF_MAP.add(proof).unwrap();
         let proof_str = get_proof(handle).unwrap();
-        // TODO: Why don't these equal? Parse compare values?
+        // TODO: Fix A2AMessage serialization
+        // v3/messages A2AMessages do not serialize type and so following statement fails.
         // assert_eq!(&proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION);
     }
 
