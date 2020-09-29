@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use disclosed_proof::DisclosedProof;
+use disclosed_proof::generate_indy_proof;
 use error::prelude::*;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
 use v3::messages::a2a::A2AMessage;
@@ -168,7 +168,7 @@ impl From<(PresentationSentState, ProblemReport)> for FinishedState {
 
 impl InitialState {
     fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        DisclosedProof::generate_indy_proof(credentials,
+        generate_indy_proof(credentials,
                                             self_attested_attrs,
                                             &self.presentation_request.request_presentations_attach.content()?)
     }

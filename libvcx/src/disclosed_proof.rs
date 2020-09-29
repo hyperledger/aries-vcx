@@ -48,42 +48,6 @@ enum DisclosedProofs {
     V3(Prover),
 }
 
-impl Default for DisclosedProof {
-    fn default() -> DisclosedProof
-    {
-        DisclosedProof {
-            source_id: String::new(),
-            state: VcxStateType::VcxStateNone,
-            proof_request: None,
-            proof: None,
-            link_secret_alias: settings::DEFAULT_LINK_SECRET_ALIAS.to_string(),
-            my_did: None,
-            my_vk: None,
-            their_did: None,
-            their_vk: None,
-            agent_did: None,
-            agent_vk: None,
-            thread: Some(Thread::new()),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DisclosedProof {
-    source_id: String,
-    state: VcxStateType,
-    proof_request: Option<ProofRequestMessage>,
-    proof: Option<ProofMessage>,
-    link_secret_alias: String,
-    my_did: Option<String>,
-    my_vk: Option<String>,
-    their_did: Option<String>,
-    their_vk: Option<String>,
-    agent_did: Option<String>,
-    agent_vk: Option<String>,
-    thread: Option<Thread>,
-}
-
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfo {
     pub requested_attr: String,
@@ -152,7 +116,6 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-// Also updates timestamp in credentials_identifiers
 pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfo>) -> VcxResult<String> {
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
@@ -256,172 +219,106 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfo>) -> Vcx
     Ok(rtn.to_string())
 }
 
-impl DisclosedProof {
-    fn retrieve_credentials(&self) -> VcxResult<String> {
-        trace!("DisclosedProof::set_state >>>");
+pub fn build_schemas_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
+    let mut rtn: Value = json!({});
 
-        let proof_req = self.proof_request
-            .as_ref()
-            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get proot request"))?;
+    for ref cred_info in credentials_identifiers {
+        if rtn.get(&cred_info.schema_id).is_none() {
+            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+                .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
-        let indy_proof_req = serde_json::to_string(&proof_req.proof_request_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
+            let schema_json = serde_json::from_str(&schema_json)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
 
-        anoncreds::libindy_prover_get_credentials_for_proof_req(&indy_proof_req)
+            rtn[cred_info.schema_id.to_owned()] = schema_json;
+        }
     }
+    Ok(rtn.to_string())
+}
 
-    pub fn build_schemas_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
-        let mut rtn: Value = json!({});
+pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
+    let mut rtn: Value = json!({});
 
+    for ref cred_info in credentials_identifiers {
+        if rtn.get(&cred_info.cred_def_id).is_none() {
+            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
+                .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
+
+            let credential_def = serde_json::from_str(&credential_def)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
+
+            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
+        }
+    }
+    Ok(rtn.to_string())
+}
+
+pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfo>,
+                                        self_attested_attrs: &str,
+                                        proof_req: &ProofRequestData) -> VcxResult<String> {
+    let mut rtn: Value = json!({
+          "self_attested_attributes":{},
+          "requested_attributes":{},
+          "requested_predicates":{}
+    });
+    // do same for predicates and self_attested
+    if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for ref cred_info in credentials_identifiers {
-            if rtn.get(&cred_info.schema_id).is_none() {
-                let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
-                    .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
-
-                let schema_json = serde_json::from_str(&schema_json)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
-
-                rtn[cred_info.schema_id.to_owned()] = schema_json;
+            if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
+                let insert_val = json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
+                map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
         }
-        Ok(rtn.to_string())
     }
 
-    pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
-        let mut rtn: Value = json!({});
-
+    if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for ref cred_info in credentials_identifiers {
-            if rtn.get(&cred_info.cred_def_id).is_none() {
-                let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
-                    .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
-
-                let credential_def = serde_json::from_str(&credential_def)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
-
-                rtn[cred_info.cred_def_id.to_owned()] = credential_def;
+            if let Some(_) = proof_req.requested_predicates.get(&cred_info.requested_attr) {
+                let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
+                map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
         }
-        Ok(rtn.to_string())
     }
 
-    pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfo>,
-                                            self_attested_attrs: &str,
-                                            proof_req: &ProofRequestData) -> VcxResult<String> {
-        let mut rtn: Value = json!({
-              "self_attested_attributes":{},
-              "requested_attributes":{},
-              "requested_predicates":{}
-        });
-        // do same for predicates and self_attested
-        if let Value::Object(ref mut map) = rtn["requested_attributes"] {
-            for ref cred_info in credentials_identifiers {
-                if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
-                    let insert_val = json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
-                    map.insert(cred_info.requested_attr.to_owned(), insert_val);
-                }
-            }
+    // handle if the attribute is not revealed
+    let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize self attested attributes: {}", err)))?;
+    rtn["self_attested_attributes"] = self_attested_attrs;
+
+    Ok(rtn.to_string())
+}
+
+pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
+    trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
+
+    match get_mock_generate_indy_proof() {
+        None => {}
+        Some(mocked_indy_proof) => {
+            warn!("generate_indy_proof :: returning mocked response");
+            return Ok(mocked_indy_proof)
         }
-
-        if let Value::Object(ref mut map) = rtn["requested_predicates"] {
-            for ref cred_info in credentials_identifiers {
-                if let Some(_) = proof_req.requested_predicates.get(&cred_info.requested_attr) {
-                    let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
-                    map.insert(cred_info.requested_attr.to_owned(), insert_val);
-                }
-            }
-        }
-
-        // handle if the attribute is not revealed
-        let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize self attested attributes: {}", err)))?;
-        rtn["self_attested_attributes"] = self_attested_attrs;
-
-        Ok(rtn.to_string())
     }
 
-    fn generate_proof(&mut self, credentials: &str, self_attested_attrs: &str) -> VcxResult<u32> {
-        trace!("DisclosedProof::generate_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
+    let proof_request: ProofRequestData = serde_json::from_str(&proof_req_data_json)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
 
-        debug!("generating proof {}", self.source_id);
-        if settings::indy_mocks_enabled() { return Ok(error::SUCCESS.code_num); }
+    let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
 
-        let proof_req = self.proof_request.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::CreateProof, "Cannot get proof request"))?;
+    let revoc_states_json = build_rev_states_json(&mut credentials_identifiers)?;
+    let requested_credentials = build_requested_credentials_json(&credentials_identifiers,
+                                                                                 self_attested_attrs,
+                                                                                 &proof_request)?;
 
-        let proof_req_data_json = serde_json::to_string(&proof_req.proof_request_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize proof request: {}", err)))?;
+    let schemas_json = build_schemas_json(&credentials_identifiers)?;
+    let credential_defs_json = build_cred_def_json(&credentials_identifiers)?;
 
-        let proof = DisclosedProof::generate_indy_proof(credentials, self_attested_attrs, &proof_req_data_json)?;
-
-        let mut proof_msg = ProofMessage::new();
-        proof_msg.libindy_proof = proof;
-        self.proof = Some(proof_msg);
-
-        Ok(error::SUCCESS.code_num)
-    }
-
-    pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
-        trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
-
-        match get_mock_generate_indy_proof() {
-            None => {}
-            Some(mocked_indy_proof) => {
-                warn!("generate_indy_proof :: returning mocked response");
-                return Ok(mocked_indy_proof)
-            }
-        }
-
-        let proof_request: ProofRequestData = serde_json::from_str(&proof_req_data_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
-
-        let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
-
-        let revoc_states_json = build_rev_states_json(&mut credentials_identifiers)?;
-        let requested_credentials = DisclosedProof::build_requested_credentials_json(&credentials_identifiers,
-                                                                                     self_attested_attrs,
-                                                                                     &proof_request)?;
-
-        let schemas_json = DisclosedProof::build_schemas_json(&credentials_identifiers)?;
-        let credential_defs_json = DisclosedProof::build_cred_def_json(&credentials_identifiers)?;
-
-        let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
-                                                           &requested_credentials,
-                                                           settings::DEFAULT_LINK_SECRET_ALIAS,
-                                                           &schemas_json,
-                                                           &credential_defs_json,
-                                                           Some(&revoc_states_json))?;
-        Ok(proof)
-    }
-
-    fn _prep_proof_reference(&mut self, agent_info: &MyAgentInfo) -> VcxResult<String> {
-        let proof_req = self.proof_request
-            .as_ref()
-            .ok_or(VcxError::from(VcxErrorKind::CreateProof))?;
-
-        let ref_msg_uid = proof_req.msg_ref_id
-            .as_ref()
-            .ok_or(VcxError::from(VcxErrorKind::CreateProof))?;
-
-        let their_did = get_agent_attr(&agent_info.their_pw_did)?;
-
-        self.thread
-            .as_mut()
-            .map(|thread| thread.increment_receiver(&their_did));
-
-        Ok(ref_msg_uid.to_string())
-    }
-
-    fn generate_reject_proof_msg(&self) -> VcxResult<String> {
-        let msg = match settings::indy_mocks_enabled() {
-            false => {
-                let proof_reject = ProofMessage::new_reject();
-                serde_json::to_string(&proof_reject)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize proof reject: {}", err)))?
-            }
-            true => DEFAULT_REJECTED_PROOF.to_string(),
-        };
-
-        Ok(msg)
-    }
+    let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
+                                                       &requested_credentials,
+                                                       settings::DEFAULT_LINK_SECRET_ALIAS,
+                                                       &schemas_json,
+                                                       &credential_defs_json,
+                                                       Some(&revoc_states_json))?;
+    Ok(proof)
 }
 
 fn handle_err(err: VcxError) -> VcxError {
@@ -517,9 +414,9 @@ pub fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
 }
 
 pub fn generate_reject_proof_msg(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get_mut(handle, |proof| {
+    HANDLE_MAP.get_mut(handle, |_| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported,
-                               "Action generate_reject_proof_msg is not for V3 disclosed proof."))
+                               "Action generate_reject_proof_msg is not implemented for V3 disclosed proof."))
     })
 }
 
@@ -749,7 +646,6 @@ mod tests {
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
     }
 
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
@@ -821,7 +717,7 @@ mod tests {
     fn test_find_schemas() {
         let _setup = SetupAriesMocks::init();
 
-        assert_eq!(DisclosedProof::build_schemas_json(&Vec::new()).unwrap(), "{}".to_string());
+        assert_eq!(build_schemas_json(&Vec::new()).unwrap(), "{}".to_string());
 
         let cred1 = CredInfo {
             requested_attr: "height_1".to_string(),
@@ -847,7 +743,7 @@ mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = DisclosedProof::build_schemas_json(&creds).unwrap();
+        let schemas = build_schemas_json(&creds).unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -868,7 +764,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(DisclosedProof::build_schemas_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidSchema);
+        assert_eq!(build_schemas_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidSchema);
     }
 
     #[test]
@@ -900,7 +796,7 @@ mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = DisclosedProof::build_cred_def_json(&creds).unwrap();
+        let credential_def = build_cred_def_json(&creds).unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:2471","schemaId":"2471""#));
     }
@@ -921,7 +817,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(DisclosedProof::build_cred_def_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(build_cred_def_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
     }
 
     #[test]
@@ -984,7 +880,7 @@ mod tests {
             "non_revoked": {"from": 098, "to": 123}
         });
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
-        let requested_credential = DisclosedProof::build_requested_credentials_json(&creds, &self_attested_attrs, &proof_req).unwrap();
+        let requested_credential = build_requested_credentials_json(&creds, &self_attested_attrs, &proof_req).unwrap();
         assert_eq!(test.to_string(), requested_credential);
     }
 
@@ -998,104 +894,6 @@ mod tests {
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_retrieve_credentials() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let (_, _, req, _) = ::utils::libindy::anoncreds::tests::create_proof();
-
-        let mut proof_req = ProofRequestMessage::create();
-        let mut proof: DisclosedProof = Default::default();
-        proof_req.proof_request_data = serde_json::from_str(&req).unwrap();
-        proof.proof_request = Some(proof_req);
-
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
-        assert!(retrieved_creds.len() > 500);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_retrieve_credentials_emtpy() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let mut req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": json!({}),
-           "requested_predicates": json!({}),
-        });
-        let mut proof_req = ProofRequestMessage::create();
-        let mut proof: DisclosedProof = Default::default();
-        proof_req.proof_request_data = serde_json::from_str(&req.to_string()).unwrap();
-        proof.proof_request = Some(proof_req.clone());
-
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
-        assert_eq!(retrieved_creds, "{}".to_string());
-
-        req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
-        proof_req.proof_request_data = serde_json::from_str(&req.to_string()).unwrap();
-        proof.proof_request = Some(proof_req);
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
-        assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let mut req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": json!({
-               "zip_1": json!({
-                   "name":"zip",
-                   "restrictions": [json!({ "issuer_did": did })]
-               })
-           }),
-           "requested_predicates": json!({}),
-        });
-
-        let mut proof_req = ProofRequestMessage::create();
-        let mut proof: DisclosedProof = Default::default();
-        proof_req.proof_request_data = serde_json::from_str(&req.to_string()).unwrap();
-        proof.proof_request = Some(proof_req.clone());
-
-        // All lower case
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
-        assert!(retrieved_creds.contains(r#""zip":"84000""#));
-        let ret_creds_as_value: Value = serde_json::from_str(&retrieved_creds).unwrap();
-        assert_eq!(ret_creds_as_value["attrs"]["zip_1"][0]["cred_info"]["attrs"]["zip"], "84000");
-        // First letter upper
-        req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
-        proof_req.proof_request_data = serde_json::from_str(&req.to_string()).unwrap();
-        proof.proof_request = Some(proof_req.clone());
-        let retrieved_creds2 = proof.retrieve_credentials().unwrap();
-        assert!(retrieved_creds2.contains(r#""zip":"84000""#));
-
-        //entire word upper
-        req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
-        proof_req.proof_request_data = serde_json::from_str(&req.to_string()).unwrap();
-        proof.proof_request = Some(proof_req.clone());
-        let retrieved_creds3 = proof.retrieve_credentials().unwrap();
-        assert!(retrieved_creds3.contains(r#""zip":"84000""#));
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_retrieve_credentials_fails_with_no_proof_req() {
-        let _setup = SetupLibraryWallet::init();
-
-        let proof: DisclosedProof = Default::default();
-        assert_eq!(proof.retrieve_credentials().unwrap_err().kind(), VcxErrorKind::NotReady);
     }
 
     #[test]
@@ -1278,171 +1076,6 @@ mod tests {
         // Schema Id is null
         selected_credentials["attrs"]["height_1"]["cred_info"]["schema_id"] = serde_json::Value::Null;
         assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let mut proof_req = ProofRequestMessage::create();
-        let to = time::get_time().sec;
-        let indy_proof_req = json!({
-            "nonce": "123432421212",
-            "name": "proof_req_1",
-            "version": "0.1",
-            "requested_attributes": {
-                "address1_1": {
-                    "name": "address1",
-                    "restrictions": [{"issuer_did": did}],
-                    "non_revoked":  {"from": 123, "to": to}
-                },
-                "zip_2": { "name": "zip" }
-            },
-            "self_attested_attr_3": json!({
-                   "name":"self_attested_attr",
-             }),
-            "requested_predicates": {},
-            "non_revoked": {"from": 098, "to": to}
-        }).to_string();
-        proof_req.proof_request_data = serde_json::from_str(&indy_proof_req).unwrap();
-
-        let mut proof: DisclosedProof = Default::default();
-        proof.proof_request = Some(proof_req);
-        proof.link_secret_alias = "main".to_string();
-
-        let all_creds: Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
-        let selected_credentials: Value = json!({
-           "attrs":{
-              "address1_1": {
-                "credential": all_creds["attrs"]["address1_1"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
-              },
-              "zip_2": {
-                "credential": all_creds["attrs"]["zip_2"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
-              },
-           },
-           "predicates":{ }
-        });
-
-        let self_attested: Value = json!({
-              "self_attested_attr_3":"attested_val"
-        });
-
-        let generated_proof = proof.generate_proof(&selected_credentials.to_string(), &self_attested.to_string());
-        assert!(generated_proof.is_ok());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_self_attested_proof() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let mut proof_req = ProofRequestMessage::create();
-        let indy_proof_req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": json!({
-               "address1_1": json!({
-                   "name":"address1",
-               }),
-               "zip_2": json!({
-                   "name":"zip",
-               }),
-           }),
-           "requested_predicates": json!({}),
-        }).to_string();
-        proof_req.proof_request_data = serde_json::from_str(&indy_proof_req).unwrap();
-
-        let selected_credentials: Value = json!({});
-
-        let self_attested: Value = json!({
-              "address1_1":"attested_address",
-              "zip_2": "attested_zip"
-        });
-
-        let mut proof: DisclosedProof = Default::default();
-        proof.proof_request = Some(proof_req);
-        proof.link_secret_alias = "main".to_string();
-        let generated_proof = proof.generate_proof(&selected_credentials.to_string(), &self_attested.to_string());
-
-        assert!(generated_proof.is_ok());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof_with_predicates() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let mut proof_req = ProofRequestMessage::create();
-        let to = time::get_time().sec;
-        let indy_proof_req = json!({
-            "nonce": "123432421212",
-            "name": "proof_req_1",
-            "version": "0.1",
-            "requested_attributes": {
-                "address1_1": {
-                    "name": "address1",
-                    "restrictions": [{"issuer_did": did}],
-                    "non_revoked":  {"from": 123, "to": to}
-                },
-                "zip_2": { "name": "zip" }
-            },
-            "self_attested_attr_3": json!({
-                   "name":"self_attested_attr",
-             }),
-            "requested_predicates": json!({
-                "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
-            }),
-            "non_revoked": {"from": 098, "to": to}
-        }).to_string();
-        proof_req.proof_request_data = serde_json::from_str(&indy_proof_req).unwrap();
-
-        let mut proof: DisclosedProof = Default::default();
-        proof.proof_request = Some(proof_req);
-        proof.link_secret_alias = "main".to_string();
-
-        let all_creds: Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
-        let selected_credentials: Value = json!({
-           "attrs":{
-              "address1_1": {
-                "credential": all_creds["attrs"]["address1_1"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
-              },
-              "zip_2": {
-                "credential": all_creds["attrs"]["zip_2"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
-              },
-           },
-           "predicates":{ 
-               "zip_3": {
-                "credential": all_creds["attrs"]["zip_3"][0],
-               }
-           }
-        });
-
-        let self_attested: Value = json!({
-              "self_attested_attr_3":"attested_val"
-        });
-
-        let generated_proof = proof.generate_proof(&selected_credentials.to_string(), &self_attested.to_string());
-        assert!(generated_proof.is_ok());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_generate_reject_proof() {
-        let _setup = SetupAriesMocks::init();
-
-        let proof: DisclosedProof = Default::default();
-        let generated_reject = proof.generate_reject_proof_msg();
-        assert!(generated_reject.is_ok());
     }
 
     #[test]
