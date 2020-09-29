@@ -25,7 +25,7 @@ runs:
           -e RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           ${{ inputs.docker-img-name }} \
           bash -c '(cd $HOME/libvcx && \
-              cargo test --features "general_test aries" -- --test-threads=1 && \
+              cargo test --features "general_test aries" && \
               grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ./target/debug/coverage.lcov)'
         docker_id=$(docker ps -a | grep libvcx-codecov-unit | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep codecov | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
