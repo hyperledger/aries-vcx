@@ -1,8 +1,7 @@
 use error::prelude::*;
 use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::states::null::NullState;
-use v3::handlers::connection::states::requested::RequestedState;
-use v3::handlers::connection::states::responded::RespondedState;
+use v3::handlers::connection::inviter::states::null::NullState;
+use v3::handlers::connection::inviter::states::responded::RespondedState;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
 use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
@@ -16,21 +15,14 @@ pub struct InvitedState {
 
 impl From<(InvitedState, ProblemReport)> for NullState {
     fn from((_state, _error): (InvitedState, ProblemReport)) -> NullState {
-        trace!("DidExchangeStateSM: transit state from InvitedState to NullState");
+        trace!("ConnectionInviter: transit state from InvitedState to NullState");
         NullState {}
-    }
-}
-
-impl From<(InvitedState, Request)> for RequestedState {
-    fn from((state, request): (InvitedState, Request)) -> RequestedState {
-        trace!("DidExchangeStateSM: transit state from InvitedState to RequestedState");
-        RequestedState { request, did_doc: DidDoc::from(state.invitation) }
     }
 }
 
 impl From<(InvitedState, Request, SignedResponse, AgentInfo)> for RespondedState {
     fn from((_state, request, response, prev_agent_info): (InvitedState, Request, SignedResponse, AgentInfo)) -> RespondedState {
-        trace!("DidExchangeStateSM: transit state from InvitedState to RequestedState");
+        trace!("ConnectionInviter: transit state from InvitedState to RespondedState");
         RespondedState { response, did_doc: request.connection.did_doc, prev_agent_info }
     }
 }
@@ -38,7 +30,7 @@ impl From<(InvitedState, Request, SignedResponse, AgentInfo)> for RespondedState
 impl InvitedState {
     pub fn handle_connection_request(&self, request: &Request,
                                      agent_info: &AgentInfo) -> VcxResult<(SignedResponse, AgentInfo)> {
-        trace!("InvitedState:handle_connection_request >>> request: {:?}, agent_info: {:?}", request, agent_info);
+        trace!("ConnectionInviter:handle_connection_request >>> request: {:?}, agent_info: {:?}", request, agent_info);
 
         request.connection.did_doc.validate()?;
 

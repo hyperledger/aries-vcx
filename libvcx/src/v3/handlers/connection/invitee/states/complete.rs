@@ -1,8 +1,8 @@
 use error::VcxResult;
 use v3::handlers::connection::agent_info::AgentInfo;
+use v3::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use v3::handlers::connection::messages::DidExchangeMessages;
-use v3::handlers::connection::state_machine::DidExchangeState;
-use v3::handlers::connection::states::util::handle_ping;
+use v3::handlers::connection::util::handle_ping;
 use v3::messages::a2a::protocol_registry::ProtocolRegistry;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
@@ -17,38 +17,38 @@ pub struct CompleteState {
 
 impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
     fn from((state, protocols): (CompleteState, Vec<ProtocolDescriptor>)) -> CompleteState {
-        trace!("DidExchangeStateSM: transit state from CompleteState to CompleteState");
+        trace!("ConnectionInvitee: transit state from CompleteState to CompleteState");
         CompleteState { did_doc: state.did_doc, protocols: Some(protocols) }
     }
 }
 
 impl CompleteState {
-    pub fn handle_message(self, message: DidExchangeMessages, agent_info: &AgentInfo) -> VcxResult<DidExchangeState> {
+    pub fn handle_message(self, message: DidExchangeMessages, agent_info: &AgentInfo) -> VcxResult<InviteeState> {
         Ok(match message {
             DidExchangeMessages::SendPing(comment) => {
                 self.handle_send_ping(comment, agent_info)?;
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
             DidExchangeMessages::PingReceived(ping) => {
                 self.handle_ping(&ping, agent_info)?;
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
             DidExchangeMessages::PingResponseReceived(_) => {
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
             DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
                 self.handle_discover_features(query_, comment, agent_info)?;
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
             DidExchangeMessages::QueryReceived(query) => {
                 self.handle_discovery_query(query, agent_info)?;
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
             DidExchangeMessages::DiscloseReceived(disclose) => {
-                DidExchangeState::Completed((self, disclose.protocols).into())
+                InviteeState::Completed((self, disclose.protocols).into())
             }
             _ => {
-                DidExchangeState::Completed(self)
+                InviteeState::Completed(self)
             }
         })
     }

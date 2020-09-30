@@ -34,6 +34,9 @@ impl Default for AgentInfo {
 }
 
 impl AgentInfo {
+    /**
+    Create connection agent in one's agency
+     */
     pub fn create_agent(&self) -> VcxResult<AgentInfo> {
         trace!("Agent::create_agent >>>");
 
@@ -49,6 +52,9 @@ impl AgentInfo {
         Ok(AgentInfo { pw_did, pw_vk, agent_did, agent_vk })
     }
 
+    /**
+    Builds one's agency's URL endpoint
+     */
     pub fn agency_endpoint(&self) -> VcxResult<String> {
         settings::get_config_value(settings::CONFIG_AGENCY_ENDPOINT)
             .map(|str| format!("{}/agency/msg", str))
@@ -130,6 +136,9 @@ impl AgentInfo {
         EncryptionEnvelope::open(message.payload()?)
     }
 
+    /**
+    Sends authenticated message to connection counterparty
+     */
     pub fn send_message(&self, message: &A2AMessage, did_dod: &DidDoc) -> VcxResult<()> {
         trace!("Agent::send_message >>> message: {:?}, did_doc: {:?}", message, did_dod);
         let envelope = EncryptionEnvelope::create(&message, Some(&self.pw_vk), &did_dod)?;
@@ -137,6 +146,9 @@ impl AgentInfo {
         Ok(())
     }
 
+    /**
+    Sends anonymous message to connection counterparty
+     */
     pub fn send_message_anonymously(message: &A2AMessage, did_dod: &DidDoc) -> VcxResult<()> {
         trace!("Agent::send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, did_dod);
         let envelope = EncryptionEnvelope::create(&message, None, &did_dod)?;
@@ -144,6 +156,9 @@ impl AgentInfo {
         Ok(())
     }
 
+    /**
+    Sends message to one's agency signalling resources related to this connection agent can be deleted.
+     */
     pub fn delete(&self) -> VcxResult<()> {
         trace!("Agent::delete >>>");
         send_delete_connection_message(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk)

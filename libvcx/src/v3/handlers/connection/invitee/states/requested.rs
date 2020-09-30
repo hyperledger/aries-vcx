@@ -1,7 +1,7 @@
 use error::prelude::*;
 use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::states::complete::CompleteState;
-use v3::handlers::connection::states::null::NullState;
+use v3::handlers::connection::invitee::states::complete::CompleteState;
+use v3::handlers::connection::invitee::states::null::NullState;
 use v3::messages::ack::Ack;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
@@ -18,21 +18,21 @@ pub struct RequestedState {
 
 impl From<(RequestedState, ProblemReport)> for NullState {
     fn from((_state, _error): (RequestedState, ProblemReport)) -> NullState {
-        trace!("DidExchangeStateSM: transit state from RequestedState to NullState");
+        trace!("ConnectionInvitee: transit state from RequestedState to NullState");
         NullState {}
     }
 }
 
 impl From<(RequestedState, Response)> for CompleteState {
     fn from((_state, response): (RequestedState, Response)) -> CompleteState {
-        trace!("DidExchangeStateSM: transit state from RequestedState to RespondedState");
+        trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
         CompleteState { did_doc: response.connection.did_doc, protocols: None }
     }
 }
 
 impl RequestedState {
     pub fn handle_connection_response(&self, response: SignedResponse, agent_info: &AgentInfo) -> VcxResult<Response> {
-        trace!("RequestedState:handle_connection_response >>> response: {:?}, agent_info: {:?}", response, agent_info);
+        trace!("ConnectionInvitee:handle_connection_response >>> response: {:?}, agent_info: {:?}", response, agent_info);
 
         let remote_vk: String = self.did_doc.recipient_keys().get(0).cloned()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
