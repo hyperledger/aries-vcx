@@ -217,7 +217,7 @@ pub mod test {
         pub fn create_invite(&mut self) -> String {
             self.activate();
             self.connection_handle = ::connection::create_connection("alice").unwrap();
-            ::connection::connect(self.connection_handle, None).unwrap();
+            ::connection::connect(self.connection_handle).unwrap();
             ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(2, ::connection::get_state(self.connection_handle));
 
@@ -357,7 +357,7 @@ pub mod test {
         pub fn accept_invite(&mut self, invite: &str) {
             self.activate();
             self.connection_handle = ::connection::create_connection_with_invite("faber", invite).unwrap();
-            ::connection::connect(self.connection_handle, None).unwrap();
+            ::connection::connect(self.connection_handle).unwrap();
             ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(3, ::connection::get_state(self.connection_handle));
         }

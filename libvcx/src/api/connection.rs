@@ -308,7 +308,7 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let options = if !connection_options.is_null() {
+    let _options = if !connection_options.is_null() {
         check_useful_opt_c_str!(connection_options, VcxErrorKind::InvalidOption);
         connection_options.to_owned()
     } else {
@@ -316,30 +316,22 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
     };
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_connect(command_handle: {}, connection_handle: {}, connection_options: {:?}), source_id: {:?}",
-           command_handle, connection_handle, options, source_id);
+    trace!("vcx_connection_connect(command_handle: {}, connection_handle: {}, source_id: {:?}",
+           command_handle, connection_handle, source_id);
 
     spawn(move || {
-        match connect(connection_handle, options) {
-            Ok(_) => {
-                match get_invite_details(connection_handle, true) {
-                    Ok(x) => {
-                        trace!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
-                               command_handle, connection_handle, error::SUCCESS.message, x, source_id);
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    Err(_) => {
-                        warn!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
-                              command_handle, connection_handle, error::SUCCESS.message, "null", source_id); // TODO: why Success?????
-                        cb(command_handle, error::SUCCESS.code_num, ptr::null_mut());
-                    }
-                }
+        match connect(connection_handle) {
+            Ok(invitation) => {
+                let invitation = invitation.unwrap_or(String::from("{}"));
+                trace!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {}",
+                       command_handle, connection_handle, error::SUCCESS.message, invitation, source_id);
+                let invitation = CStringUtils::string_to_cstring(invitation);
+                cb(command_handle, error::SUCCESS.code_num, invitation.as_ptr());
             }
-            Err(x) => {
+            Err(err) => {
                 warn!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {})",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -1283,7 +1275,7 @@ mod tests {
     use std::ptr;
 
     use api::{return_types_u32, VcxStateType};
-    use connection::tests::{build_test_connection_inviter_requested, build_test_connection_inviter_invited, build_test_connection_inviter_null};
+    use connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use utils::devsetup::*;
     use utils::error;
@@ -1293,6 +1285,7 @@ mod tests {
     use utils::timeout::TimeoutUtils;
 
     use super::*;
+    use serde_json::Value;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -1344,12 +1337,26 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    fn test_vcx_connection_connect_returns_invitation() {
+        let _setup = SetupAriesMocks::init();
+
+        let handle = build_test_connection_inviter_null();
+        let invitation = connect(handle).unwrap().unwrap();
+        let invitation: Value = serde_json::from_str(&invitation).unwrap();
+        assert!(invitation["serviceEndpoint"].is_string());
+        assert!(invitation["recipientKeys"].is_array());
+        assert!(invitation["routingKeys"].is_array());
+        assert!(invitation["@type"].is_string());
+        assert!(invitation["@id"].is_string());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state() {
         let _setup = SetupAriesMocks::init();
 
         let handle = build_test_connection_inviter_invited();
         assert!(handle > 0);
-        connect(handle, None).unwrap();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
@@ -1375,7 +1382,6 @@ mod tests {
 
         let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
-        connect(handle, None).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state_with_message(cb.command_handle, handle, CString::new(ARIES_CONNECTION_REQUEST).unwrap().into_raw(), Some(cb.get_callback()));

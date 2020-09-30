@@ -142,10 +142,10 @@ pub fn delete_connection(handle: u32) -> VcxResult<u32> {
         .and_then(|_| Ok(error::SUCCESS.code_num))
 }
 
-pub fn connect(handle: u32, _options: Option<String>) -> VcxResult<u32> {
+pub fn connect(handle: u32) -> VcxResult<Option<String>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.connect()?;
-        Ok(error::SUCCESS.code_num)
+        Ok(connection.get_invite_details())
     })
 }
 
@@ -183,7 +183,8 @@ pub fn release_all() {
 
 pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.get_invite_details()
+        return connection.get_invite_details()
+            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
@@ -284,7 +285,7 @@ pub mod tests {
 
     pub fn build_test_connection_inviter_invited() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
-        connect(handle, Some("{}".to_string())).unwrap();
+        connect(handle).unwrap();
         handle
     }
 
@@ -300,14 +301,13 @@ pub mod tests {
         ::utils::devsetup::set_institution();
         let faber_to_alice = create_connection("alice").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        connect(faber_to_alice, None).unwrap();
+        let details = connect(faber_to_alice).unwrap().unwrap();
         update_state(faber_to_alice).unwrap();
-        let details = get_invite_details(faber_to_alice, false).unwrap();
 
         ::utils::devsetup::set_consumer();
         debug!("Consumer is going to accept connection invitation.");
         let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
-        connect(alice_to_faber, None).unwrap();
+        connect(alice_to_faber).unwrap();
         update_state(alice_to_faber).unwrap();
         // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
 
@@ -339,7 +339,7 @@ pub mod tests {
         assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
 
 
-        connect(handle, Some("{}".to_string())).unwrap();
+        connect(handle).unwrap();
         assert_eq!(get_pw_did(handle).unwrap(), constants::DID);
         assert_eq!(get_pw_verkey(handle).unwrap(), constants::VERKEY);
 
@@ -417,7 +417,7 @@ pub mod tests {
 
         let handle = create_connection("test_get_qr_code_data").unwrap();
 
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
 
         let details = get_invite_details(handle, true).unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
@@ -506,8 +506,8 @@ pub mod tests {
 
         assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
 
-        connect(handle, None).unwrap();
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
+        connect(handle).unwrap();
     }
 
     #[test]
@@ -534,10 +534,10 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
 
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
 
         let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle_2, None).unwrap();
+        connect(handle_2).unwrap();
     }
 
     #[test]

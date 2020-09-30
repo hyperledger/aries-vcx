@@ -13,7 +13,6 @@ use utils::libindy::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, 
 use utils::libindy::ledger::*;
 use utils::libindy::payments::{pay_for_txn, PaymentTxn};
 use utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
-use v3::handlers::issuance::utils::encode_attributes;
 use v3::messages::proof_presentation::presentation_request::{PresentationRequestData, PresentationRequest};
 use utils::mockdata::mockdata_proof;
 

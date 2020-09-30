@@ -223,16 +223,16 @@ impl Connection {
     If called on Inviter in Invited state returns invitation to connect with him. Returns error in other states.
     If called on Invitee, returns error
      */
-    pub fn get_invite_details(&self) -> VcxResult<String> {
+    pub fn get_invite_details(&self) -> Option<String> {
         trace!("Connection::get_invite_details >>>");
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let invitation = sm_inviter.get_invitation()
-                    .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Can't retrieve invitation")))?;
-                Ok(json!(invitation.to_a2a_message()).to_string())
+                sm_inviter.get_invitation().map(|invitation| {
+                    json!(invitation.to_a2a_message()).to_string()
+                })
             }
             SmConnection::Invitee(_sm_invitee) => {
-                Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Can't retrieve invitation for invitee side of connection.")))
+                None
             }
         }
     }
