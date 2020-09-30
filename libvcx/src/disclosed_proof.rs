@@ -13,17 +13,16 @@ use messages::{
     thread::Thread,
 };
 use messages::proofs::{
-    proof_message::ProofMessage,
+    proof_message::ProofMessage::CredInfoProver,
     proof_request::{
-        NonRevokedInterval,
         ProofRequestData,
         ProofRequestMessage,
+        NonRevokedInterval
     },
 };
 use object_cache::ObjectCache;
 use settings;
-use utils::agent_info::{get_agent_attr, MyAgentInfo};
-use utils::constants::{DEFAULT_REJECTED_PROOF, GET_MESSAGES_DECRYPTED_RESPONSE};
+use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
 use utils::httpclient::AgencyMockDecrypted;
 use utils::libindy::anoncreds;
@@ -36,6 +35,7 @@ use v3::{
 use settings::indy_mocks_enabled;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
+use proof_utils::build_schemas_json_prover;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -48,20 +48,7 @@ enum DisclosedProofs {
     V3(Prover),
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
-pub struct CredInfo {
-    pub requested_attr: String,
-    pub referent: String,
-    pub schema_id: String,
-    pub cred_def_id: String,
-    pub rev_reg_id: Option<String>,
-    pub cred_rev_id: Option<String>,
-    pub revocation_interval: Option<NonRevokedInterval>,
-    pub tails_file: Option<String>,
-    pub timestamp: Option<u64>,
-}
-
-pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfo>> {
+pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfoProver>> {
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(credentials)
@@ -86,7 +73,7 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     .map(|x| x.to_string());
 
                 rtn.push(
-                    CredInfo {
+                    CredInfoProver {
                         requested_attr: requested_attr.to_string(),
                         referent: referent.to_string(),
                         schema_id: schema_id.to_string(),
@@ -116,7 +103,7 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfo>) -> VcxResult<String> {
+pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
@@ -219,24 +206,7 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfo>) -> Vcx
     Ok(rtn.to_string())
 }
 
-pub fn build_schemas_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
-    let mut rtn: Value = json!({});
-
-    for ref cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
-                .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
-
-            let schema_json = serde_json::from_str(&schema_json)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
-
-            rtn[cred_info.schema_id.to_owned()] = schema_json;
-        }
-    }
-    Ok(rtn.to_string())
-}
-
-pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult<String> {
+pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
@@ -253,7 +223,7 @@ pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfo>) -> VcxResult
     Ok(rtn.to_string())
 }
 
-pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfo>,
+pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoProver>,
                                         self_attested_attrs: &str,
                                         proof_req: &ProofRequestData) -> VcxResult<String> {
     let mut rtn: Value = json!({
@@ -309,7 +279,7 @@ pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_r
                                                                                  self_attested_attrs,
                                                                                  &proof_request)?;
 
-    let schemas_json = build_schemas_json(&credentials_identifiers)?;
+    let schemas_json = build_schemas_json_prover(&credentials_identifiers)?;
     let credential_defs_json = build_cred_def_json(&credentials_identifiers)?;
 
     let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
@@ -717,9 +687,9 @@ mod tests {
     fn test_find_schemas() {
         let _setup = SetupAriesMocks::init();
 
-        assert_eq!(build_schemas_json(&Vec::new()).unwrap(), "{}".to_string());
+        assert_eq!(build_schemas_json_prover(&Vec::new()).unwrap(), "{}".to_string());
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -730,7 +700,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
             referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
@@ -743,7 +713,7 @@ mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json(&creds).unwrap();
+        let schemas = build_schemas_json_prover(&creds).unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -753,7 +723,7 @@ mod tests {
     fn test_find_schemas_fails() {
         let _setup = SetupLibraryWallet::init();
 
-        let credential_ids = vec![CredInfo {
+        let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
             schema_id: "3".to_string(),
@@ -764,7 +734,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_schemas_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidSchema);
+        assert_eq!(build_schemas_json_prover(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidSchema);
     }
 
     #[test]
@@ -772,7 +742,7 @@ mod tests {
     fn test_find_credential_def() {
         let _setup = SetupAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -783,7 +753,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
             referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
@@ -806,7 +776,7 @@ mod tests {
     fn test_find_credential_def_fails() {
         let _setup = SetupLibraryWallet::init();
 
-        let credential_ids = vec![CredInfo {
+        let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
             schema_id: "3".to_string(),
@@ -825,7 +795,7 @@ mod tests {
     fn test_build_requested_credentials() {
         let _setup = SetupAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -836,7 +806,7 @@ mod tests {
             tails_file: None,
             timestamp: Some(800),
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
             referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
@@ -901,7 +871,7 @@ mod tests {
     fn test_credential_def_identifiers() {
         let _setup = SetupDefaults::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -912,7 +882,7 @@ mod tests {
             tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
             referent: ADDRESS_CRED_ID.to_string(),
             schema_id: ADDRESS_SCHEMA_ID.to_string(),
@@ -1030,7 +1000,7 @@ mod tests {
            },
            "predicates":{ }
         });
-        let creds = vec![CredInfo {
+        let creds = vec![CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -1083,7 +1053,7 @@ mod tests {
     fn test_build_rev_states_json() {
         let _setup = SetupAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: "abc".to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -1111,7 +1081,7 @@ mod tests {
         assert_eq!(build_rev_states_json(Vec::new().as_mut()).unwrap(), "{}".to_string());
 
         // no rev_reg_id
-        let cred1 = CredInfo {
+        let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
             referent: LICENCE_CRED_ID.to_string(),
             schema_id: SCHEMA_ID.to_string(),
@@ -1133,7 +1103,7 @@ mod tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
             ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
             schema_id,
@@ -1176,7 +1146,7 @@ mod tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
             ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
             schema_id,
@@ -1231,7 +1201,7 @@ mod tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
             ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
             schema_id,
@@ -1286,7 +1256,7 @@ mod tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
             ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfo {
+        let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
             schema_id,

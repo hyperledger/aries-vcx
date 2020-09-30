@@ -2,7 +2,10 @@ use serde_json;
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::proofs::proof_message::{CredInfo, get_credential_info};
+use messages::proofs::proof_message::{CredInfoVerifier,
+    CredInfoProver,
+    get_credential_info
+};
 use object_cache::ObjectCache;
 use settings;
 use settings::get_config_value;
@@ -37,7 +40,7 @@ fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
     Ok(())
 }
 
-fn build_credential_defs_json(credential_data: &Vec<CredInfo>) -> VcxResult<String> {
+fn build_credential_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
     let mut credential_json = json!({});
 
@@ -55,7 +58,7 @@ fn build_credential_defs_json(credential_data: &Vec<CredInfo>) -> VcxResult<Stri
     Ok(credential_json.to_string())
 }
 
-fn build_schemas_json(credential_data: &Vec<CredInfo>) -> VcxResult<String> {
+fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
     let mut schemas_json = json!({});
@@ -75,7 +78,25 @@ fn build_schemas_json(credential_data: &Vec<CredInfo>) -> VcxResult<String> {
     Ok(schemas_json.to_string())
 }
 
-fn build_rev_reg_defs_json(credential_data: &Vec<CredInfo>) -> VcxResult<String> {
+pub fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+    let mut rtn: Value = json!({});
+
+    for ref cred_info in credentials_identifiers {
+        if rtn.get(&cred_info.schema_id).is_none() {
+            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+                .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
+
+            let schema_json = serde_json::from_str(&schema_json)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
+
+            rtn[cred_info.schema_id.to_owned()] = schema_json;
+        }
+    }
+    Ok(rtn.to_string())
+}
+
+
+fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
     let mut rev_reg_defs_json = json!({});
@@ -100,7 +121,7 @@ fn build_rev_reg_defs_json(credential_data: &Vec<CredInfo>) -> VcxResult<String>
     Ok(rev_reg_defs_json.to_string())
 }
 
-fn build_rev_reg_json(credential_data: &Vec<CredInfo>) -> VcxResult<String> {
+fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
     let mut rev_regs_json = json!({});
@@ -142,7 +163,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
     let credential_defs_json = build_credential_defs_json(&credential_data)
         .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json(&credential_data)
+    let schemas_json = build_schemas_json_verifier(&credential_data)
         .unwrap_or(json!({}).to_string());
     let rev_reg_defs_json = build_rev_reg_defs_json(&credential_data)
         .unwrap_or(json!({}).to_string());
@@ -181,13 +202,13 @@ pub mod tests {
     fn test_build_credential_defs_json_with_multiple_credentials() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: None,
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoVerifier {
             schema_id: "schema_key2".to_string(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: None,
@@ -203,23 +224,23 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_build_schemas_json_with_multiple_schemas() {
+    fn test_build_schemas_json_verifier_with_multiple_schemas() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: None,
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoVerifier {
             schema_id: "schema_key2".to_string(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: None,
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json(&credentials).unwrap();
+        let schema_json = build_schemas_json_verifier(&credentials).unwrap();
 
         let json: Value = serde_json::from_str(SCHEMA_JSON).unwrap();
         let expected = json!({SCHEMA_ID:json}).to_string();
@@ -231,13 +252,13 @@ pub mod tests {
     fn test_build_rev_reg_defs_json() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: Some("id1".to_string()),
             timestamp: None,
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoVerifier {
             schema_id: "schema_key2".to_string(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: Some("id2".to_string()),
@@ -256,13 +277,13 @@ pub mod tests {
     fn test_build_rev_reg_json() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let cred1 = CredInfo {
+        let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
             cred_def_id: "cred_def_key1".to_string(),
             rev_reg_id: Some("id1".to_string()),
             timestamp: Some(1),
         };
-        let cred2 = CredInfo {
+        let cred2 = CredInfoVerifier {
             schema_id: "schema_key2".to_string(),
             cred_def_id: "cred_def_key2".to_string(),
             rev_reg_id: Some("id2".to_string()),
