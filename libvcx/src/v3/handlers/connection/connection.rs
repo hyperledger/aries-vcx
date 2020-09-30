@@ -276,14 +276,14 @@ impl Connection {
 
         if let Some((uid, message)) = self.find_message_to_handle(messages) {
             trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-            self.update_state_with_message(&message);
+            self.update_state_with_message(&message)?;
             self.agent_info().clone().update_message_status(uid)?;
         } else if let SmConnection::Inviter(sm_inviter) = &self.connection_sm {
             trace!("Connection::update_state >>> Inviter found no message to handel on main connection agent. Will check bootstrap agent.");
             if let Some((messages, bootstrap_agent_info)) = sm_inviter.get_bootstrap_agent_messages()? {
                 if let Some((uid, message)) = self.find_message_to_handle(messages) {
                     trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                    self.update_state_with_message(&message);
+                    self.update_state_with_message(&message)?;
                     bootstrap_agent_info.update_message_status(uid)?;
                 }
             }
