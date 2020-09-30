@@ -1,8 +1,6 @@
 use v3::handlers::issuance::issuer::state_machine::RevocationInfoV1;
 use v3::handlers::issuance::issuer::states::finished::FinishedState;
-use v3::handlers::issuance::issuer::states::initial::InitialState;
 use v3::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use v3::messages::a2a::MessageId;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential_request::CredentialRequest;
 use v3::messages::status::Status;

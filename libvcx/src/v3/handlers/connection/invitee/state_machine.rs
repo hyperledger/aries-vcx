@@ -10,16 +10,11 @@ use v3::handlers::connection::invitee::states::requested::RequestedState;
 use v3::handlers::connection::messages::DidExchangeMessages;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::a2a::protocol_registry::ProtocolRegistry;
-use v3::messages::ack::Ack;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
 use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use v3::messages::connection::request::Request;
-use v3::messages::connection::response::{Response, SignedResponse};
-use v3::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use v3::messages::discovery::query::Query;
-use v3::messages::trust_ping::ping::Ping;
-use v3::messages::trust_ping::ping_response::PingResponse;
+use v3::messages::discovery::disclose::{ProtocolDescriptor};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {

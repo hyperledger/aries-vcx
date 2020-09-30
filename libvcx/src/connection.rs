@@ -11,7 +11,7 @@ use settings;
 use settings::ProtocolTypes;
 use utils::error;
 use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnection, SmConnectionState};
+use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation as InvitationV3;
@@ -264,12 +264,9 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
-    use serde::Serialize;
     use serde_json::Value;
 
     use api::VcxStateType;
-    use messages::get_message::*;
-    use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;

@@ -1,9 +1,5 @@
-use std::collections::HashMap;
-
-use api::VcxStateType;
 use disclosed_proof::DisclosedProof;
 use error::prelude::*;
-use v3::handlers::proof_presentation::prover::states::finished::FinishedState;
 use v3::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use v3::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
 use v3::messages::error::ProblemReport;

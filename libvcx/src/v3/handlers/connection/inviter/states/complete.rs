@@ -1,6 +1,6 @@
 use error::VcxResult;
 use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use v3::handlers::connection::inviter::state_machine::{InviterState};
 use v3::handlers::connection::messages::DidExchangeMessages;
 use v3::handlers::connection::util::handle_ping;
 use v3::messages::a2a::protocol_registry::ProtocolRegistry;

@@ -1,7 +1,6 @@
 use v3::handlers::issuance::issuer::state_machine::RevocationInfoV1;
 use v3::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
 use v3::handlers::issuance::issuer::states::finished::FinishedState;
-use v3::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use v3::messages::a2a::MessageId;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential_request::CredentialRequest;

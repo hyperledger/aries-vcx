@@ -2,9 +2,8 @@ use error::prelude::*;
 use v3::handlers::connection::agent_info::AgentInfo;
 use v3::handlers::connection::inviter::states::null::NullState;
 use v3::handlers::connection::inviter::states::responded::RespondedState;
-use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
-use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
+use v3::messages::connection::problem_report::{ProblemReport};
 use v3::messages::connection::request::Request;
 use v3::messages::connection::response::{Response, SignedResponse};
 

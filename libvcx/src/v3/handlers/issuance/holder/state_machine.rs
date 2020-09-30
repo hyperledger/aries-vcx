@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use credential;
 use error::prelude::*;
 use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
 use v3::handlers::issuance::messages::CredentialIssuanceMessage;

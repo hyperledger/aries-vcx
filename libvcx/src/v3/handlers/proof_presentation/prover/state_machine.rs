@@ -2,13 +2,11 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use disclosed_proof::DisclosedProof;
 use error::prelude::*;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
 use v3::messages::proof_presentation::presentation::Presentation;
-use v3::messages::proof_presentation::presentation_ack::PresentationAck;
 use v3::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
 use v3::messages::status::Status;
