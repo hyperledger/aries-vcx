@@ -188,14 +188,14 @@ mod tests {
         info!("send_credential >>> getting offers");
         issuer_credential::update_state(issuer_handle, None, None).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(issuer_handle).unwrap());
-        println!("sending credential");
+        info!("sending credential");
         issuer_credential::send_credential(issuer_handle, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
         // AS CONSUMER STORE CREDENTIAL
         ::utils::devsetup::set_consumer();
         credential::update_state(credential_handle, None, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
-        println!("storing credential");
+        info!("storing credential");
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
     }
 
@@ -237,10 +237,24 @@ mod tests {
         set_institution();
         // GET REV REG DELTA BEFORE REVOCATION
         let (_, delta, timestamp) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
-        println!("revoking credential");
+        info!("revoking credential");
         ::issuer_credential::revoke_credential(issuer_handle).unwrap();
         let (_, delta_after_revoke, _) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
         assert_ne!(delta, delta_after_revoke);
+    }
+
+    fn revoke_credential_local(issuer_handle: u32, rev_reg_id: Option<String>) {
+        set_institution();
+        let (_, delta, timestamp) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
+        info!("revoking credential locally");
+        ::issuer_credential::revoke_credential_local(issuer_handle).unwrap();
+        let (_, delta_after_revoke, _) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
+        assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
+    }
+
+    fn publish_revocation(rev_reg_id: String) {
+        set_institution();
+        ::utils::libindy::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
     }
 
     fn _issue_address_credential(faber: u32, alice: u32, institution_did: &str) -> (String, String, Option<String>, u32, u32) {
@@ -262,6 +276,24 @@ mod tests {
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL");
         send_credential(credential_offer, alice, credential);
         (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer)
+    }
+
+    fn _verifier_create_proof_and_send_request(institution_did: &str, schema_id: &str, cred_def_id: &str, alice: u32) -> u32{
+        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
+        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
+        send_proof_request(alice, &requested_attrs_string, "[]", "{}")
+    }
+
+    fn _prover_select_credentials_and_send_proof(faber: u32) {
+        info!("Prover :: Going to create proof");
+        let proof_handle_prover = create_proof(faber);
+        info!("Prover :: Retrieving matching credentials");
+        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
+        info!("Prover :: Based on proof, retrieved credentials: {}", &retrieved_credentials);
+        let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
+        let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
+        info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
+        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -287,22 +319,39 @@ mod tests {
         info!("test_basic_revocation :: Going to seng proof request with attributes {}", &requested_attrs_string);
         let proof_handle_verifier = send_proof_request(alice, &requested_attrs_string, "[]", &interval);
 
-        info!("test_basic_revocation :: Going to create proof");
-        let proof_handle_prover = create_proof(faber);
-        info!("test_basic_revocation :: retrieving matching credentials");
-
-        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
-        info!("test_basic_revocation :: prover :: based on proof, retrieved credentials: {}", &retrieved_credentials);
-
-        let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
-        let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
-        info!("test_basic_revocation :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str);
+        _prover_select_credentials_and_send_proof(faber);
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         set_institution();
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_local_revocation() {
+        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (faber, alice) = ::connection::tests::create_connected_connections();
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, &institution_did);
+
+        revoke_credential_local(credential_offer, rev_reg_id.clone());
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice);
+        _prover_select_credentials_and_send_proof(faber);
+
+        set_institution();
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
+        publish_revocation(rev_reg_id.clone().unwrap());
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice);
+        _prover_select_credentials_and_send_proof(faber);
+
+        set_institution();
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
+
     }
 
     #[cfg(feature = "agency_pool_tests")]
