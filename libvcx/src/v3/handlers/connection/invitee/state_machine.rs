@@ -14,7 +14,7 @@ use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
 use v3::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use v3::messages::connection::request::Request;
-use v3::messages::discovery::disclose::{ProtocolDescriptor};
+use v3::messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {

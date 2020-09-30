@@ -2,7 +2,7 @@ use v3::handlers::connection::invitee::states::null::NullState;
 use v3::handlers::connection::invitee::states::requested::RequestedState;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation;
-use v3::messages::connection::problem_report::{ProblemReport};
+use v3::messages::connection::problem_report::ProblemReport;
 use v3::messages::connection::request::Request;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

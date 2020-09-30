@@ -4,7 +4,7 @@ use v3::handlers::connection::invitee::states::complete::CompleteState;
 use v3::handlers::connection::invitee::states::null::NullState;
 use v3::messages::ack::Ack;
 use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::connection::problem_report::{ProblemReport};
+use v3::messages::connection::problem_report::ProblemReport;
 use v3::messages::connection::request::Request;
 use v3::messages::connection::response::{Response, SignedResponse};
 use v3::messages::trust_ping::ping::Ping;

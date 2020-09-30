@@ -7,9 +7,9 @@ mod util;
 
 #[cfg(test)]
 pub mod tests {
+    use connection::tests::build_test_connection_inviter_requested;
     use utils::devsetup::SetupEmpty;
     use v3::messages::connection::invite::tests::_invitation_json;
-    use connection::tests::build_test_connection_inviter_requested;
 
     pub fn mock_connection() -> u32 {
         build_test_connection_inviter_requested()
