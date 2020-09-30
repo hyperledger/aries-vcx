@@ -40,7 +40,7 @@ fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
     Ok(())
 }
 
-fn build_credential_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
     let mut credential_json = json!({});
 
@@ -56,6 +56,23 @@ fn build_credential_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxRes
     }
 
     Ok(credential_json.to_string())
+}
+
+pub fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+    let mut rtn: Value = json!({});
+
+    for ref cred_info in credentials_identifiers {
+        if rtn.get(&cred_info.cred_def_id).is_none() {
+            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
+                .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
+
+            let credential_def = serde_json::from_str(&credential_def)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
+
+            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
+        }
+    }
+    Ok(rtn.to_string())
 }
 
 fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
@@ -161,7 +178,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
     let credential_data = get_credential_info(&proof_json)?;
 
-    let credential_defs_json = build_credential_defs_json(&credential_data)
+    let credential_defs_json = build_cred_defs_json_verifier(&credential_data)
         .unwrap_or(json!({}).to_string());
     let schemas_json = build_schemas_json_verifier(&credential_data)
         .unwrap_or(json!({}).to_string());
@@ -199,7 +216,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_build_credential_defs_json_with_multiple_credentials() {
+    fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
         let _setup = SetupStrictAriesMocks::init();
 
         let cred1 = CredInfoVerifier {
@@ -215,7 +232,7 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_credential_defs_json(&credentials).unwrap();
+        let credential_json = build_cred_defs_json_verifier(&credentials).unwrap();
 
         let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({CRED_DEF_ID:json}).to_string();

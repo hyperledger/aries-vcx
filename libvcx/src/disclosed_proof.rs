@@ -13,7 +13,7 @@ use messages::{
     thread::Thread,
 };
 use messages::proofs::{
-    proof_message::ProofMessage::CredInfoProver,
+    proof_message::CredInfoProver,
     proof_request::{
         ProofRequestData,
         ProofRequestMessage,
@@ -35,7 +35,10 @@ use v3::{
 use settings::indy_mocks_enabled;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
-use proof_utils::build_schemas_json_prover;
+use proof_utils::{
+    build_schemas_json_prover,
+    build_cred_defs_json_prover
+};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -206,23 +209,6 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
     Ok(rtn.to_string())
 }
 
-pub fn build_cred_def_json(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
-    let mut rtn: Value = json!({});
-
-    for ref cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
-                .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
-
-            let credential_def = serde_json::from_str(&credential_def)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
-
-            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
-        }
-    }
-    Ok(rtn.to_string())
-}
-
 pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoProver>,
                                         self_attested_attrs: &str,
                                         proof_req: &ProofRequestData) -> VcxResult<String> {
@@ -280,7 +266,7 @@ pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_r
                                                                                  &proof_request)?;
 
     let schemas_json = build_schemas_json_prover(&credentials_identifiers)?;
-    let credential_defs_json = build_cred_def_json(&credentials_identifiers)?;
+    let credential_defs_json = build_cred_defs_json_prover(&credentials_identifiers)?;
 
     let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
                                                        &requested_credentials,
@@ -766,7 +752,7 @@ mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_def_json(&creds).unwrap();
+        let credential_def = build_cred_defs_json_prover(&creds).unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:2471","schemaId":"2471""#));
     }
@@ -787,7 +773,7 @@ mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_cred_def_json(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(build_cred_defs_json_prover(&credential_ids).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
     }
 
     #[test]
