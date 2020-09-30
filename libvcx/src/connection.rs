@@ -274,6 +274,8 @@ pub mod tests {
     use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
+    use messages::get_message::download_messages;
+    use messages::MessageStatusCode;
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -428,7 +430,7 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
 
         let handle = from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
-        let second_string = to_string(handle).unwrap();
+        let _second_string = to_string(handle).unwrap();
 
         assert_eq!(get_pw_did(handle).unwrap(), "2ZHFFhzA2XtTD6hJqzL7ux");
         assert_eq!(get_pw_verkey(handle).unwrap(), "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
@@ -439,7 +441,7 @@ pub mod tests {
     }
 
     fn test_deserialize_and_serialize(sm_serialized: &str) {
-        let mut original_object: Value = serde_json::from_str(sm_serialized).unwrap();
+        let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
         let handle_conn = from_string(sm_serialized).unwrap();
         let reserialized = to_string(handle_conn).unwrap();
         let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
@@ -549,29 +551,14 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_with_legacy_invite_details() {
-        let _setup = SetupAriesMocks::init();
-
-        let err = create_connection_with_invite("alice", constants::INVITE_DETAIL_V1_STRING).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidJson);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_different_protocol_version() {
-        let _setup = SetupAriesMocks::init();
-        let err = create_connection_with_invite("alice", INVITE_DETAIL_V1_STRING).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidJson);
-
+    fn test_connection_handle_is_found() {
         let _setup = SetupAriesMocks::init();
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
-        // TODO: Test it is v3 connection
-        CONNECTION_MAP.get_mut(handle, |connection| {
+        CONNECTION_MAP.get_mut(handle, |_connection| {
             Ok(())
         }).unwrap();
 
-        let _serialized = to_string(handle).unwrap();
     }
 
     #[test]
