@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use disclosed_proof::generate_indy_proof;
+use disclosed_proof_utils::generate_indy_proof;
 use error::prelude::*;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
 use v3::messages::a2a::A2AMessage;

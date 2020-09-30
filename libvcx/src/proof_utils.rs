@@ -2,8 +2,8 @@ use serde_json;
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::proofs::proof_message::{CredInfoVerifier,
-    CredInfoProver,
+use messages::proofs::proof_message::{
+    CredInfoVerifier,
     get_credential_info
 };
 use object_cache::ObjectCache;
@@ -58,23 +58,6 @@ fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> Vcx
     Ok(credential_json.to_string())
 }
 
-pub fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
-    let mut rtn: Value = json!({});
-
-    for ref cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
-                .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
-
-            let credential_def = serde_json::from_str(&credential_def)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
-
-            rtn[cred_info.cred_def_id.to_owned()] = credential_def;
-        }
-    }
-    Ok(rtn.to_string())
-}
-
 fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
@@ -94,24 +77,6 @@ fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxRe
 
     Ok(schemas_json.to_string())
 }
-
-pub fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
-    let mut rtn: Value = json!({});
-
-    for ref cred_info in credentials_identifiers {
-        if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
-                .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
-
-            let schema_json = serde_json::from_str(&schema_json)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
-
-            rtn[cred_info.schema_id.to_owned()] = schema_json;
-        }
-    }
-    Ok(rtn.to_string())
-}
-
 
 fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
