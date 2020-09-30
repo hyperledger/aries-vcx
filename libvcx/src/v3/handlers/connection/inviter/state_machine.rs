@@ -18,16 +18,11 @@ use v3::messages::trust_ping::ping::Ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
-    pub(super) source_id: String,
-    pub(super) agent_info: AgentInfo,
-    pub(super) state: InviterState,
+    source_id: String,
+    agent_info: AgentInfo,
+    state: InviterState,
 }
 
-/// Transitions of Inviter Connection state
-/// Null -> Invited
-/// Invited -> Responded, Null
-/// Responded -> Complete, Null
-/// Completed
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum InviterState {
     Null(NullState),

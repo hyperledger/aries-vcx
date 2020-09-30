@@ -23,16 +23,11 @@ use v3::messages::trust_ping::ping_response::PingResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
-    pub(super) source_id: String,
-    pub(super) agent_info: AgentInfo,
-    pub(super) state: InviteeState,
+    source_id: String,
+    agent_info: AgentInfo,
+    state: InviteeState,
 }
 
-/// Transitions of Invitee Connection state
-/// Null -> Invited
-/// Invited -> Requested, Null
-/// Requested -> Completed, Null
-/// Completed
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum InviteeState {
     Null(NullState),
