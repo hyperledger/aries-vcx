@@ -160,7 +160,9 @@ async function createVcxAgent ({ agentName, protocolType, agencyUrl, seed, webho
     const connection = await Connection.createWithInvite({ id, invite })
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect({ data: '{}' })
+    logger.debug(`InviteeConnectionSM created connection agent`)
     await connection.updateState()
+    logger.debug(`InviteeConnectionSM updated state`)
     return connection
   }
 

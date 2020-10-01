@@ -4,15 +4,14 @@ use serde_json;
 
 use error::prelude::*;
 use messages;
-use messages::SerializableObjectWithState;
 use messages::get_message::Message;
+use messages::SerializableObjectWithState;
 use object_cache::ObjectCache;
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
-use v3::handlers::connection::connection::Connection as ConnectionV3;
-use v3::handlers::connection::states::ActorDidExchangeState;
-use v3::handlers::connection::agent::AgentInfo;
+use v3::handlers::connection::agent_info::AgentInfo;
+use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::connection::did_doc::DidDoc;
 use v3::messages::connection::invite::Invitation as InvitationV3;
@@ -99,7 +98,7 @@ fn store_connection(connection: ConnectionV3) -> VcxResult<u32> {
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = ConnectionV3::create(source_id);
-    return store_connection(connection)
+    return store_connection(connection);
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
@@ -120,14 +119,14 @@ pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str
 
 pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_state(Some(&message))?;
+        connection.update_state_with_message(&message)?;
         Ok(error::SUCCESS.code_num)
     })
 }
 
-pub fn update_state(handle: u32, message: Option<A2AMessage>) -> VcxResult<u32> {
+pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_state(message.as_ref())?;
+        connection.update_state()?;
         Ok(error::SUCCESS.code_num)
     })
 }
@@ -143,10 +142,10 @@ pub fn delete_connection(handle: u32) -> VcxResult<u32> {
         .and_then(|_| Ok(error::SUCCESS.code_num))
 }
 
-pub fn connect(handle: u32, _options: Option<String>) -> VcxResult<u32> {
+pub fn connect(handle: u32) -> VcxResult<Option<String>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.connect()?;
-        Ok(error::SUCCESS.code_num)
+        Ok(connection.get_invite_details())
     })
 }
 
@@ -161,13 +160,13 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<AgentInfo, ::v3::handlers::connection::states::ActorDidExchangeState> = ::serde_json::from_str(connection_data)
+    let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = ::serde_json::from_str(connection_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
         SerializableObjectWithState::V3 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
-        },
+        }
         _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
     };
     Ok(handle)
@@ -184,18 +183,19 @@ pub fn release_all() {
 
 pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.get_invite_details()
+        return connection.get_invite_details()
+            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-impl Into<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
-    fn into(self) -> (ActorDidExchangeState, AgentInfo, String) {
-        (self.state_object().to_owned(), self.agent_info().to_owned(), self.source_id())
+impl Into<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
+    fn into(self) -> (SmConnectionState, AgentInfo, String) {
+        (self.state_object(), self.agent_info().to_owned(), self.source_id())
     }
 }
 
-impl From<(ActorDidExchangeState, AgentInfo, String)> for ConnectionV3 {
-    fn from((state, agent_info, source_id): (ActorDidExchangeState, AgentInfo, String)) -> ConnectionV3 {
+impl From<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
+    fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> ConnectionV3 {
         ConnectionV3::from_parts(source_id, agent_info, state)
     }
 }
@@ -264,26 +264,33 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
+    use serde_json::Value;
+
     use api::VcxStateType;
-    use messages::MessageStatusCode;
-    use messages::get_message::*;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST};
+    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
+    use messages::get_message::download_messages;
+    use messages::MessageStatusCode;
+
+    pub fn build_test_connection_inviter_null() -> u32 {
+        let handle = create_connection("faber_to_alice").unwrap();
+        handle
+    }
 
     pub fn build_test_connection_inviter_invited() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
-        connect(handle, Some("{}".to_string())).unwrap();
+        connect(handle).unwrap();
         handle
     }
 
     pub fn build_test_connection_inviter_requested() -> u32 {
         let handle = build_test_connection_inviter_invited();
-        let msg : A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
+        let msg: A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
         update_state_with_message(handle, msg).unwrap();
         handle
     }
@@ -293,31 +300,30 @@ pub mod tests {
         ::utils::devsetup::set_institution();
         let faber_to_alice = create_connection("alice").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        connect(faber_to_alice, None).unwrap();
-        update_state(faber_to_alice, None).unwrap();
-        let details = get_invite_details(faber_to_alice, false).unwrap();
+        let details = connect(faber_to_alice).unwrap().unwrap();
+        update_state(faber_to_alice).unwrap();
 
         ::utils::devsetup::set_consumer(consumer_handle);
         debug!("Consumer is going to accept connection invitation.");
         let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
-        connect(alice_to_faber, None).unwrap();
-        update_state(alice_to_faber, None).unwrap();
+        connect(alice_to_faber).unwrap();
+        update_state(alice_to_faber).unwrap();
         // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
 
         debug!("Institution is going to process connection request.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice, None).unwrap();
+        update_state(faber_to_alice).unwrap();
 
         debug!("Consumer is going to complete the connection protocol.");
         ::utils::devsetup::set_consumer(consumer_handle);
-        update_state(alice_to_faber, None).unwrap();
+        update_state(alice_to_faber).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(alice_to_faber));
 
         debug!("Institution is going to complete the connection protocol.");
         ::utils::devsetup::set_institution();
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice, None).unwrap();
+        update_state(faber_to_alice).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(faber_to_alice));
 
         (alice_to_faber, faber_to_alice)
@@ -332,18 +338,18 @@ pub mod tests {
         assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
 
 
-        connect(handle, Some("{}".to_string())).unwrap();
+        connect(handle).unwrap();
         assert_eq!(get_pw_did(handle).unwrap(), constants::DID);
         assert_eq!(get_pw_verkey(handle).unwrap(), constants::VERKEY);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
-        update_state(handle, None).unwrap();
+        update_state(handle).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
-        update_state(handle, None).unwrap();
+        update_state(handle).unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);
@@ -410,12 +416,48 @@ pub mod tests {
 
         let handle = create_connection("test_get_qr_code_data").unwrap();
 
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
 
         let details = get_invite_details(handle, true).unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
 
         assert_eq!(get_invite_details(0, true).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_connection_inviter_completed() {
+        let _setup = SetupAriesMocks::init();
+
+        let handle = from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
+        let _second_string = to_string(handle).unwrap();
+
+        assert_eq!(get_pw_did(handle).unwrap(), "2ZHFFhzA2XtTD6hJqzL7ux");
+        assert_eq!(get_pw_verkey(handle).unwrap(), "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
+        assert_eq!(get_agent_did(handle).unwrap(), "EZrZyu4bfydm4ByNm56kPP");
+        assert_eq!(get_agent_verkey(handle).unwrap(), "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
+        assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
+        assert!(release(handle).is_ok());
+    }
+
+    fn test_deserialize_and_serialize(sm_serialized: &str) {
+        let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
+        let handle_conn = from_string(sm_serialized).unwrap();
+        let reserialized = to_string(handle_conn).unwrap();
+        let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
+
+        assert_eq!(original_object, reserialized_object);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        let _setup = SetupAriesMocks::init();
+
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
     }
 
     #[test]
@@ -463,8 +505,8 @@ pub mod tests {
 
         assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
 
-        connect(handle, None).unwrap();
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
+        connect(handle).unwrap();
     }
 
     #[test]
@@ -491,10 +533,10 @@ pub mod tests {
         let _setup = SetupAriesMocks::init();
 
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle, None).unwrap();
+        connect(handle).unwrap();
 
         let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle_2, None).unwrap();
+        connect(handle_2).unwrap();
     }
 
     #[test]
@@ -509,29 +551,14 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_with_legacy_invite_details() {
-        let _setup = SetupAriesMocks::init();
-
-        let err = create_connection_with_invite("alice", constants::INVITE_DETAIL_V1_STRING).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidJson);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_different_protocol_version() {
-        let _setup = SetupAriesMocks::init();
-        let err = create_connection_with_invite("alice", INVITE_DETAIL_V1_STRING).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidJson);
-
+    fn test_connection_handle_is_found() {
         let _setup = SetupAriesMocks::init();
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
-        // TODO: Test it is v3 connection
-        CONNECTION_MAP.get_mut(handle, |connection| {
+        CONNECTION_MAP.get_mut(handle, |_connection| {
             Ok(())
         }).unwrap();
 
-        let _serialized = to_string(handle).unwrap();
     }
 
     #[test]

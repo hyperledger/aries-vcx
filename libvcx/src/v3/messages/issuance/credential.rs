@@ -1,7 +1,4 @@
-use std::convert::TryInto;
-
-use error::{VcxError, VcxErrorKind, VcxResult};
-use messages::payload::PayloadKinds;
+use error::{VcxResult};
 use messages::thread::Thread;
 use v3::messages::a2a::{A2AMessage, MessageId};
 use v3::messages::ack::PleaseAck;

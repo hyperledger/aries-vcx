@@ -17,24 +17,13 @@ pub const ARIES_CONNECTION_INVITATION: &str = r#"
 // Alice created and serialized connection created from received invitation
 pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
 {
-    "version": "2.0",
+    "version": "3.0",
+    "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
-        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
         "pw_did": "",
-        "pw_verkey": "",
-        "state": 2,
-        "uuid": "",
-        "endpoint": "",
-        "invite_detail": null,
-        "redirect_detail": null,
-        "invite_url": null,
+        "pw_vk": "",
         "agent_did": "",
-        "agent_vk": "",
-        "their_pw_did": "18ac5f5d-c81d-451a-be20-a0df4933513a",
-        "their_pw_verkey": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw",
-        "public_did": null,
-        "their_public_did": null,
-        "version": "2.0"
+        "agent_vk": ""
     },
     "state": {
         "Invitee": {
@@ -104,24 +93,13 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
 // Alice sends connection request to Faber
 pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
 {
-    "version": "2.0",
+    "version": "3.0",
+    "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
-        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
-        "pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
-        "state": 3,
-        "uuid": "",
-        "endpoint": "",
-        "invite_detail": null,
-        "redirect_detail": null,
-        "invite_url": null,
+        "pw_vk": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
         "agent_did": "Gqw6t57yDgzaG79h4HUVCf",
-        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
-        "their_pw_did": "18ac5f5d-c81d-451a-be20-a0df4933513a",
-        "their_pw_verkey": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw",
-        "public_did": null,
-        "their_public_did": null,
-        "version": "2.0"
+        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV"
     },
     "state": {
         "Invitee": {
@@ -226,24 +204,13 @@ pub const ARIES_CONNECTION_RESPONSE: &str = r#"
 // Alice (invitee) connection SM after Faber accepted connection by sending connection response
 pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
 {
-    "version": "2.0",
+    "version": "3.0",
+    "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
-        "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
-        "pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
-        "state": 4,
-        "uuid": "",
-        "endpoint": "",
-        "invite_detail": null,
-        "redirect_detail": null,
-        "invite_url": null,
+        "pw_vk": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
         "agent_did": "Gqw6t57yDgzaG79h4HUVCf",
-        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
-        "their_pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
-        "their_pw_verkey": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
-        "public_did": null,
-        "their_public_did": null,
-        "version": "2.0"
+        "agent_vk": "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV"
     },
     "state": {
         "Invitee": {
@@ -303,24 +270,13 @@ pub const ARIES_CONNECTION_ACK: &str = r#"
 // Inviter (Faber) after finished connection protocol by sending connection ack
 pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
 {
-    "version": "2.0",
+    "version": "3.0",
+    "source_id": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
     "data": {
-        "source_id": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
         "pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
-        "pw_verkey": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
-        "state": 4,
-        "uuid": "",
-        "endpoint": "",
-        "invite_detail": null,
-        "redirect_detail": null,
-        "invite_url": null,
+        "pw_vk": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
         "agent_did": "EZrZyu4bfydm4ByNm56kPP",
-        "agent_vk": "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2",
-        "their_pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
-        "their_pw_verkey": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
-        "public_did": null,
-        "their_public_did": null,
-        "version": "2.0"
+        "agent_vk": "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2"
     },
     "state": {
         "Inviter": {
@@ -367,6 +323,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
 pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
 {
   "version": "3.0",
+  "source_id": "test_serialize_deserialize",
   "data": {
     "pw_did": "",
     "pw_vk": "",
@@ -377,7 +334,6 @@ pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
     "Inviter": {
       "Null": {}
     }
-  },
-  "source_id": "test_serialize_deserialize"
+  }
 }"#;
 

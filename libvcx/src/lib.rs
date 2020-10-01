@@ -50,6 +50,7 @@ pub mod disclosed_proof;
 
 pub mod v3;
 mod proof_utils;
+mod disclosed_proof_utils;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
@@ -85,7 +86,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
         let alice = connection::create_connection("alice").unwrap();
-        connection::connect(alice, None).unwrap();
+        connection::connect(alice).unwrap();
         connection::delete_connection(alice).unwrap();
         assert!(connection::release(alice).is_err());
     }

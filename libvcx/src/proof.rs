@@ -2,7 +2,7 @@ use serde_json;
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::proofs::proof_message::{CredInfo, get_credential_info};
+use messages::proofs::proof_message::{CredInfoVerifier, get_credential_info};
 use object_cache::ObjectCache;
 use settings;
 use settings::get_config_value;

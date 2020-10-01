@@ -1,3 +1,4 @@
-pub mod states;
 pub mod prover;
-pub mod messages;
+mod state_machine;
+mod messages;
+mod states;
