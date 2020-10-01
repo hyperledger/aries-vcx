@@ -3,6 +3,7 @@ use serde_json::Value;
 
 use api::VcxStateType;
 use error::prelude::*;
+use messages::proofs::proof_request::NonRevokedInterval;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofMessage {
@@ -16,10 +17,23 @@ pub struct ProofMessage {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
-pub struct CredInfo {
+pub struct CredInfoVerifier {
     pub schema_id: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
+    pub timestamp: Option<u64>,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct CredInfoProver {
+    pub requested_attr: String,
+    pub referent: String,
+    pub schema_id: String,
+    pub cred_def_id: String,
+    pub rev_reg_id: Option<String>,
+    pub cred_rev_id: Option<String>,
+    pub revocation_interval: Option<NonRevokedInterval>,
+    pub tails_file: Option<String>,
     pub timestamp: Option<u64>,
 }
 
@@ -56,12 +70,12 @@ impl ProofMessage {
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Cannot deserialize proof: {}", err)))
     }
 
-    pub fn get_credential_info(&self) -> VcxResult<Vec<CredInfo>> {
+    pub fn get_credential_info(&self) -> VcxResult<Vec<CredInfoVerifier>> {
         get_credential_info(&self.libindy_proof)
     }
 }
 
-pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfo>> {
+pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(&proof)
@@ -77,7 +91,7 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfo>> {
 
                 let timestamp = identifier["timestamp"].as_u64();
                 rtn.push(
-                    CredInfo {
+                    CredInfoVerifier {
                         schema_id: schema_id.to_string(),
                         cred_def_id: cred_def_id.to_string(),
                         rev_reg_id,
@@ -162,7 +176,7 @@ pub mod tests {
             "schema_id": SCHEMA_ID,
             "cred_def_id": CRED_DEF_ID,
         }]}).to_string();
-        let mut cred_info = CredInfo {
+        let mut cred_info = CredInfoVerifier {
             schema_id: SCHEMA_ID.to_string(),
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,

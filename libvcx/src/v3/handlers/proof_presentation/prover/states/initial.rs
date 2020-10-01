@@ -1,11 +1,10 @@
-use disclosed_proof::DisclosedProof;
+use disclosed_proof_utils::generate_indy_proof;
 use error::prelude::*;
 use v3::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use v3::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
 use v3::messages::error::ProblemReport;
 use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
-use v3::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
@@ -15,7 +14,7 @@ pub struct InitialState {
 
 impl InitialState {
     pub fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        DisclosedProof::generate_indy_proof(credentials,
+        generate_indy_proof(credentials,
                                             self_attested_attrs,
                                             &self.presentation_request.request_presentations_attach.content()?)
     }

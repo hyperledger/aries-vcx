@@ -174,3 +174,259 @@ impl Prover {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utils::devsetup::*;
+    use utils::get_temp_dir_path;
+    use utils::constants::TEST_TAILS_FILE;
+    use v3::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+
+    #[test]
+    #[cfg(feature = "pool_tests")]
+    fn test_retrieve_credentials() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, req, _) = ::utils::libindy::anoncreds::tests::create_proof();
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
+        let mut proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        assert!(retrieved_creds.len() > 500);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_retrieve_credentials_emtpy() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        let mut req = json!({
+           "nonce":"123432421212",
+           "name":"proof_req_1",
+           "version":"0.1",
+           "requested_attributes": json!({}),
+           "requested_predicates": json!({}),
+        });
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        assert_eq!(retrieved_creds, "{}".to_string());
+
+        req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("2", proof_req).unwrap();
+
+        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let mut req = json!({
+           "nonce":"123432421212",
+           "name":"proof_req_1",
+           "version":"0.1",
+           "requested_attributes": json!({
+               "zip_1": json!({
+                   "name":"zip",
+                   "restrictions": [json!({ "issuer_did": did })]
+               })
+           }),
+           "requested_predicates": json!({}),
+        });
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        // All lower case
+        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        assert!(retrieved_creds.contains(r#""zip":"84000""#));
+        let ret_creds_as_value: serde_json::Value = serde_json::from_str(&retrieved_creds).unwrap();
+        assert_eq!(ret_creds_as_value["attrs"]["zip_1"][0]["cred_info"]["attrs"]["zip"], "84000");
+
+        // First letter upper
+        req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("2", proof_req).unwrap();
+        let retrieved_creds2 = proof.retrieve_credentials().unwrap();
+        assert!(retrieved_creds2.contains(r#""zip":"84000""#));
+
+        // Entire word upper
+        req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("1", proof_req).unwrap();
+        let retrieved_creds3 = proof.retrieve_credentials().unwrap();
+        assert!(retrieved_creds3.contains(r#""zip":"84000""#));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_retrieve_credentials_fails_with_no_proof_req() {
+        let _setup = SetupLibraryWallet::init();
+
+        let proof_req = PresentationRequest::create();
+        let proof = Prover::create("1", proof_req).unwrap();
+        assert_eq!(proof.retrieve_credentials().unwrap_err().kind(), VcxErrorKind::InvalidJson);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_generate_proof() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        let to = time::get_time().sec;
+        let indy_proof_req = json!({
+            "nonce": "123432421212",
+            "name": "proof_req_1",
+            "version": "0.1",
+            "requested_attributes": {
+                "address1_1": {
+                    "name": "address1",
+                    "restrictions": [{"issuer_did": did}],
+                    "non_revoked":  {"from": 123, "to": to}
+                },
+                "zip_2": { "name": "zip" }
+            },
+            "self_attested_attr_3": json!({
+                   "name":"self_attested_attr",
+             }),
+            "requested_predicates": {},
+            "non_revoked": {"from": 098, "to": to}
+        }).to_string();
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
+        let selected_credentials: serde_json::Value = json!({
+           "attrs":{
+              "address1_1": {
+                "credential": all_creds["attrs"]["address1_1"][0],
+                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+              },
+              "zip_2": {
+                "credential": all_creds["attrs"]["zip_2"][0],
+                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+              },
+           },
+           "predicates":{ }
+        });
+
+        let self_attested: serde_json::Value = json!({
+              "self_attested_attr_3":"attested_val"
+        });
+
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        assert!(generated_proof.is_ok());
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_generate_self_attested_proof() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        let indy_proof_req = json!({
+           "nonce":"123432421212",
+           "name":"proof_req_1",
+           "version":"0.1",
+           "requested_attributes": json!({
+               "address1_1": json!({
+                   "name":"address1",
+               }),
+               "zip_2": json!({
+                   "name":"zip",
+               }),
+           }),
+           "requested_predicates": json!({}),
+        }).to_string();
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        let selected_credentials: serde_json::Value = json!({});
+        let self_attested: serde_json::Value = json!({
+              "address1_1":"attested_address",
+              "zip_2": "attested_zip"
+        });
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        assert!(generated_proof.is_ok());
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_generate_proof_with_predicates() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        let to = time::get_time().sec;
+        let indy_proof_req = json!({
+            "nonce": "123432421212",
+            "name": "proof_req_1",
+            "version": "0.1",
+            "requested_attributes": {
+                "address1_1": {
+                    "name": "address1",
+                    "restrictions": [{"issuer_did": did}],
+                    "non_revoked":  {"from": 123, "to": to}
+                },
+                "zip_2": { "name": "zip" }
+            },
+            "self_attested_attr_3": json!({
+                   "name":"self_attested_attr",
+             }),
+            "requested_predicates": json!({
+                "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
+            }),
+            "non_revoked": {"from": 098, "to": to}
+        }).to_string();
+
+        let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+
+        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
+        let selected_credentials: serde_json::Value = json!({
+           "attrs":{
+              "address1_1": {
+                "credential": all_creds["attrs"]["address1_1"][0],
+                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+              },
+              "zip_2": {
+                "credential": all_creds["attrs"]["zip_2"][0],
+                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+              },
+           },
+           "predicates":{ 
+               "zip_3": {
+                "credential": all_creds["attrs"]["zip_3"][0],
+               }
+           }
+        });
+        let self_attested: serde_json::Value = json!({
+              "self_attested_attr_3":"attested_val"
+        });
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        assert!(generated_proof.is_ok());
+    }
+}
