@@ -502,7 +502,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections();
+        let (_faber, alice) = ::connection::tests::create_connected_connections(None);
 
         let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
 
@@ -521,7 +521,7 @@ mod tests {
         let hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
 
         // AS CONSUMER GET MESSAGES
-        ::utils::devsetup::set_consumer();
+        ::utils::devsetup::set_consumer(None);
 
         let _all_messages = download_messages(None, None, None).unwrap();
 
