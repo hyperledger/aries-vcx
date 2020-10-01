@@ -5,11 +5,11 @@ use error::prelude::*;
 use messages::proofs::proof_message::ProofMessage;
 use utils::libindy::anoncreds;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
-use v3::handlers::proof_presentation::prover::states::ProverSM;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::proof_presentation::presentation::Presentation;
 use v3::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
+use v3::handlers::proof_presentation::prover::state_machine::ProverSM;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
