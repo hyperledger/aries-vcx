@@ -2,16 +2,19 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use disclosed_proof_utils::generate_indy_proof;
 use error::prelude::*;
 use v3::handlers::proof_presentation::prover::messages::ProverMessages;
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
 use v3::messages::proof_presentation::presentation::Presentation;
-use v3::messages::proof_presentation::presentation_ack::PresentationAck;
 use v3::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use v3::messages::proof_presentation::presentation_request::PresentationRequest;
 use v3::messages::status::Status;
+use v3::handlers::proof_presentation::prover::states::initial::InitialState;
+use v3::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use v3::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use v3::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
+use v3::handlers::proof_presentation::prover::states::finished::FinishedState;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -41,137 +44,6 @@ pub enum ProverState {
     PresentationPreparationFailed(PresentationPreparationFailedState),
     PresentationSent(PresentationSentState),
     Finished(FinishedState),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct InitialState {
-    presentation_request: PresentationRequest,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PresentationPreparedState {
-    presentation_request: PresentationRequest,
-    presentation: Presentation,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PresentationPreparationFailedState {
-    presentation_request: PresentationRequest,
-    problem_report: ProblemReport,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PresentationSentState {
-    connection_handle: u32,
-    presentation_request: PresentationRequest,
-    presentation: Presentation,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FinishedState {
-    connection_handle: u32,
-    presentation_request: PresentationRequest,
-    presentation: Presentation,
-    status: Status,
-}
-
-impl From<(InitialState, Presentation)> for PresentationPreparedState {
-    fn from((state, presentation): (InitialState, Presentation)) -> Self {
-        trace!("transit state from InitialState to PresentationPreparedState");
-        PresentationPreparedState {
-            presentation_request: state.presentation_request,
-            presentation,
-        }
-    }
-}
-
-impl From<(InitialState, ProblemReport)> for PresentationPreparationFailedState {
-    fn from((state, problem_report): (InitialState, ProblemReport)) -> Self {
-        trace!("transit state from InitialState to PresentationPreparationFailedState");
-        PresentationPreparationFailedState {
-            presentation_request: state.presentation_request,
-            problem_report,
-        }
-    }
-}
-
-impl From<InitialState> for FinishedState {
-    fn from(state: InitialState) -> Self {
-        trace!("transit state from InitialState to FinishedState");
-        FinishedState {
-            connection_handle: 0,
-            presentation_request: state.presentation_request,
-            presentation: Default::default(),
-            status: Status::Declined,
-        }
-    }
-}
-
-impl From<(PresentationPreparedState, u32)> for PresentationSentState {
-    fn from((state, connection_handle): (PresentationPreparedState, u32)) -> Self {
-        trace!("transit state from PresentationPreparedState to PresentationSentState");
-        PresentationSentState {
-            presentation_request: state.presentation_request,
-            presentation: state.presentation,
-            connection_handle,
-        }
-    }
-}
-
-impl From<PresentationPreparedState> for FinishedState {
-    fn from(state: PresentationPreparedState) -> Self {
-        trace!("transit state from PresentationPreparedState to FinishedState");
-        FinishedState {
-            connection_handle: 0,
-            presentation_request: state.presentation_request,
-            presentation: Default::default(),
-            status: Status::Declined,
-        }
-    }
-}
-
-impl From<(PresentationPreparationFailedState, u32)> for FinishedState {
-    fn from((state, connection_handle): (PresentationPreparationFailedState, u32)) -> Self {
-        trace!("transit state from PresentationPreparationFailedState to FinishedState");
-        FinishedState {
-            presentation_request: state.presentation_request,
-            presentation: Presentation::create(),
-            connection_handle,
-            status: Status::Failed(state.problem_report),
-        }
-    }
-}
-
-impl From<(PresentationSentState, PresentationAck)> for FinishedState {
-    fn from((state, _ack): (PresentationSentState, PresentationAck)) -> Self {
-        trace!("transit state from PresentationSentState to FinishedState");
-        FinishedState {
-            connection_handle: state.connection_handle,
-            presentation_request: state.presentation_request,
-            presentation: state.presentation,
-            status: Status::Success,
-        }
-    }
-}
-
-impl From<(PresentationSentState, ProblemReport)> for FinishedState {
-    fn from((state, problem_report): (PresentationSentState, ProblemReport)) -> Self {
-        trace!("transit state from PresentationSentState to FinishedState");
-        FinishedState {
-            connection_handle: state.connection_handle,
-            presentation_request: state.presentation_request,
-            presentation: state.presentation,
-            status: Status::Failed(problem_report),
-        }
-    }
-}
-
-impl InitialState {
-    fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        generate_indy_proof(credentials,
-                                            self_attested_attrs,
-                                            &self.presentation_request.request_presentations_attach.content()?)
-    }
 }
 
 impl ProverSM {

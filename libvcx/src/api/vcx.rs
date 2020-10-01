@@ -1370,7 +1370,7 @@ mod tests {
         assert_eq!(_vcx_init_minimal_c_closure(&config), error::SUCCESS.code_num);
 
         let connection_handle = ::connection::create_connection("test_create_fails").unwrap();
-        ::connection::connect(connection_handle, None).unwrap_err();
+        ::connection::connect(connection_handle).unwrap_err();
 
         settings::set_defaults();
     }

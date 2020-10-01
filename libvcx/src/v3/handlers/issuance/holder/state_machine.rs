@@ -2,11 +2,9 @@ use std::collections::HashMap;
 
 use api::VcxStateType;
 use connection;
-use credential;
 use error::prelude::*;
 use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
 use v3::handlers::issuance::messages::CredentialIssuanceMessage;
-use v3::handlers::issuance::states::{HolderState, OfferReceivedState};
 use v3::messages::a2a::A2AMessage;
 use v3::messages::error::ProblemReport;
 use v3::messages::issuance::credential::Credential;
@@ -14,6 +12,35 @@ use v3::messages::issuance::credential_ack::CredentialAck;
 use v3::messages::issuance::credential_offer::CredentialOffer;
 use v3::messages::issuance::credential_request::CredentialRequest;
 use v3::messages::status::Status;
+use v3::handlers::issuance::holder::states::offer_received::OfferReceivedState;
+use v3::handlers::issuance::holder::states::request_sent::RequestSentState;
+use v3::handlers::issuance::holder::states::finished::FinishedHolderState;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum HolderState {
+    OfferReceived(OfferReceivedState),
+    RequestSent(RequestSentState),
+    Finished(FinishedHolderState),
+}
+
+impl HolderState {
+    pub fn get_connection_handle(&self) -> u32 {
+        match self {
+            HolderState::OfferReceived(_) => 0,
+            HolderState::RequestSent(state) => state.connection_handle,
+            HolderState::Finished(_) => 0
+        }
+    }
+
+    pub fn set_connection_handle(&mut self, connection_handle: u32) {
+        match self {
+            HolderState::RequestSent(ref mut state) => {
+                state.connection_handle = connection_handle;
+            }
+            _ => {}
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HolderSM {

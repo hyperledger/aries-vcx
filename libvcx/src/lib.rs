@@ -86,7 +86,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
         let alice = connection::create_connection("alice").unwrap();
-        connection::connect(alice, None).unwrap();
+        connection::connect(alice).unwrap();
         connection::delete_connection(alice).unwrap();
         assert!(connection::release(alice).is_err());
     }
