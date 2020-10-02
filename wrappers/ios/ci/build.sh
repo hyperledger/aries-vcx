@@ -358,13 +358,17 @@ build_vcx_framework() {
         UNIVERSAL_BUILD_PATH=$OUTPUT_DIR/universal/vcx
         mkdir -p $UNIVERSAL_BUILD_PATH
         cp -rvp vcx.framework $UNIVERSAL_BUILD_PATH
-        zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-universal.zip $UNIVERSAL_BUILD_PATH
+        pushd $UNIVERSAL_BUILD_PATH
+            zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-universal.zip ./*
+        popd
 
         DEVICE_BUILD_PATH=$OUTPUT_DIR/device/vcx
         mkdir -p $DEVICE_BUILD_PATH
         cp -rvp vcx.framework $DEVICE_BUILD_PATH
         lipo -extract arm64 $DEVICE_BUILD_PATH/vcx.framework/vcx -o $DEVICE_BUILD_PATH/vcx.framework/vcx
-        zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-device.zip $DEVICE_BUILD_PATH
+        pushd $DEVICE_BUILD_PATH
+            zip -r $OUTPUT_DIR/libvcx-ios-${LIBVCX_VERSION}-device.zip ./*
+        popd
 
     popd
 }
