@@ -71,7 +71,7 @@ mod tests {
     use proof;
     use settings;
     use utils::{
-        constants::{DEFAULT_SCHEMA_ATTRS, TEST_TAILS_FILE},
+        constants::TEST_TAILS_FILE,
         devsetup::{set_consumer, set_institution},
         get_temp_dir_path,
     };
@@ -283,8 +283,8 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data = json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
 
-        let credential_offer = _exchange_credential(credential_data, cred_def_handle, faber, alice, consumer_handle);
-        (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_offer)
+        let credential_handle = _exchange_credential(credential_data, cred_def_handle, faber, alice, consumer_handle);
+        (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_handle)
     }
 
     fn _verifier_create_proof_and_send_request(institution_did: &str, schema_id: &str, cred_def_id: &str, alice: u32) -> u32{
@@ -314,11 +314,11 @@ mod tests {
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections(None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
-        revoke_credential(credential_offer, rev_reg_id);
+        revoke_credential(credential_handle, rev_reg_id);
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
 
@@ -344,9 +344,9 @@ mod tests {
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections(None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
 
-        revoke_credential_local(credential_offer, rev_reg_id.clone());
+        revoke_credential_local(credential_handle, rev_reg_id.clone());
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice);
         _prover_select_credentials_and_send_proof(faber, None);
 
@@ -380,14 +380,14 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_offer1 = _exchange_credential(credential_data1, cred_def_handle, faber1, alice1, Some(consumer_1));
+        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, faber1, alice1, Some(consumer_1));
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "UT", zip.clone(): "8721"}).to_string();
-        let credential_offer2 = _exchange_credential(credential_data2, cred_def_handle, faber2, alice2, Some(consumer_2));
+        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, faber2, alice2, Some(consumer_2));
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_offer3 = _exchange_credential(credential_data3, cred_def_handle, faber3, alice3, Some(consumer_3));
+        let credential_handle3 = _exchange_credential(credential_data3, cred_def_handle, faber3, alice3, Some(consumer_3));
 
-        revoke_credential_local(credential_offer1, rev_reg_id.clone());
-        revoke_credential_local(credential_offer2, rev_reg_id.clone());
+        revoke_credential_local(credential_handle1, rev_reg_id.clone());
+        revoke_credential_local(credential_handle2, rev_reg_id.clone());
 
         // Revoke two locally and verify their are all still valid
         let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice1);
@@ -430,13 +430,13 @@ mod tests {
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections(None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_offer) = _issue_address_credential(faber, alice, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
         thread::sleep(Duration::from_millis(2000));
         info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
-        revoke_credential(credential_offer, rev_reg_id);
+        revoke_credential(credential_handle, rev_reg_id);
         thread::sleep(Duration::from_millis(2000));
 
         let from = time_before_revocation - 100;
