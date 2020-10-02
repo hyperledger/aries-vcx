@@ -619,7 +619,7 @@ mod tests {
     fn test_update_agent_webhook_real() {
         let _setup = SetupLibraryAgencyV2::init();
 
-        ::utils::devsetup::set_consumer();
+        ::utils::devsetup::set_consumer(None);
         update_agent_webhook("https://example.org").unwrap();
     }
 }

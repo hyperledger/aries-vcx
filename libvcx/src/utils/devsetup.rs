@@ -373,8 +373,10 @@ macro_rules! assert_match {
     );
 }
 
+// TODO: We could have an array of configs
 static mut INSTITUTION_CONFIG: u32 = 0;
 static mut CONSUMER_CONFIG: u32 = 0;
+// static mut CONFIGS: Vec<u32> = Vec::new(); // Vector of handles
 
 lazy_static! {
     static ref CONFIG_STRING: ObjectCache<String> = ObjectCache::<String>::new("devsetup-config-cache");
@@ -467,7 +469,7 @@ pub fn cleanup_agency_env() {
     set_institution();
     delete_wallet(&settings::get_wallet_name().unwrap(), None, None, None).unwrap();
 
-    set_consumer();
+    set_consumer(None);
     delete_wallet(&settings::get_wallet_name().unwrap(), None, None, None).unwrap();
 
     delete_test_pool();
@@ -486,10 +488,11 @@ pub fn set_institution() {
     change_wallet_handle();
 }
 
-pub fn set_consumer() {
+pub fn set_consumer(consumer_handle: Option<u32>) {
     settings::clear_config();
+    info!("Using consumer handle: {:?}", consumer_handle);
     unsafe {
-        CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
+        CONFIG_STRING.get(consumer_handle.unwrap_or(CONSUMER_CONFIG), |t| {
             warn!("Setting consumer config {}", t);
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             let result = settings::process_config_string(&t, true);
@@ -571,9 +574,8 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-
     // grab the generated did and vk from the consumer and enterprise
-    set_consumer();
+    set_consumer(None);
     let did2 = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     let vk2 = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
     set_institution();
@@ -591,7 +593,7 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
 
     // as trustees, mint tokens into each wallet
-    set_consumer();
+    set_consumer(None);
     ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
 
     set_institution();
@@ -603,6 +605,31 @@ pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
     let mut config: serde_json::Value = serde_json::from_str(config).unwrap();
     config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
     config.to_string()
+}
+
+pub fn create_consumer_config() -> u32 {
+    let consumer_id: u32 = CONFIG_STRING.len().unwrap() as u32;
+    let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, consumer_id);
+    let seed = create_new_seed();
+    let config = json!({
+            "agency_url": C_AGENCY_ENDPOINT.to_string(),
+            "agency_did": C_AGENCY_DID.to_string(),
+            "agency_verkey": C_AGENCY_VERKEY.to_string(),
+            "wallet_name": consumer_wallet_name,
+            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
+            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION.to_string(),
+            "enterprise_seed": seed,
+            "agent_seed": seed,
+            "name": format!("consumer_{}", consumer_id).to_string(),
+            "logo": "http://www.logo.com".to_string(),
+            "path": constants::GENESIS_PATH.to_string(),
+            "protocol_type": "4.0"
+        });
+
+    debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
+    let consumer_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+
+    CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
 }
 
 pub fn setup_wallet_env(test_name: &str) -> Result<WalletHandle, String> {
@@ -656,7 +683,7 @@ mod tests {
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
-        let (_faber, _alice) = ::connection::tests::create_connected_connections();
-        let (_faber, _alice) = ::connection::tests::create_connected_connections();
+        let (_faber, _alice) = ::connection::tests::create_connected_connections(None);
+        let (_faber, _alice) = ::connection::tests::create_connected_connections(None);
     }
 }

@@ -100,6 +100,11 @@ impl<T> ObjectCache<T> {
         let mut store = self._lock_store()?;
         Ok(store.clear())
     }
+
+    pub fn len(&self) -> VcxResult<usize> {
+        let store = self._lock_store()?;
+        Ok(store.len())
+    }
 }
 
 #[cfg(test)]

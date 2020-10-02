@@ -178,14 +178,14 @@ mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections();
+        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
 
         send_generic_message(faber_to_alice, "Hello 1", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
         send_generic_message(faber_to_alice, "Hello 2", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
         send_generic_message(faber_to_alice, "Hello 3", &json!({"msg_type": "toalice", "msg_title": "msg3"}).to_string()).unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        ::utils::devsetup::set_consumer();
+        ::utils::devsetup::set_consumer(None);
 
         let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
