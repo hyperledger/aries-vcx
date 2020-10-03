@@ -947,7 +947,10 @@ jobs:
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
-          stripHeaders: true
+          stripHeaders: false
+          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
+          breakingLabels: backwards-incompatible,breaking
+          deprecatedLabels: deprecated
 
       - name: Create a new release
         id: create-release
