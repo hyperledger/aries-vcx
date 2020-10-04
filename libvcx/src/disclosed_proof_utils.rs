@@ -12,7 +12,7 @@ use messages::proofs::{
     },
 };
 
-use v3::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries::messages::proof_presentation::presentation_request::PresentationRequest;
 
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};

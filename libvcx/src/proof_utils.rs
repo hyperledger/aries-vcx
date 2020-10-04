@@ -6,13 +6,13 @@ use messages::proofs::proof_message::{
     CredInfoVerifier,
     get_credential_info
 };
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use settings;
 use settings::get_config_value;
 use utils::error;
 use utils::libindy::anoncreds;
 use utils::openssl::encode;
-use v3::handlers::proof_presentation::verifier::verifier::Verifier;
+use aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
@@ -169,15 +169,15 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use api::VcxStateType;
+    use api_c::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
 
     use utils::devsetup::*;
     use utils::constants::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_proof;
-    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
-    use v3::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use aries::handlers::proof_presentation::verifier::verifier::Verifier;
+    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
 
     #[test]
     #[cfg(feature = "general_test")]

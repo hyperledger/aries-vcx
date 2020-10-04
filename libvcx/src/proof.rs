@@ -3,13 +3,13 @@ use serde_json::Value;
 
 use error::prelude::*;
 use messages::proofs::proof_message::{CredInfoVerifier, get_credential_info};
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use settings;
 use settings::get_config_value;
 use utils::error;
 use utils::libindy::anoncreds;
 use utils::openssl::encode;
-use v3::handlers::proof_presentation::verifier::verifier::Verifier;
+use aries::handlers::proof_presentation::verifier::verifier::Verifier;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -108,17 +108,17 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use api::VcxStateType;
+    use api_c::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
 
     use utils::devsetup::*;
     use utils::constants::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_proof;
-    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
-    use v3::messages::proof_presentation::presentation::Presentation;
+    use aries::handlers::proof_presentation::verifier::verifier::Verifier;
+    use aries::messages::proof_presentation::presentation::Presentation;
     use proof_utils::validate_indy_proof;
-    use v3::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use utils::mockdata::mock_settings::MockBuilder;
 
     fn create_default_proof() -> Verifier {

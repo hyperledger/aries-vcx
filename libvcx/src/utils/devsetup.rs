@@ -5,7 +5,7 @@ use futures::Future;
 use indy::WalletHandle;
 
 use ::{settings, utils};
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use settings::set_defaults;
 use utils::{get_temp_dir_path, threadpool};
 use utils::constants;
@@ -539,7 +539,7 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
     let enterprise_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
 
-    ::api::vcx::vcx_shutdown(false);
+    ::api_c::vcx::vcx_shutdown(false);
 
     let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, settings::DEFAULT_WALLET_NAME);
     let seed2 = create_new_seed();

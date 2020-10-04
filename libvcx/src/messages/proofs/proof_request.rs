@@ -7,7 +7,7 @@ use error::prelude::*;
 use messages::validation;
 use utils::libindy::anoncreds;
 use utils::qualifier;
-use v3::messages::connection::service::Service;
+use aries::messages::connection::service::Service;
 
 static PROOF_REQUEST: &str = "PROOF_REQUEST";
 static PROOF_DATA: &str = "proof_request_data";

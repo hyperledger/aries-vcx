@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use serde_json;
 
-use api::VcxStateType;
+use api_c::VcxStateType;
 use connection;
 use error::prelude::*;
 use messages::{
@@ -17,7 +17,7 @@ use messages::proofs::{
         NonRevokedInterval
     },
 };
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use settings;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
@@ -25,7 +25,7 @@ use utils::httpclient::AgencyMockDecrypted;
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
-use v3::{
+use aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };

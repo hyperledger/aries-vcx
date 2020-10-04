@@ -1,4 +1,4 @@
-use api::VcxStateType;
+use api_c::VcxStateType;
 use connection;
 
 use messages::*;

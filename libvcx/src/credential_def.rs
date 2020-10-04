@@ -1,9 +1,9 @@
 use serde_json;
 
-use api::PublicEntityStateType;
+use api_c::PublicEntityStateType;
 use error::prelude::*;
 use messages::ObjectWithVersion;
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::cache::update_rev_reg_ids_cache;

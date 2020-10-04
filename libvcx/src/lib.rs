@@ -36,7 +36,7 @@ pub mod settings;
 #[macro_use]
 pub mod messages;
 
-pub mod api;
+pub mod api_c;
 pub mod connection;
 pub mod issuer_credential;
 pub mod credential_request;
@@ -45,10 +45,9 @@ pub mod schema;
 pub mod credential_def;
 pub mod error;
 pub mod credential;
-pub mod object_cache;
 pub mod disclosed_proof;
 
-pub mod v3;
+pub mod aries;
 mod proof_utils;
 mod disclosed_proof_utils;
 
@@ -62,8 +61,8 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use api::ProofStateType;
-    use api::VcxStateType;
+    use api_c::ProofStateType;
+    use api_c::VcxStateType;
     use connection;
     use credential;
     use disclosed_proof;

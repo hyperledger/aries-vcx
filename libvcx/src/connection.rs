@@ -6,15 +6,15 @@ use error::prelude::*;
 use messages;
 use messages::get_message::Message;
 use messages::SerializableObjectWithState;
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
-use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
-use v3::messages::a2a::A2AMessage;
-use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::connection::invite::Invitation as InvitationV3;
+use aries::handlers::connection::agent_info::AgentInfo;
+use aries::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
+use aries::messages::a2a::A2AMessage;
+use aries::messages::connection::did_doc::DidDoc;
+use aries::messages::connection::invite::Invitation as InvitationV3;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
@@ -266,7 +266,7 @@ pub mod tests {
 
     use serde_json::Value;
 
-    use api::VcxStateType;
+    use api_c::VcxStateType;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;

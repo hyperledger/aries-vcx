@@ -1,16 +1,17 @@
-use ::{serde_json};
-use error::prelude::*;
-use object_cache::ObjectCache;
-use utils::error;
-use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
-use utils::httpclient::AgencyMockDecrypted;
-use settings::indy_mocks_enabled;
-use v3::{
+use serde_json;
+
+use aries::{
     handlers::issuance::holder::holder::Holder,
+    messages::issuance::credential::Credential as CredentialV3,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
-    messages::issuance::credential::Credential as CredentialV3
 };
+use error::prelude::*;
+use settings::indy_mocks_enabled;
+use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use utils::error;
+use utils::httpclient::AgencyMockDecrypted;
+use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -25,8 +26,7 @@ enum Credentials {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct Credential {
-}
+pub struct Credential {}
 
 fn handle_err(err: VcxError) -> VcxError {
     if err.kind() == VcxErrorKind::InvalidHandle {
@@ -44,7 +44,7 @@ fn create_credential_v3(source_id: &str, offer: &str) -> VcxResult<Option<Holder
 
     let offer_message = match offer_message {
         serde_json::Value::Array(_) => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Received offer in legacy format")),
-        offer => offer 
+        offer => offer
     };
 
     if let Ok(cred_offer) = serde_json::from_value::<CredentialOfferV3>(offer_message) {
@@ -73,7 +73,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     trace!("credential_create_with_msgid ::: for msg_id {} found offer {}", msg_id, offer);
 
     let credential = create_credential_v3(source_id, &offer)?
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))?;
+        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))?;
 
     let handle = HANDLE_MAP.add(credential)?;
 
@@ -192,13 +192,13 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(credential_data: &str) -> VcxResult<u32> {
-    let credential: Credentials = serde_json::from_str(credential_data) 
+    let credential: Credentials = serde_json::from_str(credential_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Credential: {:?}", err)))?;
 
     match credential {
         Credentials::V3(credential) => HANDLE_MAP.add(credential),
         _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Found credential of unsupported version"))
-    } 
+    }
 }
 
 pub fn is_payment_required(handle: u32) -> VcxResult<bool> {
@@ -215,12 +215,13 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use utils::devsetup::*;
-    use api::VcxStateType;
+    use api_c::VcxStateType;
     use connection;
     use credential_request::CredentialRequest;
+    use utils::devsetup::*;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+
+    use super::*;
 
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 

@@ -341,8 +341,8 @@ impl Message {
     }
 
     fn _decrypt_v3_message(&self) -> VcxResult<::messages::payload::PayloadV1> {
-        use v3::messages::a2a::A2AMessage;
-        use v3::utils::encryption_envelope::EncryptionEnvelope;
+        use aries::messages::a2a::A2AMessage;
+        use aries::utils::encryption_envelope::EncryptionEnvelope;
         use ::messages::payload::{PayloadTypes, PayloadV1, PayloadKinds};
 
         let a2a_message = EncryptionEnvelope::open(self.payload()?)?;

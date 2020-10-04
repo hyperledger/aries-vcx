@@ -1,10 +1,10 @@
 use serde_json;
 
 use error::prelude::*;
-use object_cache::ObjectCache;
+use utils::object_cache::ObjectCache;
 
 use utils::error;
-use v3::handlers::issuance::issuer::issuer::Issuer;
+use aries::handlers::issuance::issuer::issuer::Issuer;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -145,7 +145,7 @@ pub mod tests {
     
 
     use ::{issuer_credential, settings};
-    use api::VcxStateType;
+    use api_c::VcxStateType;
     
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;

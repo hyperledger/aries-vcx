@@ -1,7 +1,7 @@
 use serde_json;
 use serde_json::Value;
 
-use api::VcxStateType;
+use api_c::VcxStateType;
 use error::prelude::*;
 use messages::proofs::proof_request::NonRevokedInterval;
 

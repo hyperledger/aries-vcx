@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use api::VcxStateType::VcxStateAccepted;
+use api_c::VcxStateType::VcxStateAccepted;
 use error::{VcxError, VcxResult};
 
 static MOCKED_GENERATED_PROOF: &str = "mocked_proof";
