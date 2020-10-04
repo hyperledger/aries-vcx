@@ -5,7 +5,7 @@ ARG UID=1000
 ARG INDYSDK_PATH=/home/indy/indy-sdk
 ARG INDYSDK_REVISION=v1.15.0
 ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk
-ARG RUST_VER=nightly
+ARG RUST_VER=nightly-2020-08-20
 
 # Install dependencies
 RUN apt-get update && \
