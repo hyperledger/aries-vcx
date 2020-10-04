@@ -111,9 +111,9 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
     }
 }
 
-pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str) -> VcxResult<String> {
+pub fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
-        connection.send_generic_message(msg, msg_options)
+        connection.send_generic_message(msg)
     })
 }
 
@@ -567,7 +567,7 @@ pub mod tests {
 
         let handle = ::connection::tests::build_test_connection_inviter_invited();
 
-        let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
+        let err = send_generic_message(handle, "this is the message").unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
 
@@ -577,12 +577,12 @@ pub mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
 
-        send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
-        send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "Hello Alice").unwrap();
+        send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer(None);
-        send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
+        send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
         // make sure messages has bee delivered
         thread::sleep(Duration::from_millis(1000));

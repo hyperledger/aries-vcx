@@ -384,7 +384,7 @@ impl Connection {
         AgentInfo::send_message_anonymously(message, did_doc)
     }
 
-    fn parse_generic_message(message: &str, _message_options: &str) -> A2AMessage {
+    fn parse_generic_message(message: &str) -> A2AMessage {
         match ::serde_json::from_str::<A2AMessage>(message) {
             Ok(a2a_message) => a2a_message,
             Err(_) => {
@@ -396,10 +396,10 @@ impl Connection {
         }
     }
 
-    pub fn send_generic_message(&self, message: &str, _message_options: &str) -> VcxResult<String> {
+    pub fn send_generic_message(&self, message: &str) -> VcxResult<String> {
         trace!("Connection::send_generic_message >>> message: {:?}", message);
 
-        let message = Connection::parse_generic_message(message, _message_options);
+        let message = Connection::parse_generic_message(message);
         self.send_message(&message).map(|_| String::new())
     }
 
