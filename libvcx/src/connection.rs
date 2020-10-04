@@ -181,7 +181,7 @@ pub fn release_all() {
     CONNECTION_MAP.drain().ok();
 }
 
-pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
+pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         return connection.get_invite_details()
             .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported));
@@ -418,10 +418,10 @@ pub mod tests {
 
         connect(handle).unwrap();
 
-        let details = get_invite_details(handle, true).unwrap();
+        let details = get_invite_details(handle).unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
 
-        assert_eq!(get_invite_details(0, true).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(get_invite_details(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[test]

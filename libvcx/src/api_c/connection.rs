@@ -648,15 +648,15 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
                                             connection_handle: u32,
-                                            abbreviated: bool,
+                                            _abbreviated: bool,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, details: *const c_char)>) -> u32 {
     info!("vcx_connection_invite_details >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}, abbreviated: {}), source_id: {:?}",
-           command_handle, connection_handle, abbreviated, source_id);
+    trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
+           command_handle, connection_handle, source_id);
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_get_state - invalid handle");
@@ -664,7 +664,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        match get_invite_details(connection_handle, abbreviated) {
+        match get_invite_details(connection_handle) {
             Ok(str) => {
                 trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, str, source_id);
@@ -706,15 +706,15 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
                                           connection_handle: u32,
                                           msg: *const c_char,
-                                          send_msg_options: *const c_char,
+                                          _send_msg_options: *const c_char,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg_id: *const c_char)>) -> u32 {
     info!("vcx_connection_send_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(msg, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {}, send_msg_options: {})",
-           command_handle, connection_handle, msg, send_msg_options);
+    trace!("vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {})",
+           command_handle, connection_handle, msg);
 
     spawn(move || {
         match send_generic_message(connection_handle, &msg) {
