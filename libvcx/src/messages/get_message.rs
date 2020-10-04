@@ -503,7 +503,7 @@ mod tests {
 
         thread::sleep(Duration::from_millis(1000));
 
-        let hello_uid = ::connection::send_generic_message(alice, "hello", &json!({"msg_type":"hello", "msg_title": "hello", "ref_msg_id": null}).to_string()).unwrap();
+        let hello_uid = ::connection::send_generic_message(alice, "hello").unwrap();
 
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer(None);

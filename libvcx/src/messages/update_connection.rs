@@ -160,15 +160,14 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     use super::*;
+    use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
         let _setup = SetupDefaults::init();
 
-        let payload = vec![130, 165, 64, 116, 121, 112, 101, 130, 164, 110, 97, 109, 101, 179, 67, 79, 78, 78, 95, 83, 84, 65, 84, 85, 83, 95, 85, 80, 68, 65, 84, 69, 68, 163, 118, 101, 114, 163, 49, 46, 48, 170, 115, 116, 97, 116, 117, 115, 67, 111, 100, 101, 166, 67, 83, 45, 49, 48, 51];
-        let msg_str = r#"{ "@type": { "name": "CONN_STATUS_UPDATED", "ver": "1.0" }, "statusCode": "CS-103" }"#;
-        let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(&msg_str).unwrap();
-        assert_eq!(delete_connection_payload, rmp_serde::from_slice(&payload).unwrap());
+        let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(DELETE_CONNECTION_DECRYPTED_RESPONSE).unwrap();
+        assert_eq!(delete_connection_payload.status_code, ConnectionStatus::Deleted);
     }
 }

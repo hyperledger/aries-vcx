@@ -117,7 +117,7 @@ pub mod tests {
                 faber.activate();
 
                 let basic_message = r#"Hi there"#;
-                ::connection::send_generic_message(faber.connection_handle, basic_message, "").unwrap();
+                ::connection::send_generic_message(faber.connection_handle, basic_message).unwrap();
 
                 alice.activate();
 

@@ -221,7 +221,7 @@ pub mod test {
             ::connection::update_state(self.connection_handle).unwrap();
             assert_eq!(2, ::connection::get_state(self.connection_handle));
 
-            ::connection::get_invite_details(self.connection_handle, false).unwrap()
+            ::connection::get_invite_details(self.connection_handle).unwrap()
         }
 
         pub fn update_state(&self, expected_state: u32) {

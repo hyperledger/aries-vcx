@@ -214,6 +214,7 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 #[cfg(test)]
 pub mod tests {
     use api_c::VcxStateType;
+    use aries::messages::issuance::credential::Credential as CredentialV3;
     use connection;
     use credential_request::CredentialRequest;
     use utils::devsetup::*;
