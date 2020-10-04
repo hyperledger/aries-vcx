@@ -1,11 +1,9 @@
-use utils::libindy::crypto;
-use utils::httpclient::AgencyMockDecrypted;
-
-use error::prelude::*;
-
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::forward::Forward;
+use error::prelude::*;
+use utils::httpclient::AgencyMockDecrypted;
+use utils::libindy::crypto;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -84,20 +82,21 @@ impl EncryptionEnvelope {
         // }
 
         Ok(::serde_json::from_str(&message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?
         )
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
-    use utils::libindy::tests::test_setup;
     use utils::libindy::crypto::create_key;
+    use utils::libindy::tests::test_setup;
 
-    fn _setup(){
+    use super::*;
+
+    fn _setup() {
         ::settings::set_config_value(::settings::CONFIG_ENABLE_TEST_MODE, "false");
     }
 
@@ -147,7 +146,7 @@ pub mod tests {
             A2AMessage::Forward(forward) => {
                 assert_eq!(key_1, forward.to);
                 serde_json::to_vec(&forward.msg).unwrap()
-            },
+            }
             _ => return assert!(false)
         };
 
@@ -157,7 +156,7 @@ pub mod tests {
             A2AMessage::Forward(forward) => {
                 assert_eq!(_key_1(), forward.to);
                 serde_json::to_vec(&forward.msg).unwrap()
-            },
+            }
             _ => return assert!(false)
         };
 

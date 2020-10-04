@@ -2,7 +2,6 @@ use serde_json;
 
 use aries::{
     handlers::issuance::holder::holder::Holder,
-    messages::issuance::credential::Credential as CredentialV3,
     messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
 };
 use error::prelude::*;
@@ -111,7 +110,7 @@ pub fn delete_credential(handle: u32) -> VcxResult<u32> {
 }
 
 pub fn get_credential_offer(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |credential| {
+    HANDLE_MAP.get(handle, |_credential| {
         Err(VcxError::from(VcxErrorKind::InvalidCredentialHandle)) // TODO: implement
     })
 }
@@ -125,7 +124,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 /// #Returns
 /// Credential request message serialized as String
 pub fn generate_credential_request_msg(handle: u32, _my_pw_did: &str, _their_pw_did: &str) -> VcxResult<String> {
-    HANDLE_MAP.get_mut(handle, |credential| {
+    HANDLE_MAP.get_mut(handle, |_credential| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "This action is not implemented yet")) // TODO: implement
     }).map_err(handle_err)
 }
@@ -196,8 +195,7 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Credential: {:?}", err)))?;
 
     match credential {
-        Credentials::V3(credential) => HANDLE_MAP.add(credential),
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Found credential of unsupported version"))
+        Credentials::V3(credential) => HANDLE_MAP.add(credential)
     }
 }
 

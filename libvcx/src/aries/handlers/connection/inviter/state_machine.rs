@@ -84,7 +84,7 @@ impl SmConnectionInviter {
 
     pub fn step(self, message: DidExchangeMessages) -> VcxResult<SmConnectionInviter> {
         trace!("SmConnectionInviter::step >>> message: {:?}", message);
-        let SmConnectionInviter { source_id, mut agent_info, state } = self;
+        let SmConnectionInviter { source_id, agent_info, state } = self;
 
         trace!("SmConnectionInviter::step :: current state = {:?}", &state);
         let (new_state, agent_info) =

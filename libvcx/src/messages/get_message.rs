@@ -1,7 +1,6 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType, to_u8};
 use messages::message_type::MessageTypes;
-use messages::MessageStatusCode;
 use messages::payload::Payloads;
 use settings;
 use settings::ProtocolTypes;
@@ -471,11 +470,11 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     use std::time::Duration;
 
+    use connection::send_generic_message;
     use utils::constants::{GET_ALL_MESSAGES_RESPONSE, GET_MESSAGES_RESPONSE};
     use utils::devsetup::*;
 
     use super::*;
-    use connection::send_generic_message;
 
     #[test]
     #[cfg(feature = "general_test")]

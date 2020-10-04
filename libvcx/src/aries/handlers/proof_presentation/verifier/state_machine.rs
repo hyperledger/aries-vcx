@@ -218,14 +218,6 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_request_data(&self) -> VcxResult<&PresentationRequestData> {
-        match self.state {
-            VerifierState::Initiated(ref state) => Ok(&state.presentation_request_data),
-            VerifierState::PresentationRequestSent(_) => Err(VcxError::from(VcxErrorKind::InvalidProofHandle)),
-            VerifierState::Finished(_) => Err(VcxError::from(VcxErrorKind::InvalidProofHandle)),
-        }
-    }
-
     pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
         match self.state {
             VerifierState::Initiated(ref state) => {

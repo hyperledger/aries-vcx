@@ -127,10 +127,6 @@ impl HolderSM {
         None
     }
 
-    pub fn get_connection_handle(&self) -> u32 {
-        self.state.get_connection_handle()
-    }
-
     pub fn step(state: HolderState, source_id: String, thread_id: String) -> Self {
         HolderSM { state, source_id, thread_id }
     }

@@ -1,5 +1,8 @@
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value;
 
-use messages::*;
+use error::prelude::*;
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
 use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
@@ -122,16 +125,16 @@ pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: 
 impl GeneralMessage for DeleteConnectionBuilder {
     type Msg = DeleteConnectionBuilder;
 
+    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
+
+    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
+
     fn set_agent_did(&mut self, did: String) {
         self.agent_did = did;
     }
-
     fn set_agent_vk(&mut self, vk: String) {
         self.agent_vk = vk;
     }
-
-    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
-    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {

@@ -262,7 +262,7 @@ mod tests {
     fn _create_address_schema() -> (String, String, String, String, u32, Option<String>) {
         info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-       ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
+        ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
     }
 
     fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>) -> u32 {
@@ -286,7 +286,7 @@ mod tests {
         (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_handle)
     }
 
-    fn _verifier_create_proof_and_send_request(institution_did: &str, schema_id: &str, cred_def_id: &str, alice: u32) -> u32{
+    fn _verifier_create_proof_and_send_request(institution_did: &str, schema_id: &str, cred_def_id: &str, alice: u32) -> u32 {
         let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(alice, &requested_attrs_string, "[]", "{}")

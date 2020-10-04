@@ -1,9 +1,10 @@
 use api_c::VcxStateType;
 use connection;
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, CreateMessage, GeneralMessage, GeneralMessageDetail, MessageDetail, MessageStatusCode, parse_response_from_agency, prepare_message_for_agent, RemoteMessageType, SendRemoteMessage};
 use messages::message_type::MessageTypes;
 use messages::payload::{PayloadKinds, Payloads};
+use messages::send_message;
 use messages::thread::Thread;
 use settings;
 use utils::{constants, httpclient};

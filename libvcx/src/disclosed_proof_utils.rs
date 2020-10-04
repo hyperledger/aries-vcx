@@ -1,19 +1,16 @@
-use serde_json::Value;
 use std::collections::HashMap;
 
-use settings;
-use error::prelude::*;
+use serde_json::Value;
 
+use error::prelude::*;
 use messages::proofs::{
     proof_message::CredInfoProver,
     proof_request::{
+        NonRevokedInterval,
         ProofRequestData,
-        NonRevokedInterval
     },
 };
-
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-
+use settings;
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
@@ -253,7 +250,7 @@ pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_r
         None => {}
         Some(mocked_indy_proof) => {
             warn!("generate_indy_proof :: returning mocked response");
-            return Ok(mocked_indy_proof)
+            return Ok(mocked_indy_proof);
         }
     }
 
@@ -264,8 +261,8 @@ pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_r
 
     let revoc_states_json = build_rev_states_json(&mut credentials_identifiers)?;
     let requested_credentials = build_requested_credentials_json(&credentials_identifiers,
-                                                                                 self_attested_attrs,
-                                                                                 &proof_request)?;
+                                                                 self_attested_attrs,
+                                                                 &proof_request)?;
 
     let schemas_json = build_schemas_json_prover(&credentials_identifiers)?;
     let credential_defs_json = build_cred_defs_json_prover(&credentials_identifiers)?;
@@ -281,17 +278,17 @@ pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_r
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use utils::devsetup::*;
-
     use connection;
     use utils::{
-        constants::{ADDRESS_CRED_ID, LICENCE_CRED_ID, ADDRESS_SCHEMA_ID,
-                    ADDRESS_CRED_DEF_ID, CRED_DEF_ID, SCHEMA_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, REV_REG_ID, CRED_REV_ID, TEST_TAILS_FILE, REV_STATE_JSON,
-                    GET_MESSAGES_DECRYPTED_RESPONSE, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS},
+        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
+                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
+                    CRED_DEF_ID, CRED_REV_ID, GET_MESSAGES_DECRYPTED_RESPONSE, LICENCE_CRED_ID, REV_REG_ID,
+                    REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
         get_temp_dir_path,
     };
+    use utils::devsetup::*;
+
+    use super::*;
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({

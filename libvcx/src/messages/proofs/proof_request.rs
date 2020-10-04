@@ -3,11 +3,11 @@ use std::vec::Vec;
 
 use serde_json;
 
+use aries::messages::connection::service::Service;
 use error::prelude::*;
 use messages::validation;
 use utils::libindy::anoncreds;
 use utils::qualifier;
-use aries::messages::connection::service::Service;
 
 static PROOF_REQUEST: &str = "PROOF_REQUEST";
 static PROOF_DATA: &str = "proof_request_data";

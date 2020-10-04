@@ -1,15 +1,9 @@
 use serde_json;
-use serde_json::Value;
 
-use error::prelude::*;
-use messages::proofs::proof_message::{CredInfoVerifier, get_credential_info};
-use utils::object_cache::ObjectCache;
-use settings;
-use settings::get_config_value;
-use utils::error;
-use utils::libindy::anoncreds;
-use utils::openssl::encode;
 use aries::handlers::proof_presentation::verifier::verifier::Verifier;
+use error::prelude::*;
+use utils::error;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -81,9 +75,8 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("cannot deserialize Proofs proofect: {:?}", err)))?;
 
     match proof {
-        Proofs::V3(proof) => PROOF_MAP.add(proof),
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Found proof of unsupported version"))
-    } 
+        Proofs::V3(proof) => PROOF_MAP.add(proof)
+    }
 }
 
 pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
@@ -107,27 +100,30 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
-    use api_c::VcxStateType;
-    use connection::tests::build_test_connection_inviter_requested;
+    use serde_json::Value;
 
-    use utils::devsetup::*;
-    use utils::constants::*;
-    use utils::httpclient::HttpClientMockResponse;
-    use utils::mockdata::mockdata_proof;
+    use api_c::VcxStateType;
     use aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use aries::messages::proof_presentation::presentation::Presentation;
-    use proof_utils::validate_indy_proof;
     use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use connection::tests::build_test_connection_inviter_requested;
+    use proof_utils::validate_indy_proof;
+    use settings;
+    use utils::constants::*;
+    use utils::devsetup::*;
+    use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mock_settings::MockBuilder;
+    use utils::mockdata::mockdata_proof;
+
+    use super::*;
 
     fn create_default_proof() -> Verifier {
         let proof = Verifier::create("1".to_string(),
-                                  REQUESTED_ATTRS.to_owned(),
-                                  REQUESTED_PREDICATES.to_owned(),
-                                  r#"{"support_revocation":false}"#.to_string(),
-                                  "Optional".to_owned()).unwrap();
-        return proof
+                                     REQUESTED_ATTRS.to_owned(),
+                                     REQUESTED_PREDICATES.to_owned(),
+                                     r#"{"support_revocation":false}"#.to_string(),
+                                     "Optional".to_owned()).unwrap();
+        return proof;
     }
 
     fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32, proof_presentation: &str) {

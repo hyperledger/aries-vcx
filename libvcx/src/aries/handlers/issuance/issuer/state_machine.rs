@@ -123,10 +123,6 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_connection_handle(&self) -> u32 {
-        self.state.get_connection_handle()
-    }
-
     pub fn update_state(mut self, connection_handle: Option<u32>) -> VcxResult<Self> {
         trace!("Issuer::update_state >>> ", );
 

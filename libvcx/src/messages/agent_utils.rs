@@ -490,9 +490,11 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 
 #[cfg(test)]
 mod tests {
-    use utils::devsetup::*;
+    use std::env;
 
-    use super::*;
+    use api_c::vcx::vcx_shutdown;
+    use messages::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
+    use utils::devsetup::{SetupAriesMocks, SetupDefaults, SetupLibraryAgencyV2};
 
     #[test]
     #[cfg(feature = "agency")]
@@ -613,7 +615,7 @@ mod tests {
         // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }
-    
+
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_update_agent_webhook_real() {

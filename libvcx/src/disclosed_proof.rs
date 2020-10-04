@@ -2,35 +2,24 @@ use std::convert::TryInto;
 
 use serde_json;
 
-use api_c::VcxStateType;
+use aries::{
+    handlers::proof_presentation::prover::prover::Prover,
+    messages::proof_presentation::presentation_request::PresentationRequest,
+};
 use connection;
 use error::prelude::*;
 use messages::{
     get_message::Message,
     payload::Payloads,
-    thread::Thread,
 };
-use messages::proofs::{
-    proof_request::{
-        ProofRequestData,
-        ProofRequestMessage,
-        NonRevokedInterval
-    },
-};
-use utils::object_cache::ObjectCache;
+use messages::proofs::proof_request::ProofRequestMessage;
 use settings;
+use settings::indy_mocks_enabled;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
 use utils::httpclient::AgencyMockDecrypted;
-use utils::libindy::anoncreds;
-use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
-use aries::{
-    handlers::proof_presentation::prover::prover::Prover,
-    messages::proof_presentation::presentation_request::PresentationRequest,
-};
-use settings::indy_mocks_enabled;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -65,7 +54,7 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
 
 pub fn create_proof_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
     if !connection::is_v3_connection(connection_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
     };
 
     let proof_request = get_proof_request(connection_handle, &msg_id)?;
@@ -107,8 +96,7 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("cannot deserialize DisclosedProofs object: {:?}", err)))?;
 
     match proof {
-        DisclosedProofs::V3(proof) => HANDLE_MAP.add(proof),
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Found disclosed proof of unsupported version"))
+        DisclosedProofs::V3(proof) => HANDLE_MAP.add(proof)
     }
 }
 
@@ -254,20 +242,21 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use time;
 
+    use api_c::VcxStateType;
     use utils::{
-        constants::{ADDRESS_CRED_ID, LICENCE_CRED_ID, ADDRESS_SCHEMA_ID,
-                    ADDRESS_CRED_DEF_ID, CRED_DEF_ID, SCHEMA_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, REV_REG_ID, CRED_REV_ID, TEST_TAILS_FILE, REV_STATE_JSON,
-                    GET_MESSAGES_DECRYPTED_RESPONSE, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS},
+        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
+                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
+                    CRED_DEF_ID, CRED_REV_ID, GET_MESSAGES_DECRYPTED_RESPONSE, LICENCE_CRED_ID, REV_REG_ID,
+                    REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
         get_temp_dir_path,
     };
-    use utils::mockdata::mockdata_proof;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::devsetup::*;
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata::mock_settings::MockBuilder;
+    use utils::mockdata::mockdata_proof;
+    use utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
 
     use super::*;
-    use utils::mockdata::mockdata_proof::{ARIES_PROOF_REQUEST_PRESENTATION, ARIES_PROOF_PRESENTATION_ACK};
-    use utils::mockdata::mock_settings::MockBuilder;
 
     fn _get_proof_request_messages(connection_h: u32) -> String {
         let requests = get_proof_request_messages(connection_h, None).unwrap();

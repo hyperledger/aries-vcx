@@ -11,7 +11,6 @@ use utils::libindy::{ledger, pool, wallet};
 use utils::libindy::pool::{init_pool, is_pool_open};
 use utils::threadpool::spawn;
 use utils::version_constants;
-use indy_sys::INVALID_POOL_HANDLE;
 
 /// Initializes VCX with config settings
 ///

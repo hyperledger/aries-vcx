@@ -5,7 +5,6 @@ use futures::Future;
 use indy::WalletHandle;
 
 use ::{settings, utils};
-use utils::object_cache::ObjectCache;
 use settings::set_defaults;
 use utils::{get_temp_dir_path, threadpool};
 use utils::constants;
@@ -17,6 +16,7 @@ use utils::libindy::wallet::{create_wallet, delete_wallet, reset_wallet_handle};
 use utils::libindy::wallet;
 use utils::libindy::wallet::init_wallet;
 use utils::logger::LibvcxDefaultLogger;
+use utils::object_cache::ObjectCache;
 use utils::plugins::init_plugin;
 
 pub struct SetupEmpty; // clears settings, setups up logging
@@ -427,7 +427,7 @@ pub fn create_new_seed() -> String {
     format!("{:032}", x)
 }
 
-pub fn configure_trustee_did () {
+pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     ::utils::libindy::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
     let (my_did, my_vk) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();

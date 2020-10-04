@@ -1,8 +1,8 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency, validation};
 use messages::message_type::MessageTypes;
 use settings;
-use utils::constants::*;
+use utils::constants::UPDATE_PROFILE_RESPONSE;
 use utils::httpclient;
 use utils::httpclient::AgencyMock;
 
@@ -145,12 +145,13 @@ impl UpdateProfileDataBuilder {
 #[cfg(test)]
 mod tests {
     use messages::update_data;
+    use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
+    use utils::httpclient::AgencyMockDecrypted;
     use utils::libindy::signus::create_and_store_my_did;
+    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     use super::*;
-    use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,5 +1,5 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use messages::message_type::MessageTypes;
 use settings;
 use utils::{constants, httpclient};
@@ -158,13 +158,14 @@ mod tests {
     use std::thread;
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
-    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
-    use utils::httpclient::AgencyMockDecrypted;
-    use messages::update_message::{UpdateMessageStatusByConnectionsBuilder, UIDsByConn, update_agency_messages};
-    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+
     use connection::send_generic_message;
     use messages::get_message::download_messages;
     use messages::MessageStatusCode;
+    use messages::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 
     #[test]
     #[cfg(feature = "general_test")]

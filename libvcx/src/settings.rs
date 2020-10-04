@@ -227,9 +227,7 @@ pub fn agency_decrypted_mocks_enabled() -> bool {
     }
 }
 
-pub fn enable_mock_generate_indy_proof() {
-
-}
+pub fn enable_mock_generate_indy_proof() {}
 
 pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32> {
     trace!("process_config_string >>> config {}", config);

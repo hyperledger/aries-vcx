@@ -3,12 +3,12 @@ use serde_json;
 use api_c::PublicEntityStateType;
 use error::prelude::*;
 use messages::ObjectWithVersion;
-use utils::object_cache::ObjectCache;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::cache::update_rev_reg_ids_cache;
 use utils::libindy::ledger;
 use utils::libindy::payments::PaymentTxn;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");

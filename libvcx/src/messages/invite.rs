@@ -1,11 +1,12 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, CreateMessage, GeneralMessage, MessageDetail, MessageStatusCode, parse_response_from_agency, prepare_message_for_agent, RemoteMessageType, validation};
 use messages::message_type::{MessageTypes, MessageTypeV1, MessageTypeV2};
 use messages::thread::Thread;
 use settings;
-use utils::constants::*;
+use utils::constants::{ACCEPT_INVITE_RESPONSE, ACCEPT_INVITE_V2_RESPONSE, SEND_INVITE_RESPONSE, SEND_INVITE_V2_RESPONSE};
 use utils::httpclient;
 use utils::httpclient::AgencyMock;
+use utils::libindy::crypto;
 use utils::uuid::uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -801,7 +802,8 @@ pub struct Payload {
 
 #[cfg(test)]
 mod tests {
-    use messages::send_invite;
+    use messages::{redirect_connection, send_invite};
+    use utils::constants::{INVITE_DETAIL_V1_STRING, INVITE_DETAIL_V2_STRING, MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::libindy::signus::create_and_store_my_did;
 

@@ -2,19 +2,19 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use error::prelude::*;
-use messages;
-use messages::get_message::Message;
-use messages::SerializableObjectWithState;
-use utils::object_cache::ObjectCache;
-use settings;
-use settings::ProtocolTypes;
-use utils::error;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
+use error::prelude::*;
+use messages;
+use messages::get_message::Message;
+use messages::SerializableObjectWithState;
+use settings;
+use settings::ProtocolTypes;
+use utils::error;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
@@ -184,7 +184,7 @@ pub fn release_all() {
 pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         return connection.get_invite_details()
-            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
+            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported));
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
@@ -267,6 +267,8 @@ pub mod tests {
     use serde_json::Value;
 
     use api_c::VcxStateType;
+    use messages::get_message::download_messages;
+    use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
@@ -274,8 +276,6 @@ pub mod tests {
     use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
-    use messages::get_message::download_messages;
-    use messages::MessageStatusCode;
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -558,7 +558,6 @@ pub mod tests {
         CONNECTION_MAP.get_mut(handle, |_connection| {
             Ok(())
         }).unwrap();
-
     }
 
     #[test]

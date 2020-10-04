@@ -5,11 +5,11 @@ use serde_json;
 use api_c::PublicEntityStateType;
 use error::prelude::*;
 use messages::ObjectWithVersion;
-use utils::object_cache::ObjectCache;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::ledger;
 use utils::libindy::payments::PaymentTxn;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
