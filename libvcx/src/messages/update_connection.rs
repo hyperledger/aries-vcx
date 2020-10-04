@@ -2,7 +2,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
 use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
@@ -102,7 +102,6 @@ impl DeleteConnectionBuilder {
         let mut response = parse_response_from_agency(response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateConnectionResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
         }
@@ -138,15 +137,7 @@ impl GeneralMessage for DeleteConnectionBuilder {
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateConnection(
-                        UpdateConnection {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>

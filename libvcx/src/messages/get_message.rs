@@ -1,5 +1,5 @@
 use error::{VcxError, VcxErrorKind, VcxResult};
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV1, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType, to_u8};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use messages::message_type::MessageTypes;
 use messages::payload::Payloads;
 use settings;
@@ -148,10 +148,6 @@ impl GetMessagesBuilder {
         trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::GetMessagesResponse(res)) => {
-                trace!("Interpreting response as V1");
-                Ok(res.msgs)
-            }
             A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
@@ -178,15 +174,7 @@ impl GetMessagesBuilder {
 
     fn prepare_download_request(&self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -211,7 +199,6 @@ impl GetMessagesBuilder {
 
         trace!("parse_download_messages_response: parsed response {:?}", response);
         let msgs = match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::GetMessagesByConnectionsResponse(res)) => res.msgs,
             A2AMessage::Version2(A2AMessageV2::GetMessagesByConnectionsResponse(res)) => res.msgs,
             _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
         };
@@ -233,23 +220,15 @@ impl GetMessagesBuilder {
 impl GeneralMessage for GetMessagesBuilder {
     type Msg = GetMessagesBuilder;
 
+    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
+    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
     fn set_agent_did(&mut self, did: String) { self.agent_did = did; }
     fn set_agent_vk(&mut self, vk: String) { self.agent_vk = vk; }
-    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
-    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         debug!("prepare_request >> This connection is using protocol_type: {:?}", self.version);
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessages,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -278,7 +257,6 @@ pub struct DeliveryDetails {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
 pub enum MessagePayload {
-    V1(Vec<i8>),
     V2(::serde_json::Value),
 }
 
@@ -310,7 +288,6 @@ macro_rules! convert_aries_message {
 impl Message {
     pub fn payload<'a>(&'a self) -> VcxResult<Vec<u8>> {
         match self.payload {
-            Some(MessagePayload::V1(ref payload)) => Ok(to_u8(payload)),
             Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, err)),
             _ => Err(VcxError::from(VcxErrorKind::InvalidState)),
         }
@@ -321,12 +298,11 @@ impl Message {
         let mut new_message = self.clone();
         if let Some(ref payload) = self.payload {
             let decrypted_payload = match payload {
-                MessagePayload::V1(payload) => Payloads::decrypt_payload_v1(&vk, &payload)
-                    .map(Payloads::PayloadV1),
                 MessagePayload::V2(payload) => Payloads::decrypt_payload_v2(&vk, &payload)
                     .map(Payloads::PayloadV2)
             };
 
+            // todo: are all these branches still even possible?
             if let Ok(decrypted_payload) = decrypted_payload {
                 new_message.decrypted_payload = ::serde_json::to_string(&decrypted_payload).ok();
             } else if let Ok(decrypted_payload) = self._decrypt_v3_message() {
@@ -478,20 +454,30 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_parse_get_messages_response() {
         let _setup = SetupAriesMocks::init();
 
-        let result = GetMessagesBuilder::create_v1().parse_response(GET_MESSAGES_RESPONSE.to_vec()).unwrap();
-        assert_eq!(result.len(), 3)
+        // we should setup keys, build encrypted response from agency
+        // then test we are able to decrypt th message
+
+        // old test:
+        // let result = GetMessagesBuilder::create_v1().parse_response(GET_MESSAGES_RESPONSE.to_vec()).unwrap();
+        // assert_eq!(result.len(), 3)
     }
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_parse_get_connection_messages_response() {
         let _setup = SetupAriesMocks::init();
 
-        let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
-        assert_eq!(result.len(), 1)
+        // we should setup keys, build encrypted response from agency
+        // then test we are able to decrypt th message
+
+        // old test:
+        // let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
+        // assert_eq!(result.len(), 1)
     }
 
     #[cfg(feature = "agency_pool_tests")]
