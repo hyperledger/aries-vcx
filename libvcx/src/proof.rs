@@ -102,7 +102,7 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use aries::messages::proof_presentation::presentation::Presentation;
     use aries::messages::proof_presentation::presentation_request::PresentationRequestData;

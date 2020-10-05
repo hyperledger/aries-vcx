@@ -423,7 +423,7 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 mod tests {
     use std::env;
 
-    use api_c::vcx::vcx_shutdown;
+    use api::vcx::vcx_shutdown;
     use messages::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
     use utils::devsetup::{SetupAriesMocks, SetupDefaults, SetupLibraryAgencyV2};
 

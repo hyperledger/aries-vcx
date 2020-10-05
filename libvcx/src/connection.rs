@@ -266,7 +266,7 @@ pub mod tests {
 
     use serde_json::Value;
 
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use messages::get_message::download_messages;
     use messages::MessageStatusCode;
     use utils::constants::*;

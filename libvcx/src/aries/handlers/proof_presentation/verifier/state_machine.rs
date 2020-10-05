@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use api_c::VcxStateType;
+use api::VcxStateType;
 use connection::{get_pw_did, get_their_pw_verkey};
 use connection;
 use error::prelude::*;

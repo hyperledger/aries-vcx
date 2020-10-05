@@ -408,7 +408,7 @@ pub mod tests {
         let id = "id1";
         let value = "value1";
 
-        ::api_c::vcx::vcx_shutdown(true);
+        ::api::vcx::vcx_shutdown(true);
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),

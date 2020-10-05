@@ -805,7 +805,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use api_c::{return_types_u32, VcxStateType};
+    use api::{return_types_u32, VcxStateType};
     use settings;
     use utils::get_temp_dir_path;
     use utils::constants::*;

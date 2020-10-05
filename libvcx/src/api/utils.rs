@@ -531,7 +531,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use api_c::return_types_u32;
+    use api::return_types_u32;
     use utils::constants;
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;

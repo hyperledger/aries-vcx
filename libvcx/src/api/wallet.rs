@@ -985,7 +985,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use api_c::return_types_u32;
+    use api::return_types_u32;
     use settings;
     use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]

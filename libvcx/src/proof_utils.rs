@@ -164,7 +164,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use connection::tests::build_test_connection_inviter_requested;

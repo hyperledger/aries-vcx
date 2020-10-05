@@ -956,8 +956,8 @@ mod tests {
 
     use serde_json::Value;
 
-    use api_c::return_types_u32;
-    use api_c::VcxStateType;
+    use api::return_types_u32;
+    use api::VcxStateType;
     use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION, CREDS_FROM_PROOF_REQ};
     use utils::devsetup::*;
     use utils::timeout::TimeoutUtils;

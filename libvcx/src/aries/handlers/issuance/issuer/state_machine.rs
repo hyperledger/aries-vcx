@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use api_c::VcxStateType;
+use api::VcxStateType;
 use connection::{get_messages, send_message};
 use connection;
 use error::{VcxError, VcxErrorKind, VcxResult};

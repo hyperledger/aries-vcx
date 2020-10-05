@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use api_c::VcxStateType;
+use api::VcxStateType;
 use error::prelude::*;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::inviter::states::complete::CompleteState;

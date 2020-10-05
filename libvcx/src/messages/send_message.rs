@@ -1,4 +1,4 @@
-use api_c::VcxStateType;
+use api::VcxStateType;
 use connection;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agent, RemoteMessageType, SendRemoteMessage};

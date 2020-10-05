@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use api_c::VcxStateType;
+use api::VcxStateType;
 use connection;
 use error::prelude::*;
 use aries::handlers::proof_presentation::prover::messages::ProverMessages;

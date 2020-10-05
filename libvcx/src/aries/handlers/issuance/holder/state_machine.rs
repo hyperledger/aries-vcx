@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use api_c::VcxStateType;
+use api::VcxStateType;
 use connection;
 use error::prelude::*;
 use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};

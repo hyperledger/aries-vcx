@@ -242,7 +242,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use time;
 
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,

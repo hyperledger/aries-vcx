@@ -116,7 +116,7 @@ impl Verifier {
 
 #[cfg(test)]
 pub mod tests {
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use utils::devsetup::*;

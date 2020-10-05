@@ -141,7 +141,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use ::{issuer_credential, settings};
-    use api_c::VcxStateType;
+    use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
     #[allow(unused_imports)]

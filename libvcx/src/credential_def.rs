@@ -1,6 +1,6 @@
 use serde_json;
 
-use api_c::PublicEntityStateType;
+use api::PublicEntityStateType;
 use error::prelude::*;
 use messages::ObjectWithVersion;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;

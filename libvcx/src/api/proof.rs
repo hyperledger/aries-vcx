@@ -687,7 +687,7 @@ mod tests {
     use std::str;
 
     use ::{proof, settings};
-    use api_c::{ProofStateType, return_types_u32, VcxStateType};
+    use api::{ProofStateType, return_types_u32, VcxStateType};
     
     use utils::constants::*;
     use utils::devsetup::*;

@@ -660,8 +660,8 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use indy_sys::INVALID_POOL_HANDLE;
 
-    use api_c::return_types_u32;
-    use api_c::VcxStateType;
+    use api::return_types_u32;
+    use api::VcxStateType;
     use utils::{
         libindy::{
             wallet::{import, tests::export_test_wallet},
@@ -681,8 +681,8 @@ mod tests {
     use super::*;
     use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
     use utils::libindy::wallet::delete_wallet;
-    use api_c::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
-    use api_c::wallet::tests::_test_add_and_get_wallet_record;
+    use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
+    use api::wallet::tests::_test_add_and_get_wallet_record;
     use utils::libindy::pool::reset_pool_handle;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
@@ -1101,7 +1101,7 @@ mod tests {
     fn get_current_error_works_for_sync_error() {
         let _setup = SetupDefaults::init();
 
-        ::api_c::utils::vcx_provision_agent(ptr::null());
+        ::api::utils::vcx_provision_agent(ptr::null());
 
         let mut error_json_p: *const c_char = ptr::null();
         vcx_get_current_error(&mut error_json_p);
@@ -1122,7 +1122,7 @@ mod tests {
         }
 
         let config = CString::new("{}").unwrap();
-        ::api_c::utils::vcx_agent_provision_async(0, config.as_ptr(), Some(cb));
+        ::api::utils::vcx_agent_provision_async(0, config.as_ptr(), Some(cb));
         ::std::thread::sleep(::std::time::Duration::from_secs(1));
     }
 
@@ -1208,15 +1208,15 @@ mod tests {
         assert_ne!(pool_handle, INVALID_POOL_HANDLE);
 
         // Reset handles to 0
-        assert_eq!(::api_c::utils::vcx_pool_set_handle(INVALID_POOL_HANDLE), INVALID_POOL_HANDLE);
-        assert_eq!(::api_c::wallet::vcx_wallet_set_handle(INVALID_WALLET_HANDLE), INVALID_WALLET_HANDLE);
+        assert_eq!(::api::utils::vcx_pool_set_handle(INVALID_POOL_HANDLE), INVALID_POOL_HANDLE);
+        assert_eq!(::api::wallet::vcx_wallet_set_handle(INVALID_WALLET_HANDLE), INVALID_WALLET_HANDLE);
 
         // Test for errors when handles not set
         assert_ne!(error::SUCCESS.code_num, _vcx_init_minimal_c_closure(&config));
-        ::api_c::wallet::vcx_wallet_set_handle(wallet_handle);
+        ::api::wallet::vcx_wallet_set_handle(wallet_handle);
 
         assert_ne!(error::SUCCESS.code_num, _vcx_init_minimal_c_closure(&config));
-        ::api_c::utils::vcx_pool_set_handle(pool_handle);
+        ::api::utils::vcx_pool_set_handle(pool_handle);
 
         // NOTE: handles are set independently, test config with no wallet or pool
         assert_eq!(error::SUCCESS.code_num, _vcx_init_minimal_c_closure(&config));
@@ -1361,8 +1361,8 @@ mod tests {
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
 
-        ::api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
-        ::api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
+        ::api::wallet::vcx_wallet_set_handle(get_wallet_handle());
+        ::api::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
 
