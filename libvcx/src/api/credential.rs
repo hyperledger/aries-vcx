@@ -2,7 +2,6 @@ use std::ptr;
 
 use indy_sys::CommandHandle;
 use libc::c_char;
-use serde_json;
 
 use connection;
 use credential;
@@ -18,7 +17,6 @@ use utils::threadpool::spawn;
     # State
 
     The set of object states, messages and transitions depends on the communication method is used.
-    There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
     The communication method can be specified as a config option on one of *_init functions.
         VcxStateType::VcxStateRequestReceived - once `vcx_credential_create_with_offer` (create Credential object) is called.
 
@@ -96,8 +94,6 @@ pub extern fn vcx_credential_get_payment_info(command_handle: CommandHandle,
 ///
 /// # Example
 /// offer -> depends on communication method:
-///     proprietary:
-///         [{"msg_type": "CREDENTIAL_OFFER","version": "0.1","to_did": "...","from_did":"...","credential": {"account_num": ["...."],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "...","credential_name": "Account Certificate","credential_id": "3675417066","msg_ref_id": "ymy5nth"}]
 ///     aries:
 ///         {"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential", "@id":"<uuid-of-offer-message>", "comment":"somecomment", "credential_preview":<json-ldobject>, "offers~attach":[{"@id":"libindy-cred-offer-0", "mime-type":"application/json", "data":{"base64":"<bytesforbase64>"}}]}
 ///
@@ -152,8 +148,6 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
 ///
 /// # Example
 /// credential -> depends on communication method:
-///     proprietary:
-///         {"credential_id":"cred_id", "credential": {"libindy_cred":"{....}","rev_reg_def_json":"","cred_def_id":"cred_def_id","msg_type":"CLAIM","claim_offer_id":"1234","version":"0.1","from_did":"did"}}
 ///     aries:
 ///         https://github.com/hyperledger/aries-rfcs/tree/master/features/0036-issue-credential#issue-credential
 ///

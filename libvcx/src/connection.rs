@@ -2,19 +2,19 @@ use std::collections::HashMap;
 
 use serde_json;
 
+use aries::handlers::connection::agent_info::AgentInfo;
+use aries::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
+use aries::messages::a2a::A2AMessage;
+use aries::messages::connection::did_doc::DidDoc;
+use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use messages;
 use messages::get_message::Message;
 use messages::SerializableObjectWithState;
-use object_cache::ObjectCache;
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
-use v3::handlers::connection::agent_info::AgentInfo;
-use v3::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
-use v3::messages::a2a::A2AMessage;
-use v3::messages::connection::did_doc::DidDoc;
-use v3::messages::connection::invite::Invitation as InvitationV3;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
@@ -111,9 +111,9 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
     }
 }
 
-pub fn send_generic_message(connection_handle: u32, msg: &str, msg_options: &str) -> VcxResult<String> {
+pub fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
-        connection.send_generic_message(msg, msg_options)
+        connection.send_generic_message(msg)
     })
 }
 
@@ -181,10 +181,10 @@ pub fn release_all() {
     CONNECTION_MAP.drain().ok();
 }
 
-pub fn get_invite_details(handle: u32, _abbreviated: bool) -> VcxResult<String> {
+pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         return connection.get_invite_details()
-            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
+            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported));
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
@@ -267,6 +267,8 @@ pub mod tests {
     use serde_json::Value;
 
     use api::VcxStateType;
+    use messages::get_message::download_messages;
+    use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
@@ -274,8 +276,6 @@ pub mod tests {
     use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
-    use messages::get_message::download_messages;
-    use messages::MessageStatusCode;
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -418,10 +418,10 @@ pub mod tests {
 
         connect(handle).unwrap();
 
-        let details = get_invite_details(handle, true).unwrap();
+        let details = get_invite_details(handle).unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
 
-        assert_eq!(get_invite_details(0, true).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(get_invite_details(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[test]
@@ -558,7 +558,6 @@ pub mod tests {
         CONNECTION_MAP.get_mut(handle, |_connection| {
             Ok(())
         }).unwrap();
-
     }
 
     #[test]
@@ -568,7 +567,7 @@ pub mod tests {
 
         let handle = ::connection::tests::build_test_connection_inviter_invited();
 
-        let err = send_generic_message(handle, "this is the message", &json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap_err();
+        let err = send_generic_message(handle, "this is the message").unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
 
@@ -578,12 +577,12 @@ pub mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
 
-        send_generic_message(faber_to_alice, "Hello Alice", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
-        send_generic_message(faber_to_alice, "How are you Alice?", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "Hello Alice").unwrap();
+        send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
         ::utils::devsetup::set_consumer(None);
-        send_generic_message(alice_to_faber, "Hello Faber", &json!({"msg_type": "tofaber", "msg_title": "msg1"}).to_string()).unwrap();
+        send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
         // make sure messages has bee delivered
         thread::sleep(Duration::from_millis(1000));

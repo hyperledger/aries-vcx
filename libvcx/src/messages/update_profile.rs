@@ -1,8 +1,8 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency, validation};
 use messages::message_type::MessageTypes;
 use settings;
-use utils::constants::*;
+use utils::constants::UPDATE_PROFILE_RESPONSE;
 use utils::httpclient;
 use utils::httpclient::AgencyMock;
 
@@ -104,15 +104,7 @@ impl UpdateProfileDataBuilder {
 
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateConfigs(
-                        UpdateConfigs {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConfigs),
-                            configs: self.configs.clone(),
-                        }
-                    )
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -135,7 +127,6 @@ impl UpdateProfileDataBuilder {
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateConfigsResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
         }
@@ -145,12 +136,13 @@ impl UpdateProfileDataBuilder {
 #[cfg(test)]
 mod tests {
     use messages::update_data;
+    use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
+    use utils::httpclient::AgencyMockDecrypted;
     use utils::libindy::signus::create_and_store_my_did;
+    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     use super::*;
-    use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     #[test]
     #[cfg(feature = "general_test")]

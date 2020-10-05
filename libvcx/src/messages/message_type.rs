@@ -12,7 +12,6 @@ pub const DID: &str = "did:sov:123456789abcdefghi1234";
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum MessageTypes {
-    MessageTypeV1(MessageTypeV1),
     MessageTypeV2(MessageTypeV2),
 }
 
@@ -35,7 +34,7 @@ impl MessageTypes {
 
     pub fn build(kind: A2AMessageKinds) -> MessageTypes {
         match settings::get_protocol_type() {
-            settings::ProtocolTypes::V1 => MessageTypes::MessageTypeV1(MessageTypes::build_v1(kind)),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 => MessageTypes::MessageTypeV2(MessageTypes::build_v2(kind))
@@ -44,7 +43,6 @@ impl MessageTypes {
 
     pub fn name<'a>(&'a self) -> &'a str {
         match self {
-            MessageTypes::MessageTypeV1(type_) => type_.name.as_str(),
             MessageTypes::MessageTypeV2(type_) => type_.type_.as_str(),
         }
     }

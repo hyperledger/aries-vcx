@@ -13,8 +13,6 @@ use utils::libindy::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, 
 use utils::libindy::ledger::*;
 use utils::libindy::payments::{pay_for_txn, PaymentTxn};
 use utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
-use v3::messages::proof_presentation::presentation_request::{PresentationRequestData, PresentationRequest};
-use utils::mockdata::mockdata_proof;
 
 const BLOB_STORAGE_TYPE: &str = "default";
 const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
@@ -153,7 +151,7 @@ pub fn libindy_prover_get_credentials_for_proof_req(proof_req: &str) -> VcxResul
         None => {}
         Some(mocked_creds) => {
             warn!("get_mock_creds_retrieved_for_proof_request :: returning mocked response");
-            return Ok(mocked_creds)
+            return Ok(mocked_creds);
         }
     }
 
@@ -612,6 +610,7 @@ pub mod tests {
 
     use rand::Rng;
 
+    use aries::handlers::issuance::issuer::utils::encode_attributes;
     use settings;
     use utils::constants::*;
     #[cfg(feature = "pool_tests")]
@@ -620,7 +619,6 @@ pub mod tests {
     use utils::get_temp_dir_path;
 
     use super::*;
-    use v3::handlers::issuance::issuer::utils::encode_attributes;
 
     extern crate serde_json;
     extern crate rand;

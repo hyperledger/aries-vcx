@@ -1,10 +1,9 @@
 use serde_json::Value;
 
-use error::prelude::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
 use messages::get_message::MessagePayload;
 use messages::message_type::*;
 use messages::thread::Thread;
-use messages::to_u8;
 use settings::{get_protocol_type, ProtocolTypes};
 use utils::libindy::crypto;
 
@@ -49,22 +48,8 @@ impl Payloads {
     // Possibly this function moves out of this file.
     // On second thought, this should stick as a ConnectionError.
     pub fn encrypt(my_vk: &str, their_vk: &str, data: &str, msg_type: PayloadKinds, thread: Option<Thread>) -> VcxResult<Vec<u8>> {
-        match ProtocolTypes::from(get_protocol_type()) {
-            ProtocolTypes::V1 => {
-                let payload = PayloadV1 {
-                    type_: PayloadTypes::build_v1(msg_type, "json"),
-                    msg: data.to_string(),
-                };
-
-                let bytes = rmp_serde::to_vec_named(&payload)
-                    .map_err(|err| {
-                        error!("could not encode create_keys msg: {}", err);
-                        VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot encrypt  payload: {}", err))
-                    })?;
-
-                trace!("Sending payload: {:?}", bytes);
-                crypto::prep_msg(&my_vk, &their_vk, &bytes)
-            }
+        match ProtocolTypes::from(get_protocol_type().to_string()) {
+            ProtocolTypes::V1 |
             ProtocolTypes::V2 |
             ProtocolTypes::V3 |
             ProtocolTypes::V4 => {
@@ -94,24 +79,11 @@ impl Payloads {
 
     pub fn decrypt(my_vk: &str, payload: &MessagePayload) -> VcxResult<(String, Option<Thread>)> {
         match payload {
-            MessagePayload::V1(payload) => {
-                let payload = Payloads::decrypt_payload_v1(my_vk, payload)?;
-                Ok((payload.msg, None))
-            }
             MessagePayload::V2(payload) => {
                 let payload = Payloads::decrypt_payload_v2(my_vk, payload)?;
                 Ok((payload.msg, Some(payload.thread)))
             }
         }
-    }
-
-    pub fn decrypt_payload_v1(my_vk: &str, payload: &Vec<i8>) -> VcxResult<PayloadV1> {
-        let (_, data) = crypto::parse_msg(&my_vk, &to_u8(payload))?;
-
-        let my_payload: PayloadV1 = rmp_serde::from_slice(&data[..])
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Cannot decrypt payload: {}", err)))?;
-
-        Ok(my_payload)
     }
 
     pub fn decrypt_payload_v2(_my_vk: &str, payload: &::serde_json::Value) -> VcxResult<PayloadV2> {

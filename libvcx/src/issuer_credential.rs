@@ -1,10 +1,9 @@
 use serde_json;
 
+use aries::handlers::issuance::issuer::issuer::Issuer;
 use error::prelude::*;
-use object_cache::ObjectCache;
-
 use utils::error;
-use v3::handlers::issuance::issuer::issuer::Issuer;
+use utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -74,9 +73,8 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize IssuerCredential: {:?}", err)))?;
 
     match issuer_credential {
-        IssuerCredentials::V3(credential) => ISSUER_CREDENTIAL_MAP.add(credential),
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Found issuer credential of unsupported version"))
-    } 
+        IssuerCredentials::V3(credential) => ISSUER_CREDENTIAL_MAP.add(credential)
+    }
 }
 
 pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)> {
@@ -94,7 +92,7 @@ pub fn send_credential_offer(handle: u32, connection_handle: u32) -> VcxResult<u
     })
 }
 
-pub fn generate_credential_msg(handle: u32, my_pw_did: &str) -> VcxResult<String> {
+pub fn generate_credential_msg(handle: u32, _my_pw_did: &str) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |_| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet")) // TODO: implement
     })
@@ -142,14 +140,10 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    
-
     use ::{issuer_credential, settings};
     use api::VcxStateType;
-    
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
-    
     #[allow(unused_imports)]
     use utils::{constants::*,
                 get_temp_dir_path,

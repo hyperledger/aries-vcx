@@ -8,7 +8,7 @@ use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::threadpool::spawn;
-use v3::messages::a2a::A2AMessage;
+use aries::messages::a2a::A2AMessage;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -18,25 +18,7 @@ use v3::messages::a2a::A2AMessage;
     # States
 
     The set of object states, messages and transitions depends on the communication method is used.
-    There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
     The communication method can be specified as a config option on one of *_init functions.
-
-    proprietary:
-        Inviter:
-            VcxStateType::VcxStateInitialized - once `vcx_connection_create` (create Connection object) is called.
-
-            VcxStateType::VcxStateOfferSent - once `vcx_connection_connect` (send Connection invite) is called.
-
-            VcxStateType::VcxStateAccepted - once `connReqAnswer` messages is received.
-                                             use `vcx_connection_update_state` or `vcx_connection_update_state_with_message` functions for state updates.
-            VcxStateType::VcxStateNone - once `vcx_connection_delete_connection` (delete Connection object) is called.
-
-        Invitee:
-            VcxStateType::VcxStateRequestReceived - once `vcx_connection_create_with_invite` (create Connection object with invite) is called.
-
-            VcxStateType::VcxStateAccepted - once `vcx_connection_connect` (accept Connection invite) is called.
-
-            VcxStateType::VcxStateNone - once `vcx_connection_delete_connection` (delete Connection object) is called.
 
     aries:
         Inviter:
@@ -70,18 +52,6 @@ use v3::messages::a2a::A2AMessage;
 
     # Transitions
 
-    proprietary:
-        Inviter:
-            VcxStateType::None - `vcx_connection_create` - VcxStateType::VcxStateInitialized
-            VcxStateType::VcxStateInitialized - `vcx_connection_connect` - VcxStateType::VcxStateOfferSent
-            VcxStateType::VcxStateOfferSent - received `connReqAnswer` - VcxStateType::VcxStateAccepted
-            any state - `vcx_connection_delete_connection` - `VcxStateType::VcxStateNone`
-
-        Invitee:
-            VcxStateType::None - `vcx_connection_create_with_invite` - VcxStateType::VcxStateRequestReceived
-            VcxStateType::VcxStateRequestReceived - `vcx_connection_connect` - VcxStateType::VcxStateAccepted
-            any state - `vcx_connection_delete_connection` - `VcxStateType::VcxStateNone`
-
     aries - RFC: https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
         Inviter:
             VcxStateType::None - `vcx_connection_create` - VcxStateType::VcxStateInitialized
@@ -113,10 +83,6 @@ use v3::messages::a2a::A2AMessage;
             any state - `vcx_connection_delete_connection` - VcxStateType::VcxStateNone
 
     # Messages
-
-    proprietary:
-        ConnectionRequest (`connReq`)
-        ConnectionRequestAnswer (`connReqAnswer`)
 
     aries:
         Invitation - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#0-invitation-to-connect
@@ -232,8 +198,6 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
 ///
 /// # Examples
 /// invite_details -> depends on communication method:
-///     proprietary:
-///         {"targetName": "", "statusMsg": "message created", "connReqId": "mugIkrWeMr", "statusCode": "MS-101", "threadId": null, "senderAgencyDetail": {"endpoint": "http://localhost:8080", "verKey": "key", "DID": "did"}, "senderDetail": {"agentKeyDlgProof": {"agentDID": "8f6gqnT13GGMNPWDa2TRQ7", "agentDelegatedKey": "5B3pGBYjDeZYSNk9CXvgoeAAACe2BeujaAkipEC7Yyd1", "signature": "TgGSvZ6+/SynT3VxAZDOMWNbHpdsSl8zlOfPlcfm87CjPTmC/7Cyteep7U3m9Gw6ilu8SOOW59YR1rft+D8ZDg=="}, "publicDID": "7YLxxEfHRiZkCMVNii1RCy", "name": "Faber", "logoUrl": "http://robohash.org/234", "verKey": "CoYZMV6GrWqoG9ybfH3npwH3FnWPcHmpWYUF8n172FUx", "DID": "Ney2FxHT4rdEyy6EDCCtxZ"}}
 ///     aries: https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#0-invitation-to-connect
 ///      {
 ///         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation",
@@ -661,14 +625,12 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 ///
 /// connection_handle: was provided during creation. Used to identify connection object
 ///
-/// abbreviated: abbreviated connection details for QR codes or not (applicable for `proprietary` communication method only)
+/// abbreviated: deprecated, has not effect
 ///
 /// cb: Callback that provides the json string of details
 ///
 /// # Example
 /// details -> depends on communication method:
-///     proprietary:
-///       {"targetName": "", "statusMsg": "message created", "connReqId": "mugIkrWeMr", "statusCode": "MS-101", "threadId": null, "senderAgencyDetail": {"endpoint": "http://localhost:8080", "verKey": "key", "DID": "did"}, "senderDetail": {"agentKeyDlgProof": {"agentDID": "8f6gqnT13GGMNPWDa2TRQ7", "agentDelegatedKey": "5B3pGBYjDeZYSNk9CXvgoeAAACe2BeujaAkipEC7Yyd1", "signature": "TgGSvZ6+/SynT3VxAZDOMWNbHpdsSl8zlOfPlcfm87CjPTmC/7Cyteep7U3m9Gw6ilu8SOOW59YR1rft+D8ZDg=="}, "publicDID": "7YLxxEfHRiZkCMVNii1RCy", "name": "Faber", "logoUrl": "http://robohash.org/234", "verKey": "CoYZMV6GrWqoG9ybfH3npwH3FnWPcHmpWYUF8n172FUx", "DID": "Ney2FxHT4rdEyy6EDCCtxZ"}}
 ///     aries:
 ///      {
 ///         "label": "Alice",
@@ -686,15 +648,15 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
                                             connection_handle: u32,
-                                            abbreviated: bool,
+                                            _abbreviated: bool,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, details: *const c_char)>) -> u32 {
     info!("vcx_connection_invite_details >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}, abbreviated: {}), source_id: {:?}",
-           command_handle, connection_handle, abbreviated, source_id);
+    trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
+           command_handle, connection_handle, source_id);
 
     if !is_valid_handle(connection_handle) {
         error!("vcx_connection_get_state - invalid handle");
@@ -702,7 +664,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        match get_invite_details(connection_handle, abbreviated) {
+        match get_invite_details(connection_handle) {
             Ok(str) => {
                 trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, str, source_id);
@@ -734,37 +696,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 ///
 /// msg: actual message to send
 ///
-/// send_msg_options: (applicable for `proprietary` communication method only)
-///     {
-///         msg_type: String, // type of message to send. can be any string.
-///         msg_title: String, // message title (user notification)
-///         ref_msg_id: Option<String>, // If responding to a message, id of the message
-///     }
-///
-/// # Example:
-/// msg ->
-///     "HI"
-///   OR
-///     {"key": "value"}
-///   OR
-///     {
-///         "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping",
-///         "@id": "518be002-de8e-456e-b3d5-8fe472477a86",
-///         "comment": "Hi. Are you listening?",
-///         "response_requested": true
-///     }
-///
-/// send_msg_options ->
-///     {
-///         "msg_type":"Greeting",
-///         "msg_title": "Hi There"
-///     }
-///   OR
-///     {
-///         "msg_type":"Greeting",
-///         "msg_title": "Hi There",
-///         "ref_msg_id" "as2d343sag"
-///     }
+/// send_msg_options: deprecated, has not effect
 ///
 /// cb: Callback that provides id of retrieved response message
 ///
@@ -774,19 +706,18 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
                                           connection_handle: u32,
                                           msg: *const c_char,
-                                          send_msg_options: *const c_char,
+                                          _send_msg_options: *const c_char,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg_id: *const c_char)>) -> u32 {
     info!("vcx_connection_send_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(msg, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(send_msg_options, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {}, send_msg_options: {})",
-           command_handle, connection_handle, msg, send_msg_options);
+    trace!("vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {})",
+           command_handle, connection_handle, msg);
 
     spawn(move || {
-        match send_generic_message(connection_handle, &msg, &send_msg_options) {
+        match send_generic_message(connection_handle, &msg) {
             Ok(x) => {
                 trace!("vcx_connection_send_message_cb(command_handle: {}, rc: {}, msg_id: {})",
                        command_handle, error::SUCCESS.message, x);

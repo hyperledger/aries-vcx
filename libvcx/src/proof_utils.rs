@@ -4,16 +4,12 @@ use serde_json::Value;
 use error::prelude::*;
 use messages::proofs::proof_message::{
     CredInfoVerifier,
-    get_credential_info
+    get_credential_info,
 };
-use object_cache::ObjectCache;
 use settings;
-use settings::get_config_value;
-use utils::error;
 use utils::libindy::anoncreds;
-use utils::openssl::encode;
-use v3::handlers::proof_presentation::verifier::verifier::Verifier;
 use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
+use utils::openssl::encode;
 
 fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
     if settings::indy_mocks_enabled() { return Ok(()); }
@@ -136,7 +132,7 @@ fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<Stri
 
 pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
-        return mock_result
+        return mock_result;
     }
 
     validate_proof_revealed_attributes(&proof_json)?;
@@ -168,16 +164,16 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use api::VcxStateType;
+    use aries::handlers::proof_presentation::verifier::verifier::Verifier;
+    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use connection::tests::build_test_connection_inviter_requested;
-
-    use utils::devsetup::*;
     use utils::constants::*;
+    use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_proof;
-    use v3::handlers::proof_presentation::verifier::verifier::Verifier;
-    use v3::messages::proof_presentation::presentation_request::PresentationRequestData;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

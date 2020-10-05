@@ -17,16 +17,7 @@ use utils::threadpool::spawn;
     # State
 
     The set of object states, messages and transitions depends on the communication method is used.
-    There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
     The communication method can be specified as a config option on one of *_init functions.
-
-    proprietary:
-        VcxStateType::VcxStateInitialized - once `vcx_proof_create` (create Proof object) is called.
-
-        VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `PROOF_REQ` message) is called.
-
-        VcxStateType::VcxStateAccepted - once `PROOF` messages is received.
-                                         use `vcx_proof_update_state` or `vcx_proof_update_state_with_message` functions for state updates.
 
     aries:
         VcxStateType::VcxStateInitialized - once `vcx_proof_create` (create Proof object) is called.
@@ -41,13 +32,6 @@ use utils::threadpool::spawn;
 
     # Transitions
 
-    proprietary:
-        VcxStateType::None - `vcx_proof_create` - VcxStateType::VcxStateInitialized
-
-        VcxStateType::VcxStateInitialized - `vcx_credential_send_request` - VcxStateType::VcxStateOfferSent
-
-        VcxStateType::VcxStateOfferSent - received `PROOF` - VcxStateType::VcxStateAccepted
-
     aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#propose-presentation
         VcxStateType::None - `vcx_proof_create` - VcxStateType::VcxStateInitialized
 
@@ -58,10 +42,6 @@ use utils::threadpool::spawn;
         VcxStateType::VcxStateOfferSent - received `ProblemReport` - VcxStateType::None
 
     # Messages
-
-    proprietary:
-        ProofRequest (`PROOF_REQ`)
-        Proof (`PROOF`)
 
     aries:
         PresentationRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#request-presentation

@@ -120,20 +120,16 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_get_cb(){
+    fn test_get_cb() {
         let _setup = SetupDefaults::init();
 
         let mutex_map: Mutex<HashMap<u32, Box<dyn FnMut(u32) + Send>>> = Default::default();
         assert!(get_cb(2123, &mutex_map).is_none());
 
-        let closure: Box<dyn FnMut(u32) + Send> = Box::new(move |_ | {
+        let closure: Box<dyn FnMut(u32) + Send> = Box::new(move |_| {});
 
-        });
-
-        mutex_map.lock().unwrap().insert(2123,closure);
+        mutex_map.lock().unwrap().insert(2123, closure);
         let cb = get_cb(2123, &mutex_map);
         assert!(cb.is_some());
     }
-
-
 }

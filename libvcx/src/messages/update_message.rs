@@ -1,5 +1,5 @@
-
-use messages::*;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use messages::message_type::MessageTypes;
 use settings;
 use utils::{constants, httpclient};
@@ -83,16 +83,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateMessageStatusByConnections(
-                        UpdateMessageStatusByConnections {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
-                            uids_by_conns: self.uids_by_conns.clone(),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -117,7 +108,6 @@ impl UpdateMessageStatusByConnectionsBuilder {
         let mut response = parse_response_from_agency(response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
         }
@@ -158,13 +148,14 @@ mod tests {
     use std::thread;
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
-    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
-    use utils::httpclient::AgencyMockDecrypted;
-    use messages::update_message::{UpdateMessageStatusByConnectionsBuilder, UIDsByConn, update_agency_messages};
-    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+
     use connection::send_generic_message;
     use messages::get_message::download_messages;
     use messages::MessageStatusCode;
+    use messages::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
+    use utils::httpclient::AgencyMockDecrypted;
+    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -180,9 +171,9 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
 
-        send_generic_message(faber_to_alice, "Hello 1", &json!({"msg_type": "toalice", "msg_title": "msg1"}).to_string()).unwrap();
-        send_generic_message(faber_to_alice, "Hello 2", &json!({"msg_type": "toalice", "msg_title": "msg2"}).to_string()).unwrap();
-        send_generic_message(faber_to_alice, "Hello 3", &json!({"msg_type": "toalice", "msg_title": "msg3"}).to_string()).unwrap();
+        send_generic_message(faber_to_alice, "Hello 1").unwrap();
+        send_generic_message(faber_to_alice, "Hello 2").unwrap();
+        send_generic_message(faber_to_alice, "Hello 3").unwrap();
 
         thread::sleep(Duration::from_millis(1000));
         ::utils::devsetup::set_consumer(None);

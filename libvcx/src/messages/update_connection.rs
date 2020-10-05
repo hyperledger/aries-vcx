@@ -1,5 +1,8 @@
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value;
 
-use messages::*;
+use error::prelude::*;
+use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
 use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
@@ -99,7 +102,6 @@ impl DeleteConnectionBuilder {
         let mut response = parse_response_from_agency(response, &self.version)?;
 
         match response.remove(0) {
-            A2AMessage::Version1(A2AMessageV1::UpdateConnectionResponse(_)) => Ok(()),
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
         }
@@ -122,28 +124,20 @@ pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: 
 impl GeneralMessage for DeleteConnectionBuilder {
     type Msg = DeleteConnectionBuilder;
 
+    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
+
+    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
+
     fn set_agent_did(&mut self, did: String) {
         self.agent_did = did;
     }
-
     fn set_agent_vk(&mut self, vk: String) {
         self.agent_vk = vk;
     }
 
-    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
-    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
-
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
         let message = match self.version {
-            settings::ProtocolTypes::V1 =>
-                A2AMessage::Version1(
-                    A2AMessageV1::UpdateConnection(
-                        UpdateConnection {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                ),
+            settings::ProtocolTypes::V1 |
             settings::ProtocolTypes::V2 |
             settings::ProtocolTypes::V3 |
             settings::ProtocolTypes::V4 =>
@@ -166,15 +160,14 @@ mod tests {
     use utils::devsetup::SetupDefaults;
 
     use super::*;
+    use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
         let _setup = SetupDefaults::init();
 
-        let payload = vec![130, 165, 64, 116, 121, 112, 101, 130, 164, 110, 97, 109, 101, 179, 67, 79, 78, 78, 95, 83, 84, 65, 84, 85, 83, 95, 85, 80, 68, 65, 84, 69, 68, 163, 118, 101, 114, 163, 49, 46, 48, 170, 115, 116, 97, 116, 117, 115, 67, 111, 100, 101, 166, 67, 83, 45, 49, 48, 51];
-        let msg_str = r#"{ "@type": { "name": "CONN_STATUS_UPDATED", "ver": "1.0" }, "statusCode": "CS-103" }"#;
-        let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(&msg_str).unwrap();
-        assert_eq!(delete_connection_payload, rmp_serde::from_slice(&payload).unwrap());
+        let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(DELETE_CONNECTION_DECRYPTED_RESPONSE).unwrap();
+        assert_eq!(delete_connection_payload.status_code, ConnectionStatus::Deleted);
     }
 }

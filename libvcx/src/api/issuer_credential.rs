@@ -2,7 +2,6 @@ use std::ptr;
 
 use indy_sys::CommandHandle;
 use libc::c_char;
-use serde_json;
 
 use connection;
 use error::prelude::*;
@@ -19,7 +18,6 @@ use utils::threadpool::spawn;
     # State
 
     The set of object states, messages and transitions depends on the communication method is used.
-    There are two communication methods: `proprietary` and `aries`. The default communication method is `proprietary`.
     The communication method can be specified as a config option on one of *_init functions.
 
         VcxStateType::VcxStateInitialized - once `vcx_issuer_create_credential` (create IssuerCredential object) is called.
