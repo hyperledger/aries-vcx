@@ -1,7 +1,9 @@
 /* eslint-env jest */
 require('jest')
-const { initRustapi, protocolTypes } = require('../../vcxagent-core/vcx-workflows')
-const { createVcxAgent } = require('../vcx-agent')
+const {holderSelectCredentialsForProof} = require('../src/utils/proofs')
+const {getSampleSchemaData} = require('../src')
+const { initRustapi, protocolTypes } = require('../src/index')
+const { createVcxAgent } = require('../src/index')
 const { shutdownVcx, Connection, IssuerCredential, Proof, DisclosedProof, Credential, StateType } = require('@absaoss/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
@@ -80,10 +82,10 @@ async function createFaber () {
     await faberVcxControl.initVcx()
 
     logger.info('Faber writing schema on ledger')
-    const schema = await faberVcxControl.createSchema()
+    const schemaId = await faberVcxControl.createSchema(getSampleSchemaData())
 
     logger.info('Faber writing credential definition on ledger')
-    await faberVcxControl.createCredentialDefinition(await schema.getSchemaId(), getFaberCredDefName(), logger)
+    await faberVcxControl.createCredentialDefinition(schemaId, getFaberCredDefName(), logger)
 
     logger.info('Faber sending credential to Alice')
     const schemaAttrs = getAliceSchemaAttrs()
@@ -223,7 +225,7 @@ async function createAlice () {
 
     const connectionAliceToFaber = await Connection.deserialize(serConn)
     const holderProof = await DisclosedProof.create({ sourceId: 'proof', request })
-    const selectedCreds = await aliceVcxControl.holderSelectCredentialsForProof(holderProof)
+    const selectedCreds = await holderSelectCredentialsForProof(holderProof, logger)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
     await holderProof.generateProof({ selectedCreds, selfAttestedAttrs })
     await holderProof.sendProof(connectionAliceToFaber)
@@ -265,15 +267,15 @@ async function createAlice () {
 }
 
 describe('test update state', () => {
-  it('Faber should fail to update state of the their credential via V1 API', async () => {
-    const alice = await createAlice()
-    const faber = await createFaber()
-    const invite = await faber.createInvite()
-    await alice.acceptInvite(invite)
-    await faber.sendCredentialOffer()
-    await alice.acceptCredentialOffer()
-    await faber.updateStateCredentialV1()
-  })
+  // it('Faber should fail to update state of the their credential via V1 API', async () => {
+  //   const alice = await createAlice()
+  //   const faber = await createFaber()
+  //   const invite = await faber.createInvite()
+  //   await alice.acceptInvite(invite)
+  //   await faber.sendCredentialOffer()
+  //   await alice.acceptCredentialOffer()
+  //   await faber.updateStateCredentialV1()
+  // })
 
   it('Faber should send credential to Alice', async () => {
     const alice = await createAlice()

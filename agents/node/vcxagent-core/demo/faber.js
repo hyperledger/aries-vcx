@@ -1,13 +1,14 @@
-const { initRustapi, protocolTypes } = require('../vcx-workflows')
 const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
+const { initRustapi, protocolTypes } = require('../src/index')
+const { createVcxAgent } = require('../src/index')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
-const { createVcxAgent } = require('../vcx-agent')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
+const { getSampleSchemaData } = require('../src')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/data')
 
 async function runFaber (options) {
@@ -15,9 +16,10 @@ async function runFaber (options) {
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   let faberServer
   let exitcode = 0
+  const connectionName = `faber-to-alice`
   try {
     const agentName = `faber-${uuid.v4()}`
-    const vcxClient = await createVcxAgent({
+    const vcxAgent = await createVcxAgent({
       agentName,
       protocolType: options.protocolType,
       agencyUrl: 'http://localhost:8080',
@@ -25,17 +27,16 @@ async function runFaber (options) {
       usePostgresWallet: false,
       logger
     })
-    await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
+    await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
-    if (process.env.ACCEPT_TAA || false) {
-      await vcxClient.acceptTaa()
+    if (process.env.ACCEPT_TAA) {
+      await vcxAgent.acceptTaa()
     }
 
-    const schema = await vcxClient.createSchema()
-    const schemaId = await schema.getSchemaId()
-    await vcxClient.createCredentialDefinition(schemaId, getFaberCredDefName())
+    const schemaId = await vcxAgent.serviceLedger.createSchema(getSampleSchemaData())
+    await vcxAgent.serviceLedger.createCredentialDefinition(schemaId, getFaberCredDefName())
 
-    const { connection: connectionToAlice } = await vcxClient.inviterConnectionCreateAndAccept(agentName, (invitationString) => {
+    const { connection: connectionToAlice } = await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionName, (invitationString) => {
       logger.info('\n\n**invite details**')
       logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
       logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
@@ -62,10 +63,15 @@ async function runFaber (options) {
       }
     })
 
-    await vcxClient.credentialIssue({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionNameReceiver: agentName, revoke: options.revocation })
+
+    logger.info(`Faber is going to send credential offer`)
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName: "cred-for-alice", connectionName, credDefName: getFaberCredDefName(), schemaAttrs: getAliceSchemaAttrs()})
+    if (options.revocation) {
+      await vcxAgent.serviceCredIssuer.revokeCredential({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionName})
+    }
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create(getFaberProofData(vcxClient.getInstitutionDid()))
+    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid()))
 
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)

@@ -30,5 +30,25 @@ async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 
   return [null, result]
 }
 
+function getSampleSchemaData () {
+  const version = `${getRandomInt(1, 101)}.${getRandomInt(1, 101)}.${getRandomInt(1, 101)}`
+  return {
+    data: {
+      attrNames: ['name', 'last_name', 'sex', 'date', 'degree', 'age'],
+      name: 'FaberVcx',
+      version
+    },
+    paymentHandle: 0,
+    sourceId: `your-identifier-fabervcx-${version}`
+  }
+}
+
+function getRandomInt (min, max) {
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min)) + min
+}
+
 module.exports.waitUntilAgencyIsReady = waitUntilAgencyIsReady
 module.exports.pollFunction = pollFunction
+module.exports.getSampleSchemaData = getSampleSchemaData

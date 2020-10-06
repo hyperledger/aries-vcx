@@ -1,8 +1,7 @@
 const { initRustAPI, initVcxWithConfig, provisionAgent } = require('@absaoss/node-vcx-wrapper')
 const ffi = require('ffi-napi')
 const os = require('os')
-const isPortReachable = require('is-port-reachable')
-const url = require('url')
+
 const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
 
@@ -46,9 +45,12 @@ async function initRustapi (logLevel = 'vcx=error') {
   await initRustApiAndLogger(logLevel)
 }
 
-async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger) {
+async function provisionAgentInAgency (agentName, genesisPath, protocolType, agencyUrl, seed, usePostgresWallet, logger) {
   if (!agentName) {
     throw Error('agentName not specified')
+  }
+  if (!genesisPath) {
+    throw Error('genesisPath not specified')
   }
   if (!protocolType) {
     throw Error('protocolType not specified')
@@ -84,7 +86,7 @@ async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed,
   const agentProvision = JSON.parse(await provisionAgent(JSON.stringify(provisionConfig)))
   agentProvision.institution_name = agentName
   agentProvision.institution_logo_url = 'https://example.org'
-  agentProvision.genesis_path = `${__dirname}/docker.txn`
+  agentProvision.genesis_path = genesisPath
   logger.info(`Agent provision created: ${JSON.stringify(agentProvision, null, 2)}`)
   return agentProvision
 }

@@ -1,8 +1,24 @@
 {
   "name": "vcxagent-core",
-  "version": "1.0.0",
-  "description": "",
+  "description": "NodeJS LibVCX based Aries agent",
+  "license": "Apache-2.0",
   "main": "index.js",
+  "directories": {
+    "test": "test",
+    "lib": "src"
+  },
+  "contributors": [
+    {
+      "name": "Absa Group Limited"
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/AbsaOSS/libvcx.git",
+    "type": "git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "lint:fix": "standard --fix",
     "demo:notifyserver": "node demo/notification-server.js",
@@ -18,7 +34,6 @@
     "test:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js"
   },
   "author": "Absa Group Limited",
-  "license": "Apache-2.0",
   "dependencies": {
     "@absaoss/node-vcx-wrapper": "file:../../../wrappers/node",
     "ffi-napi": "^2.4.7",

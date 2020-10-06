@@ -1,4 +1,5 @@
 const readlineSync = require('readline-sync')
+const { getSampleSchemaData } = require('vcxagent-core/src')
 const { createVcxAgent } = require('vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
@@ -42,7 +43,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
         logger.info('Taa accepted.\n')
       } else if (cmd === '1') {
         logger.info(`Cmd was ${cmd}, going to create schema\n`)
-        const schema = await vcxClient.createSchema()
+        const schema = await vcxClient.createSchema(getSampleSchemaData())
         logger.info(`Schema created ${JSON.stringify(await schema.serialize())}`)
       } else if (cmd === '2') {
         const schemaId = readlineSync.question('Enter schemaId:\n')

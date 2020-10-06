@@ -1,5 +1,5 @@
-const _ = require('lodash')
 const { downloadMessages } = require('@absaoss/node-vcx-wrapper')
+const _ = require('lodash')
 
 module.exports.getMessagesForPwDid = async function getMessagesForPwDid (
   pwDid,

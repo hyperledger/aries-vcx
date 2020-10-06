@@ -1,14 +1,15 @@
-const { initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
 const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
-const { createVcxAgent } = require('../vcx-agent')
 const sleepPromise = require('sleep-promise')
+const { initRustapi, allowedProtocolTypes } = require('../src/index')
+const { createVcxAgent } = require('../src/index')
 const logger = require('./logger')('Alice')
 const { runScript } = require('./script-common')
 const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
+const {holderSelectCredentialsForProof} = require('../src/utils/proofs')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -40,7 +41,8 @@ async function runAlice (options) {
 
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
-  const vcxClient = await createVcxAgent({
+  const connectionName = `alice-to-faber`
+  const vcxAgent = await createVcxAgent({
     agentName,
     protocolType: options.protocolType,
     agencyUrl: 'http://localhost:8080',
@@ -48,17 +50,17 @@ async function runAlice (options) {
     usePostgresWallet: false,
     logger
   })
-  await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
+  await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(agentName, invitationString)
+  const connectionToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionName, invitationString)
 
   if (!connectionToFaber) {
     throw Error('Connection with alice was not established.')
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxClient.waitForCredentialOfferAndAccept({ connectionName: agentName })
+  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionName })
 
   logger.info('Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)
@@ -73,7 +75,7 @@ async function runAlice (options) {
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const selectedCreds = await vcxClient.holderSelectCredentialsForProof(proof)
+  const selectedCreds = await holderSelectCredentialsForProof(proof, logger)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
 
   logger.info('Generate the proof.')
