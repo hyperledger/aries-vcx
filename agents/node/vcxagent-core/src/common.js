@@ -14,7 +14,7 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   }
 }
 
-async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 10, timeout = 2000) {
+async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 10, timeoutMs = 2000) {
   let { result, isFinished } = await fn()
   let attempts = 1
   while (!isFinished) {
@@ -22,8 +22,8 @@ async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 
       const error = `Tried to poll ${attempts} times and result was not received.`
       return [error, null]
     }
-    logger.info(`Trying to do: ${actionDescription} Attempt ${attempts}/${attemptsThreshold}. Will try again after ${timeout}ms.`)
-    await sleepPromise(timeout);
+    logger.info(`Trying to do: ${actionDescription} Attempt ${attempts}/${attemptsThreshold}. Will try again after ${timeoutMs}ms.`)
+    await sleepPromise(timeoutMs);
     ({ result, isFinished } = await fn())
     attempts += 1
   }

@@ -665,23 +665,23 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper integration test
+      - name: Run wrapper legacy integration test
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:integration)'
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:legacy:integration)'
 
-      - name: Run wrapper integration revocation test
+      - name: Run wrapper legacy integration revocation test
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:integration:revocation)'
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:legacy:integration:revocation)'
 
-      - name: Run wrapper api v2 integration test
+      - name: Run integration tests
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
@@ -689,7 +689,7 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && \
                                 cd $HOME/agents/node/vcxagent-cli && npm install && \
-                                cd $HOME/agents/node/vcxagent-core && npm run test:update-state)'
+                                cd $HOME/agents/node/vcxagent-core && npm run test:integration)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:

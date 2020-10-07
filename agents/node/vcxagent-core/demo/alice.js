@@ -1,4 +1,3 @@
-const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
 const sleepPromise = require('sleep-promise')
 const { initRustapi, allowedProtocolTypes } = require('../src/index')
@@ -9,7 +8,6 @@ const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
-const { holderSelectCredentialsForProof } = require('../src/utils/proofs')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -42,7 +40,8 @@ async function runAlice (options) {
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionName = 'alice-to-faber'
-  const credHolderName = "alice-credential"
+  const credHolderName = 'alice-credential'
+  const disclosedProofName = 'alice-proof'
   const vcxAgent = await createVcxAgent({
     agentName,
     protocolType: options.protocolType,
@@ -64,37 +63,21 @@ async function runAlice (options) {
 
   await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionName, credHolderName })
 
-  logger.info('Poll agency for a proof request')
-  let requests = await DisclosedProof.getRequests(connectionToFaber)
-  while (requests.length === 0) {
-    await sleepPromise(2000)
-    requests = await DisclosedProof.getRequests(connectionToFaber)
+  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests({ connectionName }))[0]
+  if (!proofRequest) {
+    throw Error('No proof request found.')
   }
-  logger.info('#23 Create a Disclosed proof object from proof request')
-  logger.debug(`Received proof request = ${JSON.stringify(requests, null, 2)}`)
-  const proof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(requests[0]) })
-  const requestInfo = JSON.parse(Buffer.from(requests[0]['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
+
+  await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofName, proofRequest)
+  const requestInfo = JSON.parse(Buffer.from(proofRequest['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
-  logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const selectedCreds = await holderSelectCredentialsForProof(proof, logger)
+  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofName)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
-
-  logger.info('Generate the proof.')
-  logger.debug(`Proof is using wallet credentials:\n${JSON.stringify(selectedCreds, null, 2)}
-  \nProof is using self attested attributes: ${JSON.stringify(selfAttestedAttrs, null, 2)}`)
-  await proof.generateProof({ selectedCreds, selfAttestedAttrs })
-
-  logger.info('Send the proof to faber')
-  await proof.sendProof(connectionToFaber)
-
-  logger.info('Wait for Faber to receive the proof')
-  let proofState = await proof.updateState()
-  while (proofState !== StateType.Accepted && proofState !== StateType.None) {
-    await sleepPromise(2000)
-    proofState = await proof.updateState()
-  }
+  await vcxAgent.serviceProver.generateProof(disclosedProofName, selectedCreds, selfAttestedAttrs)
+  await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofName, connectionName)
   logger.info('Faber received the proof')
+
   await vcxAgent.agentShutdownVcx()
   process.exit(0)
 }

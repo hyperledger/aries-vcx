@@ -2,7 +2,6 @@
 require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
-const sleep = require('sleep-promise')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
@@ -24,10 +23,8 @@ describe('test signatures', () => {
 
     const dataBase64 = Buffer.from('foobar').toString('base64')
     // following is signature of "foobar" by some random key
-    const signatureBase64 = "aL2gZL2YfAieArCv5hrGznnwTEinnp9UU+X16axgtFIkX29M40v4n89iH35AtqApgfjvn6Okq6B8Q2IcKn+3DQ=="
+    const signatureBase64 = 'aL2gZL2YfAieArCv5hrGznnwTEinnp9UU+X16axgtFIkX29M40v4n89iH35AtqApgfjvn6Okq6B8Q2IcKn+3DQ=='
     const isValid = await faber.verifySignature(dataBase64, signatureBase64)
     expect(isValid).toBeFalsy()
   })
-
-
 })

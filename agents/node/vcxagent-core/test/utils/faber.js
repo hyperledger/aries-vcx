@@ -56,7 +56,6 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function sendCredentialOffer () {
-    logger.info('Faber sending credential')
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')

@@ -116,7 +116,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     await issuerCred.revokeCredential()
   }
 
-  async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeout) {
+  async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
       if (await issuerCredential.updateStateV2(connection) !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
@@ -125,7 +125,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
       }
     }
 
-    const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeout)
+    const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeoutMs)
     if (error) {
       throw Error(`Couldn't get credential offers. ${error}`)
     }

@@ -62,7 +62,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
     return connection
   }
 
-  async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeout) {
+  async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
       if (await connection.updateState() !== StateType.Accepted) {
         return { result: undefined, isFinished: false }
@@ -71,7 +71,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
       }
     }
 
-    const [error] = await pollFunction(progressToAcceptedState, 'Progress connection', logger, attemptsThreshold, timeout)
+    const [error] = await pollFunction(progressToAcceptedState, 'Progress connection', logger, attemptsThreshold, timeoutMs)
     if (error) {
       throw Error(`Couldn't progress connection to Accepted state. ${error}`)
     }
@@ -89,10 +89,10 @@ module.exports.createServiceConnections = function createServiceConnections (log
     return state
   }
 
-  async function connectionAutoupdate (connectionName, updateAttemptsThreshold = 10, timeout = 2000) {
+  async function connectionAutoupdate (connectionName, updateAttemptsThreshold = 10, timeoutMs = 2000) {
     const connSerializedBefore = await loadConnection(connectionName)
     const connection = await Connection.deserialize(connSerializedBefore)
-    await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeout)
+    await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeoutMs)
 
     logger.info('Success! Connection was progressed to Accepted state.')
     const connSerialized = await connection.serialize()
@@ -126,7 +126,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
 
   async function getConnectionPwDid (connectionName) {
     const serConnection = await loadConnection(connectionName)
-    return serConnection.agent_info.pw_did
+    return serConnection.data.pw_did
   }
 
   async function sendMessage (connectionName, payload) {

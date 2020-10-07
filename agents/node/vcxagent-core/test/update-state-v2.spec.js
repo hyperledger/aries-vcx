@@ -1,4 +1,6 @@
 /* eslint-env jest */
+const { shutdownVcx } = require('@absaoss/node-vcx-wrapper')
+
 require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
@@ -16,6 +18,7 @@ describe('test update state', () => {
     await faber.sendCredentialOffer()
     await alice.acceptCredentialOffer()
     await expect(faber.updateStateCredentialV1()).rejects.toThrow('Obj was not found with handle')
+    await shutdownVcx()
   })
 
   it('Faber should send credential to Alice', async () => {
@@ -29,7 +32,7 @@ describe('test update state', () => {
     await alice.updateStateCredentialV2(StateType.Accepted)
 
     const request = await faber.requestProofFromAlice()
-    await alice.sendHolderProof(request)
+    await alice.sendHolderProof(JSON.parse(request))
     await faber.updateStateVerifierProofV2(StateType.Accepted)
     await alice.updateStateHolderProofV2(StateType.Accepted)
   })

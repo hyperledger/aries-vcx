@@ -51,8 +51,6 @@ module.exports.createAlice = async function createAlice () {
   }
 
   async function sendHolderProof (proofRequest) {
-    logger.info('Alice creating and sending proof')
-
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofName, proofRequest)

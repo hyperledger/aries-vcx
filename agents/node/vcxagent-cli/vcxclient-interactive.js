@@ -71,7 +71,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
         await vcxClient.connectionsList()
       } else if (cmd === '20') {
         const connectionName = readlineSync.question('Enter connection name:\n')
-        await vcxClient.getCredentialOffers(connectionName)
+        await vcxClient.getCredentialOffers(connectionName) // use waitForCredentialOffers with minimal timeoutMs tolerance
       } else if (cmd === '30') {
         const connectionName = readlineSync.question('Enter connection name:\n')
         const message = readlineSync.question('Enter message to send:\n')
