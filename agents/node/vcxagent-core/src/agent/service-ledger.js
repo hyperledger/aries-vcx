@@ -5,14 +5,13 @@ const {
   setActiveTxnAuthorAgreementMeta
 } = require('@absaoss/node-vcx-wrapper')
 
-module.exports.createServiceLedger = function createServiceLedger(logger, storeSchema, loadSchema, storeCredDef, loadCredDef) {
-
+module.exports.createServiceLedger = function createServiceLedger (logger, storeSchema, loadSchema, storeCredDef, loadCredDef) {
   async function createSchema (schemaData) {
     logger.info(`Creating a new schema on the ledger: ${JSON.stringify(schemaData, null, 2)}`)
 
     const schema = await Schema.create(schemaData)
     const schemaId = await schema.getSchemaId()
-    const serSchema = await schema.serialize();
+    const serSchema = await schema.serialize()
     await storeSchema(schemaId, serSchema)
     logger.info(`Created schema with id ${schemaId}`)
     return schemaId
@@ -50,5 +49,4 @@ module.exports.createServiceLedger = function createServiceLedger(logger, storeS
     createSchema,
     createCredentialDefinition
   }
-
 }

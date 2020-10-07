@@ -1,15 +1,14 @@
-const {getMessagesForPwDid} = require('../utils/messages')
+const { getMessagesForPwDid } = require('../utils/messages')
 const {
   Connection,
-  StateType,
+  StateType
 } = require('@absaoss/node-vcx-wrapper')
-const {pollFunction} = require('../common')
+const { pollFunction } = require('../common')
 
 module.exports.createServiceConnections = function createServiceConnections (logger, storeConnection, loadConnection) {
-
   async function _createConnection (connectionName) {
     logger.info(`InviterConnectionSM creating connection ${connectionName}`)
-    const connection = await Connection.create({id: connectionName})
+    const connection = await Connection.create({ id: connectionName })
     logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect('{}')
     await connection.updateState()
@@ -26,25 +25,26 @@ module.exports.createServiceConnections = function createServiceConnections (log
     const connSerialized = await connection.serialize()
     await storeConnection(connectionName, connSerialized)
     logger.info(`InviterConnectionSM has established connection ${connectionName}`)
-    return {invite, connection}
+    return { invite, connection }
   }
 
   async function inviterConnectionCreateAndAccept (connectionName, cbInvitation) {
-    let {invite, connection} = await inviterConnectionCreate(connectionName, cbInvitation)
+    const { invite, connection } = await inviterConnectionCreate(connectionName, cbInvitation)
     await _progressConnectionToAcceptedState(connection, 20, 2000)
 
     const connSerialized = await connection.serialize()
     await storeConnection(connectionName, connSerialized)
     logger.debug(`InviterConnectionSM after connection was accepted:\n${JSON.stringify(connSerialized)}`)
-    return {invite, connection}
+    return { invite, connection }
   }
 
+  // Invitee creates new connection from invite, sends connection request
   async function inviteeConnectionAcceptFromInvitation (connectionName, invite) {
     logger.info(`InviteeConnectionSM creating connection ${connectionName} from connection invitation.`)
-    const connection = await Connection.createWithInvite({id: connectionName, invite})
+    const connection = await Connection.createWithInvite({ id: connectionName, invite })
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(await connection.serialize())}`)
-    await connection.connect({data: '{}'})
-    logger.debug(`InviteeConnectionSM created connection agent`)
+    await connection.connect({ data: '{}' })
+    logger.debug('InviteeConnectionSM created connection agent')
     await connection.updateState()
 
     const connSerialized = await connection.serialize()
@@ -65,9 +65,9 @@ module.exports.createServiceConnections = function createServiceConnections (log
   async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeout) {
     async function progressToAcceptedState () {
       if (await connection.updateState() !== StateType.Accepted) {
-        return {result: undefined, isFinished: false}
+        return { result: undefined, isFinished: false }
       } else {
-        return {result: null, isFinished: true}
+        return { result: null, isFinished: true }
       }
     }
 
@@ -75,6 +75,18 @@ module.exports.createServiceConnections = function createServiceConnections (log
     if (error) {
       throw Error(`Couldn't progress connection to Accepted state. ${error}`)
     }
+  }
+
+  async function connectionUpdate (connectionName) {
+    const connSerializedBefore = await loadConnection(connectionName)
+    const connection = await Connection.deserialize(connSerializedBefore)
+
+    const state = await connection.updateState()
+
+    const connSerialized = await connection.serialize()
+    await storeConnection(connectionName, connSerialized)
+
+    return state
   }
 
   async function connectionAutoupdate (connectionName, updateAttemptsThreshold = 10, timeout = 2000) {
@@ -109,7 +121,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
     const connection = await Connection.deserialize(serConnection)
     const data = Buffer.from(dataBase64, 'base64')
     const signature = Buffer.from(signatureBase64, 'base64')
-    const success = await connection.verifySignature({data, signature})
+    const success = await connection.verifySignature({ data, signature })
     return success === 'Success'
   }
 
@@ -121,7 +133,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
   async function sendMessage (connectionName, payload) {
     const serConnection = await loadConnection(connectionName)
     const connection = await Connection.deserialize(serConnection)
-    await connection.sendMessage({msg: payload, msg_title: 'msg_title', msg_type: 'msg_type', ref_msg_id: 'ref_msg_id'})
+    await connection.sendMessage({ msg: payload, msg_title: 'msg_title', msg_type: 'msg_type', ref_msg_id: 'ref_msg_id' })
   }
 
   async function getMessages (connectionName, filterStatuses = [], filterUids = []) {
@@ -130,22 +142,30 @@ module.exports.createServiceConnections = function createServiceConnections (log
     return getMessagesForPwDid(pwDid, [], filterStatuses, filterUids)
   }
 
+  async function connectionGetState (connectionName) {
+    const connSerialized = await loadConnection(connectionName)
+    const connection = await Connection.deserialize(connSerialized)
+    return await connection.getState()
+  }
+
   return {
     // inviter
     inviterConnectionCreate,
     inviterConnectionCreateAndAccept,
 
-    //invitee
+    // invitee
     inviteeConnectionAcceptFromInvitation,
     inviteeConnectionAcceptFromInvitationAndProgress,
 
     // universal
     connectionAutoupdate,
+    connectionUpdate,
+
     signData,
     verifySignature,
+    connectionGetState,
     getConnectionPwDid,
     sendMessage,
     getMessages
   }
-
 }

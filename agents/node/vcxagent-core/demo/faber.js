@@ -16,7 +16,7 @@ async function runFaber (options) {
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   let faberServer
   let exitcode = 0
-  const connectionName = `faber-to-alice`
+  const connectionName = 'faber-to-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
     const vcxAgent = await createVcxAgent({
@@ -63,11 +63,10 @@ async function runFaber (options) {
       }
     })
 
-
-    logger.info(`Faber is going to send credential offer`)
-    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName: "cred-for-alice", connectionName, credDefName: getFaberCredDefName(), schemaAttrs: getAliceSchemaAttrs()})
+    logger.info('Faber is going to send credential offer')
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName: 'cred-for-alice', connectionName, credDefName: getFaberCredDefName(), schemaAttrs: getAliceSchemaAttrs() })
     if (options.revocation) {
-      await vcxAgent.serviceCredIssuer.revokeCredential({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionName})
+      await vcxAgent.serviceCredIssuer.revokeCredential({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionName })
     }
 
     logger.info('#19 Create a Proof object')

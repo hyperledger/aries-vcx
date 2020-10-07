@@ -9,7 +9,7 @@ const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
-const {holderSelectCredentialsForProof} = require('../src/utils/proofs')
+const { holderSelectCredentialsForProof } = require('../src/utils/proofs')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -41,7 +41,7 @@ async function runAlice (options) {
 
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
-  const connectionName = `alice-to-faber`
+  const connectionName = 'alice-to-faber'
   const vcxAgent = await createVcxAgent({
     agentName,
     protocolType: options.protocolType,

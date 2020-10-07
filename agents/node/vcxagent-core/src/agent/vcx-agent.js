@@ -1,21 +1,21 @@
-const {createServiceVerifier} = require('./service-verifier')
-const {createServiceProver} = require('./service-prover')
-const {createServiceCredHolder} = require('./service-cred-holder')
-const {createServiceCredIssuer} = require('./service-cred-issuer')
-const {createServiceLedger} = require('./service-ledger')
+const { createServiceVerifier } = require('./service-verifier')
+const { createServiceProver } = require('./service-prover')
+const { createServiceCredHolder } = require('./service-cred-holder')
+const { createServiceCredIssuer } = require('./service-cred-issuer')
+const { createServiceLedger } = require('./service-ledger')
 const { createServiceConnections } = require('./service-connections')
 const { provisionAgentInAgency } = require('../utils/vcx-workflows')
 const {
-  initVcxWithConfig,
   initVcxCore,
   openVcxWallet,
   openVcxPool,
   vcxUpdateWebhookUrl,
+  shutdownVcx
 } = require('@absaoss/node-vcx-wrapper')
 const { createStorageService } = require('../state/storage-service')
 const { waitUntilAgencyIsReady } = require('../common')
 
-async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger }) {
+async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl, seed, usePostgresWallet, logger }) {
   genesisPath = genesisPath || `${__dirname}/../../resources/docker.txn`
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
@@ -27,34 +27,24 @@ async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl
   }
   const agentProvision = await storageService.loadAgentProvision()
 
-  await initVcx()
-  if (webhookUrl) {
-    await vcxUpdateWebhookUrl(webhookUrl)
-  }
-
-  /**
-   * Initializes libvcx configuration, open pool, open wallet, set webhook url if present in agent provision
-   */
-  async function initVcxOld (name = agentName) {
-    logger.info(`Initializing VCX agent ${name}`)
-    logger.debug(`Using following agent provision to initialize VCX ${JSON.stringify(agentProvision, null, 2)}`)
-    await initVcxWithConfig(JSON.stringify(agentProvision))
-  }
-
   /**
    * Performs the same as initVcxOld, except for the fact it ignores webhook_url in agent provision. You have to
    * update webhook_url by calling function vcxUpdateWebhookUrl.
    */
-  async function initVcx (name = agentName) {
-    logger.info(`Initializing VCX agent ${name}`)
-    logger.debug(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
+  async function agentInitVcx () {
+    logger.info(`Initializing ${agentName} vcx session.`)
+    logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
     await initVcxCore(JSON.stringify(agentProvision))
-    logger.debug('Opening wallet and pool')
-    const promises = []
-    promises.push(openVcxPool())
-    promises.push(openVcxWallet())
-    await Promise.all(promises)
-    logger.debug('LibVCX fully initialized')
+    logger.silly('Opening pool')
+    await openVcxPool()
+    logger.silly('Opening wallet')
+    await openVcxWallet()
+    logger.silly('LibVCX fully initialized')
+  }
+
+  async function agentShutdownVcx () {
+    logger.debug(`Shutting down ${agentName} vcx session.`)
+    shutdownVcx()
   }
 
   async function updateWebhookUrl (webhookUrl) {
@@ -74,10 +64,8 @@ async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl
   }
 
   async function connectionPrintInfo (connectionName) {
-    const connSerialized = await storageService.loadConnection(connectionName)
-    const connection = await Connection.deserialize(connSerialized)
-    const connectionState = await connection.getState()
-    logger.info(`Connection ${connectionName} state=${connectionState}`)
+    const state = await serviceConnections.connectionGetState(connectionName)
+    logger.info(`Connection ${connectionName} state=${state}`)
   }
 
   const serviceConnections = createServiceConnections(logger, storageService.saveConnection, storageService.loadConnection)
@@ -92,11 +80,10 @@ async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl
 
   return {
     // vcx controls
-    initVcxOld,
-    initVcx,
+    agentInitVcx,
+    agentShutdownVcx,
     getInstitutionDid,
     updateWebhookUrl,
-
 
     // connections
     serviceConnections,

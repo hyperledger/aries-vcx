@@ -2,7 +2,7 @@ function getFaberCredDefName () {
   return 'DemoCredential123'
 }
 
-function getFaberProofData (issuerDid) {
+function getFaberProofData (issuerDid, name) {
   const proofAttributes = [
     {
       names: ['name', 'last_name', 'sex'],
@@ -30,7 +30,7 @@ function getFaberProofData (issuerDid) {
     sourceId: '213',
     attrs: proofAttributes,
     preds: proofPredicates,
-    name: 'proofForAlice',
+    name,
     revocationInterval: { to: Date.now() }
   }
 }

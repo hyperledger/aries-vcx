@@ -3,5 +3,5 @@ module.exports = {
   ...require('./state/storage-service'),
   ...require('./utils/messages'),
   ...require('./utils/vcx-workflows'),
-  ...require('./common'),
+  ...require('./common')
 }

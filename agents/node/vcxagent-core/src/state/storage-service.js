@@ -32,7 +32,7 @@ async function createStorageService (agentName) {
   }
 
   async function loadConnection (name) {
-    let res = await storageConnections.get(`${name}`)
+    const res = await storageConnections.get(`${name}`)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
@@ -48,7 +48,7 @@ async function createStorageService (agentName) {
   }
 
   async function loadSchema (name) {
-    let res = await storageSchemas.get(name)
+    const res = await storageSchemas.get(name)
     if (!res) {
       throw Error(`Schema ${name} was not found.`)
     }
@@ -60,55 +60,55 @@ async function createStorageService (agentName) {
   }
 
   async function loadCredentialDefinition (name) {
-    let res = await storageCredentialDefinitons.get(name)
+    const res = await storageCredentialDefinitons.get(name)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
     return res
   }
 
-  async function saveCredIssuer(name, credIssuer) {
+  async function saveCredIssuer (name, credIssuer) {
     await storageCredIssuer.set(name, credIssuer)
   }
 
-  async function loadCredIssuer(name) {
-    let res = await storageCredIssuer.get(name)
+  async function loadCredIssuer (name) {
+    const res = await storageCredIssuer.get(name)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
     return res
   }
 
-  async function saveCredHolder(name, credHolder) {
+  async function saveCredHolder (name, credHolder) {
     await storageCredHolder.set(name, credHolder)
   }
 
-  async function loadCredHolder(name) {
-    let res = await storageCredHolder.get(name)
+  async function loadCredHolder (name) {
+    const res = await storageCredHolder.get(name)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
     return res
   }
 
-  async function saveDisclosedProof(name, proof) {
+  async function saveDisclosedProof (name, proof) {
     await storageDisclosedProof.set(name, proof)
   }
 
-  async function loadDisclosedProof(name) {
-    let res = await storageDisclosedProof.get(name)
+  async function loadDisclosedProof (name) {
+    const res = await storageDisclosedProof.get(name)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
     return res
   }
 
-  async function saveProof(name, proof) {
+  async function saveProof (name, proof) {
     await storageProof.set(name, proof)
   }
 
-  async function loadProof(name) {
-    let res = await storageProof.get(name)
+  async function loadProof (name) {
+    const res = await storageProof.get(name)
     if (!res) {
       throw Error(`Connection ${name} was not found.`)
     }
