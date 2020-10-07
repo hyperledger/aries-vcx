@@ -17,8 +17,10 @@ async function runFaber (options) {
   let faberServer
   let exitcode = 0
   let vcxAgent
+  const credDefName = getFaberCredDefName()
   const proofName = 'proof-from-alice'
   const connectionName = 'faber-to-alice'
+  const issuerCredName = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
     vcxAgent = await createVcxAgent({
@@ -67,9 +69,9 @@ async function runFaber (options) {
     })
 
     logger.info('Faber is going to send credential offer')
-    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName: 'cred-for-alice', connectionName, credDefName: getFaberCredDefName(), schemaAttrs: getAliceSchemaAttrs() })
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName, connectionName, credDefName, schemaAttrs: getAliceSchemaAttrs() })
     if (options.revocation) {
-      await vcxAgent.serviceCredIssuer.revokeCredential({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionName })
+      await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredName)
     }
 
     logger.info('#19 Create a Proof object')
