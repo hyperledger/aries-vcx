@@ -15,7 +15,7 @@ describe('test update state', () => {
 
     await faber.sendCredentialOffer()
     await alice.acceptCredentialOffer()
-    await faber.updateStateCredentialV1()
+    await expect(faber.updateStateCredentialV1()).rejects.toThrow('Obj was not found with handle')
   })
 
   it('Faber should send credential to Alice', async () => {

@@ -42,6 +42,7 @@ async function runAlice (options) {
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionName = 'alice-to-faber'
+  const credHolderName = "alice-credential"
   const vcxAgent = await createVcxAgent({
     agentName,
     protocolType: options.protocolType,
@@ -50,6 +51,7 @@ async function runAlice (options) {
     usePostgresWallet: false,
     logger
   })
+  await vcxAgent.agentInitVcx()
   await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
@@ -60,7 +62,7 @@ async function runAlice (options) {
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionName })
+  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionName, credHolderName })
 
   logger.info('Poll agency for a proof request')
   let requests = await DisclosedProof.getRequests(connectionToFaber)
@@ -93,6 +95,7 @@ async function runAlice (options) {
     proofState = await proof.updateState()
   }
   logger.info('Faber received the proof')
+  await vcxAgent.agentShutdownVcx()
   process.exit(0)
 }
 

@@ -77,7 +77,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer updating state of credential with connection')
-    expect(vcxAgent.serviceCredIssuer.credentialUpdateV1(issuerCredName)).rejects.toThrow('Obj was not found with handle')
+    await vcxAgent.serviceCredIssuer.credentialUpdateV1(issuerCredName)
 
     await vcxAgent.agentShutdownVcx()
   }

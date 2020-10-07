@@ -9,17 +9,19 @@ const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
 const { getSampleSchemaData } = require('../src')
-const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/data')
+const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/utils/data')
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   let faberServer
   let exitcode = 0
+  let vcxAgent
+  const proofName = 'proof-from-alice'
   const connectionName = 'faber-to-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
-    const vcxAgent = await createVcxAgent({
+    vcxAgent = await createVcxAgent({
       agentName,
       protocolType: options.protocolType,
       agencyUrl: 'http://localhost:8080',
@@ -27,6 +29,7 @@ async function runFaber (options) {
       usePostgresWallet: false,
       logger
     })
+    await vcxAgent.agentInitVcx()
     await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
     if (process.env.ACCEPT_TAA) {
@@ -70,7 +73,7 @@ async function runFaber (options) {
     }
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid()))
+    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid(), proofName))
 
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)
@@ -116,6 +119,7 @@ async function runFaber (options) {
       await faberServer.close()
     }
     logger.info(`Exiting process with code ${exitcode}`)
+    await vcxAgent.agentShutdownVcx()
     process.exit(exitcode)
   }
 }
