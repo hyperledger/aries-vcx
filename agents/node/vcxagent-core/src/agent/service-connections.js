@@ -121,8 +121,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
     const connection = await Connection.deserialize(serConnection)
     const data = Buffer.from(dataBase64, 'base64')
     const signature = Buffer.from(signatureBase64, 'base64')
-    const success = await connection.verifySignature({ data, signature })
-    return success === 'Success'
+    return connection.verifySignature({ data, signature })
   }
 
   async function getConnectionPwDid (connectionName) {

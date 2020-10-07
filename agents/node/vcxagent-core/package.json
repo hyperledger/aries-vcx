@@ -31,7 +31,8 @@
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:integration": "node demo/integration-test.js",
     "test:integration:revocation": "REVOCATION=true node demo/integration-test.js",
-    "test:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js"
+    "test:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js",
+    "test:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js"
   },
   "author": "Absa Group Limited",
   "dependencies": {

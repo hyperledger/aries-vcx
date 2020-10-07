@@ -1,18 +1,33 @@
 /* eslint-env jest */
 require('jest')
-const { createPairedAliceAndFaber } = require('./utils/alice')
+const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
+const sleep = require('sleep-promise')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
 })
 
-describe('test update state', () => {
-  it('Faber should fail to update state of the their credential via V1 API', async () => {
+describe('test signatures', () => {
+  it('Alice should sign data and Faber verify it', async () => {
     const { alice, faber } = await createPairedAliceAndFaber()
 
-    const signature = await alice.signData('foobar')
-    await faber.verifySignature('foobar', signature)
+    const dataBase64 = Buffer.from('foobar').toString('base64')
+    const signatureBase64 = await alice.signData(dataBase64)
+    const isValid = await faber.verifySignature(dataBase64, signatureBase64)
+    expect(isValid).toBeTruthy()
   })
+
+  it('Faber should evaluate signature as invalid if was created by someone else', async () => {
+    const { faber } = await createPairedAliceAndFaber()
+
+    const dataBase64 = Buffer.from('foobar').toString('base64')
+    // following is signature of "foobar" by some random key
+    const signatureBase64 = "aL2gZL2YfAieArCv5hrGznnwTEinnp9UU+X16axgtFIkX29M40v4n89iH35AtqApgfjvn6Okq6B8Q2IcKn+3DQ=="
+    const isValid = await faber.verifySignature(dataBase64, signatureBase64)
+    expect(isValid).toBeFalsy()
+  })
+
+
 })

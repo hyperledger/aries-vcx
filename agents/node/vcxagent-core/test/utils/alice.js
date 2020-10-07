@@ -84,7 +84,20 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function signData (dataBase64) {
+    logger.info('Alice is going to sign data')
+    await vcxAgent.agentInitVcx()
+
+    const signatureBase64 = await vcxAgent.serviceConnections.signData(connectionName, dataBase64)
+
+    await vcxAgent.agentShutdownVcx()
+
+    logger.debug(`Alice signed data. Data=${dataBase64} signature=${signatureBase64}`)
+    return signatureBase64
+  }
+
   return {
+    signData,
     acceptInvite,
     updateConnection,
     acceptCredentialOffer,

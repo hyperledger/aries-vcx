@@ -9,7 +9,7 @@ module.exports.createFaber = async function createFaber () {
   const issuerCredName = 'credential-for-alice'
   const proofName = 'proof-from-alice'
   const logger = require('../../../vcxagent-cli/logger')('Faber')
-  
+
   const faberAgentConfig = {
     agentName: faberId,
     protocolType: protocolTypes.v4,
@@ -124,7 +124,18 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function verifySignature (dataBase64, signatureBase64) {
+    logger.debug(`Faber is going to verift signed data. Data=${dataBase64} signature=${signatureBase64}`)
+    await vcxAgent.agentInitVcx()
+
+    const isValid = await vcxAgent.serviceConnections.verifySignature(connectionName, dataBase64, signatureBase64)
+
+    await vcxAgent.agentShutdownVcx()
+    return isValid
+  }
+
   return {
+    verifySignature,
     createInvite,
     updateConnection,
     sendConnectionResponse,

@@ -1,6 +1,6 @@
 /* eslint-env jest */
 require('jest')
-const {createPairedAliceAndFaber} = require('./utils/utils')
+const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
 const { StateType } = require('@absaoss/node-vcx-wrapper')
 
