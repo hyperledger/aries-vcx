@@ -295,38 +295,38 @@ pub mod tests {
         handle
     }
 
-    pub fn create_connected_connections(consumer_handle: Option<u32>) -> (u32, u32) {
+    pub fn create_connected_connections(consumer_handle: Option<u32>, institution_handle: Option<u32>) -> (u32, u32) {
         debug!("Institution is going to create connection.");
-        ::utils::devsetup::set_institution();
-        let faber_to_alice = create_connection("alice").unwrap();
+        ::utils::devsetup::set_institution(institution_handle);
+        let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let details = connect(faber_to_alice).unwrap().unwrap();
-        update_state(faber_to_alice).unwrap();
+        let details = connect(institution_to_consumer).unwrap().unwrap();
+        update_state(institution_to_consumer).unwrap();
 
         ::utils::devsetup::set_consumer(consumer_handle);
         debug!("Consumer is going to accept connection invitation.");
-        let alice_to_faber = create_connection_with_invite("faber", &details).unwrap();
-        connect(alice_to_faber).unwrap();
-        update_state(alice_to_faber).unwrap();
-        // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(faber));
+        let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
+        connect(consumer_to_institution).unwrap();
+        update_state(consumer_to_institution).unwrap();
+        // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution));
 
         debug!("Institution is going to process connection request.");
-        ::utils::devsetup::set_institution();
+        ::utils::devsetup::set_institution(institution_handle);
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice).unwrap();
+        update_state(institution_to_consumer).unwrap();
 
         debug!("Consumer is going to complete the connection protocol.");
         ::utils::devsetup::set_consumer(consumer_handle);
-        update_state(alice_to_faber).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(alice_to_faber));
+        update_state(consumer_to_institution).unwrap();
+        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
 
         debug!("Institution is going to complete the connection protocol.");
-        ::utils::devsetup::set_institution();
+        ::utils::devsetup::set_institution(institution_handle);
         thread::sleep(Duration::from_millis(500));
-        update_state(faber_to_alice).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(faber_to_alice));
+        update_state(institution_to_consumer).unwrap();
+        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
 
-        (alice_to_faber, faber_to_alice)
+        (consumer_to_institution, institution_to_consumer)
     }
 
     #[test]
@@ -575,7 +575,7 @@ pub mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
+        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();

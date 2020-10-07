@@ -487,7 +487,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections(None);
+        let (_faber, alice) = ::connection::tests::create_connected_connections(None, None);
 
         let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
 
