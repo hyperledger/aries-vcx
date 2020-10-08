@@ -401,6 +401,44 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_v2_disclosed_proof_get_requests(command_handle: CommandHandle,
+                                               connection_handle: u32,
+                                               request_name: *const c_char,
+                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, requests: *const c_char)>) -> u32 {
+    info!("vcx_v2_disclosed_proof_get_requests >>>");
+
+    check_useful_opt_c_str!(request_name, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
+    }
+
+    trace!("vcx_disclosed_proof_get_requests(command_handle: {}, connection_handle: {})",
+           command_handle, connection_handle);
+
+    spawn(move || {
+        match disclosed_proof::get_proof_request_messages(connection_handle, request_name.as_deref()) {
+            Ok(x) => {
+                trace!("vcx_v2_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
+                       command_handle, error::SUCCESS.message, x);
+                let msg = CStringUtils::string_to_cstring(x);
+                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+            }
+            Err(x) => {
+                error!("vcx_v2_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
+                       command_handle, error::SUCCESS.message, x);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 /// Get the current state of the disclosed proof object
 ///
 /// #Params

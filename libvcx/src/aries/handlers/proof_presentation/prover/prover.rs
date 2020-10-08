@@ -52,22 +52,8 @@ impl Prover {
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
         trace!("Prover::generate_presentation_msg >>>");
-
         let proof = self.prover_sm.presentation()?.to_owned();
-
-        // strict aries protocol is set. return aries formatted Proof
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string());
-        }
-
-        if ::std::env::var("DISALLOW_V1").unwrap_or("true".to_string()) == "true"{
-            panic!("Trying to generate legacy proof message.");
-        }
-
-        // convert Proof into proprietary format
-        let proof: ProofMessage = proof.try_into()?;
-
-        return Ok(json!(proof).to_string());
+        Ok(json!(proof).to_string())
     }
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {

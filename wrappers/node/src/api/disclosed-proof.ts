@@ -259,6 +259,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Queries agency for all pending proof requests from the given connection.
    *
@@ -275,6 +276,29 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
     const requestsStr = await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_disclosed_proof_get_requests(0, connection.handle, cb)
+        if (rc) {
+          reject(rc)
+        }
+      },
+      (resolve, reject) => Callback(
+        'void',
+        ['uint32', 'uint32', 'string'],
+        (handle: number, err: number, messages: string) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          resolve(messages)
+        })
+    )
+    const requests = JSON.parse(requestsStr)
+    return requests
+  }
+
+  public static async getRequestsV2 (connection: Connection, requestName: string): Promise<IDisclosedProofRequest[]> {
+    const requestsStr = await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_v2_disclosed_proof_get_requests(0, connection.handle, requestName, cb)
         if (rc) {
           reject(rc)
         }
