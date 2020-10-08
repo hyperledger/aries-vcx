@@ -184,7 +184,7 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        let err = match issuer_credential::send_credential_offer(credential_handle, connection_handle) {
+        let err = match issuer_credential::send_credential_offer(credential_handle, connection_handle, None) {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);

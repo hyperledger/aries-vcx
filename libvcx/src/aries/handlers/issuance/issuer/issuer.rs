@@ -19,8 +19,8 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn send_credential_offer(&mut self, connection_handle: u32) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialInit(connection_handle))
+    pub fn send_credential_offer(&mut self, connection_handle: u32, comment: Option<String>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialInit(connection_handle, comment))
     }
 
     pub fn send_credential(&mut self, connection_handle: u32) -> VcxResult<()> {
