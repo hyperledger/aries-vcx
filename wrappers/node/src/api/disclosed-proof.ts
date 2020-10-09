@@ -295,29 +295,6 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
     return requests
   }
 
-  public static async getRequestsV2 (connection: Connection, requestName: string): Promise<IDisclosedProofRequest[]> {
-    const requestsStr = await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_v2_disclosed_proof_get_requests(0, connection.handle, requestName, cb)
-        if (rc) {
-          reject(rc)
-        }
-      },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32', 'uint32', 'string'],
-        (handle: number, err: number, messages: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(messages)
-        })
-    )
-    const requests = JSON.parse(requestsStr)
-    return requests
-  }
-
   protected _releaseFn = rustAPI().vcx_disclosed_proof_release
   protected _updateStFn = rustAPI().vcx_disclosed_proof_update_state
   protected _updateStFnV2 = rustAPI().vcx_v2_disclosed_proof_update_state
