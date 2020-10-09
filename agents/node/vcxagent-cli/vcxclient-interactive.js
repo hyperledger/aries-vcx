@@ -1,10 +1,12 @@
 const readlineSync = require('readline-sync')
-const { getSampleSchemaData } = require('vcxagent-core/src')
-const { createVcxAgent } = require('vcxagent-core')
+const { initRustapi, getSampleSchemaData, createVcxAgent } = require('../vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
 async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustLogLevel) {
   logger.info(`Creating interactive client ${agentName} seed=${seed} protocolType=${protocolType}`)
+
+  await initRustapi(rustLogLevel)
+
   const ariesAgent = await createVcxAgent({
     agentName,
     protocolType,
@@ -44,8 +46,8 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
         logger.info('Taa accepted.\n')
       } else if (cmd === '1') {
         logger.info(`Cmd was ${cmd}, going to create schema\n`)
-        const schema = await ariesAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-        logger.info(`Schema created ${JSON.stringify(await schema.serialize())}`)
+        const schemaId = await ariesAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+        await ariesAgent.serviceLedgerSchema.printInfo([schemaId])
       } else if (cmd === '2') {
         const schemaId = readlineSync.question('Enter schemaId:\n')
         const name = readlineSync.question('Enter credDef name:\n')
@@ -66,20 +68,20 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
         await ariesAgent.serviceConnections.connectionAutoupdate(connectionId)
       } else if (cmd === '13') {
         const connectionId = readlineSync.question('Enter connection id:\n')
-        await ariesAgent.connectionPrintInfo(connectionId)
+        await ariesAgent.serviceConnections.printInfo([connectionId])
       } else if (cmd === '14') {
-        logger.info('Listing connections:')
-        await ariesAgent.connectionsList()
+        const connectionIds = await ariesAgent.serviceConnections.listIds()
+        await ariesAgent.serviceConnections.printInfo(connectionIds)
       } else if (cmd === '20') {
         const connectionId = readlineSync.question('Enter connection id:\n')
-        await ariesAgent.getCredentialOffers(connectionId) // use waitForCredentialOffers with minimal timeoutMs tolerance
+        await ariesAgent.serviceCredHolder.waitForCredentialOffer(connectionId, null, 1, 0)
       } else if (cmd === '30') {
         const connectionId = readlineSync.question('Enter connection id:\n')
         const message = readlineSync.question('Enter message to send:\n')
-        await ariesAgent.sendMessage(connectionId, message)
+        await ariesAgent.serviceConnections.sendMessage(connectionId, message)
       } else if (cmd === '31') {
         const connectionId = readlineSync.question('Enter connection id:\n')
-        const messages = await ariesAgent.getMessages(connectionId, [], [])
+        const messages = await ariesAgent.serviceConnections.getMessages(connectionId, [], [])
         logger.info(`Found messages\n:${JSON.stringify(messages, null, 2)}`)
       } else {
         logger.error(`Unknown command ${cmd}`)

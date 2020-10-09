@@ -2,7 +2,7 @@
   "name": "@absaoss/vcxagent-core",
   "description": "NodeJS LibVCX based Aries agent",
   "license": "Apache-2.0",
-  "main": "index.js",
+  "main": "src/index.js",
   "directories": {
     "test": "test",
     "lib": "src"
