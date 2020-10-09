@@ -1,5 +1,5 @@
 const readlineSync = require('readline-sync')
-const { initRustapi, getSampleSchemaData, createVcxAgent } = require('../vcxagent-core')
+const { initRustapi, getSampleSchemaData, createVcxAgent } = require('@absaoss/vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
 async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustLogLevel) {
