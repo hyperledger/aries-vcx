@@ -381,7 +381,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
            command_handle, connection_handle);
 
     spawn(move || {
-        match disclosed_proof::get_proof_request_messages(connection_handle, None) {
+        match disclosed_proof::get_proof_request_messages(connection_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, x);

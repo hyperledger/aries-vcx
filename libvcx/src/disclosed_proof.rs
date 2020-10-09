@@ -181,14 +181,14 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)));
 }
 
-pub fn get_proof_request_messages(connection_handle: u32, match_name: Option<&str>) -> VcxResult<String> {
-    trace!("get_proof_request_messages >>> connection_handle: {}, match_name: {:?}", connection_handle, match_name);
+pub fn get_proof_request_messages(connection_handle: u32) -> VcxResult<String> {
+    trace!("get_proof_request_messages >>> connection_handle: {}", connection_handle);
 
     if !connection::is_v3_connection(connection_handle)? {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
     }
 
-    let presentation_requests = Prover::get_presentation_request_messages(connection_handle, match_name)?;
+    let presentation_requests = Prover::get_presentation_request_messages(connection_handle)?;
     Ok(json!(presentation_requests).to_string())
 }
 
@@ -244,7 +244,7 @@ mod tests {
     use super::*;
 
     fn _get_proof_request_messages(connection_h: u32) -> String {
-        let requests = get_proof_request_messages(connection_h, None).unwrap();
+        let requests = get_proof_request_messages(connection_h).unwrap();
         let requests: Value = serde_json::from_str(&requests).unwrap();
         let requests = serde_json::to_string(&requests[0]).unwrap();
         requests

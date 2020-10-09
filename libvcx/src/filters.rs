@@ -44,23 +44,23 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_filter_proof_requests_by_name() {
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array, "request1").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "request1").unwrap();
         assert_eq!(filtered.len(), 1);
 
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array, "request2").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "request2").unwrap();
         assert_eq!(filtered.len(), 1);
 
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array, "not there").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "not there").unwrap();
         assert_eq!(filtered.len(), 0);
 
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array, "").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "").unwrap();
         assert_eq!(filtered.len(), 0);
 
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array_empty_attach, "not there").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH, "not there").unwrap();
         assert_eq!(filtered.len(), 0);
 
         // TODO: fix the behavior so that this passes
-        let filtered = _filter_proof_requests_by_name(mockdata_proof::presentation_request_message_array_empty_attach, "").unwrap();
+        let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH, "").unwrap();
         assert_eq!(filtered.len(), 0);
     }
 
