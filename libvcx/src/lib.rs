@@ -90,7 +90,6 @@ mod tests {
         assert!(connection::release(alice).is_err());
     }
 
-
     fn attr_names() -> (String, String, String, String, String) {
         let address1 = "Address1".to_string();
         let address2 = "address2".to_string();
@@ -345,13 +344,13 @@ mod tests {
 
         set_institution(None);
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
+        let (consumer_to_institution, institution_to_consumer) = ::connection::tests::create_connected_connections(None, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_institution, institution_to_consumer, None);
 
         revoke_credential_local(credential_handle, rev_reg_id.clone());
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice, None, request_name1);
-        _prover_select_credentials_and_send_proof(faber, None, request_name1);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name1);
 
         set_institution(None);
         proof::update_state(proof_handle_verifier, None, None).unwrap();
@@ -359,8 +358,8 @@ mod tests {
 
         publish_revocation(rev_reg_id.clone().unwrap());
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice, None, request_name2);
-        _prover_select_credentials_and_send_proof(faber, None, request_name2);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name2);
 
         set_institution(None);
         proof::update_state(proof_handle_verifier, None, None).unwrap();
@@ -412,20 +411,20 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (c2v, v2c) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (c2i, i2c) = ::connection::tests::create_connected_connections(Some(consumer), None); // Issuer
+        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None); // Issuer
 
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(c2i, i2c, Some(consumer));
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_issuer, issuer_to_consumer, Some(consumer));
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, v2c, Some(verifier), request_name1);
-        _prover_select_credentials_and_send_proof(c2v, Some(consumer), request_name1);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), request_name1);
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, v2c, Some(verifier), request_name2);
-        _prover_select_credentials_and_send_proof(c2v, Some(consumer), request_name2);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), request_name2);
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
@@ -433,33 +432,31 @@ mod tests {
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
-    fn test_double_issuance_fail() {
+    fn test_double_issuance_issuer_is_verifier() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let consumer = create_consumer_config();
-        let (faber, alice) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_institution, institution_to_consumer) = ::connection::tests::create_connected_connections(None, None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address, city, state, zip) = attr_names();
         let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_handle = _exchange_credential(credential_data, cred_def_handle, faber, alice, Some(consumer));
+        let credential_handle = _exchange_credential(credential_data, cred_def_handle, consumer_to_institution, institution_to_consumer, None);
 
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice, None, request_name1);
-        _prover_select_credentials_and_send_proof(faber, Some(consumer), request_name1);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name1);
         set_institution(None);
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice, None, request_name2);
-        _prover_select_credentials_and_send_proof(faber, Some(consumer), request_name2);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name2);
         set_institution(None);
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
-
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
@@ -467,36 +464,36 @@ mod tests {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let consumer_1 = create_consumer_config();
-        let consumer_2 = create_consumer_config();
-        let consumer_3 = create_consumer_config();
-        let (faber1, alice1) = ::connection::tests::create_connected_connections(Some(consumer_1), None);
-        let (faber2, alice2) = ::connection::tests::create_connected_connections(Some(consumer_2), None);
-        let (faber3, alice3) = ::connection::tests::create_connected_connections(Some(consumer_3), None);
-        assert_ne!(alice1, alice2); assert_ne!(alice1, alice3); assert_ne!(alice2, alice3);
-        assert_ne!(faber1, faber2); assert_ne!(faber1, faber3); assert_ne!(faber2, faber3);
+        let consumer1 = create_consumer_config();
+        let consumer2 = create_consumer_config();
+        let consumer3 = create_consumer_config();
+        let (consumer_to_institution1, institution_to_consumer1) = ::connection::tests::create_connected_connections(Some(consumer1), None);
+        let (consumer_to_institution2, institution_to_consumer2) = ::connection::tests::create_connected_connections(Some(consumer2), None);
+        let (consumer_to_institution3, institution_to_consumer3) = ::connection::tests::create_connected_connections(Some(consumer3), None);
+        assert_ne!(institution_to_consumer1, institution_to_consumer2); assert_ne!(institution_to_consumer1, institution_to_consumer3); assert_ne!(institution_to_consumer2, institution_to_consumer3);
+        assert_ne!(consumer_to_institution1, consumer_to_institution2); assert_ne!(consumer_to_institution1, consumer_to_institution3); assert_ne!(consumer_to_institution2, consumer_to_institution3);
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, faber1, alice1, Some(consumer_1));
+        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, consumer_to_institution1, institution_to_consumer1, Some(consumer1));
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, faber2, alice2, Some(consumer_2));
+        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, consumer_to_institution2, institution_to_consumer2, Some(consumer2));
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_handle3 = _exchange_credential(credential_data3, cred_def_handle, faber3, alice3, Some(consumer_3));
+        let credential_handle3 = _exchange_credential(credential_data3, cred_def_handle, consumer_to_institution3, institution_to_consumer3, Some(consumer3));
 
         revoke_credential_local(credential_handle1, rev_reg_id.clone());
         revoke_credential_local(credential_handle2, rev_reg_id.clone());
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1"); let request_name2 = Some("request2");
-        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice1, None, request_name1);
-        _prover_select_credentials_and_send_proof(faber1, Some(consumer_1), request_name1);
-        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice2, None, request_name1);
-        _prover_select_credentials_and_send_proof(faber2, Some(consumer_2), request_name1);
-        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice3, None, request_name1);
-        _prover_select_credentials_and_send_proof(faber3, Some(consumer_3), request_name1);
+        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer1, None, request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_institution1, Some(consumer1), request_name1);
+        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer2, None, request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_institution2, Some(consumer2), request_name1);
+        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer3, None, request_name1);
+        _prover_select_credentials_and_send_proof(consumer_to_institution3, Some(consumer3), request_name1);
 
         set_institution(None);
         proof::update_state(proof_handle_verifier1, None, None).unwrap();
@@ -510,12 +507,12 @@ mod tests {
         publish_revocation(rev_reg_id.clone().unwrap());
         thread::sleep(Duration::from_millis(2000));
         let request_name2 = Some("request2");
-        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice1, None, request_name2);
-        _prover_select_credentials_and_send_proof(faber1, Some(consumer_1), request_name2);
-        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice2, None, request_name2);
-        _prover_select_credentials_and_send_proof(faber2, Some(consumer_2), request_name2);
-        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, alice3, None, request_name2);
-        _prover_select_credentials_and_send_proof(faber3, Some(consumer_3), request_name2);
+        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer1, None, request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_institution1, Some(consumer1), request_name2);
+        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer2, None, request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_institution2, Some(consumer2), request_name2);
+        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer3, None, request_name2);
+        _prover_select_credentials_and_send_proof(consumer_to_institution3, Some(consumer3), request_name2);
         assert_ne!(proof_handle_verifier1, proof_handle_verifier2); assert_ne!(proof_handle_verifier1, proof_handle_verifier3); assert_ne!(proof_handle_verifier2, proof_handle_verifier3);
 
         set_institution(None);

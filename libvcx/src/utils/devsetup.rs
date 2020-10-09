@@ -509,6 +509,19 @@ fn change_wallet_handle() {
     unsafe { wallet::WALLET_HANDLE = WalletHandle(wallet_handle.parse::<i32>().unwrap()) }
 }
 
+fn assign_trustee_role(institution_handle: Option<u32>) {
+    set_institution(institution_handle);
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+    let vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
+    settings::clear_config();
+
+    wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
+    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
+    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+}
+
 pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
@@ -575,24 +588,9 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    // grab the generated did and vk from the consumer and enterprise
-    set_consumer(None);
-    let did2 = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk2 = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    set_institution(None);
-    let did1 = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk1 = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    settings::clear_config();
-
-    // make enterprise and consumer trustees on the ledger
-    wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
-    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did1, Some(&vk1), None, Some("TRUSTEE")).wait().unwrap();
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
-    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+    assign_trustee_role(None);
 
     // as trustees, mint tokens into each wallet
-
     set_institution(None);
     ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
 }
@@ -661,16 +659,7 @@ pub fn create_institution_config() -> u32 {
 
     let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
 
-    set_institution(Some(handle));
-    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    settings::clear_config();
-
-    wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
-    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
-    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+    assign_trustee_role(Some(handle));
 
     handle
 }
