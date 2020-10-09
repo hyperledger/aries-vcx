@@ -181,7 +181,6 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)));
 }
 
-//TODO one function with credential
 pub fn get_proof_request_messages(connection_handle: u32, match_name: Option<&str>) -> VcxResult<String> {
     trace!("get_proof_request_messages >>> connection_handle: {}, match_name: {:?}", connection_handle, match_name);
 
@@ -190,21 +189,7 @@ pub fn get_proof_request_messages(connection_handle: u32, match_name: Option<&st
     }
 
     let presentation_requests = Prover::get_presentation_request_messages(connection_handle, match_name)?;
-
-    // strict aries protocol is set. return aries formatted Proof Request.
-    if settings::is_strict_aries_protocol_set() {
-        return Ok(json!(presentation_requests).to_string());
-    }
-
-    let msgs: Vec<ProofRequestMessage> = presentation_requests
-        .into_iter()
-        .map(|presentation_request| presentation_request.try_into())
-        .collect::<VcxResult<Vec<ProofRequestMessage>>>()?;
-
-    serde_json::to_string(&msgs).
-        map_err(|err| {
-            VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize ProofRequestMessage: {:?}", err))
-        })
+    Ok(json!(presentation_requests).to_string())
 }
 
 fn _parse_proof_req_message(message: &Message, my_vk: &str) -> VcxResult<ProofRequestMessage> {

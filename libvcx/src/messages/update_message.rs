@@ -169,7 +169,7 @@ mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None);
+        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();

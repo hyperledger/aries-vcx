@@ -17,6 +17,13 @@ pub struct Prover {
     prover_sm: ProverSM
 }
 
+fn _filter_by_name(content: &str, match_name: &str, presentation_request: PresentationRequest) -> Option<PresentationRequest> {
+   match serde_json::from_str(&content).map(|value: serde_json::Value| value.get("name").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or("").to_string()) {
+       Ok(name) if name == String::from(match_name) => Some(presentation_request),
+       _ => None
+   }
+}
+
 impl Prover {
     pub fn create(source_id: &str, presentation_request: PresentationRequest) -> VcxResult<Prover> {
         trace!("Prover::create >>> source_id: {}, presentation_request: {:?}", source_id, presentation_request);
@@ -45,18 +52,8 @@ impl Prover {
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
         trace!("Prover::generate_presentation_msg >>>");
-
         let proof = self.prover_sm.presentation()?.to_owned();
-
-        // strict aries protocol is set. return aries formatted Proof
-        if settings::is_strict_aries_protocol_set() {
-            return Ok(json!(proof).to_string());
-        }
-
-        // convert Proof into proprietary format
-        let proof: ProofMessage = proof.try_into()?;
-
-        return Ok(json!(proof).to_string());
+        Ok(json!(proof).to_string())
     }
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
@@ -136,9 +133,12 @@ impl Prover {
                 .filter_map(|(_, message)| {
                     match message {
                         A2AMessage::PresentationRequest(presentation_request) => {
-                            Some(presentation_request)
+                            match (presentation_request.request_presentations_attach.content().ok(), match_name) {
+                                (Some(content), Some(match_name)) => _filter_by_name(&content, match_name, presentation_request),
+                                _ => Some(presentation_request)
+                            }
                         }
-                        _ => None,
+                        _ => None
                     }
                 })
                 .collect();

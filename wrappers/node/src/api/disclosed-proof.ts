@@ -259,6 +259,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Queries agency for all pending proof requests from the given connection.
    *

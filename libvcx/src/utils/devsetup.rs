@@ -18,6 +18,7 @@ use utils::libindy::wallet::init_wallet;
 use utils::logger::LibvcxDefaultLogger;
 use utils::object_cache::ObjectCache;
 use utils::plugins::init_plugin;
+use rand::Rng;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -466,7 +467,7 @@ pub fn cleanup_indy_env() {
 }
 
 pub fn cleanup_agency_env() {
-    set_institution();
+    set_institution(None);
     delete_wallet(&settings::get_wallet_name().unwrap(), None, None, None).unwrap();
 
     set_consumer(None);
@@ -475,10 +476,10 @@ pub fn cleanup_agency_env() {
     delete_test_pool();
 }
 
-pub fn set_institution() {
+pub fn set_institution(institution_handle: Option<u32>) {
     settings::clear_config();
     unsafe {
-        CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
+        CONFIG_STRING.get(institution_handle.unwrap_or(INSTITUTION_CONFIG), |t| {
             settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
             let result = settings::process_config_string(&t, true);
             warn!("Switching test context to institution. Settings: {:?}", settings::settings_as_string());
@@ -506,6 +507,19 @@ pub fn set_consumer(consumer_handle: Option<u32>) {
 fn change_wallet_handle() {
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
     unsafe { wallet::WALLET_HANDLE = WalletHandle(wallet_handle.parse::<i32>().unwrap()) }
+}
+
+fn assign_trustee_role(institution_handle: Option<u32>) {
+    set_institution(institution_handle);
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+    let vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
+    settings::clear_config();
+
+    wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
+    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
+    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
 }
 
 pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
@@ -574,29 +588,10 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    // grab the generated did and vk from the consumer and enterprise
-    set_consumer(None);
-    let did2 = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk2 = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    set_institution();
-    let did1 = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk1 = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    settings::clear_config();
-
-    // make enterprise and consumer trustees on the ledger
-    wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
-    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did1, Some(&vk1), None, Some("TRUSTEE")).wait().unwrap();
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
-    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did2, Some(&vk2), None, Some("TRUSTEE")).wait().unwrap();
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
-    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+    assign_trustee_role(None);
 
     // as trustees, mint tokens into each wallet
-    set_consumer(None);
-    ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
-
-    set_institution();
+    set_institution(None);
     ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
@@ -608,8 +603,11 @@ pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
 }
 
 pub fn create_consumer_config() -> u32 {
+    settings::clear_config();
     let consumer_id: u32 = CONFIG_STRING.len().unwrap() as u32;
-    let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, consumer_id);
+    let mut rng = rand::thread_rng();
+    let random_salt = rng.gen::<u32>();
+    let consumer_wallet_name = format!("{}_{}_{}", constants::CONSUMER_PREFIX, consumer_id, random_salt);
     let seed = create_new_seed();
     let config = json!({
             "agency_url": C_AGENCY_ENDPOINT.to_string(),
@@ -626,10 +624,44 @@ pub fn create_consumer_config() -> u32 {
             "protocol_type": "4.0"
         });
 
-    debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
+    debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
     let consumer_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
 
     CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
+}
+
+pub fn create_institution_config() -> u32 {
+    settings::clear_config();
+
+    let enterprise_id: u32 = CONFIG_STRING.len().unwrap() as u32;
+    let mut rng = rand::thread_rng();
+    let random_salt = rng.gen::<u32>();
+    let enterprise_wallet_name = format!("{}_{}_{}", constants::ENTERPRISE_PREFIX, enterprise_id, random_salt);
+
+    let seed = create_new_seed();
+    let mut config = json!({
+            "agency_url": AGENCY_ENDPOINT.to_string(),
+            "agency_did": AGENCY_DID.to_string(),
+            "agency_verkey": AGENCY_VERKEY.to_string(),
+            "wallet_name": enterprise_wallet_name,
+            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
+            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "enterprise_seed": seed,
+            "agent_seed": seed,
+            "name": format!("institution_{}", enterprise_id).to_string(),
+            "logo": "http://www.logo.com".to_string(),
+            "path": constants::GENESIS_PATH.to_string(),
+            "protocol_type": "4.0"
+        });
+
+    debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);
+    let enterprise_config = ::messages::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+
+    let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
+
+    assign_trustee_role(Some(handle));
+
+    handle
 }
 
 pub fn setup_wallet_env(test_name: &str) -> Result<WalletHandle, String> {
@@ -683,7 +715,7 @@ mod tests {
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
-        let (_faber, _alice) = ::connection::tests::create_connected_connections(None);
-        let (_faber, _alice) = ::connection::tests::create_connected_connections(None);
+        let (_faber, _alice) = ::connection::tests::create_connected_connections(None, None);
+        let (_faber, _alice) = ::connection::tests::create_connected_connections(None, None);
     }
 }

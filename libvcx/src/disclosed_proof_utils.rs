@@ -112,7 +112,7 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
     for cred_info in credentials_identifiers.iter_mut() {
         if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_file)) =
         (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_file) {
-            if rtn.get(&rev_reg_id).is_none() {
+            if rtn.get(&rev_reg_id).is_none() { // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
                 { (interval.from, interval.to) } else { (None, None) };
 
@@ -199,6 +199,7 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
             }
 
             // If the rev_reg_id is already in the map, timestamp may not be updated on cred_info
+            // All further credential info gets the same timestamp as the first one
             if cred_info.timestamp.is_none() {
                 cred_info.timestamp = timestamps.get(rev_reg_id).cloned();
             }
