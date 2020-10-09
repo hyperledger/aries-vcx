@@ -50,6 +50,7 @@ pub mod disclosed_proof;
 pub mod aries;
 mod proof_utils;
 mod disclosed_proof_utils;
+mod filters;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
