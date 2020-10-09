@@ -3,18 +3,18 @@ const { protocolTypes, createVcxAgent } = require('../../src/index')
 const { StateType } = require('@absaoss/node-vcx-wrapper')
 
 module.exports.createAlice = async function createAlice () {
-  const aliceId = `alice-${Math.floor(new Date() / 1000)}`
-  const connectionName = 'connection-alice-to-faber'
-  const credHolderName = 'credential-of-alice'
-  const disclosedProofName = 'proof-from-alice'
+  const agentName = `alice-${Math.floor(new Date() / 1000)}`
+  const connectionId = 'connection-alice-to-faber'
+  const holderCredentialId = 'credential-of-alice'
+  const disclosedProofId = 'proof-from-alice'
   const logger = require('../../../vcxagent-cli/logger')('Alice')
 
   const aliceAgentConfig = {
-    agentName: aliceId,
+    agentName,
     protocolType: protocolTypes.v4,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Alice000',
-    webhookUrl: `http://localhost:7209/notifications/${aliceId}`,
+    webhookUrl: `http://localhost:7209/notifications/${agentName}`,
     usePostgresWallet: false,
     logger
   }
@@ -25,7 +25,7 @@ module.exports.createAlice = async function createAlice () {
 
     await vcxAgent.agentInitVcx()
 
-    const connectionAliceToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitation(connectionName, invite)
+    const connectionAliceToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitation(connectionId, invite)
     expect(await connectionAliceToFaber.getState()).toBe(StateType.RequestReceived)
 
     await vcxAgent.agentShutdownVcx()
@@ -35,7 +35,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info(`Alice is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceConnections.connectionUpdate(connectionName)
+    const state = await vcxAgent.serviceConnections.connectionUpdate(connectionId)
     expect(state).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
@@ -45,7 +45,7 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Alice accepting creadential offer')
-    await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAccept({ credHolderName, connectionName })
+    await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAccept({ connectionId, holderCredentialId })
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -53,11 +53,11 @@ module.exports.createAlice = async function createAlice () {
   async function sendHolderProof (proofRequest) {
     await vcxAgent.agentInitVcx()
 
-    await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofName, proofRequest)
-    const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofName)
+    await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
+    const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
-    await vcxAgent.serviceProver.generateProof(disclosedProofName, selectedCreds, selfAttestedAttrs)
-    const state = await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofName, connectionName)
+    await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
+    const state = await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)
     expect(state).toBe(StateType.OfferSent)
 
     await vcxAgent.agentShutdownVcx()
@@ -67,7 +67,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info(`Holder updating state of disclosed proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceProver.disclosedProofUpdate(disclosedProofName, connectionName)
+    const state = await vcxAgent.serviceProver.disclosedProofUpdate(disclosedProofId, connectionId)
     expect(state).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
@@ -77,7 +77,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info('Holder updating state of credential with connection')
     await vcxAgent.agentInitVcx()
 
-    expect(await vcxAgent.serviceCredHolder.credentialUpdate(credHolderName, connectionName)).toBe(expectedState)
+    expect(await vcxAgent.serviceCredHolder.credentialUpdate(holderCredentialId, connectionId)).toBe(expectedState)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -86,7 +86,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info('Alice is going to sign data')
     await vcxAgent.agentInitVcx()
 
-    const signatureBase64 = await vcxAgent.serviceConnections.signData(connectionName, dataBase64)
+    const signatureBase64 = await vcxAgent.serviceConnections.signData(connectionId, dataBase64)
 
     await vcxAgent.agentShutdownVcx()
 

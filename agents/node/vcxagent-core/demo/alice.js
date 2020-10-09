@@ -39,9 +39,9 @@ async function runAlice (options) {
 
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
-  const connectionName = 'alice-to-faber'
-  const credHolderName = 'alice-credential'
-  const disclosedProofName = 'alice-proof'
+  const connectionId = 'alice-to-faber'
+  const holderCredentialId = 'alice-credential'
+  const disclosedProofId = 'alice-proof'
   const vcxAgent = await createVcxAgent({
     agentName,
     protocolType: options.protocolType,
@@ -54,28 +54,28 @@ async function runAlice (options) {
   await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  const connectionToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionName, invitationString)
+  const connectionToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
 
   if (!connectionToFaber) {
     throw Error('Connection with alice was not established.')
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionName, credHolderName })
+  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionId, holderCredentialId })
 
-  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests({ connectionName }))[0]
+  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests({ connectionId }))[0]
   if (!proofRequest) {
     throw Error('No proof request found.')
   }
 
-  await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofName, proofRequest)
+  await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
   const requestInfo = JSON.parse(Buffer.from(proofRequest['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
-  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofName)
+  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
-  await vcxAgent.serviceProver.generateProof(disclosedProofName, selectedCreds, selfAttestedAttrs)
-  await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofName, connectionName)
+  await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
+  await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
 
   await vcxAgent.agentShutdownVcx()

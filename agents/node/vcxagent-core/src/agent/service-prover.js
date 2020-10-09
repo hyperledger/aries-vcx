@@ -6,7 +6,7 @@ const {
   StateType
 } = require('@absaoss/node-vcx-wrapper')
 
-module.exports.createServiceProver = function createServiceProver (logger, loadConnection, storeDisclosedProof, loadDisclosedProof) {
+module.exports.createServiceProver = function createServiceProver (logger, loadConnection, storeDisclosedProof, loadDisclosedProof, listDislosedProofIds) {
   async function _progressProofToState (proof, connection, targetStates, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
       if (!Array.isArray(targetStates)) {
@@ -43,8 +43,8 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     return proofRequests
   }
 
-  async function waitForProofRequests ({ connectionName, attemptsThreshold = 10, timeoutMs = 2000 }) {
-    const connSerializedBefore = await loadConnection(connectionName)
+  async function waitForProofRequests ({ connectionId, attemptsThreshold = 10, timeoutMs = 2000 }) {
+    const connSerializedBefore = await loadConnection(connectionId)
     const connection = await Connection.deserialize(connSerializedBefore)
 
     const proofRequests = await _getProofRequests(connection, attemptsThreshold, timeoutMs)
@@ -53,84 +53,101 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     return proofRequests
   }
 
-  async function getProofRequests (connectionName) {
-    const serConnection = await loadConnection(connectionName)
+  async function getProofRequests (connectionId) {
+    const serConnection = await loadConnection(connectionId)
     const connection = await Connection.deserialize(serConnection)
 
     return DisclosedProof.getRequests(connection)
   }
 
-  async function buildDisclosedProof (disclosedProofName, proofRequest) {
+  async function buildDisclosedProof (disclosedProofId, proofRequest) {
     const disclosedProof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(proofRequest) })
 
     const serDisclosedProofAfter = await disclosedProof.serialize()
-    await storeDisclosedProof(disclosedProofName, serDisclosedProofAfter)
+    await storeDisclosedProof(disclosedProofId, serDisclosedProofAfter)
   }
 
-  async function selectCredentials (disclosedProofName) {
-    const serDisclosedProof = await loadDisclosedProof(disclosedProofName)
+  async function selectCredentials (disclosedProofId) {
+    const serDisclosedProof = await loadDisclosedProof(disclosedProofId)
     const disclosedProof = await DisclosedProof.deserialize(serDisclosedProof)
 
     return holderSelectCredentialsForProof(disclosedProof, logger)
   }
 
-  async function generateProof (disclosedProofName, selectedCreds, selfAttestedAttrs) {
-    const serDisclosedProof = await loadDisclosedProof(disclosedProofName)
+  async function generateProof (disclosedProofId, selectedCreds, selfAttestedAttrs) {
+    const serDisclosedProof = await loadDisclosedProof(disclosedProofId)
     const disclosedProof = await DisclosedProof.deserialize(serDisclosedProof)
 
     await disclosedProof.generateProof({ selectedCreds, selfAttestedAttrs })
 
     const serDisclosedProofAfter = await disclosedProof.serialize()
-    await storeDisclosedProof(disclosedProofName, serDisclosedProofAfter)
+    await storeDisclosedProof(disclosedProofId, serDisclosedProofAfter)
   }
 
-  async function sendDisclosedProof (disclosedProofName, connectionName) {
-    const serDisclosedProof = await loadDisclosedProof(disclosedProofName)
+  async function sendDisclosedProof (disclosedProofId, connectionId) {
+    const serDisclosedProof = await loadDisclosedProof(disclosedProofId)
     const disclosedProof = await DisclosedProof.deserialize(serDisclosedProof)
 
-    const serConnection = await loadConnection(connectionName)
+    const serConnection = await loadConnection(connectionId)
     const connection = await Connection.deserialize(serConnection)
 
     await disclosedProof.sendProof(connection)
     const state = await disclosedProof.getState()
 
     const serDisclosedProofAfter = await disclosedProof.serialize()
-    await storeDisclosedProof(disclosedProofName, serDisclosedProofAfter)
+    await storeDisclosedProof(disclosedProofId, serDisclosedProofAfter)
 
     return state
   }
 
-  async function sendDisclosedProofAndProgress (disclosedProofName, connectionName) {
-    await sendDisclosedProof(disclosedProofName, connectionName)
+  async function sendDisclosedProofAndProgress (disclosedProofId, connectionId) {
+    await sendDisclosedProof(disclosedProofId, connectionId)
 
-    const serDisclosedProof = await loadDisclosedProof(disclosedProofName)
+    const serDisclosedProof = await loadDisclosedProof(disclosedProofId)
     const disclosedProof = await DisclosedProof.deserialize(serDisclosedProof)
 
-    const serConnection = await loadConnection(connectionName)
+    const serConnection = await loadConnection(connectionId)
     const connection = await Connection.deserialize(serConnection)
 
     await _progressProofToState(disclosedProof, connection, [StateType.Accepted, StateType.None])
     const state = await disclosedProof.getState()
 
     const serDisclosedProofAfter = await disclosedProof.serialize()
-    await storeDisclosedProof(disclosedProofName, serDisclosedProofAfter)
+    await storeDisclosedProof(disclosedProofId, serDisclosedProofAfter)
 
     return state
   }
 
-  async function disclosedProofUpdate (disclosedProofName, connectionName) {
-    const serDisclosedProof = await loadDisclosedProof(disclosedProofName)
+  async function disclosedProofUpdate (disclosedProofId, connectionId) {
+    const serDisclosedProof = await loadDisclosedProof(disclosedProofId)
     const disclosedProof = await DisclosedProof.deserialize(serDisclosedProof)
 
-    const connSerializedBefore = await loadConnection(connectionName)
+    const connSerializedBefore = await loadConnection(connectionId)
     const connection = await Connection.deserialize(connSerializedBefore)
 
     const state = await disclosedProof.updateStateV2(connection)
 
     const serDisclosedProofAfter = await disclosedProof.serialize()
-    await storeDisclosedProof(disclosedProofName, serDisclosedProofAfter)
+    await storeDisclosedProof(disclosedProofId, serDisclosedProofAfter)
 
     return state
+  }
+
+  async function getState (disclosedProofId) {
+    const serDiclosedProof = await loadDisclosedProof(disclosedProofId)
+    const disclosedProof = await DisclosedProof.deserialize(serDiclosedProof)
+    return await disclosedProof.getState()
+  }
+
+  async function listIds () {
+    return listDislosedProofIds()
+  }
+
+  async function printInfo (disclosedProofIds) {
+    for (const id of disclosedProofIds) {
+      const state = await getState(id)
+      logger.info(`DisclosedProof ${id} state=${state}`)
+    }
   }
 
   return {
@@ -141,6 +158,10 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     sendDisclosedProof,
     sendDisclosedProofAndProgress,
     buildDisclosedProof,
-    disclosedProofUpdate
+    disclosedProofUpdate,
+
+    listIds,
+    printInfo,
+    getState
   }
 }

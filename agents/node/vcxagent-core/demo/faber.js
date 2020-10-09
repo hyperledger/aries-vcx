@@ -17,10 +17,10 @@ async function runFaber (options) {
   let faberServer
   let exitcode = 0
   let vcxAgent
-  const credDefName = getFaberCredDefName()
-  const proofName = 'proof-from-alice'
-  const connectionName = 'faber-to-alice'
-  const issuerCredName = 'cred-for-alice'
+  const credDefId = getFaberCredDefName()
+  const proofId = 'proof-from-alice'
+  const connectionId = 'faber-to-alice'
+  const issuerCredId = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
     vcxAgent = await createVcxAgent({
@@ -38,10 +38,10 @@ async function runFaber (options) {
       await vcxAgent.acceptTaa()
     }
 
-    const schemaId = await vcxAgent.serviceLedger.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedger.createCredentialDefinition(schemaId, getFaberCredDefName())
+    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName())
 
-    const { connection: connectionToAlice } = await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionName, (invitationString) => {
+    const { connection: connectionToAlice } = await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
       logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
       logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
@@ -69,13 +69,13 @@ async function runFaber (options) {
     })
 
     logger.info('Faber is going to send credential offer')
-    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredName, connectionName, credDefName, schemaAttrs: getAliceSchemaAttrs() })
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredId, connectionId, credDefId, schemaAttrs: getAliceSchemaAttrs() })
     if (options.revocation) {
-      await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredName)
+      await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredId)
     }
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid(), proofName))
+    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid(), proofId))
 
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)

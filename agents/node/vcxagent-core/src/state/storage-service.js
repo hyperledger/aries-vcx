@@ -6,6 +6,7 @@ async function createStorageService (agentName) {
   mkdirp.sync('storage-connections/')
   mkdirp.sync('storage-credentialDefinitions/')
   mkdirp.sync('storage-schemas/')
+
   const storageAgentProvisions = await createFileStorage(`storage-agentProvisions/${agentName}`)
   const storageConnections = await createFileStorage(`storage-connections/${agentName}`)
   const storageCredIssuer = await createFileStorage(`storage-credsIssuer/${agentName}`)
@@ -37,10 +38,6 @@ async function createStorageService (agentName) {
       throw Error(`Connection ${name} was not found.`)
     }
     return res
-  }
-
-  async function listConnectionNames () {
-    return storageConnections.keys()
   }
 
   async function saveSchema (name, connection) {
@@ -115,25 +112,67 @@ async function createStorageService (agentName) {
     return res
   }
 
+  async function listConnectionKeys () {
+    return storageConnections.keys()
+  }
+
+  async function listSchemaKeys () {
+    return storageSchemas.keys()
+  }
+
+  async function listCredentialDefinitionKeys () {
+    return storageCredentialDefinitons.keys()
+  }
+
+  async function listCredIssuerKeys () {
+    return storageCredIssuer.keys()
+  }
+
+  async function listCredHolderKeys () {
+    return storageCredHolder.keys()
+  }
+
+  async function listDisclosedProofKeys () {
+    return storageDisclosedProof.keys()
+  }
+
+  async function listProofKeys () {
+    return storageProof.keys()
+  }
+
   return {
     agentProvisionExists,
     saveAgentProvision,
     loadAgentProvision,
+
     saveConnection,
     loadConnection,
-    listConnectionNames,
+
     saveSchema,
     loadSchema,
+
     saveCredentialDefinition,
     loadCredentialDefinition,
+
     saveCredIssuer,
     loadCredIssuer,
+
     saveCredHolder,
     loadCredHolder,
+
     saveDisclosedProof,
     loadDisclosedProof,
+
     saveProof,
-    loadProof
+    loadProof,
+
+    listConnectionKeys,
+    listSchemaKeys,
+    listCredentialDefinitionKeys,
+    listCredIssuerKeys,
+    listCredHolderKeys,
+    listDisclosedProofKeys,
+    listProofKeys
   }
 }
 

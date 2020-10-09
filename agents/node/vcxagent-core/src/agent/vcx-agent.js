@@ -1,8 +1,10 @@
+const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
+const { createServiceLedgerCredDef } = require('./service-ledger-creddef')
+const { createServiceLedgerSchema } = require('./service-ledger-schema')
 const { createServiceVerifier } = require('./service-verifier')
 const { createServiceProver } = require('./service-prover')
 const { createServiceCredHolder } = require('./service-cred-holder')
 const { createServiceCredIssuer } = require('./service-cred-issuer')
-const { createServiceLedger } = require('./service-ledger')
 const { createServiceConnections } = require('./service-connections')
 const { provisionAgentInAgency } = require('../utils/vcx-workflows')
 const {
@@ -52,31 +54,66 @@ async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl
     await vcxUpdateWebhookUrl({ webhookUrl })
   }
 
+  async function acceptTaa () {
+    const taa = await getLedgerAuthorAgreement()
+    const taaJson = JSON.parse(taa)
+    const utime = Math.floor(new Date() / 1000)
+    await setActiveTxnAuthorAgreementMeta(taaJson.text, taaJson.version, null, Object.keys(taaJson.aml)[0], utime)
+  }
+
   function getInstitutionDid () {
     return agentProvision.institution_did
   }
 
-  async function connectionsList () {
-    const connectionsNames = await storageService.listConnectionNames()
-    for (const connectionsName of connectionsNames) {
-      await connectionPrintInfo(connectionsName)
-    }
-  }
-
-  async function connectionPrintInfo (connectionName) {
-    const state = await serviceConnections.connectionGetState(connectionName)
-    logger.info(`Connection ${connectionName} state=${state}`)
-  }
-
-  const serviceConnections = createServiceConnections(logger, storageService.saveConnection, storageService.loadConnection)
-
-  const serviceLedger = createServiceLedger(logger, storageService.saveSchema, storageService.loadSchema, storageService.saveCredentialDefinition, storageService.loadCredentialDefinition)
-
-  const serviceCredIssuer = createServiceCredIssuer(logger, storageService.loadConnection, storageService.loadCredentialDefinition, storageService.saveCredIssuer, storageService.loadCredIssuer)
-  const serviceCredHolder = createServiceCredHolder(logger, storageService.loadConnection, storageService.saveCredHolder, storageService.loadCredHolder)
-
-  const serviceProver = createServiceProver(logger, storageService.loadConnection, storageService.saveDisclosedProof, storageService.loadDisclosedProof)
-  const serviceVerifier = createServiceVerifier(logger, storageService.loadConnection, storageService.saveProof, storageService.loadProof)
+  const serviceConnections = createServiceConnections(
+    logger,
+    storageService.saveConnection,
+    storageService.loadConnection,
+    storageService.listConnectionKeys
+  )
+  const serviceLedgerSchema = createServiceLedgerSchema(
+    logger,
+    storageService.saveSchema,
+    storageService.loadSchema,
+    storageService.listSchemaKeys
+  )
+  const serviceLedgerCredDef = createServiceLedgerCredDef(
+    logger,
+    storageService.saveSchema,
+    storageService.loadSchema,
+    storageService.saveCredentialDefinition,
+    storageService.loadCredentialDefinition,
+    storageService.listCredentialDefinitionKeys
+  )
+  const serviceCredIssuer = createServiceCredIssuer(
+    logger,
+    storageService.loadConnection,
+    storageService.loadCredentialDefinition,
+    storageService.saveCredIssuer,
+    storageService.loadCredIssuer,
+    storageService.listCredIssuerKeys
+  )
+  const serviceCredHolder = createServiceCredHolder(
+    logger,
+    storageService.loadConnection,
+    storageService.saveCredHolder,
+    storageService.loadCredHolder,
+    storageService.listCredHolderKeys
+  )
+  const serviceProver = createServiceProver(
+    logger,
+    storageService.loadConnection,
+    storageService.saveDisclosedProof,
+    storageService.loadDisclosedProof,
+    storageService.listDisclosedProofKeys
+  )
+  const serviceVerifier = createServiceVerifier(
+    logger,
+    storageService.loadConnection,
+    storageService.saveProof,
+    storageService.loadProof,
+    storageService.listProofKeys
+  )
 
   return {
     // vcx controls
@@ -84,14 +121,14 @@ async function createVcxAgent ({ agentName, genesisPath, protocolType, agencyUrl
     agentShutdownVcx,
     getInstitutionDid,
     updateWebhookUrl,
+    acceptTaa,
+
+    // ledger
+    serviceLedgerSchema,
+    serviceLedgerCredDef,
 
     // connections
     serviceConnections,
-    connectionsList,
-    connectionPrintInfo,
-
-    // ledger
-    serviceLedger,
 
     // credex
     serviceCredIssuer,
