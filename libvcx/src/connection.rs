@@ -301,19 +301,19 @@ pub mod tests {
         let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let details = connect(institution_to_consumer).unwrap().unwrap();
-        update_state(institution_to_consumer).unwrap();
+        // update_state(institution_to_consumer).unwrap();
 
         ::utils::devsetup::set_consumer(consumer_handle);
         debug!("Consumer is going to accept connection invitation.");
         let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
         connect(consumer_to_institution).unwrap();
         update_state(consumer_to_institution).unwrap();
-        // assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution));
 
         debug!("Institution is going to process connection request.");
         ::utils::devsetup::set_institution(institution_handle);
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
 
         debug!("Consumer is going to complete the connection protocol.");
         ::utils::devsetup::set_consumer(consumer_handle);
