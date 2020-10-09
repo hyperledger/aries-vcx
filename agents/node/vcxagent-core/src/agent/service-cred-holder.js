@@ -1,15 +1,12 @@
 const { filterOffersByAttr } = require('../utils/credentials')
 const { filterOffersBySchema } = require('../utils/credentials')
 const {
-  Connection,
   StateType,
   Credential
 } = require('@absaoss/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredHolder = function createServiceCredHolder (logger, loadConnection, storeHolderCredential, loadHolderCredential, listHolderCredentialIds) {
-  // todo: start storing credential objects...
-
   async function _getOffers (connection, filter, attemptsThreshold, timeoutMs) {
     async function findSomeCredOffer () {
       let offers = await Credential.getOffers(connection)
@@ -49,25 +46,17 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
   }
 
   async function waitForCredential (connectionId, holderCredentialId, attemptsThreshold = 10, timeoutMs = 2000) {
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
-
-    const serCred = await loadHolderCredential(holderCredentialId)
-    const credential = await Credential.deserialize(serCred)
-
+    const connection = await loadConnection(connectionId)
+    const credential = await loadHolderCredential(holderCredentialId)
     await _progressCredentialToState(credential, connection, StateType.Accepted, attemptsThreshold, timeoutMs)
-    logger.debug(`CredentialSM after credential was received:\n${JSON.stringify(await credential.serialize())}`)
     logger.info('Credential has been received.')
-
-    const serCred1 = await credential.serialize()
-    await storeHolderCredential(holderCredentialId, serCred1)
-
+    await storeHolderCredential(holderCredentialId, credential)
     return getCredentialData(holderCredentialId)
   }
 
   async function getCredentialData (holderCredentialId) {
-    const serCred = await loadHolderCredential(holderCredentialId)
-
+    const credential = await loadHolderCredential(holderCredentialId)
+    const serCred = await credential.serialize()
     return JSON.parse(
       Buffer.from(serCred.data.holder_sm.state.Finished.credential['credentials~attach'][0].data.base64, 'base64')
         .toString('utf8')
@@ -75,35 +64,22 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
   }
 
   async function createCredentialFromOfferAndSendRequest (connectionId, holderCredentialId, credentialOffer) {
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
-
+    const connection = await loadConnection(connectionId)
     const credential = await Credential.create({ sourceId: 'credential', offer: credentialOffer })
-
-    const serCred1 = await credential.serialize()
-    await storeHolderCredential(holderCredentialId, serCred1)
-
-    logger.info('After receiving credential offer, send credential request')
+    await storeHolderCredential(holderCredentialId, credential)
+    logger.info('Sending credential request')
     await credential.sendRequest({ connection, payment: 0 })
-
-    const serCred2 = await credential.serialize()
-    await storeHolderCredential(holderCredentialId, serCred2)
-
-    logger.debug(`CredentialSM after credential request was sent:\n${JSON.stringify(serCred2)}`)
+    await storeHolderCredential(holderCredentialId, credential)
     return credential
   }
 
   async function waitForCredentialOffer (connectionId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     logger.info('Going to try fetch credential offer and receive credential.')
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
-
+    const connection = await loadConnection(connectionId)
     const offers = await _getOffers(connection, credOfferFilter, attemptsThreshold, timeoutMs)
     logger.info(`Found ${offers.length} credential offers.`)
-
     const pickedOffer = JSON.stringify(offers[0])
     logger.debug(`Picked credential offer = ${pickedOffer}`)
-
     return pickedOffer
   }
 
@@ -119,23 +95,15 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
   }
 
   async function credentialUpdate (holderCredentialId, connectionId) {
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
-
-    const serCred = await loadHolderCredential(holderCredentialId)
-    const cred = await Credential.deserialize(serCred)
-
+    const connection = await loadConnection(connectionId)
+    const cred = await loadHolderCredential(holderCredentialId)
     const state = await cred.updateStateV2(connection)
-
-    const serCredAfter = await cred.serialize()
-    await storeHolderCredential(holderCredentialId, serCredAfter)
-
+    await storeHolderCredential(holderCredentialId, cred)
     return state
   }
 
   async function getState (credHolderId) {
-    const serCred = await loadHolderCredential(credHolderId)
-    const credential = await Credential.deserialize(serCred)
+    const credential = await loadHolderCredential(credHolderId)
     return await credential.getState()
   }
 

@@ -5,6 +5,7 @@ require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
 const { StateType } = require('@absaoss/node-vcx-wrapper')
+const sleep = require('sleep-promise')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
@@ -22,18 +23,24 @@ describe('test update state', () => {
   })
 
   it('Faber should send credential to Alice', async () => {
-    const { alice, faber } = await createPairedAliceAndFaber()
+    try {
+      const { alice, faber } = await createPairedAliceAndFaber()
 
-    await faber.sendCredentialOffer()
-    await alice.acceptCredentialOffer()
+      await faber.sendCredentialOffer()
+      await alice.acceptCredentialOffer()
 
-    await faber.updateStateCredentialV2(StateType.RequestReceived)
-    await faber.sendCredential()
-    await alice.updateStateCredentialV2(StateType.Accepted)
+      await faber.updateStateCredentialV2(StateType.RequestReceived)
+      await faber.sendCredential()
+      await alice.updateStateCredentialV2(StateType.Accepted)
 
-    const request = await faber.requestProofFromAlice()
-    await alice.sendHolderProof(JSON.parse(request))
-    await faber.updateStateVerifierProofV2(StateType.Accepted)
-    await alice.updateStateHolderProofV2(StateType.Accepted)
+      const request = await faber.requestProofFromAlice()
+      await alice.sendHolderProof(JSON.parse(request))
+      await faber.updateStateVerifierProofV2(StateType.Accepted)
+      await alice.updateStateHolderProofV2(StateType.Accepted)
+    } catch (err) {
+      console.error(`err = ${err.message} stack = ${err.stack}`)
+      await sleep(2000)
+      throw Error(err)
+    }
   })
 })

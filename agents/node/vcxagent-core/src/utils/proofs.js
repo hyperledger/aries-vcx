@@ -20,3 +20,8 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
   logger.debug(`Selected credentials:\n${JSON.stringify(selectedCreds, null, 2)}`)
   return selectedCreds
 }
+
+module.exports.extractProofRequestAttachement = function extractProofRequestAttachement (proofRequest) {
+  const attachment = proofRequest['request_presentations~attach'][0].data.base64
+  return JSON.parse(Buffer.from(attachment, 'base64').toString('utf8'))
+}

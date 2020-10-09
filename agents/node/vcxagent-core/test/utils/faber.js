@@ -39,8 +39,7 @@ module.exports.createFaber = async function createFaber () {
     logger.info('Faber is going to generate invite')
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceConnections.connectionUpdate(connectionId)
-    expect(state).toBe(StateType.RequestReceived)
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(StateType.RequestReceived)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -49,8 +48,7 @@ module.exports.createFaber = async function createFaber () {
     logger.info(`Faber is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceConnections.connectionUpdate(connectionId)
-    expect(state).toBe(expectedNextState)
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -117,8 +115,7 @@ module.exports.createFaber = async function createFaber () {
     logger.info(`Verifier updating state of proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceVerifier.proofUpdate(proofId, connectionId)
-    expect(state).toBe(expectedNextState)
+    expect(await vcxAgent.serviceVerifier.proofUpdate(proofId, connectionId)).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
   }

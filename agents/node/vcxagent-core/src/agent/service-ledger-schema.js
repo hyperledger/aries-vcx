@@ -6,9 +6,7 @@ module.exports.createServiceLedgerSchema = function createServiceLedgerSchema (l
 
     const schema = await Schema.create(schemaData)
     const schemaId = await schema.getSchemaId()
-    const serSchema = await schema.serialize()
-    await storeSchema(schemaId, serSchema)
-    logger.info(`Created schema with id ${schemaId}`)
+    await storeSchema(schemaId, schema)
     return schemaId
   }
 

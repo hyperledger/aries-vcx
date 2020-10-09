@@ -8,6 +8,7 @@ const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
+const { extractProofRequestAttachement } = require('../src/utils/proofs')
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -69,7 +70,7 @@ async function runAlice (options) {
   }
 
   await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
-  const requestInfo = JSON.parse(Buffer.from(proofRequest['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
+  const requestInfo = extractProofRequestAttachement(proofRequest)
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
   const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)

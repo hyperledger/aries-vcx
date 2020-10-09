@@ -15,8 +15,7 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
       sourceId: 'testCredentialDefSourceId123'
     }
     const credDef = await CredentialDef.create(data)
-    const credDefSer = await credDef.serialize()
-    await storeCredDef(credDefId, credDefSer)
+    await storeCredDef(credDefId, credDef)
     logger.info(`Created credentialDefinition ${credDefId}.`)
     return credDef
   }
@@ -27,7 +26,8 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
 
   async function printInfo (credDefIds) {
     for (const id of credDefIds) {
-      const serCredDef = await loadCredDef(id)
+      const credDef = await loadCredDef(id)
+      const serCredDef = await credDef.serialize()
       logger.info(`Credential definition ${id}: ${JSON.stringify(serCredDef)}`)
     }
   }

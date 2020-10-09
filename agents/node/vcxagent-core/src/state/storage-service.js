@@ -1,5 +1,14 @@
 const { createFileStorage } = require('./storage-file')
 const mkdirp = require('mkdirp')
+const {
+  Connection,
+  Credential,
+  IssuerCredential,
+  CredentialDef,
+  Schema,
+  DisclosedProof,
+  Proof
+} = require('@absaoss/node-vcx-wrapper')
 
 async function createStorageService (agentName) {
   mkdirp.sync('storage-agentProvisions/')
@@ -29,87 +38,94 @@ async function createStorageService (agentName) {
   }
 
   async function saveConnection (name, connection) {
-    await storageConnections.set(`${name}`, connection)
+    const serialized = await connection.serialize()
+    await storageConnections.set(`${name}`, serialized)
   }
 
   async function loadConnection (name) {
-    const res = await storageConnections.get(`${name}`)
-    if (!res) {
+    const serialized = await storageConnections.get(`${name}`)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return Connection.deserialize(serialized)
   }
 
-  async function saveSchema (name, connection) {
-    await storageSchemas.set(name, connection)
+  async function saveSchema (name, schema) {
+    const serialized = await schema.serialize()
+    await storageSchemas.set(name, serialized)
   }
 
   async function loadSchema (name) {
-    const res = await storageSchemas.get(name)
-    if (!res) {
+    const serialized = await storageSchemas.get(name)
+    if (!serialized) {
       throw Error(`Schema ${name} was not found.`)
     }
-    return res
+    return Schema.deserialize(serialized)
   }
 
   async function saveCredentialDefinition (name, credDef) {
-    await storageCredentialDefinitons.set(name, credDef)
+    const serialized = await credDef.serialize()
+    await storageCredentialDefinitons.set(name, serialized)
   }
 
   async function loadCredentialDefinition (name) {
-    const res = await storageCredentialDefinitons.get(name)
-    if (!res) {
+    const serialized = await storageCredentialDefinitons.get(name)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return CredentialDef.deserialize(serialized)
   }
 
   async function saveCredIssuer (name, credIssuer) {
-    await storageCredIssuer.set(name, credIssuer)
+    const serialized = await credIssuer.serialize()
+    await storageCredIssuer.set(name, serialized)
   }
 
   async function loadCredIssuer (name) {
-    const res = await storageCredIssuer.get(name)
-    if (!res) {
+    const serialized = await storageCredIssuer.get(name)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return IssuerCredential.deserialize(serialized)
   }
 
   async function saveCredHolder (name, credHolder) {
-    await storageCredHolder.set(name, credHolder)
+    const serialized = await credHolder.serialize()
+    await storageCredHolder.set(name, serialized)
   }
 
   async function loadCredHolder (name) {
-    const res = await storageCredHolder.get(name)
-    if (!res) {
+    const serialized = await storageCredHolder.get(name)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return Credential.deserialize(serialized)
   }
 
-  async function saveDisclosedProof (name, proof) {
-    await storageDisclosedProof.set(name, proof)
+  async function saveDisclosedProof (name, disclosedProof) {
+    const serialized = await disclosedProof.serialize()
+    await storageDisclosedProof.set(name, serialized)
   }
 
   async function loadDisclosedProof (name) {
-    const res = await storageDisclosedProof.get(name)
-    if (!res) {
+    const serialized = await storageDisclosedProof.get(name)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return DisclosedProof.deserialize(serialized)
   }
 
   async function saveProof (name, proof) {
-    await storageProof.set(name, proof)
+    const serialized = await proof.serialize()
+    await storageProof.set(name, serialized)
   }
 
   async function loadProof (name) {
-    const res = await storageProof.get(name)
-    if (!res) {
+    const serialized = await storageProof.get(name)
+    if (!serialized) {
       throw Error(`Connection ${name} was not found.`)
     }
-    return res
+    return Proof.deserialize(serialized)
   }
 
   async function listConnectionKeys () {

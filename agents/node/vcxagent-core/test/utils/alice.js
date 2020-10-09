@@ -35,8 +35,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info(`Alice is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceConnections.connectionUpdate(connectionId)
-    expect(state).toBe(expectedNextState)
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -57,8 +56,7 @@ module.exports.createAlice = async function createAlice () {
     const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
     await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
-    const state = await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)
-    expect(state).toBe(StateType.OfferSent)
+    expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(StateType.OfferSent)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -67,8 +65,7 @@ module.exports.createAlice = async function createAlice () {
     logger.info(`Holder updating state of disclosed proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
-    const state = await vcxAgent.serviceProver.disclosedProofUpdate(disclosedProofId, connectionId)
-    expect(state).toBe(expectedNextState)
+    expect(await vcxAgent.serviceProver.disclosedProofUpdate(disclosedProofId, connectionId)).toBe(expectedNextState)
 
     await vcxAgent.agentShutdownVcx()
   }
