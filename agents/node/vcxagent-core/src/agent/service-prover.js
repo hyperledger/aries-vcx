@@ -43,7 +43,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     return proofRequests
   }
 
-  async function waitForProofRequests ({ connectionId, attemptsThreshold = 10, timeoutMs = 2000 }) {
+  async function waitForProofRequests (connectionId, attemptsThreshold = 10, timeoutMs = 2000) {
     const connSerializedBefore = await loadConnection(connectionId)
     const connection = await Connection.deserialize(connSerializedBefore)
 

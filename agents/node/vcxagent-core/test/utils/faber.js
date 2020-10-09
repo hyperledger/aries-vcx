@@ -67,7 +67,7 @@ module.exports.createFaber = async function createFaber () {
     logger.info('Faber sending credential to Alice')
     const schemaAttrs = getAliceSchemaAttrs()
     const credDefId = getFaberCredDefName()
-    await vcxAgent.serviceCredIssuer.sendOffer({ issuerCredId, connectionId, credDefId, schemaAttrs })
+    await vcxAgent.serviceCredIssuer.sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -95,7 +95,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential')
-    expect(await vcxAgent.serviceCredIssuer.sendCredential({ issuerCredId, connectionId })).toBe(StateType.Accepted)
+    expect(await vcxAgent.serviceCredIssuer.sendCredential(issuerCredId, connectionId)).toBe(StateType.Accepted)
     logger.info('Credential sent')
 
     await vcxAgent.agentShutdownVcx()
@@ -106,7 +106,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
     const issuerDid = vcxAgent.getInstitutionDid()
     const proofData = getFaberProofData(issuerDid, proofId)
-    await vcxAgent.serviceVerifier.createProof({ proofId, proofData })
+    await vcxAgent.serviceVerifier.createProof(proofId, proofData)
     const { state, proofRequestMessage } = await vcxAgent.serviceVerifier.sendProofRequest(connectionId, proofId)
     expect(state).toBe(StateType.OfferSent)
     await vcxAgent.agentShutdownVcx()

@@ -45,7 +45,7 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Alice accepting creadential offer')
-    await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAccept({ connectionId, holderCredentialId })
+    await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAccept(connectionId, holderCredentialId)
 
     await vcxAgent.agentShutdownVcx()
   }

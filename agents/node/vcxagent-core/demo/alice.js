@@ -61,9 +61,9 @@ async function runAlice (options) {
   }
   logger.info('Connection to alice was Accepted!')
 
-  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress({ connectionId, holderCredentialId })
+  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)
 
-  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests({ connectionId }))[0]
+  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests(connectionId))[0]
   if (!proofRequest) {
     throw Error('No proof request found.')
   }

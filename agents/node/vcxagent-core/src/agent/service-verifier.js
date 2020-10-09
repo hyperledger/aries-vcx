@@ -5,7 +5,7 @@ const {
 const sleep = require('sleep-promise')
 
 module.exports.createServiceVerifier = function createServiceVerifier (logger, loadConnection, storeProof, loadProof, listProofIds) {
-  async function createProof ({ proofId, proofData }) {
+  async function createProof (proofId, proofData) {
     logger.info(`Verifier creating proof ${proofId}, proofData=${JSON.stringify(proofData)}`)
     await sleep(1000)
     const proof = await Proof.create(proofData)

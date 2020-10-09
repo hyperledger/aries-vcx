@@ -8,7 +8,7 @@ const { pollFunction } = require('../common')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer (logger, loadConnection, loadCredDef, storeIssuerCredential, loadIssuerCredential, listIssuerCredentialIds) {
   // Creates issuer credential, sends offer
-  async function sendOffer ({ issuerCredId, connectionId, credDefId, schemaAttrs }) {
+  async function sendOffer (issuerCredId, connectionId, credDefId, schemaAttrs) {
     logger.debug(`sendOffer >> issuerCredId=${issuerCredId} schemaAttrs=${schemaAttrs} credDefId=${credDefId} connectionId=${connectionId}`)
     const serConnection = await loadConnection(connectionId)
     const credDefSerialized = await loadCredDef(credDefId)
@@ -45,7 +45,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
   }
 
   // Assuming issuer credential is in state Requested, tries to send the actual credential
-  async function sendCredential ({ issuerCredId, connectionId }) {
+  async function sendCredential (issuerCredId, connectionId) {
     logger.debug('sendCredential >> ')
     const serConnection = await loadConnection(connectionId)
     const connection = await Connection.deserialize(serConnection)
@@ -65,9 +65,9 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
   }
 
   // Creates issuer credential, sends offer and waits to receive credential request
-  async function sendOfferAndWaitForCredRequest ({ issuerCredId, connectionId, credDefId, schemaAttrs }) {
+  async function sendOfferAndWaitForCredRequest (issuerCredId, connectionId, credDefId, schemaAttrs) {
     logger.debug('sendOfferAndWaitForCredRequest >> ')
-    const issuerCred = await sendOffer({ issuerCredId, schemaAttrs, credDefId, connectionId })
+    const issuerCred = await sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
 
     logger.debug('Going to wait until credential request is received.')
     const serConnection = await loadConnection(connectionId)
@@ -81,9 +81,9 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
   }
 
   // Assuming issuer credential is in state "Requested", sends credential and wait to receive Ack
-  async function sendCredentialAndProgress ({ issuerCredId, connectionId }) {
+  async function sendCredentialAndProgress (issuerCredId, connectionId) {
     logger.debug('sendCredentialAndProgress >> ')
-    await sendCredential({ issuerCredId, connectionId })
+    await sendCredential(issuerCredId, connectionId)
 
     const serConnection = await loadConnection(connectionId)
     const connection = await Connection.deserialize(serConnection)
@@ -101,10 +101,10 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
   }
 
   // Creates issuer credential, sends offer and waits to receive credential request, then sends credential
-  async function sendOfferAndCredential ({ issuerCredId, connectionId, credDefId, schemaAttrs }) {
+  async function sendOfferAndCredential (issuerCredId, connectionId, credDefId, schemaAttrs) {
     logger.debug('sendOfferAndCredential >> ')
-    await sendOfferAndWaitForCredRequest({ issuerCredId, connectionId, credDefId, schemaAttrs })
-    await sendCredentialAndProgress({ issuerCredId, connectionId })
+    await sendOfferAndWaitForCredRequest(issuerCredId, connectionId, credDefId, schemaAttrs)
+    await sendCredentialAndProgress(issuerCredId, connectionId)
   }
 
   // Assuming the credential has been issued, tries to revoke the credential on ledger

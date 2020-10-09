@@ -33,7 +33,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     return offers
   }
 
-  async function _progressCredentialToState (credential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
+  async function _progressCredentialToState (credential, connection, credentialStateTarget, attemptsThreshold = 10, timeoutMs = 2000) {
     async function progressToAcceptedState () {
       if (await credential.updateStateV2(connection) !== credentialStateTarget) {
         return { result: undefined, isFinished: false }
@@ -48,7 +48,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     }
   }
 
-  async function waitForCredential (connectionId, holderCredentialId, attemptsThreshold, timeoutMs) {
+  async function waitForCredential (connectionId, holderCredentialId, attemptsThreshold = 10, timeoutMs = 2000) {
     const connSerializedBefore = await loadConnection(connectionId)
     const connection = await Connection.deserialize(connSerializedBefore)
 
@@ -93,7 +93,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     return credential
   }
 
-  async function waitForCredentialOffer (connectionId, credOfferFilter, attemptsThreshold, timeoutMs) {
+  async function waitForCredentialOffer (connectionId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     logger.info('Going to try fetch credential offer and receive credential.')
     const connSerializedBefore = await loadConnection(connectionId)
     const connection = await Connection.deserialize(connSerializedBefore)
@@ -107,14 +107,14 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     return pickedOffer
   }
 
-  async function waitForCredentialOfferAndAccept ({ connectionId, holderCredentialId, credOfferFilter, attemptsThreshold = 10, timeoutMs = 2000 }) {
+  async function waitForCredentialOfferAndAccept (connectionId, holderCredentialId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     const pickedOffer = await waitForCredentialOffer(connectionId, credOfferFilter, attemptsThreshold, timeoutMs)
     return createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, pickedOffer)
   }
 
-  async function waitForCredentialOfferAndAcceptAndProgress ({ connectionId, holderCredentialId, credOfferFilter, attemptsThreshold = 10, timeoutMs = 2000 }) {
+  async function waitForCredentialOfferAndAcceptAndProgress (connectionId, holderCredentialId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     logger.info('Going to try fetch credential offer and receive credential.')
-    await waitForCredentialOfferAndAccept({ connectionId, holderCredentialId, credOfferFilter, attemptsThreshold, timeoutMs })
+    await waitForCredentialOfferAndAccept(connectionId, holderCredentialId, credOfferFilter, attemptsThreshold, timeoutMs)
     return waitForCredential(connectionId, holderCredentialId, attemptsThreshold, timeoutMs)
   }
 

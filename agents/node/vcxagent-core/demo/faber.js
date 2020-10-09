@@ -69,7 +69,8 @@ async function runFaber (options) {
     })
 
     logger.info('Faber is going to send credential offer')
-    await vcxAgent.serviceCredIssuer.sendOfferAndCredential({ issuerCredId, connectionId, credDefId, schemaAttrs: getAliceSchemaAttrs() })
+    const schemaAttrs = getAliceSchemaAttrs()
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, connectionId, credDefId, schemaAttrs)
     if (options.revocation) {
       await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredId)
     }
