@@ -1,12 +1,10 @@
 const {
-  Connection,
   StateType,
   IssuerCredential
 } = require('@absaoss/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer (logger, loadConnection, loadCredDef, storeIssuerCredential, loadIssuerCredential, listIssuerCredentialIds) {
-
   async function sendOffer (issuerCredId, connectionId, credDefId, schemaAttrs) {
     const connection = await loadConnection(connectionId)
     const credDef = await loadCredDef(credDefId)

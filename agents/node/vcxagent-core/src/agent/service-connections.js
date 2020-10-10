@@ -80,8 +80,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
   }
 
   async function signData (connectionId, dataBase64) {
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
+    const connection = await loadConnection(connectionId)
     var challengeBuffer = Buffer.from(dataBase64, 'base64')
     let signatureBuffer
     try {

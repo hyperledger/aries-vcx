@@ -1,6 +1,6 @@
 const readlineSync = require('readline-sync')
 const sleepPromise = require('sleep-promise')
-const { initRustapi, allowedProtocolTypes } = require('../src/index')
+const { initRustapi } = require('../src/index')
 const { createVcxAgent } = require('../src/index')
 const logger = require('./logger')('Alice')
 const { runScript } = require('./script-common')
@@ -9,6 +9,8 @@ const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
 const { extractProofRequestAttachement } = require('../src/utils/proofs')
+
+const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -45,7 +47,6 @@ async function runAlice (options) {
   const disclosedProofId = 'alice-proof'
   const vcxAgent = await createVcxAgent({
     agentName,
-    protocolType: options.protocolType,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     usePostgresWallet: false,
@@ -64,16 +65,17 @@ async function runAlice (options) {
 
   await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)
 
-  const proofRequest = (await vcxAgent.serviceProver.waitForProofRequests(connectionId))[0]
-  if (!proofRequest) {
+  const proofRequests = await vcxAgent.serviceProver.waitForProofRequests(connectionId)
+  if (proofRequests.length === 0) {
     throw Error('No proof request found.')
   }
+  const proofRequest = proofRequests[0]
 
   await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
   const requestInfo = extractProofRequestAttachement(proofRequest)
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
-  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)
+  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
   await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
@@ -89,12 +91,6 @@ const optionDefinitions = [
     alias: 'h',
     type: Boolean,
     description: 'Display this usage guide.'
-  },
-  {
-    name: 'protocolType',
-    type: String,
-    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
-    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -119,11 +115,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid (options) {
-  if (!(allowedProtocolTypes.includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
-    return false
-  }
+function areOptionsValid (_options) {
   return true
 }
 

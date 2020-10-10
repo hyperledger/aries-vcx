@@ -1,5 +1,6 @@
 /* eslint-env jest */
-const { protocolTypes, createVcxAgent, getSampleSchemaData } = require('../../src/index')
+const { buildRevocationDetails } = require('../../src')
+const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const { StateType } = require('@absaoss/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
@@ -12,7 +13,6 @@ module.exports.createFaber = async function createFaber () {
 
   const faberAgentConfig = {
     agentName,
-    protocolType: protocolTypes.v4,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
@@ -60,7 +60,11 @@ module.exports.createFaber = async function createFaber () {
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
 
     logger.info('Faber writing credential definition on ledger')
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName())
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
+      schemaId,
+      getFaberCredDefName(),
+      buildRevocationDetails({ supportRevocation: false })
+    )
 
     logger.info('Faber sending credential to Alice')
     const schemaAttrs = getAliceSchemaAttrs()

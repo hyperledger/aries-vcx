@@ -43,6 +43,21 @@ function getSampleSchemaData () {
   }
 }
 
+module.exports.buildRevocationDetails = function buildRevocationDetails ({ supportRevocation, tailsFile, maxCreds }) {
+  if (supportRevocation === true) {
+    return {
+      supportRevocation,
+      tailsFile,
+      maxCreds
+    }
+  } else {
+    return {
+      supportRevocation: false
+      // tailsFile: '/tmp/tails', // todo: CredDefinition in node wrapper should not require this when revocation is disabled
+    }
+  }
+}
+
 function getRandomInt (min, max) {
   min = Math.ceil(min)
   max = Math.floor(max)

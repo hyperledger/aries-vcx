@@ -1,6 +1,4 @@
 const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
-const { initRustapi, protocolTypes } = require('../src/index')
-const { createVcxAgent } = require('../src/index')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
 const logger = require('./logger')('Faber')
@@ -8,8 +6,11 @@ const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
-const { getSampleSchemaData } = require('../src')
-const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/utils/data')
+const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
+const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
+const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
+
+const tailsFile = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
@@ -25,7 +26,6 @@ async function runFaber (options) {
     const agentName = `faber-${uuid.v4()}`
     vcxAgent = await createVcxAgent({
       agentName,
-      protocolType: options.protocolType,
       agencyUrl: 'http://localhost:8080',
       seed: '000000000000000000000000Trustee1',
       usePostgresWallet: false,
@@ -39,7 +39,7 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName())
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }))
 
     const { connection: connectionToAlice } = await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
@@ -76,7 +76,7 @@ async function runFaber (options) {
     }
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create(getFaberProofData(vcxAgent.getInstitutionDid(), proofId))
+    const vcxProof = await Proof.create(getFaberProofDataWithNonRevocation(vcxAgent.getInstitutionDid(), proofId))
 
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)
@@ -89,6 +89,11 @@ async function runFaber (options) {
       await sleepPromise(2000)
       proofProtocolState = await vcxProof.updateState()
       logger.info(`proofState=${proofProtocolState}`)
+      if (proofProtocolState === StateType.None) {
+        logger.error(`Faber proof protocol state is ${StateType.None} which an error has ocurred.`)
+        logger.error(`Serialized proof state = ${JSON.stringify(await vcxProof.serialize())}`)
+        process.exit(-1)
+      }
     }
 
     logger.info('#27 Process the proof provided by alice.')
@@ -138,12 +143,6 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'protocolType',
-    type: String,
-    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
-    defaultValue: '4.0'
-  },
-  {
     name: 'postgresql',
     type: Boolean,
     description: 'If specified, postresql wallet will be used.',
@@ -172,11 +171,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid (options) {
-  if (!(Object.values(protocolTypes).includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(Object.values(protocolTypes))} are allowed.`)
-    return false
-  }
+function areOptionsValid (_options) {
   return true
 }
 runScript(optionDefinitions, usage, areOptionsValid, runFaber)

@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const { protocolTypes, createVcxAgent } = require('../../src/index')
+const { createVcxAgent } = require('../../src/index')
 const { StateType } = require('@absaoss/node-vcx-wrapper')
 
 module.exports.createAlice = async function createAlice () {
@@ -11,7 +11,6 @@ module.exports.createAlice = async function createAlice () {
 
   const aliceAgentConfig = {
     agentName,
-    protocolType: protocolTypes.v4,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Alice000',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
@@ -51,9 +50,9 @@ module.exports.createAlice = async function createAlice () {
 
   async function sendHolderProof (proofRequest) {
     await vcxAgent.agentInitVcx()
-
+    const mapRevRegId = (_revRegId) => { throw Error('Tails file should not be need') }
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
-    const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId)
+    const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
     await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
     expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(StateType.OfferSent)

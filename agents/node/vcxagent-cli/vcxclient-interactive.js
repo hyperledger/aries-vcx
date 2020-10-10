@@ -2,14 +2,13 @@ const readlineSync = require('readline-sync')
 const { initRustapi, getSampleSchemaData, createVcxAgent } = require('@absaoss/vcxagent-core')
 const logger = require('./logger')('VCX Client')
 
-async function createInteractiveClient (agentName, seed, acceptTaa, protocolType, rustLogLevel) {
-  logger.info(`Creating interactive client ${agentName} seed=${seed} protocolType=${protocolType}`)
+async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel) {
+  logger.info(`Creating interactive client ${agentName} seed=${seed}`)
 
   await initRustapi(rustLogLevel)
 
   const ariesAgent = await createVcxAgent({
     agentName,
-    protocolType,
     agencyUrl: 'http://localhost:8080',
     seed,
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
@@ -93,7 +92,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, protocolType
 async function runInteractive (options) {
   logger.debug(`Going to build interactive client using options ${JSON.stringify(options)}`)
   const agentName = options.name || readlineSync.question('Enter agent\'s name:\n')
-  await createInteractiveClient(agentName, options.seed, options.acceptTaa, options.protocolType, options.RUST_LOG)
+  await createInteractiveClient(agentName, options.seed, options.acceptTaa, options.RUST_LOG)
 }
 
 module.exports.runInteractive = runInteractive

@@ -59,9 +59,9 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     await storeDisclosedProof(disclosedProofId, disclosedProof)
   }
 
-  async function selectCredentials (disclosedProofId) {
+  async function selectCredentials (disclosedProofId, mapRevRegIdToTailsFilePath) {
     const disclosedProof = await loadDisclosedProof(disclosedProofId)
-    return holderSelectCredentialsForProof(disclosedProof, logger)
+    return holderSelectCredentialsForProof(disclosedProof, logger, mapRevRegIdToTailsFilePath)
   }
 
   async function generateProof (disclosedProofId, selectedCreds, selfAttestedAttrs) {

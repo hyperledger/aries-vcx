@@ -2,6 +2,12 @@ function getFaberCredDefName () {
   return 'DemoCredential123'
 }
 
+function getFaberProofDataWithNonRevocation (issuerDid, proofName) {
+  const proofData = getFaberProofData(issuerDid, proofName)
+  proofData.revocationInterval = { to: Date.now() }
+  return proofData
+}
+
 function getFaberProofData (issuerDid, proofName) {
   const proofAttributes = [
     {
@@ -31,7 +37,7 @@ function getFaberProofData (issuerDid, proofName) {
     attrs: proofAttributes,
     preds: proofPredicates,
     name: proofName,
-    revocationInterval: { to: Date.now() }
+    revocationInterval: { to: null, from: null }
   }
 }
 
@@ -48,3 +54,4 @@ function getAliceSchemaAttrs () {
 module.exports.getAliceSchemaAttrs = getAliceSchemaAttrs
 module.exports.getFaberCredDefName = getFaberCredDefName
 module.exports.getFaberProofData = getFaberProofData
+module.exports.getFaberProofDataWithNonRevocation = getFaberProofDataWithNonRevocation
