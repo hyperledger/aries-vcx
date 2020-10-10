@@ -15,7 +15,6 @@ use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
 use self::proofs::proof_request::ProofRequestMessage;
-use self::send_message::SendMessageBuilder;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
@@ -23,7 +22,6 @@ use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDa
 pub mod create_key;
 pub mod validation;
 pub mod get_message;
-pub mod send_message;
 pub mod update_profile;
 pub mod proofs;
 pub mod agent_utils;
@@ -243,15 +241,6 @@ impl<'de> Deserialize<'de> for A2AMessage {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct Forward {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypeV1,
-    #[serde(rename = "@fwd")]
-    fwd: String,
-    #[serde(rename = "@msg")]
-    msg: Vec<u8>,
-}
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct ForwardV2 {
@@ -263,7 +252,7 @@ pub struct ForwardV2 {
     msg: Value,
 }
 
-impl Forward {
+impl ForwardV2 {
     fn new(fwd: String, msg: Vec<u8>, version: ProtocolTypes) -> VcxResult<A2AMessage> {
         match version {
             settings::ProtocolTypes::V1 |
@@ -283,56 +272,6 @@ impl Forward {
             }
         }
     }
-}
-
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub struct CreateMessage {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypeV1,
-    mtype: RemoteMessageType,
-    #[serde(rename = "sendMsg")]
-    send_msg: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    uid: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "replyToMsgId")]
-    reply_to_msg_id: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct GeneralMessageDetail {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypeV1,
-    #[serde(rename = "@msg")]
-    msg: Vec<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    detail: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct MessageCreated {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypeV1,
-    pub uid: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct MessageSent {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypeV1,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub uid: Option<String>,
-    #[serde(default)]
-    pub uids: Vec<String>,
-}
-
-#[serde(untagged)]
-#[derive(Debug, Deserialize, Serialize)]
-pub enum MessageDetail {
-    General(GeneralMessageDetail),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -690,7 +629,7 @@ pub fn bundle_from_u8(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
 fn prepare_forward_message(message: Vec<u8>, did: &str, version: ProtocolTypes) -> VcxResult<Vec<u8>> {
     let agency_vk = settings::get_config_value(settings::CONFIG_AGENCY_VERKEY)?;
 
-    let message = Forward::new(did.to_string(), message, version)?;
+    let message = ForwardV2::new(did.to_string(), message, version)?;
 
     match message {
         A2AMessage::Version2(A2AMessageV2::Forward(msg)) => prepare_forward_message_for_agency_v2(&msg, &agency_vk),
@@ -731,7 +670,7 @@ fn prepare_message_for_agent_v2(messages: Vec<A2AMessage>, pw_vk: &str, agent_di
     let message = crypto::pack_message(Some(pw_vk), &receiver_keys, message.as_bytes())?;
 
     /* forward to did */
-    let message = Forward::new(agent_did.to_owned(), message, ProtocolTypes::V2)?;
+    let message = ForwardV2::new(agent_did.to_owned(), message, ProtocolTypes::V2)?;
 
     let to_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
@@ -816,8 +755,6 @@ pub fn update_data() -> UpdateProfileDataBuilder { UpdateProfileDataBuilder::cre
 
 pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
 
-pub fn send_message() -> SendMessageBuilder { SendMessageBuilder::create() }
-
 pub fn proof_request() -> ProofRequestMessage { ProofRequestMessage::create() }
 
 #[cfg(test)]
@@ -847,44 +784,4 @@ pub mod tests {
         println!("new bundle: {:?}", buf);
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_general_message_null_parameters() {
-        let _setup = SetupDefaults::init();
-
-        let details = GeneralMessageDetail {
-            msg_type: MessageTypeV1 {
-                name: "Name".to_string(),
-                ver: "1.0".to_string(),
-            },
-            msg: vec![1, 2, 3],
-            title: None,
-            detail: None,
-        };
-
-        let string: String = serde_json::to_string(&details).unwrap();
-        assert!(!string.contains("title"));
-        assert!(!string.contains("detail"));
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_create_message_null_parameters() {
-        let _setup = SetupDefaults::init();
-
-        let details = CreateMessage {
-            msg_type: MessageTypeV1 {
-                name: "Name".to_string(),
-                ver: "1.0".to_string(),
-            },
-            mtype: RemoteMessageType::ProofReq,
-            send_msg: true,
-            uid: None,
-            reply_to_msg_id: None,
-        };
-
-        let string: String = serde_json::to_string(&details).unwrap();
-        assert!(!string.contains("uid"));
-        assert!(!string.contains("replyToMsgId"));
-    }
 }
