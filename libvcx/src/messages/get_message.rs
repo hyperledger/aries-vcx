@@ -1,7 +1,6 @@
 use error::{VcxError, VcxErrorKind, VcxResult};
 use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use messages::message_type::MessageTypes;
-use messages::payload::Payloads;
 use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
@@ -274,8 +273,10 @@ pub struct Message {
     pub ref_msg_id: Option<String>,
     #[serde(skip_deserializing)]
     pub delivery_details: Vec<DeliveryDetails>,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub decrypted_payload: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub decrypted_payload: Option<String>,
+    pub decrypted_msg: Option<String>,
 }
 
 #[macro_export]
@@ -297,18 +298,12 @@ impl Message {
         // TODO: must be Result
         let mut new_message = self.clone();
         if let Some(ref payload) = self.payload {
-            let decrypted_payload = match payload {
-                MessagePayload::V2(payload) => Payloads::decrypt_payload_v2(&vk, &payload)
-                    .map(Payloads::PayloadV2)
-            };
-
-            // todo: are all these branches still even possible?
-            if let Ok(decrypted_payload) = decrypted_payload {
-                new_message.decrypted_payload = ::serde_json::to_string(&decrypted_payload).ok();
-            } else if let Ok(decrypted_payload) = self._decrypt_v3_message() {
-                new_message.decrypted_payload = ::serde_json::to_string(&json!(decrypted_payload)).ok()
+            if let Ok(decrypted_payload) = self._decrypt_v3_message() {
+                new_message.decrypted_msg = Some(decrypted_payload.msg.clone());
+                // new_message.decrypted_payload = ::serde_json::to_string(&json!(decrypted_payload)).ok()
             } else {
-                new_message.decrypted_payload = ::serde_json::to_string(&json!(null)).ok();
+                new_message.decrypted_msg = None;
+                // new_message.decrypted_payload = ::serde_json::to_string(&json!(null)).ok();
             }
         }
         new_message.payload = None;
@@ -478,58 +473,5 @@ mod tests {
         // old test:
         // let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
         // assert_eq!(result.len(), 1)
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: failing on "invalid credential preview"
-    #[test]
-    fn test_download_messages() {
-        let _setup = SetupLibraryAgencyV2::init();
-
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (_faber, alice) = ::connection::tests::create_connected_connections(None, None);
-
-        let (_, cred_def_handle) = ::credential_def::tests::create_cred_def_real(false);
-
-        let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
-        let credential_offer = ::issuer_credential::issuer_credential_create(cred_def_handle,
-                                                                             "1".to_string(),
-                                                                             institution_did.clone(),
-                                                                             "credential_name".to_string(),
-                                                                             credential_data.to_owned(),
-                                                                             1).unwrap();
-
-        ::issuer_credential::send_credential_offer(credential_offer, alice).unwrap();
-
-        thread::sleep(Duration::from_millis(1000));
-
-        let hello_uid = ::connection::send_generic_message(alice, "hello").unwrap();
-
-        // AS CONSUMER GET MESSAGES
-        ::utils::devsetup::set_consumer(None);
-
-        let _all_messages = download_messages(None, None, None).unwrap();
-
-        let pending = download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
-        assert_eq!(pending.len(), 1);
-        assert!(pending[0].msgs[0].decrypted_payload.is_some());
-
-        let accepted = download_messages(None, Some(vec!["MS-104".to_string()]), None).unwrap();
-        assert_eq!(accepted[0].msgs.len(), 2);
-
-        let specific = download_messages(None, None, Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(specific.len(), 1);
-
-        // No pending will return empty list
-        let empty = download_messages(None, Some(vec!["MS-103".to_string()]), Some(vec![accepted[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(empty.len(), 1);
-
-        let hello_msg = download_messages(None, None, Some(vec![hello_uid])).unwrap();
-        assert_eq!(hello_msg[0].msgs[0].decrypted_payload, Some("{\"@type\":{\"name\":\"hello\",\"ver\":\"1.0\",\"fmt\":\"json\"},\"@msg\":\"hello\"}".to_string()));
-
-        // Agency returns a bad request response for invalid dids
-        let invalid_did = "abc".to_string();
-        let bad_req = download_messages(Some(vec![invalid_did]), None, None);
-        assert_eq!(bad_req.unwrap_err().kind(), VcxErrorKind::PostMessageFailed);
     }
 }
