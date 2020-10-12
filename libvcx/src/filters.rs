@@ -5,7 +5,6 @@ use utils::error;
 
 use aries::messages::proof_presentation::presentation_request::PresentationRequest;
 
-// TODO: Log errors
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize Vec<PresentationRequest>: {}\nObtained error: {:?}", requests, err)))?;
@@ -14,12 +13,18 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
         .filter_map(|presentation_request| {
             match presentation_request.request_presentations_attach.content().ok() {
                 Some(content) => {
-                     match serde_json::from_str(&content).map(|value: serde_json::Value| value.get("name").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or("").to_string()) {
-                         Ok(name) if name == String::from(match_name) => Some(presentation_request),
-                         _ => None
+                     match serde_json::from_str::<serde_json::Value>(&content) {
+                         Ok(value) => match value.get("name") {
+                             Some(name) => match name.as_str() {
+                                 Some(name) if name.to_string() == String::from(match_name) => Some(presentation_request),
+                                 _ => None // Not a string or not equal
+                             }
+                             _ => None // No name field found in the content
+                         }
+                         _ => None // Content deserialization failed
                      }
                 }
-                _ => None
+                _ => None // No content
             }
         })
         .collect();
@@ -59,7 +64,6 @@ pub mod tests {
         let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH, "not there").unwrap();
         assert_eq!(filtered.len(), 0);
 
-        // TODO: fix the behavior so that this passes
         let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH, "").unwrap();
         assert_eq!(filtered.len(), 0);
     }
