@@ -324,7 +324,7 @@ impl Message {
 
         let (kind, msg) = match a2a_message.clone() {
             A2AMessage::PresentationRequest(_) => (PayloadKinds::ProofRequest, json!(&a2a_message).to_string()),
-            A2AMessage::CredentialOffer(offer) => (PayloadKinds::CredOffer, json!(&offer).to_string()),
+            A2AMessage::CredentialOffer(_) => (PayloadKinds::CredOffer, json!(&a2a_message).to_string()),
             A2AMessage::Credential(_) => (PayloadKinds::Cred, json!(&a2a_message).to_string()),
             A2AMessage::Presentation(_) => (PayloadKinds::Proof, json!(&a2a_message).to_string()),
             msg => {
