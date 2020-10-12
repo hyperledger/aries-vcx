@@ -56,11 +56,7 @@ async function runAlice (options) {
   await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  const connectionToFaber = await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
-
-  if (!connectionToFaber) {
-    throw Error('Connection with alice was not established.')
-  }
+  await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
   logger.info('Connection to alice was Accepted!')
 
   await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)

@@ -3,12 +3,12 @@ const {
 } = require('@absaoss/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 
-module.exports.createServiceVerifier = function createServiceVerifier (logger, loadConnection, storeProof, loadProof, listProofIds) {
+module.exports.createServiceVerifier = function createServiceVerifier ({ logger, loadConnection, saveProof, loadProof, listProofIds }) {
   async function createProof (proofId, proofData) {
     logger.info(`Verifier creating proof ${proofId}, proofData=${JSON.stringify(proofData)}`)
     await sleep(1000)
     const proof = await Proof.create(proofData)
-    await storeProof(proofId, proof)
+    await saveProof(proofId, proof)
     return proof
   }
 
@@ -17,7 +17,7 @@ module.exports.createServiceVerifier = function createServiceVerifier (logger, l
     const proof = await loadProof(proofId)
     await proof.requestProof(connection)
     const state = await proof.getState()
-    await storeProof(proofId, proof)
+    await saveProof(proofId, proof)
     const proofRequestMessage = proof.getProofRequestMessage()
     return { state, proofRequestMessage }
   }
@@ -26,7 +26,7 @@ module.exports.createServiceVerifier = function createServiceVerifier (logger, l
     const proof = await loadProof(proofId)
     const connection = await loadConnection(connectionId)
     const state = await proof.updateStateV2(connection)
-    await storeProof(proofId, proof)
+    await saveProof(proofId, proof)
     return state
   }
 

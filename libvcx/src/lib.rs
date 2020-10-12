@@ -367,7 +367,6 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")]
     #[test]
     fn test_double_issuance_separate_issuer_and_consumers() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();

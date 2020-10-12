@@ -4,7 +4,7 @@ const {
 } = require('@absaoss/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceCredIssuer = function createServiceCredIssuer (logger, loadConnection, loadCredDef, storeIssuerCredential, loadIssuerCredential, listIssuerCredentialIds) {
+module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds }) {
   async function sendOffer (issuerCredId, connectionId, credDefId, schemaAttrs) {
     const connection = await loadConnection(connectionId)
     const credDef = await loadCredDef(credDefId)
@@ -18,7 +18,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     })
     logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
     await issuerCred.sendOffer(connection)
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
   async function sendCredential (issuerCredId, connectionId) {
@@ -27,7 +27,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     logger.info(`Sending credential ${issuerCredId} to ${connectionId}`)
     await issuerCred.sendCredential(connection)
     const state = await issuerCred.getState()
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
     return state
   }
 
@@ -37,7 +37,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     const connection = await loadConnection(connectionId)
     logger.debug('Going to wait until credential request is received.')
     await _progressIssuerCredentialToState(issuerCred, connection, StateType.RequestReceived, 10, 2000)
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
   async function sendCredentialAndProgress (issuerCredId, connectionId) {
@@ -46,7 +46,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     const issuerCred = await loadIssuerCredential(issuerCredId)
     logger.info('Going to wait until counterparty accepts the credential.')
     await _progressIssuerCredentialToState(issuerCred, connection, StateType.Accepted, 10, 2000)
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
   async function sendOfferAndCredential (issuerCredId, connectionId, credDefId, schemaAttrs) {
@@ -80,7 +80,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
     const connection = await loadConnection(connectionId)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     const state = await issuerCred.updateStateV2(connection)
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
     return state
   }
 
@@ -88,7 +88,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer (logge
   async function credentialUpdateV1 (issuerCredId) {
     const issuerCred = await loadIssuerCredential(issuerCredId)
     const state = await issuerCred.updateState()
-    await storeIssuerCredential(issuerCredId, issuerCred)
+    await saveIssuerCredential(issuerCredId, issuerCred)
     return state
   }
 

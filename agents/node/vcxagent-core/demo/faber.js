@@ -41,7 +41,7 @@ async function runFaber (options) {
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }))
 
-    const { connection: connectionToAlice } = await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
+    await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
       logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
       logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
@@ -78,6 +78,7 @@ async function runFaber (options) {
     logger.info('#19 Create a Proof object')
     const vcxProof = await Proof.create(getFaberProofDataWithNonRevocation(vcxAgent.getInstitutionDid(), proofId))
 
+    const connectionToAlice = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)
 

@@ -1,6 +1,6 @@
 const { CredentialDef } = require('@absaoss/node-vcx-wrapper')
 
-module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef (logger, storeSchema, loadSchema, storeCredDef, loadCredDef, listCredDefIds) {
+module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef ({ logger, saveCredDef, loadCredDef, listCredDefIds }) {
   async function createCredentialDefinition (schemaId, credDefId, revocationDetails) {
     const data = {
       name: credDefId,
@@ -12,7 +12,7 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
     logger.info(`Create a new credential definition on the ledger from input: ${JSON.stringify(data)}`)
 
     const credDef = await CredentialDef.create(data)
-    await storeCredDef(credDefId, credDef)
+    await saveCredDef(credDefId, credDef)
     logger.info(`Created credentialDefinition ${credDefId}.`)
     return credDef
   }

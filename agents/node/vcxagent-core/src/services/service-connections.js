@@ -5,7 +5,7 @@ const {
 } = require('@absaoss/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceConnections = function createServiceConnections (logger, storeConnection, loadConnection, listConnectionIds) {
+module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, listConnectionIds }) {
   async function inviterConnectionCreate (connectionId, cbInvitation) {
     logger.info(`InviterConnectionSM creating connection ${connectionId}`)
     const connection = await Connection.create({ id: connectionId })
@@ -16,17 +16,18 @@ module.exports.createServiceConnections = function createServiceConnections (log
     if (cbInvitation) {
       cbInvitation(invite)
     }
-    await storeConnection(connectionId, connection)
+    await saveConnection(connectionId, connection)
     logger.info(`InviterConnectionSM has established connection ${connectionId}`)
-    return { invite, connection }
+    return invite
   }
 
   async function inviterConnectionCreateAndAccept (conenctionId, cbInvitation) {
-    const { invite, connection } = await inviterConnectionCreate(conenctionId, cbInvitation)
+    const invite = await inviterConnectionCreate(conenctionId, cbInvitation)
+    const connection = await loadConnection(conenctionId)
     await _progressConnectionToAcceptedState(connection, 20, 2000)
 
-    await storeConnection(conenctionId, connection)
-    return { invite, connection }
+    await saveConnection(conenctionId, connection)
+    return invite
   }
 
   async function inviteeConnectionAcceptFromInvitation (connectionId, invite) {
@@ -35,18 +36,15 @@ module.exports.createServiceConnections = function createServiceConnections (log
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(await connection.serialize())}`)
     await connection.connect({ data: '{}' })
     logger.debug('InviteeConnectionSM created connection agent')
-    await connection.updateState()
-
-    await storeConnection(connectionId, connection)
-    return connection
+    await saveConnection(connectionId, connection)
   }
 
   async function inviteeConnectionAcceptFromInvitationAndProgress (connectionId, invite) {
-    const connection = await inviteeConnectionAcceptFromInvitation(connectionId, invite)
+    await inviteeConnectionAcceptFromInvitation(connectionId, invite)
+    const connection = await loadConnection(connectionId)
     await _progressConnectionToAcceptedState(connection, 20, 2000)
     logger.info(`InviteeConnectionSM has established connection ${connectionId}`)
-    await storeConnection(connectionId, connection)
-    return connection
+    await saveConnection(connectionId, connection)
   }
 
   async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeoutMs) {
@@ -67,16 +65,15 @@ module.exports.createServiceConnections = function createServiceConnections (log
   async function connectionUpdate (connectionId) {
     const connection = await loadConnection(connectionId)
     const state = await connection.updateState()
-    await storeConnection(connectionId, connection)
+    await saveConnection(connectionId, connection)
     return state
   }
 
   async function connectionAutoupdate (connectionId, updateAttemptsThreshold = 10, timeoutMs = 2000) {
-    const connSerializedBefore = await loadConnection(connectionId)
-    const connection = await Connection.deserialize(connSerializedBefore)
+    const connection = await loadConnection(connectionId)
     await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeoutMs)
     logger.info('Success! Connection was progressed to Accepted state.')
-    await storeConnection(connectionId, connection)
+    await saveConnection(connectionId, connection)
   }
 
   async function signData (connectionId, dataBase64) {
@@ -133,6 +130,11 @@ module.exports.createServiceConnections = function createServiceConnections (log
     }
   }
 
+  async function getVcxConnection (connectionId) {
+    logger.warn('Usage of getVcxConnection is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
+    return loadConnection(connectionId)
+  }
+
   return {
     // inviter
     inviterConnectionCreate,
@@ -154,6 +156,7 @@ module.exports.createServiceConnections = function createServiceConnections (log
 
     getState,
     listIds,
-    printInfo
+    printInfo,
+    getVcxConnection
   }
 }

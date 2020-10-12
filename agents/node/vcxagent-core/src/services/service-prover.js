@@ -5,7 +5,7 @@ const {
   StateType
 } = require('@absaoss/node-vcx-wrapper')
 
-module.exports.createServiceProver = function createServiceProver (logger, loadConnection, storeDisclosedProof, loadDisclosedProof, listDislosedProofIds) {
+module.exports.createServiceProver = function createServiceProver ({ logger, loadConnection, saveDisclosedProof, loadDisclosedProof, listDislosedProofIds }) {
   async function _progressProofToState (proof, connection, targetStates, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
       if (!Array.isArray(targetStates)) {
@@ -56,7 +56,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
 
   async function buildDisclosedProof (disclosedProofId, proofRequest) {
     const disclosedProof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(proofRequest) })
-    await storeDisclosedProof(disclosedProofId, disclosedProof)
+    await saveDisclosedProof(disclosedProofId, disclosedProof)
   }
 
   async function selectCredentials (disclosedProofId, mapRevRegIdToTailsFilePath) {
@@ -67,7 +67,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
   async function generateProof (disclosedProofId, selectedCreds, selfAttestedAttrs) {
     const disclosedProof = await loadDisclosedProof(disclosedProofId)
     await disclosedProof.generateProof({ selectedCreds, selfAttestedAttrs })
-    await storeDisclosedProof(disclosedProofId, disclosedProof)
+    await saveDisclosedProof(disclosedProofId, disclosedProof)
   }
 
   async function sendDisclosedProof (disclosedProofId, connectionId) {
@@ -75,7 +75,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     const connection = await loadConnection(connectionId)
     await disclosedProof.sendProof(connection)
     const state = await disclosedProof.getState()
-    await storeDisclosedProof(disclosedProofId, disclosedProof)
+    await saveDisclosedProof(disclosedProofId, disclosedProof)
     return state
   }
 
@@ -85,7 +85,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     const connection = await loadConnection(connectionId)
     await _progressProofToState(disclosedProof, connection, [StateType.Accepted, StateType.None])
     const state = await disclosedProof.getState()
-    await storeDisclosedProof(disclosedProofId, disclosedProof)
+    await saveDisclosedProof(disclosedProofId, disclosedProof)
     return state
   }
 
@@ -93,7 +93,7 @@ module.exports.createServiceProver = function createServiceProver (logger, loadC
     const disclosedProof = await loadDisclosedProof(disclosedProofId)
     const connection = await loadConnection(connectionId)
     const state = await disclosedProof.updateStateV2(connection)
-    await storeDisclosedProof(disclosedProofId, disclosedProof)
+    await saveDisclosedProof(disclosedProofId, disclosedProof)
     return state
   }
 

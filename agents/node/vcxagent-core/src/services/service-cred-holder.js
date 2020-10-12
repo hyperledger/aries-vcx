@@ -6,7 +6,7 @@ const {
 } = require('@absaoss/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceCredHolder = function createServiceCredHolder (logger, loadConnection, storeHolderCredential, loadHolderCredential, listHolderCredentialIds) {
+module.exports.createServiceCredHolder = function createServiceCredHolder ({ logger, loadConnection, saveHolderCredential, loadHolderCredential, listHolderCredentialIds }) {
   async function _getOffers (connection, filter, attemptsThreshold, timeoutMs) {
     async function findSomeCredOffer () {
       let offers = await Credential.getOffers(connection)
@@ -50,7 +50,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     const credential = await loadHolderCredential(holderCredentialId)
     await _progressCredentialToState(credential, connection, StateType.Accepted, attemptsThreshold, timeoutMs)
     logger.info('Credential has been received.')
-    await storeHolderCredential(holderCredentialId, credential)
+    await saveHolderCredential(holderCredentialId, credential)
     return getCredentialData(holderCredentialId)
   }
 
@@ -66,10 +66,10 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
   async function createCredentialFromOfferAndSendRequest (connectionId, holderCredentialId, credentialOffer) {
     const connection = await loadConnection(connectionId)
     const credential = await Credential.create({ sourceId: 'credential', offer: credentialOffer })
-    await storeHolderCredential(holderCredentialId, credential)
+    await saveHolderCredential(holderCredentialId, credential)
     logger.info('Sending credential request')
     await credential.sendRequest({ connection, payment: 0 })
-    await storeHolderCredential(holderCredentialId, credential)
+    await saveHolderCredential(holderCredentialId, credential)
     return credential
   }
 
@@ -98,7 +98,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder (logge
     const connection = await loadConnection(connectionId)
     const cred = await loadHolderCredential(holderCredentialId)
     const state = await cred.updateStateV2(connection)
-    await storeHolderCredential(holderCredentialId, cred)
+    await saveHolderCredential(holderCredentialId, cred)
     return state
   }
 

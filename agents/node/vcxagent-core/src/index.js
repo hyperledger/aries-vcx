@@ -1,6 +1,6 @@
 module.exports = {
-  ...require('./agent/vcx-agent'),
-  ...require('./state/storage-service'),
+  ...require('./agent'),
+  ...require('./storage/storage-service'),
   ...require('./utils/messages'),
   ...require('./utils/vcx-workflows'),
   ...require('./common')
