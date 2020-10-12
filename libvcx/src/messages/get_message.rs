@@ -289,15 +289,14 @@ impl Message {
         }
     }
 
+    // todo: must use vk to verify send of the message
     pub fn decrypt(&self, vk: &str) -> Message {
         // TODO: must be Result
         let mut new_message = self.clone();
-        if let Some(ref payload) = self.payload {
-            if let Ok(decrypted_msg) = self._decrypt_v3_message() {
-                new_message.decrypted_msg = Some(decrypted_msg);
-            } else {
-                new_message.decrypted_msg = None;
-            }
+        if let Ok(decrypted_msg) = self._decrypt_v3_message() {
+            new_message.decrypted_msg = Some(decrypted_msg);
+        } else {
+            new_message.decrypted_msg = None;
         }
         new_message.payload = None;
         new_message
