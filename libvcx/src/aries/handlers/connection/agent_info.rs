@@ -133,7 +133,7 @@ impl AgentInfo {
     pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
         trace!("Agent::decode_message >>> message = {:?}", json!(&message).to_string());
 
-        EncryptionEnvelope::open(message.payload()?)
+        EncryptionEnvelope::anon_unpack(message.payload()?)
     }
 
     /**

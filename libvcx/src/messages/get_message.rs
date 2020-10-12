@@ -206,10 +206,12 @@ impl GetMessagesBuilder {
         msgs
             .iter()
             .map(|connection| {
+                // todo: instead of resolving our vk_key (unused) we need to resolve their vk_key
+                // pass it to decrypt() to authenticate the sender of the message
                 ::utils::libindy::signus::get_local_verkey(&connection.pairwise_did)
-                    .map(|vk| MessageByConnection {
+                    .map(|_vk| MessageByConnection {
                         pairwise_did: connection.pairwise_did.clone(),
-                        msgs: connection.msgs.iter().map(|message| message.decrypt(&vk)).collect(),
+                        msgs: connection.msgs.iter().map(|message| message.decrypt()).collect(),
                     })
             })
             .collect()
@@ -290,7 +292,7 @@ impl Message {
     }
 
     // todo: must use vk to verify send of the message
-    pub fn decrypt(&self, vk: &str) -> Message {
+    pub fn decrypt(&self) -> Message {
         // TODO: must be Result
         let mut new_message = self.clone();
         if let Ok(decrypted_msg) = self._decrypt_v3_message() {
@@ -304,7 +306,7 @@ impl Message {
 
     fn _decrypt_v3_message(&self) -> VcxResult<String> {
         use aries::utils::encryption_envelope::EncryptionEnvelope;
-        let a2a_message = EncryptionEnvelope::open(self.payload()?)?;
+        let a2a_message = EncryptionEnvelope::anon_unpack(self.payload()?)?;
         Ok(json!(&a2a_message).to_string())
     }
 }

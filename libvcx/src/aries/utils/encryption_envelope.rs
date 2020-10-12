@@ -61,29 +61,65 @@ impl EncryptionEnvelope {
         crypto::pack_message(None, &receiver_keys, message.as_bytes())
     }
 
-    pub fn open(payload: Vec<u8>) -> VcxResult<A2AMessage> {
+    fn _unpack_a2a_message(payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
+        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
+
+        let unpacked_msg = crypto::unpack_message(&payload)?;
+
+        let msg_value: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
+
+        let sender_vk = msg_value["sender_verkey"].as_str().map(String::from);
+
+        let msg_string = msg_value["message"].as_str()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
+
+        Ok((msg_string, sender_vk))
+    }
+
+    // todo: we should use auth_unpack wherever possible
+    pub fn anon_unpack(payload: Vec<u8>) -> VcxResult<A2AMessage> {
+        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
+        let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
+            trace!("EncryptionEnvelope::open >>> returning decrypted mock message");
+            AgencyMockDecrypted::get_next_decrypted_message()
+        } else {
+            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(payload)?;
+            a2a_message
+        };
+        let a2a_message = ::serde_json::from_str(&message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
+        Ok(a2a_message)
+    }
+
+    pub fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> VcxResult<A2AMessage> {
         trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
 
         let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::open >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
-            let unpacked_msg = crypto::unpack_message(&payload)?;
+            let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload)?;
 
-            let _message: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
-
-            _message["message"].as_str()
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string()
+            match sender_vk {
+                Some(sender_vk) => {
+                    if sender_vk != expected_vk {
+                        error!("auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
+                        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                                      format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
+                        );
+                    }
+                }
+                None => {
+                    error!("auth_unpack :: message was authcrypted");
+                    return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Can't authenticate message because it was anoncrypted."));
+                }
+            }
+            a2a_message
         };
-        if ::std::env::var("VCX_LOG_DECRYPTED_MESSAGES").unwrap_or("true".to_string()) == "true"
-        {
-            warn!("Raw decrypted message: {}", message);
-        }
-
-        Ok(::serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?
-        )
+        let a2a_message = ::serde_json::from_str(&message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
+        Ok(a2a_message)
     }
 }
 
@@ -121,7 +157,7 @@ pub mod tests {
         let message = A2AMessage::Ack(_ack());
 
         let envelope = EncryptionEnvelope::create(&message, Some(&setup.key), &_did_doc_4()).unwrap();
-        assert_eq!(message, EncryptionEnvelope::open(envelope.0).unwrap());
+        assert_eq!(message, EncryptionEnvelope::anon_unpack(envelope.0).unwrap());
     }
 
     #[test]
@@ -140,7 +176,7 @@ pub mod tests {
 
         let envelope = EncryptionEnvelope::create(&ack, Some(&setup.key), &did_doc).unwrap();
 
-        let message_1 = EncryptionEnvelope::open(envelope.0).unwrap();
+        let message_1 = EncryptionEnvelope::anon_unpack(envelope.0).unwrap();
 
         let message_1 = match message_1 {
             A2AMessage::Forward(forward) => {
@@ -150,7 +186,7 @@ pub mod tests {
             _ => return assert!(false)
         };
 
-        let message_2 = EncryptionEnvelope::open(message_1).unwrap();
+        let message_2 = EncryptionEnvelope::anon_unpack(message_1).unwrap();
 
         let message_2 = match message_2 {
             A2AMessage::Forward(forward) => {
@@ -160,6 +196,6 @@ pub mod tests {
             _ => return assert!(false)
         };
 
-        assert_eq!(ack, EncryptionEnvelope::open(message_2).unwrap());
+        assert_eq!(ack, EncryptionEnvelope::anon_unpack(message_2).unwrap());
     }
 }
