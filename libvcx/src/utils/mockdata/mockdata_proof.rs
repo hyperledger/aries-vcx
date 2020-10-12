@@ -236,3 +236,99 @@ pub static SERIALIZIED_PROOF_REVOKED: &str = r#"
   }
 }
 "#;
+
+pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
+[
+  {
+    "@id": "testid",
+    "comment": "institution wants you to share request1",
+    "request_presentations~attach": [
+      {
+        "@id": "libindy-request-presentation-0",
+        "data": {
+          "base64": "eyJuYW1lIjoicmVxdWVzdDEiLCJub25fcmV2b2tlZCI6bnVsbCwibm9uY2UiOiI5OTQwMTI3MjM1MDE3MTg4NTgyMzI3MTEiLCJyZXF1ZXN0ZWRfYXR0cmlidXRlcyI6eyJhdHRyaWJ1dGVfMCI6eyJuYW1lIjoiQWRkcmVzczEiLCJub25fcmV2b2tlZCI6eyJmcm9tIjpudWxsLCJ0byI6bnVsbH0sInJlc3RyaWN0aW9ucyI6eyIkb3IiOlt7IiRhbmQiOlt7ImNyZWRfZGVmX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjozOkNMOjEyNzp0YWcxIn0seyJpc3N1ZXJfZGlkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFSciJ9LHsic2NoZW1hX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjoyOnlzbHo5TnJqSG1pUlJ0Um1XdDhrdWZHZmU6Mzk0MjY3MDIuNTIzNDEzNzEwIn1dfV19fSwiYXR0cmlidXRlXzEiOnsibmFtZSI6ImFkZHJlc3MyIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8yIjp7Im5hbWUiOiJDSVRZIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8zIjp7Im5hbWUiOiJTdGF0ZSIsIm5vbl9yZXZva2VkIjp7ImZyb20iOm51bGwsInRvIjpudWxsfSwicmVzdHJpY3Rpb25zIjp7IiRvciI6W3siJGFuZCI6W3siY3JlZF9kZWZfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjM6Q0w6MTI3OnRhZzEifSx7Imlzc3Vlcl9kaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyIn0seyJzY2hlbWFfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjI6eXNsejlOcmpIbWlSUnRSbVd0OGt1ZkdmZTozOTQyNjcwMi41MjM0MTM3MTAifV19XX19LCJhdHRyaWJ1dGVfNCI6eyJuYW1lIjoiemlwIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX19LCJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6e30sInZlciI6IjEuMCIsInZlcnNpb24iOiIxLjAifQ=="
+        },
+        "mime-type": "application/json"
+      }
+    ]
+  },
+  {
+    "@id": "testid",
+    "comment": "institution wants you to share request2",
+    "request_presentations~attach": [
+      {
+        "@id": "libindy-request-presentation-0",
+        "data": {
+          "base64": "eyJuYW1lIjoicmVxdWVzdDIiLCJub25fcmV2b2tlZCI6bnVsbCwibm9uY2UiOiI3NjI0MTI1ODE0NDgxMDU3OTY1NjUxMTkiLCJyZXF1ZXN0ZWRfYXR0cmlidXRlcyI6eyJhdHRyaWJ1dGVfMCI6eyJuYW1lIjoiQWRkcmVzczEiLCJub25fcmV2b2tlZCI6eyJmcm9tIjpudWxsLCJ0byI6bnVsbH0sInJlc3RyaWN0aW9ucyI6eyIkb3IiOlt7IiRhbmQiOlt7ImNyZWRfZGVmX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjozOkNMOjEyNzp0YWcxIn0seyJpc3N1ZXJfZGlkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFSciJ9LHsic2NoZW1hX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjoyOnlzbHo5TnJqSG1pUlJ0Um1XdDhrdWZHZmU6Mzk0MjY3MDIuNTIzNDEzNzEwIn1dfV19fSwiYXR0cmlidXRlXzEiOnsibmFtZSI6ImFkZHJlc3MyIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8yIjp7Im5hbWUiOiJDSVRZIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8zIjp7Im5hbWUiOiJTdGF0ZSIsIm5vbl9yZXZva2VkIjp7ImZyb20iOm51bGwsInRvIjpudWxsfSwicmVzdHJpY3Rpb25zIjp7IiRvciI6W3siJGFuZCI6W3siY3JlZF9kZWZfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjM6Q0w6MTI3OnRhZzEifSx7Imlzc3Vlcl9kaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyIn0seyJzY2hlbWFfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjI6eXNsejlOcmpIbWlSUnRSbVd0OGt1ZkdmZTozOTQyNjcwMi41MjM0MTM3MTAifV19XX19LCJhdHRyaWJ1dGVfNCI6eyJuYW1lIjoiemlwIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX19LCJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6e30sInZlciI6IjEuMCIsInZlcnNpb24iOiIxLjAifQ=="
+        },
+        "mime-type": "application/json"
+      }
+    ]
+  }
+]
+"#;
+
+pub static PRESENTATION_REQUEST_MESSAGE_1: &str = r#"
+{
+  "@id": "testid",
+  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "comment": "institution wants you to share request1",
+  "request_presentations~attach": [
+    {
+      "@id": "libindy-request-presentation-0",
+      "data": {
+        "base64": "eyJuYW1lIjoicmVxdWVzdDEiLCJub25fcmV2b2tlZCI6bnVsbCwibm9uY2UiOiI5OTQwMTI3MjM1MDE3MTg4NTgyMzI3MTEiLCJyZXF1ZXN0ZWRfYXR0cmlidXRlcyI6eyJhdHRyaWJ1dGVfMCI6eyJuYW1lIjoiQWRkcmVzczEiLCJub25fcmV2b2tlZCI6eyJmcm9tIjpudWxsLCJ0byI6bnVsbH0sInJlc3RyaWN0aW9ucyI6eyIkb3IiOlt7IiRhbmQiOlt7ImNyZWRfZGVmX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjozOkNMOjEyNzp0YWcxIn0seyJpc3N1ZXJfZGlkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFSciJ9LHsic2NoZW1hX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjoyOnlzbHo5TnJqSG1pUlJ0Um1XdDhrdWZHZmU6Mzk0MjY3MDIuNTIzNDEzNzEwIn1dfV19fSwiYXR0cmlidXRlXzEiOnsibmFtZSI6ImFkZHJlc3MyIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8yIjp7Im5hbWUiOiJDSVRZIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8zIjp7Im5hbWUiOiJTdGF0ZSIsIm5vbl9yZXZva2VkIjp7ImZyb20iOm51bGwsInRvIjpudWxsfSwicmVzdHJpY3Rpb25zIjp7IiRvciI6W3siJGFuZCI6W3siY3JlZF9kZWZfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjM6Q0w6MTI3OnRhZzEifSx7Imlzc3Vlcl9kaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyIn0seyJzY2hlbWFfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjI6eXNsejlOcmpIbWlSUnRSbVd0OGt1ZkdmZTozOTQyNjcwMi41MjM0MTM3MTAifV19XX19LCJhdHRyaWJ1dGVfNCI6eyJuYW1lIjoiemlwIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX19LCJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6e30sInZlciI6IjEuMCIsInZlcnNpb24iOiIxLjAifQ=="
+      },
+      "mime-type": "application/json"
+    }
+  ]
+}
+"#;
+
+pub static PRESENTATION_REQUEST_MESSAGE_2: &str = r#"
+{
+  "@id": "testid",
+  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "comment": "institution wants you to share request2",
+  "request_presentations~attach": [
+    {
+      "@id": "libindy-request-presentation-0",
+      "data": {
+        "base64": "eyJuYW1lIjoicmVxdWVzdDIiLCJub25fcmV2b2tlZCI6bnVsbCwibm9uY2UiOiI3NjI0MTI1ODE0NDgxMDU3OTY1NjUxMTkiLCJyZXF1ZXN0ZWRfYXR0cmlidXRlcyI6eyJhdHRyaWJ1dGVfMCI6eyJuYW1lIjoiQWRkcmVzczEiLCJub25fcmV2b2tlZCI6eyJmcm9tIjpudWxsLCJ0byI6bnVsbH0sInJlc3RyaWN0aW9ucyI6eyIkb3IiOlt7IiRhbmQiOlt7ImNyZWRfZGVmX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjozOkNMOjEyNzp0YWcxIn0seyJpc3N1ZXJfZGlkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFSciJ9LHsic2NoZW1hX2lkIjoiMjRVaHhMYWVRRU40cG1vQkNydkFScjoyOnlzbHo5TnJqSG1pUlJ0Um1XdDhrdWZHZmU6Mzk0MjY3MDIuNTIzNDEzNzEwIn1dfV19fSwiYXR0cmlidXRlXzEiOnsibmFtZSI6ImFkZHJlc3MyIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8yIjp7Im5hbWUiOiJDSVRZIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX0sImF0dHJpYnV0ZV8zIjp7Im5hbWUiOiJTdGF0ZSIsIm5vbl9yZXZva2VkIjp7ImZyb20iOm51bGwsInRvIjpudWxsfSwicmVzdHJpY3Rpb25zIjp7IiRvciI6W3siJGFuZCI6W3siY3JlZF9kZWZfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjM6Q0w6MTI3OnRhZzEifSx7Imlzc3Vlcl9kaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyIn0seyJzY2hlbWFfaWQiOiIyNFVoeExhZVFFTjRwbW9CQ3J2QVJyOjI6eXNsejlOcmpIbWlSUnRSbVd0OGt1ZkdmZTozOTQyNjcwMi41MjM0MTM3MTAifV19XX19LCJhdHRyaWJ1dGVfNCI6eyJuYW1lIjoiemlwIiwibm9uX3Jldm9rZWQiOnsiZnJvbSI6bnVsbCwidG8iOm51bGx9LCJyZXN0cmljdGlvbnMiOnsiJG9yIjpbeyIkYW5kIjpbeyJjcmVkX2RlZl9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6MzpDTDoxMjc6dGFnMSJ9LHsiaXNzdWVyX2RpZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnIifSx7InNjaGVtYV9pZCI6IjI0VWh4TGFlUUVONHBtb0JDcnZBUnI6Mjp5c2x6OU5yakhtaVJSdFJtV3Q4a3VmR2ZlOjM5NDI2NzAyLjUyMzQxMzcxMCJ9XX1dfX19LCJyZXF1ZXN0ZWRfcHJlZGljYXRlcyI6e30sInZlciI6IjEuMCIsInZlcnNpb24iOiIxLjAifQ=="
+      },
+      "mime-type": "application/json"
+    }
+  ]
+}
+"#;
+
+pub static PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH: &str = r#"
+[
+  {
+    "@id": "testid",
+    "comment": "institution wants you to share request1",
+    "request_presentations~attach": [
+      {
+        "@id": "libindy-request-presentation-0",
+        "data": {
+          "base64": "e30="
+        },
+        "mime-type": "application/json"
+      }
+    ]
+  },
+  {
+    "@id": "testid",
+    "comment": "institution wants you to share request2",
+    "request_presentations~attach": [
+      {
+        "@id": "libindy-request-presentation-0",
+        "data": {
+          "base64": "e30="
+        },
+        "mime-type": "application/json"
+      }
+    ]
+  }
+]
+"#;

@@ -396,7 +396,7 @@ pub mod test {
 
         pub fn get_proof_request_messages(&self) -> String {
             self.activate();
-            let presentation_requests = ::disclosed_proof::get_proof_request_messages(self.connection_handle, None).unwrap();
+            let presentation_requests = ::disclosed_proof::get_proof_request_messages(self.connection_handle).unwrap();
             let presentation_request = ::serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = ::serde_json::to_string(&presentation_request).unwrap();
             presentation_request_json

@@ -50,6 +50,7 @@ pub mod disclosed_proof;
 pub mod aries;
 mod proof_utils;
 mod disclosed_proof_utils;
+mod filters;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
@@ -69,6 +70,7 @@ mod tests {
     use issuer_credential;
     use proof;
     use settings;
+    use filters;
     use utils::{
         constants::TEST_TAILS_FILE,
         devsetup::{set_consumer, set_institution},
@@ -214,8 +216,18 @@ mod tests {
     fn create_proof(connection_handle: u32, consumer_handle: Option<u32>, request_name: Option<&str>) -> u32 {
         set_consumer(consumer_handle);
         info!("create_proof >>> getting proof request messages");
-        let requests = disclosed_proof::get_proof_request_messages(connection_handle, request_name).unwrap();
-        info!("create_proof :: get proof request messages returned {}", requests);
+        let requests = {
+            let _requests = disclosed_proof::get_proof_request_messages(connection_handle).unwrap();
+            info!("create_proof :: get proof request messages returned {}", _requests);
+            match request_name {
+                Some(request_name) => {
+                    let filtered = filters::filter_proof_requests_by_name(&_requests, request_name).unwrap();
+                    info!("create_proof :: proof request messages filtered by name {}: {}", request_name, filtered);
+                    filtered
+                }
+                _ => _requests
+            }
+        };
         let requests: Value = serde_json::from_str(&requests).unwrap();
         let requests = requests.as_array().unwrap();
         assert_eq!(requests.len(), 1);
