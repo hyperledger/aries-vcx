@@ -31,7 +31,7 @@ pub struct PayloadTypeV1 {
 
 type PayloadTypeV2 = MessageTypeV2;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub enum PayloadKinds {
     CredOffer,
     CredReq,

@@ -5,6 +5,7 @@ use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
+use aries::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -265,16 +266,10 @@ pub struct Message {
     #[serde(rename = "statusCode")]
     pub status_code: MessageStatusCode,
     pub payload: Option<MessagePayload>,
-    #[serde(rename = "senderDID")]
-    pub sender_did: String,
     pub uid: String,
-    #[serde(rename = "type")]
-    pub msg_type: RemoteMessageType,
     pub ref_msg_id: Option<String>,
     #[serde(skip_deserializing)]
     pub delivery_details: Vec<DeliveryDetails>,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub decrypted_payload: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub decrypted_msg: Option<String>,
 }
@@ -287,7 +282,7 @@ macro_rules! convert_aries_message {
 }
 
 impl Message {
-    pub fn payload<'a>(&'a self) -> VcxResult<Vec<u8>> {
+    pub fn payload(&self) -> VcxResult<Vec<u8>> {
         match self.payload {
             Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, err)),
             _ => Err(VcxError::from(VcxErrorKind::InvalidState)),
@@ -298,40 +293,20 @@ impl Message {
         // TODO: must be Result
         let mut new_message = self.clone();
         if let Some(ref payload) = self.payload {
-            if let Ok(decrypted_payload) = self._decrypt_v3_message() {
-                new_message.decrypted_msg = Some(decrypted_payload.msg.clone());
-                // new_message.decrypted_payload = ::serde_json::to_string(&json!(decrypted_payload)).ok()
+            if let Ok(decrypted_msg) = self._decrypt_v3_message() {
+                new_message.decrypted_msg = Some(decrypted_msg);
             } else {
                 new_message.decrypted_msg = None;
-                // new_message.decrypted_payload = ::serde_json::to_string(&json!(null)).ok();
             }
         }
         new_message.payload = None;
         new_message
     }
 
-    fn _decrypt_v3_message(&self) -> VcxResult<::messages::payload::PayloadV1> {
-        use aries::messages::a2a::A2AMessage;
+    fn _decrypt_v3_message(&self) -> VcxResult<String> {
         use aries::utils::encryption_envelope::EncryptionEnvelope;
-        use ::messages::payload::{PayloadTypes, PayloadV1, PayloadKinds};
-
         let a2a_message = EncryptionEnvelope::open(self.payload()?)?;
-
-        let (kind, msg) = match a2a_message.clone() {
-            A2AMessage::PresentationRequest(_) => (PayloadKinds::ProofRequest, json!(&a2a_message).to_string()),
-            A2AMessage::CredentialOffer(_) => (PayloadKinds::CredOffer, json!(&a2a_message).to_string()),
-            A2AMessage::Credential(_) => (PayloadKinds::Cred, json!(&a2a_message).to_string()),
-            A2AMessage::Presentation(_) => (PayloadKinds::Proof, json!(&a2a_message).to_string()),
-            msg => {
-                let msg = json!(&msg).to_string();
-                (PayloadKinds::Other(String::from("aries")), msg)
-            }
-        };
-
-        Ok(PayloadV1 {
-            type_: PayloadTypes::build_v1(kind, "json"),
-            msg,
-        })
+        Ok(json!(&a2a_message).to_string())
     }
 }
 

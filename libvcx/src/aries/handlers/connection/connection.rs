@@ -350,26 +350,6 @@ impl Connection {
     }
 
     /**
-    Try to decrypt and deserialize message using keys for this connection.
-     */
-    pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
-        // match message.decrypted_payload {
-        match message.decrypted_msg {
-            Some(ref decrypted_msg) => {
-                // let message: ::messages::payload::PayloadV1 = ::serde_json::from_str(&payload)
-                //     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
-                //
-                // ::serde_json::from_str::<A2AMessage>(&message.msg)
-                //     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))
-
-                ::serde_json::from_str::<A2AMessage>(decrypted_msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))
-            }
-            None => self.agent_info().decode_message(message)
-        }
-    }
-
-    /**
     Sends authenticated message to connection counterparty
      */
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {

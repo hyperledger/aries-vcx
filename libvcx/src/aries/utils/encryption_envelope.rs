@@ -76,10 +76,10 @@ impl EncryptionEnvelope {
             _message["message"].as_str()
                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string()
         };
-        // if ::std::env::var("VCX_LOG_DECRYPTED_MESSAGES").unwrap_or("true".to_string()) == "true"
-        // {
-        //     warn!("Raw decrypted message: {}", message);
-        // }
+        if ::std::env::var("VCX_LOG_DECRYPTED_MESSAGES").unwrap_or("true".to_string()) == "true"
+        {
+            warn!("Raw decrypted message: {}", message);
+        }
 
         Ok(::serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?

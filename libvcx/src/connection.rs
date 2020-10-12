@@ -218,12 +218,6 @@ pub fn get_message_by_id(handle: u32, msg_id: String) -> VcxResult<A2AMessage> {
     })
 }
 
-pub fn decode_message(handle: u32, message: Message) -> VcxResult<A2AMessage> {
-    CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.decode_message(&message)
-    })
-}
-
 pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
     CONNECTION_MAP.get_mut(handle, |connection| {
@@ -590,25 +584,20 @@ pub mod tests {
         let all_messages = download_messages(None, None, None).unwrap();
         assert_eq!(all_messages.len(), 1);
         assert_eq!(all_messages[0].msgs.len(), 3);
-        // assert!(all_messages[0].msgs[0].decrypted_payload.is_some());
-        // assert!(all_messages[0].msgs[1].decrypted_payload.is_some());
         assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
         assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
 
         let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
         assert_eq!(received[0].msgs.len(), 2);
-        // assert!(received[0].msgs[0].decrypted_payload.is_some());
         assert!(received[0].msgs[0].decrypted_msg.is_some());
         assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
-        // assert!(received[0].msgs[1].decrypted_payload.is_some());
         assert!(received[0].msgs[1].decrypted_msg.is_some());
 
         // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
         let reviewed = download_messages(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
         assert_eq!(reviewed.len(), 1);
         assert_eq!(reviewed[0].msgs.len(), 1);
-        // assert!(reviewed[0].msgs[0].decrypted_payload.is_some());
         assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
         assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
 
