@@ -321,32 +321,6 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
     Ok(response)
 }
 
-pub fn get_ref_msg(msg_id: &str, pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str) -> VcxResult<(String, MessagePayload)> {
-    trace!("get_ref_msg >>> msg_id: {}, pw_did: {}, pw_vk: {}, agent_did: {}, agent_vk: {}",
-           msg_id, pw_did, pw_vk, agent_did, agent_vk);
-
-    let message: Vec<Message> = get_connection_messages(pw_did, pw_vk, agent_did, agent_vk, Some(vec![msg_id.to_string()]), None, &None)?; // TODO: FIXME version should be param
-    trace!("checking for ref_msg: {:?}", message);
-
-    let msg_id = match message.get(0).as_ref().and_then(|message| message.ref_msg_id.as_ref()) {
-        Some(ref ref_msg_id) if message[0].status_code == MessageStatusCode::Accepted => ref_msg_id.to_string(),
-        _ => return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot find referent message")),
-    };
-
-    let message: Vec<Message> = get_connection_messages(pw_did, pw_vk, agent_did, agent_vk, Some(vec![msg_id]), None, &None)?;  // TODO: FIXME version should be param
-
-    trace!("checking for pending message: {:?}", message);
-
-    // this will work for both credReq and proof types
-    match message.get(0).as_ref().and_then(|message| message.payload.as_ref()) {
-        Some(payload) if message[0].status_code == MessageStatusCode::Received => {
-            // TODO: check returned verkey
-            Ok((message[0].uid.clone(), payload.to_owned()))
-        }
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Cannot find referent message"))
-    }
-}
-
 fn _parse_status_code(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
     match status_codes {
         Some(codes) => {
@@ -375,27 +349,6 @@ pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes
             .pairwise_dids(pairwise_dids)?
             .version(&Some(::settings::get_protocol_type()))?
             .download_messages_noauth()?;
-
-    trace!("message returned: {:?}", response);
-    Ok(response)
-}
-
-pub fn download_agent_messages(status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
-    trace!("download_agent_messages >>> status_codes: {:?}, uids: {:?}", status_codes, uids);
-
-    AgencyMock::set_next_response(constants::GET_ALL_MESSAGES_RESPONSE.to_vec());
-
-    let status_codes = _parse_status_code(status_codes)?;
-
-    let response =
-        get_messages()
-            .to(&::settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_DID)?)?
-            .to_vk(&::settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY)?)?
-            .agent_did(&::settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?)?
-            .agent_vk(&::settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY)?)?
-            .uid(uids)?
-            .status_codes(status_codes)?
-            .send_secure()?;
 
     trace!("message returned: {:?}", response);
     Ok(response)
