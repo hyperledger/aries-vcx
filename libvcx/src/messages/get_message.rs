@@ -1,3 +1,4 @@
+use aries::utils::encryption_envelope::EncryptionEnvelope;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use messages::message_type::MessageTypes;
@@ -5,7 +6,6 @@ use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
-use aries::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -156,7 +156,7 @@ impl GetMessagesBuilder {
         }
     }
 
-    pub fn download_messages(&mut self) -> VcxResult<Vec<MessageByConnection>> {
+    pub fn download_messages_noauth(&mut self) -> VcxResult<Vec<MessageByConnection>> {
         trace!("GetMessages::download >>>");
 
         let data = self.prepare_download_request()?;
@@ -173,20 +173,14 @@ impl GetMessagesBuilder {
     }
 
     fn prepare_download_request(&self) -> VcxResult<Vec<u8>> {
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
-        };
+        let message = A2AMessage::Version2(
+            A2AMessageV2::GetMessages(
+                GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
+                                   self.exclude_payload.clone(),
+                                   self.uids.clone(),
+                                   self.status_codes.clone(),
+                                   self.pairwise_dids.clone()))
+        );
 
         let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
@@ -206,13 +200,10 @@ impl GetMessagesBuilder {
         msgs
             .iter()
             .map(|connection| {
-                // todo: instead of resolving our vk_key (unused) we need to resolve their vk_key
-                // pass it to decrypt() to authenticate the sender of the message
-                ::utils::libindy::signus::get_local_verkey(&connection.pairwise_did)
-                    .map(|_vk| MessageByConnection {
-                        pairwise_did: connection.pairwise_did.clone(),
-                        msgs: connection.msgs.iter().map(|message| message.decrypt()).collect(),
-                    })
+                MessageByConnection {
+                    pairwise_did: connection.pairwise_did.clone(),
+                    msgs: connection.msgs.iter().map(|message| message.decrypt()).collect(),
+                }
             })
             .collect()
     }
@@ -371,8 +362,8 @@ fn _parse_status_code(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec
     }
 }
 
-pub fn download_messages(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
-    trace!("download_messages >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
+pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+    trace!("download_messages_noauth >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
            pairwise_dids, status_codes, uids);
 
     let status_codes = _parse_status_code(status_codes)?;
@@ -383,14 +374,14 @@ pub fn download_messages(pairwise_dids: Option<Vec<String>>, status_codes: Optio
             .status_codes(status_codes)?
             .pairwise_dids(pairwise_dids)?
             .version(&Some(::settings::get_protocol_type()))?
-            .download_messages()?;
+            .download_messages_noauth()?;
 
     trace!("message returned: {:?}", response);
     Ok(response)
 }
 
 pub fn download_agent_messages(status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
-    trace!("download_messages >>> status_codes: {:?}, uids: {:?}", status_codes, uids);
+    trace!("download_agent_messages >>> status_codes: {:?}, uids: {:?}", status_codes, uids);
 
     AgencyMock::set_next_response(constants::GET_ALL_MESSAGES_RESPONSE.to_vec());
 

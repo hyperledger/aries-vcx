@@ -150,7 +150,7 @@ mod tests {
     use std::time::Duration;
 
     use connection::send_generic_message;
-    use messages::get_message::download_messages;
+    use messages::get_message::download_messages_noauth;
     use messages::MessageStatusCode;
     use messages::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
@@ -178,28 +178,28 @@ mod tests {
         thread::sleep(Duration::from_millis(1000));
         ::utils::devsetup::set_consumer(None);
 
-        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
         assert_eq!(received[0].msgs.len(), 3);
         let pairwise_did = received[0].pairwise_did.clone();
         let uid = received[0].msgs[0].uid.clone();
 
-        let reviewed = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
         let reviewed_count_before = reviewed[0].msgs.len();
 
         // update status
         let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
         update_agency_messages("MS-106", &message).unwrap();
 
-        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
         assert_eq!(received[0].msgs.len(), 2);
 
-        let reviewed = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
         let reviewed_count_after = reviewed[0].msgs.len();
         assert_eq!(reviewed_count_after, reviewed_count_before + 1);
 
-        let specific_review = download_messages(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
+        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
         assert_eq!(specific_review[0].msgs[0].uid, uid);
     }
 }

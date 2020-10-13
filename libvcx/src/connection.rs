@@ -261,7 +261,7 @@ pub mod tests {
     use serde_json::Value;
 
     use api::VcxStateType;
-    use messages::get_message::download_messages;
+    use messages::get_message::download_messages_noauth;
     use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
@@ -581,13 +581,13 @@ pub mod tests {
         // make sure messages has bee delivered
         thread::sleep(Duration::from_millis(1000));
 
-        let all_messages = download_messages(None, None, None).unwrap();
+        let all_messages = download_messages_noauth(None, None, None).unwrap();
         assert_eq!(all_messages.len(), 1);
         assert_eq!(all_messages[0].msgs.len(), 3);
         assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
         assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
 
-        let received = download_messages(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
         assert_eq!(received[0].msgs.len(), 2);
         assert!(received[0].msgs[0].decrypted_msg.is_some());
@@ -595,22 +595,22 @@ pub mod tests {
         assert!(received[0].msgs[1].decrypted_msg.is_some());
 
         // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
-        let reviewed = download_messages(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed = download_messages_noauth(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
         assert_eq!(reviewed.len(), 1);
         assert_eq!(reviewed[0].msgs.len(), 1);
         assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
         assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
 
-        let rejected = download_messages(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
+        let rejected = download_messages_noauth(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
         assert_eq!(rejected.len(), 1);
         assert_eq!(rejected[0].msgs.len(), 0);
 
-        let specific = download_messages(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
+        let specific = download_messages_noauth(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
         assert_eq!(specific.len(), 1);
         assert_eq!(specific[0].msgs.len(), 1);
 
         let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
-        let empty = download_messages(Some(vec![unknown_did]), None, None).unwrap();
+        let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();
         assert_eq!(empty.len(), 0);
     }
 }

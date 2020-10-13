@@ -287,6 +287,8 @@ pub extern fn vcx_download_agent_messages(command_handle: u32,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "This is dangerous because downloaded messages are not \
+authenticated and a message appearing to be received from certain connection might been spoofed.")]
 pub extern fn vcx_messages_download(command_handle: CommandHandle,
                                     message_status: *const c_char,
                                     uids: *const c_char,
@@ -327,7 +329,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::messages::get_message::download_messages(pw_dids, message_status, uids) {
+        match ::messages::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
