@@ -62,7 +62,7 @@ impl EncryptionEnvelope {
     }
 
     fn _unpack_a2a_message(payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
-        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
+        trace!("EncryptionEnvelope::_unpack_a2a_message >>> processing payload of {} bytes", payload.len());
 
         let unpacked_msg = crypto::unpack_message(&payload)?;
 
@@ -79,9 +79,9 @@ impl EncryptionEnvelope {
 
     // todo: we should use auth_unpack wherever possible
     pub fn anon_unpack(payload: Vec<u8>) -> VcxResult<A2AMessage> {
-        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
+        trace!("EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes", payload.len());
         let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
-            trace!("EncryptionEnvelope::open >>> returning decrypted mock message");
+            trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(payload)?;
@@ -93,10 +93,10 @@ impl EncryptionEnvelope {
     }
 
     pub fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> VcxResult<A2AMessage> {
-        trace!("EncryptionEnvelope::open >>> payload: {:?}", payload);
+        trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes", payload.len());
 
         let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
-            trace!("EncryptionEnvelope::open >>> returning decrypted mock message");
+            trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload)?;

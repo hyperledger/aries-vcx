@@ -80,7 +80,7 @@ impl AgentInfo {
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
     }
 
-    pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub fn get_messages(&self, expect_sender_vk: Option<String>) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("Agent::get_messages >>>");
 
         let messages = get_connection_messages(&self.pw_did,
@@ -91,12 +91,12 @@ impl AgentInfo {
                                                Some(vec![MessageStatusCode::Received]),
                                                &Some(ProtocolTypes::V2))?;
 
-        debug!("Agent::get_messages >>> obtained messages: {:?}", messages);
+        debug!("Agent::get_messages >>> obtained {} messages,", messages.len());
 
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
 
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decode_message(&message)?);
+            a2a_messages.insert(message.uid.clone(), self.decode_message(&message, &expect_sender_vk)?);
         }
 
         #[cfg(feature = "warnlog_fetched_messages")]
@@ -109,7 +109,7 @@ impl AgentInfo {
         Ok(a2a_messages)
     }
 
-    pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
+    pub fn get_message_by_id(&self, msg_id: &str, expected_sender_vk: Option<String>) -> VcxResult<A2AMessage> {
         trace!("Agent::get_message_by_id >>> msg_id: {:?}", msg_id);
 
         let mut messages = get_connection_messages(&self.pw_did,
@@ -125,15 +125,23 @@ impl AgentInfo {
                 .pop()
                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;
 
-        let message = self.decode_message(&message)?;
+        let message = self.decode_message(&message, &expected_sender_vk)?;
 
         Ok(message)
     }
 
-    pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
+    pub fn decode_message(&self, message: &Message, expected_sender_vk: &Option<String>) -> VcxResult<A2AMessage> {
         trace!("Agent::decode_message >>> message = {:?}", json!(&message).to_string());
 
-        EncryptionEnvelope::anon_unpack(message.payload()?)
+        match expected_sender_vk {
+            Some(expected_sender_vk) => {
+                EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk)
+            },
+            None => {
+                warn!("Message will be unpacked without verifying sender verkey");
+                EncryptionEnvelope::anon_unpack(message.payload()?)
+            }
+        }
     }
 
     /**

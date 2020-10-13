@@ -552,7 +552,7 @@ pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
 }
 
 fn parse_response_from_agency_v2(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
-    trace!("parse_response_from_agency_v2 >>> response = {:?}", response);
+    trace!("parse_response_from_agency_v2 >>> processing payload of {} bytes", response.len());
 
     let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
         warn!("parse_response_from_agency_v2 >> retrieving decrypted mock response");

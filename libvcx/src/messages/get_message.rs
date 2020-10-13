@@ -141,7 +141,7 @@ impl GetMessagesBuilder {
     }
 
     fn parse_response(&self, response: Vec<u8>) -> VcxResult<Vec<Message>> {
-        trace!("parse_get_messages_response >>> response: {:?}", response);
+        trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
 
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
@@ -200,10 +200,10 @@ impl GetMessagesBuilder {
         msgs
             .iter()
             .map(|connection| {
-                MessageByConnection {
+                Ok(MessageByConnection {
                     pairwise_did: connection.pairwise_did.clone(),
                     msgs: connection.msgs.iter().map(|message| message.decrypt()).collect(),
-                }
+                })
             })
             .collect()
     }

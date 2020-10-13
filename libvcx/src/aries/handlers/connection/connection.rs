@@ -279,7 +279,7 @@ impl Connection {
             self.update_state_with_message(&message)?;
             self.agent_info().clone().update_message_status(uid)?;
         } else if let SmConnection::Inviter(sm_inviter) = &self.connection_sm {
-            trace!("Connection::update_state >>> Inviter found no message to handel on main connection agent. Will check bootstrap agent.");
+            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
             if let Some((messages, bootstrap_agent_info)) = sm_inviter.get_bootstrap_agent_messages()? {
                 if let Some((uid, message)) = self.find_message_to_handle(messages) {
                     trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
@@ -329,13 +329,18 @@ impl Connection {
      */
     pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("Connection: get_messages >>>");
+        let expected_sender_vk = if self.state() == 4 {
+            Some(self.remote_vk()?)
+        } else {
+            None
+        };
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = sm_inviter.agent_info().get_messages()?;
+                let messages = sm_inviter.agent_info().get_messages(expected_sender_vk)?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = sm_invitee.agent_info().get_messages()?;
+                let messages = sm_invitee.agent_info().get_messages(expected_sender_vk)?;
                 Ok(messages)
             }
         }
@@ -346,7 +351,8 @@ impl Connection {
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>>");
-        self.agent_info().get_message_by_id(msg_id)
+        let expected_sender_vk = self.remote_vk().ok();
+        self.agent_info().get_message_by_id(msg_id, expected_sender_vk)
     }
 
     /**
