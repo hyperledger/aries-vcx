@@ -1,19 +1,9 @@
 const { initRustAPI, initVcxWithConfig, provisionAgent } = require('@absaoss/node-vcx-wrapper')
 const ffi = require('ffi-napi')
 const os = require('os')
-const isPortReachable = require('is-port-reachable')
-const url = require('url')
+
 const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
-
-module.exports.allowedProtocolTypes = ['1.0', '2.0', '3.0', '4.0']
-
-module.exports.protocolTypes = {
-  v1: '1.0',
-  v2: '2.0',
-  v3: '3.0',
-  v4: '4.0'
-}
 
 function getLibraryPath (libraryName) {
   const platform = os.platform()
@@ -46,12 +36,12 @@ async function initRustapi (logLevel = 'vcx=error') {
   await initRustApiAndLogger(logLevel)
 }
 
-async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed, webhookUrl, usePostgresWallet, logger) {
+async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger) {
   if (!agentName) {
     throw Error('agentName not specified')
   }
-  if (!protocolType) {
-    throw Error('protocolType not specified')
+  if (!genesisPath) {
+    throw Error('genesisPath not specified')
   }
   if (!agencyUrl) {
     throw Error('agencyUrl not specified')
@@ -66,8 +56,8 @@ async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed,
     wallet_name: agentName,
     wallet_key: '123',
     payment_method: 'null',
-    enterprise_seed: seed,
-    protocol_type: protocolType
+    protocol_type: '4.0',
+    enterprise_seed: seed
   }
   if (usePostgresWallet) {
     logger.info('Will use PostreSQL wallet. Initializing plugin.')
@@ -84,7 +74,7 @@ async function provisionAgentInAgency (agentName, protocolType, agencyUrl, seed,
   const agentProvision = JSON.parse(await provisionAgent(JSON.stringify(provisionConfig)))
   agentProvision.institution_name = agentName
   agentProvision.institution_logo_url = 'https://example.org'
-  agentProvision.genesis_path = `${__dirname}/docker.txn`
+  agentProvision.genesis_path = genesisPath
   logger.info(`Agent provision created: ${JSON.stringify(agentProvision, null, 2)}`)
   return agentProvision
 }

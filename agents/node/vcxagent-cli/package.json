@@ -11,7 +11,8 @@
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
     "readline-sync": "^1.4.10",
-    "vcxagent-core": "file:../vcxagent-core",
+    "@absaoss/vcxagent-core": "file:../vcxagent-core",
+    "@absaoss/node-vcx-wrapper": "file:../../../wrappers/node",
     "winston": "^3.3.3",
     "standard": "^14.3.1"
   },

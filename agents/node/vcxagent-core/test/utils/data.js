@@ -1,27 +1,14 @@
-function getRandomInt (min, max) {
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  return Math.floor(Math.random() * (max - min)) + min
-}
-
-function getFaberSchemaData () {
-  const version = `${getRandomInt(1, 101)}.${getRandomInt(1, 101)}.${getRandomInt(1, 101)}`
-  return {
-    data: {
-      attrNames: ['name', 'last_name', 'sex', 'date', 'degree', 'age'],
-      name: 'FaberVcx',
-      version
-    },
-    paymentHandle: 0,
-    sourceId: `your-identifier-fabervcx-${version}`
-  }
-}
-
 function getFaberCredDefName () {
   return 'DemoCredential123'
 }
 
-function getFaberProofData (issuerDid) {
+function getFaberProofDataWithNonRevocation (issuerDid, proofName) {
+  const proofData = getFaberProofData(issuerDid, proofName)
+  proofData.revocationInterval = { to: Date.now() }
+  return proofData
+}
+
+function getFaberProofData (issuerDid, proofName) {
   const proofAttributes = [
     {
       names: ['name', 'last_name', 'sex'],
@@ -49,8 +36,8 @@ function getFaberProofData (issuerDid) {
     sourceId: '213',
     attrs: proofAttributes,
     preds: proofPredicates,
-    name: 'proofForAlice',
-    revocationInterval: { to: Date.now() }
+    name: proofName,
+    revocationInterval: { to: null, from: null }
   }
 }
 
@@ -64,8 +51,7 @@ function getAliceSchemaAttrs () {
     age: '25'
   }
 }
-
-module.exports.getFaberSchemaData = getFaberSchemaData
 module.exports.getAliceSchemaAttrs = getAliceSchemaAttrs
 module.exports.getFaberCredDefName = getFaberCredDefName
 module.exports.getFaberProofData = getFaberProofData
+module.exports.getFaberProofDataWithNonRevocation = getFaberProofDataWithNonRevocation

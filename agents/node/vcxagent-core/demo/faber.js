@@ -1,41 +1,47 @@
-const { initRustapi, protocolTypes } = require('../vcx-workflows')
 const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
-const { createVcxAgent } = require('../vcx-agent')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
-const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('../test/data')
+const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
+const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
+const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
+
+const tailsFile = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   let faberServer
   let exitcode = 0
+  let vcxAgent
+  const credDefId = getFaberCredDefName()
+  const proofId = 'proof-from-alice'
+  const connectionId = 'faber-to-alice'
+  const issuerCredId = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
-    const vcxClient = await createVcxAgent({
+    vcxAgent = await createVcxAgent({
       agentName,
-      protocolType: options.protocolType,
       agencyUrl: 'http://localhost:8080',
       seed: '000000000000000000000000Trustee1',
       usePostgresWallet: false,
       logger
     })
-    await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
-    if (process.env.ACCEPT_TAA || false) {
-      await vcxClient.acceptTaa()
+    if (process.env.ACCEPT_TAA) {
+      await vcxAgent.acceptTaa()
     }
 
-    const schema = await vcxClient.createSchema()
-    const schemaId = await schema.getSchemaId()
-    await vcxClient.createCredentialDefinition(schemaId, getFaberCredDefName())
+    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }))
 
-    const { connection: connectionToAlice } = await vcxClient.inviterConnectionCreateAndAccept(agentName, (invitationString) => {
+    await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
       logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
       logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
@@ -62,11 +68,17 @@ async function runFaber (options) {
       }
     })
 
-    await vcxClient.credentialIssue({ schemaAttrs: getAliceSchemaAttrs(), credDefName: getFaberCredDefName(), connectionNameReceiver: agentName, revoke: options.revocation })
+    logger.info('Faber is going to send credential offer')
+    const schemaAttrs = getAliceSchemaAttrs()
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, connectionId, credDefId, schemaAttrs)
+    if (options.revocation) {
+      await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredId)
+    }
 
     logger.info('#19 Create a Proof object')
-    const vcxProof = await Proof.create(getFaberProofData(vcxClient.getInstitutionDid()))
+    const vcxProof = await Proof.create(getFaberProofDataWithNonRevocation(vcxAgent.getInstitutionDid(), proofId))
 
+    const connectionToAlice = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
     logger.info('#20 Request proof of degree from alice')
     await vcxProof.requestProof(connectionToAlice)
 
@@ -78,27 +90,35 @@ async function runFaber (options) {
       await sleepPromise(2000)
       proofProtocolState = await vcxProof.updateState()
       logger.info(`proofState=${proofProtocolState}`)
+      if (proofProtocolState === StateType.None) {
+        logger.error(`Faber proof protocol state is ${StateType.None} which an error has ocurred.`)
+        logger.error(`Serialized proof state = ${JSON.stringify(await vcxProof.serialize())}`)
+        process.exit(-1)
+      }
     }
 
     logger.info('#27 Process the proof provided by alice.')
     const { proofState, proof } = await vcxProof.getProof(connectionToAlice)
     assert(proofState)
     assert(proof)
-    logger.info(`proofState = ${JSON.stringify(proofProtocolState)}`)
-    logger.info(`vcxProof = ${JSON.stringify(vcxProof)}`)
+    logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)
+    logger.info(`Proof verification state =${proofState}`)
+    logger.info(`Proof = ${JSON.stringify(vcxProof)}`)
+    logger.debug(`Serialized Proof state machine ${JSON.stringify(await vcxProof.serialize())}`)
 
-    logger.info('#28 Check if proof is valid.')
-    logger.debug(`Serialized proof ${JSON.stringify(await vcxProof.serialize())}`)
     if (proofState === ProofState.Verified) {
-      logger.warn('Proof is verified.')
       if (options.revocation) {
         throw Error('Proof was verified, but was expected to be invalid, because revocation was enabled.')
+      } else {
+        logger.info('Proof was verified.')
       }
     } else if (proofState === ProofState.Invalid) {
-      logger.warn('Proof verification failed. A credential used to create proof may have been revoked.')
-      if (options.revocation === false) {
+      if (options.revocation) {
+        logger.info('Proof was determined as invalid, which was expected because the used credential was revoked.')
+      } else {
         throw Error('Proof was invalid, but was expected to be verified. Revocation was not enabled.')
       }
+      await sleepPromise(1000)
     } else {
       logger.error(`Unexpected proof state '${proofState}'.`)
       process.exit(-1)
@@ -111,6 +131,7 @@ async function runFaber (options) {
       await faberServer.close()
     }
     logger.info(`Exiting process with code ${exitcode}`)
+    await vcxAgent.agentShutdownVcx()
     process.exit(exitcode)
   }
 }
@@ -121,12 +142,6 @@ const optionDefinitions = [
     alias: 'h',
     type: Boolean,
     description: 'Display this usage guide.'
-  },
-  {
-    name: 'protocolType',
-    type: String,
-    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
-    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -157,11 +172,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid (options) {
-  if (!(Object.values(protocolTypes).includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(Object.values(protocolTypes))} are allowed.`)
-    return false
-  }
+function areOptionsValid (_options) {
   return true
 }
 runScript(optionDefinitions, usage, areOptionsValid, runFaber)

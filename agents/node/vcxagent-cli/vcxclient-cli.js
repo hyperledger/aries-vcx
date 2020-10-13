@@ -1,6 +1,5 @@
 const { runInteractive } = require('./vcxclient-interactive')
 const { runScript } = require('./script-common')
-const { allowedProtocolTypes } = require('vcxagent-core')
 
 const optionDefinitions = [
   {
@@ -8,12 +7,6 @@ const optionDefinitions = [
     alias: 'h',
     type: Boolean,
     description: 'Display this usage guide.'
-  },
-  {
-    name: 'protocolType',
-    type: String,
-    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
-    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -56,11 +49,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid (options) {
-  if (!(allowedProtocolTypes.includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
-    return false
-  }
+function areOptionsValid (_options) {
   return true
 }
 

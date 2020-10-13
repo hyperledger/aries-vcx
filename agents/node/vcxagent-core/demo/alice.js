@@ -1,14 +1,16 @@
-const { initRustapi, allowedProtocolTypes } = require('../vcx-workflows')
-const { StateType, DisclosedProof } = require('@absaoss/node-vcx-wrapper')
 const readlineSync = require('readline-sync')
-const { createVcxAgent } = require('../vcx-agent')
 const sleepPromise = require('sleep-promise')
+const { initRustapi } = require('../src/index')
+const { createVcxAgent } = require('../src/index')
 const logger = require('./logger')('Alice')
 const { runScript } = require('./script-common')
 const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
+const { extractProofRequestAttachement } = require('../src/utils/proofs')
+
+const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
 async function getInvitationString (fetchInviteUrl) {
   let invitationString
@@ -40,57 +42,42 @@ async function runAlice (options) {
 
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
-  const vcxClient = await createVcxAgent({
+  const connectionId = 'alice-to-faber'
+  const holderCredentialId = 'alice-credential'
+  const disclosedProofId = 'alice-proof'
+  const vcxAgent = await createVcxAgent({
     agentName,
-    protocolType: options.protocolType,
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     usePostgresWallet: false,
     logger
   })
-  await vcxClient.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
+  await vcxAgent.agentInitVcx()
+  await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  const connectionToFaber = await vcxClient.inviteeConnectionAcceptFromInvitation(agentName, invitationString)
-
-  if (!connectionToFaber) {
-    throw Error('Connection with alice was not established.')
-  }
+  await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
   logger.info('Connection to alice was Accepted!')
 
-  await vcxClient.waitForCredentialOfferAndAccept({ connectionName: agentName })
+  await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)
 
-  logger.info('Poll agency for a proof request')
-  let requests = await DisclosedProof.getRequests(connectionToFaber)
-  while (requests.length === 0) {
-    await sleepPromise(2000)
-    requests = await DisclosedProof.getRequests(connectionToFaber)
+  const proofRequests = await vcxAgent.serviceProver.waitForProofRequests(connectionId)
+  if (proofRequests.length === 0) {
+    throw Error('No proof request found.')
   }
-  logger.info('#23 Create a Disclosed proof object from proof request')
-  logger.debug(`Received proof request = ${JSON.stringify(requests, null, 2)}`)
-  const proof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(requests[0]) })
-  const requestInfo = JSON.parse(Buffer.from(requests[0]['request_presentations~attach'][0].data.base64, 'base64').toString('utf8'))
+  const proofRequest = proofRequests[0]
+
+  await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
+  const requestInfo = extractProofRequestAttachement(proofRequest)
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
-  logger.info('#24 Query for credentials in the wallet that satisfy the proof request')
-  const selectedCreds = await vcxClient.holderSelectCredentialsForProof(proof)
+  const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
   const selfAttestedAttrs = { attribute_3: 'Smith' }
-
-  logger.info('Generate the proof.')
-  logger.debug(`Proof is using wallet credentials:\n${JSON.stringify(selectedCreds, null, 2)}
-  \nProof is using self attested attributes: ${JSON.stringify(selfAttestedAttrs, null, 2)}`)
-  await proof.generateProof({ selectedCreds, selfAttestedAttrs })
-
-  logger.info('Send the proof to faber')
-  await proof.sendProof(connectionToFaber)
-
-  logger.info('Wait for Faber to receive the proof')
-  let proofState = await proof.updateState()
-  while (proofState !== StateType.Accepted && proofState !== StateType.None) {
-    await sleepPromise(2000)
-    proofState = await proof.updateState()
-  }
+  await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
+  await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
+
+  await vcxAgent.agentShutdownVcx()
   process.exit(0)
 }
 
@@ -100,12 +87,6 @@ const optionDefinitions = [
     alias: 'h',
     type: Boolean,
     description: 'Display this usage guide.'
-  },
-  {
-    name: 'protocolType',
-    type: String,
-    description: 'Protocol type. Possible values: "1.0" "2.0" "3.0" "4.0". Default is 4.0',
-    defaultValue: '4.0'
   },
   {
     name: 'postgresql',
@@ -130,11 +111,7 @@ const usage = [
   }
 ]
 
-function areOptionsValid (options) {
-  if (!(allowedProtocolTypes.includes(options.protocolType))) {
-    console.error(`Unknown protocol type ${options.protocolType}. Only ${JSON.stringify(allowedProtocolTypes)} are allowed.`)
-    return false
-  }
+function areOptionsValid (_options) {
   return true
 }
 
