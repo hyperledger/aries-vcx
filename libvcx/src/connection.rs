@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde_json;
 
 use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::connection::{Connection as ConnectionV3, SmConnectionState};
+use aries::handlers::connection::connection::{Connection, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
@@ -17,7 +17,7 @@ use utils::error;
 use utils::object_cache::ObjectCache;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<ConnectionV3> = ObjectCache::<ConnectionV3>::new("connections-cache");
+    static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
 }
 
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
@@ -90,21 +90,21 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     })
 }
 
-fn store_connection(connection: ConnectionV3) -> VcxResult<u32> {
+fn store_connection(connection: Connection) -> VcxResult<u32> {
     CONNECTION_MAP.add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
 }
 
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = ConnectionV3::create(source_id);
+    let connection = Connection::create(source_id);
     return store_connection(connection);
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = ConnectionV3::create_with_invite(source_id, invitation)?;
+        let connection = Connection::create_with_invite(source_id, invitation)?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
@@ -188,15 +188,15 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-impl Into<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
+impl Into<(SmConnectionState, AgentInfo, String)> for Connection {
     fn into(self) -> (SmConnectionState, AgentInfo, String) {
         (self.state_object(), self.agent_info().to_owned(), self.source_id())
     }
 }
 
-impl From<(SmConnectionState, AgentInfo, String)> for ConnectionV3 {
-    fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> ConnectionV3 {
-        ConnectionV3::from_parts(source_id, agent_info, state)
+impl From<(SmConnectionState, AgentInfo, String)> for Connection {
+    fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> Connection {
+        Connection::from_parts(source_id, agent_info, state)
     }
 }
 
@@ -232,7 +232,7 @@ pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 }
 
 pub fn send_message_to_self_endpoint(message: A2AMessage, did_doc: &DidDoc) -> VcxResult<()> {
-    ConnectionV3::send_message_to_self_endpoint(&message, did_doc)
+    Connection::send_message_to_self_endpoint(&message, did_doc)
 }
 
 pub fn is_v3_connection(connection_handle: u32) -> VcxResult<bool> {

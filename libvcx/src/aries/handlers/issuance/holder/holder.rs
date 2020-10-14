@@ -49,7 +49,7 @@ impl Holder {
         self.holder_sm.get_source_id()
     }
 
-    pub fn get_credential(&self) -> VcxResult<(String, Credential)> {
+    pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         self.holder_sm.get_credential()
     }
 

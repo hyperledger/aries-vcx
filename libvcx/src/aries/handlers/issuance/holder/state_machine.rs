@@ -212,12 +212,12 @@ impl HolderSM {
         }
     }
 
-    pub fn get_credential(&self) -> VcxResult<(String, Credential)> {
+    pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         match self.state {
             HolderState::Finished(ref state) => {
                 let cred_id = state.cred_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot get credential: Credential Id not found"))?;
                 let credential = state.credential.clone().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot get credential: Credential not found"))?;
-                Ok((cred_id, credential))
+                Ok((cred_id, credential.to_a2a_message()))
             }
             _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get credential: Credential Issuance is not finished yet"))
         }
