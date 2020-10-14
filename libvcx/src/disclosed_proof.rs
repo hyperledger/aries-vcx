@@ -161,6 +161,12 @@ pub fn retrieve_credentials(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get_mut(handle, |proof| {
+        proof.presentation_request_data()
+    })
+}
+
 pub fn is_valid_handle(handle: u32) -> bool {
     HANDLE_MAP.has_handle(handle)
 }
