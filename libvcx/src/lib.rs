@@ -153,7 +153,7 @@ mod tests {
         ])
     }
 
-    fn create_and_send_cred_offer(did: &str, cred_def_handle: u32, connection: u32, credential_data: &str, comment: Option<String>) -> u32 {
+    fn create_and_send_cred_offer(did: &str, cred_def_handle: u32, connection: u32, credential_data: &str, comment: Option<&str>) -> u32 {
         set_institution(None);
         info!("create_and_send_cred_offer >> creating issuer credential");
         let handle_cred = issuer_credential::issuer_credential_create(cred_def_handle,
@@ -163,20 +163,20 @@ mod tests {
                                                                       credential_data.to_string(),
                                                                       1).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer_credential::send_credential_offer(handle_cred, connection, comment).unwrap();
+        issuer_credential::send_credential_offer(handle_cred, connection, comment.map(|s| String::from(s))).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         handle_cred
     }
 
-    fn send_cred_req(connection: u32, consumer_handle: Option<u32>, comment: Option<String>) -> u32 {
+    fn send_cred_req(connection: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
         info!("send_cred_req >>> switching to consumer");
         set_consumer(consumer_handle);
         info!("send_cred_req :: getting offers");
         let credential_offers = credential::get_credential_offer_messages(connection).unwrap();
         let credential_offers = match comment {
             Some(comment) => {
-                let filtered = filters::filter_credential_offers_by_comment(&credential_offers, &comment).unwrap();
+                let filtered = filters::filter_credential_offers_by_comment(&credential_offers, comment).unwrap();
                 info!("send_cred_req :: credential offer  messages filtered by comment {}: {}", comment, filtered);
                 filtered
             }
@@ -294,12 +294,12 @@ mod tests {
         ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
     }
 
-    fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>, comment: Option<String>) -> u32 {
+    fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
         set_institution(None);
         info!("Generated credential data: {}", credential_data);
-        let credential_offer = create_and_send_cred_offer(settings::CONFIG_INSTITUTION_DID, cred_def_handle, alice, &credential_data, comment.clone());
+        let credential_offer = create_and_send_cred_offer(settings::CONFIG_INSTITUTION_DID, cred_def_handle, alice, &credential_data, comment);
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let credential = send_cred_req(faber, consumer_handle, comment.clone());
+        let credential = send_cred_req(faber, consumer_handle, comment);
         info!("AS INSTITUTION SEND CREDENTIAL");
         send_credential(credential_offer, alice, credential, consumer_handle);
         credential_offer
@@ -336,7 +336,6 @@ mod tests {
             }
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true)
         };
-        let proof_req_data = disclosed_proof::get_proof_request_data(proof_handle_prover);
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
         generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str, consumer_handle);
@@ -727,17 +726,24 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
     }
 
     #[test]
@@ -753,16 +759,22 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
         revoke_credential(credential_handle1, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
@@ -781,19 +793,25 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
         revoke_credential(credential_handle2, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
     
     #[test]
@@ -809,15 +827,21 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         rotate_rev_reg(cred_def_handle);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
@@ -836,17 +860,23 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         rotate_rev_reg(cred_def_handle);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
         revoke_credential(credential_handle1, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
@@ -865,19 +895,25 @@ mod tests {
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
-        let (req1, req2) = (String::from("request1"), String::from("request2"));
+        let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req1));
+        let credential_handle1 = _exchange_credential(credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req1);
         rotate_rev_reg(cred_def_handle);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(credential_data2, cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), Some(req2));
+        let credential_handle2 = _exchange_credential(credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, Some(consumer), req2);
 
         revoke_credential(credential_handle2, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), None);
-        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), None, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
+
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
+        _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
+        set_institution(Some(verifier));
+        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 }
