@@ -165,7 +165,6 @@ pub fn is_valid_handle(handle: u32) -> bool {
     HANDLE_MAP.has_handle(handle)
 }
 
-//TODO one function with credential
 fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
     if !connection::is_v3_connection(connection_handle)? {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
@@ -177,8 +176,8 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
     }
 
     let presentation_request = Prover::get_presentation_request(connection_handle, msg_id)?;
-    return serde_json::to_string_pretty(&presentation_request)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)));
+    serde_json::to_string_pretty(&presentation_request)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)))
 }
 
 pub fn get_proof_request_messages(connection_handle: u32) -> VcxResult<String> {

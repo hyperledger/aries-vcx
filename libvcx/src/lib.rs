@@ -39,7 +39,6 @@ pub mod messages;
 pub mod api;
 pub mod connection;
 pub mod issuer_credential;
-pub mod credential_request;
 pub mod proof;
 pub mod schema;
 pub mod credential_def;

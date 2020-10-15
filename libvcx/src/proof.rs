@@ -293,9 +293,7 @@ pub mod tests {
 
         let handle = PROOF_MAP.add(proof).unwrap();
         let proof_str = get_proof(handle).unwrap();
-        // TODO: Fix A2AMessage serialization
-        // v3/messages A2AMessages do not serialize type and so following statement fails.
-        // assert_eq!(&proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION);
+        assert_eq!(proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION.replace("\n", "").replace(" ", ""));
     }
 
     #[test]
