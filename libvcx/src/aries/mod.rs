@@ -263,7 +263,7 @@ pub mod test {
                                                                                    String::from("cred"),
                                                                                    credential_data,
                                                                                    0).unwrap();
-            ::issuer_credential::send_credential_offer(self.credential_handle, self.connection_handle).unwrap();
+            ::issuer_credential::send_credential_offer(self.credential_handle, self.connection_handle, None).unwrap();
             ::issuer_credential::update_state(self.credential_handle, None, None).unwrap();
             assert_eq!(2, ::issuer_credential::get_state(self.credential_handle).unwrap());
         }

@@ -29,8 +29,8 @@ impl CredentialOffer {
         self
     }
 
-    pub fn set_comment(mut self, comment: String) -> Self {
-        self.comment = Some(comment);
+    pub fn set_comment(mut self, comment: Option<String>) -> Self {
+        self.comment = comment;
         self
     }
 
@@ -70,8 +70,8 @@ pub mod tests {
         })
     }
 
-    fn _comment() -> String {
-        String::from("comment")
+    fn _comment() -> Option<String> {
+        Some(String::from("comment"))
     }
 
     pub fn _value() -> (&'static str, &'static str) {
@@ -98,7 +98,7 @@ pub mod tests {
 
         CredentialOffer {
             id: MessageId::id(),
-            comment: Some(_comment()),
+            comment: _comment(),
             credential_preview: _preview_data(),
             offers_attach: attachment,
             thread: Some(_thread()),

@@ -34,7 +34,7 @@ impl Prover {
 
     pub fn retrieve_credentials(&self) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
-        let presentation_request = self.prover_sm.presentation_request().request_presentations_attach.content()?;
+        let presentation_request = self.presentation_request_data()?;
         anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request)
     }
 
@@ -117,21 +117,25 @@ impl Prover {
         Ok(presentation_request)
     }
 
-    pub fn get_presentation_request_messages(connection_handle: u32) -> VcxResult<Vec<PresentationRequest>> {
+    pub fn get_presentation_request_messages(connection_handle: u32) -> VcxResult<Vec<A2AMessage>> {
         trace!("Prover::get_presentation_request_messages >>> connection_handle: {:?}", connection_handle);
 
-        let presentation_requests: Vec<PresentationRequest> =
+        let presentation_requests: Vec<A2AMessage> =
             connection::get_messages(connection_handle)?
                 .into_iter()
                 .filter_map(|(_, message)| {
                     match message {
-                        A2AMessage::PresentationRequest(presentation_request) => Some(presentation_request),
+                        A2AMessage::PresentationRequest(_) => Some(message),
                         _ => None
                     }
                 })
                 .collect();
 
         Ok(presentation_requests)
+    }
+
+    pub fn presentation_request_data(&self) -> VcxResult<String> {
+        self.prover_sm.presentation_request().request_presentations_attach.content()
     }
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }

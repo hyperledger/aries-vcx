@@ -104,7 +104,7 @@ impl Verifier {
     pub fn get_presentation(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
 
-        let proof = self.verifier_sm.presentation()?;
+        let proof = self.verifier_sm.presentation()?.to_a2a_message();
         Ok(json!(proof).to_string())
     }
 

@@ -2,7 +2,7 @@ use serde_json;
 
 use aries::{
     handlers::issuance::holder::holder::Holder,
-    messages::issuance::credential_offer::CredentialOffer as CredentialOfferV3,
+    messages::issuance::credential_offer::CredentialOffer,
 };
 use error::prelude::*;
 use settings::indy_mocks_enabled;
@@ -35,8 +35,8 @@ fn handle_err(err: VcxError) -> VcxError {
     }
 }
 
-fn create_credential_v3(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> {
-    trace!("create_credential_v3 >>> source_id: {}, offer: {}", source_id, secret!(&offer));
+fn create_credential(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> {
+    trace!("create_credential >>> source_id: {}, offer: {}", source_id, secret!(&offer));
 
     let offer_message = ::serde_json::from_str::<serde_json::Value>(offer)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Message: {:?}", err)))?;
@@ -46,7 +46,7 @@ fn create_credential_v3(source_id: &str, offer: &str) -> VcxResult<Option<Holder
         offer => offer
     };
 
-    if let Ok(cred_offer) = serde_json::from_value::<CredentialOfferV3>(offer_message) {
+    if let Ok(cred_offer) = serde_json::from_value::<CredentialOffer>(offer_message) {
         return Ok(Some(Holder::create(cred_offer, source_id)?));
     }
 
@@ -57,7 +57,7 @@ fn create_credential_v3(source_id: &str, offer: &str) -> VcxResult<Option<Holder
 pub fn credential_create_with_offer(source_id: &str, offer: &str) -> VcxResult<u32> {
     trace!("credential_create_with_offer >>> source_id: {}, offer: {}", source_id, secret!(&offer));
 
-    let cred_offer: CredentialOfferV3 = serde_json::from_str(offer)
+    let cred_offer: CredentialOffer = serde_json::from_str(offer)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                           format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err)))?;
 
@@ -71,7 +71,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     let offer = get_credential_offer_msg(connection_handle, &msg_id)?;
     trace!("credential_create_with_msgid ::: for msg_id {} found offer {}", msg_id, offer);
 
-    let credential = create_credential_v3(source_id, &offer)?
+    let credential = create_credential(source_id, &offer)?
         .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))?;
 
     let handle = HANDLE_MAP.add(credential)?;
@@ -214,9 +214,8 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 #[cfg(test)]
 pub mod tests {
     use api::VcxStateType;
-    use aries::messages::issuance::credential::Credential as CredentialV3;
+    use aries::messages::issuance::credential::Credential as Credential;
     use connection;
-    use credential_request::CredentialRequest;
     use utils::devsetup::*;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
 
@@ -295,10 +294,11 @@ pub mod tests {
 
         info!("full_credential_test:: going to get_credential");
         let msg = get_credential(handle_cred).unwrap();
+        info!("full_credential_test:: get_credential returned {}", msg);
         let msg_value: serde_json::Value = serde_json::from_str(&msg).unwrap();
 
         info!("full_credential_test:: going to deserialize credential: {:?}", msg_value);
-        let _credential_struct: CredentialV3 = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
+        let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
     }
 
     #[test]
@@ -318,7 +318,7 @@ pub mod tests {
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(c_h).unwrap());
 
         let msg = generate_credential_request_msg(c_h, &my_pw_did, &their_pw_did).unwrap();
-        ::serde_json::from_str::<CredentialRequest>(&msg).unwrap();
+        // ::serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
     #[test]
@@ -331,7 +331,7 @@ pub mod tests {
         let offer = get_credential_offer_messages(connection_h).unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();
         println!("Serialized credential offer: {:?}", &o[0]);
-        let _credential_offer: CredentialOfferV3 = serde_json::from_str(&o[0].to_string()).unwrap();
+        let _credential_offer: CredentialOffer = serde_json::from_str(&o[0].to_string()).unwrap();
     }
 
     #[test]
@@ -353,6 +353,6 @@ pub mod tests {
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();
         let cred_value: serde_json::Value = serde_json::from_str(&cred_string).unwrap();
-        let _credential_struct: CredentialV3 = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
+        let _credential_struct: Credential = serde_json::from_str(cred_value.to_string().as_str()).unwrap();
     }
 }

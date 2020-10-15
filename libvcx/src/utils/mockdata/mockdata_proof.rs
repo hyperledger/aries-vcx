@@ -241,6 +241,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
 [
   {
     "@id": "testid",
+    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request1",
     "request_presentations~attach": [
       {
@@ -254,6 +255,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
   },
   {
     "@id": "testid",
+    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request2",
     "request_presentations~attach": [
       {
@@ -306,6 +308,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH: &str = r#"
 [
   {
     "@id": "testid",
+    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request1",
     "request_presentations~attach": [
       {
@@ -319,6 +322,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH: &str = r#"
   },
   {
     "@id": "testid",
+    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request2",
     "request_presentations~attach": [
       {
