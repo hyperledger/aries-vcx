@@ -271,7 +271,8 @@ impl Connection {
             return Ok(());
         }
 
-        let messages = self.get_messages()?;
+        // connection protocol itself handles message authentication where it makes sense
+        let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 
         if let Some((uid, message)) = self.find_message_to_handle(messages) {
@@ -325,34 +326,53 @@ impl Connection {
     }
 
     /**
-    Get messages received from connection counterparty.
-     */
-    pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
-        trace!("Connection: get_messages >>>");
-        let expected_sender_vk = if self.state() == 4 {
-            Some(self.remote_vk()?)
-        } else {
-            None
-        };
+Get messages received from connection counterparty.
+ */
+    pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = sm_inviter.agent_info().get_messages(expected_sender_vk)?;
+                let messages = sm_inviter.agent_info().get_messages_noauth()?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = sm_invitee.agent_info().get_messages(expected_sender_vk)?;
+                let messages = sm_invitee.agent_info().get_messages_noauth()?;
                 Ok(messages)
             }
         }
     }
 
     /**
+    Get messages received from connection counterparty.
+     */
+    pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
+        let expected_sender_vk = self.get_expected_sender_vk()?;
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                let messages = sm_inviter.agent_info().get_messages(&expected_sender_vk)?;
+                Ok(messages)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                let messages = sm_invitee.agent_info().get_messages(&expected_sender_vk)?;
+                Ok(messages)
+            }
+        }
+    }
+
+    fn get_expected_sender_vk(&self) -> VcxResult<String> {
+        self.remote_vk()
+            .map_err(|err|
+                VcxError::from_msg(VcxErrorKind::NotReady, "Verkey of connection counterparty \
+                is not known, hence it would be impossible to authenticate message downloaded by id.")
+            )
+    }
+
+    /**
     Get messages received from connection counterparty by id.
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>>");
-        let expected_sender_vk = self.remote_vk()?;
-        self.agent_info().get_message_by_id(msg_id, Some(expected_sender_vk))
+        trace!("Connection: get_message_by_id >>> msg_id={}", msg_id);
+        let expected_sender_vk = self.get_expected_sender_vk()?;
+        self.agent_info().get_message_by_id(msg_id, &expected_sender_vk)
     }
 
     /**

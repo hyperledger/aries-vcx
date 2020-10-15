@@ -122,7 +122,10 @@ impl SmConnectionInviter {
     pub fn get_bootstrap_agent_messages(&self) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
         let expected_sender_vk = self.remote_vk().ok();
         if let Some(prev_agent_info) = self.prev_agent_info() {
-            let messages = prev_agent_info.get_messages(expected_sender_vk)?;
+            let messages = match expected_sender_vk {
+                None => prev_agent_info.get_messages_noauth()?,
+                Some(expected_sender_vk) => prev_agent_info.get_messages(&expected_sender_vk)?
+            };
             return Ok(Some((messages, prev_agent_info.clone())));
         }
         Ok(None)
