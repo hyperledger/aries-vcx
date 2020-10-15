@@ -351,8 +351,8 @@ impl Connection {
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>>");
-        let expected_sender_vk = self.remote_vk().ok();
-        self.agent_info().get_message_by_id(msg_id, expected_sender_vk)
+        let expected_sender_vk = self.remote_vk()?;
+        self.agent_info().get_message_by_id(msg_id, Some(expected_sender_vk))
     }
 
     /**

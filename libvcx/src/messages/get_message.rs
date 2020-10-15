@@ -167,7 +167,7 @@ impl GetMessagesBuilder {
             return Ok(Vec::new());
         }
 
-        let response = self.parse_download_messages_response(response)?;
+        let response = self.parse_download_messages_response_noauth(response)?;
 
         Ok(response)
     }
@@ -187,7 +187,8 @@ impl GetMessagesBuilder {
         prepare_message_for_agency(&message, &agency_did, &self.version)
     }
 
-    fn parse_download_messages_response(&self, response: Vec<u8>) -> VcxResult<Vec<MessageByConnection>> {
+    // todo: This should be removed after public method vcx_messages_download is removed
+    fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> VcxResult<Vec<MessageByConnection>> {
         trace!("parse_download_messages_response >>>");
         let mut response = parse_response_from_agency(&response, &self.version)?;
 
@@ -202,7 +203,7 @@ impl GetMessagesBuilder {
             .map(|connection| {
                 Ok(MessageByConnection {
                     pairwise_did: connection.pairwise_did.clone(),
-                    msgs: connection.msgs.iter().map(|message| message.decrypt()).collect(),
+                    msgs: connection.msgs.iter().map(|message| message.decrypt_noauth()).collect(),
                 })
             })
             .collect()
@@ -282,9 +283,7 @@ impl Message {
         }
     }
 
-    // todo: must use vk to verify send of the message
-    pub fn decrypt(&self) -> Message {
-        // TODO: must be Result
+    pub fn decrypt_noauth(&self) -> Message {
         let mut new_message = self.clone();
         if let Ok(decrypted_msg) = self._decrypt_v3_message() {
             new_message.decrypted_msg = Some(decrypted_msg);
@@ -352,46 +351,4 @@ pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes
 
     trace!("message returned: {:?}", response);
     Ok(response)
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "agency_pool_tests")]
-    use std::thread;
-    #[cfg(feature = "agency_pool_tests")]
-    use std::time::Duration;
-
-    use connection::send_generic_message;
-    use utils::constants::{GET_ALL_MESSAGES_RESPONSE, GET_MESSAGES_RESPONSE};
-    use utils::devsetup::*;
-
-    use super::*;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_parse_get_messages_response() {
-        let _setup = SetupAriesMocks::init();
-
-        // we should setup keys, build encrypted response from agency
-        // then test we are able to decrypt th message
-
-        // old test:
-        // let result = GetMessagesBuilder::create_v1().parse_response(GET_MESSAGES_RESPONSE.to_vec()).unwrap();
-        // assert_eq!(result.len(), 3)
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_parse_get_connection_messages_response() {
-        let _setup = SetupAriesMocks::init();
-
-        // we should setup keys, build encrypted response from agency
-        // then test we are able to decrypt th message
-
-        // old test:
-        // let result = GetMessagesBuilder::create().version(&Some(ProtocolTypes::V1)).unwrap().parse_download_messages_response(GET_ALL_MESSAGES_RESPONSE.to_vec()).unwrap();
-        // assert_eq!(result.len(), 1)
-    }
 }
