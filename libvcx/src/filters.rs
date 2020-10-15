@@ -4,6 +4,7 @@ use error::prelude::*;
 use utils::error;
 
 use aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries::messages::issuance::credential_offer::CredentialOffer;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests)
@@ -31,10 +32,32 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
     Ok(filtered)
 }
 
+fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec<CredentialOffer>> {
+    let credential_offers: Vec<CredentialOffer> = serde_json::from_str(offers)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize Vec<CredentialOffer>: {}\nObtained error: {:?}", offers, err)))?;
+    let filtered = credential_offers
+        .into_iter()
+        .filter_map(|credential_offer| {
+            match &credential_offer.comment {
+                Some(comment) if String::from(comment) == String::from(match_comment) => Some(credential_offer),
+                _ => None
+            }
+        })
+        .collect();
+    Ok(filtered)
+}
+
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
     let presentation_requests: Vec<PresentationRequest> = _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to serialize filtered proof requests: {}\nObtained error: {:?}", requests, err)))?;
+    Ok(filtered)
+}
+
+pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxResult<String> {
+    let credential_offers: Vec<CredentialOffer> = _filter_offers_by_comment(offers, comment)?;
+    let filtered: String = serde_json::to_string(&credential_offers)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to serialize filtered credential offers: {}\nObtained error: {:?}", offers, err)))?;
     Ok(filtered)
 }
 

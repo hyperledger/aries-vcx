@@ -8,7 +8,7 @@ use aries::messages::issuance::credential_request::CredentialRequest;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialInit(u32),
+    CredentialInit(u32, Option<String>),
     CredentialSend(u32),
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
