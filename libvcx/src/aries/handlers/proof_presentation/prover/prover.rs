@@ -117,15 +117,15 @@ impl Prover {
         Ok(presentation_request)
     }
 
-    pub fn get_presentation_request_messages(connection_handle: u32) -> VcxResult<Vec<PresentationRequest>> {
+    pub fn get_presentation_request_messages(connection_handle: u32) -> VcxResult<Vec<A2AMessage>> {
         trace!("Prover::get_presentation_request_messages >>> connection_handle: {:?}", connection_handle);
 
-        let presentation_requests: Vec<PresentationRequest> =
+        let presentation_requests: Vec<A2AMessage> =
             connection::get_messages(connection_handle)?
                 .into_iter()
                 .filter_map(|(_, message)| {
                     match message {
-                        A2AMessage::PresentationRequest(presentation_request) => Some(presentation_request),
+                        A2AMessage::PresentationRequest(_) => Some(message),
                         _ => None
                     }
                 })
