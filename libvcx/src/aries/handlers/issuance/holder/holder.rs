@@ -1,11 +1,11 @@
-// Holder
+use std::collections::HashMap;
 
 use connection;
 use error::prelude::*;
 use aries::handlers::issuance::holder::state_machine::HolderSM;
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use aries::messages::a2a::A2AMessage;
-use aries::messages::issuance::credential::Credential;
+use aries::messages::issuance::credential::{Credential, CredentialData};
 use aries::messages::issuance::credential_offer::CredentialOffer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,6 +51,26 @@ impl Holder {
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         self.holder_sm.get_credential()
+    }
+
+    pub fn get_offered_attributes(&self) -> VcxResult<String> {
+        let credential = self.holder_sm.get_credential()?.1;
+        let content = credential.credentials_attach.content()?;
+        let cred_data: CredentialData = serde_json::from_str(&content)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", content, err)))?;
+
+        let mut new_map: HashMap<String, String> = HashMap::new();
+        match cred_data.values.as_object() {
+            Some(values) => {
+                for (key, value) in values {
+                    new_map.insert(String::from(key.replace("\"", "")), value["raw"].to_string().replace("\"", ""));
+                };
+                let res = serde_json::to_string(&new_map)
+                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize {:?}, err {:?}", new_map, err)))?;
+                Ok(res)
+            }
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", content)))
+        }
     }
 
     pub fn delete_credential(&self) -> VcxResult<()> {

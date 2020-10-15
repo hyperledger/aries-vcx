@@ -93,6 +93,12 @@ pub fn get_credential(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_offered_attributes(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get(handle, |credential| {
+        credential.get_offered_attributes()
+    })
+}
+
 pub fn delete_credential(handle: u32) -> VcxResult<u32> {
     let source_id = get_source_id(handle).unwrap_or_default();
     trace!("Credential::delete_credential >>> credential_handle: {}, source_id: {}", handle, source_id);
@@ -214,7 +220,7 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 #[cfg(test)]
 pub mod tests {
     use api::VcxStateType;
-    use aries::messages::issuance::credential::Credential as Credential;
+    use aries::messages::issuance::credential::Credential;
     use connection;
     use utils::devsetup::*;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};

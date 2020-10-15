@@ -1,4 +1,4 @@
-use error::{VcxResult};
+use error::VcxResult;
 use messages::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::ack::PleaseAck;
@@ -17,6 +17,21 @@ pub struct Credential {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
+pub struct CredentialData {
+    pub schema_id: String,
+    pub cred_def_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rev_reg_id: Option<String>,
+    pub values: serde_json::Value,
+    pub signature: serde_json::Value,
+    pub signature_correctness_proof: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rev_reg: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub witness: Option<serde_json::Value>,
 }
 
 impl Credential {

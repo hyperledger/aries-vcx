@@ -8,7 +8,7 @@ use aries::handlers::proof_presentation::prover::messages::ProverMessages;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::proof_presentation::presentation::Presentation;
 use aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 use aries::handlers::proof_presentation::prover::state_machine::ProverSM;
 
 
@@ -136,6 +136,14 @@ impl Prover {
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
         self.prover_sm.presentation_request().request_presentations_attach.content()
+    }
+
+    pub fn requested_attributes(&self) -> VcxResult<String> {
+        let data = self.prover_sm.presentation_request().request_presentations_attach.content()?;
+        let proof_request_data: PresentationRequestData = serde_json::from_str(&data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err)))?;
+        serde_json::to_string(&proof_request_data.requested_attributes)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize {:?}, error: {:?}", proof_request_data, err)))
     }
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }
@@ -421,4 +429,8 @@ mod tests {
         let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
         assert!(generated_proof.is_ok());
     }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_get_requested_attributes() {}
 }
