@@ -158,7 +158,6 @@ impl CredentialDef {
                     rev_reg_delta_payment_txn,
                     rev_reg_def_payment_txn,
                 };
-                error!("New rev_reg: {:?}", new_rev_reg);
                 self.rev_reg = Some(new_rev_reg.clone());
 
                 Ok(new_rev_reg)
