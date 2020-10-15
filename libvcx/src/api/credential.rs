@@ -906,11 +906,11 @@ mod tests {
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = ::connection::tests::build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_offers(cb.command_handle,
-                                             cxn,
+                                             handle_conn,
                                              Some(cb.get_callback())),
                    error::SUCCESS.code_num as u32);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -921,12 +921,12 @@ mod tests {
     fn test_vcx_credential_create() {
         let _setup = SetupAriesMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = ::connection::tests::build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_create_with_msgid(cb.command_handle,
                                                     CString::new("test_vcx_credential_create").unwrap().into_raw(),
-                                                    cxn,
+                                                    handle_conn,
                                                     CString::new("123").unwrap().into_raw(),
                                                     Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();

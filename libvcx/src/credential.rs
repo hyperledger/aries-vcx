@@ -326,7 +326,7 @@ pub mod tests {
     fn test_get_credential_offer() {
         let _setup = SetupAriesMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
+        let connection_h = connection::tests::build_test_connection_invitee_completed();
 
         let offer = get_credential_offer_messages(connection_h).unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();

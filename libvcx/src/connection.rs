@@ -282,6 +282,11 @@ pub mod tests {
         handle
     }
 
+    pub fn build_test_connection_invitee_completed() -> u32 {
+        let handle = from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap();
+        handle
+    }
+
     pub fn build_test_connection_inviter_requested() -> u32 {
         let handle = build_test_connection_inviter_invited();
         let msg: A2AMessage = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();

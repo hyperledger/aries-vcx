@@ -375,7 +375,7 @@ mod tests {
         let _setup = SetupAriesMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
+        let connection_h = connection::tests::build_test_connection_invitee_completed();
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
