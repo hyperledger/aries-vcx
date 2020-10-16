@@ -1,7 +1,7 @@
 {
-  "homepage": "https://github.com/AbsaOSS/libvcx/tree/master/wrappers/node",
-  "name": "@absaoss/node-vcx-wrapper",
-  "description": "NodeJS wrapper for Absa's fork of HL LibVCX",
+  "homepage": "https://github.com/hyperledger/aries-framework-rs/tree/master/wrappers/node",
+  "name": "@hyperledger/node-vcx-wrapper",
+  "description": "NodeJS wrapper Aries Framework",
   "license": "Apache-2.0",
   "version": "0.10.0",
   "directories": {
@@ -15,11 +15,11 @@
     },
     {
       "name": "Hyperledger Indy Contributors",
-      "email": "hyperledger-indy@lists.hyperledger.org"
+      "email": "indy@lists.hyperledger.org"
     }
   ],
   "bugs": {
-    "url": "https://github.com/AbsaOSS/libvcx/issues"
+    "url": "https://github.com/hyperledger/aries-framework-rs/issues"
   },
   "standard": {
     "env": [
@@ -27,7 +27,7 @@
     ]
   },
   "repository": {
-    "url": "https://github.com/AbsaOSS/libvcx.git",
+    "url": "https://github.com/hyperledger/aries-framework-rs.git",
     "type": "git"
   },
   "publishConfig": {
