@@ -1,9 +1,9 @@
 /* eslint-env jest */
 require('jest')
-const { shutdownVcx } = require('@absaoss/node-vcx-wrapper')
+const { shutdownVcx } = require('@hyperledger/node-vcx-wrapper')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
-const { StateType } = require('@absaoss/node-vcx-wrapper')
+const { StateType } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 
 beforeAll(async () => {

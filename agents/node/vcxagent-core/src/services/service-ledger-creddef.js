@@ -1,4 +1,4 @@
-const { CredentialDef } = require('@absaoss/node-vcx-wrapper')
+const { CredentialDef } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef ({ logger, saveCredDef, loadCredDef, listCredDefIds }) {
   async function createCredentialDefinition (schemaId, credDefId, revocationDetails) {
