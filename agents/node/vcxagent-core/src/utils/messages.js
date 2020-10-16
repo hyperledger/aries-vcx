@@ -1,4 +1,4 @@
-const { downloadMessages } = require('@absaoss/node-vcx-wrapper')
+const { downloadMessages } = require('@hyperledger/node-vcx-wrapper')
 const _ = require('lodash')
 
 module.exports.getMessagesForPwDid = async function getMessagesForPwDid (

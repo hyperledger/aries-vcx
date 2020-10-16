@@ -1,6 +1,6 @@
 {
-  "name": "@absaoss/vcxagent-core",
-  "description": "NodeJS LibVCX based Aries agent",
+  "name": "@hyperledger/vcxagent-core",
+  "description": "Aries-framework-rs based Aries agent",
   "license": "Apache-2.0",
   "main": "src/index.js",
   "directories": {
@@ -9,11 +9,15 @@
   },
   "contributors": [
     {
-      "name": "Absa Group Limited"
+      "name": "Hyperledger Indy Contributors",
+      "email": "indy@lists.hyperledger.org"
     }
   ],
+  "bugs": {
+    "url": "https://github.com/hyperledger/aries-framework-rs/issues"
+  },
   "repository": {
-    "url": "https://github.com/AbsaOSS/libvcx.git",
+    "url": "https://github.com/hyperledger/aries-framework-rs.git",
     "type": "git"
   },
   "publishConfig": {
@@ -35,7 +39,6 @@
     "test:integration:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js"
   },
-  "author": "Absa Group Limited",
   "dependencies": {
     "ffi-napi": "^2.4.7",
     "fs-extra": "^4.0.2",
@@ -48,7 +51,7 @@
   },
   "devDependencies": {
     "jest": "^26.4.2",
-    "@absaoss/node-vcx-wrapper": "file:../../../wrappers/node",
+    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "body-parser": "^1.19.0",
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
@@ -59,6 +62,6 @@
     "winston": "^3.3.3"
   },
   "peerDependencies": {
-    "@absaoss/node-vcx-wrapper": "^0.11.0"
+    "@hyperledger/node-vcx-wrapper": "^0.11.0"
   }
 }

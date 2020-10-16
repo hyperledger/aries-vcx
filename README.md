@@ -31,7 +31,7 @@ all these demos depends on.
     
 - The artifacts are produced from every PR (unless it's coming from a forked repository due to limitations of Github Actions).
 
-- NodeJS wrappers are published on [npmjs](https://www.npmjs.com/package/@absaoss/node-vcx-wrapper)
+- NodeJS wrappers are published on [npmjs](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper)
 - Docker images are in [Github Packages](https://github.com/AbsaOSS/libvcx/packages/332720/versions)
 - Mobile artifacts are attached to [CI runs](https://github.com/AbsaOSS/libvcx/actions) (click on particular CI run to
   see the artifacts)

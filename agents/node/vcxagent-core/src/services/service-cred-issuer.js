@@ -1,7 +1,7 @@
 const {
   StateType,
   IssuerCredential
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds }) {
