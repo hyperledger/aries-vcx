@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
 
 use connection;
 use error::prelude::*;
@@ -54,7 +55,8 @@ impl Holder {
     }
 
     pub fn get_offered_attributes(&self) -> VcxResult<String> {
-        let credential = self.holder_sm.get_credential()?.1;
+        let credential_msg = self.holder_sm.get_credential()?.1;
+        let credential: Credential = Credential::try_from(credential_msg)?;
         let content = credential.credentials_attach.content()?;
         let cred_data: CredentialData = serde_json::from_str(&content)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", content, err)))?;

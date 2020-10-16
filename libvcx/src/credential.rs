@@ -224,6 +224,7 @@ pub mod tests {
     use connection;
     use utils::devsetup::*;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use utils::mockdata::mockdata_credex;
 
     use super::*;
 
@@ -305,6 +306,13 @@ pub mod tests {
 
         info!("full_credential_test:: going to deserialize credential: {:?}", msg_value);
         let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
+
+        info!("full_credential_test:: going get offered attributes");
+        let offer_attrs: String = get_offered_attributes(handle_cred).unwrap();
+        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
+        let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
+        assert_eq!(offer_attrs, offer_attrs_expected);
     }
 
     #[test]
