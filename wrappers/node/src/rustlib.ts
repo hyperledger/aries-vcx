@@ -204,6 +204,7 @@ export interface IFFIEntryPoint {
   vcx_credential_update_state_with_message: (commandId: number, handle: number, message: string, cb: any) => number,
   vcx_credential_get_state: (commandId: number, handle: number, cb: any) => number,
   vcx_credential_get_offers: (commandId: number, connectionHandle: number, cb: any) => number,
+  vcx_credential_get_offered_attributes: (commandId: number, connectionHandle: number, cb: any) => number,
   vcx_credential_get_payment_info: (commandId: number, handle: number, cb: any) => number,
   vcx_credential_get_payment_txn: (commandId: number, handle: number, cb: any) => number,
 
@@ -419,6 +420,8 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
     FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_credential_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],
   vcx_credential_get_offers: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_credential_get_offered_attributes: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE,
+    FFI_CALLBACK_PTR]],
   vcx_credential_get_payment_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
   vcx_credential_get_payment_txn: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,FFI_CALLBACK_PTR]],
 
