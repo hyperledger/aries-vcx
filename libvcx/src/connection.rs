@@ -151,7 +151,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        let (state, data, source_id) = connection.to_owned().into();
+        let (  state, data, source_id) = connection.to_owned().into();
         let object = SerializableObjectWithState::V3 { data, state, source_id };
 
         ::serde_json::to_string(&object)
