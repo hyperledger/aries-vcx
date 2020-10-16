@@ -273,32 +273,6 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
-  public static async getAttributes (connection: Connection): Promise<string> {
-    try {
-      const offeredAttrs = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credential_get_attributes(0, connection.handle, cb)
-          if (rc) {
-            reject(rc)
-          }
-        },
-        (resolve, reject) => Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (handle: number, err: number, messages: string) => {
-            if (err) {
-              reject(err)
-              return
-            }
-            resolve(messages)
-          })
-      )
-      return offeredAttrs
-    } catch (err) {
-      throw new VCXInternalError(err)
-    }
-  }
-
   public paymentManager!: CredentialPaymentManager
   protected _releaseFn = rustAPI().vcx_credential_release
   protected _updateStFn = rustAPI().vcx_credential_update_state
@@ -377,6 +351,32 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
               resolve(message)
             })
         )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getAttributes (connection: Connection): Promise<string> {
+    try {
+      const offeredAttrs = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_attributes(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(messages)
+          })
+      )
+      return offeredAttrs
     } catch (err) {
       throw new VCXInternalError(err)
     }

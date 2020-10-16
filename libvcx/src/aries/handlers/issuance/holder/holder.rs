@@ -55,24 +55,7 @@ impl Holder {
     }
 
     pub fn get_attributes(&self) -> VcxResult<String> {
-        let credential_msg = self.holder_sm.get_credential()?.1;
-        let credential: Credential = Credential::try_from(credential_msg)?;
-        let content = credential.credentials_attach.content()?;
-        let cred_data: CredentialData = serde_json::from_str(&content)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", content, err)))?;
-
-        let mut new_map: HashMap<String, String> = HashMap::new();
-        match cred_data.values.as_object() {
-            Some(values) => {
-                for (key, value) in values {
-                    new_map.insert(String::from(key.replace("\"", "")), value["raw"].to_string().replace("\"", ""));
-                };
-                let res = serde_json::to_string(&new_map)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize {:?}, err {:?}", new_map, err)))?;
-                Ok(res)
-            }
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", content)))
-        }
+        self.holder_sm.get_attributes()
     }
 
     pub fn delete_credential(&self) -> VcxResult<()> {

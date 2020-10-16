@@ -1,4 +1,4 @@
-use error::{VcxResult};
+use error::VcxResult;
 use messages::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::attachment::{AttachmentId, Attachments};

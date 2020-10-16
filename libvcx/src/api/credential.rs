@@ -237,11 +237,10 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-#[allow(unused_variables, unused_mut)]
 pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
                                  credential_handle: u32,
                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credential: *const c_char)>) -> u32 {
-    info!("vcx_credential_get_attributes >>>");
+    info!("vcx_credential_get_attributes >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     if !credential::is_valid_handle(credential_handle) {

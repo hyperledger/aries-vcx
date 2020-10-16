@@ -288,6 +288,13 @@ pub mod tests {
         let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_cred).unwrap());
 
+        info!("full_credential_test:: going get offered attributes from offer received state");
+        let offer_attrs: String = get_attributes(handle_cred).unwrap();
+        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
+        let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
+        assert_eq!(offer_attrs, offer_attrs_expected);
+
         info!("full_credential_test:: going to send_credential_request");
         send_credential_request(handle_cred, handle_conn).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_cred).unwrap());
@@ -307,7 +314,7 @@ pub mod tests {
         info!("full_credential_test:: going to deserialize credential: {:?}", msg_value);
         let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
 
-        info!("full_credential_test:: going get offered attributes");
+        info!("full_credential_test:: going get offered attributes from final state");
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
         info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();

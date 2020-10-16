@@ -107,16 +107,14 @@ describe('Credential:', () => {
   })
 
   describe('sendRequest:', () => {
-    // todo : restore for aries
-    it.skip('success: with offer', async () => {
+    it('success: with offer', async () => {
       const data = await dataCredentialCreateWithOffer()
       const credential = await credentialCreateWithOffer(data)
       await credential.sendRequest({ connection: data.connection, payment: 0 })
       assert.equal(await credential.getState(), StateType.OfferSent)
     })
 
-    // todo : restore for aries
-    it.skip('success: with message id', async () => {
+    it('success: with message id', async () => {
       const data = await dataCredentialCreateWithMsgId()
       const credential = await credentialCreateWithMsgId(data)
       await credential.sendRequest({ connection: data.connection, payment: 0 })
@@ -145,9 +143,8 @@ describe('Credential:', () => {
     })
   })
 
-  // todo : restore for aries
   describe('getOffers:', () => {
-    it.skip('success', async () => {
+    it('success', async () => {
       const connection = await createConnectionInviterRequested()
       const offers = await Credential.getOffers(connection)
       assert.ok(offers)
@@ -158,6 +155,24 @@ describe('Credential:', () => {
         offer: JSON.stringify(offer),
         sourceId: 'credentialGetOffersTestSourceId'
       })
+    })
+  })
+
+  describe('getAttributes:', () => {
+    it('success', async () => {
+      const connection = await createConnectionInviterRequested()
+      const offers = await Credential.getOffers(connection)
+      assert.ok(offers)
+      assert.ok(offers.length)
+      const offer = offers[0]
+      const credential = await credentialCreateWithOffer({
+        connection,
+        offer: JSON.stringify(offer),
+        sourceId: 'credentialGetAttributesTestSourceId'
+      })
+      const attrs = JSON.parse(await credential.getAttributes(connection))
+      const expectedAttrs = JSON.parse('{"last_name":"clark","sex":"female","degree":"maths","date":"05-2018","age":"25","name":"alice"}')
+      assert.deepEqual(attrs, expectedAttrs)
     })
   })
 
