@@ -93,9 +93,9 @@ pub fn get_credential(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn get_offered_attributes(handle: u32) -> VcxResult<String> {
+pub fn get_attributes(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_offered_attributes()
+        credential.get_attributes()
     })
 }
 
@@ -308,7 +308,7 @@ pub mod tests {
         let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
 
         info!("full_credential_test:: going get offered attributes");
-        let offer_attrs: String = get_offered_attributes(handle_cred).unwrap();
+        let offer_attrs: String = get_attributes(handle_cred).unwrap();
         info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
         let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();

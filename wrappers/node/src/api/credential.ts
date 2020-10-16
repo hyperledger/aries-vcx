@@ -273,11 +273,11 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
-  public static async getOfferedAttributes (connection: Connection): Promise<string> {
+  public static async getAttributes (connection: Connection): Promise<string> {
     try {
       const offeredAttrs = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credential_get_offered_attributes(0, connection.handle, cb)
+          const rc = rustAPI().vcx_credential_get_attributes(0, connection.handle, cb)
           if (rc) {
             reject(rc)
           }

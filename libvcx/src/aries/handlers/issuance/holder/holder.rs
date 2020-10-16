@@ -54,7 +54,7 @@ impl Holder {
         self.holder_sm.get_credential()
     }
 
-    pub fn get_offered_attributes(&self) -> VcxResult<String> {
+    pub fn get_attributes(&self) -> VcxResult<String> {
         let credential_msg = self.holder_sm.get_credential()?.1;
         let credential: Credential = Credential::try_from(credential_msg)?;
         let content = credential.credentials_attach.content()?;
