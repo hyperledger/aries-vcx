@@ -3,7 +3,7 @@ const { holderSelectCredentialsForProof } = require('../utils/proofs')
 const {
   DisclosedProof,
   StateType
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceProver = function createServiceProver ({ logger, loadConnection, saveDisclosedProof, loadDisclosedProof, listDislosedProofIds }) {
   async function _progressProofToState (proof, connection, targetStates, attemptsThreshold, timeoutMs) {

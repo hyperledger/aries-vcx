@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { StateType } = require('@absaoss/node-vcx-wrapper')
+const { StateType } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
 module.exports.createFaber = async function createFaber () {
