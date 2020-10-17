@@ -274,6 +274,16 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    private static Callback vcxCredentialGetAttributesCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, String attributes) {
+            logger.debug("vcxCredentialGetAttributesCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], attributes = [" + attributes + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(attributes);
+        }
+    };
+
     public static CompletableFuture<String> credentialGetAttributes(
             int credentialHandle
     ) throws VcxException {
@@ -282,7 +292,7 @@ public class CredentialApi extends VcxJava.API {
         CompletableFuture<String> future = new CompletableFuture<String>();
         int commandHandle = addFuture(future);
 
-        int result = LibVcx.api.vcx_credential_get_attributes(commandHandle, credentialHandle, vcxGetCredentialCB);
+        int result = LibVcx.api.vcx_credential_get_attributes(commandHandle, credentialHandle, vcxCredentialGetAttributesCB);
         checkResult(result);
 
         return future;

@@ -451,6 +451,43 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_disclosed_proof_get_attributes(command_handle: CommandHandle,
+                                            proof_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
+    info!("vcx_disclosed_proof_get_attributes >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !disclosed_proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
+    }
+
+    let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_disclosed_proof_get_attributes(command_handle: {}, proof_handle: {}), source_id: {:?}",
+           command_handle, proof_handle, source_id);
+
+    spawn(move || {
+        match disclosed_proof::get_attributes(proof_handle) {
+            Ok(x) => {
+                trace!("vcx_disclosed_proof_get_attributes_cb(command_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                       command_handle, error::SUCCESS.message, x, source_id);
+                let attrs = CStringUtils::string_to_cstring(x);
+                cb(command_handle, error::SUCCESS.code_num, attrs.as_ptr());
+            }
+            Err(err) => {
+                error!("vcx_disclosed_proof_get_attributes_cb(command_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                       command_handle, error::SUCCESS.message, err, source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 /// Checks for any state change in the disclosed proof and updates the state attribute
 ///
 /// #Params

@@ -179,6 +179,28 @@ public class DisclosedProofApi extends VcxJava.API {
         return future;
     }
 
+    private static Callback vcxProofGetAttributesCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int commandHandle, int err, String attributes) {
+            logger.debug("vcxProofGetAttributesCB() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], attributes = [****]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(commandHandle);
+            if (!checkCallback(future, err)) return;
+            future.complete(attributes);
+        }
+    };
+
+    public static CompletableFuture<String> proofGetAttributes(
+            int proofHandle
+    ) throws VcxException {
+        logger.debug("proofGetAttributes() called with: proofHandle = [" + proofHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_disclosed_proof_get_attributes(commandHandle, proofHandle, vcxProofGetAttributesCB);
+        checkResult(result);
+
+        return future;
+    }
 
     private static Callback vcxProofGenerateCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})

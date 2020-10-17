@@ -295,6 +295,9 @@ vcx_error_t vcx_disclosed_proof_get_proof_msg(vcx_command_handle_t command_handl
 /** Get proof reject msg */
 vcx_error_t vcx_disclosed_proof_get_reject_msg(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *msg));
 
+/** Get attributes specified in proof request*/
+vcx_error_t vcx_disclosed_proof_get_attributes(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *attrs));
+
 /** Asynchronously redirect a connection. */
 vcx_error_t vcx_connection_redirect(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, vcx_connection_handle_t redirect_connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err));
 
