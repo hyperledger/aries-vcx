@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use error::VcxResult;
 use error::prelude::*;
 use messages::thread::Thread;
@@ -50,16 +48,6 @@ impl Credential {
     pub fn set_credential(mut self, credential: String) -> VcxResult<Credential> {
         self.credentials_attach.add_base64_encoded_json_attachment(AttachmentId::Credential, ::serde_json::Value::String(credential))?;
         Ok(self)
-    }
-}
-
-impl TryFrom<A2AMessage> for Credential {
-    type Error = VcxError;
-    fn try_from(msg: A2AMessage) -> VcxResult<Credential> {
-        match msg {
-            A2AMessage::Credential(credential) => Ok(credential),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into credential", msg)))
-        }
     }
 }
 
