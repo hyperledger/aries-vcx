@@ -11,9 +11,6 @@
   },
   "contributors": [
     {
-      "name": "Absa Group Limited"
-    },
-    {
       "name": "Hyperledger Indy Contributors",
       "email": "indy@lists.hyperledger.org"
     }

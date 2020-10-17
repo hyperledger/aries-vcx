@@ -8,7 +8,7 @@ const {
   Schema,
   DisclosedProof,
   Proof
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 
 async function createStorageService (agentName) {
   mkdirp.sync('storage-agentProvisions/')

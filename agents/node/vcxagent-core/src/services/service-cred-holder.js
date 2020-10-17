@@ -3,7 +3,7 @@ const { filterOffersBySchema } = require('../utils/credentials')
 const {
   StateType,
   Credential
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredHolder = function createServiceCredHolder ({ logger, loadConnection, saveHolderCredential, loadHolderCredential, listHolderCredentialIds }) {

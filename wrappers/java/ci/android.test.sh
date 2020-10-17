@@ -87,13 +87,11 @@ execute_on_device(){
 
 }
 
-
 for TARGET_ARCH in ${TARGET_ARCHS}
 do
     prepare_dependencies ${TARGET_ARCH}
     generate_arch_flags ${TARGET_ARCH}
     setup_dependencies_env_vars ${TARGET_ARCH}
-
     recreate_avd
     set_env_vars
     create_standalone_toolchain_and_rust_target

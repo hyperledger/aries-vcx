@@ -1,4 +1,4 @@
-const { Schema } = require('@absaoss/node-vcx-wrapper')
+const { Schema } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceLedgerSchema = function createServiceLedgerSchema ({ logger, saveSchema, loadSchema, listSchemaIds }) {
   async function createSchema (schemaData) {
