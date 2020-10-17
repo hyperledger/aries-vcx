@@ -1,4 +1,4 @@
-const { StateType, ProofState, Proof } = require('@absaoss/node-vcx-wrapper')
+const { StateType, ProofState, Proof } = require('@hyperledger/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
 const logger = require('./logger')('Faber')

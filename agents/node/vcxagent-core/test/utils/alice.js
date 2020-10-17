@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const { createVcxAgent } = require('../../src/index')
-const { StateType } = require('@absaoss/node-vcx-wrapper')
+const { StateType } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createAlice = async function createAlice () {
   const agentName = `alice-${Math.floor(new Date() / 1000)}`
