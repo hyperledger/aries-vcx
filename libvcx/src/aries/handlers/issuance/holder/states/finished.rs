@@ -18,15 +18,17 @@ impl FinishedHolderState {
         let cred_data: CredentialData = serde_json::from_str(&content)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", content, err)))?;
 
-        let mut new_map: HashMap<String, String> = HashMap::new();
+        let mut new_map = serde_json::map::Map::new();
         match cred_data.values.as_object() {
             Some(values) => {
                 for (key, value) in values {
-                    new_map.insert(String::from(key.replace("\"", "")), value["raw"].to_string().replace("\"", ""));
+                    let val = value["raw"]
+                        .as_str()
+                        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing raw encoding on credential value"))?
+                        .into();
+                    new_map.insert(key.clone(), val);
                 };
-                let res = serde_json::to_string(&new_map)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize {:?}, err {:?}", new_map, err)))?;
-                Ok(res)
+                Ok(serde_json::Value::Object(new_map).to_string())
             }
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", content)))
         }

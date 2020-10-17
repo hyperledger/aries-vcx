@@ -227,7 +227,7 @@ impl HolderSM {
         match self.state {
             HolderState::Finished(ref state) => state.get_attributes(),
             HolderState::OfferReceived(ref state) => state.get_attributes(),
-            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get credential attributes: credential offer must be receieved first"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get credential attributes: credential offer or credential must be receieved first"))
         }
     }
 

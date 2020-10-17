@@ -42,11 +42,10 @@ impl OfferReceivedState {
     }
 
     pub fn get_attributes(&self) -> VcxResult<String> {
-        let mut new_map: HashMap<String, String> = HashMap::new();
+        let mut new_map = serde_json::map::Map::new();
         self.offer.credential_preview.attributes.iter().for_each(|attribute| {
-            new_map.insert(attribute.name.clone(), attribute.value.clone());
+            new_map.insert(attribute.name.clone(), serde_json::Value::String(attribute.value.clone()));
         });
-        serde_json::to_string(&new_map)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to serialize {:?}, err: {}", new_map, err)))
+        Ok(serde_json::Value::Object(new_map).to_string())
     }
 }

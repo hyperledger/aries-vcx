@@ -274,6 +274,20 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    public static CompletableFuture<String> credentialGetAttributes(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("getAttributes() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_get_attributes(commandHandle, credentialHandle, vcxGetCredentialCB);
+        checkResult(result);
+
+        return future;
+    }
+
     public static int credentialRelease(int credentialHandle) throws VcxException {
         ParamGuard.notNull(credentialHandle, "credentialHandle");
         logger.debug("credentialRelease() called with: credentialHandle = [" + credentialHandle + "]");
