@@ -1,4 +1,4 @@
-const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@absaoss/node-vcx-wrapper')
+const { getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta } = require('@hyperledger/node-vcx-wrapper')
 const { createServiceLedgerCredDef } = require('./services/service-ledger-creddef')
 const { createServiceLedgerSchema } = require('./services/service-ledger-schema')
 const { createServiceVerifier } = require('./services/service-verifier')
@@ -13,7 +13,7 @@ const {
   openVcxPool,
   vcxUpdateWebhookUrl,
   shutdownVcx
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady } = require('./common')
 

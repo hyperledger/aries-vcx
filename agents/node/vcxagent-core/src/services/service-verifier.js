@@ -1,6 +1,6 @@
 const {
   Proof
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 
 module.exports.createServiceVerifier = function createServiceVerifier ({ logger, loadConnection, saveProof, loadProof, listProofIds }) {

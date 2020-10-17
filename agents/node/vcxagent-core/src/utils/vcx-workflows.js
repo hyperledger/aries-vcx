@@ -1,4 +1,4 @@
-const { initRustAPI, initVcxWithConfig, provisionAgent } = require('@absaoss/node-vcx-wrapper')
+const { initRustAPI, initVcxWithConfig, provisionAgent } = require('@hyperledger/node-vcx-wrapper')
 const ffi = require('ffi-napi')
 const os = require('os')
 

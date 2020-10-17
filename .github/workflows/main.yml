@@ -569,7 +569,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_android.rar
       - name: Run android tests
         run: |
-          # docker run --rm -i --name test-android-build -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+          rm -rf /tmp/imgcache
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
                               bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh armv7)'
 
@@ -772,7 +772,9 @@ jobs:
         run: echo "ERROR == Expected to find image from cache"; exit -1
 
       - name: Load android image from cache
-        run: docker load < /tmp/imgcache/img_android.rar
+        run: |
+          docker load < /tmp/imgcache/img_android.rar
+          rm -rf /tmp/imgcache
 
       - name: Build, run android wrapper tests, and publish artifacts
         uses: ./.github/actions/publish-android
@@ -810,8 +812,10 @@ jobs:
         if: steps.load-cached-android-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache"; exit -1
 
-      - name: Load android image from cache
-        run: docker load < /tmp/imgcache/img_android.rar
+      - name: Load image from cache
+        run: |
+          docker load < /tmp/imgcache/img_android.rar
+          rm -rf /tmp/imgcache
 
       - name: Build, run android wrapper tests, and publish artifacts
         uses: ./.github/actions/publish-android

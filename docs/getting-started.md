@@ -1,4 +1,11 @@
-﻿# Getting Started with Libvcx
+﻿# This document might be outdated
+**Though this might get you idea how to work with libvcx, technical details might be outdated. This has not been updated
+for very long time.**
+
+Keeping this doc here to sync it up in the future.
+
+# Getting Started with Libvcx
+
 
 ## A Developer Guide for Building Indy Clients Using Libvcx
 
@@ -80,7 +87,7 @@ We are ready to start writing the code that will cover Alice's use case from sta
 
 The first code block will contain the code of the **Steward's** agent.
 
-**To write and read the ledger's transactions after gaining the proper role, you'll need to make a connection to the Indy nodes pool. To make a connection to the different pools that exist, like the Sovrin pool or the [local pool we started by ourselves](../../README.md#how-to-start-local-nodes-pool-with-docker) as part of this tutorial, you'll need to set up a pool configuration.**
+**To write and read the ledger's transactions after gaining the proper role, you'll need to make a connection to the Indy nodes pool. To make a connection to the different pools that exist, like the Sovrin pool or the [local pool we started by ourselves](../README.md#how-to-start-local-nodes-pool-with-docker) as part of this tutorial, you'll need to set up a pool configuration.**
 
 The list of nodes in the pool is stored in the ledger as NODE transactions. Libindy allows you to restore the actual list of NODE transactions by a few known transactions that we call genesis transactions. Each **Pool Configuration** is defined as a pair of pool configuration name and pool configuration JSON. The most important field in pool configuration json is the path to the file with the list of genesis transactions. Make sure this path is correct.
 

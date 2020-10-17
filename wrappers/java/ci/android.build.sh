@@ -29,10 +29,13 @@ prepare_artifacts(){
 
     if [ -z "${LIBVCX_VERSION}" ]; then
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}.zip ${PACKAGE_DIR}
+        rm ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}.zip
     else
         zip -r ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}_${LIBVCX_VERSION}.zip ${PACKAGE_DIR}
+        rm ${ZIP_DIR}/libvcx_android_${ABSOLUTE_ARCH}_${LIBVCX_VERSION}.zip
     fi
     mv $(ls -r -t1 ${JAVA_WRAPPER_DIR}/android/build/outputs/aar/* | head -n 1) ${AAR_DIR}
+    rm -r ${JAVA_WRAPPER_DIR}/android/
 }
 
 build_android_wrapper(){

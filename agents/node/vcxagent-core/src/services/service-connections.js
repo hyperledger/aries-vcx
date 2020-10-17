@@ -2,7 +2,7 @@ const { getMessagesForPwDid } = require('../utils/messages')
 const {
   Connection,
   StateType
-} = require('@absaoss/node-vcx-wrapper')
+} = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
 module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, listConnectionIds }) {
