@@ -138,12 +138,11 @@ impl Prover {
         self.prover_sm.presentation_request().request_presentations_attach.content()
     }
 
-    pub fn requested_attributes(&self) -> VcxResult<String> {
+    pub fn get_attributes(&self) -> VcxResult<String> {
         let data = self.prover_sm.presentation_request().request_presentations_attach.content()?;
-        let proof_request_data: PresentationRequestData = serde_json::from_str(&data)
+        let proof_request_data: serde_json::Value = serde_json::from_str(&data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err)))?;
-        serde_json::to_string(&proof_request_data.requested_attributes)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize {:?}, error: {:?}", proof_request_data, err)))
+        Ok(proof_request_data.to_string())
     }
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }
@@ -429,8 +428,4 @@ mod tests {
         let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
         assert!(generated_proof.is_ok());
     }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_get_requested_attributes() {}
 }
