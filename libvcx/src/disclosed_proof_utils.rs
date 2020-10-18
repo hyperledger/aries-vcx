@@ -3,18 +3,13 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::proofs::{
-    proof_message::CredInfoProver,
-    proof_request::{
-        NonRevokedInterval,
-        ProofRequestData,
-    },
-};
 use settings;
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
+use indyvc::proofs::proof_message::CredInfoProver;
+use indyvc::proofs::proof_request::{ProofRequestData, NonRevokedInterval};
 
 fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);

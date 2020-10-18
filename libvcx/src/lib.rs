@@ -34,7 +34,7 @@ extern crate uuid;
 pub mod utils;
 pub mod settings;
 #[macro_use]
-pub mod messages;
+pub mod agency_vcx;
 
 pub mod api;
 pub mod init;
@@ -51,6 +51,7 @@ pub mod aries;
 mod proof_utils;
 mod disclosed_proof_utils;
 mod filters;
+mod indyvc;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]

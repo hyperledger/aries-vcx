@@ -1,4 +1,4 @@
-use messages::thread::Thread;
+use agency_vcx::thread::Thread;
 use settings::Actors;
 use aries::messages::a2a::{MessageId, A2AMessage};
 

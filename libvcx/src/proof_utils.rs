@@ -2,14 +2,11 @@ use serde_json;
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::proofs::proof_message::{
-    CredInfoVerifier,
-    get_credential_info,
-};
 use settings;
 use utils::libindy::anoncreds;
 use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use utils::openssl::encode;
+use indyvc::proofs::proof_message::{CredInfoVerifier, get_credential_info};
 
 fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
     if settings::indy_mocks_enabled() { return Ok(()); }
@@ -174,6 +171,7 @@ pub mod tests {
     use utils::mockdata::mockdata_proof;
 
     use super::*;
+    use indyvc::proofs::proof_message::CredInfoVerifier;
 
     #[test]
     #[cfg(feature = "general_test")]

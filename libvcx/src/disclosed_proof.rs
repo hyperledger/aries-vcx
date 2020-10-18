@@ -8,10 +8,9 @@ use aries::{
 };
 use connection;
 use error::prelude::*;
-use messages::{
+use agency_vcx::{
     get_message::Message,
 };
-use messages::proofs::proof_request::ProofRequestMessage;
 use settings;
 use settings::indy_mocks_enabled;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;

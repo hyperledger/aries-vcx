@@ -1,29 +1,25 @@
 use std::u8;
 
-use log;
+use ::{log, settings};
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
 use error::prelude::*;
-use settings;
-use settings::ProtocolTypes;
 use utils::httpclient::AgencyMockDecrypted;
 use utils::libindy::crypto;
+use utils::validation;
 
 use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
 use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
-use self::proofs::proof_request::ProofRequestMessage;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
 
 pub mod create_key;
-pub mod validation;
 pub mod get_message;
 pub mod update_profile;
-pub mod proofs;
 pub mod agent_utils;
 pub mod update_connection;
 pub mod update_message;
@@ -253,24 +249,17 @@ pub struct ForwardV2 {
 }
 
 impl ForwardV2 {
-    fn new(fwd: String, msg: Vec<u8>, version: ProtocolTypes) -> VcxResult<A2AMessage> {
-        match version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 => {
-                let msg = serde_json::from_slice(msg.as_slice())
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
+    fn new(fwd: String, msg: Vec<u8>) -> VcxResult<A2AMessage> {
+        let msg = serde_json::from_slice(msg.as_slice())
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
 
-                Ok(A2AMessage::Version2(A2AMessageV2::Forward(
-                    ForwardV2 {
-                        msg_type: MessageTypes::build_v2(A2AMessageKinds::Forward),
-                        fwd,
-                        msg,
-                    }
-                )))
+        Ok(A2AMessage::Version2(A2AMessageV2::Forward(
+            ForwardV2 {
+                msg_type: MessageTypes::build_v2(A2AMessageKinds::Forward),
+                fwd,
+                msg,
             }
-        }
+        )))
     }
 }
 
@@ -506,13 +495,8 @@ impl A2AMessageKinds {
     }
 }
 
-pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str, version: &ProtocolTypes) -> VcxResult<Vec<u8>> {
-    match version {
-        settings::ProtocolTypes::V1 |
-        settings::ProtocolTypes::V2 |
-        settings::ProtocolTypes::V3 |
-        settings::ProtocolTypes::V4 => pack_for_agency_v2(message, agency_did)
-    }
+pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
+    pack_for_agency_v2(message, agency_did)
 }
 
 fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
@@ -527,18 +511,7 @@ fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u
 
     let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes())?;
 
-    prepare_forward_message(message, agency_did, ProtocolTypes::V2)
-}
-
-fn parse_response_from_agency(response: &Vec<u8>, version: &ProtocolTypes) -> VcxResult<Vec<A2AMessage>> {
-    trace!("parse_response_from_agency >>>");
-
-    match version {
-        settings::ProtocolTypes::V1 |
-        settings::ProtocolTypes::V2 |
-        settings::ProtocolTypes::V3 |
-        settings::ProtocolTypes::V4 => parse_response_from_agency_v2(response)
-    }
+    prepare_forward_message(message, agency_did)
 }
 
 pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
@@ -551,8 +524,8 @@ pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
         .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field on response"))?.to_string())
 }
 
-fn parse_response_from_agency_v2(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
-    trace!("parse_response_from_agency_v2 >>> processing payload of {} bytes", response.len());
+fn parse_response_from_agency(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
+    trace!("parse_response_from_agency >>> processing payload of {} bytes", response.len());
 
     let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
         warn!("parse_response_from_agency_v2 >> retrieving decrypted mock response");
@@ -626,10 +599,10 @@ pub fn bundle_from_u8(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
         })
 }
 
-fn prepare_forward_message(message: Vec<u8>, did: &str, version: ProtocolTypes) -> VcxResult<Vec<u8>> {
+fn prepare_forward_message(message: Vec<u8>, did: &str) -> VcxResult<Vec<u8>> {
     let agency_vk = settings::get_config_value(settings::CONFIG_AGENCY_VERKEY)?;
 
-    let message = ForwardV2::new(did.to_string(), message, version)?;
+    let message = ForwardV2::new(did.to_string(), message)?;
 
     match message {
         A2AMessage::Version2(A2AMessageV2::Forward(msg)) => prepare_forward_message_for_agency_v2(&msg, &agency_vk),
@@ -647,17 +620,8 @@ fn prepare_forward_message_for_agency_v2(message: &ForwardV2, agency_vk: &str) -
     crypto::pack_message(None, &receiver_keys, message.as_bytes())
 }
 
-pub fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str, version: &ProtocolTypes) -> VcxResult<Vec<u8>> {
+fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> VcxResult<Vec<u8>> {
     debug!("prepare_message_for_agent >> {:?}", messages);
-    match version {
-        settings::ProtocolTypes::V1 |
-        settings::ProtocolTypes::V2 |
-        settings::ProtocolTypes::V3 |
-        settings::ProtocolTypes::V4 => prepare_message_for_agent_v2(messages, pw_vk, agent_did, agent_vk)
-    }
-}
-
-fn prepare_message_for_agent_v2(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> VcxResult<Vec<u8>> {
     let message = messages.get(0)
         .ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, "Cannot get message"))?;
 
@@ -670,7 +634,7 @@ fn prepare_message_for_agent_v2(messages: Vec<A2AMessage>, pw_vk: &str, agent_di
     let message = crypto::pack_message(Some(pw_vk), &receiver_keys, message.as_bytes())?;
 
     /* forward to did */
-    let message = ForwardV2::new(agent_did.to_owned(), message, ProtocolTypes::V2)?;
+    let message = ForwardV2::new(agent_did.to_owned(), message)?;
 
     let to_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
@@ -755,8 +719,6 @@ pub fn update_data() -> UpdateProfileDataBuilder { UpdateProfileDataBuilder::cre
 
 pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
 
-pub fn proof_request() -> ProofRequestMessage { ProofRequestMessage::create() }
-
 #[cfg(test)]
 pub mod tests {
     use utils::devsetup::*;
@@ -783,5 +745,4 @@ pub mod tests {
         let buf = to_i8(&vec);
         info!("new bundle: {:?}", buf);
     }
-
 }

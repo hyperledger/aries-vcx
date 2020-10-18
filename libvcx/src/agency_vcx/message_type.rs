@@ -2,8 +2,8 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
+use agency_vcx::A2AMessageKinds;
 use error::prelude::*;
-use messages::A2AMessageKinds;
 use settings;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
@@ -33,12 +33,7 @@ impl MessageTypes {
     }
 
     pub fn build(kind: A2AMessageKinds) -> MessageTypes {
-        match settings::get_protocol_type() {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 => MessageTypes::MessageTypeV2(MessageTypes::build_v2(kind))
-        }
+        MessageTypes::MessageTypeV2(MessageTypes::build_v2(kind))
     }
 
     pub fn name<'a>(&'a self) -> &'a str {

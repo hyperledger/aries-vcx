@@ -2,8 +2,8 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use error::prelude::*;
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
-use messages::message_type::MessageTypes;
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_vcx::message_type::MessageTypes;
 use settings;
 use utils::{constants, error, httpclient};
 use utils::httpclient::{AgencyMockDecrypted};
@@ -386,12 +386,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 
     match settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID) {
         Ok(to_did) => {
-            match settings::get_protocol_type() {
-                settings::ProtocolTypes::V1 |
-                settings::ProtocolTypes::V2 |
-                settings::ProtocolTypes::V3 |
-                settings::ProtocolTypes::V4 => update_agent_webhook_v2(&to_did, com_method)?,
-            }
+            update_agent_webhook_v2(&to_did, com_method)?;
         }
         Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
     }
@@ -413,12 +408,12 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()>
 }
 
 pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<A2AMessage>> {
-    let data = prepare_message_for_agency(message, &did, &settings::get_protocol_type())?;
+    let data = prepare_message_for_agency(message, &did)?;
 
     let response = httpclient::post_u8(&data)
         .map_err(|err| err.map(VcxErrorKind::InvalidHttpResponse, error::INVALID_HTTP_RESPONSE.message))?;
 
-    parse_response_from_agency(&response, &settings::get_protocol_type())
+    parse_response_from_agency(&response)
 }
 
 #[cfg(test)]
@@ -426,7 +421,7 @@ mod tests {
     use std::env;
 
     use api::vcx::vcx_shutdown;
-    use messages::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
+    use agency_vcx::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
     use utils::devsetup::{SetupMocks, SetupDefaults, SetupLibraryAgencyV2};
 
     #[test]

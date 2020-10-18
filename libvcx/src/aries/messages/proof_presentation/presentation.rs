@@ -1,8 +1,7 @@
 use std::convert::TryInto;
 
 use error::prelude::*;
-use messages::proofs::proof_message::ProofMessage;
-use messages::thread::Thread;
+use agency_vcx::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::ack::PleaseAck;
 use aries::messages::attachment::{AttachmentId, Attachments};
@@ -42,27 +41,6 @@ please_ack!(Presentation);
 threadlike!(Presentation);
 a2a_message!(Presentation);
 
-impl TryInto<Presentation> for ProofMessage {
-    type Error = VcxError;
-
-    fn try_into(self) -> Result<Presentation, Self::Error> {
-        let presentation = Presentation::create()
-            .set_presentations_attach(self.libindy_proof)?
-            .ask_for_ack();
-
-        Ok(presentation)
-    }
-}
-
-impl TryInto<ProofMessage> for Presentation {
-    type Error = VcxError;
-
-    fn try_into(self) -> Result<ProofMessage, Self::Error> {
-        let mut proof = ProofMessage::new();
-        proof.libindy_proof = self.presentations_attach.content().unwrap();
-        Ok(proof)
-    }
-}
 
 #[cfg(test)]
 pub mod tests {

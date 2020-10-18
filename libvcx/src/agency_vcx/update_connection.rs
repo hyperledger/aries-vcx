@@ -1,9 +1,9 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use agency_vcx::message_type::MessageTypes;
 use error::prelude::*;
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use messages::message_type::MessageTypes;
 use settings;
 use utils::httpclient;
 
@@ -61,7 +61,6 @@ pub struct DeleteConnectionBuilder {
     status_code: ConnectionStatus,
     agent_did: String,
     agent_vk: String,
-    version: settings::ProtocolTypes,
 }
 
 impl DeleteConnectionBuilder {
@@ -73,17 +72,8 @@ impl DeleteConnectionBuilder {
             to_vk: String::new(),
             status_code: ConnectionStatus::Deleted,
             agent_did: String::new(),
-            agent_vk: String::new(),
-            version: settings::get_protocol_type(),
+            agent_vk: String::new()
         }
-    }
-
-    pub fn version(&mut self, version: &Option<settings::ProtocolTypes>) -> VcxResult<&mut Self> {
-        self.version = match version {
-            Some(version) => version.clone(),
-            None => settings::get_protocol_type()
-        };
-        Ok(self)
     }
 
     pub fn send_secure(&mut self) -> VcxResult<()> {
@@ -99,7 +89,7 @@ impl DeleteConnectionBuilder {
     fn parse_response(&self, response: &Vec<u8>) -> VcxResult<()> {
         trace!("parse_response >>>");
 
-        let mut response = parse_response_from_agency(response, &self.version)?;
+        let mut response = parse_response_from_agency(response)?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
@@ -136,31 +126,25 @@ impl GeneralMessage for DeleteConnectionBuilder {
     }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::UpdateConnection(
-                        UpdateConnection {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                )
-        };
+        let message = A2AMessage::Version2(
+            A2AMessageV2::UpdateConnection(
+                UpdateConnection {
+                    msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
+                    status_code: self.status_code.clone(),
+                }
+            )
+        );
 
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk, &self.version)
+        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
     use utils::devsetup::SetupDefaults;
 
     use super::*;
-    use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]

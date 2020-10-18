@@ -1,6 +1,6 @@
 use error::{VcxError, VcxErrorKind, VcxResult};
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
-use messages::message_type::MessageTypes;
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
+use agency_vcx::message_type::MessageTypes;
 use settings;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
@@ -33,8 +33,7 @@ pub struct UIDsByConn {
 
 struct UpdateMessageStatusByConnectionsBuilder {
     status_code: Option<MessageStatusCode>,
-    uids_by_conns: Vec<UIDsByConn>,
-    version: settings::ProtocolTypes,
+    uids_by_conns: Vec<UIDsByConn>
 }
 
 impl UpdateMessageStatusByConnectionsBuilder {
@@ -44,7 +43,6 @@ impl UpdateMessageStatusByConnectionsBuilder {
         UpdateMessageStatusByConnectionsBuilder {
             status_code: None,
             uids_by_conns: Vec::new(),
-            version: settings::get_protocol_type(),
         }
     }
 
@@ -57,15 +55,6 @@ impl UpdateMessageStatusByConnectionsBuilder {
     pub fn status_code(&mut self, code: MessageStatusCode) -> VcxResult<&mut Self> {
         //Todo: validate that it can be parsed to number??
         self.status_code = Some(code.clone());
-        Ok(self)
-    }
-
-    #[allow(dead_code)]
-    pub fn version(&mut self, version: &Option<settings::ProtocolTypes>) -> VcxResult<&mut Self> {
-        self.version = match version {
-            Some(version) => version.clone(),
-            None => settings::get_protocol_type()
-        };
         Ok(self)
     }
 
@@ -82,30 +71,24 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::UpdateMessageStatusByConnections(
-                        UpdateMessageStatusByConnections {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
-                            uids_by_conns: self.uids_by_conns.clone(),
-                            status_code: self.status_code.clone(),
-                        }
-                    )
-                ),
-        };
+        let message = A2AMessage::Version2(
+            A2AMessageV2::UpdateMessageStatusByConnections(
+                UpdateMessageStatusByConnections {
+                    msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
+                    uids_by_conns: self.uids_by_conns.clone(),
+                    status_code: self.status_code.clone(),
+                }
+            )
+        );
 
         let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
-        prepare_message_for_agency(&message, &agency_did, &self.version)
+        prepare_message_for_agency(&message, &agency_did)
     }
 
     fn parse_response(&self, response: &Vec<u8>) -> VcxResult<()> {
         trace!("UpdateMessageStatusByConnectionsBuilder::parse_response >>>");
 
-        let mut response = parse_response_from_agency(response, &self.version)?;
+        let mut response = parse_response_from_agency(response)?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
@@ -150,9 +133,9 @@ mod tests {
     use std::time::Duration;
 
     use connection::send_generic_message;
-    use messages::get_message::download_messages_noauth;
-    use messages::MessageStatusCode;
-    use messages::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    use agency_vcx::get_message::download_messages_noauth;
+    use agency_vcx::MessageStatusCode;
+    use agency_vcx::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     use utils::devsetup::{SetupMocks, SetupLibraryAgencyV2};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;

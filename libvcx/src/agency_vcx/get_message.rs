@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
 use aries::handlers::connection::agent_info::AgentInfo;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
-use messages::message_type::MessageTypes;
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
+use agency_vcx::message_type::MessageTypes;
 use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
@@ -75,7 +75,6 @@ pub struct GetMessagesBuilder {
     uids: Option<Vec<String>>,
     status_codes: Option<Vec<MessageStatusCode>>,
     pairwise_dids: Option<Vec<String>>,
-    version: ProtocolTypes,
 }
 
 impl GetMessagesBuilder {
@@ -90,16 +89,13 @@ impl GetMessagesBuilder {
             uids: None,
             exclude_payload: None,
             status_codes: None,
-            pairwise_dids: None,
-            version: settings::get_protocol_type(),
+            pairwise_dids: None
         }
     }
 
     #[cfg(test)]
     pub fn create_v1() -> GetMessagesBuilder {
-        let mut builder = GetMessagesBuilder::create();
-        builder.version = settings::ProtocolTypes::V1;
-        builder
+        GetMessagesBuilder::create()
     }
 
     pub fn uid(&mut self, uids: Option<Vec<String>>) -> VcxResult<&mut Self> {
@@ -125,14 +121,6 @@ impl GetMessagesBuilder {
         Ok(self)
     }
 
-    pub fn version(&mut self, version: &Option<ProtocolTypes>) -> VcxResult<&mut Self> {
-        self.version = match version {
-            Some(version) => version.clone(),
-            None => settings::get_protocol_type()
-        };
-        Ok(self)
-    }
-
     pub fn send_secure(&mut self) -> VcxResult<Vec<Message>> {
         debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
@@ -146,7 +134,7 @@ impl GetMessagesBuilder {
     fn parse_response(&self, response: Vec<u8>) -> VcxResult<Vec<Message>> {
         trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
 
-        let mut response = parse_response_from_agency(&response, &self.version)?;
+        let mut response = parse_response_from_agency(&response)?;
 
         trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
 
@@ -187,13 +175,13 @@ impl GetMessagesBuilder {
 
         let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did, &self.version)
+        prepare_message_for_agency(&message, &agency_did)
     }
 
     // todo: This should be removed after public method vcx_messages_download is removed
     fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> VcxResult<Vec<MessageByConnection>> {
         trace!("parse_download_messages_response >>>");
-        let mut response = parse_response_from_agency(&response, &self.version)?;
+        let mut response = parse_response_from_agency(&response)?;
 
         trace!("parse_download_messages_response: parsed response {:?}", response);
         let msgs = match response.remove(0) {
@@ -223,23 +211,17 @@ impl GeneralMessage for GetMessagesBuilder {
     fn set_agent_vk(&mut self, vk: String) { self.agent_vk = vk; }
 
     fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
-        debug!("prepare_request >> This connection is using protocol_type: {:?}", self.version);
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::GetMessages(
-                        GetMessages::build(A2AMessageKinds::GetMessages,
-                                           self.exclude_payload.clone(),
-                                           self.uids.clone(),
-                                           self.status_codes.clone(),
-                                           self.pairwise_dids.clone()))
-                ),
-        };
+        debug!("prepare_request >>");
+        let message = A2AMessage::Version2(
+            A2AMessageV2::GetMessages(
+                GetMessages::build(A2AMessageKinds::GetMessages,
+                                   self.exclude_payload.clone(),
+                                   self.uids.clone(),
+                                   self.status_codes.clone(),
+                                   self.pairwise_dids.clone()))
+        );
 
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk, &self.version)
+        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk)
     }
 }
 
@@ -327,7 +309,6 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
         .agent_vk(&agent_vk)?
         .uid(msg_uid)?
         .status_codes(status_codes)?
-        .version(version)?
         .send_secure()
         .map_err(|err| err.map(VcxErrorKind::PostMessageFailed, "Cannot get messages"))?;
 
@@ -384,7 +365,6 @@ pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes
             .uid(uids)?
             .status_codes(status_codes)?
             .pairwise_dids(pairwise_dids)?
-            .version(&Some(::settings::get_protocol_type()))?
             .download_messages_noauth()?;
 
     trace!("message returned: {:?}", response);

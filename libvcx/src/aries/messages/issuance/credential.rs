@@ -1,6 +1,6 @@
 use error::VcxResult;
 use error::prelude::*;
-use messages::thread::Thread;
+use agency_vcx::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::ack::PleaseAck;
 use aries::messages::attachment::{AttachmentId, Attachments};

@@ -4,7 +4,7 @@ use serde_json;
 
 use api::PublicEntityStateType;
 use error::prelude::*;
-use messages::ObjectWithVersion;
+use agency_vcx::ObjectWithVersion;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::ledger;

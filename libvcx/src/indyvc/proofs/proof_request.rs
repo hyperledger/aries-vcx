@@ -5,7 +5,7 @@ use serde_json;
 
 use aries::messages::connection::service::Service;
 use error::prelude::*;
-use messages::validation;
+use utils::validation;
 use utils::libindy::anoncreds;
 use utils::qualifier;
 
@@ -92,225 +92,6 @@ pub struct ProofRequestData {
     pub requested_predicates: HashMap<String, PredicateInfo>,
     pub non_revoked: Option<NonRevokedInterval>,
     pub ver: Option<ProofRequestVersion>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct ProofRequestMessage {
-    #[serde(rename = "@type")]
-    type_header: ProofType,
-    #[serde(rename = "@topic")]
-    topic: ProofTopic,
-    pub proof_request_data: ProofRequestData,
-    pub msg_ref_id: Option<String>,
-    from_timestamp: Option<u64>,
-    to_timestamp: Option<u64>,
-    pub thread_id: Option<String>,
-    #[serde(rename = "~service")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<Service>,
-}
-
-impl ProofPredicates {
-    pub fn create() -> ProofPredicates {
-        ProofPredicates {
-            predicates: Vec::new()
-        }
-    }
-}
-
-impl ProofRequestMessage {
-    pub fn create() -> ProofRequestMessage {
-        ProofRequestMessage {
-            type_header: ProofType {
-                name: String::from(PROOF_REQUEST),
-                type_version: String::new(),
-            },
-            topic: ProofTopic {
-                tid: 0,
-                mid: 0,
-            },
-            proof_request_data: ProofRequestData {
-                nonce: String::new(),
-                name: String::new(),
-                data_version: String::new(),
-                requested_attributes: HashMap::new(),
-                requested_predicates: HashMap::new(),
-                non_revoked: None,
-                ver: None,
-            },
-            msg_ref_id: None,
-            from_timestamp: None,
-            to_timestamp: None,
-            thread_id: None,
-            service: None,
-        }
-    }
-
-    pub fn type_version(&mut self, version: &str) -> VcxResult<&mut Self> {
-        self.type_header.type_version = String::from(version);
-        Ok(self)
-    }
-
-    pub fn tid(&mut self, tid: u32) -> VcxResult<&mut Self> {
-        self.topic.tid = tid;
-        Ok(self)
-    }
-
-    pub fn mid(&mut self, mid: u32) -> VcxResult<&mut Self> {
-        self.topic.mid = mid;
-        Ok(self)
-    }
-
-    pub fn nonce(&mut self, nonce: &str) -> VcxResult<&mut Self> {
-        let nonce = validation::validate_nonce(nonce)?;
-        self.proof_request_data.nonce = nonce;
-        Ok(self)
-    }
-
-    pub fn proof_name(&mut self, name: &str) -> VcxResult<&mut Self> {
-        self.proof_request_data.name = String::from(name);
-        Ok(self)
-    }
-
-    pub fn proof_request_format_version(&mut self, version: Option<ProofRequestVersion>) -> VcxResult<&mut Self> {
-        self.proof_request_data.ver = version;
-        Ok(self)
-    }
-
-    pub fn proof_data_version(&mut self, version: &str) -> VcxResult<&mut Self> {
-        self.proof_request_data.data_version = String::from(version);
-        Ok(self)
-    }
-
-
-    pub fn requested_attrs(&mut self, attrs: &str) -> VcxResult<&mut Self> {
-        let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
-        let proof_attrs: Vec<AttrInfo> = serde_json::from_str(attrs)
-            .map_err(|err| {
-                debug!("Cannot parse attributes: {}", err);
-                VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse attributes: {}", err))
-            })?;
-
-        let mut index = 1;
-        for mut attr in proof_attrs.into_iter() {
-            let attr_name = match (attr.name.as_ref(), attr.names.as_ref()) {
-                (Some(name), None) => { name.clone() }
-                (None, Some(names)) => {
-                    if names.is_empty() {
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest, "Proof Request validation failed: there is empty request attribute names"));
-                    }
-                    names.join(",")
-                }
-                (Some(_), Some(_)) => {
-                    return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                                  format!("Proof Request validation failed: there is empty requested attribute: {:?}", attrs)));
-                }
-                (None, None) => {
-                    return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                                  format!("Proof request validation failed: there is a requested attribute with both name and names: {:?}", attrs)));
-                }
-            };
-
-            attr.restrictions = self.process_restrictions(attr.restrictions);
-
-            if check_req_attrs.contains_key(&attr_name) {
-                check_req_attrs.insert(format!("{}_{}", attr_name, index), attr);
-            } else {
-                check_req_attrs.insert(attr_name, attr);
-            }
-            index = index + 1;
-        }
-        self.proof_request_data.requested_attributes = check_req_attrs;
-        Ok(self)
-    }
-
-    pub fn requested_predicates(&mut self, predicates: &str) -> VcxResult<&mut Self> {
-        let mut check_predicates: HashMap<String, PredicateInfo> = HashMap::new();
-        let attr_values: Vec<PredicateInfo> = serde_json::from_str(predicates)
-            .map_err(|err| {
-                debug!("Cannot parse predicates: {}", err);
-                VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse predicates: {}", err))
-            })?;
-
-        let mut index = 1;
-        for mut attr in attr_values.into_iter() {
-            attr.restrictions = self.process_restrictions(attr.restrictions);
-
-            if check_predicates.contains_key(&attr.name) {
-                check_predicates.insert(format!("{}_{}", attr.name, index), attr);
-            } else {
-                check_predicates.insert(attr.name.clone(), attr);
-            }
-            index = index + 1;
-        }
-
-        self.proof_request_data.requested_predicates = check_predicates;
-        Ok(self)
-    }
-
-    fn process_restrictions(&self, restrictions: Option<Restrictions>) -> Option<Restrictions> {
-        match restrictions {
-            Some(Restrictions::V2(restrictions)) => Some(Restrictions::V2(restrictions)),
-            Some(Restrictions::V1(restrictions)) => {
-                Some(Restrictions::V1(
-                    restrictions
-                        .into_iter()
-                        .map(|filter| {
-                            Filter {
-                                schema_id: filter.schema_id.as_ref().and_then(|schema_id| anoncreds::libindy_to_unqualified(&schema_id).ok()),
-                                schema_issuer_did: filter.schema_issuer_did.as_ref().and_then(|schema_issuer_did| anoncreds::libindy_to_unqualified(&schema_issuer_did).ok()),
-                                schema_name: filter.schema_name,
-                                schema_version: filter.schema_version,
-                                issuer_did: filter.issuer_did.as_ref().and_then(|issuer_did| anoncreds::libindy_to_unqualified(&issuer_did).ok()),
-                                cred_def_id: filter.cred_def_id.as_ref().and_then(|cred_def_id| anoncreds::libindy_to_unqualified(&cred_def_id).ok()),
-                            }
-                        })
-                        .collect()
-                ))
-            }
-            None => None
-        }
-    }
-
-    pub fn from_timestamp(&mut self, from: Option<u64>) -> VcxResult<&mut Self> {
-        self.from_timestamp = from;
-        Ok(self)
-    }
-
-    pub fn to_timestamp(&mut self, to: Option<u64>) -> VcxResult<&mut Self> {
-        self.to_timestamp = to;
-        Ok(self)
-    }
-
-    pub fn set_proof_request_data(&mut self, proof_request_data: ProofRequestData) -> VcxResult<&mut Self> {
-        self.proof_request_data = proof_request_data;
-        Ok(self)
-    }
-
-
-    pub fn set_thread_id(&mut self, thid: String) -> VcxResult<&mut Self> {
-        self.thread_id = Some(thid);
-        Ok(self)
-    }
-
-    pub fn set_service(&mut self, service: Option<Service>) -> VcxResult<&mut Self> {
-        self.service = service;
-        Ok(self)
-    }
-
-    pub fn serialize_message(&mut self) -> VcxResult<String> {
-        serde_json::to_string(self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize proof request: {}", err)))
-    }
-
-    pub fn get_proof_request_data(&self) -> String {
-        json!(self)[PROOF_DATA].to_string()
-    }
-
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize proof request: {}", err)))
-    }
 }
 
 impl ProofRequestData {
@@ -426,7 +207,6 @@ impl Default for ProofRequestVersion {
 
 #[cfg(test)]
 mod tests {
-    use messages::proof_request;
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use utils::devsetup::SetupDefaults;
 
@@ -434,24 +214,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_proof_request_data() {
-        let _setup = SetupDefaults::init();
-
-        let request = proof_request();
-        let proof_data = ProofRequestData {
-            nonce: String::new(),
-            name: String::new(),
-            data_version: String::new(),
-            requested_attributes: HashMap::new(),
-            requested_predicates: HashMap::new(),
-            non_revoked: None,
-            ver: None,
-        };
-        assert_eq!(request.proof_request_data, proof_data);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
@@ -490,6 +253,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -506,6 +270,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_predicates_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -519,6 +284,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_attrs_constructed_correctly_for_names() {
         let _setup = SetupDefaults::init();
 
@@ -538,6 +304,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_attrs_constructed_correctly_for_name_and_names_passed_together() {
         let _setup = SetupDefaults::init();
 

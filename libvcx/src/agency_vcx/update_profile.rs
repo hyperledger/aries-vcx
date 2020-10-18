@@ -1,17 +1,16 @@
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_vcx::message_type::MessageTypes;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency, validation};
-use messages::message_type::MessageTypes;
 use settings;
+use utils::{httpclient, validation};
 use utils::constants::UPDATE_PROFILE_RESPONSE;
-use utils::httpclient;
 use utils::httpclient::AgencyMock;
 
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
     to_did: String,
     agent_payload: String,
-    configs: Vec<ConfigOption>,
-    version: settings::ProtocolTypes,
+    configs: Vec<ConfigOption>
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -40,8 +39,7 @@ impl UpdateProfileDataBuilder {
         UpdateProfileDataBuilder {
             to_did: String::new(),
             configs: Vec::new(),
-            agent_payload: String::new(),
-            version: settings::get_protocol_type(),
+            agent_payload: String::new()
         }
     }
 
@@ -81,15 +79,6 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn version(&mut self, version: &Option<settings::ProtocolTypes>) -> VcxResult<&mut Self> {
-        self.version = match version {
-            Some(version) => version.clone(),
-            None => settings::get_protocol_type()
-        };
-        Ok(self)
-    }
-
-
     pub fn send_secure(&mut self) -> VcxResult<()> {
         trace!("UpdateProfileData::send_secure >>>");
 
@@ -103,28 +92,22 @@ impl UpdateProfileDataBuilder {
     }
 
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::UpdateConfigs(
-                        UpdateConfigs {
-                            msg_type: MessageTypes::build(A2AMessageKinds::UpdateConfigs),
-                            configs: self.configs.clone(),
-                        }
-                    )
-                )
-        };
+        let message = A2AMessage::Version2(
+            A2AMessageV2::UpdateConfigs(
+                UpdateConfigs {
+                    msg_type: MessageTypes::build(A2AMessageKinds::UpdateConfigs),
+                    configs: self.configs.clone(),
+                }
+            )
+        );
 
         let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did, &self.version)
+        prepare_message_for_agency(&message, &agency_did)
     }
 
     fn parse_response(&self, response: Vec<u8>) -> VcxResult<()> {
-        let mut response = parse_response_from_agency(&response, &self.version)?;
+        let mut response = parse_response_from_agency(&response)?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
@@ -135,7 +118,7 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    use messages::update_data;
+    use agency_vcx::update_data;
     use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;

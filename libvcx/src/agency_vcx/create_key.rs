@@ -1,9 +1,9 @@
+use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_vcx::message_type::MessageTypes;
 use error::prelude::*;
-use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency, validation};
-use messages::message_type::MessageTypes;
 use settings;
 use settings::ProtocolTypes;
-use utils::{constants, httpclient};
+use utils::{constants, httpclient, validation};
 use utils::httpclient::AgencyMock;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -30,8 +30,7 @@ pub struct CreateKeyResponse {
 #[derive(Debug)]
 pub struct CreateKeyBuilder {
     for_did: String,
-    for_verkey: String,
-    version: ProtocolTypes,
+    for_verkey: String
 }
 
 impl CreateKeyBuilder {
@@ -40,8 +39,7 @@ impl CreateKeyBuilder {
 
         CreateKeyBuilder {
             for_did: String::new(),
-            for_verkey: String::new(),
-            version: settings::get_protocol_type(),
+            for_verkey: String::new()
         }
     }
 
@@ -57,24 +55,11 @@ impl CreateKeyBuilder {
         Ok(self)
     }
 
-    pub fn version(&mut self, version: &Option<ProtocolTypes>) -> VcxResult<&mut Self> {
-        self.version = match version {
-            Some(version) => version.clone(),
-            None => settings::get_protocol_type()
-        };
-        Ok(self)
-    }
-
     pub fn send_secure(&self) -> VcxResult<(String, String)> {
         trace!("CreateKeyMsg::send >>>");
 
         if settings::agency_mocks_enabled() {
-            match self.version {
-                settings::ProtocolTypes::V1 |
-                settings::ProtocolTypes::V2 |
-                settings::ProtocolTypes::V3 |
-                settings::ProtocolTypes::V4 => AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec()),
-            }
+            AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
         let data = self.prepare_request()?;
@@ -85,27 +70,21 @@ impl CreateKeyBuilder {
     }
 
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
-        let message = match self.version {
-            settings::ProtocolTypes::V1 |
-            settings::ProtocolTypes::V2 |
-            settings::ProtocolTypes::V3 |
-            settings::ProtocolTypes::V4 =>
-                A2AMessage::Version2(
-                    A2AMessageV2::CreateKey(CreateKey {
-                        msg_type: MessageTypes::MessageTypeV2(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
-                        for_did: self.for_did.to_string(),
-                        for_verkey: self.for_verkey.to_string(),
-                    })
-                ),
-        };
+        let message = A2AMessage::Version2(
+            A2AMessageV2::CreateKey(CreateKey {
+                msg_type: MessageTypes::MessageTypeV2(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
+                for_did: self.for_did.to_string(),
+                for_verkey: self.for_verkey.to_string(),
+            })
+        );
 
         let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did, &self.version)
+        prepare_message_for_agency(&message, &agency_did)
     }
 
     fn parse_response(&self, response: &Vec<u8>) -> VcxResult<(String, String)> {
-        let mut response = parse_response_from_agency(response, &self.version)?;
+        let mut response = parse_response_from_agency(response)?;
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
             _ => Err(VcxError::from(VcxErrorKind::InvalidHttpResponse))
@@ -115,7 +94,7 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use messages::create_keys;
+    use agency_vcx::create_keys;
     use utils::constants::{CREATE_KEYS_V2_RESPONSE, MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::libindy::signus::create_and_store_my_did;
@@ -162,7 +141,7 @@ mod tests {
 
         let mut builder = create_keys();
 
-        let (for_did, for_verkey) = builder.version(&Some(ProtocolTypes::V2)).unwrap().parse_response(&CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
+        let (for_did, for_verkey) = builder.parse_response(&CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
 
         assert_eq!(for_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(for_verkey, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");

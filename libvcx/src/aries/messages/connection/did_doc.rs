@@ -2,7 +2,7 @@ use aries::messages::connection::invite::Invitation;
 
 use error::prelude::*;
 use url::Url;
-use messages::validation::validate_verkey;
+use utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";

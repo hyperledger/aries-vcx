@@ -8,9 +8,9 @@ use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
-use messages;
-use messages::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
-use messages::{SerializableObjectWithState, MessageStatusCode};
+use agency_vcx;
+use agency_vcx::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
+use agency_vcx::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
@@ -23,10 +23,9 @@ lazy_static! {
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
-    let (agent_did, agent_verkey) = messages::create_keys()
+    let (agent_did, agent_verkey) = agency_vcx::create_keys()
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
-        .version(&Some(settings::get_protocol_type()))?
         .send_secure()
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
@@ -65,10 +64,6 @@ pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.agent_info().agent_vk.clone())
     })
-}
-
-pub fn get_version(_handle: u32) -> VcxResult<Option<ProtocolTypes>> {
-    Ok(Some(settings::get_protocol_type()))
 }
 
 pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
@@ -313,8 +308,8 @@ pub mod tests {
     use serde_json::Value;
 
     use api::VcxStateType;
-    use messages::get_message::download_messages_noauth;
-    use messages::MessageStatusCode;
+    use agency_vcx::get_message::download_messages_noauth;
+    use agency_vcx::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
