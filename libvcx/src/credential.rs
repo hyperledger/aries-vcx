@@ -3,9 +3,11 @@ use serde_json;
 use aries::{
     handlers::issuance::holder::holder::Holder,
     messages::issuance::credential_offer::CredentialOffer,
+    messages::a2a::A2AMessage,
 };
 use error::prelude::*;
 use settings::indy_mocks_enabled;
+use connection;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
 use utils::httpclient::AgencyMockDecrypted;
@@ -80,10 +82,32 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     Ok((handle, offer))
 }
 
-pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |credential| {
-        credential.update_state(message.clone(), connection_handle)?;
-        Ok(error::SUCCESS.code_num)
+        trace!("credential::update_state >>> ");
+
+        if credential.is_terminal_state() { return Ok(credential.get_status()); }
+
+        if let Some(message) = message {
+            let message: A2AMessage = ::serde_json::from_str(&message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+
+            credential.step(message.into())?;
+            return Ok(credential.get_status());
+        }
+
+        let conn_handle = credential.maybe_update_connection_handle(connection_handle);
+
+        let messages = connection::get_messages(conn_handle)?;
+
+        match credential.find_message_to_handle(messages) {
+            Some((uid, msg)) => {
+                credential.step(msg.into())?;
+                connection::update_message_status(conn_handle, uid)?;
+                Ok(credential.get_status())
+            }
+            None => Ok(credential.get_status())
+        }
     })
 }
 

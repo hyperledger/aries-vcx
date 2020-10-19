@@ -589,7 +589,7 @@ pub extern fn vcx_credential_update_state_with_message(command_handle: CommandHa
            command_handle, credential_handle, source_id);
 
     spawn(move || {
-        match credential::update_state(credential_handle, Some(message), None) {
+        match credential::update_state(credential_handle, Some(&message), None) {
             Ok(_) => (),
             Err(e) => {
                 error!("vcx_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
