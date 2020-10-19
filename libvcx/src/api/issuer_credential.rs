@@ -384,7 +384,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, Some(message), None) {
+        match issuer_credential::update_state(credential_handle, Some(&message), None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
