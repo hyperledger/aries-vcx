@@ -77,9 +77,29 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.update_state(message.as_ref().map(String::as_str), connection_handle)?;
+        trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
+
+        if !proof.has_transitions() { 
+            trace!("disclosed_proof::update_state >> found no available transition");
+            return Ok(proof.state());
+        }
+
+        let connection_handle = proof.maybe_update_connection_handle(connection_handle)?;
+
+        if let Some(message_) = message {
+            return proof.update_state_with_message(message_);
+        }
+
+        let messages = connection::get_messages(connection_handle)?;
+        trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
+
+        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+            proof.handle_message(message.into())?;
+            connection::update_message_status(connection_handle, uid)?;
+        };
+
         Ok(proof.state())
     })
 }
@@ -296,7 +316,7 @@ mod tests {
         send_proof(handle_proof, connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_proof).unwrap());
 
-        update_state(handle_proof, Some(String::from(ARIES_PROOF_PRESENTATION_ACK)), Some(connection_h)).unwrap();
+        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), Some(connection_h)).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
     }
 

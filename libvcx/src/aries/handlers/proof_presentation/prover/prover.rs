@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::collections::HashMap;
 
 use ::{connection, settings};
 use error::prelude::*;
@@ -59,33 +60,21 @@ impl Prover {
         self.step(ProverMessages::SendPresentation(connection_handle))
     }
 
-    pub fn update_state(&mut self, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<()> {
-        trace!("Prover::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
-
-        if !self.prover_sm.has_transitions() { 
-            trace!("Prover::update_state >> found no available transition");
-            return Ok(());
-        }
-
-        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
-        self.prover_sm.set_connection_handle(connection_handle);
-
-        if let Some(message_) = message {
-            return self.update_state_with_message(message_);
-        }
-
-        let messages = connection::get_messages(connection_handle)?;
-        trace!("Prover::update_state >>> found messages: {:?}", messages);
-
-        if let Some((uid, message)) = self.prover_sm.find_message_to_handle(messages) {
-            self.handle_message(message.into())?;
-            connection::update_message_status(connection_handle, uid)?;
-        };
-
-        Ok(())
+    pub fn has_transitions(&self) -> bool {
+        self.prover_sm.has_transitions()
     }
 
-    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<()> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+        self.prover_sm.find_message_to_handle(messages)
+    }
+
+    pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> VcxResult<u32> {
+        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
+        self.prover_sm.set_connection_handle(connection_handle);
+        Ok(connection_handle)
+    }
+
+    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<u32> {
         trace!("Prover::update_state_with_message >>> message: {:?}", message);
 
         let a2a_message: A2AMessage = ::serde_json::from_str(&message)
@@ -93,7 +82,7 @@ impl Prover {
 
         self.handle_message(a2a_message.into())?;
 
-        Ok(())
+        Ok(self.state())
     }
 
     pub fn handle_message(&mut self, message: ProverMessages) -> VcxResult<()> {

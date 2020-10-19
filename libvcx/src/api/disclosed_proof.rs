@@ -571,7 +571,7 @@ pub extern fn vcx_disclosed_proof_update_state_with_message(command_handle: Comm
            command_handle, proof_handle, source_id);
 
     spawn(move || {
-        match disclosed_proof::update_state(proof_handle, Some(message), None) {
+        match disclosed_proof::update_state(proof_handle, Some(&message), None) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_update_state__with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, s, source_id);
