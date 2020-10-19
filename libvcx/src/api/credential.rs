@@ -873,7 +873,7 @@ mod tests {
                                             handle,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         let credential_json = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
-        println!("Serialized credential: ${:?}", credential_json);
+        debug!("Serialized credential: {:?}", credential_json);
 
         let object: Value = serde_json::from_str(&credential_json).unwrap();
         assert_eq!(object["version"], V3_OBJECT_SERIALIZE_VERSION);

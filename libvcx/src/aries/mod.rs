@@ -115,7 +115,7 @@ pub mod test {
     }
 
     fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
-        println!("determine_message_type >>> a2a_message={:?}", a2a_message);
+        debug!("determine_message_type >>> a2a_message={:?}", a2a_message);
         match a2a_message.clone() {
             A2AMessage::PresentationRequest(_) => PayloadKinds::ProofRequest,
             A2AMessage::CredentialOffer(offer) => PayloadKinds::CredOffer,
@@ -142,20 +142,15 @@ pub mod test {
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
-        println!("Going to filter message for type ...");
         for message in messages.msgs.into_iter() {
-            // let decrypted_msg = serde_json::from_str(&message.decrypted_msg.unwrap()).unwrap();
             let decrypted_msg = &message.decrypted_msg.unwrap();
-            println!("Decrypted_msg = {}", decrypted_msg);
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
-            println!("Filtering for {:?}, found {:?}", filter_msg_type, msg_type);
             if filter_msg_type == msg_type {
                 return VcxAgencyMessage {
                     uid: message.uid,
                     decrypted_payload: decrypted_msg.clone(),
                 };
             }
-            // todo: just finished writing this code, needs to be tested
         }
         panic!("Message not found")
     }
@@ -666,9 +661,9 @@ pub mod test {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[cfg(feature = "to_restore")] // todo: this is the problem alice.download_message("credential-offer");
     #[test]
     fn aries_demo_download_message_flow() {
+        SetupEmpty::init();
         PaymentPlugin::load();
         let _pool = Pool::open();
 

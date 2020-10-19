@@ -35,12 +35,12 @@ impl Default for AgentInfo {
 
 fn _log_messages_optionally(a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
-        {
-            for message in a2a_messages.values() {
-                let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
-                warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
-            }
+    {
+        for message in a2a_messages.values() {
+            let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+            warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
         }
+    }
 }
 
 impl AgentInfo {
@@ -120,33 +120,31 @@ impl AgentInfo {
         let message = messages
             .pop()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;
-        let message = self.decode_message(&message, &expected_sender_vk)?;
+        let message = self.decrypt_decode_message(&message, &expected_sender_vk)?;
         Ok(message)
     }
 
     fn decrypt_decode_messages(&self, messages: &Vec<Message>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decode_message(&message, expected_sender_vk)?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(&message, expected_sender_vk)?);
         }
-        return Ok(a2a_messages)
+        return Ok(a2a_messages);
     }
 
     fn decrypt_decode_messages_noauth(&self, messages: &Vec<Message>) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decode_message_noauth(&message)?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(&message)?);
         }
-        return Ok(a2a_messages)
+        return Ok(a2a_messages);
     }
 
-    fn decode_message(&self, message: &Message, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
-        trace!("Agent::decode_message >>> message = {:?}", json!(&message).to_string());
+    fn decrypt_decode_message(&self, message: &Message, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
         EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk)
     }
 
-    fn decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
-        trace!("Agent::decode_message_noatuh >>> message = {:?}", json!(&message).to_string());
+    fn decrypt_decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
         EncryptionEnvelope::anon_unpack(message.payload()?)
     }
 

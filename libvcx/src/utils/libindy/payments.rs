@@ -497,7 +497,7 @@ pub fn mint_tokens_and_set_fees(number_of_addresses: Option<u32>, tokens_per_add
 
         match ::utils::libindy::ledger::libindy_submit_request(&sign4) {
             Ok(_) => (),
-            Err(x) => println!("failure minting tokens: {}", x),
+            Err(x) => error!("failure minting tokens: {}", x),
         };
     }
 
@@ -947,7 +947,6 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let fees = get_ledger_fees().unwrap();
-        println!("fees: {}", fees);
         ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 
@@ -958,7 +957,6 @@ pub mod tests {
 
         mint_tokens_and_set_fees(Some(0), Some(0), Some("{\"101\":0, \"102\":0}".to_string()), None).unwrap();
         let fees = get_ledger_fees().unwrap();
-        println!("fees: {}", fees);
         ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 

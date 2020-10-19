@@ -156,6 +156,7 @@ pub mod tests {
     use aries::messages::connection::did_doc::tests::*;
 
     use super::*;
+    use utils::libindy::tests::test_setup::create_trustee_key;
 
     fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
@@ -214,8 +215,9 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_response_encode_works() {
-        let setup = test_setup::key();
-        let signed_response: SignedResponse = _response().encode(&setup.key).unwrap();
-        assert_eq!(_response(), signed_response.decode(&setup.key).unwrap());
+        let setup = test_setup::setup_wallet();
+        let trustee_key = create_trustee_key(setup.wh);
+        let signed_response: SignedResponse = _response().encode(&trustee_key).unwrap();
+        assert_eq!(_response(), signed_response.decode(&trustee_key).unwrap());
     }
 }

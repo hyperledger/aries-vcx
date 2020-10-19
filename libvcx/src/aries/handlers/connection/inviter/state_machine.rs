@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use api::VcxStateType;
-use error::prelude::*;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::inviter::states::complete::CompleteState;
 use aries::handlers::connection::inviter::states::invited::InvitedState;
@@ -15,6 +14,7 @@ use aries::messages::connection::invite::Invitation;
 use aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use aries::messages::discovery::disclose::ProtocolDescriptor;
 use aries::messages::trust_ping::ping::Ping;
+use error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
@@ -120,12 +120,12 @@ impl SmConnectionInviter {
     }
 
     pub fn get_bootstrap_agent_messages(&self) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
-        let expected_sender_vk = self.remote_vk().ok();
+        let expected_sender_vk = match self.remote_vk() {
+            Ok(vk) => vk,
+            Err(_) => return Ok(None)
+        };
         if let Some(prev_agent_info) = self.prev_agent_info() {
-            let messages = match expected_sender_vk {
-                None => prev_agent_info.get_messages_noauth()?,
-                Some(expected_sender_vk) => prev_agent_info.get_messages(&expected_sender_vk)?
-            };
+            let messages = prev_agent_info.get_messages(&expected_sender_vk)?;
             return Ok(Some((messages, prev_agent_info.clone())));
         }
         Ok(None)
@@ -326,7 +326,6 @@ impl SmConnectionInviter {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupAriesMocks;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::invite::tests::_invitation;
     use aries::messages::connection::problem_report::tests::_problem_report;
@@ -338,6 +337,7 @@ pub mod test {
     use aries::messages::trust_ping::ping_response::tests::_ping_response;
     use aries::test::setup::AgencyModeSetup;
     use aries::test::source_id;
+    use utils::devsetup::SetupAriesMocks;
 
     use super::*;
 
