@@ -189,14 +189,14 @@ public class DisclosedProofApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<String> proofGetAttributes(
+    public static CompletableFuture<String> proofGetProofRequestAttachment(
             int proofHandle
     ) throws VcxException {
         logger.debug("proofGetAttributes() called with: proofHandle = [" + proofHandle + "]");
         CompletableFuture<String> future = new CompletableFuture<>();
         int commandHandle = addFuture(future);
 
-        int result = LibVcx.api.vcx_disclosed_proof_get_attributes(commandHandle, proofHandle, vcxProofGetAttributesCB);
+        int result = LibVcx.api.vcx_disclosed_proof_get_proof_request_attachment(commandHandle, proofHandle, vcxProofGetAttributesCB);
         checkResult(result);
 
         return future;

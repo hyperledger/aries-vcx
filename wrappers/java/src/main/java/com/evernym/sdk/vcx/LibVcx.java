@@ -451,9 +451,9 @@ public abstract class LibVcx {
         public int vcx_disclosed_proof_retrieve_credentials(int command_handle, int proof_handle, Callback cb);
 
         /**
-         * Retrieve attributes specified in the proof request
+         * Retrieve attachment of the received proof request
          */
-        public int vcx_disclosed_proof_get_attributes(int command_handle, int proof_handle, Callback cb);
+        public int vcx_disclosed_proof_get_proof_request_attachment(int command_handle, int proof_handle, Callback cb);
 
         /**
          * Generate a proof that can be sent later

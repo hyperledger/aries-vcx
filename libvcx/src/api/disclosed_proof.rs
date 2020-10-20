@@ -452,10 +452,10 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_disclosed_proof_get_attributes(command_handle: CommandHandle,
+pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: CommandHandle,
                                             proof_handle: u32,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_attributes >>>");
+    info!("vcx_disclosed_proof_get_attachment >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -464,19 +464,19 @@ pub extern fn vcx_disclosed_proof_get_attributes(command_handle: CommandHandle,
     }
 
     let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_disclosed_proof_get_attributes(command_handle: {}, proof_handle: {}), source_id: {:?}",
+    trace!("vcx_disclosed_proof_get_attachment(command_handle: {}, proof_handle: {}), source_id: {:?}",
            command_handle, proof_handle, source_id);
 
     spawn(move || {
-        match disclosed_proof::get_attributes(proof_handle) {
+        match disclosed_proof::get_proof_request_attachment(proof_handle) {
             Ok(x) => {
-                trace!("vcx_disclosed_proof_get_attributes_cb(command_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                trace!("vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, source_id);
                 let attrs = CStringUtils::string_to_cstring(x);
                 cb(command_handle, error::SUCCESS.code_num, attrs.as_ptr());
             }
             Err(err) => {
-                error!("vcx_disclosed_proof_get_attributes_cb(command_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                error!("vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }

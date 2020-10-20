@@ -138,7 +138,7 @@ impl Prover {
         self.prover_sm.presentation_request().request_presentations_attach.content()
     }
 
-    pub fn get_attributes(&self) -> VcxResult<String> {
+    pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
         let data = self.prover_sm.presentation_request().request_presentations_attach.content()?;
         let proof_request_data: serde_json::Value = serde_json::from_str(&data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err)))?;

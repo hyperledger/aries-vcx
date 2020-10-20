@@ -167,9 +167,9 @@ pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn get_attributes(handle: u32) -> VcxResult<String> {
+pub fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.get_attributes()
+        proof.get_proof_request_attachment()
     })
 }
 
@@ -410,7 +410,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_get_attributes() {
+    fn test_get_proof_request_attachment() {
         let _setup = SetupStrictAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
@@ -423,7 +423,7 @@ mod tests {
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
 
-        let attrs = get_attributes(handle).unwrap();
+        let attrs = get_proof_request_attachment(handle).unwrap();
         let attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
     }
 }

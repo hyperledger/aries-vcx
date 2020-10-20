@@ -165,11 +165,11 @@ describe('DisclosedProof', () => {
     })
   })
 
-  describe('getAttributes:', async () => {
+  describe('getProofRequestAttachment:', async () => {
     it('success', async () => {
       const data = await dataDisclosedProofCreateWithRequest()
       const disclosedProof = await disclosedProofCreateWithRequest(data)
-      const attrs = await disclosedProof.getAttributes()
+      const attrs = await disclosedProof.getProofRequestAttachment()
       const expectedAttrs = '{"name":"proofForAlice","non_revoked":{"from":null,"to":1599834712270},"nonce":"1137618739380422483900458","requested_attributes":{"attribute_0":{"names":["name","last_name","sex"],"restrictions":{"$or":[{"issuer_did":"V4SGRU86Z58d6TV7PBUe6f"}]}},"attribute_1":{"name":"date","restrictions":{"issuer_did":"V4SGRU86Z58d6TV7PBUe6f"}},"attribute_2":{"name":"degree","restrictions":{"attr::degree::value":"maths"}},"attribute_3":{"name":"nickname"}},"requested_predicates":{"predicate_0":{"name":"age","p_type":">=","p_value":20,"restrictions":{"$or":[{"issuer_did":"V4SGRU86Z58d6TV7PBUe6f"}]}}},"ver":"1.0","version":"1.0"}'
       assert.equal(attrs, expectedAttrs)
     })

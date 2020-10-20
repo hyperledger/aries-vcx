@@ -342,11 +342,11 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
     }
   }
 
-  public async getAttributes (): Promise<string> {
+  public async getProofRequestAttachment (): Promise<string> {
     try {
       const attrs = await createFFICallbackPromise<string>(
           (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_get_attributes(0, this.handle, cb)
+            const rc = rustAPI().vcx_disclosed_proof_get_proof_request_attachment(0, this.handle, cb)
             if (rc) {
               reject(rc)
             }
