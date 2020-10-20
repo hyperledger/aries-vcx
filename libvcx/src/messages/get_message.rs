@@ -295,7 +295,6 @@ impl Message {
     }
 
     fn _decrypt_v3_message(&self) -> VcxResult<String> {
-        use aries::utils::encryption_envelope::EncryptionEnvelope;
         let a2a_message = EncryptionEnvelope::anon_unpack(self.payload()?)?;
         Ok(json!(&a2a_message).to_string())
     }
@@ -320,7 +319,7 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
     Ok(response)
 }
 
-fn _parse_status_code(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
+pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
     match status_codes {
         Some(codes) => {
             let codes = codes
@@ -335,11 +334,21 @@ fn _parse_status_code(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec
     }
 }
 
+pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+    let codes = conn_handles
+        .iter()
+        .map(|handle|
+            ::serde_json::from_str::<u32>(handle)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
+        ).collect::<VcxResult<Vec<u32>>>()?;
+    Ok(codes)
+}
+
 pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
     trace!("download_messages_noauth >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
            pairwise_dids, status_codes, uids);
 
-    let status_codes = _parse_status_code(status_codes)?;
+    let status_codes = parse_status_codes(status_codes)?;
 
     let response =
         get_messages()

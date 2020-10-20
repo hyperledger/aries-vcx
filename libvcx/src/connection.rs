@@ -9,7 +9,7 @@ use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use messages;
-use messages::get_message::Message;
+use messages::get_message::{MessageByConnection, parse_status_codes, parse_connection_handles, Message};
 use messages::SerializableObjectWithState;
 use settings;
 use settings::ProtocolTypes;
@@ -251,6 +251,24 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_connection_info()
     })
+}
+
+pub fn download_messages(conn_handles: Vec<String>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+    let status_codes = parse_status_codes(status_codes)?;
+    let conn_handles  = parse_connection_handles(conn_handles)?;
+    let mut res = Vec::new();
+    for conn_handle in conn_handles {
+        let msg_by_conn = CONNECTION_MAP.get(
+            conn_handle, |connection| {
+                let msgs = connection
+                   .agent_info()
+                   .download_encrypted_messages(uids.clone(), status_codes.clone())?;
+                Ok(MessageByConnection{ pairwise_did: connection.agent_info().clone().pw_did, msgs })
+            }
+        )?;
+        res.push(msg_by_conn);
+    };
+    Ok(res)
 }
 
 #[cfg(test)]
