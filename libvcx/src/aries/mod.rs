@@ -12,10 +12,12 @@ pub mod test {
     use rand::Rng;
 
     use messages::agent_utils::connect_register_provision;
-    use messages::payload::PayloadV1;
+    use messages::payload::{PayloadKinds};
     use utils::devsetup::*;
     use utils::libindy::wallet::*;
     use utils::plugins::init_plugin;
+    use aries::messages::a2a::A2AMessage;
+    use error::{VcxResult, VcxErrorKind, VcxError};
 
     pub fn source_id() -> String {
         String::from("test source id")
@@ -107,22 +109,46 @@ pub mod test {
     }
 
     #[derive(Debug)]
-    pub struct Message {
+    pub struct VcxAgencyMessage {
         uid: String,
-        message: String,
+        decrypted_payload: String,
     }
 
-    fn download_message(did: String, type_: &str) -> Message {
-        let mut messages = ::messages::get_message::download_messages(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+    fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
+        debug!("determine_message_type >>> a2a_message={:?}", a2a_message);
+        match a2a_message.clone() {
+            A2AMessage::PresentationRequest(_) => PayloadKinds::ProofRequest,
+            A2AMessage::CredentialOffer(offer) => PayloadKinds::CredOffer,
+            A2AMessage::Credential(_) => PayloadKinds::Cred,
+            A2AMessage::Presentation(_) => PayloadKinds::Proof,
+            msg => PayloadKinds::Other(String::from("aries"))
+        }
+    }
+
+    fn str_message_to_a2a_message(message: &str) -> VcxResult<A2AMessage> {
+        Ok(::serde_json::from_str(message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?
+        )
+    }
+
+    fn str_message_to_payload_type(message: &str) -> VcxResult<PayloadKinds> {
+        let a2a_message = str_message_to_a2a_message(message)?;
+        Ok(determine_message_type(a2a_message))
+    }
+
+
+    fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
+        let mut messages = ::messages::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
         for message in messages.msgs.into_iter() {
-            let payload: PayloadV1 = serde_json::from_str(&message.decrypted_payload.clone().unwrap()).unwrap();
-            if payload.type_.name == type_ {
-                return Message {
+            let decrypted_msg = &message.decrypted_msg.unwrap();
+            let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
+            if filter_msg_type == msg_type {
+                return VcxAgencyMessage {
                     uid: message.uid,
-                    message: payload.msg,
+                    decrypted_payload: decrypted_msg.clone(),
                 };
             }
         }
@@ -368,10 +394,10 @@ pub mod test {
             assert_eq!(expected_state, ::connection::get_state(self.connection_handle));
         }
 
-        pub fn download_message(&self, message_type: &str) -> Message {
+        pub fn download_message(&self, message_type: PayloadKinds) -> VcxAgencyMessage {
             self.activate();
             let did = ::connection::get_pw_did(self.connection_handle).unwrap();
-            download_message(did, message_type)
+            download_message(did, message_type) // tood: need to pass PayloadKind
         }
 
         pub fn accept_offer(&mut self) {
@@ -571,6 +597,7 @@ pub mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo_create_with_message_id_flow() {
+        let _setup = SetupEmpty::init();
         PaymentPlugin::load();
         let _pool = Pool::open();
 
@@ -601,7 +628,7 @@ pub mod test {
 
         // Alice creates Credential object with message id
         {
-            let message = alice.download_message("credential-offer");
+            let message = alice.download_message(PayloadKinds::CredOffer);
             let (credential_handle, _credential_offer) = ::credential::credential_create_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
             alice.credential_handle = credential_handle;
 
@@ -617,7 +644,7 @@ pub mod test {
 
         // Alice creates Presentation object with message id
         {
-            let message = alice.download_message("presentation-request");
+            let message = alice.download_message(PayloadKinds::ProofRequest);
             let (presentation_handle, _presentation_request) = ::disclosed_proof::create_proof_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
             alice.presentation_handle = presentation_handle;
 
@@ -636,6 +663,7 @@ pub mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn aries_demo_download_message_flow() {
+        SetupEmpty::init();
         PaymentPlugin::load();
         let _pool = Pool::open();
 
@@ -666,9 +694,9 @@ pub mod test {
 
         // Alice creates Credential object with Offer
         {
-            let message = alice.download_message("credential-offer");
+            let message = alice.download_message(PayloadKinds::CredOffer);
 
-            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.message).unwrap();
+            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.decrypted_payload).unwrap();
 
             ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
@@ -684,11 +712,11 @@ pub mod test {
 
         // Alice creates Presentation object with Proof Request
         {
-            let message = alice.download_message("presentation-request");
+            let agency_msg = alice.download_message(PayloadKinds::ProofRequest);
 
-            alice.presentation_handle = ::disclosed_proof::create_proof("test", &message.message).unwrap();
+            alice.presentation_handle = ::disclosed_proof::create_proof("test", &agency_msg.decrypted_payload).unwrap();
 
-            ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
+            ::connection::update_message_status(alice.connection_handle, agency_msg.uid).unwrap();
 
             let credentials = alice.get_credentials_for_presentation();
 

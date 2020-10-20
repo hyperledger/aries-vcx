@@ -552,7 +552,7 @@ pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
 }
 
 fn parse_response_from_agency_v2(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
-    trace!("parse_response_from_agency_v2 >>> response = {:?}", response);
+    trace!("parse_response_from_agency_v2 >>> processing payload of {} bytes", response.len());
 
     let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
         warn!("parse_response_from_agency_v2 >> retrieving decrypted mock response");
@@ -771,7 +771,7 @@ pub mod tests {
         let vec: Vec<i8> = vec![-127, -89, 98, 117, 110, 100, 108, 101, 100, -111, -36, 5, -74];
 
         let buf = to_u8(&vec);
-        println!("new bundle: {:?}", buf);
+        info!("new bundle: {:?}", buf);
     }
 
     #[test]
@@ -781,7 +781,7 @@ pub mod tests {
 
         let vec: Vec<u8> = vec![129, 167, 98, 117, 110, 100, 108, 101, 100, 145, 220, 19, 13];
         let buf = to_i8(&vec);
-        println!("new bundle: {:?}", buf);
+        info!("new bundle: {:?}", buf);
     }
 
 }

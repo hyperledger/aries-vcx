@@ -89,7 +89,7 @@ pub mod tests {
                 }
             }
 
-            let _res = ::messages::get_message::download_messages(None, None, Some(vec![uid.clone()])).unwrap();
+            let _res = ::messages::get_message::download_messages_noauth(None, None, Some(vec![uid.clone()])).unwrap();
 
             info!("test_connection_send_works:: Test if Get Message by id works");
             {
@@ -136,7 +136,7 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Download Messages");
             {
-                use messages::get_message::{download_messages, MessageByConnection, Message};
+                use messages::get_message::{download_messages_noauth, MessageByConnection, Message};
 
                 let credential_offer = ::aries::messages::issuance::credential_offer::tests::_credential_offer();
 
@@ -145,11 +145,10 @@ pub mod tests {
 
                 alice.activate();
 
-                let messages: Vec<MessageByConnection> = download_messages(None, Some(vec!["MS-103".to_string()]), None).unwrap();
+                let messages: Vec<MessageByConnection> = download_messages_noauth(None, Some(vec!["MS-103".to_string()]), None).unwrap();
                 let message: Message = messages[0].msgs[0].clone();
-                assert_eq!(::messages::RemoteMessageType::Other("aries".to_string()), message.msg_type);
-                let payload: ::messages::payload::PayloadV1 = ::serde_json::from_str(&message.decrypted_payload.unwrap()).unwrap();
-                let _payload: aries::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&payload.msg).unwrap();
+                let decrypted_msg = message.decrypted_msg.unwrap();
+                let _payload: aries::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&decrypted_msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
             }

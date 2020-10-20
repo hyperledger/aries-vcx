@@ -327,7 +327,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::messages::get_message::download_messages(pw_dids, message_status, uids) {
+        match ::messages::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {

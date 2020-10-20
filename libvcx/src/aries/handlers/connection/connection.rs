@@ -271,7 +271,8 @@ impl Connection {
             return Ok(());
         }
 
-        let messages = self.get_messages()?;
+        // connection protocol itself handles message authentication where it makes sense
+        let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 
         if let Some((uid, message)) = self.find_message_to_handle(messages) {
@@ -279,7 +280,7 @@ impl Connection {
             self.update_state_with_message(&message)?;
             self.agent_info().clone().update_message_status(uid)?;
         } else if let SmConnection::Inviter(sm_inviter) = &self.connection_sm {
-            trace!("Connection::update_state >>> Inviter found no message to handel on main connection agent. Will check bootstrap agent.");
+            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
             if let Some((messages, bootstrap_agent_info)) = sm_inviter.get_bootstrap_agent_messages()? {
                 if let Some((uid, message)) = self.find_message_to_handle(messages) {
                     trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
@@ -325,44 +326,53 @@ impl Connection {
     }
 
     /**
-    Get messages received from connection counterparty.
-     */
-    pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
-        trace!("Connection: get_messages >>>");
+Get messages received from connection counterparty.
+ */
+    pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = sm_inviter.agent_info().get_messages()?;
+                let messages = sm_inviter.agent_info().get_messages_noauth()?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = sm_invitee.agent_info().get_messages()?;
+                let messages = sm_invitee.agent_info().get_messages_noauth()?;
                 Ok(messages)
             }
         }
+    }
+
+    /**
+    Get messages received from connection counterparty.
+     */
+    pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
+        let expected_sender_vk = self.get_expected_sender_vk()?;
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                let messages = sm_inviter.agent_info().get_messages(&expected_sender_vk)?;
+                Ok(messages)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                let messages = sm_invitee.agent_info().get_messages(&expected_sender_vk)?;
+                Ok(messages)
+            }
+        }
+    }
+
+    fn get_expected_sender_vk(&self) -> VcxResult<String> {
+        self.remote_vk()
+            .map_err(|err|
+                VcxError::from_msg(VcxErrorKind::NotReady, "Verkey of connection counterparty \
+                is not known, hence it would be impossible to authenticate message downloaded by id.")
+            )
     }
 
     /**
     Get messages received from connection counterparty by id.
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>>");
-        self.agent_info().get_message_by_id(msg_id)
-    }
-
-    /**
-    Try to decrypt and deserialize message using keys for this connection.
-     */
-    pub fn decode_message(&self, message: &Message) -> VcxResult<A2AMessage> {
-        match message.decrypted_payload {
-            Some(ref payload) => {
-                let message: ::messages::payload::PayloadV1 = ::serde_json::from_str(&payload)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
-
-                ::serde_json::from_str::<A2AMessage>(&message.msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))
-            }
-            None => self.agent_info().decode_message(message)
-        }
+        trace!("Connection: get_message_by_id >>> msg_id={}", msg_id);
+        let expected_sender_vk = self.get_expected_sender_vk()?;
+        self.agent_info().get_message_by_id(msg_id, &expected_sender_vk)
     }
 
     /**
