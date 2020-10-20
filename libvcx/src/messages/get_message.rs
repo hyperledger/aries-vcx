@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
+use aries::handlers::connection::agent_info::AgentInfo;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use messages::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use messages::message_type::MessageTypes;
@@ -6,6 +8,7 @@ use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
+use aries::messages::a2a::A2AMessage as AriesA2AMessage;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -318,6 +321,18 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
 
     trace!("message returned: {:?}", response);
     Ok(response)
+}
+
+pub fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, AriesA2AMessage>, AgentInfo)>> {
+    let expected_sender_vk = match remote_vk {
+        Ok(vk) => vk,
+        Err(_) => return Ok(None)
+    };
+    if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+        let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+        return Ok(Some((messages, bootstrap_agent_info.clone())));
+    }
+    Ok(None)
 }
 
 fn _parse_status_code(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {

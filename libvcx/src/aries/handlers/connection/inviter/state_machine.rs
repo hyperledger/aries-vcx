@@ -119,18 +119,6 @@ impl SmConnectionInviter {
         None
     }
 
-    pub fn get_bootstrap_agent_messages(&self) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
-        let expected_sender_vk = match self.remote_vk() {
-            Ok(vk) => vk,
-            Err(_) => return Ok(None)
-        };
-        if let Some(prev_agent_info) = self.prev_agent_info() {
-            let messages = prev_agent_info.get_messages(&expected_sender_vk)?;
-            return Ok(Some((messages, prev_agent_info.clone())));
-        }
-        Ok(None)
-    }
-
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
     }
