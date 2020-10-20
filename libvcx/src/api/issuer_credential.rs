@@ -984,7 +984,7 @@ pub mod tests {
     fn test_vcx_issuer_update_state_v2() {
         let _setup = SetupStrictAriesMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = ::connection::tests::build_test_connection_invitee_completed();
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         let cb = return_types_u32::Return_U32::new().unwrap();
 
@@ -996,9 +996,11 @@ pub mod tests {
 
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
+        let connection_serialized = ::connection::to_string(connection_handle).unwrap();
         ::connection::release(connection_handle).unwrap();
+        let connection_handle = ::connection::from_string(&connection_serialized).unwrap();
 
-        let connection_handle = ::connection::tests::build_test_connection_inviter_invited();
+
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);

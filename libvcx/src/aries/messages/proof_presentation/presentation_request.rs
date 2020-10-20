@@ -16,7 +16,7 @@ pub struct PresentationRequest {
     pub request_presentations_attach: Attachments,
     #[serde(rename = "~service")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<Service>,
+    pub service: Option<Service>
 }
 
 impl PresentationRequest {

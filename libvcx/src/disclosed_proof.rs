@@ -10,7 +10,6 @@ use connection;
 use error::prelude::*;
 use messages::{
     get_message::Message,
-    payload::Payloads,
 };
 use messages::proofs::proof_request::ProofRequestMessage;
 use settings;
@@ -217,21 +216,6 @@ pub fn get_proof_request_messages(connection_handle: u32) -> VcxResult<String> {
     Ok(json!(presentation_requests).to_string())
 }
 
-fn _parse_proof_req_message(message: &Message, my_vk: &str) -> VcxResult<ProofRequestMessage> {
-    let payload = message.payload.as_ref()
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Cannot get payload"))?;
-
-    let (request, thread) = Payloads::decrypt(&my_vk, payload)?;
-
-    let mut request: ProofRequestMessage = serde_json::from_str(&request)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, format!("Cannot deserialize proof request: {}", err)))?;
-
-    request.msg_ref_id = Some(message.uid.to_owned());
-    request.thread_id = thread.and_then(|tr| tr.thid.clone());
-
-    Ok(request)
-}
-
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
         Ok(proof.get_source_id())
@@ -411,7 +395,7 @@ mod tests {
         let _setup = SetupAriesMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
+        let connection_h = connection::tests::build_test_connection_invitee_completed();
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();

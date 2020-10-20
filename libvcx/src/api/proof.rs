@@ -767,7 +767,7 @@ mod tests {
                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _ser = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        println!("Serialize proof: {:?}", _ser);
+        info!("Serialized proof: {:?}", _ser);
     }
 
     #[test]

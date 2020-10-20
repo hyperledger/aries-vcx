@@ -66,32 +66,39 @@ pub mod tests {
         pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
         pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
 
-        pub struct Setup {
+        pub struct WalletSetup {
             pub name: String,
             pub wallet_config: String,
-            pub wallet_handle: indy::WalletHandle,
-            pub key: String,
+            pub wh: indy::WalletHandle,
         }
 
-        pub fn key() -> Setup {
+        pub fn setup_wallet() -> WalletSetup {
             let name: String = ::rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
 
             let wallet_config = json!({"id": name}).to_string();
-            let key_config = json!({"seed": TRUSTEE_SEED}).to_string();
 
             indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
             let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
-            let key = indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap();
-
             wallet::set_wallet_handle(wallet_handle);
 
-            Setup { name, wallet_config, wallet_handle, key }
+            WalletSetup { name, wallet_config, wh: wallet_handle }
         }
 
-        impl Drop for Setup {
+        pub fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
+            let key_config = json!({"seed": TRUSTEE_SEED}).to_string();
+            indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
+        }
+
+        pub fn create_key(wallet_handle: indy::WalletHandle) -> String {
+            let seed = ::rand::thread_rng().gen_ascii_chars().take(32).collect::<String>();
+            let key_config = json!({"seed": seed}).to_string();
+            indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
+        }
+
+        impl Drop for WalletSetup {
             fn drop(&mut self) {
-                if self.wallet_handle.0 != 0 {
-                    indy::wallet::close_wallet(self.wallet_handle).wait().unwrap();
+                if self.wh.0 != 0 {
+                    indy::wallet::close_wallet(self.wh).wait().unwrap();
                     indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS).wait().unwrap();
                 }
             }
