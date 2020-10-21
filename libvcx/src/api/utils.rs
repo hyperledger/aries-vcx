@@ -664,4 +664,3 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 }
-

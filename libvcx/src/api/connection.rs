@@ -9,6 +9,7 @@ use utils::cstring::CStringUtils;
 use utils::error;
 use utils::threadpool::spawn;
 use aries::messages::a2a::A2AMessage;
+use messages::get_message::{parse_status_codes, parse_connection_handles};
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -1203,7 +1204,7 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
 #[no_mangle]
 pub extern fn vcx_connection_download_messages(command_handle: CommandHandle,
                                     conn_handles: *const c_char,
-                                    message_status: *const c_char,
+                                    message_statuses: *const c_char,
                                     uids: *const c_char,
                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
     info!("vcx_connection_download_messages >>>");
@@ -1219,13 +1220,23 @@ pub extern fn vcx_connection_download_messages(command_handle: CommandHandle,
         return VcxError::from_msg(VcxErrorKind::InvalidJson, "List of connection handles can't be null").into()
     };
 
-    let message_status = if !message_status.is_null() {
-        check_useful_c_str!(message_status, VcxErrorKind::InvalidOption);
-        let v: Vec<&str> = message_status.split(',').collect();
+    let conn_handles = match parse_connection_handles(conn_handles) {
+        Ok(handles) => handles,
+        Err(err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    };
+
+    let message_statuses = if !message_statuses.is_null() {
+        check_useful_c_str!(message_statuses, VcxErrorKind::InvalidOption);
+        let v: Vec<&str> = message_statuses.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         Some(v.to_owned())
     } else {
         None
+    };
+
+    let message_statuses = match parse_status_codes(message_statuses) {
+        Ok(statuses) => statuses,
+        Err(err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
     };
 
     let uids = if !uids.is_null() {
@@ -1237,11 +1248,11 @@ pub extern fn vcx_connection_download_messages(command_handle: CommandHandle,
         None
     };
 
-    trace!("vcx_connection_download_messages(command_handle: {}, message_status: {:?}, uids: {:?})",
-           command_handle, message_status, uids);
+    trace!("vcx_connection_download_messages(command_handle: {}, message_statuses: {:?}, uids: {:?})",
+           command_handle, message_statuses, uids);
 
     spawn(move || {
-        match download_messages(conn_handles, message_status, uids) {
+        match download_messages(conn_handles, message_statuses, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {

@@ -10,7 +10,7 @@ use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use messages;
 use messages::get_message::{MessageByConnection, parse_status_codes, parse_connection_handles, Message};
-use messages::SerializableObjectWithState;
+use messages::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
@@ -253,9 +253,7 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn download_messages(conn_handles: Vec<String>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
-    let status_codes = parse_status_codes(status_codes)?;
-    let conn_handles  = parse_connection_handles(conn_handles)?;
+pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
     let mut res = Vec::new();
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
@@ -635,5 +633,48 @@ pub mod tests {
         let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
         let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();
         assert_eq!(empty.len(), 0);
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_download_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let consumer1 = create_consumer_config();
+        let consumer2 = create_consumer_config();
+
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(Some(consumer1), None);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(Some(consumer2), None);
+
+        let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
+        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
+
+        ::utils::devsetup::set_consumer(Some(consumer1));
+        send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
+        ::utils::devsetup::set_consumer(Some(consumer2));
+        send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
+
+        ::utils::devsetup::set_institution(None);
+        let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
+        assert_eq!(all_msgs.len(), 2);
+        assert_eq!(all_msgs[0].msgs.len(), 2);
+        assert_eq!(all_msgs[1].msgs.len(), 2);
+
+        let consumer1_msgs = download_messages([institution_to_consumer1].to_vec(), None, None).unwrap();
+        assert_eq!(consumer1_msgs.len(), 1);
+        assert_eq!(consumer1_msgs[0].msgs.len(), 2);
+        assert_eq!(consumer1_msgs[0].pairwise_did, consumer1_pwdid);
+
+        let consumer2_msgs = download_messages([institution_to_consumer2].to_vec(), None, None).unwrap();
+        assert_eq!(consumer2_msgs.len(), 1);
+        assert_eq!(consumer2_msgs[0].msgs.len(), 2);
+        assert_eq!(consumer2_msgs[0].pairwise_did, consumer2_pwdid);
+
+        let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(consumer1_reviewed_msgs.len(), 1);
+        assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
+
+        let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
+        assert_eq!(consumer1_reviewed_msgs.len(), 1);
+        assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
     }
 }
