@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use error::prelude::*;
 use aries::handlers::issuance::holder::states::finished::FinishedHolderState;
 use aries::handlers::issuance::holder::states::request_sent::RequestSentState;
 use aries::messages::error::ProblemReport;
@@ -7,15 +9,6 @@ use aries::messages::status::Status;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {
     pub offer: CredentialOffer
-}
-
-
-impl OfferReceivedState {
-    pub fn new(offer: CredentialOffer) -> Self {
-        OfferReceivedState {
-            offer,
-        }
-    }
 }
 
 impl From<(OfferReceivedState, String, String, u32)> for RequestSentState {
@@ -38,5 +31,21 @@ impl From<(OfferReceivedState, ProblemReport)> for FinishedHolderState {
             status: Status::Failed(problem_report),
             rev_reg_def_json: None,
         }
+    }
+}
+
+impl OfferReceivedState {
+    pub fn new(offer: CredentialOffer) -> Self {
+        OfferReceivedState {
+            offer,
+        }
+    }
+
+    pub fn get_attributes(&self) -> VcxResult<String> {
+        let mut new_map = serde_json::map::Map::new();
+        self.offer.credential_preview.attributes.iter().for_each(|attribute| {
+            new_map.insert(attribute.name.clone(), serde_json::Value::String(attribute.value.clone()));
+        });
+        Ok(serde_json::Value::Object(new_map).to_string())
     }
 }

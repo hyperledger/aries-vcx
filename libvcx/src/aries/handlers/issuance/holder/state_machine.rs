@@ -211,6 +211,14 @@ impl HolderSM {
         }
     }
 
+    pub fn get_attributes(&self) -> VcxResult<String> {
+        match self.state {
+            HolderState::Finished(ref state) => state.get_attributes(),
+            HolderState::OfferReceived(ref state) => state.get_attributes(),
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get credential attributes: credential offer or credential must be receieved first"))
+        }
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 

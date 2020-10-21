@@ -224,6 +224,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Create an object from a JSON Structured data produced from the objects serialize method
    *
@@ -235,6 +236,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     const credential = await super._deserialize<Credential, {}>(Credential, credentialData)
     return credential
   }
+
   /**
    * Retrieves all pending credential offers.
    *
@@ -349,6 +351,32 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
               resolve(message)
             })
         )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getAttributes (connection: Connection): Promise<string> {
+    try {
+      const offeredAttrs = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_attributes(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(messages)
+          })
+      )
+      return offeredAttrs
     } catch (err) {
       throw new VCXInternalError(err)
     }
