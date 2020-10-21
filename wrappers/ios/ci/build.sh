@@ -46,21 +46,35 @@ setup() {
         exit 1
     fi
 
-    echo "Update Homebrew"
-    # brew doctor || 1
 
-    tries=0
-    threshold=5
-    while ! brew update;
-    do
-      tries=$(( $tries + 1 ))
-      echo echo "Brew update attempt ${tries}/${threshold} failed.";
-      if [ "$tries" -eq "${threshold}" ]; then
-          echo "Failed to update brew after ${threshold} attempts. Terminating."
-          exit 1
-      fi;
-      sleep 5;
-    done
+    # github actions issue is causing "brew update" to fail
+    # provided temporary workaround:
+    # https://github.com/actions/virtual-environments/issues/1811#issuecomment-708480190
+    brew uninstall openssl@1.0.2t
+    brew uninstall python@2.7.17
+    brew untap local/openssl
+    brew untap local/python2
+    brew cask install xquartz
+    brew update
+    brew upgrade
+    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
+
+#    echo "Update Homebrew"
+#    brew doctor || 1
+
+#    tries=0
+#    threshold=5
+
+#    while ! brew update;
+#    do
+#      tries=$(( $tries + 1 ))
+#      echo echo "Brew update attempt ${tries}/${threshold} failed.";
+#      if [ "$tries" -eq "${threshold}" ]; then
+#          echo "Failed to update brew after ${threshold} attempts. Terminating."
+#          exit 1
+#      fi;
+#      sleep 5;
+#    done
 
     echo "Install required native libraries and utilities"
     which pkg-config &>/dev/null || brew install pkg-config
