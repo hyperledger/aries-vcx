@@ -8,7 +8,7 @@ use aries::handlers::proof_presentation::prover::messages::ProverMessages;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::proof_presentation::presentation::Presentation;
 use aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 use aries::handlers::proof_presentation::prover::state_machine::ProverSM;
 
 
@@ -136,6 +136,13 @@ impl Prover {
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
         self.prover_sm.presentation_request().request_presentations_attach.content()
+    }
+
+    pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
+        let data = self.prover_sm.presentation_request().request_presentations_attach.content()?;
+        let proof_request_data: serde_json::Value = serde_json::from_str(&data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err)))?;
+        Ok(proof_request_data.to_string())
     }
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }

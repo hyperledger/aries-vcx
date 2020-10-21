@@ -1,11 +1,12 @@
-// Holder
+use std::collections::HashMap;
+use std::convert::TryFrom;
 
 use connection;
 use error::prelude::*;
 use aries::handlers::issuance::holder::state_machine::HolderSM;
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use aries::messages::a2a::A2AMessage;
-use aries::messages::issuance::credential::Credential;
+use aries::messages::issuance::credential::{Credential, CredentialData};
 use aries::messages::issuance::credential_offer::CredentialOffer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,6 +52,10 @@ impl Holder {
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         self.holder_sm.get_credential()
+    }
+
+    pub fn get_attributes(&self) -> VcxResult<String> {
+        self.holder_sm.get_attributes()
     }
 
     pub fn delete_credential(&self) -> VcxResult<()> {
