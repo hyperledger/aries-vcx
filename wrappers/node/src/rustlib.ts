@@ -126,6 +126,8 @@ export interface IFFIEntryPoint {
   vcx_connection_get_pw_did: (commandId: number, handle: number, cb: any) => number,
   vcx_connection_get_their_pw_did: (commandId: number, handle: number, cb: any) => number,
   vcx_connection_info: (commandId: number, handle: number, cb: any) => number,
+  vcx_connection_download_messages: (commandId: number, status: string, uids: string, pairwiseDids: string,
+                                     cb: any) => number,
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number,
@@ -331,13 +333,15 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_connection_get_pw_did: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
   vcx_connection_get_their_pw_did: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
   vcx_connection_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_connection_download_messages: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA,
+    FFI_STRING_DATA, FFI_CALLBACK_PTR]],
 
   // issuer
   vcx_issuer_credential_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_issuer_credential_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],
   vcx_issuer_credential_update_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],
-  vcx_v2_issuer_credential_update_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE,
-    FFI_CALLBACK_PTR]],
+  vcx_v2_issuer_credential_update_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,
+    FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
   vcx_issuer_credential_update_state_with_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE,
     FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_issuer_credential_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR]],

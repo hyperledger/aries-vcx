@@ -1222,7 +1222,7 @@ pub extern fn vcx_connection_download_messages(command_handle: CommandHandle,
 
     let conn_handles = match parse_connection_handles(conn_handles) {
         Ok(handles) => handles,
-        Err(err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        Err(err) => return err.into()
     };
 
     let message_statuses = if !message_statuses.is_null() {

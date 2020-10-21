@@ -335,6 +335,7 @@ pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option
 }
 
 pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+    trace!("parse_connection_handles >>> conn_handles: {:?}", conn_handles);
     let codes = conn_handles
         .iter()
         .map(|handle|

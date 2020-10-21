@@ -1,23 +1,17 @@
-const { downloadMessages } = require('@hyperledger/node-vcx-wrapper')
+const { downloadMessages, downloadMessagesV2 } = require('@hyperledger/node-vcx-wrapper')
 const _ = require('lodash')
 
-module.exports.getMessagesForPwDid = async function getMessagesForPwDid (
-  pwDid,
-  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
-  filterUids = []
-) {
-  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
+async function maybeJoinWithComma (list) {
+  let res
+  if (list && list.length > 0) {
+    res = list.join(',')
+  }
+  return res
+}
+
+async function parseDownloadMessagesResult (msgs) {
   const messages = []
-  const downloadInstructions = {
-    pairwiseDids: pwDid
-  }
-  if (filterStatuses && filterStatuses.length > 0) {
-    downloadInstructions.status = filterStatuses.join(',')
-  }
-  if (filterUids && filterUids.length > 0) {
-    downloadInstructions.uids = filterUids.join(',')
-  }
-  const res = JSON.parse(await downloadMessages(downloadInstructions))
+  const res = JSON.parse(msgs)
   if (res && res.length > 1) {
     throw Error(`Expected to receive messages for single connection, but received messages for ${res.length} connection. This is agency bug.`)
   }
@@ -31,4 +25,32 @@ module.exports.getMessagesForPwDid = async function getMessagesForPwDid (
     await messages.push(res[0].msgs)
   }
   return _.flatten(messages)
+}
+
+module.exports.getMessagesForPwDid = async function getMessagesForPwDid (
+  pwDid,
+  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
+  filterUids = []
+) {
+  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
+  const downloadInstructions = {
+    pairwiseDids: pwDid,
+    status: await maybeJoinWithComma(filterStatuses),
+    uids: await maybeJoinWithComma(filterUids)
+  }
+  return parseDownloadMessagesResult(await downloadMessages(downloadInstructions))
+}
+
+module.exports.getMessagesForConnection = async function getMessagesForConnection (
+  connections,
+  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
+  filterUids = []
+) {
+  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
+  const downloadInstructions = {
+    connections,
+    status: await maybeJoinWithComma(filterStatuses),
+    uids: await maybeJoinWithComma(filterUids)
+  }
+  return parseDownloadMessagesResult(await downloadMessagesV2(downloadInstructions))
 }

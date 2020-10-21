@@ -123,6 +123,10 @@ async function runFaber (options) {
       logger.error(`Unexpected proof state '${proofState}'.`)
       process.exit(-1)
     }
+
+    const msgs = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
+    logger.debug(`Faber received messages: ${JSON.stringify(msgs, null, 2)}`)
+    assert(msgs.length === 3)
   } catch (err) {
     exitcode = -1
     logger.error(`Faber encountered error ${err.message} ${err.stack}`)
