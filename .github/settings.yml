@@ -3,8 +3,8 @@
 #
 
 repository:
-  name: aries-framework-rs
-  description: aries-framework-rs
+  name: aries-vcx
+  description: aries-vcx
   homepage: https://wiki.hyperledger.org/display/aries
   default_branch: master 
   has_downloads: false
