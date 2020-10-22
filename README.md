@@ -2,7 +2,7 @@
 
 ![CI build](https://github.com/hyperledger/aries-framework-rs/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/hyperledger/aries-framework-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-framework-rs)
-[![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-framework-rs.svg)](https://chat.hyperledger.org/channel/aries-framework-rs)
+[![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
 - Aries Framework Rust is C-callable implementation written in Rust with language wrappers available in:
