@@ -123,6 +123,15 @@ impl Connection {
         }
     }
 
+    pub fn bootstrap_agent_info(&self) -> Option<&AgentInfo> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.prev_agent_info()
+            }
+            SmConnection::Invitee(sm_invitee) => None
+        }
+    }
+
     pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -237,7 +246,7 @@ impl Connection {
         }
     }
 
-    fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 sm_inviter.find_message_to_handle(messages)
@@ -255,43 +264,6 @@ impl Connection {
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.step(DidExchangeMessages::Connect())
-    }
-
-    /**
-    Tries to update state of connection state machine in 3 steps:
-      1. find relevant message in agency,
-      2. use it to update connection state and possibly send response over network,
-      3. update state of used message in agency to "Reviewed".
-     */
-    pub fn update_state(&mut self) -> VcxResult<()> {
-        trace!("Connection::update_state >>>");
-
-        if self.is_in_null_state() {
-            warn!("Connection::update_state :: update state on connection in null state is ignored");
-            return Ok(());
-        }
-
-        // connection protocol itself handles message authentication where it makes sense
-        let messages = self.get_messages_noauth()?;
-        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
-
-        if let Some((uid, message)) = self.find_message_to_handle(messages) {
-            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-            self.update_state_with_message(&message)?;
-            self.agent_info().clone().update_message_status(uid)?;
-        } else if let SmConnection::Inviter(sm_inviter) = &self.connection_sm {
-            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
-            if let Some((messages, bootstrap_agent_info)) = sm_inviter.get_bootstrap_agent_messages()? {
-                if let Some((uid, message)) = self.find_message_to_handle(messages) {
-                    trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                    self.update_state_with_message(&message)?;
-                    bootstrap_agent_info.update_message_status(uid)?;
-                }
-            }
-        }
-
-        trace!("Connection::update_state >>> done");
-        Ok(())
     }
 
     /**

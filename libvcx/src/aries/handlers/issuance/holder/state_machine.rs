@@ -75,27 +75,7 @@ impl HolderSM {
         }
     }
 
-    pub fn update_state(mut self, connection_handle: Option<u32>) -> VcxResult<Self> {
-        trace!("Holder::update_state >>> ");
-
-        if self.is_terminal_state() { return Ok(self); }
-
-        let conn_handle = connection_handle.unwrap_or(self.state.get_connection_handle());
-        self.state.set_connection_handle(conn_handle);
-
-        let messages = connection::get_messages(conn_handle)?;
-
-        match self.find_message_to_handle(messages) {
-            Some((uid, msg)) => {
-                let state = self.handle_message(msg.into())?;
-                connection::update_message_status(conn_handle, uid)?;
-                Ok(state)
-            }
-            None => Ok(self)
-        }
-    }
-
-    fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Holder::find_message_to_handle >>> messages: {:?}", messages);
 
         for (uid, message) in messages {
@@ -210,6 +190,14 @@ impl HolderSM {
             HolderState::Finished(_) => true,
             _ => false
         }
+    }
+
+    pub fn get_connection_handle(&self) -> u32 {
+        self.state.get_connection_handle()
+    }
+
+    pub fn set_connection_handle(&mut self, conn_handle: u32) {
+        self.state.set_connection_handle(conn_handle)
     }
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
