@@ -178,6 +178,21 @@ public class ProofApi extends VcxJava.API {
         return future;
     }
 
+    public static CompletableFuture<Integer> proofUpdateStateV2(
+            int proofHandle,
+            int connectionHandle
+    ) throws VcxException {
+        ParamGuard.notNull(proofHandle, "proofHandle");
+        logger.debug("proofUpdateStateV2() called with: proofHandle = [" + proofHandle + "], connectionHandle = [" + connectionHandle + "]");
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_v2_proof_update_state(commandHandle, proofHandle, vcxProofUpdateStateCB);
+        checkResult(result);
+
+        return future;
+    }
+
     public static CompletableFuture<Integer> proofUpdateStateWithMessage(
             int proofHandle,
             String message
