@@ -143,7 +143,7 @@ pub mod test {
         let messages = messages.pop().unwrap();
 
         for message in messages.msgs.into_iter() {
-            let decrypted_msg = &message.decrypted_msg.unwrap();
+            let decrypted_msg = &message.decrypted_payload.unwrap();
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
                 return VcxAgencyMessage {
