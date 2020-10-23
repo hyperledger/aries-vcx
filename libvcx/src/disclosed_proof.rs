@@ -76,9 +76,29 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.update_state(message.as_ref().map(String::as_str), connection_handle)?;
+        trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
+
+        if !proof.has_transitions() { 
+            trace!("disclosed_proof::update_state >> found no available transition");
+            return Ok(proof.state());
+        }
+
+        let connection_handle = proof.maybe_update_connection_handle(connection_handle)?;
+
+        if let Some(message_) = message {
+            return proof.update_state_with_message(message_);
+        }
+
+        let messages = connection::get_messages(connection_handle)?;
+        trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
+
+        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+            proof.handle_message(message.into())?;
+            connection::update_message_status(connection_handle, uid)?;
+        };
+
         Ok(proof.state())
     })
 }
@@ -166,6 +186,12 @@ pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get_mut(handle, |proof| {
+        proof.get_proof_request_attachment()
+    })
+}
+
 pub fn is_valid_handle(handle: u32) -> bool {
     HANDLE_MAP.has_handle(handle)
 }
@@ -229,6 +255,7 @@ mod tests {
     use utils::mockdata::mock_settings::MockBuilder;
     use utils::mockdata::mockdata_proof;
     use utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
+    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
 
     use super::*;
 
@@ -242,8 +269,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
     }
@@ -251,8 +277,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_fails() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
@@ -260,8 +285,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_cycle() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 
@@ -280,7 +304,7 @@ mod tests {
         send_proof(handle_proof, connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_proof).unwrap());
 
-        update_state(handle_proof, Some(String::from(ARIES_PROOF_PRESENTATION_ACK)), Some(connection_h)).unwrap();
+        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), Some(connection_h)).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
     }
 
@@ -318,8 +342,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
-        let _setup = SetupAriesMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 
@@ -338,8 +361,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_state_test() {
-        let _setup = SetupAriesMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap())
@@ -348,8 +370,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn to_string_test() {
-        let _setup = SetupAriesMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -372,8 +393,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_request() {
-        let _setup = SetupAriesMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
+        let _setup = SetupStrictAriesMocks::init();
 
         let connection_h = connection::tests::build_test_connection_invitee_completed();
 
@@ -385,11 +405,29 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         let serialized = to_string(handle).unwrap();
         from_string(&serialized).unwrap();
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_proof_request_attachment() {
+        let _setup = SetupStrictAriesMocks::init();
+
+        let connection_h = connection::tests::build_test_connection_inviter_requested();
+
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
+
+        let request = _get_proof_request_messages(connection_h);
+
+        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
+
+        let attrs = get_proof_request_attachment(handle).unwrap();
+        let attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
     }
 }

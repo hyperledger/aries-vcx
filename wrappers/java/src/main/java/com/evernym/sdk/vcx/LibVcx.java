@@ -451,6 +451,11 @@ public abstract class LibVcx {
         public int vcx_disclosed_proof_retrieve_credentials(int command_handle, int proof_handle, Callback cb);
 
         /**
+         * Retrieve attachment of the received proof request
+         */
+        public int vcx_disclosed_proof_get_proof_request_attachment(int command_handle, int proof_handle, Callback cb);
+
+        /**
          * Generate a proof that can be sent later
          */
         public int vcx_disclosed_proof_generate_proof(int command_handle, int proof_handle, String selected_credentials, String self_attested_attributes, Callback cb);
@@ -492,28 +497,31 @@ public abstract class LibVcx {
          */
 
         /** Creates a credential object from the specified credentialdef handle. Populates a handle the new credential. */
-        public int vcx_credential_create_with_offer(int command_handle, String source_id, String credential_offer,Callback cb);
+        public int vcx_credential_create_with_offer(int command_handle, String source_id, String credential_offer, Callback cb);
 
         /** Creates a credential object from the connection and msg id. Populates a handle the new credential. */
-        public int vcx_credential_create_with_msgid(int command_handle, String source_id, int connection, String msg_id,Callback cb);
+        public int vcx_credential_create_with_msgid(int command_handle, String source_id, int connection, String msg_id, Callback cb);
 
         /** Asynchronously sends the credential request to the connection. */
-        public int vcx_credential_send_request(int command_handle, int credential_handle, int connection_handle,int payment_handle, Callback cb);
+        public int vcx_credential_send_request(int command_handle, int credential_handle, int connection_handle, int payment_handle, Callback cb);
 
         /** Get credential request message for given connection */
         public int vcx_credential_get_request_msg(int command_handle, int credential_handle, String myPwDid, String theirPwDid, int payment_handle, Callback cb);
 
         /** Check for any credential offers from the connection. */
-        public int vcx_credential_get_offers(int command_handle, int connection_handle,Callback cb);
+        public int vcx_credential_get_offers(int command_handle, int connection_handle, Callback cb);
 
         /** Updates the State of the credential from the agency. */
-        public int vcx_credential_update_state(int command_handle, int credential_handle,Callback cb);
+        public int vcx_credential_update_state(int command_handle, int credential_handle, Callback cb);
 
         /** Updates the state of the credential from the given message. */
         public int vcx_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);
 
         /** Retrieves the State of the credential - including storing the credential if it has been sent. */
         public int vcx_credential_get_state(int command_handle, int credential_handle, Callback cb);
+
+        /** Retrieves attributes present in the credential or credential offer, depending on credential state */
+        public int vcx_credential_get_attributes(int command_handle, int credential_handle, Callback cb);
 
         /** Populates status with the current State of this credential. */
         public int vcx_credential_serialize(int command_handle, int credential_handle, Callback cb);

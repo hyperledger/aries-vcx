@@ -236,6 +236,42 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
+                                 credential_handle: u32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
+    info!("vcx_credential_get_attributes >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_get_attributes(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::get_attributes(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_credential_get_attribute_cb(commmand_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let attrs = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, attrs.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_credential_get_attributes_cb(commmand_handle: {}, rc: {}, attributes: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 /// Create a Credential object based off of a known message id for a given connection.
 ///
 /// #Params
@@ -589,7 +625,7 @@ pub extern fn vcx_credential_update_state_with_message(command_handle: CommandHa
            command_handle, credential_handle, source_id);
 
     spawn(move || {
-        match credential::update_state(credential_handle, Some(message), None) {
+        match credential::update_state(credential_handle, Some(&message), None) {
             Ok(_) => (),
             Err(e) => {
                 error!("vcx_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",

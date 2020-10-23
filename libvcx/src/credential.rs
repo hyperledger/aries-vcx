@@ -3,9 +3,11 @@ use serde_json;
 use aries::{
     handlers::issuance::holder::holder::Holder,
     messages::issuance::credential_offer::CredentialOffer,
+    messages::a2a::A2AMessage,
 };
 use error::prelude::*;
 use settings::indy_mocks_enabled;
+use connection;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
 use utils::httpclient::AgencyMockDecrypted;
@@ -80,16 +82,44 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     Ok((handle, offer))
 }
 
-pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |credential| {
-        credential.update_state(message.clone(), connection_handle)?;
-        Ok(error::SUCCESS.code_num)
+        trace!("credential::update_state >>> ");
+
+        if credential.is_terminal_state() { return Ok(credential.get_status()); }
+
+        if let Some(message) = message {
+            let message: A2AMessage = ::serde_json::from_str(&message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+
+            credential.step(message.into())?;
+            return Ok(credential.get_status());
+        }
+
+        let conn_handle = credential.maybe_update_connection_handle(connection_handle);
+
+        let messages = connection::get_messages(conn_handle)?;
+
+        match credential.find_message_to_handle(messages) {
+            Some((uid, msg)) => {
+                credential.step(msg.into())?;
+                connection::update_message_status(conn_handle, uid)?;
+                Ok(credential.get_status())
+            }
+            None => Ok(credential.get_status())
+        }
     })
 }
 
 pub fn get_credential(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
         Ok(json!(credential.get_credential()?.1).to_string())
+    })
+}
+
+pub fn get_attributes(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get(handle, |credential| {
+        credential.get_attributes()
     })
 }
 
@@ -214,10 +244,11 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 #[cfg(test)]
 pub mod tests {
     use api::VcxStateType;
-    use aries::messages::issuance::credential::Credential as Credential;
+    use aries::messages::issuance::credential::Credential;
     use connection;
     use utils::devsetup::*;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use utils::mockdata::mockdata_credex;
 
     use super::*;
 
@@ -281,6 +312,13 @@ pub mod tests {
         let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_cred).unwrap());
 
+        info!("full_credential_test:: going get offered attributes from offer received state");
+        let offer_attrs: String = get_attributes(handle_cred).unwrap();
+        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
+        let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
+        assert_eq!(offer_attrs, offer_attrs_expected);
+
         info!("full_credential_test:: going to send_credential_request");
         send_credential_request(handle_cred, handle_conn).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_cred).unwrap());
@@ -299,6 +337,13 @@ pub mod tests {
 
         info!("full_credential_test:: going to deserialize credential: {:?}", msg_value);
         let _credential_struct: Credential = serde_json::from_str(msg_value.to_string().as_str()).unwrap();
+
+        info!("full_credential_test:: going get offered attributes from final state");
+        let offer_attrs: String = get_attributes(handle_cred).unwrap();
+        info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
+        let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
+        assert_eq!(offer_attrs, offer_attrs_expected);
     }
 
     #[test]

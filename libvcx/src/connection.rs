@@ -9,7 +9,7 @@ use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use messages;
-use messages::get_message::{MessageByConnection, parse_status_codes, parse_connection_handles, Message};
+use messages::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
 use messages::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
@@ -124,9 +124,41 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
     })
 }
 
+/**
+Tries to update state of connection state machine in 3 steps:
+  1. find relevant message in agency,
+  2. use it to update connection state and possibly send response over network,
+  3. update state of used message in agency to "Reviewed".
+ */
 pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_state()?;
+        trace!("Connection::update_state >>>");
+
+        if connection.is_in_null_state() {
+            warn!("Connection::update_state :: update state on connection in null state is ignored");
+            return Ok(error::SUCCESS.code_num)
+        }
+
+        // connection protocol itself handles message authentication where it makes sense
+        let messages = connection.get_messages_noauth()?;
+        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
+
+        if let Some((uid, message)) = connection.find_message_to_handle(messages) {
+            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
+            connection.update_state_with_message(&message)?;
+            connection.agent_info().clone().update_message_status(uid)?;
+        } else if let SmConnectionState::Inviter(_) = connection.state_object() {
+            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
+            if let Some((messages, bootstrap_agent_info)) = get_bootstrap_agent_messages(connection.remote_vk(), connection.bootstrap_agent_info())? {
+                if let Some((uid, message)) = connection.find_message_to_handle(messages) {
+                    trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
+                    connection.update_state_with_message(&message)?;
+                    bootstrap_agent_info.update_message_status(uid)?;
+                }
+            }
+        }
+
+        trace!("Connection::update_state >>> done");
         Ok(error::SUCCESS.code_num)
     })
 }

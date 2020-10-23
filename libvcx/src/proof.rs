@@ -4,6 +4,7 @@ use aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use error::prelude::*;
 use utils::error;
 use utils::object_cache::ObjectCache;
+use connection;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -30,9 +31,24 @@ pub fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
-pub fn update_state(handle: u32, message: Option<String>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.update_state(message.as_ref().map(String::as_str), connection_handle)?;
+        trace!("proof::update_state >>> ", );
+        if !proof.has_transitions() { return Ok(proof.state()); }
+
+        let connection_handle = proof.maybe_update_connection_handle(connection_handle)?;
+
+        if let Some(message_) = message {
+            return proof.update_state_with_message(&message_);
+        }
+
+        let messages = connection::get_messages(connection_handle)?;
+
+        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+            proof.handle_message(message.into())?;
+            connection::update_message_status(connection_handle, uid)?;
+        };
+
         Ok(proof.state())
     })
 }
@@ -126,11 +142,11 @@ pub mod tests {
         return proof;
     }
 
-    fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32, proof_presentation: &str) {
+    fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32, proof_presentation: &str, proof_handle: u32) {
         proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        proof.update_state(Some(proof_presentation), None).unwrap();
+        update_state(proof_handle, Some(proof_presentation), None).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
@@ -262,9 +278,10 @@ pub mod tests {
         ::connection::release(connection_handle);
         let connection_handle = build_test_connection_inviter_requested();
 
-        proof.update_state(Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
+        let handle = PROOF_MAP.add(proof).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
 
-        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
+        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
@@ -277,7 +294,13 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested();
 
         let mut proof = create_default_proof();
-        progress_proof_to_final_state(&mut proof, connection_handle, mockdata_proof::ARIES_PROOF_PRESENTATION);
+
+        proof.send_presentation_request(connection_handle).unwrap();
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
+
+        let handle = PROOF_MAP.add(proof).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), None).unwrap();
+        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
@@ -289,9 +312,14 @@ pub mod tests {
 
         let connection_handle = build_test_connection_inviter_requested();
         let mut proof = create_default_proof();
-        progress_proof_to_final_state(&mut proof, connection_handle, mockdata_proof::ARIES_PROOF_PRESENTATION);
+
+        proof.send_presentation_request(connection_handle).unwrap();
+        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
         let handle = PROOF_MAP.add(proof).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), None).unwrap();
+        assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
+
         let proof_str = get_proof(handle).unwrap();
         assert_eq!(proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION.replace("\n", "").replace(" ", ""));
     }
@@ -355,7 +383,7 @@ pub mod tests {
                                         "Optional".to_owned()).unwrap();
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         send_proof_request(handle_proof, handle_conn).unwrap();
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION.to_string()), Some(handle_conn)).unwrap();
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(handle_conn)).unwrap();
         assert_eq!(::proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 

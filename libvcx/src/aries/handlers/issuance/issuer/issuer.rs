@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use error::prelude::*;
 use aries::handlers::issuance::issuer::state_machine::IssuerSM;
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
@@ -35,23 +37,22 @@ impl Issuer {
         Ok(self.issuer_sm.get_source_id())
     }
 
+    pub fn is_terminal_state(&self) -> bool {
+        self.issuer_sm.is_terminal_state()
+    }
+
+    pub fn find_message_to_handle(&self,  messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+        self.issuer_sm.find_message_to_handle(messages)
+    }
+
     pub fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
         self.issuer_sm.revoke(publish)
     }
 
-    pub fn update_status(&mut self, msg: Option<String>, connection_handle: Option<u32>) -> VcxResult<()> {
-        match msg {
-            Some(msg) => {
-                let message: A2AMessage = ::serde_json::from_str(&msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot deserialize Message: {:?}", err)))?;
-
-                self.step(message.into())
-            }
-            None => {
-                self.issuer_sm = self.issuer_sm.clone().update_state(connection_handle)?;
-                Ok(())
-            }
-        }
+    pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> u32 {
+        let conn_handle = connection_handle.unwrap_or(self.issuer_sm.get_connection_handle());
+        self.issuer_sm.set_connection_handle(conn_handle);
+        conn_handle
     }
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {

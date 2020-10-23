@@ -1,10 +1,10 @@
-use ::{connection};
 use error::prelude::*;
 use aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use aries::handlers::proof_presentation::verifier::state_machine::VerifierSM;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::proof_presentation::presentation::Presentation;
 use aries::messages::proof_presentation::presentation_request::*;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Verifier {
@@ -45,29 +45,7 @@ impl Verifier {
         self.verifier_sm.presentation_status()
     }
 
-    pub fn update_state(&mut self, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<()> {
-        trace!("Verifier::update_state >>> message: {:?}", message);
-
-        if !self.verifier_sm.has_transitions() { return Ok(()); }
-
-        let connection_handle = connection_handle.unwrap_or(self.verifier_sm.connection_handle()?);
-        self.verifier_sm.set_connection_handle(connection_handle);
-
-        if let Some(message_) = message {
-            return self.update_state_with_message(message_);
-        }
-
-        let messages = connection::get_messages(connection_handle)?;
-
-        if let Some((uid, message)) = self.verifier_sm.find_message_to_handle(messages) {
-            self.handle_message(message.into())?;
-            connection::update_message_status(connection_handle, uid)?;
-        };
-
-        Ok(())
-    }
-
-    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<()> {
+    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<u32> {
         trace!("Verifier::update_state_with_message >>> message: {:?}", message);
 
         let message: A2AMessage = ::serde_json::from_str(&message)
@@ -75,7 +53,7 @@ impl Verifier {
 
         self.handle_message(message.into())?;
 
-        Ok(())
+        Ok(self.state())
     }
 
     pub fn handle_message(&mut self, message: VerifierMessages) -> VcxResult<()> {
@@ -111,6 +89,20 @@ impl Verifier {
     pub fn step(&mut self, message: VerifierMessages) -> VcxResult<()> {
         self.verifier_sm = self.verifier_sm.clone().step(message)?;
         Ok(())
+    }
+
+    pub fn has_transitions(&self) -> bool {
+        self.verifier_sm.has_transitions()
+    }
+
+    pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> VcxResult<u32> {
+        let connection_handle = connection_handle.unwrap_or(self.verifier_sm.connection_handle()?);
+        self.verifier_sm.set_connection_handle(connection_handle);
+        Ok(connection_handle)
+    }
+
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+        self.verifier_sm.find_message_to_handle(messages)
     }
 }
 
@@ -183,7 +175,7 @@ pub mod tests {
 
         proof.send_presentation_request(connection_handle);
 
-        proof.update_state(Some(PROOF_REJECT_RESPONSE_STR_V2), Some(connection_handle)).unwrap();
+        proof.update_state_with_message(PROOF_REJECT_RESPONSE_STR_V2).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 }

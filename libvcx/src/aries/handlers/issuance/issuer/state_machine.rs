@@ -123,27 +123,15 @@ impl IssuerSM {
         }
     }
 
-    pub fn update_state(mut self, connection_handle: Option<u32>) -> VcxResult<Self> {
-        trace!("Issuer::update_state >>> ", );
-
-        if self.is_terminal_state() { return Ok(self); }
-
-        let conn_handle = connection_handle.unwrap_or(self.state.get_connection_handle());
-        self.state.set_connection_handle(conn_handle);
-
-        let messages = get_messages(conn_handle)?;
-
-        match self.find_message_to_handle(messages) {
-            Some((uid, msg)) => {
-                let state = self.handle_message(msg.into())?;
-                connection::update_message_status(conn_handle, uid)?;
-                Ok(state)
-            }
-            None => Ok(self)
-        }
+    pub fn get_connection_handle(&self) -> u32 {
+        self.state.get_connection_handle()
     }
 
-    fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn set_connection_handle(&mut self, conn_handle: u32) {
+        self.state.set_connection_handle(conn_handle)
+    }
+
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Issuer::find_message_to_handle >>> messages: {:?}", messages);
 
         for (uid, message) in messages {

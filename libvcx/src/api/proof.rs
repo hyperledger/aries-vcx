@@ -285,7 +285,7 @@ pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
     }
 
     spawn(move|| {
-        match proof::update_state(proof_handle, Some(message), None) {
+        match proof::update_state(proof_handle, Some(&message), None) {
             Ok(x) => {
                 trace!("vcx_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);

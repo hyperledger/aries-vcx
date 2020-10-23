@@ -1,11 +1,10 @@
-// Holder
+use std::collections::HashMap;
 
 use connection;
 use error::prelude::*;
 use aries::handlers::issuance::holder::state_machine::HolderSM;
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use aries::messages::a2a::A2AMessage;
-use aries::messages::issuance::credential::Credential;
 use aries::messages::issuance::credential_offer::CredentialOffer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -26,19 +25,18 @@ impl Holder {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(connection_handle))
     }
 
-    pub fn update_state(&mut self, msg: Option<String>, connection_handle: Option<u32>) -> VcxResult<()> {
-        match msg {
-            Some(msg) => {
-                let message: A2AMessage = ::serde_json::from_str(&msg)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+    pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> u32 {
+        let conn_handle = connection_handle.unwrap_or(self.holder_sm.get_connection_handle());
+        self.holder_sm.set_connection_handle(conn_handle);
+        conn_handle
+    }
 
-                self.step(message.into())
-            }
-            None => {
-                self.holder_sm = self.holder_sm.clone().update_state(connection_handle)?;
-                Ok(())
-            }
-        }
+    pub fn is_terminal_state(&self) -> bool {
+        self.holder_sm.is_terminal_state()
+    }
+
+    pub fn find_message_to_handle(&self,  messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+        self.holder_sm.find_message_to_handle(messages)
     }
 
     pub fn get_status(&self) -> u32 {
@@ -51,6 +49,10 @@ impl Holder {
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         self.holder_sm.get_credential()
+    }
+
+    pub fn get_attributes(&self) -> VcxResult<String> {
+        self.holder_sm.get_attributes()
     }
 
     pub fn delete_credential(&self) -> VcxResult<()> {
