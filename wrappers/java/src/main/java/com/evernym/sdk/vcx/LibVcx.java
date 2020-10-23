@@ -520,7 +520,7 @@ public abstract class LibVcx {
         /** Updates the State of the credential from the agency. */
         public int vcx_credential_update_state(int command_handle, int credential_handle, Callback cb);
 
-        public int vcx_v2_credential_update_state(int command_handle, int credential_handle, int proof_handle, Callback cb);
+        public int vcx_v2_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
 
         /** Updates the state of the credential from the given message. */
         public int vcx_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);

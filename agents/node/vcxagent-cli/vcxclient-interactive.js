@@ -34,6 +34,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
     20: 'GET_CREDENTIAL_OFFERS',
     30: 'SEND_MESSAGE',
     31: 'GET_MESSAGE'
+    32: 'GET_MESSAGE_V2'
   }
 
   while (true) {
@@ -81,6 +82,10 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
       } else if (cmd === '31') {
         const connectionId = readlineSync.question('Enter connection id:\n')
         const messages = await ariesAgent.serviceConnections.getMessages(connectionId, [], [])
+        logger.info(`Found messages\n:${JSON.stringify(messages, null, 2)}`)
+      } else if (cmd === '32') {
+        const connectionId = readlineSync.question('Enter connection id:\n')
+        const messages = await ariesAgent.serviceConnections.getMessagesV2(connectionId, [], [])
         logger.info(`Found messages\n:${JSON.stringify(messages, null, 2)}`)
       } else {
         logger.error(`Unknown command ${cmd}`)

@@ -90,7 +90,7 @@ impl AgentInfo {
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
     }
 
-    fn _download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
+    pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
         get_connection_messages(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk,
                                 msg_uid, status_codes, &Some(ProtocolTypes::V2),
         )
@@ -98,7 +98,7 @@ impl AgentInfo {
 
     pub fn get_messages(&self, expect_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("Agent::get_messages >>> expect_sender_vk={}", expect_sender_vk);
-        let messages = self._download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]))?;
+        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]))?;
         debug!("Agent::get_messages >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk)?;
         _log_messages_optionally(&a2a_messages);
@@ -107,7 +107,7 @@ impl AgentInfo {
 
     pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("Agent::get_messages_noauth >>>");
-        let messages = self._download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]))?;
+        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]))?;
         debug!("Agent::get_messages_noauth >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages_noauth(&messages)?;
         _log_messages_optionally(&a2a_messages);
@@ -116,7 +116,7 @@ impl AgentInfo {
 
     pub fn get_message_by_id(&self, msg_id: &str, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
         trace!("Agent::get_message_by_id >>> msg_id: {:?}", msg_id);
-        let mut messages = self._download_encrypted_messages(Some(vec![msg_id.to_string()]), None)?;
+        let mut messages = self.download_encrypted_messages(Some(vec![msg_id.to_string()]), None)?;
         let message = messages
             .pop()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;

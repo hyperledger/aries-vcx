@@ -229,6 +229,40 @@ export function voidPtrToUint8Array (origPtr: any, length: number): Buffer {
   const newBuffer = Buffer.from(newPtr)
   return newBuffer
 }
+
+export interface IDownloadMessagesConfigsV2 {
+  connections: [ Connection ],
+  status: string,
+  uids: string,
+}
+
+export async function downloadMessagesV2
+({ connections, status, uids }: IDownloadMessagesConfigsV2): Promise<string> {
+  try {
+    const handles = connections.map((connection) => connection.handle).join(',')
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_v2_messages_download(0, handles, status, uids, cb)
+        if (rc) {
+          reject(rc)
+        }
+      },
+      (resolve, reject) => ffi.Callback(
+        'void',
+        ['uint32','uint32','string'],
+        (xhandle: number, err: number, messages: string) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          resolve(messages)
+        })
+    )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
+
 /**
  * @class Class representing a Connection
  */

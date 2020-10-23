@@ -8,6 +8,7 @@ RUN apt-get update && \
       pkg-config \
       libgmp3-dev \
       curl \
+      wget \
       build-essential \
       libsqlite3-dev \
       cmake \

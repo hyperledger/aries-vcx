@@ -137,12 +137,12 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)agentUpdateInfo:(NSString *)config
              completion:(void (^)(NSError *error))completion;
 
-- (void)getCredential:(NSInteger )credentailHandle
+- (void)getCredential:(NSInteger )credentialHandle
            completion:(void (^)(NSError *error, NSString *credential))completion;
 
 - (void)credentialCreateWithOffer:(NSString *)sourceId
                             offer:(NSString *)credentialOffer
-                       completion:(void (^)(NSError *error, NSInteger credentailHandle))completion;
+                       completion:(void (^)(NSError *error, NSInteger credentialHandle))completion;
 
 - (void)credentialCreateWithMsgid:(NSString *)sourceId
                  connectionHandle:(VcxHandle)connectionHandle
@@ -157,7 +157,7 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)credentialGetState:(NSInteger )credentialHandle
                 completion:(void (^)(NSError *error, NSInteger state))completion;
 
-- (void)credentialUpdateState:(NSInteger )credentailHandle
+- (void)credentialUpdateState:(NSInteger )credentialHandle
                 completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void)credentialUpdateStateV2:(NSInteger )credentailHandle
@@ -238,8 +238,8 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void) proofGetRequests:(NSInteger)connectionHandle
               completion:(void (^)(NSError *error, NSString *requests))completion;
 
-- (void) proofGetAttributes:(NSInteger)connectionHandle
-              completion:(void (^)(NSError *error, NSString *attrs))completion;
+- (void) proofGetProofRequestAttachment:(NSInteger)proofHandle
+              completion:(void (^)(NSError *error, NSString *attach))completion;
 
 - (void) proofRetrieveCredentials:(vcx_proof_handle_t)proofHandle
                    withCompletion:(void (^)(NSError *error, NSString *matchingCredentials))completion;
