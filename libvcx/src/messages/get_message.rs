@@ -268,7 +268,7 @@ pub struct Message {
     #[serde(skip_deserializing)]
     pub delivery_details: Vec<DeliveryDetails>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub decrypted_msg: Option<String>,
+    pub decrypted_payload: Option<String>,
 }
 
 #[macro_export]
@@ -289,9 +289,9 @@ impl Message {
     pub fn decrypt_noauth(&self) -> Message {
         let mut new_message = self.clone();
         if let Ok(decrypted_msg) = self._decrypt_v3_message() {
-            new_message.decrypted_msg = Some(decrypted_msg);
+            new_message.decrypted_payload = Some(decrypted_msg);
         } else {
-            new_message.decrypted_msg = None;
+            new_message.decrypted_payload = None;
         }
         new_message.payload = None;
         new_message
@@ -299,7 +299,9 @@ impl Message {
 
     fn _decrypt_v3_message(&self) -> VcxResult<String> {
         let a2a_message = EncryptionEnvelope::anon_unpack(self.payload()?)?;
-        Ok(json!(&a2a_message).to_string())
+        // todo: this awkward return value is here just to keep backwards comptability
+        // todo: we should make breaking change and simplify content of Message.decrypted_payload
+        Ok(json!({"@msg": json!(a2a_message).to_string()}).to_string())
     }
 }
 
