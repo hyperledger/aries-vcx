@@ -274,6 +274,8 @@ public abstract class LibVcx {
         /** Updates the state of the credential from the agency. */
         public int vcx_issuer_credential_update_state(int command_handle, int credential_handle, Callback cb);
 
+        public int vcx_v2_issuer_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
+
         /** Updates the state of the credential from the given message. */
         public int vcx_issuer_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);
 
@@ -349,6 +351,8 @@ public abstract class LibVcx {
          */
         public int vcx_proof_update_state(int command_handle, int proof_handle, Callback cb);
 
+        public int vcx_v2_proof_update_state(int command_handle, int proof_handle, int connection_handle, Callback cb);
+
         /**
          * Updates the state of the proof from the given message.
          */
@@ -414,6 +418,8 @@ public abstract class LibVcx {
          * Populates status with the current State of this disclosed_proof request.
          */
         public int vcx_disclosed_proof_update_state(int command_handle, int proof_handle, Callback cb);
+
+        public int vcx_v2_disclosed_proof_update_state(int command_handle, int proof_handle, int connection_handle, Callback cb);
 
         /**
          * Check for any proof requests from the connection.
@@ -513,6 +519,8 @@ public abstract class LibVcx {
 
         /** Updates the State of the credential from the agency. */
         public int vcx_credential_update_state(int command_handle, int credential_handle, Callback cb);
+
+        public int vcx_v2_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
 
         /** Updates the state of the credential from the given message. */
         public int vcx_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);
@@ -646,7 +654,7 @@ public abstract class LibVcx {
         int vcx_credentialdef_get_cred_def_id(int command_handle, int cred_def_handle, Callback cb);
 
         /** Updates the State of the credential def from the ledger. */
-        public int vcx_credentialdef_update_state(int command_handle, int credentialdef_handle,Callback cb);
+        public int vcx_credentialdef_update_state(int command_handle, int credentialdef_handle, Callback cb);
 
         /** Retrieves the State of the credential def */
         public int vcx_credentialdef_get_state(int command_handle, int credentialdef_handle, Callback cb);

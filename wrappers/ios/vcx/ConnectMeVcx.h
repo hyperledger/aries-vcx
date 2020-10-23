@@ -137,12 +137,12 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)agentUpdateInfo:(NSString *)config
              completion:(void (^)(NSError *error))completion;
 
-- (void)getCredential:(NSInteger )credentailHandle
+- (void)getCredential:(NSInteger )credentialHandle
            completion:(void (^)(NSError *error, NSString *credential))completion;
 
 - (void)credentialCreateWithOffer:(NSString *)sourceId
                             offer:(NSString *)credentialOffer
-                       completion:(void (^)(NSError *error, NSInteger credentailHandle))completion;
+                       completion:(void (^)(NSError *error, NSInteger credentialHandle))completion;
 
 - (void)credentialCreateWithMsgid:(NSString *)sourceId
                  connectionHandle:(VcxHandle)connectionHandle
@@ -157,7 +157,11 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)credentialGetState:(NSInteger )credentialHandle
                 completion:(void (^)(NSError *error, NSInteger state))completion;
 
-- (void)credentialUpdateState:(NSInteger )credentailHandle
+- (void)credentialUpdateState:(NSInteger )credentialHandle
+                completion:(void (^)(NSError *error, NSInteger state))completion;
+
+- (void)credentialUpdateStateV2:(NSInteger )credentailHandle
+                connectionHandle:(VcxHandle)connectionHandle
                 completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void)credentialGetOffers:(VcxHandle)connectionHandle
@@ -258,6 +262,10 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
            completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void)proofUpdateState:(NSInteger) proofHandle
+              completion:(void (^)(NSError *error, NSInteger state))completion;
+
+- (void)proofUpdateStateV2:(NSInteger) proofHandle
+              connectionHandle:(vcx_connection_handle_t)connectionHandle
               completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void) proofReject: (vcx_proof_handle_t)proof_handle
