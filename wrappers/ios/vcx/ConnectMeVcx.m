@@ -762,6 +762,23 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
+- (void)credentialUpdateStateV2:(NSInteger)credentialHandle
+               connectionHandle:(vcx_connection_handle_t)connectionHandle
+               completion:(void (^)(NSError *error, NSInteger state))completion {
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    ret = vcx_v2_credential_update_state(handle, credentialHandle, connectionHandle, VcxWrapperCommonNumberCallback);
+
+    if( ret != 0 )
+    {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret], 0);
+       });
+    }
+}
+
 - (void)credentialGetOffers:(VcxHandle)connectionHandle
                    completion:(void (^)(NSError *error, NSString *offers))completion{
    vcx_error_t ret;
@@ -1265,6 +1282,21 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     vcx_error_t ret;
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     ret = vcx_disclosed_proof_update_state(handle, proofHandle, VcxWrapperCommonNumberCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
+        });
+    }
+}
+
+- (void)proofUpdateStateV2:(NSInteger) proofHandle
+               connectionHandle:(vcx_connection_handle_t)connectionHandle
+               completion:(void (^)(NSError *error, NSInteger state))completion {
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    ret = vcx_v2_disclosed_proof_update_state(handle, proofHandle, connectionHandle, VcxWrapperCommonNumberCallback);
     if( ret != 0 )
     {
         [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];

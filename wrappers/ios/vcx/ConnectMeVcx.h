@@ -160,6 +160,10 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)credentialUpdateState:(NSInteger )credentailHandle
                 completion:(void (^)(NSError *error, NSInteger state))completion;
 
+- (void)credentialUpdateStateV2:(NSInteger )credentailHandle
+                connectionHandle:(VcxHandle)connectionHandle
+                completion:(void (^)(NSError *error, NSInteger state))completion;
+
 - (void)credentialGetOffers:(VcxHandle)connectionHandle
                  completion:(void (^)(NSError *error, NSString *offers))completion;
 
@@ -258,6 +262,10 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
            completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void)proofUpdateState:(NSInteger) proofHandle
+              completion:(void (^)(NSError *error, NSInteger state))completion;
+
+- (void)proofUpdateStateV2:(NSInteger) proofHandle
+              connectionHandle:(vcx_connection_handle_t)connectionHandle
               completion:(void (^)(NSError *error, NSInteger state))completion;
 
 - (void) proofReject: (vcx_proof_handle_t)proof_handle
