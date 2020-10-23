@@ -7,6 +7,8 @@ use serde_json;
 
 use error::prelude::*;
 use messages;
+use connection;
+use messages::get_message::{parse_status_codes, parse_connection_handles};
 use utils::constants::*;
 use utils::cstring::CStringUtils;
 use utils::error;
@@ -342,6 +344,90 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
                     Err(e) => {
                         let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
                         warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                              command_handle, err, "null");
+
+                        cb(command_handle, err.into(), ptr::null_mut());
+                    }
+                };
+            }
+            Err(e) => {
+                warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                      command_handle, e, "null");
+
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
+                                    conn_handles: *const c_char,
+                                    message_statuses: *const c_char,
+                                    uids: *const c_char,
+                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
+    info!("vcx_v2_messages_download >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let conn_handles = if !conn_handles.is_null() {
+        check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
+        let v: Vec<&str> = conn_handles.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        v.to_owned()
+    } else {
+        return VcxError::from_msg(VcxErrorKind::InvalidJson, "List of connection handles can't be null").into()
+    };
+
+    let conn_handles = match parse_connection_handles(conn_handles) {
+        Ok(handles) => handles,
+        Err(err) => return err.into()
+    };
+
+    let message_statuses = if !message_statuses.is_null() {
+        check_useful_c_str!(message_statuses, VcxErrorKind::InvalidOption);
+        let v: Vec<&str> = message_statuses.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        Some(v.to_owned())
+    } else {
+        None
+    };
+
+    let message_statuses = match parse_status_codes(message_statuses) {
+        Ok(statuses) => statuses,
+        Err(err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+    };
+
+    let uids = if !uids.is_null() {
+        check_useful_c_str!(uids, VcxErrorKind::InvalidOption);
+        let v: Vec<&str> = uids.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        Some(v.to_owned())
+    } else {
+        None
+    };
+
+    trace!("vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
+           command_handle, message_statuses, uids);
+
+    spawn(move || {
+        match connection::download_messages(conn_handles, message_statuses, uids) {
+            Ok(x) => {
+                match serde_json::to_string(&x) {
+                    Ok(x) => {
+                        trace!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                               command_handle, error::SUCCESS.message, x);
+
+                        let msg = CStringUtils::string_to_cstring(x);
+                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                    }
+                    Err(e) => {
+                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
+                        warn!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                               command_handle, err, "null");
 
                         cb(command_handle, err.into(), ptr::null_mut());

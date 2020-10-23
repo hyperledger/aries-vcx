@@ -669,12 +669,14 @@ pub mod tests {
         assert_eq!(consumer2_msgs[0].msgs.len(), 2);
         assert_eq!(consumer2_msgs[0].pairwise_did, consumer2_pwdid);
 
-        let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
-        assert_eq!(consumer1_reviewed_msgs.len(), 1);
-        assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
+        let consumer1_received_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(consumer1_received_msgs.len(), 1);
+        assert_eq!(consumer1_received_msgs[0].msgs.len(), 1);
+        assert!(consumer1_received_msgs[0].msgs[0].payload.is_some());
 
         let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
         assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
+        assert!(consumer1_reviewed_msgs[0].msgs[0].payload.is_some());
     }
 }

@@ -69,6 +69,8 @@ export interface IFFIEntryPoint {
   vcx_mint_tokens: (seed: string | undefined | null, fees: string | undefined | null) => void,
   vcx_version: () => string,
   vcx_messages_download: (commandId: number, status: string, uids: string, pairwiseDids: string, cb: any) => number,
+  vcx_v2_messages_download: (commandId: number, status: string, uids: string, pairwiseDids: string,
+                                     cb: any) => number,
   vcx_messages_update_status: (commandId: number, status: string, msgIds: string, cb: any) => number,
   vcx_get_ledger_author_agreement: (commandId: number, cb: any) => number,
   vcx_set_active_txn_author_agreement_meta: (text: string | undefined | null, version: string | undefined | null,
@@ -126,8 +128,6 @@ export interface IFFIEntryPoint {
   vcx_connection_get_pw_did: (commandId: number, handle: number, cb: any) => number,
   vcx_connection_get_their_pw_did: (commandId: number, handle: number, cb: any) => number,
   vcx_connection_info: (commandId: number, handle: number, cb: any) => number,
-  vcx_connection_download_messages: (commandId: number, status: string, uids: string, pairwiseDids: string,
-                                     cb: any) => number,
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number,
@@ -265,6 +265,8 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_mint_tokens: [FFI_VOID, [FFI_STRING_DATA, FFI_STRING_DATA]],
   vcx_messages_download: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA,
     FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_v2_messages_download: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA,
+    FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_messages_update_status: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA,
     FFI_CALLBACK_PTR]],
   vcx_get_ledger_author_agreement: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
@@ -333,8 +335,6 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
   vcx_connection_get_pw_did: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
   vcx_connection_get_their_pw_did: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
   vcx_connection_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR]],
-  vcx_connection_download_messages: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA,
-    FFI_STRING_DATA, FFI_CALLBACK_PTR]],
 
   // issuer
   vcx_issuer_credential_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],

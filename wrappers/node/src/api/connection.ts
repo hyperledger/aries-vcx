@@ -242,7 +242,7 @@ export async function downloadMessagesV2
     const handles = connections.map((connection) => connection.handle).join(',')
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_connection_download_messages(0, handles, status, uids, cb)
+        const rc = rustAPI().vcx_v2_messages_download(0, handles, status, uids, cb)
         if (rc) {
           reject(rc)
         }
