@@ -1150,12 +1150,12 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
    }
 }
 
-- (void)proofGetProofRequestAttachment:(NSInteger)connectionHandle
-                   completion:(void (^)(NSError *error, NSString *attrs))completion{
+- (void)proofGetProofRequestAttachment:(NSInteger)proofHandle
+                   completion:(void (^)(NSError *error, NSString *attach))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
-    ret = vcx_disclosed_proof_get_proof_request_attachment(handle,connectionHandle, VcxWrapperCommonStringCallback);
+    ret = vcx_disclosed_proof_get_proof_request_attachment(handle, proofHandle, VcxWrapperCommonStringCallback);
 
    if( ret != 0 )
    {
