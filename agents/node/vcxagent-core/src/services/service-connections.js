@@ -1,4 +1,4 @@
-const { getMessagesForPwDid } = require('../utils/messages')
+const { getMessagesForPwDid, getMessagesForConnection } = require('../utils/messages')
 const {
   Connection,
   StateType
@@ -135,6 +135,11 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return loadConnection(connectionId)
   }
 
+  async function getMessagesV2 (connectionId, filterStatuses = [], filterUids = []) {
+    const connection = await getVcxConnection(connectionId)
+    return getMessagesForConnection([connection], [], [])
+  }
+
   return {
     // inviter
     inviterConnectionCreate,
@@ -153,6 +158,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     verifySignature,
     sendMessage,
     getMessages,
+    getMessagesV2,
 
     getState,
     listIds,

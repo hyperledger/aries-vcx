@@ -9,8 +9,8 @@ use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use messages;
-use messages::get_message::{get_bootstrap_agent_messages, Message};
-use messages::SerializableObjectWithState;
+use messages::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
+use messages::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
@@ -283,6 +283,22 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_connection_info()
     })
+}
+
+pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+    let mut res = Vec::new();
+    for conn_handle in conn_handles {
+        let msg_by_conn = CONNECTION_MAP.get(
+            conn_handle, |connection| {
+                let msgs = connection
+                   .agent_info()
+                   .download_encrypted_messages(uids.clone(), status_codes.clone())?;
+                Ok(MessageByConnection{ pairwise_did: connection.agent_info().clone().pw_did, msgs })
+            }
+        )?;
+        res.push(msg_by_conn);
+    };
+    Ok(res)
 }
 
 #[cfg(test)]
@@ -649,5 +665,50 @@ pub mod tests {
         let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
         let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();
         assert_eq!(empty.len(), 0);
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_download_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let consumer1 = create_consumer_config();
+        let consumer2 = create_consumer_config();
+
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(Some(consumer1), None);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(Some(consumer2), None);
+
+        let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
+        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
+
+        ::utils::devsetup::set_consumer(Some(consumer1));
+        send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
+        ::utils::devsetup::set_consumer(Some(consumer2));
+        send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
+
+        ::utils::devsetup::set_institution(None);
+        let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
+        assert_eq!(all_msgs.len(), 2);
+        assert_eq!(all_msgs[0].msgs.len(), 2);
+        assert_eq!(all_msgs[1].msgs.len(), 2);
+
+        let consumer1_msgs = download_messages([institution_to_consumer1].to_vec(), None, None).unwrap();
+        assert_eq!(consumer1_msgs.len(), 1);
+        assert_eq!(consumer1_msgs[0].msgs.len(), 2);
+        assert_eq!(consumer1_msgs[0].pairwise_did, consumer1_pwdid);
+
+        let consumer2_msgs = download_messages([institution_to_consumer2].to_vec(), None, None).unwrap();
+        assert_eq!(consumer2_msgs.len(), 1);
+        assert_eq!(consumer2_msgs[0].msgs.len(), 2);
+        assert_eq!(consumer2_msgs[0].pairwise_did, consumer2_pwdid);
+
+        let consumer1_received_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(consumer1_received_msgs.len(), 1);
+        assert_eq!(consumer1_received_msgs[0].msgs.len(), 1);
+        assert!(consumer1_received_msgs[0].msgs[0].payload.is_some());
+
+        let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
+        assert_eq!(consumer1_reviewed_msgs.len(), 1);
+        assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
+        assert!(consumer1_reviewed_msgs[0].msgs[0].payload.is_some());
     }
 }

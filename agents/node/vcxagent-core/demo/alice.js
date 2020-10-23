@@ -9,6 +9,7 @@ const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
 const { extractProofRequestAttachement } = require('../src/utils/proofs')
+const assert = require('assert')
 
 const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
@@ -76,6 +77,10 @@ async function runAlice (options) {
   await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
+
+  const msgs = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
+  logger.debug(`Alice received messages: ${JSON.stringify(msgs, null, 2)}`)
+  assert(msgs.length === 5)
 
   await vcxAgent.agentShutdownVcx()
   process.exit(0)
