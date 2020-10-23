@@ -243,7 +243,7 @@ public class CredentialApi extends VcxJava.API {
         CompletableFuture<Integer> future = new CompletableFuture<Integer>();
         int commandHandle = addFuture(future);
 
-        int result = LibVcx.api.vcx_v2_credential_update_state(commandHandle, credentialHandle, coonectionHandle, vcxCredentialUpdateStateCB);
+        int result = LibVcx.api.vcx_v2_credential_update_state(commandHandle, credentialHandle, connectionHandle, vcxCredentialUpdateStateCB);
         checkResult(result);
 
         return future;

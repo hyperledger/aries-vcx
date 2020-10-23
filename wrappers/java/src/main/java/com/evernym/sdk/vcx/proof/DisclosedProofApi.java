@@ -102,11 +102,11 @@ public class DisclosedProofApi extends VcxJava.API {
             int proofHandle,
             int connectionHandle
     ) throws VcxException {
-        logger.debug("proofUpdateStateV2() called with: proofHandle = [" + proofHandle + "], connecitonHandle = [" + connectionHandle + " ]");
+        logger.debug("proofUpdateStateV2() called with: proofHandle = [" + proofHandle + "], connectionHandle = [" + connectionHandle + " ]");
         CompletableFuture<Integer> future = new CompletableFuture<>();
         int commandHandle = addFuture(future);
 
-        int result = LibVcx.api.vcx_v2_disclosed_proof_update_state(commandHandle, proofHandle, vcxProofUpdateStateCB);
+        int result = LibVcx.api.vcx_v2_disclosed_proof_update_state(commandHandle, proofHandle, connectionHandle, vcxProofUpdateStateCB);
         checkResult(result);
 
         return future;
