@@ -661,6 +661,14 @@ pub mod tests {
         let specific = download_messages_noauth(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
         assert_eq!(specific.len(), 1);
         assert_eq!(specific[0].msgs.len(), 1);
+        let msg = specific[0].msgs[0].decrypted_payload.clone().unwrap();
+        let msg_wrapper_value: Value = serde_json::from_str(&msg).unwrap();
+        assert!(msg_wrapper_value["@msg"].is_string());
+        let msg_aries_value: Value = serde_json::from_str(&msg_wrapper_value["@msg"].as_str().unwrap()).unwrap();
+        assert!(msg_aries_value.is_object());
+        assert!(msg_aries_value["@id"].is_string());
+        assert!(msg_aries_value["@type"].is_string());
+        assert!(msg_aries_value["content"].is_string());
 
         let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
         let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();

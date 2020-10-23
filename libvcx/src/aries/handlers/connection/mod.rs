@@ -31,6 +31,7 @@ pub mod tests {
         use aries::test::{Alice, Faber};
 
         use super::*;
+        use serde_json::Value;
 
         #[test]
         #[cfg(feature = "aries")]
@@ -147,8 +148,9 @@ pub mod tests {
 
                 let messages: Vec<MessageByConnection> = download_messages_noauth(None, Some(vec!["MS-103".to_string()]), None).unwrap();
                 let message: Message = messages[0].msgs[0].clone();
-                let decrypted_msg = message.decrypted_payload.unwrap();
-                let _payload: aries::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&decrypted_msg).unwrap();
+                let msg_wrapper: Value = ::serde_json::from_str(&message.decrypted_payload.unwrap()).unwrap();
+                let msg_aries = msg_wrapper["@msg"].as_str().unwrap();
+                let _payload: aries::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(msg_aries).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
             }
