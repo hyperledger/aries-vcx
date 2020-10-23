@@ -14,10 +14,10 @@
     }
   ],
   "bugs": {
-    "url": "https://github.com/hyperledger/aries-framework-rs/issues"
+    "url": "https://github.com/hyperledger/aries-vcx/issues"
   },
   "repository": {
-    "url": "https://github.com/hyperledger/aries-framework-rs.git",
+    "url": "https://github.com/hyperledger/aries-vcx.git",
     "type": "git"
   },
   "publishConfig": {

@@ -570,7 +570,7 @@ jobs:
         run: |
           rm -rf /tmp/imgcache
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/libvcx-absa && ./wrappers/java/ci/android.test.sh armv7)'
+                              bash -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
 
   test-node-wrapper:
     runs-on: ubuntu-latest
@@ -742,9 +742,9 @@ jobs:
 
   #     - name: Test android wrapper
   #       run: |
-  #         # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw $DOCKER_IMG_NAME_ANDROID \
+  #         # docker run --name test-android-wrapper -v $PWD:/home/indy/aries-vcx:rw $DOCKER_IMG_NAME_ANDROID \
   #         docker run --name test-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-  #                             bash -c '(cd $HOME/libvcx-absa/libvcx && ./android.wrapper.test.sh x86)'
+  #                             bash -c '(cd $HOME/aries-vcx/libvcx && ./android.wrapper.test.sh x86)'
 
   publish-android-wrapper-device:
     runs-on: ubuntu-16.04

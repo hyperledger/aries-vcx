@@ -39,11 +39,11 @@ WORKDIR /home/vcx_user
 
 COPY android-ndk-r20-linux-x86_64.zip /home/vcx_user/
 RUN unzip -qq /home/vcx_user/android-ndk-r20-linux-x86_64.zip -d /home/vcx_user/
-COPY --chown=vcx_user:vcx_user . /home/vcx_user/libvcx-absa
+COPY --chown=vcx_user:vcx_user . /home/vcx_user/aries-vcx
 COPY --chown=vcx_user:vcx_user ${openssl_dir}/ ${OPENSSL_DIR}/
 COPY --chown=vcx_user:vcx_user ${sodium_dir}/ /home/vcx_user/${sodium_dir}/
 COPY --chown=vcx_user:vcx_user ${libzmq_dir}/ /home/vcx_user/${libzmq_dir}/
 COPY --chown=vcx_user:vcx_user ${libindy_dir}/ /home/vcx_user/${libindy_dir}/
-RUN chmod a+x libvcx-absa/libvcx/build_scripts/android/vcx/make_vcx.sh
-RUN ./libvcx-absa/libvcx/build_scripts/android/vcx/make_vcx.sh
+RUN chmod a+x aries-vcx/libvcx/build_scripts/android/vcx/make_vcx.sh
+RUN ./aries-vcx/libvcx/build_scripts/android/vcx/make_vcx.sh
 RUN echo "libvcx android build successful"
