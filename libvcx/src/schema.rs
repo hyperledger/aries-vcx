@@ -225,6 +225,7 @@ pub mod tests {
     use utils::libindy::payments::add_new_did;
 
     use super::*;
+    use utils::libindy::wallet::get_wallet_handle;
 
     fn data() -> Vec<String> {
         vec!["address1".to_string(), "address2".to_string(), "zip".to_string(), "city".to_string(), "state".to_string()]
@@ -432,7 +433,7 @@ pub mod tests {
 
         assert_eq!(1, update_state(handle).unwrap());
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_wallet();
+        ::utils::libindy::wallet::close_main_wallet();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -442,6 +443,6 @@ pub mod tests {
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_wallet();
+        ::utils::libindy::wallet::close_main_wallet();
     }
 }

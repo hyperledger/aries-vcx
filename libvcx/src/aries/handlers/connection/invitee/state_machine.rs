@@ -515,6 +515,7 @@ pub mod test {
 
         mod find_message_to_handle {
             use super::*;
+            use settings;
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -585,7 +586,7 @@ pub mod test {
             #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_completed_state() {
                 let _setup = AgencyModeSetup::init();
-
+                
                 let connection = invitee_sm().to_invitee_completed_state();
 
                 // Ping

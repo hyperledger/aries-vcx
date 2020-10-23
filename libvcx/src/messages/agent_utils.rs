@@ -10,6 +10,7 @@ use utils::httpclient::{AgencyMockDecrypted};
 use utils::libindy::{anoncreds, wallet};
 use utils::libindy::signus::create_and_store_my_did;
 use utils::option_util::get_or_default;
+use utils::libindy::wallet::get_wallet_handle;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -204,8 +205,10 @@ fn _create_issuer_keys(my_did: &str, my_vk: &str, my_config: &Config) -> VcxResu
 pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String)> {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
-    wallet::init_wallet(
+    wallet::create_and_open_as_main_wallet(
         &wallet_name,
+        &my_config.wallet_key,
+        &my_config.wallet_key_derivation.as_deref().unwrap_or("ARGON2I_INT".into()),
         my_config.wallet_type.as_ref().map(String::as_str),
         my_config.storage_config.as_ref().map(String::as_str),
         my_config.storage_credentials.as_ref().map(String::as_str),
@@ -308,7 +311,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
     let config = get_final_config(&my_did, &my_vk, &agent_did, &agent_vk, &wallet_name, &my_config)?;
 
-    wallet::close_wallet()?;
+    wallet::close_main_wallet()?;
 
     Ok(config)
 }

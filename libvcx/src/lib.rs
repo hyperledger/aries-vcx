@@ -37,6 +37,7 @@ pub mod settings;
 pub mod messages;
 
 pub mod api;
+pub mod init;
 pub mod connection;
 pub mod issuer_credential;
 pub mod proof;

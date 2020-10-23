@@ -55,6 +55,7 @@ pub mod tests {
     use utils::devsetup::*;
 
     use super::*;
+    use init::open_pool;
 
     // TODO:  Is used for Aries tests...try to remove and use one of devsetup's
     pub mod test_setup {
@@ -108,12 +109,15 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_pool_and_wallet() {
-        let _setup = SetupWalletAndPool::init();
+        let _setup_defaults = SetupDefaults::init();
+        let setup_wallet = SetupWallet::init();
+        let _setup_pool = SetupPoolCongig::init();
+
         let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap();
         let path = settings::get_config_value(settings::CONFIG_GENESIS_PATH).unwrap();
         let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG);
 
-        pool::init_pool(&pool_name, &path, pool_config.ok().as_ref().map(String::as_str)).unwrap();
-        wallet::init_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
+        open_pool(&pool_name, &path, pool_config.ok().as_ref().map(String::as_str)).unwrap();
+        wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_name, &setup_wallet.wallet_key, &setup_wallet.wallet_kdf, None, None, None).unwrap();
     }
 }

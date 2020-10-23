@@ -8,7 +8,7 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 #[cfg(test)]
 pub mod test {
     use indy_sys::WalletHandle;
-    use rand;
+    use ::{rand, settings};
     use rand::Rng;
 
     use messages::agent_utils::connect_register_provision;
@@ -27,60 +27,81 @@ pub mod test {
     pub mod setup {
         use indy_sys::WalletHandle;
 
-        use settings::{CONFIG_WALLET_KEY_DERIVATION, DEFAULT_WALLET_KEY};
+        use settings::{CONFIG_WALLET_KEY_DERIVATION, WALLET_KDF_RAW, DEFAULT_WALLET_KEY, get_config_value, CONFIG_WALLET_KEY, CONFIG_WALLET_STORAGE_CREDS, UNINITIALIZED_WALLET_KEY, CONFIG_WALLET_NAME};
+        use utils::devsetup::{SetupEmpty, init_test_logging};
 
         pub fn base_config() -> ::serde_json::Value {
             json!({
-                "agency_did":"VsKV7grR1BUE29mG2Fm2kX",
-                "agency_endpoint":"http://localhost:8080",
-                "agency_verkey":"Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
-                "genesis_path":"<CHANGE_ME>",
-                "institution_did":"V4SGRU86Z58d6TV7PBUe6f",
-                "institution_logo_url":"<CHANGE_ME>",
-                "institution_name":"<CHANGE_ME>",
-                "institution_verkey":"GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
-                "protocol_type":"2.0",
-                "remote_to_sdk_did":"LjC6xZPeYPeL5AjuRByMDA",
-                "remote_to_sdk_verkey":"Bkd9WFmCydMCvLKL8x47qyQTN1nbyQ8rUK8JTsQRtLGE",
-                "sdk_to_remote_did":"Mi3bbeWQDVpQCmGFBqWeYa",
-                "sdk_to_remote_verkey":"CHcPnSn48wfrUhekmcFZAmx8NvhHCh72J73WToNiK9EX",
-                "wallet_key":DEFAULT_WALLET_KEY,
-                "wallet_name":"test_wallet",
-                CONFIG_WALLET_KEY_DERIVATION:"RAW",
-                "communication_method":"aries",
+                "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+                "agency_endpoint": "http://localhost:8080",
+                "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+                "genesis_path": "<CHANGE_ME>",
+                "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
+                "institution_logo_url": "<CHANGE_ME>",
+                "institution_name": "<CHANGE_ME>",
+                "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
+                "remote_to_sdk_did": "LjC6xZPeYPeL5AjuRByMDA",
+                "remote_to_sdk_verkey": "Bkd9WFmCydMCvLKL8x47qyQTN1nbyQ8rUK8JTsQRtLGE",
+                "sdk_to_remote_did": "Mi3bbeWQDVpQCmGFBqWeYa",
+                "sdk_to_remote_verkey": "CHcPnSn48wfrUhekmcFZAmx8NvhHCh72J73WToNiK9EX",
+                "wallet_key": DEFAULT_WALLET_KEY,
+                "wallet_name": "test_wallet",
+                "wallet_key_derivation": WALLET_KDF_RAW,
             })
         }
 
         pub struct AgencyModeSetup {
             pub wallet_name: String,
+            pub wallet_key: String,
+            pub key_derivation: String,
             pub wallet_handle: WalletHandle,
+            pub storage_creds: Option<String>
         }
 
         impl AgencyModeSetup {
             pub fn init() -> AgencyModeSetup {
-                let wallet_name = "wallet_name";
-
+                init_test_logging();
                 let mut config = base_config();
-                config["wallet_name"] = json!(wallet_name);
                 config["enable_test_mode"] = json!("true");
-
                 ::settings::process_config_string(&config.to_string(), false).unwrap();
 
-                ::utils::libindy::wallet::create_wallet(wallet_name, None, None, None).unwrap();
-                let config = ::utils::devsetup::config_with_wallet_handle(wallet_name, &config.to_string());
+                let wallet_name= get_config_value(CONFIG_WALLET_NAME).ok().unwrap();
+                let wallet_key= get_config_value(CONFIG_WALLET_KEY).ok().unwrap();
+                let key_derivation = get_config_value(CONFIG_WALLET_KEY_DERIVATION).unwrap();
+                let storage_creds = get_config_value(CONFIG_WALLET_STORAGE_CREDS).ok();
+                info!("wallet_name={} wallet_key={}", wallet_name, wallet_key);
 
-                ::settings::process_config_string(&config.to_string(), false).unwrap();
+                // ::settings::process_config_string(&config.to_string(), false).unwrap();
+                //
+                // ::utils::libindy::wallet::create_wallet(wallet_name, None, None, None).unwrap();
+                // let config = ::utils::devsetup::config_with_wallet_handle(wallet_name, &config.to_string());
+                //
+                // ::settings::process_config_string(&config.to_string(), false).unwrap();
+
+                let wallet_handle = ::utils::libindy::wallet::create_and_open_as_main_wallet(
+                    &wallet_name,
+                    &wallet_key,
+                    &key_derivation,
+                    None,
+                    None,
+                    storage_creds.as_deref()
+                ).unwrap();
+
 
                 AgencyModeSetup {
                     wallet_name: wallet_name.to_string(),
-                    wallet_handle: ::utils::libindy::wallet::get_wallet_handle(),
+                    wallet_handle,
+                    wallet_key: wallet_key.to_string(),
+                    key_derivation,
+                    storage_creds
                 }
             }
         }
 
         impl Drop for AgencyModeSetup {
             fn drop(&mut self) {
-                ::utils::libindy::wallet::delete_wallet(&self.wallet_name, None, None, None).unwrap();
+                ::utils::libindy::wallet::close_main_wallet().unwrap();
+                ::utils::libindy::wallet::delete_wallet(&self.wallet_name, &self.wallet_key, &self.key_derivation,None, None, self.storage_creds.as_deref()).unwrap();
             }
         }
     }
@@ -155,9 +176,11 @@ pub mod test {
 
     pub struct Faber {
         pub wallet_name: String,
+        pub wallet_key: String,
         pub wallet_handle: WalletHandle,
         pub connection_handle: u32,
         pub config: String,
+        pub wallet_kdf: String,
         pub schema_handle: u32,
         pub cred_def_handle: u32,
         pub credential_handle: u32,
@@ -167,26 +190,29 @@ pub mod test {
     impl Faber {
         pub fn setup() -> Faber {
             ::settings::clear_config();
-            let wallet_name = "faber_wallet";
+            let wallet_name: String = format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string());
+            let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
 
             let config = json!({
                 "agency_url": AGENCY_ENDPOINT,
                 "agency_did": AGENCY_DID,
                 "agency_verkey": AGENCY_VERKEY,
-                "wallet_name": wallet_name,
-                "wallet_key": "123",
+                "wallet_name": &wallet_name,
+                "wallet_key": &wallet_key,
+                "wallet_key_derivation": settings::WALLET_KDF_RAW,
                 "payment_method": "null",
                 "enterprise_seed": "000000000000000000000000Trustee1",
-                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();
 
-            let config = config_with_wallet_handle(wallet_name, &config);
+            let config = config_with_wallet_handle(&wallet_name, &config);
 
             Faber {
                 config,
-                wallet_name: wallet_name.to_string(),
+                wallet_name,
+                wallet_key,
+                wallet_kdf: settings::WALLET_KDF_RAW.into(),
                 schema_handle: 0,
                 cred_def_handle: 0,
                 connection_handle: 0,
@@ -329,13 +355,15 @@ pub mod test {
 
         pub fn teardown(&self) {
             self.activate();
-            close_wallet().unwrap();
-            delete_wallet(&self.wallet_name, None, None, None).unwrap();
+            close_main_wallet().unwrap();
+            delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
         }
     }
 
     pub struct Alice {
         pub wallet_name: String,
+        pub wallet_key: String,
+        pub wallet_kdf: String,
         pub wallet_handle: WalletHandle,
         pub connection_handle: u32,
         pub config: String,
@@ -346,16 +374,18 @@ pub mod test {
     impl Alice {
         pub fn setup() -> Alice {
             ::settings::clear_config();
-            let wallet_name = "alice_wallet";
+
+            let wallet_name: String = format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string());
+            let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
 
             let config = json!({
                 "agency_url": C_AGENCY_ENDPOINT,
                 "agency_did": C_AGENCY_DID,
                 "agency_verkey": C_AGENCY_VERKEY,
-                "wallet_name": wallet_name,
-                "wallet_key": "123",
+                "wallet_name": &wallet_name,
+                "wallet_key": &wallet_key,
+                "wallet_key_derivation": settings::WALLET_KDF_RAW,
                 "payment_method": "null",
-                "protocol_type": "4.0"
             }).to_string();
 
             let config = connect_register_provision(&config).unwrap();
@@ -364,7 +394,9 @@ pub mod test {
 
             Alice {
                 config,
-                wallet_name: wallet_name.to_string(),
+                wallet_name,
+                wallet_key,
+                wallet_kdf: settings::WALLET_KDF_RAW.into(),
                 wallet_handle: get_wallet_handle(),
                 connection_handle: 0,
                 credential_handle: 0,
@@ -496,16 +528,16 @@ pub mod test {
     impl Drop for Faber {
         fn drop(&mut self) {
             self.activate();
-            close_wallet().unwrap();
-            delete_wallet(&self.wallet_name, None, None, None).unwrap();
+            close_main_wallet().unwrap();
+            delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
         }
     }
 
     impl Drop for Alice {
         fn drop(&mut self) {
             self.activate();
-            close_wallet().unwrap();
-            delete_wallet(&self.wallet_name, None, None, None).unwrap();
+            close_main_wallet().unwrap();
+            delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
         }
     }
 

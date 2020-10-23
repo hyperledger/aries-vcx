@@ -75,7 +75,9 @@ pub static DEFAULT_WALLET_BACKUP_KEY: &str = "backup_wallet_key";
 pub static DEFAULT_WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
 pub static DEFAULT_THREADPOOL_SIZE: usize = 8;
 pub static MASK_VALUE: &str = "********";
-pub static DEFAULT_WALLET_KEY_DERIVATION: &str = "RAW";
+pub static WALLET_KDF_RAW: &str = "RAW";
+pub static WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
+pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_INT;
 #[cfg(not(target_os = "macos"))]
 pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.so";
 #[cfg(target_os = "macos")]
@@ -102,8 +104,8 @@ impl ToString for HashMap<String, String> {
     }
 }
 
-pub fn set_defaults() -> u32 {
-    trace!("set_defaults >>>");
+pub fn set_testing_defaults() -> u32 {
+    trace!("set_testing_defaults >>>");
 
     // if this fails the program should exit
     let mut settings = SETTINGS.write().unwrap();
@@ -124,7 +126,7 @@ pub fn set_defaults() -> u32 {
     settings.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
     settings.insert(CONFIG_SDK_TO_REMOTE_ROLE.to_string(), DEFAULT_ROLE.to_string());
     settings.insert(CONFIG_WALLET_KEY.to_string(), DEFAULT_WALLET_KEY.to_string());
-    settings.insert(CONFIG_WALLET_KEY_DERIVATION.to_string(), DEFAULT_WALLET_KEY_DERIVATION.to_string());
+    settings.insert(CONFIG_WALLET_KEY_DERIVATION.to_string(), WALLET_KDF_RAW.to_string());
     settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
     settings.insert(CONFIG_EXPORTED_WALLET_PATH.to_string(),
@@ -340,29 +342,18 @@ pub fn set_opt_config_value(key: &str, value: &Option<String>) {
     }
 }
 
-pub fn get_wallet_config(wallet_name: &str, wallet_type: Option<&str>, _storage_config: Option<&str>) -> String { // TODO: _storage_config must be used
+pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
     let mut config = json!({
         "id": wallet_name,
         "storage_type": wallet_type
     });
-
-    if let Ok(_config) = get_config_value(CONFIG_WALLET_STORAGE_CONFIG) {
-        config["storage_config"] = serde_json::from_str(&_config).unwrap();
-    }
-
+    if let Some(storage_config) = storage_config { config["storage_config"] = json!(storage_config); }
     config.to_string()
 }
 
-pub fn get_wallet_credentials(_storage_creds: Option<&str>) -> String { // TODO: storage_creds must be used?
-    let key = get_config_value(CONFIG_WALLET_KEY).unwrap_or(UNINITIALIZED_WALLET_KEY.to_string());
-    let mut credentials = json!({"key": key});
-
-    let key_derivation = get_config_value(CONFIG_WALLET_KEY_DERIVATION).ok();
-    if let Some(_key) = key_derivation { credentials["key_derivation_method"] = json!(_key); }
-
-    let storage_creds = get_config_value(CONFIG_WALLET_STORAGE_CREDS).ok();
-    if let Some(_creds) = storage_creds { credentials["storage_credentials"] = serde_json::from_str(&_creds).unwrap(); }
-
+pub fn build_wallet_credentials(key: &str, storage_creds: Option<&str>, key_derivation: &str) -> String {
+    let mut credentials = json!({"key": key, "key_derivation_method": key_derivation});
+    if let Some(storage_credentials) = storage_creds { credentials["storage_credentials"] = serde_json::from_str(&storage_credentials).unwrap(); }
     credentials.to_string()
 }
 

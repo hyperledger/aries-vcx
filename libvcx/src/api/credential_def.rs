@@ -642,7 +642,6 @@ mod tests {
     fn test_vcx_create_credentialdef_fails() {
         let _setup = SetupLibraryWallet::init();
 
-        settings::set_defaults();
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
