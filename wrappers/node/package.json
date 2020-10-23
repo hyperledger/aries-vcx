@@ -1,5 +1,5 @@
 {
-  "homepage": "https://github.com/hyperledger/aries-framework-rs/tree/master/wrappers/node",
+  "homepage": "https://github.com/hyperledger/aries-vcx/tree/master/wrappers/node",
   "name": "@hyperledger/node-vcx-wrapper",
   "description": "NodeJS wrapper Aries Framework",
   "license": "Apache-2.0",
@@ -16,7 +16,7 @@
     }
   ],
   "bugs": {
-    "url": "https://github.com/hyperledger/aries-framework-rs/issues"
+    "url": "https://github.com/hyperledger/aries-vcx/issues"
   },
   "standard": {
     "env": [
@@ -24,7 +24,7 @@
     ]
   },
   "repository": {
-    "url": "https://github.com/hyperledger/aries-framework-rs.git",
+    "url": "https://github.com/hyperledger/aries-vcx.git",
     "type": "git"
   },
   "publishConfig": {

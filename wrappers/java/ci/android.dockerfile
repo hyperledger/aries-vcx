@@ -56,8 +56,8 @@ ENV PATH /home/indy/.cargo/bin:$PATH
 
 
 # This is to mount a host volume with write access
-RUN mkdir /home/indy/libvcx-absa
-# VOLUME ["/home/indy/libvcx-absa"]
+RUN mkdir /home/indy/aries-vcx
+# VOLUME ["/home/indy/aries-vcx"]
 
 # Set env vars
 ARG LIBINDY_VER=1.15.0
@@ -77,6 +77,6 @@ ENV LIBVCX_VERSION=$LIBVCX_VER
 # RUN chmod +x android.prepare.sh setup.android.env.sh
 
 # This is temporary workaround GA mounted directory issues
-COPY --chown=indy:indy . libvcx-absa/
+COPY --chown=indy:indy . aries-vcx/
 
-RUN ./libvcx-absa/wrappers/java/ci/android.prepare.sh
+RUN ./aries-vcx/wrappers/java/ci/android.prepare.sh

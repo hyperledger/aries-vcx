@@ -20,12 +20,12 @@ runs:
     - name: Build, run android wrapper tests, and publish artifacts
       run: |
         set -x
-        # docker run --name test-android-wrapper -v $PWD:/home/indy/libvcx-absa:rw ${{ inputs.docker-img.name }} \
+        # docker run --name test-android-wrapper -v $PWD:/home/indy/aries-vcx:rw ${{ inputs.docker-img.name }} \
         docker run --name publish-android-wrapper \
             -e ABIS="${{ inputs.abis }}" \
             -e FULL_VERSION_NAME="${{ inputs.full-version-name }}" \
             ${{ inputs.docker-img-name }} \
-            bash -c '(cd /home/indy/libvcx-absa && ./wrappers/java/ci/android.build.sh $ABIS)'
+            bash -c '(cd /home/indy/aries-vcx && ./wrappers/java/ci/android.build.sh $ABIS)'
         docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep ${{ inputs.docker-img-name }} | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
         mkdir -p /tmp/artifacts/aar
