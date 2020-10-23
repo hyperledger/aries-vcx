@@ -131,8 +131,8 @@ download_and_unzip_if_missed() {
     fname=$3
     url="${url_pref}${fname}"
     if [ ! -d "${target_dir}" ] ; then
-        echo "${GREEN}Downloading ${fname}${RESET}"
-        curl -sSLO ${url}
+        echo "${GREEN}Downloading ${fname}${RESET} from url ${url}"
+        wget -q ${url}
         unzip -qq ${fname}
         rm ${fname}
         echo "${GREEN}Done!${RESET}"
