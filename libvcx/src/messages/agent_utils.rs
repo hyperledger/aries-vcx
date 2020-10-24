@@ -399,7 +399,10 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 
 fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
     info!("> update_agent_webhook_v2");
-    if settings::agency_mocks_enabled() { return Ok(()); }
+    if settings::indy_mocks_enabled() {
+        warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
+        return Ok(());
+    }
 
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))

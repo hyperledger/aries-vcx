@@ -342,21 +342,6 @@ pub fn set_opt_config_value(key: &str, value: &Option<String>) {
     }
 }
 
-pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
-    let mut config = json!({
-        "id": wallet_name,
-        "storage_type": wallet_type
-    });
-    if let Some(storage_config) = storage_config { config["storage_config"] = json!(storage_config); }
-    config.to_string()
-}
-
-pub fn build_wallet_credentials(key: &str, storage_creds: Option<&str>, key_derivation: &str) -> String {
-    let mut credentials = json!({"key": key, "key_derivation_method": key_derivation});
-    if let Some(storage_credentials) = storage_creds { credentials["storage_credentials"] = serde_json::from_str(&storage_credentials).unwrap(); }
-    credentials.to_string()
-}
-
 pub fn get_connecting_protocol_version() -> ProtocolTypes {
     let protocol = get_config_value(CONFIG_USE_LATEST_PROTOCOLS).unwrap_or(DEFAULT_USE_LATEST_PROTOCOLS.to_string());
     match protocol.as_ref() {

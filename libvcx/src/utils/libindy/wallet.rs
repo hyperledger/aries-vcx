@@ -60,11 +60,26 @@ pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
 pub fn reset_wallet_handle() { set_wallet_handle(INVALID_WALLET_HANDLE); }
 
+pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
+    let mut config = json!({
+        "id": wallet_name,
+        "storage_type": wallet_type
+    });
+    if let Some(storage_config) = storage_config { config["storage_config"] = json!(storage_config); }
+    config.to_string()
+}
+
+pub fn build_wallet_credentials(key: &str, storage_creds: Option<&str>, key_derivation: &str) -> String {
+    let mut credentials = json!({"key": key, "key_derivation_method": key_derivation});
+    if let Some(storage_credentials) = storage_creds { credentials["storage_credentials"] = serde_json::from_str(&storage_credentials).unwrap(); }
+    credentials.to_string()
+}
+
 pub fn create_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<()> {
     trace!("creating wallet: {}", wallet_name);
 
-    let config = settings::build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = settings::build_wallet_credentials(wallet_key, storage_creds, key_derivation);
+    let config = build_wallet_config(wallet_name, wallet_type, storage_config);
+    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);
 
     match wallet::create_wallet(&config, &credentials)
         .wait() {
@@ -90,7 +105,13 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
-    trace!("close_wallet >>>");
+    trace!("close_main_wallet >>>");
+
+    if settings::indy_mocks_enabled() {
+        warn!("close_main_wallet >>> Indy mocks enabled, skipping closing wallet");
+        set_wallet_handle(INVALID_WALLET_HANDLE);
+        return Ok(());
+    }
 
     wallet::close_wallet(get_wallet_handle())
         .wait()?;
@@ -102,8 +123,8 @@ pub fn close_main_wallet() -> VcxResult<()> {
 pub fn delete_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<()> {
     trace!("delete_wallet >>> wallet_name: {}", wallet_name);
 
-    let config = settings::build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = settings::build_wallet_credentials(wallet_key, storage_creds, key_derivation);
+    let config = build_wallet_config(wallet_name, wallet_type, storage_config);
+    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);
 
     wallet::delete_wallet(&config, &credentials)
         .wait()
@@ -250,7 +271,6 @@ pub fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
-// todo: Why don't we take RestoreWalletConfigs as parameter?
 pub fn import(config: &str) -> VcxResult<()> {
     trace!("import >>> config {}", config);
 
@@ -261,8 +281,8 @@ pub fn import(config: &str) -> VcxResult<()> {
     let new_wallet_key = restore_config.wallet_key;
     let new_wallet_kdf = restore_config.wallet_key_derivation.unwrap_or("ARGON2I_INT".into());
 
-    let new_wallet_config = settings::build_wallet_config(&new_wallet_name, None, None);
-    let new_wallet_credentials = settings::build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf);
+    let new_wallet_config = build_wallet_config(&new_wallet_name, None, None);
+    let new_wallet_credentials = build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf);
     let import_config = json!({
         "key": restore_config.backup_key,
         "path": restore_config.exported_wallet_path
