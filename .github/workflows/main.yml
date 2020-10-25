@@ -17,11 +17,13 @@ jobs:
       CACHE_KEY_ANDROID: ${{ steps.mainstep.outputs.CACHE_KEY_ANDROID }}
       CACHE_KEY_LIBVCX: ${{ steps.mainstep.outputs.CACHE_KEY_LIBVCX }}
       CACHE_KEY_CODECOV: ${{ steps.mainstep.outputs.CACHE_KEY_CODECOV }}
+      CACHE_KEY_ALPINE_CORE: ${{ steps.mainstep.outputs.CACHE_KEY_ALPINE_CORE }}
       DOCKER_IMG_NAME_POOL: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_POOL }}
       DOCKER_IMG_NAME_ANDROID: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ANDROID }}
       DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       DOCKER_IMG_NAME_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_LIBVCX }}
       DOCKER_IMG_NAME_CODECOV: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_CODECOV }}
+      DOCKER_IMG_NAME_ALPINE_CORE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ALPINE_CORE }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
     steps:
@@ -95,6 +97,7 @@ jobs:
           LIBVCX_NODE_AGENT_HASH=${{ hashFiles('agents/node') }}
           JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
+          ALPINE_CORE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
 
           LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_NODE_WRAPPERS_HASH:0:15}-${LIBVCX_NODE_AGENT_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${CODECOV_DOCKERFILE_HASH:0:23}
@@ -107,12 +110,7 @@ jobs:
           echo ::set-env name=CACHE_KEY_CODECOV::$CODECOV_HASH
           echo ::set-env name=CACHE_KEY_ANDROID::$ANDROID_HASH
           echo ::set-env name=CACHE_KEY_POOL::$POOL_HASH
-
-          DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.2"
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo $DOCKER_IMG_NAME_AGENCY)
-
-          DOCKER_IMG_NAME_ANDROID="android-test"
-          echo ::set-env name=DOCKER_IMG_NAME_ANDROID::$(echo $DOCKER_IMG_NAME_ANDROID)
+          echo ::set-env name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_HASH
 
       - name: Set and print outputs
         id: mainstep
@@ -126,9 +124,11 @@ jobs:
           echo "::set-output name=CACHE_KEY_CODECOV::$CACHE_KEY_CODECOV"
           echo "::set-output name=CACHE_KEY_ANDROID::$CACHE_KEY_ANDROID"
           echo "::set-output name=CACHE_KEY_POOL::$CACHE_KEY_POOL"
+          echo "::set-output name=CACHE_KEY_ALPINE_CORE::$CACHE_KEY_ALPINE_CORE"
 
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::$DOCKER_IMG_NAME_AGENCY"
-          echo "::set-output name=DOCKER_IMG_NAME_ANDROID::$CACHE_KEY_ANDROID"
+          echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.2"
+          echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$CACHE_KEY_LIBVCX"
           echo "::set-output name=DOCKER_IMG_NAME_CODECOV::codecov:$CACHE_KEY_CODECOV"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$CACHE_KEY_POOL"
@@ -167,8 +167,44 @@ jobs:
           docker images
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
 
-  build-image-libvcx:
+  build-image-alpine-core:
     needs: workflow-setup
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=CACHE_KEY_ALPINE_CORE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ALPINE_CORE}})
+          echo ::set-env name=DOCKER_IMG_NAME_ALPINE_CORE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ALPINE_CORE}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Try load from cache.
+        id: cache-image-alpinecore
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache_alpine_core
+          key: ${{ env.CACHE_KEY_ALPINE_CORE }}
+      - name: If NOT found in cache, build and cache image.
+        if: steps.cache-image-alpinecore.outputs.cache-hit != 'true'
+        run: |
+          set -x
+          docker build --build-arg "USER_ID=$UID" \
+                       -f ci/alpine_core.dockerfile \
+                       -t "$DOCKER_IMG_NAME_ALPINE_CORE" \
+                        .
+          mkdir -p /tmp/imgcache_alpine_core
+          docker save "$DOCKER_IMG_NAME_ALPINE_CORE" > /tmp/imgcache_alpine_core/img_alpine_core.rar
+
+      - name: Load alpine_core image from cache
+        run: |
+          docker load < /tmp/imgcache_alpine_core/img_alpine_core.rar
+      - name: Verify alpine_core image was loaded
+        run: |
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ALPINE_CORE" || { echo "Image $DOCKER_IMG_NAME_ALPINE_CORE was not found!" ; exit 1; }
+
+  build-image-libvcx:
+    needs: [workflow-setup, build-image-alpine-core]
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -177,8 +213,23 @@ jobs:
         run: |
           echo ::set-env name=CACHE_KEY_LIBVCX::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}})
           echo ::set-env name=DOCKER_IMG_NAME_LIBVCX::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}})
+          echo ::set-env name=CACHE_KEY_ALPINE_CORE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_ALPINE_CORE}})
+          echo ::set-env name=DOCKER_IMG_NAME_ALPINE_CORE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_ALPINE_CORE}})
       - name: Git checkout
         uses: actions/checkout@v2
+      - name: Try load from cache.
+        id: cache-image-alpinecore
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache_alpine_core
+          key: ${{ env.CACHE_KEY_ALPINE_CORE }}
+      - name: If alpine_core NOT found in cache, error
+        if: steps.cache-image-alpinecore.outputs.cache-hit != 'true'
+        run: exit -1
+      - name: Load alpine_core image from cache
+        run: |
+          docker load < /tmp/imgcache_alpine_core/img_alpine_core.rar
+          rm /tmp/imgcache_alpine_core/img_alpine_core.rar
       - name: Try load from cache.
         id: cache-image-libvcx
         uses: actions/cache@v2
@@ -189,8 +240,8 @@ jobs:
         if: steps.cache-image-libvcx.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build --build-arg "NPMJS_TOKEN=$NPMJS_TOKEN" \
-                       --build-arg "USER_ID=$UID" \
+          docker build --build-arg "USER_ID=$UID" \
+                       --build-arg "ALPINE_CORE_IMAGE=$DOCKER_IMG_NAME_ALPINE_CORE" \
                        -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
                         .
