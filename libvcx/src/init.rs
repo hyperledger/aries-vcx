@@ -16,14 +16,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
 }
 
 pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
-    info!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
-
-    if settings::indy_mocks_enabled() {
-        warn!("open_pool ::: Indy mocks enabled, skipping opening pool.");
-        return Ok(());
-    }
-
-    trace!("open_pool ::: Opening pool {} with genesis_path: {}", pool_name, path);
+    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 
     create_pool_ledger_config(&pool_name, &path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
@@ -39,11 +32,6 @@ pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxR
 }
 
 pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<WalletHandle> {
-    if settings::indy_mocks_enabled() {
-        warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
-        return Ok(set_wallet_handle(WalletHandle(1)));
-    }
-
     trace!("open_wallet >>> wallet_name: {}", wallet_name);
     let config = build_wallet_config(wallet_name, wallet_type, storage_config);
     let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);

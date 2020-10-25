@@ -239,7 +239,7 @@ impl SetupIndyMocks {
         settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "indy");
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         create_and_open_as_main_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
 
         SetupIndyMocks { wallet_name, wallet_key, wallet_kdf }

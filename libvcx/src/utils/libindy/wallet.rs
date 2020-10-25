@@ -100,13 +100,16 @@ pub fn create_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, 
 }
 
 pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<WalletHandle> {
+    if settings::indy_mocks_enabled() {
+        warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
+        return Ok(set_wallet_handle(WalletHandle(1)));
+    }
     create_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)?;
     open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
     trace!("close_main_wallet >>>");
-
     if settings::indy_mocks_enabled() {
         warn!("close_main_wallet >>> Indy mocks enabled, skipping closing wallet");
         set_wallet_handle(INVALID_WALLET_HANDLE);

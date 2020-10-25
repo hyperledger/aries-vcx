@@ -272,7 +272,6 @@ pub mod test {
     use aries::messages::discovery::query::tests::_query;
     use aries::messages::trust_ping::ping::tests::_ping;
     use aries::messages::trust_ping::ping_response::tests::_ping_response;
-    use aries::test::setup::AgencyModeSetup;
     use aries::test::source_id;
 
     use super::*;
@@ -336,11 +335,12 @@ pub mod test {
 
         mod step {
             use super::*;
+            use utils::devsetup::{SetupDefaults, SetupIndyMocks};
 
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_init() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let did_exchange_sm = invitee_sm();
 
@@ -350,7 +350,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_invite_message_from_null_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm();
 
@@ -362,7 +362,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_message_from_null_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm();
 
@@ -376,7 +376,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_connect_message_from_invited_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
 
@@ -388,7 +388,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_invited_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
 
@@ -401,7 +401,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_invited_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
 
@@ -415,7 +415,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_response_message_from_requested_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL";
 
@@ -429,7 +429,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_invalid_response_message_from_requested_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
@@ -444,7 +444,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_problem_report_message_from_requested_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
@@ -456,7 +456,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_other_messages_from_requested_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
@@ -470,7 +470,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_did_exchange_handle_messages_from_completed_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_completed_state();
 
@@ -516,11 +516,12 @@ pub mod test {
         mod find_message_to_handle {
             use super::*;
             use settings;
+            use utils::devsetup::SetupIndyMocks;
 
             #[test]
             #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_invited_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let connection = invitee_sm().to_invitee_invited_state();
 
@@ -541,7 +542,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_requested_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
 
                 let connection = invitee_sm().to_invitee_requested_state();
 
@@ -585,7 +586,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_completed_state() {
-                let _setup = AgencyModeSetup::init();
+                let _setup = SetupIndyMocks::init();
                 
                 let connection = invitee_sm().to_invitee_completed_state();
 
