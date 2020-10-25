@@ -719,7 +719,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof_util().unwrap();
         assert!(handle > 0);
@@ -728,7 +728,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_create_proof_fails() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_create(cb.command_handle,
@@ -744,7 +744,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_request_msg() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let proof_handle = create_proof_util().unwrap();
 
@@ -757,7 +757,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_serialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let proof_handle = create_proof_util().unwrap();
 
@@ -773,7 +773,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_deserialize_succeeds() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_deserialize(cb.command_handle,
@@ -787,7 +787,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_update_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let proof_handle = create_proof_util().unwrap();
 
@@ -803,7 +803,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_send_request() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
@@ -838,7 +838,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_fails_when_not_ready_with_proof() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let proof_handle = create_proof_util().unwrap();
 
@@ -854,7 +854,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_returns_proof_with_proof_state_invalid() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
 
@@ -874,7 +874,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_get_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).unwrap();

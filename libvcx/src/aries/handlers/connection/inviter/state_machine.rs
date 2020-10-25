@@ -324,7 +324,7 @@ pub mod test {
     use aries::messages::trust_ping::ping::tests::_ping;
     use aries::messages::trust_ping::ping_response::tests::_ping_response;
     use aries::test::source_id;
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -361,7 +361,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_inviter_new() {
-                let _setup = SetupAriesMocks::init();
+                let _setup = SetupMocks::init();
 
                 let inviter_sm = inviter_sm();
 
@@ -752,7 +752,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_get_state() {
-                let _setup = SetupAriesMocks::init();
+                let _setup = SetupMocks::init();
 
                 assert_eq!(VcxStateType::VcxStateInitialized as u32, inviter_sm().state());
                 assert_eq!(VcxStateType::VcxStateOfferSent as u32, inviter_sm().to_inviter_invited_state().state());

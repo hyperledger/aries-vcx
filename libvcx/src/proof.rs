@@ -153,7 +153,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof_succeeds() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         create_proof("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
@@ -165,7 +165,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_revocation_details() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         // No Revocation
         create_proof("1".to_string(),
@@ -188,7 +188,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_string_succeeds() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -205,7 +205,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -221,7 +221,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_proof() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -235,7 +235,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_proof_request() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 
@@ -251,7 +251,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_fails_with_no_proof() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("1".to_string(),
                                   REQUESTED_ATTRS.to_owned(),
@@ -265,7 +265,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_update_state_v2() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -287,7 +287,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_message() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -306,7 +306,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -327,7 +327,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let h1 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
         let h2 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
@@ -345,7 +345,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_proof_request_can_be_retried() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection_inviter_requested();
@@ -370,7 +370,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_accepted() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -390,7 +390,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_errors() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 

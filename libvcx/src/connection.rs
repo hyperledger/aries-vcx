@@ -379,7 +379,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_connection() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_create_connection").unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
@@ -409,7 +409,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_drop_create() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_create_drop_create").unwrap();
 
@@ -459,7 +459,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_service_endpoint() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_get_qr_code_data").unwrap();
 
@@ -474,7 +474,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_connection_inviter_completed() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
         let _second_string = to_string(handle).unwrap();
@@ -499,7 +499,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_and_serialize_should_produce_the_same_object() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
         test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
@@ -510,7 +510,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_serialize_deserialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_serialize_deserialize").unwrap();
 
@@ -528,7 +528,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_existing() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_serialize_deserialize").unwrap();
 
@@ -546,7 +546,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_retry_connection() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_serialize_deserialize").unwrap();
 
@@ -559,7 +559,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let h1 = create_connection("rel1").unwrap();
         let h2 = create_connection("rel2").unwrap();
@@ -577,7 +577,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_with_valid_invite_details() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
         connect(handle).unwrap();
@@ -589,7 +589,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_process_acceptance_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_connection("test_process_acceptance_message").unwrap();
         let message = serde_json::from_str(ARIES_CONNECTION_REQUEST).unwrap();
@@ -599,7 +599,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_connection_handle_is_found() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
 
         CONNECTION_MAP.get_mut(handle, |_connection| {
@@ -610,7 +610,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_generic_message_fails_with_invalid_connection() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = ::connection::tests::build_test_connection_inviter_invited();
 

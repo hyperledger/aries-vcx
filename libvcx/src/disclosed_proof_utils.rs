@@ -310,7 +310,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_find_credential_def() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
@@ -382,7 +382,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_find_schemas() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         assert_eq!(build_schemas_json_prover(&Vec::new()).unwrap(), "{}".to_string());
 
@@ -600,7 +600,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_requested_credentials() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
@@ -664,7 +664,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_states_json() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoProver {
             requested_attr: "height".to_string(),

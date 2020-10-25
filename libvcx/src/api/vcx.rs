@@ -742,7 +742,7 @@ mod tests {
     fn test_init_with_file() {
         let _setup_defaults = SetupDefaults::init();
         let _setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolCongig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         let config = TempFile::create_with_data("test_init.json", &config());
 
@@ -774,7 +774,7 @@ mod tests {
     fn test_init_with_config() {
         let _setup_defaults = SetupDefaults::init();
         let _setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolCongig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure(&config()).unwrap();
 
@@ -851,7 +851,7 @@ mod tests {
     fn test_vcx_init_with_default_values() {
         let _setup_defaults = SetupDefaults::init();
         let _setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolCongig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure("{}").unwrap();
     }
@@ -861,7 +861,7 @@ mod tests {
     fn test_vcx_init_called_twice_fails() {
         let _setup_defaults = SetupDefaults::init();
         let _setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolCongig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure("{}").unwrap();
 
@@ -1023,7 +1023,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_shutdown() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let data = r#"["name","male"]"#;
@@ -1049,7 +1049,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_error_c_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(0)).unwrap().unwrap();
         assert_eq!(c_message, error::SUCCESS.message);
@@ -1152,7 +1152,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_set_active_txn_author_agreement_meta() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         assert!(&settings::get_config_value(::settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
@@ -1185,7 +1185,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_ledger_author_agreement() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,

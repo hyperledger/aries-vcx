@@ -262,7 +262,7 @@ impl SmConnectionInvitee {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::SetupMocks;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::invite::tests::_invitation;
     use aries::messages::connection::problem_report::tests::_problem_report;
@@ -324,7 +324,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_invitee_new() {
-                let _setup = SetupAriesMocks::init();
+                let _setup = SetupMocks::init();
 
                 let invitee_sm = invitee_sm();
 
@@ -654,7 +654,7 @@ pub mod test {
             #[test]
             #[cfg(feature = "general_test")]
             fn test_get_state() {
-                let _setup = SetupAriesMocks::init();
+                let _setup = SetupMocks::init();
 
                 assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().state());
                 assert_eq!(VcxStateType::VcxStateOfferSent as u32, invitee_sm().to_invitee_invited_state().state());

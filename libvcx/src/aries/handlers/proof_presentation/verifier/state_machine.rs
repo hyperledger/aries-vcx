@@ -241,7 +241,7 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::SetupMocks;
     use aries::handlers::connection::tests::mock_connection;
     use aries::messages::proof_presentation::presentation::tests::_presentation;
     use aries::messages::proof_presentation::presentation_proposal::tests::_presentation_proposal;
@@ -275,7 +275,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_verifier_new() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let verifier_sm = _verifier_sm();
 
@@ -294,7 +294,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_verifier_init() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let verifier_sm = _verifier_sm();
             assert_match!(VerifierState::Initiated(_), verifier_sm.state);
@@ -303,7 +303,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_send_presentation_request_message_from_initiated_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -314,7 +314,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_other_messages_from_initiated_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
 
@@ -328,7 +328,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -343,7 +343,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_invalid_presentation_message() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
@@ -371,7 +371,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -384,7 +384,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -397,7 +397,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_other_messages_from_presentation_request_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -409,7 +409,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_handle_messages_from_presentation_finished_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
@@ -429,7 +429,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_verifier_find_message_to_handle_from_initiated_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let verifier = _verifier_sm();
 
@@ -450,7 +450,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_verifier_find_message_to_handle_from_presentation_request_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let verifier = _verifier_sm().to_presentation_request_sent_state();
 
@@ -518,7 +518,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_verifier_find_message_to_handle_from_finished_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let verifier = _verifier_sm().to_finished_state();
 
@@ -544,7 +544,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_get_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 

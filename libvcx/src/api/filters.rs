@@ -74,7 +74,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_filter_proof_requests_by_name() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 

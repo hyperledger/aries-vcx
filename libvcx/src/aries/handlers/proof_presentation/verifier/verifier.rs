@@ -121,7 +121,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_validation_with_predicate() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
@@ -145,7 +145,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_presentation_request() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 
@@ -163,7 +163,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_state_with_reject_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 

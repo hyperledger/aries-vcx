@@ -111,7 +111,7 @@ pub mod tests {
     fn test_init_pool_and_wallet() {
         let _setup_defaults = SetupDefaults::init();
         let setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolCongig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap();
         let path = settings::get_config_value(settings::CONFIG_GENESIS_PATH).unwrap();

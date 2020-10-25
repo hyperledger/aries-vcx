@@ -1001,7 +1001,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_token_info() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_get_token_info(cb.command_handle,
@@ -1014,7 +1014,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_tokens() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
@@ -1029,7 +1029,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_address() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_create_payment_address(cb.command_handle,
@@ -1042,7 +1042,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_sign_with_address_api() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_BIN::new().unwrap();
         let msg = "message";
@@ -1061,7 +1061,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verify_with_address_api() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_BOOL::new().unwrap();
         let msg = "message";

@@ -256,7 +256,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_schema_to_string() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema("test_create_schema_success",
@@ -281,7 +281,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema("test_create_schema_success",
@@ -294,7 +294,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_prepare_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         prepare_schema_for_endorser("test_create_schema_success",
@@ -308,7 +308,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_schema_attrs_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (handle, schema_json) = get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string()).unwrap();
 
@@ -386,7 +386,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, version, data) = prepare_schema_data();
 

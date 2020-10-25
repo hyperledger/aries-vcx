@@ -427,7 +427,7 @@ mod tests {
 
     use api::vcx::vcx_shutdown;
     use messages::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
-    use utils::devsetup::{SetupAriesMocks, SetupDefaults, SetupLibraryAgencyV2};
+    use utils::devsetup::{SetupMocks, SetupDefaults, SetupLibraryAgencyV2};
 
     #[test]
     #[cfg(feature = "agency")]
@@ -468,7 +468,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_connect_register_provision() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let agency_did = "Ab8TvZa3Q19VNkQVzAWVL7";
         let agency_vk = "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf";
@@ -544,7 +544,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_update_agent_info() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }

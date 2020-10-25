@@ -1221,7 +1221,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_create() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let _rc = vcx_connection_create(cb.command_handle,
@@ -1234,7 +1234,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_create_fails() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let rc = vcx_connection_create(0,
                                        CString::new("test_create_fails").unwrap().into_raw(),
@@ -1250,7 +1250,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_connect() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
@@ -1269,7 +1269,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_connect_returns_invitation() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_null();
         let invitation = connect(handle).unwrap().unwrap();
@@ -1284,7 +1284,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_invited();
         assert!(handle > 0);
@@ -1309,7 +1309,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state_with_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
@@ -1328,7 +1328,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_update_state_fails() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let rc = vcx_connection_update_state(0, 0, None);
         assert_eq!(rc, error::INVALID_OPTION.code_num);
@@ -1337,7 +1337,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_serialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_requested();
         assert!(handle > 0);
@@ -1352,7 +1352,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_release() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_requested();
 
@@ -1370,7 +1370,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_deserialize_succeeds() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_connection_deserialize(cb.command_handle,
@@ -1384,7 +1384,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_get_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = build_test_connection_inviter_invited();
 
@@ -1404,7 +1404,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_delete_connection() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 
@@ -1420,7 +1420,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = build_test_connection_inviter_requested();
 
@@ -1434,7 +1434,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_sign() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = ::connection::tests::build_test_connection_inviter_invited();
 
@@ -1453,7 +1453,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verify_signature() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
 

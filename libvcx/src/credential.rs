@@ -300,7 +300,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn full_credential_test() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
         let handle_conn = connection::tests::build_test_connection_inviter_requested();
@@ -350,7 +350,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // todo: generate_credential_request_msg is not implemented for v3
     fn test_get_request_msg() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_invited();
 
@@ -369,7 +369,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential_offer() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_invitee_completed();
 
@@ -383,7 +383,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // get_credential_offer not implemented for aries
     fn test_get_credential_offer_and_deserialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = from_string(CREDENTIAL_SM_OFFER_RECEIVED).unwrap();
         let offer_string = get_credential_offer(handle).unwrap();
@@ -393,7 +393,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_credential_and_deserialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = from_string(CREDENTIAL_SM_FINISHED).unwrap();
         let cred_string: String = get_credential(handle).unwrap();

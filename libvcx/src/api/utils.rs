@@ -643,7 +643,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_provision_agent() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let c_json = CString::new(CONFIG_V3).unwrap().into_raw();
 
@@ -656,7 +656,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_provision_agent_async_c_closure() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let result = _vcx_agent_provision_async_c_closure(CONFIG_V3).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
@@ -665,7 +665,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_agent_fails() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let config = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":null}"#;
 
@@ -694,7 +694,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_agent_fails() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         AgencyMock::set_next_response(constants::REGISTER_RESPONSE.to_vec()); //set response garbage
 
@@ -711,7 +711,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_ledger_fees() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_ledger_get_fees(cb.command_handle,
@@ -722,7 +722,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_messages_download() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 
@@ -734,7 +734,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_messages_update_status() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 

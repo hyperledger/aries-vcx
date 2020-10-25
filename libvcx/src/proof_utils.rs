@@ -178,7 +178,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
@@ -203,7 +203,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_schemas_json_verifier_with_multiple_schemas() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
@@ -228,7 +228,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_defs_json() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),
@@ -253,7 +253,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_rev_reg_json() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
             schema_id: "schema_key1".to_string(),

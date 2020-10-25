@@ -28,15 +28,7 @@ pub struct SetupDefaults; // set default settings
 
 pub struct SetupMocks; // set default settings and enable test mode
 
-pub struct SetupAriesMocks; // set default settings, aries communication protocol and enable test mode
-
-pub struct SetupStrictAriesMocks; // set default settings, strict aries communication protocol and enable test mode
-
-pub struct SetupIndyMocks {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub wallet_kdf: String,
-} // set default settings and enable indy mode
+pub struct SetupIndyMocks; // set default settings and enable indy mode
 
 pub struct SetupWallet {
     pub wallet_name: String,
@@ -44,7 +36,7 @@ pub struct SetupWallet {
     pub wallet_kdf: String,
 } // creates wallet with random name, configures wallet settings
 
-pub struct SetupPoolCongig;
+pub struct SetupPoolConfig;
 
 pub struct SetupLibraryWallet {
     pub wallet_name: String,
@@ -62,15 +54,9 @@ pub struct SetupAgencyMock {
     pub wallet_kdf: String,
 } // set default settings and enable mock agency mode
 
-pub struct SetupLibraryAgencyV1; // init indy wallet, init pool, provision 2 agents. use protocol type 1.0
-
-pub struct SetupLibraryAgencyV1ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 1.0, set zero fees
-
 pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0
 
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
-
-pub struct SetupLibraryAgencyZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
 fn setup() {
     settings::clear_config();
@@ -132,36 +118,6 @@ impl Drop for SetupMocks {
     }
 }
 
-impl SetupAriesMocks {
-    pub fn init() -> SetupAriesMocks {
-        setup();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "3.0");
-        SetupAriesMocks
-    }
-}
-
-impl Drop for SetupAriesMocks {
-    fn drop(&mut self) {
-        tear_down()
-    }
-}
-
-impl SetupStrictAriesMocks {
-    pub fn init() -> SetupAriesMocks {
-        setup();
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
-        SetupAriesMocks
-    }
-}
-
-impl Drop for SetupStrictAriesMocks {
-    fn drop(&mut self) {
-        tear_down()
-    }
-}
-
 impl SetupLibraryWallet {
     pub fn init() -> SetupLibraryWallet {
         setup();
@@ -214,16 +170,16 @@ impl Drop for SetupWallet {
     }
 }
 
-impl SetupPoolCongig {
-    pub fn init() -> SetupPoolCongig {
+impl SetupPoolConfig {
+    pub fn init() -> SetupPoolConfig {
         create_test_ledger_config();
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
 
-        SetupPoolCongig { }
+        SetupPoolConfig { }
     }
 }
 
-impl Drop for SetupPoolCongig {
+impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
         delete_test_pool();
         reset_pool_handle();
@@ -233,16 +189,8 @@ impl Drop for SetupPoolCongig {
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
-        let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
-        let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
-        let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
-        settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        create_and_open_as_main_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
-
-        SetupIndyMocks { wallet_name, wallet_key, wallet_kdf }
+        SetupIndyMocks { }
     }
 }
 
@@ -306,36 +254,6 @@ impl Drop for SetupAgencyMock {
     }
 }
 
-impl SetupLibraryAgencyV1 {
-    pub fn init() -> SetupLibraryAgencyV1 {
-        setup();
-        setup_agency_env("1.0", false);
-        SetupLibraryAgencyV1
-    }
-}
-
-impl Drop for SetupLibraryAgencyV1 {
-    fn drop(&mut self) {
-        cleanup_agency_env();
-        tear_down()
-    }
-}
-
-impl SetupLibraryAgencyV1ZeroFees {
-    pub fn init() -> SetupLibraryAgencyV1ZeroFees {
-        setup();
-        setup_agency_env("1.0", true);
-        SetupLibraryAgencyV1ZeroFees
-    }
-}
-
-impl Drop for SetupLibraryAgencyV1ZeroFees {
-    fn drop(&mut self) {
-        cleanup_agency_env();
-        tear_down()
-    }
-}
-
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
@@ -362,21 +280,6 @@ impl SetupLibraryAgencyV2ZeroFees {
 }
 
 impl Drop for SetupLibraryAgencyV2ZeroFees {
-    fn drop(&mut self) {
-        cleanup_agency_env();
-        tear_down()
-    }
-}
-
-impl SetupLibraryAgencyZeroFees {
-    pub fn init(protocol_type: &str) -> SetupLibraryAgencyZeroFees {
-        setup();
-        setup_agency_env(&protocol_type, true);
-        SetupLibraryAgencyZeroFees
-    }
-}
-
-impl Drop for SetupLibraryAgencyZeroFees {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()
