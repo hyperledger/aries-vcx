@@ -33,7 +33,7 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
     14: 'CONNECTIONS_INFO',
     20: 'GET_CREDENTIAL_OFFERS',
     30: 'SEND_MESSAGE',
-    31: 'GET_MESSAGE'
+    31: 'GET_MESSAGE',
     32: 'GET_MESSAGE_V2'
   }
 

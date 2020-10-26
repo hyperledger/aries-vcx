@@ -78,9 +78,18 @@ async function runAlice (options) {
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
 
-  const msgs = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
-  logger.debug(`Alice received messages: ${JSON.stringify(msgs, null, 2)}`)
+  const msgs = await vcxAgent.serviceConnections.getMessages(connectionId)
   assert(msgs.length === 5)
+  assert(msgs[0].uid)
+  assert(msgs[0].statusCode)
+  assert(msgs[0].decryptedPayload)
+  const payload = JSON.parse(msgs[0].decryptedPayload)
+  assert(payload["@id"])
+  assert(payload["@type"])
+
+  const msgs2 = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
+  logger.debug(`Alice received messages: ${JSON.stringify(msgs2, null, 2)}`)
+  assert(msgs2.length === 5)
 
   await vcxAgent.agentShutdownVcx()
   process.exit(0)

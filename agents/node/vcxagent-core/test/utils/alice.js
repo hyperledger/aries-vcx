@@ -91,7 +91,15 @@ module.exports.createAlice = async function createAlice () {
     return signatureBase64
   }
 
+  async function sendMessage (message) {
+    logger.info('Alice is going to send message')
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceConnections.sendMessage(connectionId, message)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
+    sendMessage,
     signData,
     acceptInvite,
     updateConnection,
