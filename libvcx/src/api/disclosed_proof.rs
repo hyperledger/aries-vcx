@@ -500,6 +500,7 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_v2_disclosed_proof_update_state instead.")]
 pub extern fn vcx_disclosed_proof_update_state(command_handle: CommandHandle,
                                                proof_handle: u32,
                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
