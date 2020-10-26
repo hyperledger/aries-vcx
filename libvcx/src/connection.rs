@@ -290,9 +290,13 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
             conn_handle, |connection| {
+                let expected_sender_vk = connection.remote_vk()?;
                 let msgs = connection
                    .agent_info()
-                   .download_encrypted_messages(uids.clone(), status_codes.clone())?;
+                   .download_encrypted_messages(uids.clone(), status_codes.clone())?
+                   .iter()
+                   .map(|msg| msg.decrypt_auth(&expected_sender_vk))
+                   .collect::<VcxResult<Vec<Message>>>()?;
                 Ok(MessageByConnection{ pairwise_did: connection.agent_info().clone().pw_did, msgs })
             }
         )?;
@@ -710,11 +714,11 @@ pub mod tests {
         let consumer1_received_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
         assert_eq!(consumer1_received_msgs.len(), 1);
         assert_eq!(consumer1_received_msgs[0].msgs.len(), 1);
-        assert!(consumer1_received_msgs[0].msgs[0].payload.is_some());
+        assert!(consumer1_received_msgs[0].msgs[0].decrypted_msg.is_some());
 
         let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
         assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
-        assert!(consumer1_reviewed_msgs[0].msgs[0].payload.is_some());
+        assert!(consumer1_reviewed_msgs[0].msgs[0].decrypted_msg.is_some());
     }
 }
