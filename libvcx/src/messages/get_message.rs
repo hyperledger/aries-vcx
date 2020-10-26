@@ -312,7 +312,7 @@ impl Message {
 
     fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> VcxResult<String> {
         let a2a_message = EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk)?;
-        Ok(json!({"@msg": json!(a2a_message).to_string()}).to_string())
+        Ok(json!(&a2a_message).to_string())
     }
 }
 

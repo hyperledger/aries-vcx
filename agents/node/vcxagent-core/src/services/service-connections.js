@@ -137,7 +137,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function getMessagesV2 (connectionId, filterStatuses = [], filterUids = []) {
     const connection = await getVcxConnection(connectionId)
-    return getMessagesForConnection([connection], [], [])
+    return getMessagesForConnection([connection], filterStatuses, filterUids)
   }
 
   return {
