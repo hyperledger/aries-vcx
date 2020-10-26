@@ -135,7 +135,16 @@ module.exports.createFaber = async function createFaber () {
     return isValid
   }
 
+  async function downloadReceivedMessages () {
+    logger.info('Faber is going to download messages wit')
+    await vcxAgent.agentInitVcx()
+    const agencyMessages = await vcxAgent.serviceConnections.getMessages(connectionId, ["MS-103"])
+    await vcxAgent.agentShutdownVcx()
+    return agencyMessages
+  }
+
   return {
+    downloadReceivedMessages,
     verifySignature,
     createInvite,
     updateConnection,

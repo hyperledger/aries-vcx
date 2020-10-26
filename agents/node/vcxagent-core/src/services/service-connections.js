@@ -111,7 +111,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function getMessages (connectionId, filterStatuses = [], filterUids = []) {
     const pwDid = await getConnectionPwDid(connectionId)
-    return getMessagesForPwDid(pwDid, [], filterStatuses, filterUids)
+    return getMessagesForPwDid(pwDid, filterStatuses, filterUids)
   }
 
   async function getState (connectionId) {
