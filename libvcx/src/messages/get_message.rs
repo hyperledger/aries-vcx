@@ -299,9 +299,7 @@ impl Message {
 
     fn _decrypt_v3_message(&self) -> VcxResult<String> {
         let a2a_message = EncryptionEnvelope::anon_unpack(self.payload()?)?;
-        // todo: this awkward return value is here just to keep backwards comptability
-        // todo: we should make breaking change and simplify content of Message.decrypted_payload
-        Ok(json!({"@msg": json!(a2a_message).to_string()}).to_string())
+        Ok(json!(&a2a_message).to_string())
     }
 }
 
