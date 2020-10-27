@@ -13,10 +13,9 @@ pub struct FinishedHolderState {
 
 impl FinishedHolderState {
     pub fn get_attributes(&self) -> VcxResult<String> {
-        let credential = self.credential.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
-        let content = credential.credentials_attach.content()?;
-        let cred_data: CredentialData = serde_json::from_str(&content)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", content, err)))?;
+        let attach = self.get_attachment()?;
+        let cred_data: CredentialData = serde_json::from_str(&attach)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?}, into CredentialData, err: {:?}", attach, err)))?;
 
         let mut new_map = serde_json::map::Map::new();
         match cred_data.values.as_object() {
@@ -30,7 +29,12 @@ impl FinishedHolderState {
                 };
                 Ok(serde_json::Value::Object(new_map).to_string())
             }
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", content)))
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", attach)))
         }
+    }
+    
+    pub fn get_attachment(&self) -> VcxResult<String> {
+        let credential = self.credential.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
+        credential.credentials_attach.content()
     }
 }

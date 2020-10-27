@@ -219,6 +219,14 @@ impl HolderSM {
         }
     }
 
+    pub fn get_attachment(&self) -> VcxResult<String> {
+        match self.state {
+            HolderState::Finished(ref state) => state.get_attachment(),
+            HolderState::OfferReceived(ref state) => state.get_attachment(),
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get credential attachment: credential offer or credential must be receieved first"))
+        }
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 

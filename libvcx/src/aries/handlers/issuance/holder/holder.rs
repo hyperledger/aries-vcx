@@ -55,6 +55,10 @@ impl Holder {
         self.holder_sm.get_attributes()
     }
 
+    pub fn get_attachment(&self) -> VcxResult<String> {
+        self.holder_sm.get_attachment()
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         self.holder_sm.delete_credential()
     }
