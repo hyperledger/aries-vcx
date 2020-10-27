@@ -48,4 +48,8 @@ impl OfferReceivedState {
         });
         Ok(serde_json::Value::Object(new_map).to_string())
     }
+
+    pub fn get_attachment(&self) -> VcxResult<String> {
+        self.offer.offers_attach.content()
+    }
 }
