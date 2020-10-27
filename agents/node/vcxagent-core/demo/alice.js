@@ -82,8 +82,8 @@ async function runAlice (options) {
   assert(msgs.length === 5)
   assert(msgs[0].uid)
   assert(msgs[0].statusCode)
-  assert(msgs[0].decryptedPayload)
-  const payload = JSON.parse(msgs[0].decryptedPayload)
+  assert(msgs[0].decryptedMsg)
+  const payload = JSON.parse(msgs[0].decryptedMsg)
   assert(payload["@id"])
   assert(payload["@type"])
 
