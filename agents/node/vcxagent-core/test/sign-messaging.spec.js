@@ -17,7 +17,7 @@ describe('test messaging', () => {
     expect(msgs.length).toBe(1)
     expect(msgs[0].uid).toBeDefined()
     expect(msgs[0].statusCode).toBe("MS-103")
-    const payload = JSON.parse(msgs[0].decryptedPayload)
+    const payload = JSON.parse(msgs[0].decryptedMsg)
     expect(payload["@id"]).toBeDefined()
     expect(payload["@type"]).toBeDefined()
     expect(payload["content"]).toBe("HelloFaber")

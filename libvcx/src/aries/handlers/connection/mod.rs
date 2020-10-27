@@ -147,7 +147,7 @@ pub mod tests {
 
                 let messages: Vec<MessageByConnection> = download_messages_noauth(None, Some(vec!["MS-103".to_string()]), None).unwrap();
                 let message: Message = messages[0].msgs[0].clone();
-                let decrypted_msg = message.decrypted_payload.unwrap();
+                let decrypted_msg = message.decrypted_msg.unwrap();
                 let _payload: aries::messages::issuance::credential_offer::CredentialOffer = ::serde_json::from_str(&decrypted_msg).unwrap();
 
                 ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();

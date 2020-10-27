@@ -112,7 +112,7 @@ pub mod test {
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
         uid: String,
-        decrypted_payload: String,
+        decrypted_msg: String,
     }
 
     fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
@@ -143,12 +143,12 @@ pub mod test {
         let messages = messages.pop().unwrap();
 
         for message in messages.msgs.into_iter() {
-            let decrypted_msg = &message.decrypted_payload.unwrap();
+            let decrypted_msg = &message.decrypted_msg.unwrap();
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
                 return VcxAgencyMessage {
                     uid: message.uid,
-                    decrypted_payload: decrypted_msg.clone(),
+                    decrypted_msg: decrypted_msg.clone(),
                 };
             }
         }
@@ -696,7 +696,7 @@ pub mod test {
         {
             let message = alice.download_message(PayloadKinds::CredOffer);
 
-            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.decrypted_payload).unwrap();
+            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.decrypted_msg).unwrap();
 
             ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
@@ -714,7 +714,7 @@ pub mod test {
         {
             let agency_msg = alice.download_message(PayloadKinds::ProofRequest);
 
-            alice.presentation_handle = ::disclosed_proof::create_proof("test", &agency_msg.decrypted_payload).unwrap();
+            alice.presentation_handle = ::disclosed_proof::create_proof("test", &agency_msg.decrypted_msg).unwrap();
 
             ::connection::update_message_status(alice.connection_handle, agency_msg.uid).unwrap();
 
