@@ -2,6 +2,7 @@ const readlineSync = require('readline-sync')
 const sleepPromise = require('sleep-promise')
 const { initRustapi } = require('../src/index')
 const { createVcxAgent } = require('../src/index')
+const { testTailsUrl } = require('../src/common')
 const logger = require('./logger')('Alice')
 const { runScript } = require('./script-common')
 const uuid = require('uuid')
@@ -61,6 +62,8 @@ async function runAlice (options) {
   logger.info('Connection to alice was Accepted!')
 
   await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)
+  const revRegId = await vcxAgent.serviceCredHolder.getRevRegId(holderCredentialId)
+  await _validateTestTailsLocation(holderCredentialId, revRegId, vcxAgent)
 
   const proofRequests = await vcxAgent.serviceProver.waitForProofRequests(connectionId)
   if (proofRequests.length === 0) {
@@ -79,20 +82,29 @@ async function runAlice (options) {
   logger.info('Faber received the proof')
 
   const msgs = await vcxAgent.serviceConnections.getMessages(connectionId)
+  _validateMsgs(msgs)
+
+  const msgs2 = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
+  _validateMsgs(msgs2)
+
+  await vcxAgent.agentShutdownVcx()
+  process.exit(0)
+}
+
+function _validateMsgs (msgs) {
   assert(msgs.length === 5)
   assert(msgs[0].uid)
   assert(msgs[0].statusCode)
   assert(msgs[0].decryptedMsg)
   const payload = JSON.parse(msgs[0].decryptedMsg)
-  assert(payload["@id"])
-  assert(payload["@type"])
+  assert(payload['@id'])
+  assert(payload['@type'])
+}
 
-  const msgs2 = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
-  logger.debug(`Alice received messages: ${JSON.stringify(msgs2, null, 2)}`)
-  assert(msgs2.length === 5)
-
-  await vcxAgent.agentShutdownVcx()
-  process.exit(0)
+async function _validateTestTailsLocation (holderCredentialId, revRegId, vcxAgent) {
+  logger.info(`Going to check that holder's tails location is ${testTailsUrl}`)
+  const tailsLocation = await vcxAgent.serviceCredHolder.getTailsLocation(holderCredentialId)
+  assert(tailsLocation === testTailsUrl + `/${revRegId}`)
 }
 
 const optionDefinitions = [

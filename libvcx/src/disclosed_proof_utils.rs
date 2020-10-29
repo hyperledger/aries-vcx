@@ -17,6 +17,7 @@ use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_re
 use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+    trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
@@ -34,6 +35,7 @@ fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> V
 }
 
 fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+    trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
@@ -51,6 +53,7 @@ fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) ->
 }
 
 pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfoProver>> {
+    trace!("credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}", credentials, proof_req);
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(credentials)
@@ -106,6 +109,7 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
 }
 
 pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+    trace!("build_rev_states_json >> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
@@ -212,6 +216,7 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
 pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoProver>,
                                         self_attested_attrs: &str,
                                         proof_req: &ProofRequestData) -> VcxResult<String> {
+    trace!("build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: {:?}, proof_req: {:?}", credentials_identifiers, self_attested_attrs, proof_req);
     let mut rtn: Value = json!({
           "self_attested_attributes":{},
           "requested_attributes":{},

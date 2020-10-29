@@ -170,7 +170,7 @@ describe('Credential:', () => {
         offer: JSON.stringify(offer),
         sourceId: 'credentialGetAttributesTestSourceId'
       })
-      const attrs = JSON.parse(await credential.getAttributes(connection))
+      const attrs = JSON.parse(await credential.getAttributes())
       const expectedAttrs = JSON.parse('{"last_name":"clark","sex":"female","degree":"maths","date":"05-2018","age":"25","name":"alice"}')
       assert.deepEqual(attrs, expectedAttrs)
     })
@@ -188,7 +188,7 @@ describe('Credential:', () => {
         offer: JSON.stringify(offer),
         sourceId: 'credentialGetAttributesTestSourceId'
       })
-      const attach = JSON.parse(await credential.getAttachment(connection))
+      const attach = JSON.parse(await credential.getAttachment())
       assert.deepEqual(attach.schema_id, 'V4SGRU86Z58d6TV7PBUe6f:2:FaberVcx:83.23.62')
     })
   })

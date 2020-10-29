@@ -574,6 +574,43 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle,
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
+    info!("vcx_issuer_credential_get_rev_reg_id >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_issuer_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, credential_handle, source_id);
+    spawn(move || {
+        match issuer_credential::get_rev_reg_id(credential_handle) {
+            Ok(rev_reg_id) => {
+                let rev_reg_id = CStringUtils::string_to_cstring(rev_reg_id);
+                trace!("vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, source_id);
+                cb(command_handle, error::SUCCESS.code_num, rev_reg_id.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                      command_handle, credential_handle, x, source_id);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
 #[allow(unused_variables)]
 pub extern fn vcx_issuer_terminate_credential(credential_handle: u32, termination_type: u32, msg: *const c_char) -> u32 {
     info!("vcx_issuer_terminate_credential >>>");

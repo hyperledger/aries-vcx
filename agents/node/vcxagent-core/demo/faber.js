@@ -1,6 +1,7 @@
 const { StateType, ProofState, Proof } = require('@hyperledger/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
+const { testTailsUrl } = require('../src/common')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
@@ -39,7 +40,7 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }))
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, tailsUrl: testTailsUrl, maxCreds: 5 }))
 
     await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')

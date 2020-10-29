@@ -35,29 +35,30 @@
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:legacy:integration": "node demo/integration-test.js",
     "test:legacy:integration:revocation": "REVOCATION=true node demo/integration-test.js",
-    "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging",
+    "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails",
     "test:integration:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js",
-    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/sign-messaging.spec.js"
+    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/sign-messaging.spec.js",
+    "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js"
   },
   "dependencies": {
+    "axios": "^0.20.0",
     "ffi-napi": "^2.4.7",
     "fs-extra": "^4.0.2",
     "lodash": "^4.17.11",
     "mkdirp": "^1.0.4",
-    "uuid": "^8.3.0",
     "node-persist": "^3.1.0",
     "sleep-promise": "^8.0.1",
-    "axios": "^0.20.0"
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
-    "jest": "^26.4.2",
     "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "body-parser": "^1.19.0",
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
     "express": "^4.17.1",
     "is-port-reachable": "^2.0.1",
+    "jest": "^26.4.2",
     "readline-sync": "^1.4.10",
     "standard": "^14.3.1",
     "winston": "^3.3.3"

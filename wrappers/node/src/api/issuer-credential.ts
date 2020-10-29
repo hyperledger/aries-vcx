@@ -286,6 +286,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Sends the credential to the end user.
    *
@@ -324,6 +325,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Gets the credential message for sending to connection.
    *
@@ -366,6 +368,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
       throw new VCXInternalError(err)
     }
   }
+
   /**
    * Revokes credential.
    *
@@ -426,6 +429,32 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
             resolve()
           })
       )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getRevRegId (): Promise<string> {
+    try {
+      const revRegId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_issuer_credential_get_rev_reg_id(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => ffi.Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, _revRegId: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(_revRegId)
+          })
+      )
+      return revRegId
     } catch (err) {
       throw new VCXInternalError(err)
     }

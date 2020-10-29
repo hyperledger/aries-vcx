@@ -72,6 +72,7 @@ export interface IRevocationDetails {
   maxCreds?: number,
   supportRevocation?: boolean,
   tailsFile?: string,
+  tailsUrl?: string,
 }
 
 export enum CredentialDefState {
@@ -118,7 +119,8 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     const revocation = {
       max_creds: revocationDetails.maxCreds,
       support_revocation: revocationDetails.supportRevocation,
-      tails_file: revocationDetails.tailsFile
+      tails_file: revocationDetails.tailsFile,
+      tails_url: revocationDetails.tailsUrl
     }
 
     try {
@@ -304,6 +306,58 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
             })
         )
       return credDefId
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getTailsHash (): Promise<string> {
+    try {
+      const tailsHash = await createFFICallbackPromise<string>(
+          (resolve, reject, cb) => {
+            const rc = rustAPI().vcx_credentialdef_get_tails_hash(0, this.handle, cb)
+            if (rc) {
+              reject(rc)
+            }
+          },
+          (resolve, reject) => ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (xcommandHandle: number, err: number, _tailsHash: string) => {
+              if (err) {
+                reject(err)
+                return
+              }
+              resolve(_tailsHash)
+            })
+        )
+      return tailsHash
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getRevRegId (): Promise<string> {
+    try {
+      const revRegId = await createFFICallbackPromise<string>(
+          (resolve, reject, cb) => {
+            const rc = rustAPI().vcx_credentialdef_get_rev_reg_id(0, this.handle, cb)
+            if (rc) {
+              reject(rc)
+            }
+          },
+          (resolve, reject) => ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (xcommandHandle: number, err: number, _revRegId: string) => {
+              if (err) {
+                reject(err)
+                return
+              }
+              resolve(_revRegId)
+            })
+        )
+      return revRegId
     } catch (err) {
       throw new VCXInternalError(err)
     }

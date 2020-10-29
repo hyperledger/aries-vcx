@@ -29,10 +29,23 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
     }
   }
 
+  async function getTailsFile (credDefId) {
+    const credDef = await loadCredDef(credDefId)
+    logger.info(`Getting tails file for credential definition ${credDef}`)
+    return credDef.getTailsFile()
+  }
+
+  async function getTailsHash (credDefId) {
+    const credDef = await loadCredDef(credDefId)
+    logger.info(`Getting tails hash for credential definition ${credDefId}`)
+    return credDef.getTailsHash()
+  }
+
   return {
     createCredentialDefinition,
-
     listIds,
-    printInfo
+    printInfo,
+    getTailsFile,
+    getTailsHash
   }
 }

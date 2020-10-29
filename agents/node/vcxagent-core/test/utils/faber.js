@@ -8,6 +8,7 @@ module.exports.createFaber = async function createFaber () {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
+  let credDefId
   const proofId = 'proof-from-alice'
   const logger = require('../../../vcxagent-cli/logger')('Faber')
 
@@ -54,22 +55,23 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOffer () {
+  async function sendCredentialOffer (_revocationDetails) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
 
     logger.info('Faber writing credential definition on ledger')
+    const revocationDetails = _revocationDetails || buildRevocationDetails({ supportRevocation: false })
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
       schemaId,
       getFaberCredDefName(),
-      buildRevocationDetails({ supportRevocation: false })
+      revocationDetails
     )
 
     logger.info('Faber sending credential to Alice')
     const schemaAttrs = getAliceSchemaAttrs()
-    const credDefId = getFaberCredDefName()
+    credDefId = getFaberCredDefName()
     await vcxAgent.serviceCredIssuer.sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
 
     await vcxAgent.agentShutdownVcx()
@@ -151,6 +153,33 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
+  async function getCredentialRevRegId () {
+    logger.info(`Faber is going to obtain rev reg id for cred id ${issuerCredId}`)
+    await vcxAgent.agentInitVcx()
+    const revRegId = await vcxAgent.serviceCredIssuer.getRevRegId(issuerCredId)
+    logger.debug(`Faber obtained rev reg id ${revRegId}`)
+    await vcxAgent.agentShutdownVcx()
+    return revRegId
+  }
+
+  async function getTailsFile () {
+    logger.info(`Faber is going to obtain tails file for cred id ${issuerCredId}`)
+    await vcxAgent.agentInitVcx()
+    const tailsFile = await vcxAgent.serviceLedgerCredDef.getTailsFile(issuerCredId)
+    await vcxAgent.agentShutdownVcx()
+    logger.debug(`Faber obtained tails file ${tailsFile}`)
+    return tailsFile
+  }
+
+  async function getTailsHash () {
+    logger.info(`Faber is going to obtain tails hash for cred def id ${credDefId}`)
+    await vcxAgent.agentInitVcx()
+    const tailsHash = await vcxAgent.serviceLedgerCredDef.getTailsHash(credDefId)
+    logger.info(`Faber obtained tails hash ${tailsHash}`)
+    await vcxAgent.agentShutdownVcx()
+    return tailsHash
+  }
+
   return {
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
@@ -163,6 +192,9 @@ module.exports.createFaber = async function createFaber () {
     updateStateCredentialV2,
     sendCredential,
     requestProofFromAlice,
-    updateStateVerifierProofV2
+    updateStateVerifierProofV2,
+    getCredentialRevRegId,
+    getTailsFile,
+    getTailsHash
   }
 }

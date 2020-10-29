@@ -605,6 +605,72 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_credentialdef_get_tails_hash(command_handle: CommandHandle,
+                                                handle: u32,
+                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+    info!("vcx_credentialdef_get_tails_hash >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = credential_def::get_source_id(handle).unwrap_or_default();
+    trace!("vcx_credentialdef_get_tails_hash(command_handle: {}) source_id: {}", command_handle, source_id);
+
+    spawn(move || {
+        match credential_def::get_tails_hash(handle) {
+            Ok(x) => {
+                trace!("vcx_credentialdef_get_tails_hash_cb(command_handle: {}, rc: {}, hash: {}), source_id: {}",
+                       command_handle, error::SUCCESS.message, x, credential_def::get_source_id(handle).unwrap_or_default());
+
+                let hash = CStringUtils::string_to_cstring(x);
+                cb(command_handle, 0, hash.as_ptr());
+            }
+            Err(x) => {
+                error!("vcx_credentialdef_get_tails_hash_cb(command_handle: {}, rc: {}, hash: {}), source_id: {}",
+                       command_handle, x, "null", credential_def::get_source_id(handle).unwrap_or_default());
+                cb(command_handle, x.into(), ptr::null());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
+                                                handle: u32,
+                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
+    info!("vcx_credentialdef_get_rev_reg_id >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = credential_def::get_source_id(handle).unwrap_or_default();
+    trace!("vcx_credentialdef_get_rev_reg_id(command_handle: {}) source_id: {}", command_handle, source_id);
+
+    spawn(move || {
+        match credential_def::get_rev_reg_id(handle) {
+            Ok(x) => {
+                trace!("vcx_credentialdef_get_rev_reg_id_cb(command_handle: {}, rc: {}, rev_reg_id: {}), source_id: {}",
+                       command_handle, error::SUCCESS.message, x, credential_def::get_source_id(handle).unwrap_or_default());
+
+                let rev_reg_id = CStringUtils::string_to_cstring(x);
+                cb(command_handle, 0, rev_reg_id.as_ptr());
+            }
+            Err(x) => {
+                error!("vcx_credentialdef_get_rev_reg_id(command_handle: {}, rc: {}, rev_reg_id: {}), source_id: {}",
+                       command_handle, x, "null", credential_def::get_source_id(handle).unwrap_or_default());
+                cb(command_handle, x.into(), ptr::null());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 #[cfg(test)]
 mod tests {
     extern crate serde_json;

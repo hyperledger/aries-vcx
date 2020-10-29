@@ -614,7 +614,7 @@ pub mod tests {
     use settings;
     use utils::constants::*;
     #[cfg(feature = "pool_tests")]
-    use utils::constants::TEST_TAILS_FILE;
+    use utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
     use utils::devsetup::*;
     use utils::get_temp_dir_path;
 
@@ -658,6 +658,7 @@ pub mod tests {
         let mut revocation_details = json!({"support_revocation":support_rev});
         if support_rev {
             revocation_details["tails_file"] = json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string());
+            revocation_details["tails_url"] = json!(TEST_TAILS_URL);
             revocation_details["max_creds"] = json!(10);
         }
         let handle = ::credential_def::create_and_publish_credentialdef("1".to_string(),
@@ -671,7 +672,7 @@ pub mod tests {
         let cred_def_id = ::credential_def::get_cred_def_id(handle).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let (_, cred_def_json) = get_cred_def_json(&cred_def_id).unwrap();
-        let rev_reg_id = ::credential_def::get_rev_reg_id(handle).unwrap();
+        let rev_reg_id = ::credential_def::get_rev_reg_id(handle).ok();
         (schema_id, schema_json, cred_def_id, cred_def_json, handle, rev_reg_id)
     }
 

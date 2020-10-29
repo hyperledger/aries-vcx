@@ -308,6 +308,113 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
+                                 credential_handle: u32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, location: *const c_char)>) -> u32 {
+    info!("vcx_credential_get_tails_location >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_get_tails_location(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::get_tails_location(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_credential_get_tails_location_cb(commmand_handle: {}, rc: {}, location: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let location = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, location.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_credential_get_tails_location_cb(commmand_handle: {}, rc: {}, location: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
+                                 credential_handle: u32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+    info!("vcx_credential_get_tails_hash >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_get_tails_hash(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::get_tails_hash(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_credential_get_tails_hash_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let hash = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, hash.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_credential_get_tails_hash_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
+                                 credential_handle: u32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+    info!("vcx_credential_get_rev_reg_id >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::get_rev_reg_id(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let rev_reg_id = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, rev_reg_id.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
 
 /// Create a Credential object based off of a known message id for a given connection.
 ///
@@ -1040,6 +1147,12 @@ mod tests {
         assert_eq!(vcx_credential_update_state(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateAccepted as u32);
+
+        let cb = return_types_u32::Return_U32_STR::new().unwrap();
+        assert_eq!(vcx_credential_get_rev_reg_id(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
+        let rev_reg_id = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
+        let rev_reg_id_expected = String::from("V4SGRU86Z58d6TV7PBUe6f:4:V4SGRU86Z58d6TV7PBUe6f:3:CL:1281:tag1:CL_ACCUM:tag1");
+        assert_eq!(rev_reg_id, rev_reg_id_expected);
     }
 
     #[test]
