@@ -703,6 +703,10 @@ jobs:
     - name: Load env. variables
       run: |
         echo ::set-env name=PUBLISH_VERSION::${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+    - name: Switch to xcode version 11
+      run: |
+        sudo xcode-select --switch /Applications/Xcode_11.7.app/Contents/Developer
+        xcodebuild -version
     - name: Build iOS wrapper
       run: |
           ./wrappers/ios/ci/build.sh
