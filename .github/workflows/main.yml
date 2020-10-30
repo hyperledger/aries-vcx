@@ -1071,7 +1071,7 @@ jobs:
 
   release-android-device:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch android device build from artifacts
         uses: actions/download-artifact@v2
@@ -1090,7 +1090,7 @@ jobs:
 
   release-android-emulator:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch android emulator build from artifacts
         uses: actions/download-artifact@v2
