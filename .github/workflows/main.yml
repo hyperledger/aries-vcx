@@ -1030,45 +1030,6 @@ jobs:
              echo "New version was not defined, skipping release."
           fi
 
-  make-release:
-    runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, build-ios-wrapper, build-android-wrapper-device, build-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
-    if: needs.workflow-setup.outputs.RELEASE == 'true'
-    outputs:
-      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
-
-      - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          releaseBranch: master
-          pullRequests: true
-          unreleased: true
-          unreleasedOnly: true
-          issuesWoLabels: true
-          prWoLabels: true
-          stripGeneratorNotice: true
-          stripHeaders: false
-          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
-          breakingLabels: backwards-incompatible,breaking
-          deprecatedLabels: deprecated
-
-      - name: Create a new release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          body_path: ./CHANGELOG.md
-          draft: false
-          prerelease: false
-
   publish-android-device:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-android-wrapper-device]
@@ -1086,7 +1047,6 @@ jobs:
           asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
           asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
           asset_content_type: application/aar
-
 
   publish-android-emulator:
     runs-on: ubuntu-16.04
@@ -1141,3 +1101,54 @@ jobs:
           asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
           asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
           asset_content_type: application/zip
+
+
+  make-release:
+    runs-on: ubuntu-16.04
+    needs:
+      - workflow-setup
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool_tests
+      - test-libvcx-image-agency_pool_tests
+      - test-android-build
+      - test-node-wrapper
+      - test-integration-node-wrapper
+      - publish-android-device
+      - publish-android-emulator
+      - publish-ios-device
+      - publish-ios-universal
+    if: needs.workflow-setup.outputs.RELEASE == 'true'
+    outputs:
+      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Generate changelog
+        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          releaseBranch: master
+          pullRequests: true
+          unreleased: true
+          unreleasedOnly: true
+          issuesWoLabels: true
+          prWoLabels: true
+          stripGeneratorNotice: true
+          stripHeaders: false
+          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
+          breakingLabels: backwards-incompatible,breaking
+          deprecatedLabels: deprecated
+
+      - name: Create a new release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          body_path: ./CHANGELOG.md
+          draft: false
+          prerelease: false
