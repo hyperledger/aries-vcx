@@ -1025,7 +1025,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1035,7 +1035,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let err = _vcx_disclosed_proof_create_with_request_c_closure(BAD_PROOF_REQUEST).unwrap_err();
@@ -1045,7 +1045,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_with_msgid() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let cxn = ::connection::tests::build_test_connection_inviter_requested();
@@ -1063,7 +1063,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_release() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(vcx_disclosed_proof_release(handle + 1), error::INVALID_DISCLOSED_PROOF_HANDLE.code_num);
@@ -1074,7 +1074,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_serialize_and_deserialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1101,7 +1101,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_generate_msg() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1122,7 +1122,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_send_proof() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_proof = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1138,7 +1138,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_reject_proof_request() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1155,7 +1155,7 @@ mod tests {
     #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")] // todo: generate_reject_proof_msg is not implemented for aries
     fn test_vcx_get_reject_msg() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1172,7 +1172,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_requests() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let cxn = ::connection::tests::build_test_connection_inviter_requested();
@@ -1188,7 +1188,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
@@ -1202,7 +1202,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_retrieve_credentials() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
@@ -1220,7 +1220,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_generate_proof() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();

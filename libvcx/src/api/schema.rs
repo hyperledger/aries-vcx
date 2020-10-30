@@ -577,7 +577,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_create_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -616,7 +616,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_serialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -627,7 +627,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_deserialize_succeeds() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let err = vcx_schema_deserialize(cb.command_handle, CString::new(SCHEMA_WITH_VERSION).unwrap().into_raw(), Some(cb.get_callback()));
@@ -639,7 +639,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_schema_id_succeeds() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let schema_handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -653,7 +653,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_attrs() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
@@ -671,7 +671,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
 
@@ -701,7 +701,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_release() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -713,7 +713,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_prepare_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
@@ -734,7 +734,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_schema_get_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (handle, _) = schema::prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();

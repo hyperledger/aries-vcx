@@ -1,14 +1,17 @@
 use std::ffi::CString;
 
 use indy::{CommandHandle, INVALID_WALLET_HANDLE};
+use indy_sys::{INVALID_POOL_HANDLE, WalletHandle};
 use libc::c_char;
 
 use error::prelude::*;
+use init::{init_core, open_as_main_wallet, open_pool};
 use settings;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::libindy::{ledger, pool, wallet};
-use utils::libindy::pool::{init_pool, is_pool_open};
+use utils::libindy::pool::is_pool_open;
+use utils::libindy::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
 use utils::threadpool::spawn;
 use utils::version_constants;
 
@@ -41,7 +44,7 @@ pub extern fn vcx_init_with_config(command_handle: CommandHandle,
 
     if config == "ENABLE_TEST_MODE" {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_defaults();
+        settings::set_testing_defaults();
         warn!("Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
     } else {
         match settings::process_config_string(&config, true) {
@@ -72,28 +75,13 @@ pub extern fn vcx_init_with_config(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_init_core(config: *const c_char) -> u32 {
-    info!("vcx_init_with_config >>>");
+    info!("vcx_init_core >>>");
     info!("libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
-
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
-    info!("vcx_init_with_config :: config = {}", config);
-
-    if config == "ENABLE_TEST_MODE" {
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_defaults();
-    } else {
-        match settings::process_config_string(&config, true) {
-            Err(e) => {
-                error!("Invalid configuration specified: {}", e);
-                return e.into();
-            }
-            Ok(_) => (),
-        }
-    };
-
-    settings::log_settings();
-    ::utils::threadpool::init();
-    error::SUCCESS.code_num
+    match init_core(&config) {
+        Ok(_) => error::SUCCESS.code_num,
+        Err(_) => error::INVALID_CONFIGURATION.code_num
+    }
 }
 
 /// Opens pool based on vcx configuration previously set via vcx_init_core
@@ -123,11 +111,11 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
 
     spawn(move || {
-        match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
+        match open_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
             Ok(()) => {
                 info!("vcx_open_pool :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
-            },
+            }
             Err(e) => {
                 error!("vcx_open_pool :: Vcx Pool Init Error {}.", e);
                 cb(command_handle, e.into());
@@ -159,25 +147,38 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
         Ok(x) => x,
         Err(_) => {
             error!("vcx_open_wallet :: Value of setting {} was not set.", settings::CONFIG_WALLET_NAME);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
+    let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).ok().unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
+    let wallet_kdf = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or(settings::WALLET_KDF_DEFAULT.into());
     let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
 
     spawn(move || {
-        match wallet::open_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str),
-                                  storage_config.as_ref().map(String::as_str), storage_creds.as_ref().map(String::as_str)) {
-            Ok(_) => {
-                info!("vcx_open_wallet :: Init Vcx Wallet Successful");
-                cb(command_handle, error::SUCCESS.code_num)
-            },
-            Err(e) => {
-                error!("vcx_open_wallet :: Init Vcx Wallet Error {}.", e);
-                cb(command_handle, e.into());
-                return Ok(());
+        if settings::indy_mocks_enabled() {
+            set_wallet_handle(WalletHandle(1));
+            info!("vcx_open_wallet :: Mocked Success");
+            cb(command_handle, error::SUCCESS.code_num)
+        } else {
+            match open_as_main_wallet(&wallet_name,
+                                      &wallet_key,
+                                      &wallet_kdf,
+                                      wallet_type.as_ref().map(String::as_str),
+                                      storage_config.as_ref().map(String::as_str),
+                                      storage_creds.as_ref().map(String::as_str),
+            ) {
+                Ok(_) => {
+                    info!("vcx_open_wallet :: Success");
+                    cb(command_handle, error::SUCCESS.code_num)
+                }
+                Err(e) => {
+                    error!("vcx_open_wallet :: Error {}.", e);
+                    cb(command_handle, e.into());
+                    return Ok(());
+                }
             }
         }
         Ok(())
@@ -219,7 +220,7 @@ pub extern fn vcx_init(command_handle: CommandHandle,
 
         if config_path == "ENABLE_TEST_MODE" {
             settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-            settings::set_defaults();
+            settings::set_testing_defaults();
             warn!("vcx_init:: Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
         } else {
             match settings::process_config_file(&config_path) {
@@ -271,7 +272,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
                 let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
                     .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
                 let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
-                match init_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
+                match open_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
                     Ok(()) => (),
                     Err(e) => {
                         error!("Init Pool Error {}.", e);
@@ -279,18 +280,25 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
                         return Ok(());
                     }
                 }
-            },
+            }
             None => {
                 warn!("Skipping pool initialization because config {} was not provided", settings::CONFIG_GENESIS_PATH);
             }
         };
 
         let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
+        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
+        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or(settings::WALLET_KDF_DEFAULT.into());
         let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
         let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
         info!("_finish_init: opening wallet");
-        match wallet::open_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str),
-                                  storage_config.as_ref().map(String::as_str), storage_creds.as_ref().map(String::as_str)) {
+        match open_as_main_wallet(&wallet_name,
+                                  &wallet_key,
+                                  &key_derivation,
+                                  wallet_type.as_deref(),
+                                  storage_config.as_deref(),
+                                  storage_creds.as_deref(),
+        ) {
             Ok(_) => debug!("Init Wallet Successful"),
             Err(e) => {
                 error!("Init Wallet Error {}.", e);
@@ -343,7 +351,7 @@ pub extern fn vcx_init_minimal(config: *const c_char) -> u32 {
 
     if config == "ENABLE_TEST_MODE" {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::set_defaults();
+        settings::set_testing_defaults();
     } else {
         match settings::process_config_string(&config, false) {
             Err(e) => {
@@ -392,7 +400,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match wallet::close_wallet() {
+    match wallet::close_main_wallet() {
         Ok(()) => {}
         Err(_) => {}
     };
@@ -413,13 +421,16 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     if delete {
         let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
             .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-
         let wallet_name = settings::get_config_value(settings::CONFIG_WALLET_NAME)
             .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
-
         let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
+        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
+            .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
+        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
+            .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
-        match wallet::delete_wallet(&wallet_name, wallet_type.as_ref().map(String::as_str), None, None) {
+        close_main_wallet();
+        match wallet::delete_wallet(&wallet_name, &wallet_key, &key_derivation, wallet_type.as_deref(), None, None) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -663,28 +674,28 @@ mod tests {
 
     use api::return_types_u32;
     use api::VcxStateType;
+    use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
+    use api::wallet::tests::_test_add_and_get_wallet_record;
     use utils::{
         libindy::{
-            wallet::{import, tests::export_test_wallet},
+            wallet::{import, tests::create_main_wallet_and_its_backup},
             pool::get_pool_handle,
         }
     };
     use utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use utils::get_temp_dir_path;
+    use utils::libindy::pool::reset_pool_handle;
+    use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::pool::tests::delete_test_pool;
+    use utils::libindy::wallet::delete_wallet;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::wallet::get_wallet_handle;
-    use utils::timeout::TimeoutUtils;
     use utils::mockdata::mockdata_connection;
+    use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
-    use utils::libindy::wallet::delete_wallet;
-    use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
-    use api::wallet::tests::_test_add_and_get_wallet_record;
-    use utils::libindy::pool::reset_pool_handle;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     fn config() -> String {
@@ -730,7 +741,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_with_file() {
-        let _setup = SetupWalletAndPool::init();
+        let _setup_defaults = SetupDefaults::init();
+        let _setup_wallet = SetupWallet::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         let config = TempFile::create_with_data("test_init.json", &config());
 
@@ -748,7 +761,7 @@ mod tests {
         let config = json!({
             "wallet_name": settings::DEFAULT_WALLET_NAME,
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW,
         }).to_string();
 
         let config = TempFile::create_with_data("test_init.json", &config);
@@ -760,7 +773,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_with_config() {
-        let _setup = SetupWalletAndPool::init();
+        let _setup_defaults = SetupDefaults::init();
+        let _setup_wallet = SetupWallet::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure(&config()).unwrap();
 
@@ -771,7 +786,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_fails_when_open_pool_fails() {
-        let _setup = SetupDefaultWallet::init();
+        let _setup = SetupWallet::init();
 
         // Write invalid genesis.txn
         let _genesis_transactions = TempFile::create_with_data(::utils::constants::GENESIS_PATH, "{}");
@@ -788,12 +803,12 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_init_can_be_called_with_no_pool_config() {
-        let _setup = SetupDefaultWallet::init();
+        let setup = SetupWallet::init();
 
         let content = json!({
-            "wallet_name": settings::DEFAULT_WALLET_NAME,
-            "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_name": &setup.wallet_name,
+            "wallet_key": &setup.wallet_key,
+            "wallet_key_derivation": &setup.wallet_kdf,
         }).to_string();
 
         _vcx_init_with_config_c_closure(&content).unwrap();
@@ -835,7 +850,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_init_with_default_values() {
-        let _setup = SetupWalletAndPool::init();
+        let _setup_defaults = SetupDefaults::init();
+        let _setup_wallet = SetupWallet::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure("{}").unwrap();
     }
@@ -843,7 +860,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_init_called_twice_fails() {
-        let _setup = SetupWalletAndPool::init();
+        let _setup_defaults = SetupDefaults::init();
+        let _setup_wallet = SetupWallet::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         _vcx_init_with_config_c_closure("{}").unwrap();
 
@@ -858,8 +877,8 @@ mod tests {
         for _ in 0..2 {
             let _setup = SetupDefaults::init();
 
-            wallet::create_wallet(settings::DEFAULT_WALLET_NAME, None, None, None).unwrap();
-            pool::tests::create_test_pool();
+            wallet::create_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+            pool::tests::create_test_ledger_config();
 
             _vcx_init_with_config_c_closure("{}").unwrap();
 
@@ -888,14 +907,15 @@ mod tests {
     fn test_init_after_importing_wallet_success() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = export_test_wallet();
+        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, None, None, None).unwrap();
+        close_main_wallet();
+        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: &wallet_name,
             settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::DEFAULT_WALLET_KEY_DERIVATION,
+            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
         }).to_string();
@@ -904,9 +924,9 @@ mod tests {
         let content = json!({
             "wallet_name": &wallet_name,
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW,
         }).to_string();
-
+        //
         _vcx_init_with_config_c_closure(&content).unwrap();
 
         vcx_shutdown(true);
@@ -917,14 +937,15 @@ mod tests {
     fn test_init_with_imported_wallet_fails_with_different_params() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = export_test_wallet();
+        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, None, None, None).unwrap();
+        close_main_wallet();
+        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
             settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::DEFAULT_WALLET_KEY_DERIVATION,
+            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
         }).to_string();
@@ -933,13 +954,14 @@ mod tests {
         let content = json!({
             "wallet_name": "different_wallet_name",
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW,
         }).to_string();
 
         let err = _vcx_init_with_config_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(&wallet_name, None, None, None).unwrap();
+        close_main_wallet();
+        wallet::delete_wallet(wallet_name.as_str(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 
     #[test]
@@ -947,12 +969,12 @@ mod tests {
     fn test_import_after_init_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = export_test_wallet();
+        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
 
         let content = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION
+            "wallet_key_derivation": settings::WALLET_KDF_RAW
         }).to_string();
 
         _vcx_init_with_config_c_closure(&content).unwrap();
@@ -1001,7 +1023,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_shutdown() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let data = r#"["name","male"]"#;
@@ -1027,7 +1049,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_error_c_message() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(0)).unwrap().unwrap();
         assert_eq!(c_message, error::SUCCESS.message);
@@ -1130,7 +1152,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_set_active_txn_author_agreement_meta() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         assert!(&settings::get_config_value(::settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
@@ -1157,13 +1179,13 @@ mod tests {
 
         assert_eq!(expected, auth_agreement);
 
-        ::settings::set_defaults();
+        ::settings::set_testing_defaults();
     }
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_get_ledger_author_agreement() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
@@ -1225,7 +1247,7 @@ mod tests {
         // test that wallet and pool are operational
         ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
-        settings::set_defaults();
+        settings::set_testing_defaults();
     }
 
     #[test]
@@ -1268,9 +1290,8 @@ mod tests {
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_short());
 
-        pool::close();
         delete_test_pool();
-        settings::set_defaults();
+        settings::set_testing_defaults();
     }
 
     #[test]
@@ -1285,7 +1306,7 @@ mod tests {
 
         _test_add_and_get_wallet_record();
 
-        settings::set_defaults();
+        settings::set_testing_defaults();
     }
 
     #[test]
@@ -1346,9 +1367,8 @@ mod tests {
         assert!(schema_id.len() > 0);
 
         info!("test_init_composed :: going to cleanup");
-        pool::close();
         delete_test_pool();
-        settings::set_defaults();
+        settings::set_testing_defaults();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1372,19 +1392,19 @@ mod tests {
         let connection_handle = ::connection::create_connection("test_create_fails").unwrap();
         ::connection::connect(connection_handle).unwrap_err();
 
-        settings::set_defaults();
+        settings::set_testing_defaults();
     }
 
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_init_fails_with_not_found_pool_genesis_file() {
-        let _setup = SetupDefaultWallet::init();
+        let _setup = SetupWallet::init();
 
         let content = json!({
             "genesis_path": "invalid/txn/path",
             "wallet_name": settings::DEFAULT_WALLET_NAME,
             "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::DEFAULT_WALLET_KEY_DERIVATION,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW,
         }).to_string();
 
         let rc = _vcx_init_with_config_c_closure(&content).unwrap_err();

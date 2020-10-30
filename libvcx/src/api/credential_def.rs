@@ -622,7 +622,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_create_credentialdef_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
@@ -642,7 +642,6 @@ mod tests {
     fn test_vcx_create_credentialdef_fails() {
         let _setup = SetupLibraryWallet::init();
 
-        settings::set_defaults();
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
@@ -659,7 +658,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_serialize() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
@@ -682,7 +681,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_deserialize_succeeds() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
@@ -698,7 +697,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_deserialize_succeeds_with_old_data() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
@@ -715,7 +714,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_credentialdef_release() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
@@ -737,7 +736,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_creddef_get_id() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create(cb.command_handle,
@@ -758,7 +757,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_payment_txn() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let handle = credential_def::create_and_publish_credentialdef("sid".to_string(),
@@ -774,7 +773,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_prepare_cred_def_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR_STR_STR::new().unwrap();
@@ -799,7 +798,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_prepare_cred_def_with_revocation_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR_STR_STR::new().unwrap();
@@ -824,7 +823,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_cred_def_get_state() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (handle, _, _, _) = credential_def::prepare_credentialdef_for_endorser("testid".to_string(),
                                                                                    "Test Credential Def".to_string(),

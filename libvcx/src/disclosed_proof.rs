@@ -269,7 +269,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_proof() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
     }
@@ -277,7 +277,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_fails() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
@@ -285,7 +285,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_cycle() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 
@@ -311,7 +311,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_update_state_v2() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
@@ -342,7 +342,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_reject_cycle() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 
@@ -361,7 +361,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_state_test() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap())
@@ -370,7 +370,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn to_string_test() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_request() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_invitee_completed();
 
@@ -415,7 +415,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_proof_request_attachment() {
-        let _setup = SetupStrictAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let connection_h = connection::tests::build_test_connection_inviter_requested();
 

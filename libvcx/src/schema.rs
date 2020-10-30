@@ -225,6 +225,7 @@ pub mod tests {
     use utils::libindy::payments::add_new_did;
 
     use super::*;
+    use utils::libindy::wallet::get_wallet_handle;
 
     fn data() -> Vec<String> {
         vec!["address1".to_string(), "address2".to_string(), "zip".to_string(), "city".to_string(), "state".to_string()]
@@ -255,7 +256,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_schema_to_string() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema("test_create_schema_success",
@@ -280,7 +281,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         create_and_publish_schema("test_create_schema_success",
@@ -293,7 +294,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_prepare_schema_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         prepare_schema_for_endorser("test_create_schema_success",
@@ -307,7 +308,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_schema_attrs_success() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (handle, schema_json) = get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string()).unwrap();
 
@@ -385,7 +386,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_release_all() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let (did, schema_name, version, data) = prepare_schema_data();
 
@@ -432,7 +433,7 @@ pub mod tests {
 
         assert_eq!(1, update_state(handle).unwrap());
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_wallet();
+        ::utils::libindy::wallet::close_main_wallet();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -442,6 +443,6 @@ pub mod tests {
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_wallet();
+        ::utils::libindy::wallet::close_main_wallet();
     }
 }

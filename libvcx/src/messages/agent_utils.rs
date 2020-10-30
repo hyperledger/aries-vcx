@@ -10,6 +10,8 @@ use utils::httpclient::{AgencyMockDecrypted};
 use utils::libindy::{anoncreds, wallet};
 use utils::libindy::signus::create_and_store_my_did;
 use utils::option_util::get_or_default;
+use utils::libindy::wallet::get_wallet_handle;
+use settings::agency_mocks_enabled;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -204,8 +206,10 @@ fn _create_issuer_keys(my_did: &str, my_vk: &str, my_config: &Config) -> VcxResu
 pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String)> {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
-    wallet::init_wallet(
+    wallet::create_and_open_as_main_wallet(
         &wallet_name,
+        &my_config.wallet_key,
+        &my_config.wallet_key_derivation.as_deref().unwrap_or(settings::WALLET_KDF_DEFAULT.into()),
         my_config.wallet_type.as_ref().map(String::as_str),
         my_config.storage_config.as_ref().map(String::as_str),
         my_config.storage_credentials.as_ref().map(String::as_str),
@@ -308,7 +312,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
     let config = get_final_config(&my_did, &my_vk, &agent_did, &agent_vk, &wallet_name, &my_config)?;
 
-    wallet::close_wallet()?;
+    wallet::close_main_wallet()?;
 
     Ok(config)
 }
@@ -396,7 +400,10 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 
 fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
     info!("> update_agent_webhook_v2");
-    if settings::agency_mocks_enabled() { return Ok(()); }
+    if agency_mocks_enabled() {
+        warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
+        return Ok(());
+    }
 
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
@@ -420,7 +427,7 @@ mod tests {
 
     use api::vcx::vcx_shutdown;
     use messages::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
-    use utils::devsetup::{SetupAriesMocks, SetupDefaults, SetupLibraryAgencyV2};
+    use utils::devsetup::{SetupMocks, SetupDefaults, SetupLibraryAgencyV2};
 
     #[test]
     #[cfg(feature = "agency")]
@@ -461,7 +468,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_connect_register_provision() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let agency_did = "Ab8TvZa3Q19VNkQVzAWVL7";
         let agency_vk = "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf";
@@ -537,7 +544,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
     fn test_update_agent_info() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         // todo: Need to mock agency v2 response, only agency v1 mocking works
         update_agent_info("123", "value").unwrap();
     }

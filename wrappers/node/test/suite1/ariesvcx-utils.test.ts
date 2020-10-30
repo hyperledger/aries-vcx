@@ -15,12 +15,12 @@ import {
   VCXCode
 } from 'src'
 import { errorMessage } from '../../src/utils/error-message'
+
 import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 describe('utils:', () => {
   before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
 
   // tslint:disable-next-line max-line-length
-  const provisionString = '{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"123"}'
   const updateInstitutionConfigsData = {
     logoUrl: 'https://google.com',
     name: 'New Name'
@@ -36,7 +36,14 @@ describe('utils:', () => {
 
   describe('provisionAgent:', () => {
     it('success', async () => {
-      const res = await provisionAgent(provisionString)
+      const provisionConfig = JSON.stringify({
+        agency_did: 'Ab8TvZa3Q19VNkQVzAWVL7',
+        agency_url: 'https://vcx.agency.example.org',
+        agency_verkey: '5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf',
+        wallet_key: '123',
+        wallet_name: 'test_provision_agent'
+      })
+      const res = await provisionAgent(provisionConfig)
       assert.ok(res)
     })
 
@@ -123,5 +130,4 @@ describe('utils:', () => {
       await endorseTransaction(transaction)
     })
   })
-
 })

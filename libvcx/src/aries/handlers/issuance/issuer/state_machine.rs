@@ -349,7 +349,7 @@ fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, 
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupAriesMocks;
+    use utils::devsetup::SetupMocks;
     use aries::handlers::connection::tests::mock_connection;
     use aries::messages::issuance::credential::tests::_credential;
     use aries::messages::issuance::credential_offer::tests::_credential_offer;
@@ -391,7 +391,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_new() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer_sm = _issuer_sm();
 
@@ -406,7 +406,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_init() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer_sm = _issuer_sm();
 
@@ -416,7 +416,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_credential_init_message_from_initial_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
@@ -427,7 +427,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_other_messages_from_initial_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
 
@@ -441,7 +441,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_credential_request_message_from_offer_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
@@ -453,7 +453,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_credential_proposal_message_from_offer_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
@@ -466,7 +466,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_problem_report_message_from_offer_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
@@ -479,7 +479,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_other_messages_from_offer_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
@@ -491,7 +491,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_credential_send_message_from_request_received_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
@@ -506,7 +506,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_credential_send_message_from_request_received_state_with_invalid_request() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
@@ -521,7 +521,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_other_messages_from_request_received_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
@@ -541,7 +541,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_messages_from_finished_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
@@ -566,7 +566,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_find_message_to_handle_from_initial_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm();
 
@@ -588,7 +588,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_find_message_to_handle_from_offer_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm().to_offer_sent_state();
 
@@ -660,7 +660,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_find_message_to_handle_from_request_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm().to_finished_state();
 
@@ -682,7 +682,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_find_message_to_handle_from_credential_sent_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm().to_finished_state();
 
@@ -708,7 +708,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_get_state() {
-            let _setup = SetupAriesMocks::init();
+            let _setup = SetupMocks::init();
 
             assert_eq!(VcxStateType::VcxStateInitialized as u32, _issuer_sm().state());
             assert_eq!(VcxStateType::VcxStateOfferSent as u32, _issuer_sm().to_offer_sent_state().state());

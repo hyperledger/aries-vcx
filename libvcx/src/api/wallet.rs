@@ -8,7 +8,7 @@ use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::libindy::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
-use utils::libindy::wallet::{export, get_wallet_handle, import};
+use utils::libindy::wallet::{export_main_wallet, get_wallet_handle, import};
 use utils::libindy::wallet;
 use utils::threadpool::spawn;
 
@@ -869,7 +869,7 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
 
     spawn(move || {
         trace!("vcx_wallet_export(command_handle: {}, path: {}, backup_key: ****)", command_handle, path);
-        match export(get_wallet_handle(), &path, &backup_key) {
+        match export_main_wallet(&path, &backup_key) {
             Ok(()) => {
                 let return_code = error::SUCCESS.code_num;
                 trace!("vcx_wallet_export(command_handle: {}, rc: {})", command_handle, return_code);
@@ -890,6 +890,9 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
 /// Creates a new secure wallet and then imports its content
 /// according to fields provided in import_config
 /// Cannot be used if wallet is already opened (Especially if vcx_init has already been used).
+///
+/// Note this only works for default storage type (file), as currently this function does not let
+/// you pass down information about wallet storage_type, storage_config, storage_credentials.
 ///
 /// Note this endpoint is EXPERIMENTAL. Function signature and behaviour may change
 /// in the future releases.
@@ -990,7 +993,7 @@ pub mod tests {
     use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]
     use utils::libindy::payments::build_test_address;
-    use utils::libindy::wallet::{delete_wallet, init_wallet};
+    use utils::libindy::wallet::{delete_wallet, create_and_open_as_main_wallet, close_main_wallet};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -998,7 +1001,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_token_info() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_get_token_info(cb.command_handle,
@@ -1011,7 +1014,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_send_tokens() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
@@ -1026,7 +1029,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_address() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_create_payment_address(cb.command_handle,
@@ -1039,7 +1042,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_sign_with_address_api() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_BIN::new().unwrap();
         let msg = "message";
@@ -1058,7 +1061,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verify_with_address_api() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_BOOL::new().unwrap();
         let msg = "message";
@@ -1350,14 +1353,14 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_wallet_import_export() {
+    fn test_wallet_export_import() {
         let _setup = SetupDefaults::init();
 
         let wallet_name = "test_wallet_import_export";
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        init_wallet(wallet_name, None, None, None).unwrap();
+        create_and_open_as_main_wallet(wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();
@@ -1369,13 +1372,15 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        delete_wallet(&wallet_name, None, None, None).unwrap();
+        close_main_wallet();
+        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name,
             settings::CONFIG_WALLET_KEY: wallet_key,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_file.path,
             settings::CONFIG_WALLET_BACKUP_KEY: backup_key,
+            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
         }).to_string();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1384,6 +1389,7 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        delete_wallet(&wallet_name, None, None, None).unwrap();
+        close_main_wallet();
+        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 }

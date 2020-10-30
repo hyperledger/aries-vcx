@@ -147,7 +147,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_update_data_post() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let name = "name";
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_update_profile_response() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(AGENCY_CONFIGS_UPDATED);
         UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).unwrap();
     }

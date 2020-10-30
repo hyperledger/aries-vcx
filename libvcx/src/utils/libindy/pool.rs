@@ -87,27 +87,6 @@ pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32>
     Ok(handle as u32)
 }
 
-pub fn init_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
-    info!("init_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
-
-    if settings::indy_mocks_enabled() { return Ok(()); }
-
-    trace!("init_pool ::: Opening pool {} with genesis_path: {}", pool_name, path);
-
-    create_pool_ledger_config(&pool_name, &path)
-        .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
-
-    debug!("init_pool ::: Pool Config Created Successfully");
-
-    open_pool_ledger(&pool_name, pool_config)
-        .map_err(|err| err.extend("Can not open Pool Ledger"))?;
-
-    info!("init_pool ::: Pool Opened Successfully");
-
-    Ok(())
-}
-
-
 pub fn close() -> VcxResult<()> {
     let handle = get_pool_handle()?;
 
@@ -146,7 +125,7 @@ pub mod tests {
 
     use super::*;
 
-    pub fn create_test_pool() {
+    pub fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
         create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
     }
@@ -157,7 +136,7 @@ pub mod tests {
     }
 
     pub fn open_test_pool() -> u32 {
-        create_test_pool();
+        create_test_ledger_config();
         open_pool_ledger(POOL, None).unwrap()
     }
 

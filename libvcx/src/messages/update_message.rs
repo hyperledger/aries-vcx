@@ -153,14 +153,14 @@ mod tests {
     use messages::get_message::download_messages_noauth;
     use messages::MessageStatusCode;
     use messages::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
-    use utils::devsetup::{SetupAriesMocks, SetupLibraryAgencyV2};
+    use utils::devsetup::{SetupMocks, SetupLibraryAgencyV2};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_parse_parse_update_messages_response() {
-        let _setup = SetupAriesMocks::init();
+        let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).unwrap();
     }
