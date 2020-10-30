@@ -313,6 +313,30 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    private static Callback vcxCredentialGetAttachmentCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, String attachment) {
+            logger.debug("vcxCredentialGetAttachmentCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], attachment = [" + attachment + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(attachment);
+        }
+    };
+
+    public static CompletableFuture<String> credentialGetAttachment(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("getAttachment() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_get_attachment(commandHandle, credentialHandle, vcxCredentialGetAttachmentCB);
+        checkResult(result);
+
+        return future;
+    }
+
     public static int credentialRelease(int credentialHandle) throws VcxException {
         ParamGuard.notNull(credentialHandle, "credentialHandle");
         logger.debug("credentialRelease() called with: credentialHandle = [" + credentialHandle + "]");

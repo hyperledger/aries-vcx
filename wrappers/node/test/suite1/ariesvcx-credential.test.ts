@@ -176,6 +176,23 @@ describe('Credential:', () => {
     })
   })
 
+  describe('getAttachment:', () => {
+    it('success', async () => {
+      const connection = await createConnectionInviterRequested()
+      const offers = await Credential.getOffers(connection)
+      assert.ok(offers)
+      assert.ok(offers.length)
+      const offer = offers[0]
+      const credential = await credentialCreateWithOffer({
+        connection,
+        offer: JSON.stringify(offer),
+        sourceId: 'credentialGetAttributesTestSourceId'
+      })
+      const attach = JSON.parse(await credential.getAttachment(connection))
+      assert.deepEqual(attach.schema_id, 'V4SGRU86Z58d6TV7PBUe6f:2:FaberVcx:83.23.62')
+    })
+  })
+
   describe('getPaymentInfo:', () => {
     it.skip('success', async () => {
       const credential = await credentialCreateWithOffer()

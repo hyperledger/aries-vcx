@@ -290,9 +290,13 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
             conn_handle, |connection| {
+                let expected_sender_vk = connection.remote_vk()?;
                 let msgs = connection
                    .agent_info()
-                   .download_encrypted_messages(uids.clone(), status_codes.clone())?;
+                   .download_encrypted_messages(uids.clone(), status_codes.clone())?
+                   .iter()
+                   .map(|msg| msg.decrypt_auth(&expected_sender_vk))
+                   .collect::<VcxResult<Vec<Message>>>()?;
                 Ok(MessageByConnection{ pairwise_did: connection.agent_info().clone().pw_did, msgs })
             }
         )?;
@@ -637,21 +641,21 @@ pub mod tests {
         let all_messages = download_messages_noauth(None, None, None).unwrap();
         assert_eq!(all_messages.len(), 1);
         assert_eq!(all_messages[0].msgs.len(), 3);
-        assert!(all_messages[0].msgs[0].decrypted_payload.is_some());
-        assert!(all_messages[0].msgs[1].decrypted_payload.is_some());
+        assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
+        assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);
         assert_eq!(received[0].msgs.len(), 2);
-        assert!(received[0].msgs[0].decrypted_payload.is_some());
+        assert!(received[0].msgs[0].decrypted_msg.is_some());
         assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
-        assert!(received[0].msgs[1].decrypted_payload.is_some());
+        assert!(received[0].msgs[1].decrypted_msg.is_some());
 
         // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
         let reviewed = download_messages_noauth(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
         assert_eq!(reviewed.len(), 1);
         assert_eq!(reviewed[0].msgs.len(), 1);
-        assert!(reviewed[0].msgs[0].decrypted_payload.is_some());
+        assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
         assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
 
         let rejected = download_messages_noauth(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
@@ -661,10 +665,8 @@ pub mod tests {
         let specific = download_messages_noauth(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
         assert_eq!(specific.len(), 1);
         assert_eq!(specific[0].msgs.len(), 1);
-        let msg = specific[0].msgs[0].decrypted_payload.clone().unwrap();
-        let msg_wrapper_value: Value = serde_json::from_str(&msg).unwrap();
-        assert!(msg_wrapper_value["@msg"].is_string());
-        let msg_aries_value: Value = serde_json::from_str(&msg_wrapper_value["@msg"].as_str().unwrap()).unwrap();
+        let msg = specific[0].msgs[0].decrypted_msg.clone().unwrap();
+        let msg_aries_value: Value = serde_json::from_str(&msg).unwrap();
         assert!(msg_aries_value.is_object());
         assert!(msg_aries_value["@id"].is_string());
         assert!(msg_aries_value["@type"].is_string());
@@ -712,11 +714,11 @@ pub mod tests {
         let consumer1_received_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
         assert_eq!(consumer1_received_msgs.len(), 1);
         assert_eq!(consumer1_received_msgs[0].msgs.len(), 1);
-        assert!(consumer1_received_msgs[0].msgs[0].payload.is_some());
+        assert!(consumer1_received_msgs[0].msgs[0].decrypted_msg.is_some());
 
         let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
         assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
-        assert!(consumer1_reviewed_msgs[0].msgs[0].payload.is_some());
+        assert!(consumer1_reviewed_msgs[0].msgs[0].decrypted_msg.is_some());
     }
 }

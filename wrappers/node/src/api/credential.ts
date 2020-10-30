@@ -382,6 +382,33 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
+  public async getAttachment (connection: Connection): Promise<string> {
+    try {
+      const attach = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_attachment(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(messages)
+          })
+      )
+      return attach
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+
   get credOffer (): string {
     return this._credOffer
   }

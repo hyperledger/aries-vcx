@@ -272,6 +272,43 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
+                                 credential_handle: u32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attachment: *const c_char)>) -> u32 {
+    info!("vcx_credential_get_attachment >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_get_attachment(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::get_attachment(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_credential_get_attachment_cb(commmand_handle: {}, rc: {}, attachment: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let attach = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, attach.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_credential_get_attachment_cb(commmand_handle: {}, rc: {}, attachment: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
 /// Create a Credential object based off of a known message id for a given connection.
 ///
 /// #Params
@@ -499,6 +536,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_v2_credential_update_state instead.")]
 pub extern fn vcx_credential_update_state(command_handle: CommandHandle,
                                           credential_handle: u32,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {

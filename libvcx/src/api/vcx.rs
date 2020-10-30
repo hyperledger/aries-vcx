@@ -30,10 +30,10 @@ use utils::version_constants;
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_init_core + vcx_open_pool + vcx_open_wallet")]
 pub extern fn vcx_init_with_config(command_handle: CommandHandle,
                                    config: *const c_char,
                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    // Todo: Either deprecate function this, or refactor to reuse code in vcx_init_core
     info!("vcx_init_with_config >>>");
 
     check_useful_c_str!(config,VcxErrorKind::InvalidOption);
@@ -203,6 +203,7 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_init_core + vcx_open_pool + vcx_open_wallet")]
 pub extern fn vcx_init(command_handle: CommandHandle,
                        config_path: *const c_char,
                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
@@ -342,8 +343,8 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 /// #Returns
 /// Error code as u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_init_core + vcx_open_pool + vcx_open_wallet")]
 pub extern fn vcx_init_minimal(config: *const c_char) -> u32 {
-    // todo: Consider deprecating this, we now have more fine-grained init functions - vcx_init_core, vcx_open_wallet, vcx_open_pool
     check_useful_c_str!(config,VcxErrorKind::InvalidOption);
 
     trace!("vcx_init_minimal(config: {:?})", config);

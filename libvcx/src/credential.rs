@@ -123,6 +123,12 @@ pub fn get_attributes(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_attachment(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get(handle, |credential| {
+        credential.get_attachment()
+    })
+}
+
 pub fn delete_credential(handle: u32) -> VcxResult<u32> {
     let source_id = get_source_id(handle).unwrap_or_default();
     trace!("Credential::delete_credential >>> credential_handle: {}, source_id: {}", handle, source_id);

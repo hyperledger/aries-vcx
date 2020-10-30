@@ -51,7 +51,7 @@ pub mod test {
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
         uid: String,
-        decrypted_payload: String,
+        decrypted_msg: String,
     }
 
     fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
@@ -71,21 +71,23 @@ pub mod test {
         )
     }
 
+    fn str_message_to_payload_type(message: &str) -> VcxResult<PayloadKinds> {
+        let a2a_message = str_message_to_a2a_message(message)?;
+        Ok(determine_message_type(a2a_message))
+    }
+
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
         let mut messages = ::messages::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
         for message in messages.msgs.into_iter() {
-            let decrypted_payload = &message.decrypted_payload.unwrap();
-            let msg_wrapper: Value = serde_json::from_str(decrypted_payload).unwrap();
-            let msg_content = msg_wrapper["@msg"].as_str().unwrap();
-            let a2a_message = str_message_to_a2a_message(msg_content).unwrap();
-            let msg_type = determine_message_type(a2a_message);
+            let decrypted_msg = &message.decrypted_msg.unwrap();
+            let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
                 return VcxAgencyMessage {
                     uid: message.uid,
-                    decrypted_payload: msg_content.into(),
+                    decrypted_msg: decrypted_msg.clone(),
                 };
             }
         }
@@ -644,7 +646,7 @@ pub mod test {
         {
             let message = alice.download_message(PayloadKinds::CredOffer);
 
-            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.decrypted_payload).unwrap();
+            alice.credential_handle = ::credential::credential_create_with_offer("test", &message.decrypted_msg).unwrap();
 
             ::connection::update_message_status(alice.connection_handle, message.uid).unwrap();
 
@@ -662,7 +664,7 @@ pub mod test {
         {
             let agency_msg = alice.download_message(PayloadKinds::ProofRequest);
 
-            alice.presentation_handle = ::disclosed_proof::create_proof("test", &agency_msg.decrypted_payload).unwrap();
+            alice.presentation_handle = ::disclosed_proof::create_proof("test", &agency_msg.decrypted_msg).unwrap();
 
             ::connection::update_message_status(alice.connection_handle, agency_msg.uid).unwrap();
 

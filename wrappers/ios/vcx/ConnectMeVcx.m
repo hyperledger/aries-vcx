@@ -813,6 +813,23 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
    }
 }
 
+- (void)credentialGetAttachment:(VcxHandle)credentialHandle
+                   completion:(void (^)(NSError *error, NSString *attach))completion{
+   vcx_error_t ret;
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_credential_get_attachment(handle, credentialHandle, VcxWrapperCommonStringCallback);
+
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret],nil);
+       });
+   }
+}
+
 - (void)generateProof:(NSString *)proofRequestId
        requestedAttrs:(NSString *)requestedAttrs
   requestedPredicates:(NSString *)requestedPredicates

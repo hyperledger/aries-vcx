@@ -172,6 +172,7 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_v2_proof_update_state instead.")]
 pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
                                      proof_handle: u32,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
