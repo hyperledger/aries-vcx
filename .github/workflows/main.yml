@@ -881,7 +881,13 @@ jobs:
 
   publish-libvcx:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs:
+      - workflow-setup
+      - build-image-libvcx
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool_tests
+      - test-libvcx-image-agency_pool_tests
+      - test-integration-node-wrapper
     steps:
       - name: Load env. variables
         run: |
@@ -932,7 +938,13 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs:
+      - workflow-setup
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool_tests
+      - test-libvcx-image-agency_pool_tests
+      - test-node-wrapper
+      - test-integration-node-wrapper
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
     steps:
@@ -982,7 +994,13 @@ jobs:
 
   publish-agent-core:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs:
+      - workflow-setup
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool_tests
+      - test-libvcx-image-agency_pool_tests
+      - test-node-wrapper
+      - test-integration-node-wrapper
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
     steps:
