@@ -209,7 +209,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     wallet::create_and_open_as_main_wallet(
         &wallet_name,
         &my_config.wallet_key,
-        &my_config.wallet_key_derivation.as_deref().unwrap_or("ARGON2I_INT".into()),
+        &my_config.wallet_key_derivation.as_deref().unwrap_or(settings::WALLET_KDF_DEFAULT.into()),
         my_config.wallet_type.as_ref().map(String::as_str),
         my_config.storage_config.as_ref().map(String::as_str),
         my_config.storage_credentials.as_ref().map(String::as_str),
@@ -400,7 +400,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
 
 fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
     info!("> update_agent_webhook_v2");
-    if settings::indy_mocks_enabled() || agency_mocks_enabled() {
+    if agency_mocks_enabled() {
         warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
         return Ok(());
     }

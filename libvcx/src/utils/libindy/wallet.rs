@@ -282,7 +282,7 @@ pub fn import(config: &str) -> VcxResult<()> {
     let restore_config = RestoreWalletConfigs::from_str(config)?;
     let new_wallet_name = restore_config.wallet_name;
     let new_wallet_key = restore_config.wallet_key;
-    let new_wallet_kdf = restore_config.wallet_key_derivation.unwrap_or("ARGON2I_INT".into());
+    let new_wallet_kdf = restore_config.wallet_key_derivation.unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
     let new_wallet_config = build_wallet_config(&new_wallet_name, None, None);
     let new_wallet_credentials = build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf);

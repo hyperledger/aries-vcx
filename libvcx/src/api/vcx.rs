@@ -152,7 +152,7 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
     };
 
     let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).ok().unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-    let wallet_kdf = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or("ARGON2I_INT".into());
+    let wallet_kdf = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or(settings::WALLET_KDF_DEFAULT.into());
     let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
@@ -288,7 +288,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 
         let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or("ARGON2I_INT".into());
+        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or(settings::WALLET_KDF_DEFAULT.into());
         let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
         let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
         info!("_finish_init: opening wallet");
@@ -904,7 +904,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // fix this..., should be restored now
     fn test_init_after_importing_wallet_success() {
         let _setup = SetupDefaults::init();
 
