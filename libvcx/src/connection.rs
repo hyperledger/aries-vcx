@@ -8,9 +8,9 @@ use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
-use agency_vcx;
-use agency_vcx::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
-use agency_vcx::{SerializableObjectWithState, MessageStatusCode};
+use agency_comm;
+use agency_comm::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
+use agency_comm::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
@@ -23,7 +23,7 @@ lazy_static! {
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
-    let (agent_did, agent_verkey) = agency_vcx::create_keys()
+    let (agent_did, agent_verkey) = agency_comm::create_keys()
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
         .send_secure()
@@ -308,8 +308,8 @@ pub mod tests {
     use serde_json::Value;
 
     use api::VcxStateType;
-    use agency_vcx::get_message::download_messages_noauth;
-    use agency_vcx::MessageStatusCode;
+    use agency_comm::get_message::download_messages_noauth;
+    use agency_comm::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;

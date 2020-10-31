@@ -1,5 +1,5 @@
 use error::VcxResult;
-use agency_vcx::thread::Thread;
+use agency_comm::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::attachment::{AttachmentId, Attachments};
 

@@ -1,8 +1,8 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use agency_vcx::message_type::MessageTypes;
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use agency_comm::message_type::MessageTypes;
 use error::prelude::*;
 use settings;
 use utils::httpclient;

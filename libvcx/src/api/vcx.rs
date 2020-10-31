@@ -309,7 +309,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 
         info!("_finish_init: getting and setting webhook url");
         match settings::get_config_value(settings::CONFIG_WEBHOOK_URL) {
-            Ok(webhook_url) => match ::agency_vcx::agent_utils::update_agent_webhook(&webhook_url) {
+            Ok(webhook_url) => match ::agency_comm::agent_utils::update_agent_webhook(&webhook_url) {
                 Ok(()) => {
                     info!("Agent webhook url updated on init, webhook_url={}", webhook_url);
                     cb(command_handle, error::SUCCESS.code_num);
@@ -508,7 +508,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     settings::set_config_value(::settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
     spawn(move || {
-        match ::agency_vcx::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+        match ::agency_comm::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);

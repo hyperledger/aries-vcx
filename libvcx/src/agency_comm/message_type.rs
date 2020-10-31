@@ -2,7 +2,7 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_vcx::A2AMessageKinds;
+use agency_comm::A2AMessageKinds;
 use error::prelude::*;
 use settings;
 

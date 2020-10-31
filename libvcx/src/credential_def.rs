@@ -2,7 +2,7 @@ use serde_json;
 
 use api::PublicEntityStateType;
 use error::prelude::*;
-use agency_vcx::ObjectWithVersion;
+use agency_comm::ObjectWithVersion;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
 use utils::libindy::anoncreds;
 use utils::libindy::cache::update_rev_reg_ids_cache;

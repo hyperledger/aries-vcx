@@ -1,5 +1,5 @@
-use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
-use agency_vcx::message_type::MessageTypes;
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::message_type::MessageTypes;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use utils::{httpclient, validation};
@@ -118,7 +118,7 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    use agency_vcx::update_data;
+    use agency_comm::update_data;
     use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;

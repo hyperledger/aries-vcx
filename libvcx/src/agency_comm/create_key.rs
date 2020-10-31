@@ -1,5 +1,5 @@
-use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
-use agency_vcx::message_type::MessageTypes;
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::message_type::MessageTypes;
 use error::prelude::*;
 use settings;
 use settings::ProtocolTypes;
@@ -94,7 +94,7 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use agency_vcx::create_keys;
+    use agency_comm::create_keys;
     use utils::constants::{CREATE_KEYS_V2_RESPONSE, MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::libindy::signus::create_and_store_my_did;

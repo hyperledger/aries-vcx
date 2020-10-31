@@ -6,9 +6,9 @@ use libc::c_char;
 use serde_json;
 
 use error::prelude::*;
-use agency_vcx;
+use agency_comm;
 use connection;
-use agency_vcx::get_message::{parse_status_codes, parse_connection_handles};
+use agency_comm::get_message::{parse_status_codes, parse_connection_handles};
 use utils::constants::*;
 use utils::cstring::CStringUtils;
 use utils::error;
@@ -44,7 +44,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 
     trace!("vcx_provision_agent(config: {})", config);
 
-    match agency_vcx::agent_utils::connect_register_provision(&config) {
+    match agency_comm::agent_utils::connect_register_provision(&config) {
         Err(e) => {
             error!("Provision Agent Error {}.", e);
             let _res: u32 = e.into();
@@ -84,7 +84,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match agency_vcx::agent_utils::connect_register_provision(&config) {
+        match agency_comm::agent_utils::connect_register_provision(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -331,7 +331,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::agency_vcx::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match ::agency_comm::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -484,7 +484,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     spawn(move || {
-        match ::agency_vcx::update_message::update_agency_messages(&message_status, &msg_json) {
+        match ::agency_comm::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);

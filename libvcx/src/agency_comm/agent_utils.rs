@@ -2,8 +2,8 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use error::prelude::*;
-use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
-use agency_vcx::message_type::MessageTypes;
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::message_type::MessageTypes;
 use settings;
 use utils::{constants, error, httpclient};
 use utils::httpclient::{AgencyMockDecrypted};
@@ -421,7 +421,7 @@ mod tests {
     use std::env;
 
     use api::vcx::vcx_shutdown;
-    use agency_vcx::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
+    use agency_comm::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
     use utils::devsetup::{SetupMocks, SetupDefaults, SetupLibraryAgencyV2};
 
     #[test]

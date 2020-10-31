@@ -1,6 +1,6 @@
 use error::{VcxError, VcxErrorKind, VcxResult};
-use agency_vcx::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
-use agency_vcx::message_type::MessageTypes;
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::message_type::MessageTypes;
 use settings;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
@@ -133,9 +133,9 @@ mod tests {
     use std::time::Duration;
 
     use connection::send_generic_message;
-    use agency_vcx::get_message::download_messages_noauth;
-    use agency_vcx::MessageStatusCode;
-    use agency_vcx::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    use agency_comm::get_message::download_messages_noauth;
+    use agency_comm::MessageStatusCode;
+    use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     use utils::devsetup::{SetupMocks, SetupLibraryAgencyV2};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;

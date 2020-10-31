@@ -8,7 +8,7 @@ use aries::{
 };
 use connection;
 use error::prelude::*;
-use agency_vcx::{
+use agency_comm::{
     get_message::Message,
 };
 use settings;
