@@ -7,7 +7,7 @@ use libindy::proofs::verifier::verifier_internal::{
     build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes,
 };
 use settings;
-use utils::libindy::anoncreds;
+use libindy::utils::anoncreds;
 use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use utils::openssl::encode;
 
@@ -77,7 +77,7 @@ pub mod tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
               "self_attested_attributes":{
@@ -127,11 +127,11 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
@@ -188,11 +188,11 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = ::utils::libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{

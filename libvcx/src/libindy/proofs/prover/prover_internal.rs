@@ -6,9 +6,9 @@ use error::prelude::*;
 use libindy::proofs::proof_request::ProofRequestData;
 use libindy::proofs::proof_request_internal::NonRevokedInterval;
 use settings;
-use utils::libindy::anoncreds;
-use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
+use libindy::utils::anoncreds;
+use libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
+use libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -697,7 +697,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
+            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -740,7 +740,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
+            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -795,7 +795,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
+            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -850,7 +850,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential(attrs, true);
+            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,

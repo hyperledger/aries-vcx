@@ -1,7 +1,7 @@
 use serde_json;
 
 use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::libindy::wallet::{add_record, delete_record, get_record, update_record_value};
+use libindy::utils::wallet::{add_record, delete_record, get_record, update_record_value};
 
 static CACHE_TYPE: &str = "cache";
 static REV_REG_CACHE_PREFIX: &str = "rev_reg:";

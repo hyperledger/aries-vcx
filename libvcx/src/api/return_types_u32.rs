@@ -11,10 +11,10 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use utils::error;
-use utils::libindy::callback::POISON_MSG;
-use utils::libindy::callback_u32 as callback;
-use utils::libindy::error_codes::map_indy_error;
-use utils::libindy::next_command_handle;
+use libindy::utils::callback::POISON_MSG;
+use libindy::utils::callback_u32 as callback;
+use libindy::utils::error_codes::map_indy_error;
+use libindy::utils::next_command_handle;
 use utils::timeout::TimeoutUtils;
 
 fn log_error<T: Display>(e: T) {

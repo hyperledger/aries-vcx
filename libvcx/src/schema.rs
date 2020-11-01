@@ -2,13 +2,13 @@ use std::string::ToString;
 
 use serde_json;
 
+use agency_comm::ObjectWithVersion;
 use api::PublicEntityStateType;
 use error::prelude::*;
-use agency_comm::ObjectWithVersion;
+use libindy::utils::anoncreds;
+use libindy::utils::ledger;
+use libindy::utils::payments::PaymentTxn;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
-use utils::libindy::anoncreds;
-use utils::libindy::ledger;
-use utils::libindy::payments::PaymentTxn;
 use utils::object_cache::ObjectCache;
 
 lazy_static! {
@@ -214,18 +214,18 @@ pub mod tests {
 
     use rand::Rng;
 
+    #[cfg(feature = "pool_tests")]
+    use libindy::utils::anoncreds::tests::create_and_write_test_schema;
+    #[cfg(feature = "pool_tests")]
+    use libindy::utils::payments::add_new_did;
+    use libindy::utils::wallet::get_wallet_handle;
     use settings;
     #[cfg(feature = "pool_tests")]
     use utils::constants;
     use utils::constants::SCHEMA_ID;
     use utils::devsetup::*;
-    #[cfg(feature = "pool_tests")]
-    use utils::libindy::anoncreds::tests::create_and_write_test_schema;
-    #[cfg(feature = "pool_tests")]
-    use utils::libindy::payments::add_new_did;
 
     use super::*;
-    use utils::libindy::wallet::get_wallet_handle;
 
     fn data() -> Vec<String> {
         vec!["address1".to_string(), "address2".to_string(), "zip".to_string(), "city".to_string(), "state".to_string()]
@@ -433,7 +433,7 @@ pub mod tests {
 
         assert_eq!(1, update_state(handle).unwrap());
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_main_wallet();
+        ::libindy::utils::wallet::close_main_wallet();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -443,6 +443,6 @@ pub mod tests {
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());
-        ::utils::libindy::wallet::close_main_wallet();
+        ::libindy::utils::wallet::close_main_wallet();
     }
 }

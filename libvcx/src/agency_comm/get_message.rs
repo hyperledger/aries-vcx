@@ -1,14 +1,15 @@
 use std::collections::HashMap;
-use aries::utils::encryption_envelope::EncryptionEnvelope;
-use aries::handlers::connection::agent_info::AgentInfo;
-use error::{VcxError, VcxErrorKind, VcxResult};
+
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use agency_comm::message_type::MessageTypes;
+use aries::handlers::connection::agent_info::AgentInfo;
+use aries::messages::a2a::A2AMessage as AriesA2AMessage;
+use aries::utils::encryption_envelope::EncryptionEnvelope;
+use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
-use aries::messages::a2a::A2AMessage as AriesA2AMessage;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -89,7 +90,7 @@ impl GetMessagesBuilder {
             uids: None,
             exclude_payload: None,
             status_codes: None,
-            pairwise_dids: None
+            pairwise_dids: None,
         }
     }
 

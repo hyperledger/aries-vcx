@@ -30,7 +30,7 @@ pub struct CreateKeyResponse {
 #[derive(Debug)]
 pub struct CreateKeyBuilder {
     for_did: String,
-    for_verkey: String
+    for_verkey: String,
 }
 
 impl CreateKeyBuilder {
@@ -39,7 +39,7 @@ impl CreateKeyBuilder {
 
         CreateKeyBuilder {
             for_did: String::new(),
-            for_verkey: String::new()
+            for_verkey: String::new(),
         }
     }
 
@@ -95,9 +95,9 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use agency_comm::create_keys;
+    use libindy::utils::signus::create_and_store_my_did;
     use utils::constants::{CREATE_KEYS_V2_RESPONSE, MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
-    use utils::libindy::signus::create_and_store_my_did;
 
     use super::*;
 

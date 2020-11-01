@@ -12,7 +12,6 @@ use std::ptr;
 
 use error::prelude::*;
 use utils::cstring::CStringUtils;
-use utils::libindy;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
@@ -21,6 +20,7 @@ use self::env_logger::Builder as EnvLoggerBuilder;
 pub use self::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
+use libindy;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();
@@ -61,7 +61,7 @@ impl LibvcxLogger {
         log::set_boxed_logger(Box::new(logger))
             .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting logger failed with: {}", err)))?;
         log::set_max_level(LevelFilter::Trace);
-        libindy::logger::set_logger(log::logger())
+        libindy::utils::logger::set_logger(log::logger())
             .map_err(|err| err.map(VcxErrorKind::LoggingError, "Setting logger failed"))?;
 
         unsafe {
@@ -179,7 +179,7 @@ impl LibvcxDefaultLogger {
                 }
             }
         }
-        libindy::logger::set_default_logger(pattern.as_ref().map(String::as_str))
+        libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
     }
 
     extern fn enabled(_context: *const CVoid,

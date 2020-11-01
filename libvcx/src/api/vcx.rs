@@ -9,9 +9,9 @@ use init::{init_core, open_as_main_wallet, open_pool};
 use settings;
 use utils::cstring::CStringUtils;
 use utils::error;
-use utils::libindy::{ledger, pool, wallet};
-use utils::libindy::pool::is_pool_open;
-use utils::libindy::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
+use libindy::utils::{ledger, pool, wallet};
+use libindy::utils::pool::is_pool_open;
+use libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
 use utils::threadpool::spawn;
 use utils::version_constants;
 
@@ -633,7 +633,7 @@ pub extern fn vcx_mint_tokens(seed: *const c_char, fees: *const c_char) {
     };
     trace!("vcx_mint_tokens(seed: {:?}, fees: {:?})", seed, fees);
 
-    ::utils::libindy::payments::mint_tokens_and_set_fees(None, None, fees, seed).unwrap_or_default();
+    ::libindy::utils::payments::mint_tokens_and_set_fees(None, None, fees, seed).unwrap_or_default();
 }
 
 /// Get details for last occurred error.
@@ -676,26 +676,21 @@ mod tests {
     use api::VcxStateType;
     use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
     use api::wallet::tests::_test_add_and_get_wallet_record;
-    use utils::{
-        libindy::{
-            wallet::{import, tests::create_main_wallet_and_its_backup},
-            pool::get_pool_handle,
-        }
-    };
     use utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use utils::get_temp_dir_path;
-    use utils::libindy::pool::reset_pool_handle;
-    use utils::libindy::pool::tests::create_tmp_genesis_txn_file;
+    use libindy::utils::pool::{reset_pool_handle, get_pool_handle};
+    use libindy::utils::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
-    use utils::libindy::pool::tests::delete_test_pool;
-    use utils::libindy::wallet::delete_wallet;
+    use libindy::utils::pool::tests::delete_test_pool;
+    use libindy::utils::wallet::{delete_wallet, import};
     #[cfg(feature = "pool_tests")]
-    use utils::libindy::wallet::get_wallet_handle;
+    use libindy::utils::wallet::get_wallet_handle;
     use utils::mockdata::mockdata_connection;
     use utils::timeout::TimeoutUtils;
 
     use super::*;
+    use libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     fn config() -> String {
@@ -1225,8 +1220,8 @@ mod tests {
         settings::clear_config();
 
         // Store settings and handles
-        let wallet_handle = ::utils::libindy::wallet::get_wallet_handle();
-        let pool_handle = ::utils::libindy::pool::get_pool_handle().unwrap();
+        let wallet_handle = ::libindy::utils::wallet::get_wallet_handle();
+        let pool_handle = ::libindy::utils::pool::get_pool_handle().unwrap();
         assert_ne!(wallet_handle, INVALID_WALLET_HANDLE);
         assert_ne!(pool_handle, INVALID_POOL_HANDLE);
 
@@ -1245,7 +1240,7 @@ mod tests {
         assert_eq!(error::SUCCESS.code_num, _vcx_init_minimal_c_closure(&config));
 
         // test that wallet and pool are operational
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         settings::set_testing_defaults();
     }
@@ -1363,7 +1358,7 @@ mod tests {
         info!("test_init_composed :: creating schema+creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) =
-            ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
+            ::libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
         assert!(schema_id.len() > 0);
 
         info!("test_init_composed :: going to cleanup");

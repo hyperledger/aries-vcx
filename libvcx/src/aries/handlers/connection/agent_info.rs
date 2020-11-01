@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
+use agency_comm::get_message::{get_connection_messages, Message};
+use agency_comm::MessageStatusCode;
+use agency_comm::update_connection::send_delete_connection_message;
+use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
 use connection::create_agent_keys;
 use error::prelude::*;
-use agency_comm::get_message::{get_connection_messages, Message};
-use agency_comm::MessageStatusCode;
-use agency_comm::update_connection::send_delete_connection_message;
-use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
+use libindy::utils::signus::create_and_store_my_did;
 use settings;
 use settings::ProtocolTypes;
 use utils::httpclient;
-use utils::libindy::signus::create_and_store_my_did;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {
@@ -35,12 +35,12 @@ impl Default for AgentInfo {
 
 fn _log_messages_optionally(a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
-    {
-        for message in a2a_messages.values() {
-            let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
-            warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+        {
+            for message in a2a_messages.values() {
+                let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+                warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+            }
         }
-    }
 }
 
 impl AgentInfo {

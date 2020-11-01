@@ -3,7 +3,7 @@ use time;
 
 use error::prelude::*;
 use agency_comm::thread::Thread;
-use utils::libindy::crypto;
+use libindy::utils::crypto;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::a2a::message_family::MessageFamilies;
 use aries::messages::a2a::message_type::MessageType;
@@ -152,11 +152,11 @@ impl Default for ConnectionSignature {
 
 #[cfg(test)]
 pub mod tests {
-    use utils::libindy::tests::test_setup;
+    use libindy::utils::tests::test_setup;
     use aries::messages::connection::did_doc::tests::*;
 
     use super::*;
-    use utils::libindy::tests::test_setup::create_trustee_key;
+    use libindy::utils::tests::test_setup::create_trustee_key;
 
     fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")

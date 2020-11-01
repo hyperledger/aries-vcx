@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use utils::libindy::callback::{build_buf, build_string, get_cb};
+use libindy::utils::callback::{build_buf, build_string, get_cb};
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();

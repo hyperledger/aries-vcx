@@ -1,10 +1,10 @@
 use serde_json::Value;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
 use agency_comm::get_message::MessagePayload;
 use agency_comm::message_type::*;
 use agency_comm::thread::Thread;
-use utils::libindy::crypto;
+use error::{VcxError, VcxErrorKind, VcxResult};
+use libindy::utils::crypto;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]

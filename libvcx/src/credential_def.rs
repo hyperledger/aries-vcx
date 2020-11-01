@@ -1,13 +1,13 @@
 use serde_json;
 
+use agency_comm::ObjectWithVersion;
 use api::PublicEntityStateType;
 use error::prelude::*;
-use agency_comm::ObjectWithVersion;
+use libindy::utils::anoncreds;
+use libindy::utils::cache::update_rev_reg_ids_cache;
+use libindy::utils::ledger;
+use libindy::utils::payments::PaymentTxn;
 use utils::constants::DEFAULT_SERIALIZE_VERSION;
-use utils::libindy::anoncreds;
-use utils::libindy::cache::update_rev_reg_ids_cache;
-use utils::libindy::ledger;
-use utils::libindy::payments::PaymentTxn;
 use utils::object_cache::ObjectCache;
 
 lazy_static! {
@@ -533,14 +533,14 @@ pub mod tests {
         time::Duration,
     };
 
+    #[cfg(feature = "pool_tests")]
+    use libindy::utils::payments::add_new_did;
     use settings;
     use utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
     use utils::devsetup::*;
-    #[cfg(feature = "pool_tests")]
-    use utils::libindy::payments::add_new_did;
 
     use super::*;
 
@@ -618,9 +618,9 @@ pub mod tests {
     #[test]
     fn test_get_credential_def() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        let (_, _, cred_def_id, cred_def_json, _, _) = ::utils::libindy::anoncreds::tests::create_and_store_credential_def(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, cred_def_id, cred_def_json, _, _) = ::libindy::utils::anoncreds::tests::create_and_store_credential_def(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
-        let (id, r_cred_def_json) = ::utils::libindy::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
+        let (id, r_cred_def_json) = ::libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
 
         assert_eq!(id, cred_def_id);
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
@@ -633,7 +633,7 @@ pub mod tests {
     fn test_create_revocable_fails_with_no_tails_file() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let rc = create_and_publish_credentialdef("1".to_string(),
@@ -672,7 +672,7 @@ pub mod tests {
     fn test_create_revocable_cred_def_with_payments() {
         let _setup = SetupLibraryWalletPool::init();
 
-        let (schema_id, _) = ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2}).to_string();
@@ -688,7 +688,7 @@ pub mod tests {
         assert!(get_rev_reg_def_payment_txn(handle).unwrap().is_some());
         assert!(get_rev_reg_delta_payment_txn(handle).unwrap().is_some());
         let cred_id = get_cred_def_id(handle).unwrap();
-        ::utils::libindy::anoncreds::get_cred_def_json(&cred_id).unwrap();
+        ::libindy::utils::anoncreds::get_cred_def_json(&cred_id).unwrap();
     }
 
     #[cfg(feature = "pool_tests")]

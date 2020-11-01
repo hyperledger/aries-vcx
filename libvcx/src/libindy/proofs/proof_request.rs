@@ -6,7 +6,7 @@ use serde_json;
 use aries::messages::connection::service::Service;
 use error::prelude::*;
 use libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
-use utils::libindy::anoncreds;
+use libindy::utils::anoncreds;
 use utils::qualifier;
 use utils::validation;
 

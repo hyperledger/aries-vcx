@@ -58,21 +58,11 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
-    use ::{settings};
-    
-    #[allow(unused_imports)]
-    use utils::{constants::*,
-                get_temp_dir_path,
-                libindy::{anoncreds::{libindy_create_and_store_credential_def,
-                                      libindy_issuer_create_credential_offer,
-                                      libindy_prover_create_credential_req},
-                          LibindyMock,
-                          wallet, wallet::get_wallet_handle},
-    };
+
+    use settings;
+    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use utils::constants::SCHEMAS_JSON;
     use utils::devsetup::*;
-    
-    
-    
 
     use super::*;
 

@@ -8,16 +8,16 @@ use serde_json::Value;
 
 use ::{indy, init};
 use ::{settings, utils};
+use libindy::utils::pool::reset_pool_handle;
+use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
+use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
+use libindy::utils::wallet;
+use libindy::utils::wallet::create_and_open_as_main_wallet;
 use settings::set_testing_defaults;
 use utils::{get_temp_dir_path, threadpool};
 use utils::constants;
 use utils::file::write_file;
 use utils::httpclient::AgencyMockDecrypted;
-use utils::libindy::pool::reset_pool_handle;
-use utils::libindy::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use utils::libindy::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
-use utils::libindy::wallet;
-use utils::libindy::wallet::create_and_open_as_main_wallet;
 use utils::logger::LibvcxDefaultLogger;
 use utils::object_cache::ObjectCache;
 use utils::plugins::init_plugin;
@@ -332,15 +332,15 @@ pub fn create_new_seed() -> String {
 
 pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    ::utils::libindy::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
-    let (my_did, my_vk) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    ::libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
+    let (my_did, my_vk) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
 pub fn setup_libnullpay_nofees() {
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    ::utils::libindy::payments::tests::token_setup(None, None, true);
+    ::libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
 pub fn setup_indy_env(use_zero_fees: bool) {
@@ -354,13 +354,13 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    ::utils::libindy::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
+    ::libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
 
-    let (my_did, my_vk) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let (my_did, my_vk) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 
-    ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
+    ::libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
 pub fn cleanup_indy_env() {
@@ -422,9 +422,9 @@ fn assign_trustee_role(institution_handle: Option<u32>) {
     settings::clear_config();
 
     wallet::create_and_open_as_main_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
-    let (trustee_did, _) = ::utils::libindy::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let (trustee_did, _) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
+    ::libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
 
     close_main_wallet();
     wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
@@ -500,7 +500,7 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
 
     // as trustees, mint tokens into each wallet
     set_institution(None);
-    ::utils::libindy::payments::tests::token_setup(None, None, use_zero_fees);
+    ::libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
 pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {

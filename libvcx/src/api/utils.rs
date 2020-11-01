@@ -13,7 +13,7 @@ use utils::constants::*;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::httpclient::AgencyMock;
-use utils::libindy::payments;
+use libindy::utils::payments;
 use utils::threadpool::spawn;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -163,7 +163,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
            command_handle);
 
     spawn(move || {
-        match ::utils::libindy::payments::get_ledger_fees() {
+        match ::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -515,7 +515,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { ::utils::libindy::pool::set_pool_handle(None); } else { ::utils::libindy::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { ::libindy::utils::pool::set_pool_handle(None); } else { ::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -594,7 +594,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     spawn(move || {
-        match ::utils::libindy::ledger::endorse_transaction(&transaction) {
+        match ::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);

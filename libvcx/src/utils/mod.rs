@@ -45,7 +45,6 @@ pub mod constants;
 pub mod timeout;
 pub mod openssl;
 pub mod json;
-pub mod libindy;
 pub mod threadpool;
 pub mod uuid;
 pub mod author_agreement;

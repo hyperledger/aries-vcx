@@ -2,10 +2,10 @@ use serde_json;
 
 use aries::handlers::issuance::issuer::issuer::Issuer;
 use aries::messages::a2a::A2AMessage;
+use connection;
 use error::prelude::*;
 use utils::error;
 use utils::object_cache::ObjectCache;
-use connection;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -174,21 +174,17 @@ pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
+    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use libindy::utils::LibindyMock;
     #[allow(unused_imports)]
-    use utils::{constants::*,
-                get_temp_dir_path,
-                libindy::{anoncreds::{libindy_create_and_store_credential_def,
-                                      libindy_issuer_create_credential_offer,
-                                      libindy_prover_create_credential_req},
-                          LibindyMock,
-                          wallet, wallet::get_wallet_handle},
-    };
+
     use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use super::*;
+    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
     static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";

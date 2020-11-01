@@ -298,7 +298,7 @@ pub fn import(config: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use ::utils::libindy::signus::create_and_store_my_did;
+    use ::libindy::utils::signus::create_and_store_my_did;
     use utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
     use utils::get_temp_dir_path;
 

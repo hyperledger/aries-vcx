@@ -1,6 +1,6 @@
-use error::{VcxError, VcxErrorKind, VcxResult};
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
+use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use utils::{constants, httpclient};
 use utils::httpclient::AgencyMock;
@@ -33,7 +33,7 @@ pub struct UIDsByConn {
 
 struct UpdateMessageStatusByConnectionsBuilder {
     status_code: Option<MessageStatusCode>,
-    uids_by_conns: Vec<UIDsByConn>
+    uids_by_conns: Vec<UIDsByConn>,
 }
 
 impl UpdateMessageStatusByConnectionsBuilder {
@@ -132,11 +132,11 @@ mod tests {
     #[cfg(any(feature = "agency_pool_tests"))]
     use std::time::Duration;
 
-    use connection::send_generic_message;
     use agency_comm::get_message::download_messages_noauth;
     use agency_comm::MessageStatusCode;
     use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
-    use utils::devsetup::{SetupMocks, SetupLibraryAgencyV2};
+    use connection::send_generic_message;
+    use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
     use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 

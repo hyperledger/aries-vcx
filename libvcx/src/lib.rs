@@ -268,19 +268,19 @@ mod tests {
     fn revoke_credential(issuer_handle: u32, rev_reg_id: Option<String>) {
         set_institution(None);
         // GET REV REG DELTA BEFORE REVOCATION
-        let (_, delta, timestamp) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
+        let (_, delta, timestamp) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
         info!("revoking credential");
         ::issuer_credential::revoke_credential(issuer_handle).unwrap();
-        let (_, delta_after_revoke, _) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
+        let (_, delta_after_revoke, _) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
         assert_ne!(delta, delta_after_revoke);
     }
 
     fn revoke_credential_local(issuer_handle: u32, rev_reg_id: Option<String>) {
         set_institution(None);
-        let (_, delta, timestamp) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
+        let (_, delta, timestamp) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
         info!("revoking credential locally");
         ::issuer_credential::revoke_credential_local(issuer_handle).unwrap();
-        let (_, delta_after_revoke, _) = ::utils::libindy::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
+        let (_, delta_after_revoke, _) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
@@ -291,13 +291,13 @@ mod tests {
 
     fn publish_revocation(rev_reg_id: String) {
         set_institution(None);
-        ::utils::libindy::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
+        ::libindy::utils::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
     }
 
     fn _create_address_schema() -> (String, String, String, String, u32, Option<String>) {
         info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
+        ::libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
     }
 
     fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
@@ -675,7 +675,7 @@ mod tests {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
         }
         let attrs_list = attrs_list.to_string();
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = ::utils::libindy::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = ::libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));

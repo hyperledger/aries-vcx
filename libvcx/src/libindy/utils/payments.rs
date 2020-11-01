@@ -8,8 +8,8 @@ use serde_json::Value;
 use error::prelude::*;
 use settings;
 use utils::constants::{CREATE_TRANSFER_ACTION, SUBMIT_SCHEMA_RESPONSE};
-use utils::libindy::ledger::{append_txn_author_agreement_to_request, auth_rule, libindy_sign_and_submit_request, libindy_sign_request, libindy_submit_request};
-use utils::libindy::wallet::get_wallet_handle;
+use libindy::utils::ledger::{append_txn_author_agreement_to_request, auth_rule, libindy_sign_and_submit_request, libindy_sign_request, libindy_submit_request};
+use libindy::utils::wallet::get_wallet_handle;
 
 static DEFAULT_FEES: &str = r#"{"0":0, "1":0, "3":0, "100":0, "101":2, "102":42, "103":0, "104":0, "105":0, "107":0, "108":0, "109":0, "110":0, "111":0, "112":0, "113":2, "114":2, "115":0, "116":0, "117":0, "118":0, "119":0, "10001":0}"#;
 
@@ -248,7 +248,7 @@ pub fn pay_for_txn(req: &str, txn_action: (&str, &str, &str, Option<&str>, Optio
     debug!("pay_for_txn(req: {}, txn_action: {:?})", req, txn_action);
     if settings::indy_mocks_enabled() {
         let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
-        let outputs = serde_json::from_str::<Vec<::utils::libindy::payments::Output>>(r#"[{"amount":1,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
+        let outputs = serde_json::from_str::<Vec<::libindy::utils::payments::Output>>(r#"[{"amount":1,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
         return Ok((Some(PaymentTxn::from_parts(inputs, outputs, 1, false)), SUBMIT_SCHEMA_RESPONSE.to_string()));
     }
 
@@ -389,7 +389,7 @@ fn get_requester_info(requester_info_json: Option<String>) -> VcxResult<String> 
     let role = match settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_ROLE) {
         Ok(role) => role,
         Err(_) => {
-            let role_ = ::utils::libindy::ledger::get_role(&settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?)?;
+            let role_ = ::libindy::utils::ledger::get_role(&settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?)?;
             settings::set_config_value(settings::CONFIG_SDK_TO_REMOTE_ROLE, &role_);
             role_
         }
@@ -490,12 +490,12 @@ pub fn mint_tokens_and_set_fees(number_of_addresses: Option<u32>, tokens_per_add
         let outputs = serde_json::to_string(&mint).unwrap();
         let (req, _) = payments::build_mint_req(get_wallet_handle(), Some(&did_1), &outputs, None).wait().unwrap();
 
-        let sign1 = ::utils::libindy::ledger::multisign_request(&did_1, &req).unwrap();
-        let sign2 = ::utils::libindy::ledger::multisign_request(&did_2, &sign1).unwrap();
-        let sign3 = ::utils::libindy::ledger::multisign_request(&did_3, &sign2).unwrap();
-        let sign4 = ::utils::libindy::ledger::multisign_request(&did_4, &sign3).unwrap();
+        let sign1 = ::libindy::utils::ledger::multisign_request(&did_1, &req).unwrap();
+        let sign2 = ::libindy::utils::ledger::multisign_request(&did_2, &sign1).unwrap();
+        let sign3 = ::libindy::utils::ledger::multisign_request(&did_3, &sign2).unwrap();
+        let sign4 = ::libindy::utils::ledger::multisign_request(&did_4, &sign3).unwrap();
 
-        match ::utils::libindy::ledger::libindy_submit_request(&sign4) {
+        match ::libindy::utils::ledger::libindy_submit_request(&sign4) {
             Ok(_) => (),
             Err(x) => error!("failure minting tokens: {}", x),
         };
@@ -505,12 +505,12 @@ pub fn mint_tokens_and_set_fees(number_of_addresses: Option<u32>, tokens_per_add
         let txn = payments::build_set_txn_fees_req(get_wallet_handle(), Some(&did_1), settings::get_payment_method().as_str(), fees_)
             .wait()?;
 
-        let sign1 = ::utils::libindy::ledger::multisign_request(&did_1, &txn).unwrap();
-        let sign2 = ::utils::libindy::ledger::multisign_request(&did_2, &sign1).unwrap();
-        let sign3 = ::utils::libindy::ledger::multisign_request(&did_3, &sign2).unwrap();
-        let sign4 = ::utils::libindy::ledger::multisign_request(&did_4, &sign3).unwrap();
+        let sign1 = ::libindy::utils::ledger::multisign_request(&did_1, &txn).unwrap();
+        let sign2 = ::libindy::utils::ledger::multisign_request(&did_2, &sign1).unwrap();
+        let sign3 = ::libindy::utils::ledger::multisign_request(&did_3, &sign2).unwrap();
+        let sign4 = ::libindy::utils::ledger::multisign_request(&did_4, &sign3).unwrap();
 
-        ::utils::libindy::ledger::libindy_submit_request(&sign4).unwrap();
+        ::libindy::utils::ledger::libindy_submit_request(&sign4).unwrap();
 
         let txn_fees: HashMap<String, String> =
             ::serde_json::from_str::<HashMap<String, u64>>(fees_).unwrap()
@@ -529,12 +529,12 @@ pub fn add_new_did(role: Option<&str>) -> (String, String) {
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-    let (did, verkey) = ::utils::libindy::signus::create_and_store_my_did(None, None).unwrap();
+    let (did, verkey) = ::libindy::utils::signus::create_and_store_my_did(None, None).unwrap();
     let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).wait().unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).unwrap();
 
-    ::utils::libindy::ledger::libindy_sign_and_submit_request(&institution_did, &req_nym).unwrap();
+    ::libindy::utils::ledger::libindy_sign_and_submit_request(&institution_did, &req_nym).unwrap();
     (did, verkey)
 }
 
@@ -773,8 +773,8 @@ pub mod tests {
     fn test_pay_for_txn_real() {
         let _setup = SetupLibraryWalletPool::init();
 
-        let (_, schema_json) = ::utils::libindy::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let create_schema_req = ::utils::libindy::anoncreds::tests::create_schema_req(&schema_json);
+        let (_, schema_json) = ::libindy::utils::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let create_schema_req = ::libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
         let start_wallet = get_wallet_token_info().unwrap();
 
         let (payment, _response) = pay_for_txn(&create_schema_req, ::utils::constants::CREATE_SCHEMA_ACTION).unwrap();
@@ -794,8 +794,8 @@ pub mod tests {
 
         mint_tokens_and_set_fees(Some(0), Some(0), Some(r#"{"101":50000000001}"#.to_string()), None).unwrap();
 
-        let (_, schema_json) = ::utils::libindy::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let create_schema_req = ::utils::libindy::anoncreds::tests::create_schema_req(&schema_json);
+        let (_, schema_json) = ::libindy::utils::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let create_schema_req = ::libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
 
         let rc = pay_for_txn(&create_schema_req, ::utils::constants::CREATE_SCHEMA_ACTION);
 
@@ -879,8 +879,8 @@ pub mod tests {
     fn test_submit_fees_with_insufficient_tokens_on_ledger() {
         let _setup = SetupLibraryWalletPool::init();
 
-        let (_, schema_json) = ::utils::libindy::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let req = ::utils::libindy::anoncreds::tests::create_schema_req(&schema_json);
+        let (_, schema_json) = ::libindy::utils::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let req = ::libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
         let (remainder, inputs, refund_address) = inputs(2).unwrap();
         let output = outputs(remainder, &refund_address, None, None).unwrap();
         let start_wallet = get_wallet_token_info().unwrap();
@@ -898,8 +898,8 @@ pub mod tests {
     fn test_pay_for_txn_with_empty_outputs_success() {
         let _setup = SetupLibraryWalletPool::init();
 
-        let (_, schema_json) = ::utils::libindy::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let req = ::utils::libindy::anoncreds::tests::create_schema_req(&schema_json);
+        let (_, schema_json) = ::libindy::utils::anoncreds::tests::create_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let req = ::libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
 
         let cost = get_action_price(::utils::constants::CREATE_SCHEMA_ACTION, None).unwrap();
         let start_wallet = get_wallet_token_info().unwrap();
@@ -947,7 +947,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let fees = get_ledger_fees().unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -957,7 +957,7 @@ pub mod tests {
 
         mint_tokens_and_set_fees(Some(0), Some(0), Some("{\"101\":0, \"102\":0}".to_string()), None).unwrap();
         let fees = get_ledger_fees().unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 
     fn _action() -> String {

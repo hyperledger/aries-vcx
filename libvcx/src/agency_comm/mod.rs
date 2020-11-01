@@ -1,12 +1,12 @@
 use std::u8;
 
-use ::{log, settings};
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
+use ::{log, settings};
 use error::prelude::*;
+use libindy::utils::crypto;
 use utils::httpclient::AgencyMockDecrypted;
-use utils::libindy::crypto;
 use utils::validation;
 
 use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};

@@ -7,8 +7,8 @@ use serde_json;
 
 use error::prelude::*;
 use settings;
-use utils::libindy::pool::get_pool_handle;
-use utils::libindy::wallet::get_wallet_handle;
+use libindy::utils::pool::get_pool_handle;
+use libindy::utils::wallet::get_wallet_handle;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -297,7 +297,7 @@ pub mod auth_rule {
 
         GET_DEFAULT_AUTH_CONSTRAINTS.call_once(|| {
             let get_auth_rule_request = ::indy::ledger::build_get_auth_rule_request(None, None, None, None, None, None).wait().unwrap();
-            let get_auth_rule_response = ::utils::libindy::ledger::libindy_submit_request(&get_auth_rule_request).unwrap();
+            let get_auth_rule_response = ::libindy::utils::ledger::libindy_submit_request(&get_auth_rule_request).unwrap();
 
             let response: GetAuthRuleResponse = ::serde_json::from_str(&get_auth_rule_response)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, err)).unwrap();
@@ -462,7 +462,7 @@ mod test {
     fn test_endorse_transaction() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        use utils::libindy::payments::add_new_did;
+        use libindy::utils::payments::add_new_did;
 
         let (author_did, _) = add_new_did(None);
         let (endorser_did, _) = add_new_did(Some("ENDORSER"));

@@ -9,9 +9,9 @@ use libindy::proofs::prover::prover_internal::{
     build_schemas_json_prover, credential_def_identifiers,
 };
 use settings;
-use utils::libindy::anoncreds;
-use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
+use libindy::utils::anoncreds;
+use libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
+use libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {

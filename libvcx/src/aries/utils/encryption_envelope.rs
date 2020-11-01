@@ -3,7 +3,7 @@ use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::forward::Forward;
 use error::prelude::*;
 use utils::httpclient::AgencyMockDecrypted;
-use utils::libindy::crypto;
+use libindy::utils::crypto;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -128,13 +128,13 @@ impl EncryptionEnvelope {
 pub mod tests {
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
-    use utils::libindy::crypto::create_key;
-    use utils::libindy::tests::test_setup;
+    use libindy::utils::crypto::create_key;
+    use libindy::utils::tests::test_setup;
 
     use super::*;
     use utils::devsetup::SetupEmpty;
-    use utils::libindy::tests::test_setup::create_trustee_key;
-    use utils::libindy::wallet;
+    use libindy::utils::tests::test_setup::create_trustee_key;
+    use libindy::utils::wallet;
 
     fn _setup() {
         ::settings::set_config_value(::settings::CONFIG_ENABLE_TEST_MODE, "false");

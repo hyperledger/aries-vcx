@@ -51,11 +51,11 @@ impl LibindyMock {
 pub mod tests {
     use futures::Future;
 
+    use init::open_pool;
     use settings;
     use utils::devsetup::*;
 
     use super::*;
-    use init::open_pool;
 
     // TODO:  Is used for Aries tests...try to remove and use one of devsetup's
     pub mod test_setup {

@@ -72,7 +72,7 @@ impl DeleteConnectionBuilder {
             to_vk: String::new(),
             status_code: ConnectionStatus::Deleted,
             agent_did: String::new(),
-            agent_vk: String::new()
+            agent_vk: String::new(),
         }
     }
 

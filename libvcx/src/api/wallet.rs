@@ -7,9 +7,9 @@ use libc::c_char;
 use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
-use utils::libindy::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
-use utils::libindy::wallet::{export_main_wallet, get_wallet_handle, import};
-use utils::libindy::wallet;
+use libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
+use libindy::utils::wallet::{export_main_wallet, get_wallet_handle, import};
+use libindy::utils::wallet;
 use utils::threadpool::spawn;
 
 /// Get the total balance from all addresses contained in the configured wallet
@@ -992,8 +992,8 @@ pub mod tests {
     use settings;
     use utils::devsetup::*;
     #[cfg(feature = "pool_tests")]
-    use utils::libindy::payments::build_test_address;
-    use utils::libindy::wallet::{delete_wallet, create_and_open_as_main_wallet, close_main_wallet};
+    use libindy::utils::payments::build_test_address;
+    use libindy::utils::wallet::{delete_wallet, create_and_open_as_main_wallet, close_main_wallet};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
@@ -1130,7 +1130,7 @@ pub mod tests {
 
         let recipient = CStringUtils::string_to_cstring(build_test_address("2ZrAm5Jc3sP4NAXMQbaWzDxEa12xxJW3VgWjbbPtMPQCoznJyS"));
         debug!("sending payment to {:?}", recipient);
-        let balance = ::utils::libindy::payments::get_wallet_token_info().unwrap().get_balance();
+        let balance = ::libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
         let tokens = 5;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
@@ -1140,7 +1140,7 @@ pub mod tests {
                                           Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        let new_balance = ::utils::libindy::payments::get_wallet_token_info().unwrap().get_balance();
+        let new_balance = ::libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
         assert_eq!(balance - tokens, new_balance);
     }
 

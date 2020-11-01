@@ -14,7 +14,7 @@ pub mod test {
     use agency_comm::agent_utils::connect_register_provision;
     use agency_comm::payload::{PayloadKinds};
     use utils::devsetup::*;
-    use utils::libindy::wallet::*;
+    use libindy::utils::wallet::*;
     use utils::plugins::init_plugin;
     use aries::messages::a2a::A2AMessage;
     use error::{VcxResult, VcxErrorKind, VcxError};
@@ -36,15 +36,15 @@ pub mod test {
 
     impl Pool {
         pub fn open() -> Pool {
-            ::utils::libindy::pool::tests::open_test_pool();
+            ::libindy::utils::pool::tests::open_test_pool();
             Pool {}
         }
     }
 
     impl Drop for Pool {
         fn drop(&mut self) {
-            ::utils::libindy::pool::close().unwrap();
-            ::utils::libindy::pool::tests::delete_test_pool();
+            ::libindy::utils::pool::close().unwrap();
+            ::libindy::utils::pool::tests::delete_test_pool();
         }
     }
 

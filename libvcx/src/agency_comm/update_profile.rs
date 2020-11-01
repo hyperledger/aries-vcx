@@ -10,7 +10,7 @@ use utils::httpclient::AgencyMock;
 pub struct UpdateProfileDataBuilder {
     to_did: String,
     agent_payload: String,
-    configs: Vec<ConfigOption>
+    configs: Vec<ConfigOption>,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -39,7 +39,7 @@ impl UpdateProfileDataBuilder {
         UpdateProfileDataBuilder {
             to_did: String::new(),
             configs: Vec::new(),
-            agent_payload: String::new()
+            agent_payload: String::new(),
         }
     }
 
@@ -119,10 +119,10 @@ impl UpdateProfileDataBuilder {
 #[cfg(test)]
 mod tests {
     use agency_comm::update_data;
+    use libindy::utils::signus::create_and_store_my_did;
     use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::httpclient::AgencyMockDecrypted;
-    use utils::libindy::signus::create_and_store_my_did;
     use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     use super::*;

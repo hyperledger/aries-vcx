@@ -842,7 +842,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match ::utils::libindy::crypto::sign(&vk, &data_raw) {
+        match ::libindy::utils::crypto::sign(&vk, &data_raw) {
             Ok(x) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
@@ -922,7 +922,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match ::utils::libindy::crypto::verify(&vk, &data_raw, &signature_raw) {
+        match ::libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
             Ok(x) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
                        command_handle, error::SUCCESS.message, x);

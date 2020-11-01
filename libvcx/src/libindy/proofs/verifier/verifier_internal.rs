@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use error::prelude::*;
 use settings;
-use utils::libindy::anoncreds;
+use libindy::utils::anoncreds;
 use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use utils::openssl::encode;
 

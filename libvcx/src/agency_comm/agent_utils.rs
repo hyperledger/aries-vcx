@@ -1,17 +1,17 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use error::prelude::*;
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
+use error::prelude::*;
+use libindy::utils::{anoncreds, wallet};
+use libindy::utils::signus::create_and_store_my_did;
+use libindy::utils::wallet::get_wallet_handle;
 use settings;
-use utils::{constants, error, httpclient};
-use utils::httpclient::{AgencyMockDecrypted};
-use utils::libindy::{anoncreds, wallet};
-use utils::libindy::signus::create_and_store_my_did;
-use utils::option_util::get_or_default;
-use utils::libindy::wallet::get_wallet_handle;
 use settings::agency_mocks_enabled;
+use utils::{constants, error, httpclient};
+use utils::httpclient::AgencyMockDecrypted;
+use utils::option_util::get_or_default;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -420,9 +420,9 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 mod tests {
     use std::env;
 
-    use api::vcx::vcx_shutdown;
     use agency_comm::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
-    use utils::devsetup::{SetupMocks, SetupDefaults, SetupLibraryAgencyV2};
+    use api::vcx::vcx_shutdown;
+    use utils::devsetup::{SetupDefaults, SetupLibraryAgencyV2, SetupMocks};
 
     #[test]
     #[cfg(feature = "agency")]
