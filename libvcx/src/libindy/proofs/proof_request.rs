@@ -5,80 +5,10 @@ use serde_json;
 
 use aries::messages::connection::service::Service;
 use error::prelude::*;
-use utils::validation;
+use libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use utils::libindy::anoncreds;
 use utils::qualifier;
-
-static PROOF_REQUEST: &str = "PROOF_REQUEST";
-static PROOF_DATA: &str = "proof_request_data";
-pub const PROOF_REQUEST_V2: &str = "2.0";
-
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
-struct ProofType {
-    name: String,
-    #[serde(rename = "version")]
-    type_version: String,
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
-struct ProofTopic {
-    mid: u32,
-    tid: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-#[serde(untagged)]
-pub enum Restrictions {
-    V1(Vec<Filter>),
-    V2(::serde_json::Value),
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct AttrInfo {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub names: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub restrictions: Option<Restrictions>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub non_revoked: Option<NonRevokedInterval>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub self_attest_allowed: Option<bool>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct Filter {
-    pub schema_id: Option<String>,
-    pub schema_issuer_did: Option<String>,
-    pub schema_name: Option<String>,
-    pub schema_version: Option<String>,
-    pub issuer_did: Option<String>,
-    pub cred_def_id: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct PredicateInfo {
-    pub name: String,
-    //Todo: Update p_type to use Enum
-    pub p_type: String,
-    pub p_value: i32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub restrictions: Option<Restrictions>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub non_revoked: Option<NonRevokedInterval>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct ProofPredicates {
-    predicates: Vec<PredicateInfo>
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub struct NonRevokedInterval {
-    pub from: Option<u64>,
-    pub to: Option<u64>,
-}
+use utils::validation;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofRequestData {
@@ -103,16 +33,6 @@ impl ProofRequestData {
 
     pub fn set_name(mut self, name: String) -> ProofRequestData {
         self.name = name;
-        self
-    }
-
-    pub fn set_version(mut self, version: String) -> ProofRequestData {
-        self.data_version = version;
-        self
-    }
-
-    pub fn set_format_version(mut self, version: ProofRequestVersion) -> ProofRequestData {
-        self.ver = Some(version);
         self
     }
 

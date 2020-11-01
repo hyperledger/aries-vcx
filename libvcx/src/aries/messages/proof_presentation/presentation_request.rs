@@ -4,7 +4,7 @@ use error::prelude::*;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::attachment::{AttachmentId, Attachments};
 use aries::messages::connection::service::Service;
-use indyvc::proofs::proof_request::ProofRequestData;
+use libindy::proofs::proof_request::ProofRequestData;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {

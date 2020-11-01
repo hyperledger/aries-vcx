@@ -3,13 +3,25 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use error::prelude::*;
+use libindy::proofs::proof_request::ProofRequestData;
+use libindy::proofs::proof_request_internal::NonRevokedInterval;
 use settings;
 use utils::libindy::anoncreds;
 use utils::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 use utils::libindy::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
-use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
-use indyvc::proofs::proof_message::CredInfoProver;
-use indyvc::proofs::proof_request::{ProofRequestData, NonRevokedInterval};
+
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct CredInfoProver {
+    pub requested_attr: String,
+    pub referent: String,
+    pub schema_id: String,
+    pub cred_def_id: String,
+    pub rev_reg_id: Option<String>,
+    pub cred_rev_id: Option<String>,
+    pub revocation_interval: Option<NonRevokedInterval>,
+    pub tails_file: Option<String>,
+    pub timestamp: Option<u64>,
+}
 
 fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
@@ -244,42 +256,12 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
     Ok(rtn.to_string())
 }
 
-pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
-    trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
-
-    match get_mock_generate_indy_proof() {
-        None => {}
-        Some(mocked_indy_proof) => {
-            warn!("generate_indy_proof :: returning mocked response");
-            return Ok(mocked_indy_proof);
-        }
-    }
-
-    let proof_request: ProofRequestData = serde_json::from_str(&proof_req_data_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
-
-    let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
-
-    let revoc_states_json = build_rev_states_json(&mut credentials_identifiers)?;
-    let requested_credentials = build_requested_credentials_json(&credentials_identifiers,
-                                                                 self_attested_attrs,
-                                                                 &proof_request)?;
-
-    let schemas_json = build_schemas_json_prover(&credentials_identifiers)?;
-    let credential_defs_json = build_cred_defs_json_prover(&credentials_identifiers)?;
-
-    let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
-                                                       &requested_credentials,
-                                                       settings::DEFAULT_LINK_SECRET_ALIAS,
-                                                       &schemas_json,
-                                                       &credential_defs_json,
-                                                       Some(&revoc_states_json))?;
-    Ok(proof)
-}
 
 #[cfg(test)]
 pub mod tests {
     use connection;
+    use libindy::proofs::proof_request_internal::NonRevokedInterval;
+    use libindy::proofs::prover::prover_internal::{CredInfoProver, get_revocation_interval};
     use utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,

@@ -123,7 +123,6 @@ pub mod tests {
     use aries::messages::proof_presentation::presentation::Presentation;
     use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use connection::tests::build_test_connection_inviter_requested;
-    use proof_utils::validate_indy_proof;
     use settings;
     use utils::constants::*;
     use utils::devsetup::*;

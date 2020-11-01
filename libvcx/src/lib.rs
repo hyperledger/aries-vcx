@@ -48,10 +48,8 @@ pub mod credential;
 pub mod disclosed_proof;
 
 pub mod aries;
-mod proof_utils;
-mod disclosed_proof_utils;
 mod filters;
-mod indyvc;
+mod libindy;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
