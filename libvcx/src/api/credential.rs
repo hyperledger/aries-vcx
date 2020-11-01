@@ -238,8 +238,8 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
-                                 credential_handle: u32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
     info!("vcx_credential_get_attributes >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -274,8 +274,8 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
-                                 credential_handle: u32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attachment: *const c_char)>) -> u32 {
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attachment: *const c_char)>) -> u32 {
     info!("vcx_credential_get_attachment >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -998,15 +998,13 @@ mod tests {
     use serde_json::Value;
 
     use ::credential::tests::BAD_CREDENTIAL_OFFER;
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use api::VcxStateType;
     use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use utils::timeout::TimeoutUtils;
-    
 
     use super::*;
 

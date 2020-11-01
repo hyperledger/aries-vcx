@@ -4,14 +4,15 @@ use indy::{CommandHandle, INVALID_WALLET_HANDLE};
 use indy_sys::{INVALID_POOL_HANDLE, WalletHandle};
 use libc::c_char;
 
+use agency_comm::agency_settings;
 use error::prelude::*;
 use init::{init_core, open_as_main_wallet, open_pool};
-use settings;
-use utils::cstring::CStringUtils;
-use utils::error;
 use libindy::utils::{ledger, pool, wallet};
 use libindy::utils::pool::is_pool_open;
 use libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
+use settings;
+use utils::cstring::CStringUtils;
+use utils::error;
 use utils::threadpool::spawn;
 use utils::version_constants;
 
@@ -44,7 +45,9 @@ pub extern fn vcx_init_with_config(command_handle: CommandHandle,
 
     if config == "ENABLE_TEST_MODE" {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::set_testing_defaults();
+        agency_settings::set_testing_defaults_agency();
         warn!("Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
     } else {
         match settings::process_config_string(&config, true) {
@@ -220,7 +223,9 @@ pub extern fn vcx_init(command_handle: CommandHandle,
 
         if config_path == "ENABLE_TEST_MODE" {
             settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+            agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
             settings::set_testing_defaults();
+            agency_settings::set_testing_defaults_agency();
             warn!("vcx_init:: Initialized with ENABLE_TEST_MODE. Using settings: {:?}", settings::settings_as_string());
         } else {
             match settings::process_config_file(&config_path) {
@@ -351,7 +356,9 @@ pub extern fn vcx_init_minimal(config: *const c_char) -> u32 {
 
     if config == "ENABLE_TEST_MODE" {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::set_testing_defaults();
+        agency_settings::set_testing_defaults_agency();
     } else {
         match settings::process_config_string(&config, false) {
             Err(e) => {
@@ -672,25 +679,26 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use indy_sys::INVALID_POOL_HANDLE;
 
+    use agency_comm::agency_settings;
     use api::return_types_u32;
     use api::VcxStateType;
     use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
     use api::wallet::tests::_test_add_and_get_wallet_record;
-    use utils::devsetup::*;
-    #[cfg(any(feature = "agency", feature = "pool_tests"))]
-    use utils::get_temp_dir_path;
-    use libindy::utils::pool::{reset_pool_handle, get_pool_handle};
+    use libindy::utils::pool::{get_pool_handle, reset_pool_handle};
     use libindy::utils::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
     use libindy::utils::pool::tests::delete_test_pool;
     use libindy::utils::wallet::{delete_wallet, import};
     #[cfg(feature = "pool_tests")]
     use libindy::utils::wallet::get_wallet_handle;
+    use libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
+    use utils::devsetup::*;
+    #[cfg(any(feature = "agency", feature = "pool_tests"))]
+    use utils::get_temp_dir_path;
     use utils::mockdata::mockdata_connection;
     use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
 
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     fn config() -> String {
@@ -710,7 +718,7 @@ mod tests {
     fn _vcx_init_c_closure(path: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
         let rc = vcx_init(cb.command_handle,
                           CString::new(path.to_string()).unwrap().into_raw(),
                           Some(cb.get_callback()));
@@ -723,7 +731,7 @@ mod tests {
     fn _vcx_init_with_config_c_closure(config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
         let rc = vcx_init_with_config(cb.command_handle,
                                       CString::new(config.to_string()).unwrap().into_raw(),
                                       Some(cb.get_callback()));
@@ -1019,7 +1027,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_shutdown() {
         let _setup = SetupMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let data = r#"["name","male"]"#;
         let connection = ::connection::tests::build_test_connection_inviter_invited();
@@ -1192,17 +1199,17 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     fn get_settings() -> String {
         json!({
-            settings::CONFIG_AGENCY_DID:           settings::get_config_value(settings::CONFIG_AGENCY_DID).unwrap(),
-            settings::CONFIG_AGENCY_VERKEY:        settings::get_config_value(settings::CONFIG_AGENCY_VERKEY).unwrap(),
-            settings::CONFIG_AGENCY_ENDPOINT:      settings::get_config_value(settings::CONFIG_AGENCY_ENDPOINT).unwrap(),
-            settings::CONFIG_REMOTE_TO_SDK_DID:    settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID).unwrap(),
-            settings::CONFIG_REMOTE_TO_SDK_VERKEY: settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
-            settings::CONFIG_SDK_TO_REMOTE_DID:    settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_DID).unwrap(),
-            settings::CONFIG_SDK_TO_REMOTE_VERKEY: settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
-            settings::CONFIG_INSTITUTION_NAME:     settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
-            settings::CONFIG_INSTITUTION_DID:      settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
-            settings::CONFIG_INSTITUTION_LOGO_URL: settings::get_config_value(settings::CONFIG_INSTITUTION_LOGO_URL).unwrap(),
-            settings::CONFIG_PAYMENT_METHOD:       settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
+            agency_settings::CONFIG_AGENCY_DID:           agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_DID).unwrap(),
+            agency_settings::CONFIG_AGENCY_VERKEY:        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY).unwrap(),
+            agency_settings::CONFIG_AGENCY_ENDPOINT:      agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT).unwrap(),
+            agency_settings::CONFIG_REMOTE_TO_SDK_DID:    agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID).unwrap(),
+            agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
+            agency_settings::CONFIG_SDK_TO_REMOTE_DID:    agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID).unwrap(),
+            agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
+            settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
+            settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
+            settings::CONFIG_INSTITUTION_LOGO_URL:        settings::get_config_value(settings::CONFIG_INSTITUTION_LOGO_URL).unwrap(),
+            settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
         }).to_string()
     }
 

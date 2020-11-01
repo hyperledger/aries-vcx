@@ -89,7 +89,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -131,7 +130,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_one_attribute_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -154,7 +152,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         //        for reference....expectation is encode_attributes returns this:
 
@@ -199,7 +196,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_one_attribute_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -222,7 +218,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_mixed_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         //        for reference....expectation is encode_attributes returns this:
 
@@ -268,7 +263,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         static BAD_TEST_CREDENTIAL_DATA: &str =
             r#"{"format doesnt make sense"}"#;
@@ -280,7 +274,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         static BAD_TEST_CREDENTIAL_DATA: &str =
             r#"{"address2":[]}"#;
@@ -292,7 +285,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_empty_field() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "empty_field": {

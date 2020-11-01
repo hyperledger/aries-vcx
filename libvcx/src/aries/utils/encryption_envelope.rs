@@ -1,8 +1,8 @@
+use agency_comm::mocking::AgencyMockDecrypted;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::forward::Forward;
 use error::prelude::*;
-use utils::httpclient::AgencyMockDecrypted;
 use libindy::utils::crypto;
 
 #[derive(Debug)]
@@ -126,15 +126,16 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
+    use agency_comm::agency_settings;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
     use libindy::utils::crypto::create_key;
     use libindy::utils::tests::test_setup;
-
-    use super::*;
-    use utils::devsetup::SetupEmpty;
     use libindy::utils::tests::test_setup::create_trustee_key;
     use libindy::utils::wallet;
+    use utils::devsetup::SetupEmpty;
+
+    use super::*;
 
     fn _setup() {
         ::settings::set_config_value(::settings::CONFIG_ENABLE_TEST_MODE, "false");

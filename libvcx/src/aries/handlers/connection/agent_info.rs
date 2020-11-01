@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use agency_comm::get_message::{get_connection_messages, Message};
-use agency_comm::MessageStatusCode;
+use agency_comm::{MessageStatusCode, agency_settings};
 use agency_comm::update_connection::send_delete_connection_message;
 use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
 use aries::messages::a2a::A2AMessage;
@@ -66,12 +66,12 @@ impl AgentInfo {
     Builds one's agency's URL endpoint
      */
     pub fn agency_endpoint(&self) -> VcxResult<String> {
-        settings::get_config_value(settings::CONFIG_AGENCY_ENDPOINT)
+        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT)
             .map(|str| format!("{}/agency/msg", str))
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = settings::get_config_value(settings::CONFIG_AGENCY_VERKEY)?;
+        let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
         Ok(vec![self.agent_vk.to_string(), agency_vk])
     }
 

@@ -1,16 +1,17 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::agency_settings::agency_mocks_enabled;
 use agency_comm::message_type::MessageTypes;
+use agency_comm::mocking::AgencyMockDecrypted;
+use agency_comm::util::post_u8;
 use error::prelude::*;
 use libindy::utils::{anoncreds, wallet};
 use libindy::utils::signus::create_and_store_my_did;
 use libindy::utils::wallet::get_wallet_handle;
 use settings;
-use settings::agency_mocks_enabled;
 use utils::{constants, error, httpclient};
-use utils::httpclient::AgencyMockDecrypted;
 use utils::option_util::get_or_default;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -175,12 +176,12 @@ pub fn set_config_values(my_config: &Config) {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
     settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, &my_config.protocol_type.to_string());
-    settings::set_config_value(settings::CONFIG_AGENCY_ENDPOINT, &my_config.agency_url);
     settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
-    settings::set_config_value(settings::CONFIG_AGENCY_DID, &my_config.agency_did);
-    settings::set_config_value(settings::CONFIG_AGENCY_VERKEY, &my_config.agency_verkey);
-    settings::set_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY, &my_config.agency_verkey);
     settings::set_config_value(settings::CONFIG_WALLET_KEY, &my_config.wallet_key);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &my_config.agency_url);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, &my_config.agency_did);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &my_config.agency_verkey);
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &my_config.agency_verkey);
 
     settings::set_opt_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &my_config.wallet_key_derivation);
     settings::set_opt_config_value(settings::CONFIG_WALLET_TYPE, &my_config.wallet_type);
@@ -225,7 +226,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     )?;
 
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-    settings::set_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
 
     Ok((my_did, my_vk, wallet_name))
 }
@@ -336,7 +337,7 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Str
                 )
         };
 
-    settings::set_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
     Ok((agency_pw_did, agency_pw_vk))
 }
 
@@ -384,7 +385,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
         value: String::from(webhook_url),
     };
 
-    match settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID) {
+    match agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID) {
         Ok(to_did) => {
             update_agent_webhook_v2(&to_did, com_method)?;
         }
@@ -410,7 +411,7 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()>
 pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<A2AMessage>> {
     let data = prepare_message_for_agency(message, &did)?;
 
-    let response = httpclient::post_u8(&data)
+    let response = post_u8(&data)
         .map_err(|err| err.map(VcxErrorKind::InvalidHttpResponse, error::INVALID_HTTP_RESPONSE.message))?;
 
     parse_response_from_agency(&response)

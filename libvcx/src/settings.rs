@@ -11,6 +11,8 @@ use serde_json::Value;
 use strum::IntoEnumIterator;
 use url::Url;
 
+use agency_comm::agency_settings;
+use agency_comm::agency_settings::process_agency_config_string;
 use error::prelude::*;
 use utils::{error, get_temp_dir_path};
 use utils::file::read_file;
@@ -18,14 +20,6 @@ use utils::validation;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_PROTOCOL_TYPE: &str = "protocol_type";
-pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
-pub static CONFIG_AGENCY_DID: &str = "agency_did";
-pub static CONFIG_AGENCY_VERKEY: &str = "agency_verkey";
-pub static CONFIG_REMOTE_TO_SDK_DID: &str = "remote_to_sdk_did";
-pub static CONFIG_REMOTE_TO_SDK_VERKEY: &str = "remote_to_sdk_verkey";
-pub static CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";
-// functionally not used
-pub static CONFIG_SDK_TO_REMOTE_VERKEY: &str = "sdk_to_remote_verkey";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
@@ -113,17 +107,10 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(CONFIG_WALLET_NAME.to_string(), DEFAULT_WALLET_NAME.to_string());
     settings.insert(CONFIG_WALLET_TYPE.to_string(), DEFAULT_DEFAULT.to_string());
-    settings.insert(CONFIG_AGENCY_ENDPOINT.to_string(), DEFAULT_URL.to_string());
-    settings.insert(CONFIG_AGENCY_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_AGENCY_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
-    settings.insert(CONFIG_REMOTE_TO_SDK_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_REMOTE_TO_SDK_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
     settings.insert(CONFIG_INSTITUTION_NAME.to_string(), DEFAULT_DEFAULT.to_string());
     settings.insert(CONFIG_INSTITUTION_LOGO_URL.to_string(), DEFAULT_URL.to_string());
     settings.insert(CONFIG_WEBHOOK_URL.to_string(), DEFAULT_URL.to_string());
-    settings.insert(CONFIG_SDK_TO_REMOTE_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
     settings.insert(CONFIG_SDK_TO_REMOTE_ROLE.to_string(), DEFAULT_ROLE.to_string());
     settings.insert(CONFIG_WALLET_KEY.to_string(), DEFAULT_WALLET_KEY.to_string());
     settings.insert(CONFIG_WALLET_KEY_DERIVATION.to_string(), WALLET_KDF_RAW.to_string());
@@ -136,6 +123,7 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
     settings.insert(CONFIG_USE_LATEST_PROTOCOLS.to_string(), DEFAULT_USE_LATEST_PROTOCOLS.to_string());
 
+    agency_settings::set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 
@@ -150,22 +138,11 @@ pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
     // If values are provided, validate they're in the correct format
     validate_optional_config_val(config.get(CONFIG_INSTITUTION_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
     validate_optional_config_val(config.get(CONFIG_INSTITUTION_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-    validate_optional_config_val(config.get(CONFIG_AGENCY_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_AGENCY_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-    validate_optional_config_val(config.get(CONFIG_AGENCY_ENDPOINT), VcxErrorKind::InvalidUrl, Url::parse)?;
     validate_optional_config_val(config.get(CONFIG_INSTITUTION_LOGO_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
-
     validate_optional_config_val(config.get(CONFIG_WEBHOOK_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
-
     validate_optional_config_val(config.get(CONFIG_ACTORS), VcxErrorKind::InvalidOption, validation::validate_actors)?;
+
+    agency_settings::validate_agency_config(config)?;
 
     Ok(error::SUCCESS.code_num)
 }
@@ -211,23 +188,6 @@ pub fn indy_mocks_enabled() -> bool {
     }
 }
 
-pub fn agency_mocks_enabled() -> bool {
-    let config = SETTINGS.read().unwrap();
-
-    match config.get(CONFIG_ENABLE_TEST_MODE) {
-        None => false,
-        Some(value) => value == "true" || value == "agency"
-    }
-}
-
-pub fn agency_decrypted_mocks_enabled() -> bool {
-    let config = SETTINGS.read().unwrap();
-
-    match config.get(CONFIG_ENABLE_TEST_MODE) {
-        None => false,
-        Some(value) => value == "true"
-    }
-}
 
 pub fn enable_mock_generate_indy_proof() {}
 
@@ -248,6 +208,8 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
             }
         }
     }
+
+    process_agency_config_string(config, do_validation)?;
 
     if do_validation {
         let setting = SETTINGS.read()
@@ -280,7 +242,6 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
         .map(|v| v.to_string())
         .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from settings", key)))
 }
-
 pub fn set_config_value(key: &str, value: &str) {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
@@ -426,10 +387,12 @@ pub fn clear_config() {
     trace!("clear_config >>>");
     let mut config = SETTINGS.write().unwrap();
     config.clear();
+    agency_settings::clear_config_agency()
 }
 
 #[cfg(test)]
 pub mod tests {
+    use agency_comm::agency_settings;
     use utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;
@@ -543,27 +506,27 @@ pub mod tests {
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_AGENCY_DID.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_AGENCY_DID.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_AGENCY_VERKEY.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_AGENCY_VERKEY.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_SDK_TO_REMOTE_DID.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_DID.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_REMOTE_TO_SDK_DID.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_REMOTE_TO_SDK_DID.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
 
         let mut config = _mandatory_config();
-        config.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
+        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
 
         let mut config = _mandatory_config();

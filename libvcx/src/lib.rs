@@ -65,12 +65,12 @@ mod tests {
     use api::VcxStateType;
     use connection;
     use credential;
+    use credential_def;
     use disclosed_proof;
+    use filters;
     use issuer_credential;
     use proof;
     use settings;
-    use filters;
-    use credential_def;
     use utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         devsetup::{set_consumer, set_institution},
@@ -284,7 +284,7 @@ mod tests {
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
-    fn rotate_rev_reg(cred_def_handle: u32 ) {
+    fn rotate_rev_reg(cred_def_handle: u32) {
         set_institution(None);
         credential_def::rotate_rev_reg_def(cred_def_handle);
     }
@@ -351,7 +351,6 @@ mod tests {
     #[test]
     fn test_basic_revocation() {
         let _setup = SetupLibraryAgencyV2::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
@@ -510,8 +509,12 @@ mod tests {
         let (consumer_to_institution1, institution_to_consumer1) = ::connection::tests::create_connected_connections(Some(consumer1), None);
         let (consumer_to_institution2, institution_to_consumer2) = ::connection::tests::create_connected_connections(Some(consumer2), None);
         let (consumer_to_institution3, institution_to_consumer3) = ::connection::tests::create_connected_connections(Some(consumer3), None);
-        assert_ne!(institution_to_consumer1, institution_to_consumer2); assert_ne!(institution_to_consumer1, institution_to_consumer3); assert_ne!(institution_to_consumer2, institution_to_consumer3);
-        assert_ne!(consumer_to_institution1, consumer_to_institution2); assert_ne!(consumer_to_institution1, consumer_to_institution3); assert_ne!(consumer_to_institution2, consumer_to_institution3);
+        assert_ne!(institution_to_consumer1, institution_to_consumer2);
+        assert_ne!(institution_to_consumer1, institution_to_consumer3);
+        assert_ne!(institution_to_consumer2, institution_to_consumer3);
+        assert_ne!(consumer_to_institution1, consumer_to_institution2);
+        assert_ne!(consumer_to_institution1, consumer_to_institution3);
+        assert_ne!(consumer_to_institution2, consumer_to_institution3);
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
@@ -527,7 +530,8 @@ mod tests {
         revoke_credential_local(credential_handle2, rev_reg_id.clone());
 
         // Revoke two locally and verify their are all still valid
-        let request_name1 = Some("request1"); let request_name2 = Some("request2");
+        let request_name1 = Some("request1");
+        let request_name2 = Some("request2");
         let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer1, None, request_name1);
         _prover_select_credentials_and_send_proof(consumer_to_institution1, Some(consumer1), request_name1, None);
         let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer2, None, request_name1);
@@ -553,7 +557,9 @@ mod tests {
         _prover_select_credentials_and_send_proof(consumer_to_institution2, Some(consumer2), request_name2, None);
         let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer3, None, request_name2);
         _prover_select_credentials_and_send_proof(consumer_to_institution3, Some(consumer3), request_name2, None);
-        assert_ne!(proof_handle_verifier1, proof_handle_verifier2); assert_ne!(proof_handle_verifier1, proof_handle_verifier3); assert_ne!(proof_handle_verifier2, proof_handle_verifier3);
+        assert_ne!(proof_handle_verifier1, proof_handle_verifier2);
+        assert_ne!(proof_handle_verifier1, proof_handle_verifier3);
+        assert_ne!(proof_handle_verifier2, proof_handle_verifier3);
 
         set_institution(None);
         proof::update_state(proof_handle_verifier1, None, None).unwrap();
@@ -568,7 +574,6 @@ mod tests {
     #[test]
     fn test_revoked_credential_might_still_work() {
         let _setup = SetupLibraryAgencyV2::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
@@ -661,7 +666,6 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     fn test_real_proof() {
         let _setup = SetupLibraryAgencyV2::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         info!("test_real_proof >>>");
         let number_of_attributes = 10;
@@ -749,7 +753,6 @@ mod tests {
         set_institution(Some(verifier));
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
-
     }
 
     #[test]
@@ -819,7 +822,7 @@ mod tests {
         proof::update_state(proof_handle_verifier, None, None).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
-    
+
     #[test]
     #[cfg(feature = "agency_pool_tests")]
     fn test_two_creds_two_rev_reg_id() {

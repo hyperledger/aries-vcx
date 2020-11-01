@@ -8,6 +8,8 @@ use serde_json::Value;
 
 use ::{indy, init};
 use ::{settings, utils};
+use agency_comm::agency_settings;
+use agency_comm::mocking::AgencyMockDecrypted;
 use libindy::utils::pool::reset_pool_handle;
 use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -17,7 +19,6 @@ use settings::set_testing_defaults;
 use utils::{get_temp_dir_path, threadpool};
 use utils::constants;
 use utils::file::write_file;
-use utils::httpclient::AgencyMockDecrypted;
 use utils::logger::LibvcxDefaultLogger;
 use utils::object_cache::ObjectCache;
 use utils::plugins::init_plugin;
@@ -108,6 +109,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         SetupMocks
     }
 }
@@ -129,6 +131,7 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
         SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
     }
@@ -153,6 +156,7 @@ impl SetupWallet {
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
 
         create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
@@ -175,7 +179,7 @@ impl SetupPoolConfig {
         create_test_ledger_config();
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
 
-        SetupPoolConfig { }
+        SetupPoolConfig {}
     }
 }
 
@@ -190,7 +194,8 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        SetupIndyMocks { }
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        SetupIndyMocks {}
     }
 }
 
@@ -239,7 +244,7 @@ impl SetupAgencyMock {
         settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
@@ -345,6 +350,7 @@ pub fn setup_libnullpay_nofees() {
 
 pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+    agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 

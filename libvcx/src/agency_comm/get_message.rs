@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use agency_comm::message_type::MessageTypes;
+use agency_comm::util::post_u8;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::messages::a2a::A2AMessage as AriesA2AMessage;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
@@ -9,7 +10,6 @@ use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
-use utils::httpclient::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -127,7 +127,7 @@ impl GetMessagesBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = httpclient::post_u8(&data)?;
+        let response = post_u8(&data)?;
 
         self.parse_response(response)
     }
@@ -153,9 +153,9 @@ impl GetMessagesBuilder {
 
         let data = self.prepare_download_request()?;
 
-        let response = httpclient::post_u8(&data)?;
+        let response = post_u8(&data)?;
 
-        if settings::agency_mocks_enabled() && response.len() == 0 {
+        if agency_settings::agency_mocks_enabled() && response.len() == 0 {
             return Ok(Vec::new());
         }
 
@@ -174,7 +174,7 @@ impl GetMessagesBuilder {
                                    self.pairwise_dids.clone()))
         );
 
-        let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
+        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
         prepare_message_for_agency(&message, &agency_did)
     }

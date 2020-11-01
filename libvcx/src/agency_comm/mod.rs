@@ -6,7 +6,6 @@ use serde_json::Value;
 use ::{log, settings};
 use error::prelude::*;
 use libindy::utils::crypto;
-use utils::httpclient::AgencyMockDecrypted;
 use utils::validation;
 
 use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
@@ -16,6 +15,7 @@ use self::message_type::*;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
+use agency_comm::mocking::AgencyMockDecrypted;
 
 pub mod create_key;
 pub mod get_message;
@@ -27,6 +27,9 @@ pub mod message_type;
 pub mod payload;
 #[macro_use]
 pub mod thread;
+pub mod agency_settings;
+pub mod mocking;
+mod util;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -500,8 +503,8 @@ pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str) -> Vcx
 }
 
 fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
-    let agent_vk = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
-    let my_vk = settings::get_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
+    let agent_vk = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
+    let my_vk = agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
 
     let message = ::serde_json::to_string(&message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
@@ -600,7 +603,7 @@ pub fn bundle_from_u8(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
 }
 
 fn prepare_forward_message(message: Vec<u8>, did: &str) -> VcxResult<Vec<u8>> {
-    let agency_vk = settings::get_config_value(settings::CONFIG_AGENCY_VERKEY)?;
+    let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
 
     let message = ForwardV2::new(did.to_string(), message)?;
 
@@ -636,7 +639,7 @@ fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: 
     /* forward to did */
     let message = ForwardV2::new(agent_did.to_owned(), message)?;
 
-    let to_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
+    let to_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
     pack_for_agency_v2(&message, &to_did)
 }

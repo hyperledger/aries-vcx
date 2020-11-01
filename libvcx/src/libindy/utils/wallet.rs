@@ -303,6 +303,7 @@ pub mod tests {
     use utils::get_temp_dir_path;
 
     use super::*;
+    use agency_comm::agency_settings;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -318,7 +319,7 @@ pub mod tests {
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-        settings::set_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 

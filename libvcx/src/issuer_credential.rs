@@ -176,15 +176,14 @@ pub mod tests {
     use credential_def::tests::create_cred_def_fake;
     use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use libindy::utils::LibindyMock;
+    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
-
     use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use super::*;
-    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
     static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";
@@ -251,7 +250,6 @@ pub mod tests {
     #[test]
     fn test_generate_cred_offer() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let _issuer = create_full_issuer_credential().0
             .generate_credential_offer().unwrap();
@@ -384,7 +382,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_errors() {
         let _setup = SetupLibraryWallet::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);

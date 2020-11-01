@@ -17,7 +17,6 @@ pub mod tests {
 
     fn _setup() {
         let _setup = SetupEmpty::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
     }
 
     fn _source_id() -> &'static str {

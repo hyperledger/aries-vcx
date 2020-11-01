@@ -1,9 +1,10 @@
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
+use agency_comm::mocking::AgencyMock;
+use agency_comm::util::post_u8;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use utils::{constants, httpclient};
-use utils::httpclient::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -65,7 +66,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = httpclient::post_u8(&data)?;
+        let response = post_u8(&data)?;
 
         self.parse_response(&response)
     }
@@ -81,7 +82,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
             )
         );
 
-        let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
+        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
         prepare_message_for_agency(&message, &agency_did)
     }
 
@@ -114,7 +115,7 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()
 pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> VcxResult<()> {
     trace!("update_messages >>> ");
 
-    if settings::agency_mocks_enabled() {
+    if agency_settings::agency_mocks_enabled() {
         trace!("update_messages >>> agency mocks enabled, returning empty response");
         return Ok(());
     };
@@ -134,10 +135,10 @@ mod tests {
 
     use agency_comm::get_message::download_messages_noauth;
     use agency_comm::MessageStatusCode;
+    use agency_comm::mocking::AgencyMockDecrypted;
     use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     use connection::send_generic_message;
     use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 
     #[test]

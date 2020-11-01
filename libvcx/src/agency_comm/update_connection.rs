@@ -3,6 +3,7 @@ use serde_json::Value;
 
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
 use agency_comm::message_type::MessageTypes;
+use agency_comm::util::post_u8;
 use error::prelude::*;
 use settings;
 use utils::httpclient;
@@ -81,7 +82,7 @@ impl DeleteConnectionBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = httpclient::post_u8(&data)?;
+        let response = post_u8(&data)?;
 
         self.parse_response(&response)
     }

@@ -1,10 +1,9 @@
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, parse_response_from_agency, prepare_message_for_agency};
+use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
+use agency_comm::mocking::AgencyMock;
+use agency_comm::util::post_u8;
 use error::prelude::*;
-use settings;
-use settings::ProtocolTypes;
 use utils::{constants, httpclient, validation};
-use utils::httpclient::AgencyMock;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -58,13 +57,13 @@ impl CreateKeyBuilder {
     pub fn send_secure(&self) -> VcxResult<(String, String)> {
         trace!("CreateKeyMsg::send >>>");
 
-        if settings::agency_mocks_enabled() {
+        if agency_settings::agency_mocks_enabled() {
             AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
         let data = self.prepare_request()?;
 
-        let response = httpclient::post_u8(&data)?;
+        let response = post_u8(&data)?;
 
         self.parse_response(&response)
     }
@@ -78,7 +77,7 @@ impl CreateKeyBuilder {
             })
         );
 
-        let agency_did = settings::get_config_value(settings::CONFIG_REMOTE_TO_SDK_DID)?;
+        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
         prepare_message_for_agency(&message, &agency_did)
     }
@@ -123,9 +122,9 @@ mod tests {
         let (my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();
         let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();
 
-        settings::set_config_value(settings::CONFIG_AGENCY_VERKEY, &agency_vk);
-        settings::set_config_value(settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
-        settings::set_config_value(settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);
+        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
+        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
 
         let bytes = create_keys()
             .for_did(&my_did).unwrap()

@@ -1,10 +1,10 @@
 use serde_json;
 
 use aries::handlers::proof_presentation::verifier::verifier::Verifier;
+use connection;
 use error::prelude::*;
 use utils::error;
 use utils::object_cache::ObjectCache;
-use connection;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -345,7 +345,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_send_proof_request_can_be_retried() {
         let _setup = SetupMocks::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_conn = build_test_connection_inviter_requested();
 

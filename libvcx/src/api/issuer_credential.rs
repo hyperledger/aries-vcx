@@ -843,12 +843,12 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::{return_types_u32, VcxStateType};
     use settings;
-    use utils::get_temp_dir_path;
     use utils::constants::*;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMockDecrypted;
+    use utils::get_temp_dir_path;
     use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
     use utils::timeout::TimeoutUtils;
 
