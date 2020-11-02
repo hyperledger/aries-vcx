@@ -45,10 +45,16 @@ impl ProofRequestData {
         let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
 
+        for attribute in requested_attributes.iter() {
+            if attribute.name.is_some() && attribute.names.is_some() {
+                return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
+                                              format!("Requested attribute can contain either 'name' or 'names'. Not both.")))
+            };
+        }
         self.requested_attributes = requested_attributes
             .into_iter()
             .enumerate()
-            .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
+            .map(|(index, attribute)|(format!("attribute_{}", index), attribute))
             .collect();
         Ok(self)
     }
@@ -127,6 +133,9 @@ impl Default for ProofRequestVersion {
 
 #[cfg(test)]
 mod tests {
+    use serde::Serialize;
+    use serde_json::Value;
+
     use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use utils::devsetup::SetupDefaults;
 
@@ -134,7 +143,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
@@ -146,93 +154,166 @@ mod tests {
         let tid = 89;
         let mid = 98;
 
-        let mut request = proof_request()
-            .type_version(version).unwrap()
-            .tid(tid).unwrap()
-            .mid(mid).unwrap()
-            .nonce(nonce).unwrap()
-            .proof_request_format_version(Some(ProofRequestVersion::V2)).unwrap()
-            .proof_name(data_name).unwrap()
-            .proof_data_version(data_version).unwrap()
-            .requested_attrs(REQUESTED_ATTRS).unwrap()
-            .requested_predicates(REQUESTED_PREDICATES).unwrap()
-            .to_timestamp(Some(100)).unwrap()
-            .from_timestamp(Some(1)).unwrap()
-            .clone();
+        let request = ProofRequestData::create()
+            .set_name(data_name.into())
+            .set_nonce().unwrap()
+            .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
+            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
+            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap()
+            .set_format_version_for_did("6XFh8yBzrpJQmNyZzgoTqB".into(), "11111111rpJQmNyZzgoTqB".into()).unwrap();
 
-        let serialized_msg = request.serialize_message().unwrap();
-        assert!(serialized_msg.contains(r#""@type":{"name":"PROOF_REQUEST","version":"1.3"}"#));
-        assert!(serialized_msg.contains(r#"@topic":{"mid":98,"tid":89}"#));
-        assert!(serialized_msg.contains(r#"proof_request_data":{"nonce":"123432421212","name":"Test","version":"3.75","requested_attributes""#));
-
-        assert!(serialized_msg.contains(r#""age":{"name":"age","restrictions":[{"schema_id":"6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11","schema_issuer_did":"6XFh8yBzrpJQmNyZzgoTqB","schema_name":"Faber Student Info","schema_version":"1.0","issuer_did":"8XFh8yBzrpJQmNyZzgoTqB","cred_def_id":"8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"},{"schema_id":"5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11","schema_issuer_did":"5XFh8yBzrpJQmNyZzgoTqB","schema_name":"BYU Student Info","schema_version":"1.0","issuer_did":"66Fh8yBzrpJQmNyZzgoTqB","cred_def_id":"66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"}]}"#));
-        assert!(serialized_msg.contains(r#""to_timestamp":100"#));
-        assert!(serialized_msg.contains(r#""from_timestamp":1"#));
-        assert!(serialized_msg.contains(r#""ver":"2.0""#));
+        let serialized_msg = serde_json::to_string(&request).unwrap();
+        warn!("serialized_msg={}", serialized_msg);
+        // todo: Does it really need to have both "version" and "ver" field?
+        assert!(serialized_msg.contains(r#""name":"Test","version":"1.0""#));
+        assert!(serialized_msg.contains(r#""ver":"1.0""#));
+        assert!(serialized_msg.contains(r#""non_revoked":{"from":1100000000,"to":1600000000}"#));
+        let msg_as_value: Value = serde_json::from_str(&serialized_msg).unwrap();
+        assert_eq!(msg_as_value["requested_attributes"]["attribute_0"]["name"], "age");
+        assert_eq!(msg_as_value["requested_attributes"]["attribute_1"]["name"], "name");
+        assert_eq!(msg_as_value["requested_predicates"]["predicate_0"]["name"], "age");
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
-        let attr_info1: AttrInfo = serde_json::from_str(r#"{ "name":"age", "restrictions": [ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"Faber Student Info", "schema_version":"1.0", "schema_issuer_did":"6XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"8XFh8yBzrpJQmNyZzgoTqB", "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766" }, { "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"BYU Student Info", "schema_version":"1.0", "schema_issuer_did":"5XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"66Fh8yBzrpJQmNyZzgoTqB", "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766" } ] }"#).unwrap();
-        let attr_info2: AttrInfo = serde_json::from_str(r#"{ "name":"name", "restrictions": [ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"Faber Student Info", "schema_version":"1.0", "schema_issuer_did":"6XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"8XFh8yBzrpJQmNyZzgoTqB", "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766" }, { "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"BYU Student Info", "schema_version":"1.0", "schema_issuer_did":"5XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"66Fh8yBzrpJQmNyZzgoTqB", "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766" } ] }"#).unwrap();
+        let attr_info1: AttrInfo = serde_json::from_str(r#"
+        {
+            "name": "age",
+            "restrictions": [
+                {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                },
+                {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                }
+            ]
+        }"#).unwrap();
+        let attr_info2: AttrInfo = serde_json::from_str(r#"{
+            "name": "name",
+            "restrictions": [
+                {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                },
+                {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                }
+            ]
+        }"#).unwrap();
 
         check_req_attrs.insert("age".to_string(), attr_info1);
         check_req_attrs.insert("name".to_string(), attr_info2);
 
-        let request = proof_request().requested_attrs(REQUESTED_ATTRS).unwrap().clone();
-        assert_eq!(request.proof_request_data.requested_attributes, check_req_attrs);
+        let request = ProofRequestData::create()
+            .set_nonce().unwrap()
+            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
+            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
+        assert_eq!(request.requested_attributes, check_req_attrs);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_predicates_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
         let mut check_predicates: HashMap<String, PredicateInfo> = HashMap::new();
-        let attr_info1: PredicateInfo = serde_json::from_str(r#"{ "name":"age","p_type":"GE","p_value":22, "restrictions":[ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"Faber Student Info", "schema_version":"1.0", "schema_issuer_did":"6XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"8XFh8yBzrpJQmNyZzgoTqB", "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766" }, { "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11", "schema_name":"BYU Student Info", "schema_version":"1.0", "schema_issuer_did":"5XFh8yBzrpJQmNyZzgoTqB", "issuer_did":"66Fh8yBzrpJQmNyZzgoTqB", "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766" } ] }"#).unwrap();
-        check_predicates.insert("age".to_string(), attr_info1);
+        let attr_info1: PredicateInfo = serde_json::from_str(r#"{
+            "name": "age",
+            "p_type": "GE",
+            "p_value": 22,
+            "restrictions": [
+                {
+                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "Faber Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                },
+                {
+                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
+                    "schema_name": "BYU Student Info",
+                    "schema_version": "1.0",
+                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
+                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
+                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
+                }
+            ]
+        }"#).unwrap();
+        check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let request = proof_request().requested_predicates(REQUESTED_PREDICATES).unwrap().clone();
-        assert_eq!(request.proof_request_data.requested_predicates, check_predicates);
+        let request = ProofRequestData::create()
+            .set_nonce().unwrap()
+            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
+        assert_eq!(request.requested_predicates, check_predicates);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
     fn test_requested_attrs_constructed_correctly_for_names() {
         let _setup = SetupDefaults::init();
 
-        let attr_info = json!({ "names":["name", "age", "email"], "restrictions": [ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11" } ] });
-        let attr_info_2 = json!({ "name":"name", "restrictions": [ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11" } ] });
+        let attr_info = json!({
+          "names": ["name", "age", "email"],
+          "restrictions": [{"schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11"}]
+        });
+        let attr_info_2 = json!({
+          "name":"name",
+          "restrictions": [{"schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11" }]
+        });
 
         let requested_attrs = json!([ attr_info, attr_info_2 ]).to_string();
 
-        let request = proof_request().requested_attrs(&requested_attrs).unwrap().clone();
+        let request = ProofRequestData::create()
+            .set_nonce().unwrap()
+            .set_requested_attributes(requested_attrs.into()).unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
-        expected_req_attrs.insert("name,age,email".to_string(), serde_json::from_value(attr_info).unwrap());
-        expected_req_attrs.insert("name".to_string(), serde_json::from_value(attr_info_2).unwrap());
-
-        assert_eq!(request.proof_request_data.requested_attributes, expected_req_attrs);
+        expected_req_attrs.insert("attribute_0".to_string(), serde_json::from_value(attr_info).unwrap());
+        expected_req_attrs.insert("attribute_1".to_string(), serde_json::from_value(attr_info_2).unwrap());
+        assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // equivalent for legacy proof request is ProofRequestMessage in ::aries
-    fn test_requested_attrs_constructed_correctly_for_name_and_names_passed_together() {
+    fn test_should_return_error_if_name_and_names_passed_together() {
         let _setup = SetupDefaults::init();
 
-        let attr_info = json!({ "name":"name", "names":["name", "age", "email"], "restrictions": [ { "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11" } ] });
+        let attr_info = json!({
+          "name": "name",
+          "names": ["name", "age", "email"],
+          "restrictions": [{"schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11"}]
+        });
 
         let requested_attrs = json!([ attr_info ]).to_string();
 
-        let err = proof_request().requested_attrs(&requested_attrs).unwrap_err();
+        let err = ProofRequestData::create()
+            .set_nonce().unwrap()
+            .set_requested_attributes(requested_attrs.into()).unwrap_err();
+
         assert_eq!(VcxErrorKind::InvalidProofRequest, err.kind());
     }
 
