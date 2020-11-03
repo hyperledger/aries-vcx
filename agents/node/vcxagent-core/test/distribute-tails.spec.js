@@ -6,6 +6,7 @@ const { buildRevocationDetails } = require('../src')
 const { createPairedAliceAndFaber } = require('./utils/utils')
 const { initRustapi } = require('../src/index')
 const { StateType } = require('@hyperledger/node-vcx-wrapper')
+const uuid = require('uuid')
 const sleep = require('sleep-promise')
 const fs = require('fs')
 const mkdirp = require('mkdirp')
@@ -22,7 +23,8 @@ describe('test tails distribution', () => {
       const { alice, faber } = await createPairedAliceAndFaber()
 
       const port = 5468
-      const tailsUrl = `http://127.0.0.1:${port}`
+      const tailsUrlId = uuid.v4()
+      const tailsUrl = `http://127.0.0.1:${port}/${tailsUrlId}`
       await faber.sendCredentialOffer(buildRevocationDetails({ supportRevocation: true, tailsFile: `${__dirname}/tmp/faber/tails`, tailsUrl, maxCreds: 5 }))
       await alice.acceptCredentialOffer()
       await faber.updateStateCredentialV2(StateType.RequestReceived)
@@ -30,9 +32,8 @@ describe('test tails distribution', () => {
       await alice.updateStateCredentialV2(StateType.Accepted)
 
       const faberTailsHash = await faber.getTailsHash()
-      const faberRevRegId = await faber.getCredentialRevRegId()
       const app = express()
-      app.use(`/${faberRevRegId}`, express.static(`${__dirname}/tmp/faber/tails/${faberTailsHash}`))
+      app.use(`/${tailsUrlId}`, express.static(`${__dirname}/tmp/faber/tails/${faberTailsHash}`))
       server = app.listen(port)
 
       const aliceTailsLocation = await alice.getTailsLocation()
