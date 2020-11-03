@@ -1,6 +1,5 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::RwLock;
 
 use serde_json::Value;
@@ -29,11 +28,6 @@ pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
     CONFIG_ENABLE_TEST_MODE
 ];
 
-
-pub static DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-pub static DEFAULT_VERKEY: &str = "FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB";
-pub static DEFAULT_URL: &str = "http://127.0.0.1:8080";
-
 lazy_static! {
     static ref AGENCY_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
@@ -59,6 +53,10 @@ fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind
 
 pub fn set_testing_defaults_agency() -> u32 {
     trace!("set_testing_defaults_agency >>>");
+
+    let DEFAULT_DID= "2hoqvcwupRTUNkXn6ArYzs";
+    let DEFAULT_VERKEY= "FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB";
+    let DEFAULT_URL= "http://127.0.0.1:8080";
 
     // if this fails the test should exit
     let mut agency_settings = AGENCY_SETTINGS.write().unwrap();
@@ -152,22 +150,4 @@ pub fn set_config_value(key: &str, value: &str) {
     }
 }
 
-
-pub fn agency_mocks_enabled() -> bool {
-    let config = AGENCY_SETTINGS.read().unwrap();
-
-    match config.get(CONFIG_ENABLE_TEST_MODE) {
-        None => false,
-        Some(value) => value == "true" || value == "agency"
-    }
-}
-
-pub fn agency_decrypted_mocks_enabled() -> bool {
-    let config = AGENCY_SETTINGS.read().unwrap();
-
-    match config.get(CONFIG_ENABLE_TEST_MODE) {
-        None => false,
-        Some(value) => value == "true"
-    }
-}
 

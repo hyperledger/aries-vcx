@@ -12,7 +12,6 @@ use strum::IntoEnumIterator;
 use url::Url;
 
 use agency_comm::agency_settings;
-use agency_comm::agency_settings::process_agency_config_string;
 use error::prelude::*;
 use utils::{error, get_temp_dir_path};
 use utils::file::read_file;
@@ -209,7 +208,7 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
         }
     }
 
-    process_agency_config_string(config, do_validation)?;
+    agency_settings::process_agency_config_string(config, do_validation)?;
 
     if do_validation {
         let setting = SETTINGS.read()

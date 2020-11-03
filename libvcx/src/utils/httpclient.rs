@@ -9,6 +9,7 @@ use agency_comm::agency_settings;
 use agency_comm::mocking::{AgencyMock, AgencyMockDecrypted};
 use error::prelude::*;
 use settings;
+use crate::agency_comm::mocking;
 
 lazy_static! {
     static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
@@ -21,7 +22,7 @@ pub struct HttpClientMockResponse {
 
 impl HttpClientMockResponse {
     pub fn set_next_response(response: VcxResult<Vec<u8>>) {
-        if agency_settings::agency_mocks_enabled() {
+        if mocking::agency_mocks_enabled() {
             HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
         }
     }
@@ -37,7 +38,7 @@ impl HttpClientMockResponse {
 
 pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     // todo: this function should be general, not knowing that agency exists -> move agency mocks to agency module
-    if agency_settings::agency_mocks_enabled() {
+    if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
             warn!("HttpClient has mocked response");
             return HttpClientMockResponse::get_response();

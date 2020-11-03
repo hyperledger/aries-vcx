@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, RemoteMessageType};
 use agency_comm::message_type::MessageTypes;
-use agency_comm::util::post_u8;
+use agency_comm::utils::comm::post_to_agency;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::messages::a2a::A2AMessage as AriesA2AMessage;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
@@ -10,6 +10,7 @@ use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use settings::ProtocolTypes;
 use utils::{constants, httpclient};
+use crate::agency_comm::mocking;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -127,7 +128,7 @@ impl GetMessagesBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = post_u8(&data)?;
+        let response = post_to_agency(&data)?;
 
         self.parse_response(response)
     }
@@ -153,9 +154,9 @@ impl GetMessagesBuilder {
 
         let data = self.prepare_download_request()?;
 
-        let response = post_u8(&data)?;
+        let response = post_to_agency(&data)?;
 
-        if agency_settings::agency_mocks_enabled() && response.len() == 0 {
+        if mocking::agency_mocks_enabled() && response.len() == 0 {
             return Ok(Vec::new());
         }
 

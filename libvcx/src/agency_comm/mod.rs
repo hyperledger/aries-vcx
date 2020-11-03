@@ -8,7 +8,7 @@ use error::prelude::*;
 use libindy::utils::crypto;
 use utils::validation;
 
-use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use self::utils::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
 use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
@@ -20,7 +20,7 @@ use agency_comm::mocking::AgencyMockDecrypted;
 pub mod create_key;
 pub mod get_message;
 pub mod update_profile;
-pub mod agent_utils;
+pub mod utils;
 pub mod update_connection;
 pub mod update_message;
 pub mod message_type;
@@ -29,7 +29,6 @@ pub mod payload;
 pub mod thread;
 pub mod agency_settings;
 pub mod mocking;
-mod util;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

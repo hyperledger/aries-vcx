@@ -47,7 +47,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 pub mod tests {
     use super::*;
     use utils::devsetup::SetupLibraryWalletPoolZeroFees;
-    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use libindy::proofs::proof_request::ProofRequestData;
 
     #[test]
     #[cfg(feature = "pool_tests")]
@@ -68,7 +68,7 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":false}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = PresentationRequestData::create()
+        let proof_req_json = ProofRequestData::create()
             .set_name(name)
             .set_requested_attributes(requested_attrs).unwrap()
             .set_requested_predicates(requested_predicates).unwrap()
@@ -117,7 +117,7 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":true}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = PresentationRequestData::create()
+        let proof_req_json = ProofRequestData::create()
             .set_name(name)
             .set_requested_attributes(requested_attrs).unwrap()
             .set_requested_predicates(requested_predicates).unwrap()
@@ -178,7 +178,7 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":true}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = PresentationRequestData::create()
+        let proof_req_json = ProofRequestData::create()
             .set_name(name)
             .set_requested_attributes(requested_attrs).unwrap()
             .set_requested_predicates(requested_predicates).unwrap()

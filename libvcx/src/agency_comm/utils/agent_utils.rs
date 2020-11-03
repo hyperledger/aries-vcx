@@ -2,10 +2,9 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use agency_comm::agency_settings::agency_mocks_enabled;
+use crate::agency_comm::mocking::agency_mocks_enabled;
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMockDecrypted;
-use agency_comm::util::post_u8;
 use error::prelude::*;
 use libindy::utils::{anoncreds, wallet};
 use libindy::utils::signus::create_and_store_my_did;
@@ -13,6 +12,7 @@ use libindy::utils::wallet::get_wallet_handle;
 use settings;
 use utils::{constants, error, httpclient};
 use utils::option_util::get_or_default;
+use agency_comm::utils::comm::post_to_agency;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -411,7 +411,7 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()>
 pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<A2AMessage>> {
     let data = prepare_message_for_agency(message, &did)?;
 
-    let response = post_u8(&data)
+    let response = post_to_agency(&data)
         .map_err(|err| err.map(VcxErrorKind::InvalidHttpResponse, error::INVALID_HTTP_RESPONSE.message))?;
 
     parse_response_from_agency(&response)
@@ -421,9 +421,9 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 mod tests {
     use std::env;
 
-    use agency_comm::agent_utils::{ComMethodType, Config, configure_wallet, connect_register_provision, update_agent_webhook};
     use api::vcx::vcx_shutdown;
     use utils::devsetup::{SetupDefaults, SetupLibraryAgencyV2, SetupMocks};
+    use agency_comm::utils::agent_utils::{connect_register_provision, configure_wallet, Config, ComMethodType, update_agent_webhook};
 
     #[test]
     #[cfg(feature = "agency")]

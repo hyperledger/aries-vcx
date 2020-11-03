@@ -3,12 +3,10 @@ use std::vec::Vec;
 
 use serde_json;
 
-use aries::messages::connection::service::Service;
 use error::prelude::*;
 use libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use libindy::utils::anoncreds;
 use utils::qualifier;
-use utils::validation;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofRequestData {
@@ -224,8 +222,8 @@ mod tests {
             ]
         }"#).unwrap();
 
-        check_req_attrs.insert("age".to_string(), attr_info1);
-        check_req_attrs.insert("name".to_string(), attr_info2);
+        check_req_attrs.insert("attribute_0".to_string(), attr_info1);
+        check_req_attrs.insert("attribute_1".to_string(), attr_info2);
 
         let request = ProofRequestData::create()
             .set_nonce().unwrap()

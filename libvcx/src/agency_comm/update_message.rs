@@ -1,10 +1,11 @@
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
-use agency_comm::util::post_u8;
+use agency_comm::utils::comm::post_to_agency;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use utils::{constants, httpclient};
+use crate::agency_comm::mocking;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -66,7 +67,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = post_u8(&data)?;
+        let response = post_to_agency(&data)?;
 
         self.parse_response(&response)
     }
@@ -115,7 +116,7 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()
 pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> VcxResult<()> {
     trace!("update_messages >>> ");
 
-    if agency_settings::agency_mocks_enabled() {
+    if mocking::agency_mocks_enabled() {
         trace!("update_messages >>> agency mocks enabled, returning empty response");
         return Ok(());
     };

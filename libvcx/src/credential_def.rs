@@ -535,7 +535,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     use libindy::utils::payments::add_new_did;
-    use settings;
+    use ::{settings};
     use utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
@@ -650,7 +650,7 @@ pub mod tests {
     fn test_tails_url_written_to_ledger() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let tails_url = "https://get-tails-here.org";

@@ -168,7 +168,6 @@ pub fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<
 pub mod tests {
     use api::VcxStateType;
     use aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::*;
     use utils::devsetup::*;

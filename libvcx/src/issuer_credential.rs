@@ -176,7 +176,7 @@ pub mod tests {
     use credential_def::tests::create_cred_def_fake;
     use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use libindy::utils::LibindyMock;
-    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION, REV_REG_ID};
     #[allow(unused_imports)]
     use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;

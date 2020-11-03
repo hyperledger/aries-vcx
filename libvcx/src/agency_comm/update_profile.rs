@@ -1,7 +1,7 @@
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
-use agency_comm::util::post_u8;
+use agency_comm::utils::comm::post_to_agency;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
 use utils::{httpclient, validation};
@@ -87,7 +87,7 @@ impl UpdateProfileDataBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = post_u8(&data)?;
+        let response = post_to_agency(&data)?;
 
         self.parse_response(response)
     }

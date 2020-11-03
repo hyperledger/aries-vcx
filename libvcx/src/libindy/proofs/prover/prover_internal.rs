@@ -23,7 +23,7 @@ pub struct CredInfoProver {
     pub timestamp: Option<u64>,
 }
 
-fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
@@ -41,7 +41,7 @@ fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> V
     Ok(rtn.to_string())
 }
 
-fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
@@ -261,7 +261,7 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
 pub mod tests {
     use connection;
     use libindy::proofs::proof_request_internal::NonRevokedInterval;
-    use libindy::proofs::prover::prover_internal::{CredInfoProver, get_revocation_interval};
+    use libindy::proofs::prover::prover_internal::{CredInfoProver};
     use utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,

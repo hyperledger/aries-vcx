@@ -11,7 +11,7 @@ pub mod test {
     use ::{rand, settings};
     use rand::Rng;
 
-    use agency_comm::agent_utils::connect_register_provision;
+    use agency_comm::utils::agent_utils::connect_register_provision;
     use agency_comm::payload::{PayloadKinds};
     use utils::devsetup::*;
     use libindy::utils::wallet::*;

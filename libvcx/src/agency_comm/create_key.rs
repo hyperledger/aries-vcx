@@ -1,9 +1,10 @@
 use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
-use agency_comm::util::post_u8;
+use agency_comm::utils::comm::post_to_agency;
 use error::prelude::*;
 use utils::{constants, httpclient, validation};
+use crate::agency_comm::mocking;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -55,15 +56,15 @@ impl CreateKeyBuilder {
     }
 
     pub fn send_secure(&self) -> VcxResult<(String, String)> {
-        trace!("CreateKeyMsg::send >>>");
+        trace!("CreateKeyBuilder::send_secure >>>");
 
-        if agency_settings::agency_mocks_enabled() {
+        if mocking::agency_mocks_enabled() {
             AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
         let data = self.prepare_request()?;
 
-        let response = post_u8(&data)?;
+        let response = post_to_agency(&data)?;
 
         self.parse_response(&response)
     }

@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 
 use agency_comm::agency_settings;
+use settings;
+use settings::CONFIG_ENABLE_TEST_MODE;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -25,7 +27,7 @@ pub struct AgencyMockDecrypted {
 
 impl AgencyMock {
     pub fn set_next_response(body: Vec<u8>) {
-        if agency_settings::agency_mocks_enabled() {
+        if agency_mocks_enabled() {
             AGENCY_MOCK.lock().unwrap().responses.push(body);
         }
     }
@@ -37,7 +39,7 @@ impl AgencyMock {
 
 impl AgencyMockDecrypted {
     pub fn set_next_decrypted_response(body: &str) {
-        if agency_settings::agency_mocks_enabled() {
+        if agency_mocks_enabled() {
             AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.push(body.into());
         } else {
             warn!("Attempting to set mocked decrypted response when mocks are not enabled!");
@@ -58,7 +60,7 @@ impl AgencyMockDecrypted {
     }
 
     pub fn set_next_decrypted_message(message: &str) {
-        if agency_settings::agency_mocks_enabled() {
+        if agency_mocks_enabled() {
             AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.push(message.into());
         } else {
             warn!("Attempting to set mocked decrypted message when mocks are not enabled!");
@@ -78,3 +80,18 @@ impl AgencyMockDecrypted {
         AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.clear();
     }
 }
+
+pub fn agency_mocks_enabled() -> bool {
+    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+        None => false,
+        Some(value) => value == "true" || value == "agency"
+    }
+}
+
+pub fn agency_decrypted_mocks_enabled() -> bool {
+    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+        None => false,
+        Some(value) => value == "true"
+    }
+}
+
