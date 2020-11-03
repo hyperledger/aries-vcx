@@ -26,8 +26,6 @@ COPY --chown=node ./agency_client ./agency_client
 COPY --chown=node ./wrappers/node ./wrappers/node
 COPY --chown=node ./agents/node ./agents/node
 
-RUN echo '@alpine38 http://dl-cdn.alpinelinux.org/alpine/v3.8/main' >> /etc/apk/repositories
-
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
         bash \
