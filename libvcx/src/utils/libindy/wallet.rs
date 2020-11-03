@@ -65,7 +65,7 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
         "id": wallet_name,
         "storage_type": wallet_type
     });
-    if let Some(storage_config) = storage_config { config["storage_config"] = json!(storage_config); }
+    if let Some(_config) = storage_config {	config["storage_config"] = serde_json::from_str(_config).unwrap(); }
     config.to_string()
 }
 
