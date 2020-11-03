@@ -29,7 +29,6 @@ COPY --chown=node ./agents/node ./agents/node
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
         bash \
-        cargo \
         g++ \
         gcc \
         git \
@@ -38,11 +37,13 @@ RUN apk add --no-cache \
         nodejs \
         npm \
         make \
+        curl \
         openssl-dev \
         python2 \
         zeromq-dev
 
+USER node
 ARG RUST_VER="1.45.2"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
-
-USER node
+ENV PATH="/home/node/.cargo/bin:${PATH}"
+RUN cargo --version
