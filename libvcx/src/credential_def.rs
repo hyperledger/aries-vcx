@@ -64,7 +64,8 @@ pub struct RevocationRegistryDefinition {
     pub revoc_def_type: String,
     pub tag: String,
     pub cred_def_id: String,
-    pub value: RevocationRegistryDefinitionValue
+    pub value: RevocationRegistryDefinitionValue,
+    pub ver: String
 }
 
 fn _replace_tails_location(new_rev_reg_def: &str, tails_url: &str) -> VcxResult<String> {
