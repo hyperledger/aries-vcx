@@ -211,11 +211,8 @@ mod tests {
         info!("storing credential");
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
         if revokable {
-            let tails_hash = credential::get_tails_hash(credential_handle).unwrap();
-            debug!("Obtained tails_hash: {:?}", tails_hash);
-            let rev_reg_id = credential::get_rev_reg_id(credential_handle).unwrap();
             thread::sleep(Duration::from_millis(2000));
-            assert_eq!(credential::get_tails_location(credential_handle).unwrap(), vec![TEST_TAILS_URL.to_string(), rev_reg_id].join("/"));
+            assert_eq!(credential::get_tails_location(credential_handle).unwrap(), TEST_TAILS_URL.to_string());
         }
     }
 
@@ -287,7 +284,12 @@ mod tests {
 
     fn rotate_rev_reg(cred_def_handle: u32 ) {
         set_institution(None);
-        credential_def::rotate_rev_reg_def(cred_def_handle);
+        let revocation_details = json!({
+            "tails_file": json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
+            "tails_url": json!(TEST_TAILS_URL),
+            "max_creds": json!(10)
+        }).to_string();
+        credential_def::rotate_rev_reg_def(cred_def_handle, &revocation_details);
     }
 
     fn publish_revocation(rev_reg_id: String) {

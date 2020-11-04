@@ -104,7 +104,7 @@ function _validateMsgs (msgs) {
 async function _validateTestTailsLocation (holderCredentialId, revRegId, vcxAgent) {
   logger.info(`Going to check that holder's tails location is ${testTailsUrl}`)
   const tailsLocation = await vcxAgent.serviceCredHolder.getTailsLocation(holderCredentialId)
-  assert(tailsLocation === testTailsUrl + `/${revRegId}`)
+  assert(tailsLocation === testTailsUrl)
 }
 
 const optionDefinitions = [

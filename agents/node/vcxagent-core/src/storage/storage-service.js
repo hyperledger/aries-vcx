@@ -71,7 +71,7 @@ async function createStorageService (agentName) {
   async function loadCredentialDefinition (name) {
     const serialized = await storageCredentialDefinitons.get(name)
     if (!serialized) {
-      throw Error(`Connection ${name} was not found.`)
+      throw Error(`CredentialDefinition ${name} was not found.`)
     }
     return CredentialDef.deserialize(serialized)
   }
@@ -84,7 +84,7 @@ async function createStorageService (agentName) {
   async function loadCredIssuer (name) {
     const serialized = await storageCredIssuer.get(name)
     if (!serialized) {
-      throw Error(`Connection ${name} was not found.`)
+      throw Error(`CredentialIssuer ${name} was not found.`)
     }
     return IssuerCredential.deserialize(serialized)
   }
@@ -97,7 +97,7 @@ async function createStorageService (agentName) {
   async function loadCredHolder (name) {
     const serialized = await storageCredHolder.get(name)
     if (!serialized) {
-      throw Error(`Connection ${name} was not found.`)
+      throw Error(`CredentialHolder ${name} was not found.`)
     }
     return Credential.deserialize(serialized)
   }
@@ -110,7 +110,7 @@ async function createStorageService (agentName) {
   async function loadDisclosedProof (name) {
     const serialized = await storageDisclosedProof.get(name)
     if (!serialized) {
-      throw Error(`Connection ${name} was not found.`)
+      throw Error(`DisclosedProof ${name} was not found.`)
     }
     return DisclosedProof.deserialize(serialized)
   }
@@ -123,7 +123,7 @@ async function createStorageService (agentName) {
   async function loadProof (name) {
     const serialized = await storageProof.get(name)
     if (!serialized) {
-      throw Error(`Connection ${name} was not found.`)
+      throw Error(`Proof ${name} was not found.`)
     }
     return Proof.deserialize(serialized)
   }

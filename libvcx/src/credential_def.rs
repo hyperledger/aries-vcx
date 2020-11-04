@@ -67,14 +67,12 @@ pub struct RevocationRegistryDefinition {
     pub value: RevocationRegistryDefinitionValue
 }
 
-fn _replace_tails_location(curr_rev_reg_def: &str, new_rev_reg_def: &str) -> VcxResult<String> {
-    trace!("_replace_tails_location >>> curr_rev_reg_def: {}, new_rev_reg_def: {}", curr_rev_reg_def, new_rev_reg_def);
-    let curr_rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(curr_rev_reg_def)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize current rev_reg_def: {:?}, error: {:?}", curr_rev_reg_def, err)))?;
-
+fn _replace_tails_location(new_rev_reg_def: &str, tails_url: &str) -> VcxResult<String> {
+    trace!("_replace_tails_location >>> new_rev_reg_def: {}, tails_url: {}", new_rev_reg_def, tails_url);
     let mut new_rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(new_rev_reg_def)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize new rev_reg_def: {:?}, error: {:?}", new_rev_reg_def, err)))?;
-    new_rev_reg_def.value.tails_location = String::from(curr_rev_reg_def.value.tails_location.replace(&curr_rev_reg_def.id, &new_rev_reg_def.id));
+
+    new_rev_reg_def.value.tails_location = String::from(tails_url);
 
     serde_json::to_string(&new_rev_reg_def)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize new rev_reg_def: {:?}, error: {:?}", new_rev_reg_def, err)))
@@ -168,9 +166,14 @@ impl CredentialDef {
 
     fn get_state(&self) -> u32 { self.state as u32 }
 
-    fn rotate_rev_reg(&mut self) -> VcxResult<RevocationRegistry> {
+    fn rotate_rev_reg(&mut self, revocation_details: &str) -> VcxResult<RevocationRegistry> {
         debug!("rotate_rev_reg >>>");
-        let (tails_file, max_creds, issuer_did) = (self.get_tails_file(), self.get_max_creds(), self.issuer_did.as_ref());
+        let revocation_details = _parse_revocation_details(revocation_details)?;
+        let (tails_url, tails_file, max_creds, issuer_did) = (
+            revocation_details.tails_url.ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "tails_url not found in revocation details"))?,
+            revocation_details.tails_file.or(self.get_tails_file()),
+            revocation_details.max_creds.or(self.get_max_creds()),
+            self.issuer_did.as_ref());
         match (&mut self.rev_reg, &tails_file, &max_creds, &issuer_did) {
             (Some(rev_reg), Some(tails_file), Some(max_creds), Some(issuer_did)) => {
                 let tag = format!("tag{}", rev_reg.tag + 1);
@@ -178,7 +181,7 @@ impl CredentialDef {
                     anoncreds::generate_rev_reg(&issuer_did, &self.id, &tails_file, *max_creds, tag.as_str())
                         .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create revocation registry defintion"))?;
 
-                let new_rev_reg_def = _replace_tails_location(&rev_reg.rev_reg_def, &rev_reg_def)?;
+                let new_rev_reg_def = _replace_tails_location(&rev_reg_def, &tails_url)?;
 
                 let rev_reg_def_payment_txn = anoncreds::publish_rev_reg_def(&issuer_did, &new_rev_reg_def)
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
@@ -211,14 +214,12 @@ fn _parse_revocation_details(revocation_details: &str) -> VcxResult<RevocationDe
         .to_vcx(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails")
 }
 
-fn _maybe_set_url(rev_reg_def_json: &str, revocation_details: &RevocationDetails, rev_reg_id: &str) -> VcxResult<String> {
-    // TODO: Deserialization into RevRegDef loses ver field
+fn _maybe_set_url(rev_reg_def_json: &str, revocation_details: &RevocationDetails) -> VcxResult<String> {
     let mut rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid RevocationRegistryDefinition: {:?}, err: {:?}", rev_reg_def_json, err)))?;
 
     if let Some(tails_url) = &revocation_details.tails_url {
-        let full_tails_location = vec![tails_url.to_string(), rev_reg_id.to_string()].join("/"); // TODO: Remove trailing slashes
-        rev_reg_def["value"]["tailsLocation"] = serde_json::Value::String(full_tails_location);
+        rev_reg_def["value"]["tailsLocation"] = serde_json::Value::String(tails_url.to_string());
     }
 
     serde_json::to_string(&rev_reg_def)
@@ -252,7 +253,7 @@ fn _create_credentialdef(issuer_did: &str,
                 anoncreds::generate_rev_reg(&issuer_did, &cred_def_id, &tails_file, max_creds, "tag1")
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
 
-            let rev_reg_def = _maybe_set_url(&rev_reg_def, revocation_details, &rev_reg_id)?;
+            let rev_reg_def = _maybe_set_url(&rev_reg_def, revocation_details)?;
 
             (Some(rev_reg_id), Some(rev_reg_def), Some(rev_reg_entry))
         }
@@ -496,11 +497,11 @@ pub fn check_is_published(handle: u32) -> VcxResult<bool> {
     })
 }
 
-pub fn rotate_rev_reg_def(handle: u32) -> VcxResult<String> {
+pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
         match &s.issuer_did {
             Some(_) => {
-                let new_rev_reg = s.rotate_rev_reg()?;
+                let new_rev_reg = s.rotate_rev_reg(revocation_details)?;
                 match update_rev_reg_ids_cache(&s.id, &new_rev_reg.rev_reg_id) {
                     Ok(()) => s.to_string(),
                     Err(err) => Err(err)
@@ -653,8 +654,7 @@ pub mod tests {
         let (schema_id, _) = ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let tails_url = "https://get-tails-here.org";
-        let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_url": tails_url}).to_string();
+        let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_url": ::utils::constants::TEST_TAILS_URL.to_string()}).to_string();
         let handle = create_and_publish_credentialdef("1".to_string(),
                                                   "test_tails_url_written_to_ledger".to_string(),
                                                   did,
@@ -664,7 +664,7 @@ pub mod tests {
         let rev_reg_def = get_rev_reg_def(handle).unwrap().unwrap();
         let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def).unwrap();
         let rev_reg_id = get_rev_reg_id(handle).unwrap();
-        assert_eq!(rev_reg_def["value"]["tailsLocation"], vec![tails_url.to_string(), rev_reg_id].join("/"));
+        assert_eq!(rev_reg_def["value"]["tailsLocation"], ::utils::constants::TEST_TAILS_URL.to_string());
     }
 
     #[cfg(feature = "pool_tests")]
