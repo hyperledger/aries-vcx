@@ -30,9 +30,7 @@ provisionConfig = {
     'wallet_name': 'acme_wallet',
     'wallet_key': '123',
     'payment_method': 'null',
-    'protocol_type': '2.0',
     'use_latest_protocols': 'True',
-    'communication_method': 'aries',
 }
 
 

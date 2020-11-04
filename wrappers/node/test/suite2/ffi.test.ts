@@ -5,7 +5,6 @@ import * as ffi from 'ffi-napi'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import * as os from 'os'
 import { initVcx, VCXCode, VCXRuntime } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('vcxInit', () => {
   it('should throw if invalid path provided', async () => {
@@ -32,7 +31,7 @@ describe('Using the vcx ffi directly', () => {
   const libDir = libPath[platform.toLowerCase()] || libPath.linux
   const run = new VCXRuntime({ basepath: `${libDir}libvcx${postfix}` })
 
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   it('a call to vcx_connection_create should return 0', () => {
     const result = run.ffi.vcx_connection_create(

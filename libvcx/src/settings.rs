@@ -18,7 +18,6 @@ use utils::file::read_file;
 use utils::validation;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
-pub static CONFIG_PROTOCOL_TYPE: &str = "protocol_type";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
@@ -46,7 +45,6 @@ pub static CONFIG_TXN_AUTHOR_AGREEMENT: &'static str = "author_agreement";
 pub static CONFIG_USE_LATEST_PROTOCOLS: &'static str = "use_latest_protocols";
 pub static CONFIG_POOL_CONFIG: &'static str = "pool_config";
 pub static CONFIG_DID_METHOD: &str = "did_method";
-pub static COMMUNICATION_METHOD: &str = "communication_method";
 // proprietary or aries
 pub static CONFIG_ACTORS: &str = "actors";
 
@@ -302,14 +300,6 @@ pub fn set_opt_config_value(key: &str, value: &Option<String>) {
     }
 }
 
-pub fn get_connecting_protocol_version() -> ProtocolTypes {
-    let protocol = get_config_value(CONFIG_USE_LATEST_PROTOCOLS).unwrap_or(DEFAULT_USE_LATEST_PROTOCOLS.to_string());
-    match protocol.as_ref() {
-        "true" | "TRUE" | "True" => return ProtocolTypes::V2,
-        "false" | "FALSE" | "False" | _ => return ProtocolTypes::V1,
-    }
-}
-
 pub fn get_payment_method() -> String {
     get_config_value(CONFIG_PAYMENT_METHOD).unwrap_or(DEFAULT_PAYMENT_METHOD.to_string())
 }
@@ -333,53 +323,6 @@ pub enum Actors {
     Verifier,
     Sender,
     Receiver,
-}
-
-pub const ARIES_COMMUNICATION_METHOD: &str = "aries";
-
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum ProtocolTypes {
-    #[serde(rename = "1.0")]
-    V1,
-    #[serde(rename = "2.0")]
-    V2,
-    #[serde(rename = "3.0")]
-    V3,
-    #[serde(rename = "4.0")]
-    V4,
-}
-
-impl Default for ProtocolTypes {
-    fn default() -> Self {
-        ProtocolTypes::V3
-    }
-}
-
-impl From<String> for ProtocolTypes {
-    fn from(type_: String) -> Self {
-        match type_.as_str() {
-            "1.0" => ProtocolTypes::V1,
-            "2.0" => ProtocolTypes::V2,
-            "3.0" => ProtocolTypes::V3,
-            "4.0" => ProtocolTypes::V4,
-            type_ @ _ => {
-                error!("Unknown protocol type: {:?}. Use default", type_);
-                ProtocolTypes::default()
-            }
-        }
-    }
-}
-
-impl ::std::string::ToString for ProtocolTypes {
-    fn to_string(&self) -> String {
-        match self {
-            ProtocolTypes::V1 => "1.0".to_string(),
-            ProtocolTypes::V2 => "2.0".to_string(),
-            ProtocolTypes::V3 => "3.0".to_string(),
-            ProtocolTypes::V4 => "4.0".to_string(),
-        }
-    }
 }
 
 pub fn clear_config() {

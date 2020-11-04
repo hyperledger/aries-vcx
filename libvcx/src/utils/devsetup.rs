@@ -263,7 +263,7 @@ impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup();
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
-        setup_agency_env("4.0", false);
+        setup_agency_env(false);
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
     }
@@ -279,7 +279,7 @@ impl Drop for SetupLibraryAgencyV2 {
 impl SetupLibraryAgencyV2ZeroFees {
     pub fn init() -> SetupLibraryAgencyV2ZeroFees {
         setup();
-        setup_agency_env("4.0", true);
+        setup_agency_env(true);
         SetupLibraryAgencyV2ZeroFees
     }
 }
@@ -436,7 +436,7 @@ fn assign_trustee_role(institution_handle: Option<u32>) {
     wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 }
 
-pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
+pub fn setup_agency_env(use_zero_fees: bool) {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
 
@@ -456,13 +456,8 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
             "agent_seed": seed1,
             "name": "institution".to_string(),
             "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string(),
-            "protocol_type": protocol_type
+            "path": constants::GENESIS_PATH.to_string()
         });
-
-    if protocol_type == "2.0" {
-        config["use_latest_protocols"] = json!("true");
-    }
 
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
     let enterprise_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
@@ -482,13 +477,8 @@ pub fn setup_agency_env(protocol_type: &str, use_zero_fees: bool) {
             "agent_seed": seed2,
             "name": "consumer".to_string(),
             "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string(),
-            "protocol_type": protocol_type
+            "path": constants::GENESIS_PATH.to_string()
         });
-
-    if protocol_type == "2.0" {
-        config["use_latest_protocols"] = json!("true");
-    }
 
     debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
     let consumer_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
@@ -537,8 +527,7 @@ pub fn create_consumer_config() -> u32 {
             "agent_seed": seed,
             "name": format!("consumer_{}", consumer_id).to_string(),
             "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string(),
-            "protocol_type": "4.0"
+            "path": constants::GENESIS_PATH.to_string()
         });
 
     debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
@@ -567,8 +556,7 @@ pub fn create_institution_config() -> u32 {
             "agent_seed": seed,
             "name": format!("institution_{}", enterprise_id).to_string(),
             "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string(),
-            "protocol_type": "4.0"
+            "path": constants::GENESIS_PATH.to_string()
         });
 
     debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);

@@ -4,7 +4,6 @@ import { assert } from 'chai'
 import { validateUTXO } from 'helpers/asserts'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { initMinimal, setPoolHandle, shutdownVcx, VCXCode, Wallet } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 const WALLET_RECORD = {
   id: 'RecordId',
@@ -38,7 +37,7 @@ const PAYMENT_ADDRESS_SEED = {
 }
 
 describe('Wallet:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('getTokenInfo:', () => {
     it('success', async () => {

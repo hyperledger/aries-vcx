@@ -15,17 +15,8 @@ import { PaymentManager } from './vcx-payment-txn'
  *    # State
  *
  *    The set of object states and transitions depends on communication method is used.
- *    The communication method can be specified as config option on one of *_init function. The default communication method us `proprietary`.
+ *    The communication method can be specified as config option on one of *_init function.
  *
- *        proprietary:
- *            VcxStateType::VcxStateRequestReceived - once `vcx_credential_create_with_offer` (create Credential object) is called.
- *
- *            VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `CRED_REQ` message) is called.
- *
- *            VcxStateType::VcxStateAccepted - once `CRED` messages is received.
- *                                             use `vcx_credential_update_state` or `vcx_credential_update_state_with_message` functions for state updates.
- *
- *        aries:
  *            VcxStateType::VcxStateRequestReceived - once `vcx_credential_create_with_offer` (create Credential object) is called.
  *
  *            VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `CredentialRequest` message) is called.
@@ -36,13 +27,6 @@ import { PaymentManager } from './vcx-payment-txn'
  *
  *        # Transitions
  *
- *        proprietary:
- *            VcxStateType::None - `vcx_credential_create_with_offer` - VcxStateType::VcxStateRequestReceived
- *
- *            VcxStateType::VcxStateRequestReceived - `vcx_credential_send_request` - VcxStateType::VcxStateOfferSent
- *
- *            VcxStateType::VcxStateOfferSent - received `CRED` - VcxStateType::VcxStateAccepted
- *
  *        aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
  *            VcxStateType::None - `vcx_credential_create_with_offer` - VcxStateType::VcxStateRequestReceived
  *
@@ -52,13 +36,6 @@ import { PaymentManager } from './vcx-payment-txn'
  *            VcxStateType::VcxStateOfferSent - received `ProblemReport` - VcxStateType::None
  *
  *        # Messages
- *
- *        proprietary:
- *            CredentialOffer (`CRED_OFFER`)
- *            CredentialRequest (`CRED_REQ`)
- *            Credential (`CRED`)
- *
- *        aries:
  *            CredentialProposal - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#propose-credential
  *            CredentialOffer - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#offer-credential
  *            CredentialRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#request-credential

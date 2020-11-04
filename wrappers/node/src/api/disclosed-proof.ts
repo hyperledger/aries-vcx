@@ -14,16 +14,8 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *    # State
  *
  *    The set of object states and transitions depends on communication method is used.
- *    The communication method can be specified as config option on one of *_init function. The default communication method us `proprietary`.
+ *    The communication method can be specified as config option on one of *_init function.
  *
- *    proprietary:
- *        VcxStateType::VcxStateRequestReceived - once `vcx_disclosed_proof_create_with_request` (create DisclosedProof object) is called.
- *
- *        VcxStateType::VcxStateRequestReceived - once `vcx_disclosed_proof_generate_proof` is called.
- *
- *        VcxStateType::VcxStateAccepted - once `vcx_disclosed_proof_send_proof` (send `PROOF_REQ` message) is called.
- *
- *    aries:
  *        VcxStateType::VcxStateRequestReceived - once `vcx_disclosed_proof_create_with_request` (create DisclosedProof object) is called.
  *
  *        VcxStateType::VcxStateRequestReceived - once `vcx_disclosed_proof_generate_proof` is called.
@@ -35,13 +27,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *        VcxStateType::None - once `ProblemReport` messages is received.
  *
  *    # Transitions
- *
- *    proprietary:
- *        VcxStateType::None - `vcx_disclosed_proof_create_with_request` - VcxStateType::VcxStateRequestReceived
- *
- *        VcxStateType::VcxStateRequestReceived - `vcx_disclosed_proof_generate_proof` - VcxStateType::VcxStateRequestReceived
- *
- *        VcxStateType::VcxStateRequestReceived - `vcx_disclosed_proof_send_proof` - VcxStateType::VcxStateAccepted
  *
  *    aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#propose-presentation
  *        VcxStateType::None - `vcx_disclosed_proof_create_with_request` - VcxStateType::VcxStateRequestReceived
@@ -56,11 +41,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *
  *    # Messages
  *
- *    proprietary:
- *        ProofRequest (`PROOF_REQ`)
- *        Proof (`PROOF`)
- *
- *    aries:
  *        PresentationRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#request-presentation
  *        Presentation - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#presentation
  *        PresentationProposal - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#propose-presentation

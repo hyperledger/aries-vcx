@@ -12,7 +12,6 @@ use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
 use settings;
-use settings::ProtocolTypes;
 use utils::error;
 use utils::object_cache::ObjectCache;
 

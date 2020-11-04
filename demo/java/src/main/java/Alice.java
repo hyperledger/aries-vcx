@@ -43,10 +43,6 @@ public class Alice {
                 "  enterprise_seed: '000000000000000000000000000User1'" + // SEED of alice's DID that does not need to be registered in the ledger
                 "}").jsonString();
 
-        // Communication method. aries.
-        provisionConfig = JsonPath.parse(provisionConfig).put("$", "protocol_type", "4.0").jsonString();
-        logger.info("Running with Aries VCX Enabled! Make sure VCX agency is configured to use protocol_type 4.0");
-
         if (options.hasOption("postgres")) {
             Common.loadPostgresPlugin();
             provisionConfig = JsonPath.parse(provisionConfig).put("$", "wallet_type", "postgres_storage")

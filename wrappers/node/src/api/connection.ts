@@ -14,26 +14,8 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *   # States
  *
  *   The set of object states and transitions depends on communication method is used.
- *   The communication method can be specified as config option on one of *_init function. The default communication method us `proprietary`.
+ *   The communication method can be specified as config option on one of *_init function.
  *
- *   proprietary:
- *       Inviter:
- *           VcxStateType::VcxStateInitialized - once `vcx_connection_create` (create Connection object) is called.
- *
- *           VcxStateType::VcxStateOfferSent - once `vcx_connection_connect` (send Connection invite) is called.
- *
- *           VcxStateType::VcxStateAccepted - once `connReqAnswer` messages is received.
- *                                            use `vcx_connection_update_state` or `vcx_connection_update_state_with_message` functions for state updates.
- *           VcxStateType::VcxStateNone - once `vcx_connection_delete_connection` (delete Connection object) is called.
- *
- *       Invitee:
- *           VcxStateType::VcxStateRequestReceived - once `vcx_connection_create_with_invite` (create Connection object with invite) is called.
- *
- *           VcxStateType::VcxStateAccepted - once `vcx_connection_connect` (accept Connection invite) is called.
- *
- *           VcxStateType::VcxStateNone - once `vcx_connection_delete_connection` (delete Connection object) is called.
- *
- *   aries:
  *       Inviter:
  *           VcxStateType::VcxStateInitialized - once `vcx_connection_create` (create Connection object) is called.
  *
@@ -64,18 +46,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *                                       `ConnectionProblemReport` messages is received on state updates.
  *
  *   # Transitions
- *
- *   proprietary:
- *       Inviter:
- *           VcxStateType::None - `vcx_connection_create` - VcxStateType::VcxStateInitialized
- *           VcxStateType::VcxStateInitialized - `vcx_connection_connect` - VcxStateType::VcxStateOfferSent
- *           VcxStateType::VcxStateOfferSent - received `connReqAnswer` - VcxStateType::VcxStateAccepted
- *           any state - `vcx_connection_delete_connection` - `VcxStateType::VcxStateNone`
- *
- *       Invitee:
- *           VcxStateType::None - `vcx_connection_create_with_invite` - VcxStateType::VcxStateRequestReceived
- *           VcxStateType::VcxStateRequestReceived - `vcx_connection_connect` - VcxStateType::VcxStateAccepted
- *           any state - `vcx_connection_delete_connection` - `VcxStateType::VcxStateNone`
  *
  *   aries - RFC: https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
  *       Inviter:
@@ -108,11 +78,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *
  *   # Messages
  *
- *   proprietary:
- *       ConnectionRequest (`connReq`)
- *       ConnectionRequestAnswer (`connReqAnswer`)
- *
- *   aries:
  *       Invitation - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#0-invitation-to-connect
  *       ConnectionRequest - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#1-connection-request
  *       ConnectionResponse - https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol#2-connection-response

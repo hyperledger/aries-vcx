@@ -38,11 +38,11 @@ function generateTestConfig () {
   return sampleConfig
 }
 
-export async function initVcxTestMode (protocolType: string) {
+export async function initVcxTestMode () {
   initRustAPI()
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
   await vcx.defaultLogger(rustLogPattern)
-  const useTestConfig = { ...generateTestConfig(), protocol_type: protocolType }
+  const useTestConfig = generateTestConfig()
   await vcx.initVcxCore(JSON.stringify(useTestConfig))
 }
 

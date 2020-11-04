@@ -16,9 +16,8 @@ import {
 } from 'src'
 import { errorMessage } from '../../src/utils/error-message'
 
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 describe('utils:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   // tslint:disable-next-line max-line-length
   const updateInstitutionConfigsData = {

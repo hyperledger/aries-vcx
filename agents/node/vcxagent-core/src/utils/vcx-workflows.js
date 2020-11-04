@@ -56,7 +56,6 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
     wallet_name: agentName,
     wallet_key: '123',
     payment_method: 'null',
-    protocol_type: '4.0',
     enterprise_seed: seed
   }
   if (usePostgresWallet) {
