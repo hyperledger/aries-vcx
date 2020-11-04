@@ -164,7 +164,7 @@ describe('Wallet:', () => {
     it('can be initialized when wallet is set', async () => {
       Wallet.setHandle(1)
       setPoolHandle(1)
-      assert.equal(initMinimal('{"institution_name":"faber","institution_did":"44x8p4HubxzUK1dwxcc5FU",\
+      assert.equal(initMinimal('{"institution_did":"44x8p4HubxzUK1dwxcc5FU",\
       "institution_verkey":"444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"}'), 0)
     })
   })

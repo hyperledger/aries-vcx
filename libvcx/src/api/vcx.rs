@@ -338,7 +338,7 @@ fn _finish_init(command_handle: CommandHandle, cb: extern fn(xcommand_handle: Co
 /// vcx_wallet_set_handle() and vcx_pool_set_handle()) and without any agency configuration
 ///
 /// # Example:
-/// vcx_init_minimal -> '{"institution_name":"faber","institution_did":"44x8p4HubxzUK1dwxcc5FU",\
+/// vcx_init_minimal -> '{"institution_did":"44x8p4HubxzUK1dwxcc5FU",\
 //      "institution_verkey":"444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"}'
 ///
 /// #Params
@@ -465,28 +465,6 @@ pub extern fn vcx_error_c_message(error_code: u32) -> *const c_char {
     info!("vcx_error_c_message >>>");
     trace!("vcx_error_message(error_code: {})", error_code);
     error::error_c_message(&error_code).as_ptr()
-}
-
-/// Update setting to set new local institution information
-///
-/// #Params
-/// name: institution name
-/// logo_url: url containing institution logo
-///
-/// #Returns
-/// Error code as u32
-#[no_mangle]
-pub extern fn vcx_update_institution_info(name: *const c_char, logo_url: *const c_char) -> u32 {
-    info!("vcx_update_institution_info >>>");
-
-    check_useful_c_str!(name, VcxErrorKind::InvalidConfiguration);
-    check_useful_c_str!(logo_url, VcxErrorKind::InvalidConfiguration);
-    trace!("vcx_update_institution_info(name: {}, logo_url: {})", name, logo_url);
-
-    settings::set_config_value(::settings::CONFIG_INSTITUTION_NAME, &name);
-    settings::set_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL, &logo_url);
-
-    error::SUCCESS.code_num
 }
 
 /// Update agency webhook url setting
@@ -706,7 +684,6 @@ mod tests {
                "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
                "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
                "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-               "institution_name" : "evernym enterprise",
                "agency_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "remote_to_sdk_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "genesis_path": get_temp_dir_path("pool1.txn").to_str().unwrap(),
@@ -1077,23 +1054,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_update_institution_info() {
-        let _setup = SetupDefaults::init();
-
-        let new_name = "new_name";
-        let new_url = "http://www.evernym.com";
-        assert_ne!(new_name, &settings::get_config_value(::settings::CONFIG_INSTITUTION_NAME).unwrap());
-        assert_ne!(new_url, &settings::get_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL).unwrap());
-
-        assert_eq!(error::SUCCESS.code_num, vcx_update_institution_info(CString::new(new_name.to_string()).unwrap().into_raw(),
-                                                                        CString::new(new_url.to_string()).unwrap().into_raw()));
-
-        assert_eq!(new_name, &settings::get_config_value(::settings::CONFIG_INSTITUTION_NAME).unwrap());
-        assert_eq!(new_url, &settings::get_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL).unwrap());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_update_institution_webhook() {
         let _setup = SetupDefaults::init();
 
@@ -1264,8 +1224,6 @@ mod tests {
           "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
           "genesis_path": "/tmp/foo/bar",
           "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
-          "institution_logo_url": "https://example.org",
-          "institution_name": "alice-9b2e793a-2e89-42c0-8941-dd3360bb2043",
           "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
           "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
           "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
@@ -1327,8 +1285,6 @@ mod tests {
           "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
           "genesis_path": genesis_path,
           "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
-          "institution_logo_url": "https://example.org",
-          "institution_name": "alice-9b2e793a-2e89-42c0-8941-dd3360bb2043",
           "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
           "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
           "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
@@ -1377,7 +1333,6 @@ mod tests {
         let _setup = SetupLibraryWalletPool::init();
 
         let config = json!({
-            "institution_name": "faber",
             "institution_did": "44x8p4HubxzUK1dwxcc5FU",
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
