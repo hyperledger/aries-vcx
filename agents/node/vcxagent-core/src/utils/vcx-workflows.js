@@ -72,7 +72,6 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   logger.info(`Using following config to create agent provision: ${JSON.stringify(provisionConfig, null, 2)}`)
   const agentProvision = JSON.parse(await provisionAgent(JSON.stringify(provisionConfig)))
   agentProvision.institution_name = agentName
-  agentProvision.institution_logo_url = 'https://example.org'
   agentProvision.genesis_path = genesisPath
   logger.info(`Agent provision created: ${JSON.stringify(agentProvision, null, 2)}`)
   return agentProvision

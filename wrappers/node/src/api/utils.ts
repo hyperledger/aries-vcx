@@ -155,18 +155,6 @@ export async function vcxUpdateWebhookUrl ({ webhookUrl }: IUpdateWebhookUrl): P
   }
 }
 
-export interface IUpdateInstitutionConfigs {
-  name: string,
-  logoUrl: string
-}
-export function updateInstitutionConfigs ({ name, logoUrl }: IUpdateInstitutionConfigs): number {
-  const rc = rustAPI().vcx_update_institution_info(name, logoUrl)
-  if (rc) {
-    throw new VCXInternalError(rc)
-  }
-  return rc
-}
-
 export interface IDownloadMessagesConfigs {
   status: string,
   uids: string,

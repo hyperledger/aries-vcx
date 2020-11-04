@@ -159,7 +159,6 @@ pub struct Config {
     enterprise_seed: Option<String>,
     wallet_key_derivation: Option<String>,
     name: Option<String>,
-    logo: Option<String>,
     path: Option<String>,
     storage_config: Option<String>,
     storage_credentials: Option<String>,
@@ -247,7 +246,6 @@ pub fn get_final_config(my_did: &str,
         "remote_to_sdk_did": agent_did,
         "remote_to_sdk_verkey": agent_vk,
         "institution_name": get_or_default(&my_config.name, "<CHANGE_ME>"),
-        "institution_logo_url": get_or_default(&my_config.logo, "<CHANGE_ME>"),
         "genesis_path": get_or_default(&my_config.path, "<CHANGE_ME>")
     });
 
@@ -475,7 +473,6 @@ mod tests {
             "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf",
             "genesis_path":"<CHANGE_ME>",
             "institution_did":"FhrSrYtQcw3p9xwf7NYemf",
-            "institution_logo_url":"<CHANGE_ME>",
             "institution_name":"<CHANGE_ME>",
             "institution_verkey":"91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
             "remote_to_sdk_did":"DnEpUQJLupa5rKPkrKUpFd", // taken from mock constants::CONNECTED_RESPONSE_DECRYPTED
