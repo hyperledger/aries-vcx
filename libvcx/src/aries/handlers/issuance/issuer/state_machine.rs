@@ -4,7 +4,7 @@ use api::VcxStateType;
 use connection::{get_messages, send_message};
 use connection;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::libindy::anoncreds::{self, libindy_issuer_create_credential_offer};
+use libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::error::ProblemReport;

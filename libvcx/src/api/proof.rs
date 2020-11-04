@@ -188,7 +188,7 @@ pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         match proof::update_state(proof_handle, None, None) {
             Ok(x) => {
                 trace!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
@@ -197,7 +197,7 @@ pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
             }
             Err(x) => {
                 error!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                      command_handle, x, proof_handle, 0, source_id);
+                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
         }
@@ -210,35 +210,35 @@ pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
-                                     proof_handle: u32,
-                                     connection_handle: u32,
-                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                        proof_handle: u32,
+                                        connection_handle: u32,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_proof_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_v2_proof_update_state(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
-          command_handle, proof_handle, connection_handle, source_id);
+           command_handle, proof_handle, connection_handle, source_id);
 
     if !proof::is_valid_handle(proof_handle) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         match proof::update_state(proof_handle, None, Some(connection_handle)) {
             Ok(x) => {
                 trace!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                      command_handle, error::SUCCESS.message, proof_handle, x, source_id);
+                       command_handle, error::SUCCESS.message, proof_handle, x, source_id);
                 cb(command_handle, error::SUCCESS.code_num, x);
-            },
+            }
             Err(x) => {
                 error!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                      command_handle, x, proof_handle, 0, source_id);
+                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
         }
@@ -285,7 +285,7 @@ pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    spawn(move|| {
+    spawn(move || {
         match proof::update_state(proof_handle, Some(&message), None) {
             Ok(x) => {
                 trace!("vcx_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
@@ -689,16 +689,14 @@ mod tests {
 
     use ::{proof, settings};
     use api::{ProofStateType, return_types_u32, VcxStateType};
-    
+    use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::*;
     use utils::devsetup::*;
-
+    use utils::mockdata::mock_settings::MockBuilder;
+    use utils::mockdata::mockdata_proof;
     use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use connection::tests::build_test_connection_inviter_requested;
-    use utils::mockdata::mockdata_proof;
-    use utils::mockdata::mock_settings::MockBuilder;
 
     static DEFAULT_PROOF_NAME: &'static str = "PROOF_NAME";
 
@@ -807,7 +805,6 @@ mod tests {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let proof_handle = create_proof_util().unwrap();
 

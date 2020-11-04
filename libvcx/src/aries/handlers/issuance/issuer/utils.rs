@@ -58,21 +58,11 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
-    use ::{settings};
-    
-    #[allow(unused_imports)]
-    use utils::{constants::*,
-                get_temp_dir_path,
-                libindy::{anoncreds::{libindy_create_and_store_credential_def,
-                                      libindy_issuer_create_credential_offer,
-                                      libindy_prover_create_credential_req},
-                          LibindyMock,
-                          wallet, wallet::get_wallet_handle},
-    };
+
+    use settings;
+    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use utils::constants::SCHEMAS_JSON;
     use utils::devsetup::*;
-    
-    
-    
 
     use super::*;
 
@@ -99,7 +89,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -141,7 +130,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_one_attribute_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -164,7 +152,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         //        for reference....expectation is encode_attributes returns this:
 
@@ -209,7 +196,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_one_attribute_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "address2": {
@@ -232,7 +218,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_with_mixed_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         //        for reference....expectation is encode_attributes returns this:
 
@@ -278,7 +263,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         static BAD_TEST_CREDENTIAL_DATA: &str =
             r#"{"format doesnt make sense"}"#;
@@ -290,7 +274,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         static BAD_TEST_CREDENTIAL_DATA: &str =
             r#"{"address2":[]}"#;
@@ -302,7 +285,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_encode_empty_field() {
         let _setup = SetupDefaults::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let expected = json!({
             "empty_field": {

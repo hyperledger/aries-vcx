@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use serde_json;
 
+use agency_comm;
+use agency_comm::{MessageStatusCode, SerializableObjectWithState};
+use agency_comm::get_message::{get_bootstrap_agent_messages, Message, MessageByConnection};
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::connection::{Connection, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::connection::invite::Invitation as InvitationV3;
 use error::prelude::*;
-use messages;
-use messages::get_message::{get_bootstrap_agent_messages, MessageByConnection, Message};
-use messages::{SerializableObjectWithState, MessageStatusCode};
 use settings;
 use settings::ProtocolTypes;
 use utils::error;
@@ -23,10 +23,9 @@ lazy_static! {
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
-    let (agent_did, agent_verkey) = messages::create_keys()
+    let (agent_did, agent_verkey) = agency_comm::create_keys()
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
-        .version(&Some(settings::get_protocol_type()))?
         .send_secure()
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
@@ -65,10 +64,6 @@ pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.agent_info().agent_vk.clone())
     })
-}
-
-pub fn get_version(_handle: u32) -> VcxResult<Option<ProtocolTypes>> {
-    Ok(Some(settings::get_protocol_type()))
 }
 
 pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
@@ -136,7 +131,7 @@ pub fn update_state(handle: u32) -> VcxResult<u32> {
 
         if connection.is_in_null_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
-            return Ok(error::SUCCESS.code_num)
+            return Ok(error::SUCCESS.code_num);
         }
 
         // connection protocol itself handles message authentication where it makes sense
@@ -183,7 +178,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        let (  state, data, source_id) = connection.to_owned().into();
+        let (state, data, source_id) = connection.to_owned().into();
         let object = SerializableObjectWithState::V3 { data, state, source_id };
 
         ::serde_json::to_string(&object)
@@ -292,13 +287,13 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
             conn_handle, |connection| {
                 let expected_sender_vk = connection.remote_vk()?;
                 let msgs = connection
-                   .agent_info()
-                   .download_encrypted_messages(uids.clone(), status_codes.clone())?
-                   .iter()
-                   .map(|msg| msg.decrypt_auth(&expected_sender_vk))
-                   .collect::<VcxResult<Vec<Message>>>()?;
-                Ok(MessageByConnection{ pairwise_did: connection.agent_info().clone().pw_did, msgs })
-            }
+                    .agent_info()
+                    .download_encrypted_messages(uids.clone(), status_codes.clone())?
+                    .iter()
+                    .map(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .collect::<VcxResult<Vec<Message>>>()?;
+                Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
+            },
         )?;
         res.push(msg_by_conn);
     };
@@ -312,13 +307,13 @@ pub mod tests {
 
     use serde_json::Value;
 
+    use agency_comm::get_message::download_messages_noauth;
+    use agency_comm::MessageStatusCode;
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::VcxStateType;
-    use messages::get_message::download_messages_noauth;
-    use messages::MessageStatusCode;
     use utils::constants::*;
     use utils::constants;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;

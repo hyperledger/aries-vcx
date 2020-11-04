@@ -11,10 +11,10 @@ pub mod test {
     use ::{rand, settings};
     use rand::Rng;
 
-    use messages::agent_utils::connect_register_provision;
-    use messages::payload::{PayloadKinds};
+    use agency_comm::utils::agent_utils::connect_register_provision;
+    use agency_comm::payload::{PayloadKinds};
     use utils::devsetup::*;
-    use utils::libindy::wallet::*;
+    use libindy::utils::wallet::*;
     use utils::plugins::init_plugin;
     use aries::messages::a2a::A2AMessage;
     use error::{VcxResult, VcxErrorKind, VcxError};
@@ -36,15 +36,15 @@ pub mod test {
 
     impl Pool {
         pub fn open() -> Pool {
-            ::utils::libindy::pool::tests::open_test_pool();
+            ::libindy::utils::pool::tests::open_test_pool();
             Pool {}
         }
     }
 
     impl Drop for Pool {
         fn drop(&mut self) {
-            ::utils::libindy::pool::close().unwrap();
-            ::utils::libindy::pool::tests::delete_test_pool();
+            ::libindy::utils::pool::close().unwrap();
+            ::libindy::utils::pool::tests::delete_test_pool();
         }
     }
 
@@ -77,7 +77,7 @@ pub mod test {
     }
 
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
-        let mut messages = ::messages::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+        let mut messages = ::agency_comm::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 

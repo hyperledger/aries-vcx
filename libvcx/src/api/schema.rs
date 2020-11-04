@@ -599,7 +599,7 @@ mod tests {
     fn test_vcx_schema_get_attrs_with_pool() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = ::utils::libindy::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,
@@ -655,7 +655,6 @@ mod tests {
     fn test_vcx_schema_get_attrs() {
         let _setup = SetupMocks::init();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         let data = r#"["height","name","sex","age"]"#;
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,
@@ -715,7 +714,6 @@ mod tests {
     fn test_vcx_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_prepare_for_endorser(cb.command_handle,
                                                    CString::new("Test Source ID").unwrap().into_raw(),

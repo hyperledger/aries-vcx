@@ -3,12 +3,12 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
+use aries::messages::a2a::A2AMessage;
 use connection::*;
 use error::prelude::*;
 use utils::cstring::CStringUtils;
 use utils::error;
 use utils::threadpool::spawn;
-use aries::messages::a2a::A2AMessage;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -842,7 +842,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match ::utils::libindy::crypto::sign(&vk, &data_raw) {
+        match ::libindy::utils::crypto::sign(&vk, &data_raw) {
             Ok(x) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
@@ -922,7 +922,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
     };
 
     spawn(move || {
-        match ::utils::libindy::crypto::verify(&vk, &data_raw, &signature_raw) {
+        match ::libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
             Ok(x) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -1205,18 +1205,19 @@ mod tests {
     use std::ffi::CString;
     use std::ptr;
 
+    use serde_json::Value;
+
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::{return_types_u32, VcxStateType};
     use connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use utils::devsetup::*;
     use utils::error;
     use utils::error::SUCCESS;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
     use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use serde_json::Value;
 
     #[test]
     #[cfg(feature = "general_test")]

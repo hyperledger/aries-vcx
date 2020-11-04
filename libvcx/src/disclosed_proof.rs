@@ -2,21 +2,20 @@ use std::convert::TryInto;
 
 use serde_json;
 
+use agency_comm::{
+    get_message::Message,
+};
+use agency_comm::mocking::AgencyMockDecrypted;
 use aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use connection;
 use error::prelude::*;
-use messages::{
-    get_message::Message,
-};
-use messages::proofs::proof_request::ProofRequestMessage;
 use settings;
 use settings::indy_mocks_enabled;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
-use utils::httpclient::AgencyMockDecrypted;
 use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use utils::object_cache::ObjectCache;
 
@@ -80,7 +79,7 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Optio
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
 
-        if !proof.has_transitions() { 
+        if !proof.has_transitions() {
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.state());
         }
@@ -243,6 +242,7 @@ mod tests {
     use time;
 
     use api::VcxStateType;
+    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
@@ -251,11 +251,9 @@ mod tests {
         get_temp_dir_path,
     };
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::mockdata::mock_settings::MockBuilder;
     use utils::mockdata::mockdata_proof;
     use utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
-    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
 
     use super::*;
 

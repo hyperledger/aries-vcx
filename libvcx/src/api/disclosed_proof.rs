@@ -453,8 +453,8 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: CommandHandle,
-                                            proof_handle: u32,
-                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
+                                                               proof_handle: u32,
+                                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
     info!("vcx_disclosed_proof_get_attachment >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -538,19 +538,19 @@ pub extern fn vcx_disclosed_proof_update_state(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
-                                               proof_handle: u32,
-                                               connection_handle: u32,
-                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                  proof_handle: u32,
+                                                  connection_handle: u32,
+                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_disclosed_proof_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !disclosed_proof::is_valid_handle(proof_handle) {
-        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
@@ -994,23 +994,21 @@ mod tests {
 
     use serde_json::Value;
 
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use api::VcxStateType;
-    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION, CREDS_FROM_PROOF_REQ};
+    use utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use utils::devsetup::*;
+    use utils::mockdata::mock_settings::MockBuilder;
+    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use utils::timeout::TimeoutUtils;
 
     use super::*;
-    use utils::httpclient::AgencyMockDecrypted;
-    use utils::mockdata::mockdata_proof::{ARIES_PROOF_REQUEST_PRESENTATION};
-    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use utils::mockdata::mock_settings::MockBuilder;
 
     pub const BAD_PROOF_REQUEST: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
     fn _vcx_disclosed_proof_create_with_request_c_closure(proof_request: &str) -> Result<u32, u32> {
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
-
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_disclosed_proof_create_with_request(cb.command_handle,
                                                          CString::new("test_create").unwrap().into_raw(),
@@ -1026,7 +1024,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request_success() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert!(handle > 0);
@@ -1036,7 +1033,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_create_with_request() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let err = _vcx_disclosed_proof_create_with_request_c_closure(BAD_PROOF_REQUEST).unwrap_err();
         assert_eq!(err, error::INVALID_JSON.code_num);
@@ -1046,7 +1042,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let cxn = ::connection::tests::build_test_connection_inviter_requested();
 
@@ -1075,7 +1070,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_serialize_and_deserialize() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -1102,7 +1096,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_generate_msg() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1123,7 +1116,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_send_proof() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle_proof = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(disclosed_proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1139,7 +1131,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_reject_proof_request() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1156,7 +1147,6 @@ mod tests {
     #[cfg(feature = "general_test")] // todo: generate_reject_proof_msg is not implemented for aries
     fn test_vcx_get_reject_msg() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -1173,7 +1163,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let cxn = ::connection::tests::build_test_connection_inviter_requested();
 
@@ -1189,7 +1178,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_proof_get_state() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -1205,7 +1193,6 @@ mod tests {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let proof_handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
@@ -1221,7 +1208,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_generate_proof() {
         let _setup = SetupMocks::init();
-        ::settings::set_config_value(::settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 

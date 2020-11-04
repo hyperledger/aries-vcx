@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use api::VcxStateType;
 use connection;
 use error::prelude::*;
-use utils::libindy::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
+use libindy::utils::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
 use aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::error::ProblemReport;

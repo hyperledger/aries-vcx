@@ -1,4 +1,4 @@
-use messages::thread::Thread;
+use agency_comm::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::a2a::message_family::MessageFamilies;
 use aries::messages::a2a::message_type::MessageType;

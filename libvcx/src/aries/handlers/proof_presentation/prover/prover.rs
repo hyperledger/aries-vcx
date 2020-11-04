@@ -3,8 +3,7 @@ use std::collections::HashMap;
 
 use ::{connection, settings};
 use error::prelude::*;
-use messages::proofs::proof_message::ProofMessage;
-use utils::libindy::anoncreds;
+use libindy::utils::anoncreds;
 use aries::handlers::proof_presentation::prover::messages::ProverMessages;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::proof_presentation::presentation::Presentation;
@@ -176,8 +175,8 @@ mod tests {
     fn test_retrieve_credentials() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let (_, _, req, _) = ::utils::libindy::anoncreds::tests::create_proof();
+        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, req, _) = ::libindy::utils::anoncreds::tests::create_proof();
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let mut proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
@@ -221,7 +220,7 @@ mod tests {
     fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let mut req = json!({
            "nonce":"123432421212",
@@ -279,7 +278,7 @@ mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -366,7 +365,7 @@ mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::utils::libindy::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",

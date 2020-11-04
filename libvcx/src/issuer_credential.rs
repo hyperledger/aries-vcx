@@ -2,10 +2,10 @@ use serde_json;
 
 use aries::handlers::issuance::issuer::issuer::Issuer;
 use aries::messages::a2a::A2AMessage;
+use connection;
 use error::prelude::*;
 use utils::error;
 use utils::object_cache::ObjectCache;
-use connection;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -174,15 +174,10 @@ pub mod tests {
     use api::VcxStateType;
     use connection::tests::build_test_connection_inviter_requested;
     use credential_def::tests::create_cred_def_fake;
+    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use libindy::utils::LibindyMock;
+    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION, REV_REG_ID};
     #[allow(unused_imports)]
-    use utils::{constants::*,
-                get_temp_dir_path,
-                libindy::{anoncreds::{libindy_create_and_store_credential_def,
-                                      libindy_issuer_create_credential_offer,
-                                      libindy_prover_create_credential_req},
-                          LibindyMock,
-                          wallet, wallet::get_wallet_handle},
-    };
     use utils::devsetup::*;
     use utils::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
@@ -255,7 +250,6 @@ pub mod tests {
     #[test]
     fn test_generate_cred_offer() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         let _issuer = create_full_issuer_credential().0
             .generate_credential_offer().unwrap();
@@ -388,7 +382,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_errors() {
         let _setup = SetupLibraryWallet::init();
-        settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, "4.0");
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);

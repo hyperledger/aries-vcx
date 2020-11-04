@@ -1,16 +1,16 @@
 use serde_json;
 
+use agency_comm::mocking::AgencyMockDecrypted;
 use aries::{
     handlers::issuance::holder::holder::Holder,
-    messages::issuance::credential_offer::CredentialOffer,
     messages::a2a::A2AMessage,
+    messages::issuance::credential_offer::CredentialOffer,
 };
+use connection;
 use error::prelude::*;
 use settings::indy_mocks_enabled;
-use connection;
 use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use utils::error;
-use utils::httpclient::AgencyMockDecrypted;
 use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use utils::object_cache::ObjectCache;
 

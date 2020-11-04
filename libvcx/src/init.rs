@@ -1,11 +1,12 @@
 use futures::Future;
-use settings;
 use indy;
-use indy::{ErrorCode};
-use utils::libindy::pool::{create_pool_ledger_config, open_pool_ledger};
-use utils::libindy::wallet::{set_wallet_handle, build_wallet_credentials, build_wallet_config};
+use indy::ErrorCode;
 use indy_sys::WalletHandle;
-use error::{VcxErrorKind, VcxResult, VcxErrorExt};
+
+use error::{VcxErrorExt, VcxErrorKind, VcxResult};
+use libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
+use settings;
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);

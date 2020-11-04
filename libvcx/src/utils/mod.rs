@@ -45,7 +45,6 @@ pub mod constants;
 pub mod timeout;
 pub mod openssl;
 pub mod json;
-pub mod libindy;
 pub mod threadpool;
 pub mod uuid;
 pub mod author_agreement;
@@ -60,6 +59,7 @@ pub mod plugins;
 #[macro_use]
 pub mod logger;
 pub mod object_cache;
+pub mod validation;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();

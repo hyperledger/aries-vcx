@@ -843,7 +843,6 @@ mod tests {
     fn test_vcx_prepare_cred_def_success() {
         let _setup = SetupMocks::init();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR_STR_STR::new().unwrap();
         assert_eq!(vcx_credentialdef_prepare_for_endorser(cb.command_handle,
                                                           CString::new("Test Source ID").unwrap().into_raw(),
@@ -868,7 +867,6 @@ mod tests {
     fn test_vcx_prepare_cred_def_with_revocation_success() {
         let _setup = SetupMocks::init();
 
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         let cb = return_types_u32::Return_U32_U32_STR_STR_STR::new().unwrap();
         assert_eq!(vcx_credentialdef_prepare_for_endorser(cb.command_handle,
                                                           CString::new("Test Source ID").unwrap().into_raw(),

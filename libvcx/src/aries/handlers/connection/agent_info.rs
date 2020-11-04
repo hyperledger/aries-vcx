@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
+use agency_comm::get_message::{get_connection_messages, Message};
+use agency_comm::{MessageStatusCode, agency_settings};
+use agency_comm::update_connection::send_delete_connection_message;
+use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
 use connection::create_agent_keys;
 use error::prelude::*;
-use messages::get_message::{get_connection_messages, Message};
-use messages::MessageStatusCode;
-use messages::update_connection::send_delete_connection_message;
-use messages::update_message::{UIDsByConn, update_messages as update_messages_status};
+use libindy::utils::signus::create_and_store_my_did;
 use settings;
 use settings::ProtocolTypes;
 use utils::httpclient;
-use utils::libindy::signus::create_and_store_my_did;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {
@@ -35,12 +35,12 @@ impl Default for AgentInfo {
 
 fn _log_messages_optionally(a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
-    {
-        for message in a2a_messages.values() {
-            let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
-            warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+        {
+            for message in a2a_messages.values() {
+                let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+                warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+            }
         }
-    }
 }
 
 impl AgentInfo {
@@ -66,12 +66,12 @@ impl AgentInfo {
     Builds one's agency's URL endpoint
      */
     pub fn agency_endpoint(&self) -> VcxResult<String> {
-        settings::get_config_value(settings::CONFIG_AGENCY_ENDPOINT)
+        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT)
             .map(|str| format!("{}/agency/msg", str))
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = settings::get_config_value(settings::CONFIG_AGENCY_VERKEY)?;
+        let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
         Ok(vec![self.agent_vk.to_string(), agency_vk])
     }
 

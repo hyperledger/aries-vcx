@@ -8,14 +8,13 @@ use aries::messages::proof_presentation::presentation::Presentation;
 use aries::messages::proof_presentation::presentation_ack::PresentationAck;
 use aries::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries::messages::status::Status;
-use proof_utils::validate_indy_proof;
+use libindy::proofs::verifier::verifier::validate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
     pub connection_handle: u32,
     pub presentation_request: PresentationRequest,
 }
-
 
 impl PresentationRequestSentState {
     pub fn verify_presentation(&self, presentation: &Presentation) -> VcxResult<()> {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use error::prelude::*;
-use messages::get_message::Message;
+use agency_comm::get_message::Message;
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};

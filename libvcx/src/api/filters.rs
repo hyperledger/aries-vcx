@@ -1,13 +1,13 @@
 use std::ptr;
 
-use error::prelude::*;
-use utils::error;
 use indy_sys::CommandHandle;
 use libc::c_char;
-use filters;
-use utils::threadpool::spawn;
-use utils::cstring::CStringUtils;
 
+use error::prelude::*;
+use filters;
+use utils::cstring::CStringUtils;
+use utils::error;
+use utils::threadpool::spawn;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///
@@ -40,7 +40,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
                 trace!("vcx_filter_proof_requests_by_name_cb(command_handle: {}, requests: {}, rc: {}, requests: {})",
                        command_handle, requests, error::SUCCESS.message, x);
                 let x = CStringUtils::string_to_cstring(x);
-                cb(command_handle,error::SUCCESS.code_num, x.as_ptr());
+                cb(command_handle, error::SUCCESS.code_num, x.as_ptr());
             }
             Err(err) => {
                 error!("vcx_filter_proof_requests_by_name_cb(command_handle: {}, rc: {}, msg: {})",
@@ -58,18 +58,20 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::ffi::CString;
-    use connection;
+
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
+    use connection;
+    use disclosed_proof::get_proof_request_messages;
     use utils::{
         constants::GET_MESSAGES_DECRYPTED_RESPONSE,
-        mockdata::mockdata_proof,
-        httpclient::AgencyMockDecrypted,
-        timeout::TimeoutUtils,
         devsetup::*,
+        mockdata::mockdata_proof,
+        timeout::TimeoutUtils,
     };
-    use disclosed_proof::get_proof_request_messages;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

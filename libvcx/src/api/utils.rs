@@ -5,15 +5,15 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use error::prelude::*;
-use messages;
+use agency_comm;
+use agency_comm::get_message::{parse_connection_handles, parse_status_codes};
+use agency_comm::mocking::AgencyMock;
 use connection;
-use messages::get_message::{parse_status_codes, parse_connection_handles};
+use error::prelude::*;
+use libindy::utils::payments;
 use utils::constants::*;
 use utils::cstring::CStringUtils;
 use utils::error;
-use utils::httpclient::AgencyMock;
-use utils::libindy::payments;
 use utils::threadpool::spawn;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -44,7 +44,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 
     trace!("vcx_provision_agent(config: {})", config);
 
-    match messages::agent_utils::connect_register_provision(&config) {
+    match agency_comm::utils::agent_utils::connect_register_provision(&config) {
         Err(e) => {
             error!("Provision Agent Error {}.", e);
             let _res: u32 = e.into();
@@ -84,7 +84,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match messages::agent_utils::connect_register_provision(&config) {
+        match agency_comm::utils::agent_utils::connect_register_provision(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -163,7 +163,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
            command_handle);
 
     spawn(move || {
-        match ::utils::libindy::payments::get_ledger_fees() {
+        match ::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -331,7 +331,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::messages::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match ::agency_comm::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -366,10 +366,10 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
-                                    conn_handles: *const c_char,
-                                    message_statuses: *const c_char,
-                                    uids: *const c_char,
-                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
+                                       conn_handles: *const c_char,
+                                       message_statuses: *const c_char,
+                                       uids: *const c_char,
+                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
     info!("vcx_v2_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -380,7 +380,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         v.to_owned()
     } else {
-        return VcxError::from_msg(VcxErrorKind::InvalidJson, "List of connection handles can't be null").into()
+        return VcxError::from_msg(VcxErrorKind::InvalidJson, "List of connection handles can't be null").into();
     };
 
     let conn_handles = match parse_connection_handles(conn_handles) {
@@ -484,7 +484,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     spawn(move || {
-        match ::messages::update_message::update_agency_messages(&message_status, &msg_json) {
+        match ::agency_comm::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -515,7 +515,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { ::utils::libindy::pool::set_pool_handle(None); } else { ::utils::libindy::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { ::libindy::utils::pool::set_pool_handle(None); } else { ::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -594,7 +594,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     spawn(move || {
-        match ::utils::libindy::ledger::endorse_transaction(&transaction) {
+        match ::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -619,10 +619,10 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
+    use agency_comm::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use utils::constants;
     use utils::devsetup::*;
-    use utils::httpclient::AgencyMockDecrypted;
     use utils::timeout::TimeoutUtils;
 
     use super::*;

@@ -1,10 +1,10 @@
-use disclosed_proof_utils::generate_indy_proof;
 use error::prelude::*;
 use aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
 use aries::messages::error::ProblemReport;
 use aries::messages::proof_presentation::presentation::Presentation;
 use aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use libindy::proofs::prover::prover::generate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
