@@ -356,9 +356,9 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
-  public async getAttributes (connection: Connection): Promise<string> {
+  public async getAttributes (): Promise<string> {
     try {
-      const offeredAttrs = await createFFICallbackPromise<string>(
+      const attrs = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_credential_get_attributes(0, this.handle, cb)
           if (rc) {
@@ -368,21 +368,21 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
         (resolve, reject) => Callback(
           'void',
           ['uint32', 'uint32', 'string'],
-          (handle: number, err: number, messages: string) => {
+          (handle: number, err: number, _attrs: string) => {
             if (err) {
               reject(err)
               return
             }
-            resolve(messages)
+            resolve(_attrs)
           })
       )
-      return offeredAttrs
+      return attrs
     } catch (err) {
       throw new VCXInternalError(err)
     }
   }
 
-  public async getAttachment (connection: Connection): Promise<string> {
+  public async getAttachment (): Promise<string> {
     try {
       const attach = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
@@ -394,12 +394,12 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
         (resolve, reject) => Callback(
           'void',
           ['uint32', 'uint32', 'string'],
-          (handle: number, err: number, messages: string) => {
+          (handle: number, err: number, _attach: string) => {
             if (err) {
               reject(err)
               return
             }
-            resolve(messages)
+            resolve(_attach)
           })
       )
       return attach
@@ -408,6 +408,83 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
+  public async getTailsLocation (): Promise<string> {
+    try {
+      const location = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_tails_location(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, _location: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(_location)
+          })
+      )
+      return location
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getTailsHash (): Promise<string> {
+    try {
+      const hash = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_tails_hash(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, _hash: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(_hash)
+          })
+      )
+      return hash
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public async getRevRegId (): Promise<string> {
+    try {
+      const revRegId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_get_rev_reg_id(0, this.handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, _revRegId: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(_revRegId)
+          })
+      )
+      return revRegId
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
 
   get credOffer (): string {
     return this._credOffer

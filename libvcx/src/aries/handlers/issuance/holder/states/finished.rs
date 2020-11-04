@@ -37,4 +37,43 @@ impl FinishedHolderState {
         let credential = self.credential.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
         credential.credentials_attach.content()
     }
+
+    // TODO: Avoid duplication
+    pub fn get_tails_location(&self) -> VcxResult<String> {
+        debug!("get_tails_location >>>");
+        let rev_reg_def_json = self.rev_reg_def_json.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry definition found - is this credential revokable?"))?;
+        let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def_json)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", rev_reg_def_json, err)))?;
+        let value = rev_reg_def["value"]
+            .as_object()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'value' not found on rev_reg_def_json: {:?}", rev_reg_def_json)))?;
+        let tails_location = value["tailsLocation"]
+            .as_str()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'tailsLocation' not found on rev_reg_def_json: {:?}", self.rev_reg_def_json)))?;
+        trace!("get_tails_location <<< tails_location: {}", tails_location.to_string());
+        Ok(tails_location.to_string())
+    }
+
+    pub fn get_tails_hash(&self) -> VcxResult<String> {
+        let rev_reg_def_json = self.rev_reg_def_json.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry definition found - is this credential revokable?"))?;
+        let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def_json)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", rev_reg_def_json, err)))?;
+        let value = rev_reg_def["value"]
+            .as_object()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'value' not found on rev_reg_def_json: {:?}", rev_reg_def_json)))?;
+        let tails_hash = value["tailsHash"]
+            .as_str()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'tailsLocation' not found on rev_reg_def_json: {:?}", self.rev_reg_def_json)))?;
+        Ok(tails_hash.to_string())
+    }
+
+    pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+        let rev_reg_def_json = self.rev_reg_def_json.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry definition found - is this credential revokable?"))?;
+        let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def_json)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", rev_reg_def_json, err)))?;
+        let rev_reg_def_id = rev_reg_def["id"]
+            .as_str()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'id' not found on rev_reg_def_json: {:?}", rev_reg_def_json)))?;
+        Ok(rev_reg_def_id.to_string())
+    }
 }

@@ -20,12 +20,6 @@ use aries::handlers::issuance::issuer::states::credential_sent::CredentialSentSt
 use aries::handlers::issuance::issuer::states::finished::FinishedState;
 use aries::handlers::issuance::issuer::utils::encode_attributes;
 
-// Possible Transitions:
-// Initial -> OfferSent
-// Initial -> Finished
-// OfferSent -> CredentialSent
-// OfferSent -> Finished
-// CredentialSent -> Finished
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerState {
     Initial(InitialState),
@@ -122,6 +116,21 @@ impl IssuerSM {
             _ => Err(VcxError::from(VcxErrorKind::NotReady))
         }
     }
+
+   pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+       let rev_registry = match &self.state {
+            IssuerState::Initial(state) => state.rev_reg_id.clone(),
+            IssuerState::OfferSent(state) => state.rev_reg_id.clone(),
+            IssuerState::RequestReceived(state) => state.rev_reg_id.clone(),
+            IssuerState::CredentialSent(state) => state.revocation_info_v1.clone()
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?"))?
+                .rev_reg_id,
+            IssuerState::Finished(state) => state.revocation_info_v1.clone()
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?"))?
+                .rev_reg_id
+       };
+       rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
+   }
 
     pub fn get_connection_handle(&self) -> u32 {
         self.state.get_connection_handle()
@@ -360,8 +369,16 @@ pub mod test {
 
     use super::*;
 
+    fn _rev_reg_id() -> String {
+        String::from("TEST_REV_REG_ID")
+    }
+
+    fn _tails_file() -> String {
+        String::from("TEST_TAILS_FILE")
+    }
+
     fn _issuer_sm() -> IssuerSM {
-        IssuerSM::new("test", &json!({"name": "alice"}).to_string(), None, None, &source_id())
+        IssuerSM::new("test", &json!({"name": "alice"}).to_string(), Some(_rev_reg_id()), Some(_tails_file()), &source_id())
     }
 
     impl IssuerSM {
@@ -714,6 +731,21 @@ pub mod test {
             assert_eq!(VcxStateType::VcxStateOfferSent as u32, _issuer_sm().to_offer_sent_state().state());
             assert_eq!(VcxStateType::VcxStateRequestReceived as u32, _issuer_sm().to_request_received_state().state());
             assert_eq!(VcxStateType::VcxStateAccepted as u32, _issuer_sm().to_finished_state().state());
+        }
+    }
+
+    mod get_rev_reg_id {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_rev_reg_id() {
+            let _setup = SetupMocks::init();
+
+            assert_eq!(_rev_reg_id(), _issuer_sm().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm().to_offer_sent_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().get_rev_reg_id().unwrap());
         }
     }
 }

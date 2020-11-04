@@ -49,9 +49,9 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendHolderProof (proofRequest) {
+  async function sendHolderProof (proofRequest, _mapRevRegId) {
     await vcxAgent.agentInitVcx()
-    const mapRevRegId = (_revRegId) => { throw Error('Tails file should not be need') }
+    const mapRevRegId = _mapRevRegId || ((_revRegId) => { throw Error('Tails file should not be need') })
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
     const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
@@ -98,6 +98,24 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function getTailsLocation () {
+    logger.info('Alice is going to get tails location')
+    await vcxAgent.agentInitVcx()
+    const tailsLocation = await vcxAgent.serviceCredHolder.getTailsLocation(holderCredentialId)
+    logger.debug(`Alice obtained tails location ${tailsLocation}`)
+    await vcxAgent.agentShutdownVcx()
+    return tailsLocation
+  }
+
+  async function getTailsHash () {
+    logger.info('Alice getting tails hash')
+    await vcxAgent.agentInitVcx()
+    const tailsHash = await vcxAgent.serviceCredHolder.getTailsHash(holderCredentialId)
+    logger.debug(`Alice obtained tails hash ${tailsHash}`)
+    await vcxAgent.agentShutdownVcx()
+    return tailsHash
+  }
+
   return {
     sendMessage,
     signData,
@@ -106,6 +124,8 @@ module.exports.createAlice = async function createAlice () {
     acceptCredentialOffer,
     updateStateCredentialV2,
     sendHolderProof,
-    updateStateHolderProofV2
+    updateStateHolderProofV2,
+    getTailsLocation,
+    getTailsHash
   }
 }

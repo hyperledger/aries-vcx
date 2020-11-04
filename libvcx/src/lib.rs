@@ -73,7 +73,7 @@ mod tests {
     use filters;
     use credential_def;
     use utils::{
-        constants::TEST_TAILS_FILE,
+        constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         devsetup::{set_consumer, set_institution},
         get_temp_dir_path,
     };
@@ -195,7 +195,7 @@ mod tests {
         credential
     }
 
-    fn send_credential(issuer_handle: u32, connection: u32, credential_handle: u32, consumer_handle: Option<u32>) {
+    fn send_credential(issuer_handle: u32, connection: u32, credential_handle: u32, consumer_handle: Option<u32>, revokable: bool) {
         info!("send_credential >>> switching to institution");
         set_institution(None);
         info!("send_credential >>> getting offers");
@@ -210,6 +210,13 @@ mod tests {
         thread::sleep(Duration::from_millis(2000));
         info!("storing credential");
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
+        if revokable {
+            let tails_hash = credential::get_tails_hash(credential_handle).unwrap();
+            debug!("Obtained tails_hash: {:?}", tails_hash);
+            let rev_reg_id = credential::get_rev_reg_id(credential_handle).unwrap();
+            thread::sleep(Duration::from_millis(2000));
+            assert_eq!(credential::get_tails_location(credential_handle).unwrap(), vec![TEST_TAILS_URL.to_string(), rev_reg_id].join("/"));
+        }
     }
 
     fn send_proof_request(connection_handle: u32, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, institution_handle: Option<u32>, request_name: Option<&str>) -> u32 {
@@ -301,7 +308,7 @@ mod tests {
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
         let credential = send_cred_req(faber, consumer_handle, comment);
         info!("AS INSTITUTION SEND CREDENTIAL");
-        send_credential(credential_offer, alice, credential, consumer_handle);
+        send_credential(credential_offer, alice, credential, consumer_handle, true);
         credential_offer
     }
 
@@ -683,7 +690,7 @@ mod tests {
         let credential = send_cred_req(faber, None, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-        send_credential(credential_offer, alice, credential, None);
+        send_credential(credential_offer, alice, credential, None, false);
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         ::utils::devsetup::set_institution(None);

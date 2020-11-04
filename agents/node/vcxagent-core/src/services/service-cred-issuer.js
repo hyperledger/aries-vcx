@@ -60,6 +60,12 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     await issuerCred.revokeCredential()
   }
 
+  async function getRevRegId (issuerCredId) {
+    const issuerCred = await loadIssuerCredential(issuerCredId)
+    logger.info(`Getting rev reg id for credential ${issuerCredId}`)
+    return issuerCred.getRevRegId()
+  }
+
   async function _progressIssuerCredentialToState (issuerCredential, connection, credentialStateTarget, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
       if (await issuerCredential.updateStateV2(connection) !== credentialStateTarget) {
@@ -120,6 +126,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
     listIds,
     printInfo,
-    getState
+    getState,
+    getRevRegId
   }
 }

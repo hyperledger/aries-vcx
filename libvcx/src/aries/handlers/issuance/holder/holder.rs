@@ -59,6 +59,18 @@ impl Holder {
         self.holder_sm.get_attachment()
     }
 
+    pub fn get_tails_location(&self) -> VcxResult<String> {
+        self.holder_sm.get_tails_location()
+    }
+
+    pub fn get_tails_hash(&self) -> VcxResult<String> {
+        self.holder_sm.get_tails_hash()
+    }
+
+    pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+        self.holder_sm.get_rev_reg_id()
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         self.holder_sm.delete_credential()
     }

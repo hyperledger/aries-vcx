@@ -102,6 +102,30 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
     return state
   }
 
+  async function getTailsLocation (holderCredentialId) {
+    logger.info(`Getting tails location for credential ${holderCredentialId}`)
+    const cred = await loadHolderCredential(holderCredentialId)
+    const tailsLocation = await cred.getTailsLocation()
+    logger.debug(`Holder's tails location: ${tailsLocation}`)
+    return tailsLocation
+  }
+
+  async function getRevRegId (holderCredentialId) {
+    logger.info(`Getting rev reg id for credential ${holderCredentialId}`)
+    const cred = await loadHolderCredential(holderCredentialId)
+    const revRegId = await cred.getRevRegId()
+    logger.debug(`Holder's rev reg id: ${revRegId}`)
+    return revRegId
+  }
+
+  async function getTailsHash (holderCredentialId) {
+    logger.info(`Getting to get tails hash for credential ${holderCredentialId}`)
+    const cred = await loadHolderCredential(holderCredentialId)
+    const tailsHash = await cred.getTailsHash()
+    logger.debug(`Holder's tails hash: ${tailsHash}`)
+    return tailsHash
+  }
+
   async function getState (credHolderId) {
     const credential = await loadHolderCredential(credHolderId)
     return await credential.getState()
@@ -126,6 +150,9 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
     waitForCredentialOfferAndAccept,
     waitForCredentialOfferAndAcceptAndProgress,
     credentialUpdate,
+    getTailsLocation,
+    getRevRegId,
+    getTailsHash,
 
     listIds,
     printInfo,

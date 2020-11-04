@@ -58,6 +58,7 @@ a2a_message!(Credential);
 #[cfg(test)]
 pub mod tests {
     use aries::messages::issuance::credential_offer::tests::{thread, thread_id};
+    use utils::constants;
 
     use super::*;
 
@@ -65,6 +66,7 @@ pub mod tests {
         json!({
             "schema_id":"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0",
             "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1",
+            "rev_reg_id": constants::REV_REG_ID.to_string(),
             "values":{"name":{"raw":"Name","encoded":"1139481716457488690172217916278103335"}}
         })
     }

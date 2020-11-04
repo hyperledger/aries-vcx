@@ -15,7 +15,7 @@ impl Issuer {
         trace!("Issuer::issuer_create_credential >>> cred_def_handle: {:?}, credential_data: {:?}, source_id: {:?}", cred_def_handle, credential_data, source_id);
 
         let cred_def_id = ::credential_def::get_cred_def_id(cred_def_handle)?;
-        let rev_reg_id = ::credential_def::get_rev_reg_id(cred_def_handle)?;
+        let rev_reg_id = ::credential_def::get_rev_reg_id(cred_def_handle).ok();
         let tails_file = ::credential_def::get_tails_file(cred_def_handle)?;
         let issuer_sm = IssuerSM::new(&cred_def_id, credential_data, rev_reg_id, tails_file, source_id);
         Ok(Issuer { issuer_sm })
@@ -47,6 +47,10 @@ impl Issuer {
 
     pub fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
         self.issuer_sm.revoke(publish)
+    }
+
+    pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+        self.issuer_sm.get_rev_reg_id()
     }
 
     pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> u32 {

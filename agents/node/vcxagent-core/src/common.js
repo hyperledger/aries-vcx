@@ -1,5 +1,6 @@
 const sleepPromise = require('sleep-promise')
 const axios = require('axios')
+module.exports.testTailsUrl = 'http://some-tails-url.org'
 
 async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   let agencyReady = false
@@ -43,11 +44,12 @@ function getSampleSchemaData () {
   }
 }
 
-module.exports.buildRevocationDetails = function buildRevocationDetails ({ supportRevocation, tailsFile, maxCreds }) {
+module.exports.buildRevocationDetails = function buildRevocationDetails ({ supportRevocation, tailsFile, tailsUrl, maxCreds }) {
   if (supportRevocation === true) {
     return {
       supportRevocation,
       tailsFile,
+      tailsUrl,
       maxCreds
     }
   } else {

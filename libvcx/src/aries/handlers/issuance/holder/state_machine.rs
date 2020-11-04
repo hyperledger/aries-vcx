@@ -227,6 +227,27 @@ impl HolderSM {
         }
     }
 
+    pub fn get_tails_location(&self) -> VcxResult<String> {
+        match self.state {
+            HolderState::Finished(ref state) => state.get_tails_location(),
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get tails location: credential exchange not finished yet"))
+        }
+    }
+
+    pub fn get_tails_hash(&self) -> VcxResult<String> {
+        match self.state {
+            HolderState::Finished(ref state) => state.get_tails_hash(),
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get tails hash: credential exchange not finished yet"))
+        }
+    }
+
+    pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+        match self.state {
+            HolderState::Finished(ref state) => state.get_rev_reg_id(),
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get tails hash: credential exchange not finished yet"))
+        }
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
@@ -319,6 +340,7 @@ mod test {
     use aries::messages::issuance::credential_request::tests::_credential_request;
     use aries::messages::issuance::test::{_ack, _problem_report};
     use aries::test::source_id;
+    use utils::constants;
 
     use super::*;
 
@@ -601,6 +623,50 @@ mod test {
             assert_eq!(VcxStateType::VcxStateRequestReceived as u32, _holder_sm().state());
             assert_eq!(VcxStateType::VcxStateOfferSent as u32, _holder_sm().to_request_sent_state().state());
             assert_eq!(VcxStateType::VcxStateAccepted as u32, _holder_sm().to_finished_state().state());
+        }
+    }
+
+    mod get_tails_location {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_tails_location() {
+            let _setup = SetupMocks::init();
+
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().get_tails_location().map_err(|e| e.kind()));
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().to_request_sent_state().get_tails_location().map_err(|e| e.kind()));
+            assert_eq!(constants::TEST_TAILS_LOCATION, _holder_sm().to_finished_state().get_tails_location().unwrap());
+        }
+    }
+
+    mod get_tails_hash {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_tails_hash() {
+            let _setup = SetupMocks::init();
+
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().get_tails_hash().map_err(|e| e.kind()));
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().to_request_sent_state().get_tails_hash().map_err(|e| e.kind()));
+
+            assert_eq!(constants::TEST_TAILS_HASH, _holder_sm().to_finished_state().get_tails_hash().unwrap());
+        }
+    }
+
+    mod get_rev_reg_id {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_rev_reg_id() {
+            let _setup = SetupMocks::init();
+
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().get_rev_reg_id().map_err(|e| e.kind()));
+            assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().to_request_sent_state().get_rev_reg_id().map_err(|e| e.kind()));
+
+            assert_eq!(constants::REV_REG_ID, _holder_sm().to_finished_state().get_rev_reg_id().unwrap());
         }
     }
 }

@@ -156,6 +156,12 @@ pub fn get_credential_attributes(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
+        credential.get_rev_reg_id() 
+    })
+}
+
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_source_id()
@@ -285,22 +291,27 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateOfferSent as u32);
+        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), Some(handle_conn)).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
+        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
         HttpClientMockResponse::set_next_response(VcxResult::Err(VcxError::from_msg(VcxErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
+        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // Can retry after initial failure
         issuer_credential::send_credential(handle_cred, handle_conn).unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateAccepted as u32);
+        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
     }
 
     #[test]
