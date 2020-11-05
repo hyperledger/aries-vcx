@@ -833,7 +833,7 @@ jobs:
       - name: Build, run android wrapper tests, and publish artifacts
         uses: ./.github/actions/publish-android
         with:
-          abis: "arm arm64"
+          abis: "arm armv7 arm64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_ANDROID }}
           full-version-name: ${{ env.FULL_VERSION_NAME }}
 
