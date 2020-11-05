@@ -133,7 +133,7 @@ download_and_unzip_if_missed() {
     if [ ! -d "${target_dir}" ] ; then
         echo "${GREEN}Downloading ${fname}${RESET} from url ${url}"
         wget -q ${url}
-        unzip -qq ${fname}
+        unzip -qqo ${fname}
         rm ${fname}
         echo "${GREEN}Done!${RESET}"
     else
