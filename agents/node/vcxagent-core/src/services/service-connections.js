@@ -140,6 +140,17 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return getMessagesForConnection([connection], filterStatuses, filterUids)
   }
 
+  async function sendPing(connectionId) {
+    const connection = await getVcxConnection(connectionId)
+    await connection.sendPing()
+  }
+
+  async function discoverTheirFeatures(connectionId) {
+    const connection = await getVcxConnection(connectionId)
+    await connection.sendDiscoveryFeatures()
+  }
+
+
   return {
     // inviter
     inviterConnectionCreate,
@@ -159,6 +170,9 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     sendMessage,
     getMessages,
     getMessagesV2,
+
+    sendPing,
+    discoverTheirFeatures,
 
     getState,
     listIds,
