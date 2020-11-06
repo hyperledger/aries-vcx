@@ -173,9 +173,9 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       const revocation = {
         max_creds: revocationDetails.maxCreds,
         support_revocation: revocationDetails.supportRevocation,
-        tails_file: revocationDetails.tailsFile
+        tails_file: revocationDetails.tailsFile,
+        tails_url: revocationDetails.tailsUrl
       }
-
       const credDefForEndorser = await
       createFFICallbackPromise<{ credDefTxn: string, revocRegDefTxn: string, revocRegEntryTxn: string, handle: number }>(
           (resolve, reject, cb) => {
@@ -432,11 +432,18 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  public async rotateRevRegDef (): Promise<ISerializedData<ICredentialDefCreateData>> {
+  public async rotateRevRegDef (
+    revocationDetails: IRevocationDetails
+  ): Promise<ISerializedData<ICredentialDefCreateData>> {
+    const revocation = {
+      max_creds: revocationDetails.maxCreds,
+      tails_file: revocationDetails.tailsFile,
+      tails_url: revocationDetails.tailsUrl
+    }
     try {
       const dataStr = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_rotate_rev_reg_def(0, this.handle, cb)
+          const rc = rustAPI().vcx_credentialdef_rotate_rev_reg_def(0, this.handle, JSON.stringify(revocation), cb)
           if (rc) {
             reject(rc)
           }
