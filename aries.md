@@ -22,5 +22,9 @@
        - Missing initiation or alternation of presentation by prover using `propose-presentation` message 
 
 * #### Trust Ping: [`https://didcomm.org/trust_ping/1.0/*`](https://github.com/hyperledger/aries-rfcs/blob/master/features/0048-trust-ping/README.md)
-    * [Ping API](./libvcx/src/api/connection.rs)
+    * [API](./libvcx/src/api/connection.rs)
+    * [Implementation](./libvcx/src/aries/handlers/connection/)
+    
+* #### Discover Features: [`https://didcomm.org/discover-features/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features)
+    * [API](./libvcx/src/api/connection.rs)
     * [Implementation](./libvcx/src/aries/handlers/connection/)
