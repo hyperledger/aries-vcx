@@ -15,7 +15,7 @@ const optionDefinitions = [
     defaultValue: false
   },
   {
-    name: 'accepttaa',
+    name: 'acceptTaa',
     type: Boolean,
     description: 'If specified accpets taa',
     defaultValue: false
@@ -36,6 +36,12 @@ const optionDefinitions = [
     type: String,
     description: 'Agent name',
     defaultValue: 'vcx=error'
+  },
+  {
+    name: 'agencyUrl',
+    type: String,
+    description: 'Url of mediator agency',
+    defaultValue: 'http://localhost:8080'
   }
 ]
 
