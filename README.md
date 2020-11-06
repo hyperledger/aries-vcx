@@ -10,8 +10,9 @@
   - iOS, 
   - NodeJS
   - Python (looking for a maintainer)  
+- Overview of [implemented Aries protocols](./aries.md)
 - Aries Framework Rust requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
-  Currently, the only such agency is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).  
+  One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
   
 # Work in progress
 - This is spin off what has previously been known as LibVCX library. 
