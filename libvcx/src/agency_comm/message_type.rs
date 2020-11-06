@@ -4,7 +4,6 @@ use serde_json::Value;
 
 use agency_comm::A2AMessageKinds;
 use error::prelude::*;
-use settings;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
 pub const DID: &str = "did:sov:123456789abcdefghi1234";

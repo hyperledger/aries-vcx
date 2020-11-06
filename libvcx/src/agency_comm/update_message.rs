@@ -3,9 +3,8 @@ use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
 use agency_comm::utils::comm::post_to_agency;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use settings;
-use utils::{constants, httpclient};
-use crate::agency_comm::mocking;
+use agency_comm::utils::constants;
+use agency_comm::mocking;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

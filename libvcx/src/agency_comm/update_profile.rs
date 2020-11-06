@@ -3,9 +3,7 @@ use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
 use agency_comm::utils::comm::post_to_agency;
 use error::{VcxError, VcxErrorKind, VcxResult};
-use settings;
-use utils::{httpclient, validation};
-use utils::constants::UPDATE_PROFILE_RESPONSE;
+use agency_comm::utils::{validation, constants};
 
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
@@ -76,7 +74,7 @@ impl UpdateProfileDataBuilder {
     pub fn send_secure(&mut self) -> VcxResult<()> {
         trace!("UpdateProfileData::send_secure >>>");
 
-        AgencyMock::set_next_response(UPDATE_PROFILE_RESPONSE.to_vec());
+        AgencyMock::set_next_response(constants::UPDATE_PROFILE_RESPONSE.to_vec());
 
         let data = self.prepare_request()?;
 
@@ -115,7 +113,7 @@ mod tests {
     use agency_comm::{agency_settings, update_data};
     use agency_comm::mocking::AgencyMockDecrypted;
     use libindy::utils::signus::create_and_store_my_did;
-    use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
+    use agency_comm::utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
     use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 

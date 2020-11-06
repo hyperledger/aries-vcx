@@ -2,8 +2,6 @@
 import { rustAPI } from '../rustlib'
 
 export enum VCXMockMessage {
-  CreateKey = 1, // create keys response
-  UpdateProfile = 2, // update profile response
   GetMessages = 3, // get_message response for connection acceptance
   UpdateIssuerCredential = 4, // get_message response for claim offer
   UpdateProof = 5, // get_message response for updating proof state

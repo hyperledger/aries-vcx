@@ -1,18 +1,23 @@
-extern crate openssl;
 extern crate rust_base58;
 
-use error::prelude::*;
-use settings::Actors;
-use utils::qualifier;
-
-use self::openssl::bn::BigNum;
+use regex::Regex;
+use url::Url;
 use self::rust_base58::FromBase58;
 
+use error::prelude::*;
+
+lazy_static! {
+    pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
+}
+
+pub fn is_fully_qualified(entity: &str) -> bool {
+    REGEX.is_match(&entity)
+}
+
 pub fn validate_did(did: &str) -> VcxResult<String> {
-    if qualifier::is_fully_qualified(did) {
+    if is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
-        //    assert len(base58.b58decode(did)) == 16
         let check_did = String::from(did);
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
@@ -29,7 +34,6 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
 }
 
 pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
-    //    assert len(base58.b58decode(ver_key)) == 32
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
@@ -38,35 +42,10 @@ pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
     }
 }
 
-pub fn validate_nonce(nonce: &str) -> VcxResult<String> {
-    let nonce = BigNum::from_dec_str(nonce)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidNonce, err))?;
-    if nonce.num_bits() > 80 {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidNonce, "Invalid Nonce length"));
-    }
-    Ok(nonce.to_string())
-}
-
-pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
-    //todo: find out what needs to be validated for key_delegate
-    let check_delegate = String::from(delegate);
-    Ok(check_delegate)
-}
-
-pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
-    ::serde_json::from_str(&actors)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
-}
-
-pub fn validate_phone_number(p_num: &str) -> VcxResult<String> {
-    Ok(String::from(p_num))
-}
-
-pub fn validate_payment_method(payment_method: &str) -> VcxResult<()> {
-    if payment_method.is_empty() {
-        return Err(VcxError::from(VcxErrorKind::MissingPaymentMethod));
-    }
-    Ok(())
+pub fn validate_url(url: &str) -> VcxResult<String> {
+    Url::parse(url)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidUrl, err))?;
+    Ok(url.to_string())
 }
 
 #[cfg(test)]
@@ -145,21 +124,5 @@ mod tests {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid verkey"),
         }
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_payment_plugin_validation() {
-        let _setup = SetupDefaults::init();
-
-        validate_payment_method("null").unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_payment_plugin_validation_empty_string() {
-        let _setup = SetupDefaults::init();
-
-        assert_eq!(validate_payment_method("").unwrap_err().kind(), VcxErrorKind::MissingPaymentMethod);
     }
 }

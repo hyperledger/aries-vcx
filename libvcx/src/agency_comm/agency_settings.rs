@@ -6,7 +6,8 @@ use serde_json::Value;
 use url::Url;
 
 use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::{error, validation};
+use utils::error;
+use crate::agency_comm::utils::validation;
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
 pub static CONFIG_AGENCY_DID: &str = "agency_did";
@@ -15,7 +16,7 @@ pub static CONFIG_REMOTE_TO_SDK_DID: &str = "remote_to_sdk_did";
 pub static CONFIG_REMOTE_TO_SDK_VERKEY: &str = "remote_to_sdk_verkey";
 pub static CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";
 pub static CONFIG_SDK_TO_REMOTE_VERKEY: &str = "sdk_to_remote_verkey";
-static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
+pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
 
 pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
     CONFIG_AGENCY_ENDPOINT,

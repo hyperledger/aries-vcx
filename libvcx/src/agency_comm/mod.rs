@@ -1,9 +1,11 @@
 use std::u8;
 
+extern crate openssl;
+
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use ::{log, settings};
+use log;
 use error::prelude::*;
 use libindy::utils::crypto;
 use utils::validation;
@@ -15,7 +17,7 @@ use self::message_type::*;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
-use agency_comm::mocking::AgencyMockDecrypted;
+use self::mocking::AgencyMockDecrypted;
 
 pub mod create_key;
 pub mod get_message;

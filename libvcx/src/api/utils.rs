@@ -190,8 +190,6 @@ pub extern fn vcx_set_next_agency_response(message_index: u32) {
     info!("vcx_set_next_agency_response >>>");
 
     let message = match message_index {
-        2 => UPDATE_PROFILE_RESPONSE.to_vec(),
-        3 => GET_MESSAGES_RESPONSE.to_vec(),
         4 => UPDATE_CREDENTIAL_RESPONSE.to_vec(),
         5 => UPDATE_PROOF_RESPONSE.to_vec(),
         6 => CREDENTIAL_REQ_RESPONSE.to_vec(),

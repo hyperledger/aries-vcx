@@ -5,8 +5,6 @@ use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, 
 use agency_comm::message_type::MessageTypes;
 use agency_comm::utils::comm::post_to_agency;
 use error::prelude::*;
-use settings;
-use utils::httpclient;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

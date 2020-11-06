@@ -1,8 +1,6 @@
 use std::sync::Mutex;
 
 use agency_comm::agency_settings;
-use settings;
-use settings::CONFIG_ENABLE_TEST_MODE;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -82,14 +80,14 @@ impl AgencyMockDecrypted {
 }
 
 pub fn agency_mocks_enabled() -> bool {
-    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+    match agency_settings::get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE).ok() {
         None => false,
         Some(value) => value == "true" || value == "agency"
     }
 }
 
 pub fn agency_decrypted_mocks_enabled() -> bool {
-    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+    match agency_settings::get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE).ok() {
         None => false,
         Some(value) => value == "true"
     }

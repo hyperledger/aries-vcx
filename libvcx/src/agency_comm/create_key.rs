@@ -2,9 +2,9 @@ use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, pa
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
 use agency_comm::utils::comm::post_to_agency;
+use agency_comm::utils::{constants, validation};
+use agency_comm::mocking;
 use error::prelude::*;
-use utils::{constants, httpclient, validation};
-use crate::agency_comm::mocking;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -96,7 +96,6 @@ impl CreateKeyBuilder {
 mod tests {
     use agency_comm::create_keys;
     use libindy::utils::signus::create_and_store_my_did;
-    use utils::constants::{CREATE_KEYS_V2_RESPONSE, MY1_SEED, MY2_SEED, MY3_SEED};
     use utils::devsetup::*;
 
     use super::*;
@@ -119,9 +118,9 @@ mod tests {
     fn test_create_key_set_values_and_serialize() {
         let _setup = SetupLibraryWallet::init();
 
-        let (_agent_did, agent_vk) = create_and_store_my_did(Some(MY2_SEED), None).unwrap();
-        let (my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();
-        let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();
+        let (_agent_did, agent_vk) = create_and_store_my_did(Some(constants::MY2_SEED), None).unwrap();
+        let (my_did, my_vk) = create_and_store_my_did(Some(constants::MY1_SEED), None).unwrap();
+        let (_agency_did, agency_vk) = create_and_store_my_did(Some(constants::MY3_SEED), None).unwrap();
 
         agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);
         agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
@@ -141,7 +140,7 @@ mod tests {
 
         let mut builder = create_keys();
 
-        let (for_did, for_verkey) = builder.parse_response(&CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
+        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
 
         assert_eq!(for_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(for_verkey, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");
