@@ -23,7 +23,6 @@ provisionConfig = {
     'wallet_key': '123',
     'payment_method': 'null',
     'enterprise_seed': '000000000000000000000000Trustee1',
-    'protocol_type': '3.0',
     'storage_config': '{"path":"/tmp/alternate_path/"}'
 }
 

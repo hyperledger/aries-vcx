@@ -11,10 +11,9 @@ import {
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { mapValues } from 'lodash'
 import { DisclosedProof, StateType, VCXCode } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('DisclosedProof', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success1', async () => {

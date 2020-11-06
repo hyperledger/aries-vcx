@@ -149,8 +149,6 @@ pub struct ComMethod {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
-    #[serde(default)]
-    protocol_type: settings::ProtocolTypes,
     agency_url: String,
     pub agency_did: String,
     agency_verkey: String,
@@ -161,13 +159,11 @@ pub struct Config {
     enterprise_seed: Option<String>,
     wallet_key_derivation: Option<String>,
     name: Option<String>,
-    logo: Option<String>,
     path: Option<String>,
     storage_config: Option<String>,
     storage_credentials: Option<String>,
     pool_config: Option<String>,
     did_method: Option<String>,
-    communication_method: Option<String>,
     webhook_url: Option<String>,
     use_latest_protocols: Option<String>,
 }
@@ -175,7 +171,6 @@ pub struct Config {
 pub fn set_config_values(my_config: &Config) {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
-    settings::set_config_value(settings::CONFIG_PROTOCOL_TYPE, &my_config.protocol_type.to_string());
     settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
     settings::set_config_value(settings::CONFIG_WALLET_KEY, &my_config.wallet_key);
     agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &my_config.agency_url);
@@ -189,7 +184,6 @@ pub fn set_config_values(my_config: &Config) {
     settings::set_opt_config_value(settings::CONFIG_WALLET_STORAGE_CREDS, &my_config.storage_credentials);
     settings::set_opt_config_value(settings::CONFIG_POOL_CONFIG, &my_config.pool_config);
     settings::set_opt_config_value(settings::CONFIG_DID_METHOD, &my_config.did_method);
-    settings::set_opt_config_value(settings::COMMUNICATION_METHOD, &my_config.communication_method);
     settings::set_opt_config_value(settings::CONFIG_WEBHOOK_URL, &my_config.webhook_url);
 }
 
@@ -252,9 +246,7 @@ pub fn get_final_config(my_did: &str,
         "remote_to_sdk_did": agent_did,
         "remote_to_sdk_verkey": agent_vk,
         "institution_name": get_or_default(&my_config.name, "<CHANGE_ME>"),
-        "institution_logo_url": get_or_default(&my_config.logo, "<CHANGE_ME>"),
-        "genesis_path": get_or_default(&my_config.path, "<CHANGE_ME>"),
-        "protocol_type": &my_config.protocol_type,
+        "genesis_path": get_or_default(&my_config.path, "<CHANGE_ME>")
     });
 
     if let Some(key_derivation) = &my_config.wallet_key_derivation {
@@ -271,9 +263,6 @@ pub fn get_final_config(my_did: &str,
     }
     if let Some(_pool_config) = &my_config.pool_config {
         final_config["pool_config"] = json!(_pool_config);
-    }
-    if let Some(_communication_method) = &my_config.communication_method {
-        final_config["communication_method"] = json!(_communication_method);
     }
     if let Some(_webhook_url) = &my_config.webhook_url {
         final_config["webhook_url"] = json!(_webhook_url);
@@ -441,7 +430,6 @@ mod tests {
 
         let config = json!({
             "wallet_name": "test_wallet",
-            "protocol_type": "3.0",
             "storage_config": json!({
                 "path": path
             }).to_string(),
@@ -474,8 +462,7 @@ mod tests {
             "agency_url": host.to_string(),
             "agency_did": agency_did.to_string(),
             "agency_verkey": agency_vk.to_string(),
-            "wallet_key": wallet_key.to_string(),
-            "protocol_type": "3.0"
+            "wallet_key": wallet_key.to_string()
         });
 
         let result = connect_register_provision(&config.to_string()).unwrap();
@@ -486,10 +473,8 @@ mod tests {
             "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf",
             "genesis_path":"<CHANGE_ME>",
             "institution_did":"FhrSrYtQcw3p9xwf7NYemf",
-            "institution_logo_url":"<CHANGE_ME>",
             "institution_name":"<CHANGE_ME>",
             "institution_verkey":"91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "protocol_type":"3.0",
             "remote_to_sdk_did":"DnEpUQJLupa5rKPkrKUpFd", // taken from mock constants::CONNECTED_RESPONSE_DECRYPTED
             "remote_to_sdk_verkey":"7y118tRW2EMJn18qs9MY5NJWYW2PLwV5QpaLyfoLHtgF", // taken from mock constants::CONNECTED_RESPONSE_DECRYPTED
             "sdk_to_remote_did":"FhrSrYtQcw3p9xwf7NYemf",

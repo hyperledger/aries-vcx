@@ -8,10 +8,9 @@ import {
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { Connection, DisclosedProof, Proof, ProofState, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('Proof:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success', async () => {

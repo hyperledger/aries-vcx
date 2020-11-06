@@ -17,7 +17,6 @@ const testConfig = {
   wallet_type: 'default',
   wallet_name: 'LIBVCX_SDK_WALLET',
   payment_method: 'null',
-  institution_logo_url: 'http://127.0.0.1:8080',
   pool_name: 'pool1',
   institution_name: 'default',
   agency_did: '2hoqvcwupRTUNkXn6ArYzs',
@@ -38,11 +37,11 @@ function generateTestConfig () {
   return sampleConfig
 }
 
-export async function initVcxTestMode (protocolType: string) {
+export async function initVcxTestMode () {
   initRustAPI()
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
   await vcx.defaultLogger(rustLogPattern)
-  const useTestConfig = { ...generateTestConfig(), protocol_type: protocolType }
+  const useTestConfig = generateTestConfig()
   await vcx.initVcxCore(JSON.stringify(useTestConfig))
 }
 

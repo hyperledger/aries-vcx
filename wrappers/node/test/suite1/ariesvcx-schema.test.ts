@@ -11,10 +11,9 @@ import {
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { Schema, SchemaPaymentManager, SchemaState, VCXCode } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('Schema:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success', async () => {

@@ -12,18 +12,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *
  *    # State
  *
- *    The set of object states and transitions depends on communication method is used.
- *    The communication method can be specified as config option on one of *_init function. The default communication method us `proprietary`.
- *
- *    proprietary:
- *        VcxStateType::VcxStateInitialized - once `vcx_proof_create` (create Proof object) is called.
- *
- *        VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `PROOF_REQ` message) is called.
- *
- *        VcxStateType::VcxStateAccepted - once `PROOF` messages is received.
- *                                         use `vcx_proof_update_state` or `vcx_proof_update_state_with_message` functions for state updates.
- *
- *    aries:
  *        VcxStateType::VcxStateInitialized - once `vcx_proof_create` (create Proof object) is called.
  *
  *        VcxStateType::VcxStateOfferSent - once `vcx_credential_send_request` (send `PresentationRequest` message) is called.
@@ -36,13 +24,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *
  *    # Transitions
  *
- *    proprietary:
- *        VcxStateType::None - `vcx_proof_create` - VcxStateType::VcxStateInitialized
- *
- *        VcxStateType::VcxStateInitialized - `vcx_credential_send_request` - VcxStateType::VcxStateOfferSent
- *
- *        VcxStateType::VcxStateOfferSent - received `PROOF` - VcxStateType::VcxStateAccepted
- *
  *    aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#propose-presentation
  *        VcxStateType::None - `vcx_proof_create` - VcxStateType::VcxStateInitialized
  *
@@ -54,11 +35,6 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  *
  *    # Messages
  *
- *    proprietary:
- *        ProofRequest (`PROOF_REQ`)
- *        Proof (`PROOF`)
- *
- *    aries:
  *        PresentationRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#request-presentation
  *        Presentation - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#presentation
  *        PresentationProposal - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0037-present-proof#propose-presentation

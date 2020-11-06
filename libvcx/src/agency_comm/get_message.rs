@@ -8,7 +8,6 @@ use aries::messages::a2a::A2AMessage as AriesA2AMessage;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
 use error::{VcxError, VcxErrorKind, VcxResult};
 use settings;
-use settings::ProtocolTypes;
 use utils::{constants, httpclient};
 use crate::agency_comm::mocking;
 
@@ -300,7 +299,7 @@ impl Message {
     }
 }
 
-pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, version: &Option<ProtocolTypes>) -> VcxResult<Vec<Message>> {
+pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
     trace!("get_connection_messages >>> pw_did: {}, pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
            pw_did, pw_vk, agent_vk, msg_uid);
 

@@ -627,7 +627,7 @@ mod tests {
 
     use super::*;
 
-    static CONFIG_V3: &'static str = r#"{"protocol_type": "3.0", "agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
+    static CONFIG_V3: &'static str = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

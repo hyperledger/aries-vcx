@@ -14,18 +14,8 @@ import { PaymentManager } from './vcx-payment-txn'
  *    # State
  *
  *    The set of object states and transitions depends on communication method is used.
- *    The communication method can be specified as config option on one of *_init function. The default communication method us `proprietary`.
+ *    The communication method can be specified as config option on one of *_init function.
  *
- *    proprietary:
- *        VcxStateType::VcxStateInitialized - once `vcx_issuer_create_credential` (create IssuerCredential object) is called.
- *
- *        VcxStateType::VcxStateOfferSent - once `vcx_issuer_send_credential_offer` (send `CRED_OFFER` message) is called.
- *
- *        VcxStateType::VcxStateRequestReceived - once `CRED_REQ` messages is received.
- *                                                use `vcx_issuer_credential_update_state` or `vcx_issuer_credential_update_state_with_message` functions for state updates.
- *        VcxStateType::VcxStateAccepted - once `vcx_issuer_send_credential` (send `CRED` message) is called.
- *
- *    aries:
  *        VcxStateType::VcxStateInitialized - once `vcx_issuer_create_credential` (create IssuerCredential object) is called.
  *
  *        VcxStateType::VcxStateOfferSent - once `vcx_issuer_send_credential_offer` (send `CredentialOffer` message) is called.
@@ -37,15 +27,6 @@ import { PaymentManager } from './vcx-payment-txn'
  *        VcxStateType::VcxStateAccepted - once `vcx_issuer_send_credential` (send `Credential` message) is called.
  *
  *    # Transitions
- *
- *    proprietary:
- *        VcxStateType::None - `vcx_issuer_create_credential` - VcxStateType::VcxStateInitialized
- *
- *        VcxStateType::VcxStateInitialized - `vcx_issuer_send_credential_offer` - VcxStateType::VcxStateOfferSent
- *
- *        VcxStateType::VcxStateOfferSent - received `CRED_REQ` - VcxStateType::VcxStateRequestReceived
- *
- *        VcxStateType::VcxStateRequestReceived - `vcx_issuer_send_credential` - VcxStateType::VcxStateAccepted
  *
  *    aries: RFC - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential
  *        VcxStateType::None - `vcx_issuer_create_credential` - VcxStateType::VcxStateInitialized
@@ -60,13 +41,6 @@ import { PaymentManager } from './vcx-payment-txn'
  *        VcxStateType::VcxStateAccepted - received `Ack` - VcxStateType::VcxStateAccepted
  *
  *   # Messages
- *
- *    proprietary:
- *        CredentialOffer (`CRED_OFFER`)
- *        CredentialRequest (`CRED_REQ`)
- *        Credential (`CRED`)
- *
- *    aries:
  *        CredentialProposal - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#propose-credential
  *        CredentialOffer - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#offer-credential
  *        CredentialRequest - https://github.com/hyperledger/aries-rfcs/tree/7b6b93acbaf9611d3c892c4bada142fe2613de6e/features/0036-issue-credential#request-credential

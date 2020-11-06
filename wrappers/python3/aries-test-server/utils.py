@@ -37,8 +37,6 @@ async def init_vcx():
         'wallet_key': '123',
         'payment_method': 'null',
         'enterprise_seed': '000000000000000000000000Trustee1',
-        'protocol_type': '2.0',
-        'communication_method': 'aries'
     }
 
     print("Provision an agent and wallet, get back configuration details")

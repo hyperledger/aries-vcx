@@ -7,15 +7,12 @@ import {
   createConnectionInviterRequested,
   dataConnectionCreate
 } from 'helpers/entities'
-import {
-  INVITE_ACCEPTED_MESSAGE,
-  PROTOCOL_TYPE_ARIES_STRICT
-} from 'helpers/test-constants'
+import { INVITE_ACCEPTED_MESSAGE } from 'helpers/test-constants'
 import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils'
 import { Connection, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 
 describe('Connection:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success', async () => {

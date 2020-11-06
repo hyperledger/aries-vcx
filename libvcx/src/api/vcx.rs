@@ -467,28 +467,6 @@ pub extern fn vcx_error_c_message(error_code: u32) -> *const c_char {
     error::error_c_message(&error_code).as_ptr()
 }
 
-/// Update setting to set new local institution information
-///
-/// #Params
-/// name: institution name
-/// logo_url: url containing institution logo
-///
-/// #Returns
-/// Error code as u32
-#[no_mangle]
-pub extern fn vcx_update_institution_info(name: *const c_char, logo_url: *const c_char) -> u32 {
-    info!("vcx_update_institution_info >>>");
-
-    check_useful_c_str!(name, VcxErrorKind::InvalidConfiguration);
-    check_useful_c_str!(logo_url, VcxErrorKind::InvalidConfiguration);
-    trace!("vcx_update_institution_info(name: {}, logo_url: {})", name, logo_url);
-
-    settings::set_config_value(::settings::CONFIG_INSTITUTION_NAME, &name);
-    settings::set_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL, &logo_url);
-
-    error::SUCCESS.code_num
-}
-
 /// Update agency webhook url setting
 ///
 /// #Params
@@ -1077,23 +1055,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_update_institution_info() {
-        let _setup = SetupDefaults::init();
-
-        let new_name = "new_name";
-        let new_url = "http://www.evernym.com";
-        assert_ne!(new_name, &settings::get_config_value(::settings::CONFIG_INSTITUTION_NAME).unwrap());
-        assert_ne!(new_url, &settings::get_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL).unwrap());
-
-        assert_eq!(error::SUCCESS.code_num, vcx_update_institution_info(CString::new(new_name.to_string()).unwrap().into_raw(),
-                                                                        CString::new(new_url.to_string()).unwrap().into_raw()));
-
-        assert_eq!(new_name, &settings::get_config_value(::settings::CONFIG_INSTITUTION_NAME).unwrap());
-        assert_eq!(new_url, &settings::get_config_value(::settings::CONFIG_INSTITUTION_LOGO_URL).unwrap());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_update_institution_webhook() {
         let _setup = SetupDefaults::init();
 
@@ -1208,7 +1169,6 @@ mod tests {
             agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
             settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
             settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
-            settings::CONFIG_INSTITUTION_LOGO_URL:        settings::get_config_value(settings::CONFIG_INSTITUTION_LOGO_URL).unwrap(),
             settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
         }).to_string()
     }
@@ -1264,10 +1224,8 @@ mod tests {
           "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
           "genesis_path": "/tmp/foo/bar",
           "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
-          "institution_logo_url": "https://example.org",
           "institution_name": "alice-9b2e793a-2e89-42c0-8941-dd3360bb2043",
           "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
-          "protocol_type": "4.0",
           "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
           "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
           "sdk_to_remote_did": "6Ke2y7C9WVSwDa4PieDtc9",
@@ -1328,10 +1286,8 @@ mod tests {
           "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
           "genesis_path": genesis_path,
           "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
-          "institution_logo_url": "https://example.org",
           "institution_name": "alice-9b2e793a-2e89-42c0-8941-dd3360bb2043",
           "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
-          "protocol_type": "4.0",
           "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
           "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
           "sdk_to_remote_did": "6Ke2y7C9WVSwDa4PieDtc9",

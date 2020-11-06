@@ -11,7 +11,6 @@ use connection::create_agent_keys;
 use error::prelude::*;
 use libindy::utils::signus::create_and_store_my_did;
 use settings;
-use settings::ProtocolTypes;
 use utils::httpclient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,9 +90,7 @@ impl AgentInfo {
     }
 
     pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
-        get_connection_messages(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk,
-                                msg_uid, status_codes, &Some(ProtocolTypes::V2),
-        )
+        get_connection_messages(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
     }
 
     pub fn get_messages(&self, expect_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {

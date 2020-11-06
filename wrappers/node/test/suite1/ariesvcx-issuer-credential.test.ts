@@ -14,10 +14,9 @@ import {
   StateType,
   VCXCode
 } from 'src'
-import { PROTOCOL_TYPE_ARIES_STRICT } from '../helpers/test-constants'
 
 describe('IssuerCredential:', () => {
-  before(() => initVcxTestMode(PROTOCOL_TYPE_ARIES_STRICT))
+  before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success', async () => {
