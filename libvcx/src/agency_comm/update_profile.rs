@@ -56,13 +56,6 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn logo_url(&mut self, url: &str) -> VcxResult<&mut Self> {
-        validation::validate_url(url)?;
-        let config = ConfigOption { name: "logoUrl".to_string(), value: url.to_string() };
-        self.configs.push(config);
-        Ok(self)
-    }
-
     pub fn webhook_url(&mut self, url: &Option<String>) -> VcxResult<&mut Self> {
         if let Some(x) = url {
             validation::validate_url(x)?;
@@ -139,7 +132,6 @@ mod tests {
         let _msg = update_data()
             .to(to_did).unwrap()
             .name(&name).unwrap()
-            .logo_url(&url).unwrap()
             .prepare_request().unwrap();
     }
 
@@ -159,7 +151,6 @@ mod tests {
         let msg = update_data()
             .to(agent_did.as_ref()).unwrap()
             .name("name").unwrap()
-            .logo_url("https://random.com").unwrap()
             .prepare_request().unwrap();
         assert!(msg.len() > 0);
     }

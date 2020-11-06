@@ -10,7 +10,6 @@ import {
   getVersion,
   provisionAgent,
   setActiveTxnAuthorAgreementMeta,
-  updateInstitutionConfigs,
   updateMessages,
   VCXCode
 } from 'src'
@@ -20,10 +19,6 @@ describe('utils:', () => {
   before(() => initVcxTestMode())
 
   // tslint:disable-next-line max-line-length
-  const updateInstitutionConfigsData = {
-    logoUrl: 'https://google.com',
-    name: 'New Name'
-  }
   const downloadMessagesData = {
     pairwiseDids: 'asdf',
     status: 'MS-104',
@@ -56,25 +51,6 @@ describe('utils:', () => {
     it('success', async () => {
       const version = getVersion()
       assert.ok(version)
-    })
-  })
-
-  describe('updateInstitutionConfigs:', () => {
-    it('success', async () => {
-      const res = updateInstitutionConfigs(updateInstitutionConfigsData)
-      assert.equal(res, 0)
-    })
-
-    it('throws: missing name', async () => {
-      const { name, ...data } = updateInstitutionConfigsData
-      const error = await shouldThrow(() => updateInstitutionConfigs(data as any))
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION)
-    })
-
-    it('throws: missing logoUrl', async () => {
-      const { logoUrl, ...data } = updateInstitutionConfigsData
-      const error = await shouldThrow(() => updateInstitutionConfigs(data as any))
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION)
     })
   })
 

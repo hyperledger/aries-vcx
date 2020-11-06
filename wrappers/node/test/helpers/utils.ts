@@ -17,7 +17,6 @@ const testConfig = {
   wallet_type: 'default',
   wallet_name: 'LIBVCX_SDK_WALLET',
   payment_method: 'null',
-  institution_logo_url: 'http://127.0.0.1:8080',
   pool_name: 'pool1',
   institution_name: 'default',
   agency_did: '2hoqvcwupRTUNkXn6ArYzs',
