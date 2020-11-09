@@ -18,10 +18,6 @@ public abstract class LibVcx {
      */
     public interface API extends Library {
 
-        public int vcx_init_with_config(int command_handle, String config, Callback cb);
-        public int vcx_init(int command_handle, String config_path, Callback cb);
-        public int vcx_init_minimal(String config);
-
         public int vcx_init_core(String config);
         public int vcx_open_pool(int command_handle, Callback cb);
         public int vcx_open_wallet(int command_handle, Callback cb);
