@@ -18,6 +18,7 @@
 - This is spin off what has previously been known as LibVCX library. 
 - There's still outstanding work to cleanup code, restructure library so small breaking changes occurs with almost every release.
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
+- See our [roadmap](./roadmap.md).
 
 # Get started
 The best way to get your hands on.  
