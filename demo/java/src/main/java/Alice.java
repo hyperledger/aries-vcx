@@ -62,7 +62,7 @@ public class Alice {
                 .put("$", "protocol_version", "2")
                 .put("$", "genesis_path", System.getProperty("user.dir") + "/genesis.txn").jsonString();
         logger.info("#9 Initialize libvcx with new configuration\n" + prettyJson(vcxConfig));
-        VcxApi.vcxInitWithConfig(vcxConfig).get();
+        //todo: here vcx_init_core, vcx_pool_open, vcx_wallet_open should be used to initialize library state
 
         logger.info("Input faber invitation details\nEnter your invite details:");
         Scanner sc = new Scanner(System.in);

@@ -70,7 +70,7 @@ public class Faber {
                 .put("$", "protocol_version", "2")
                 .put("$", "genesis_path", System.getProperty("user.dir") + "/genesis.txn").jsonString();
         logger.info("#2 Using following agent provision to initialize VCX\n" + prettyJson(vcxConfig));
-        VcxApi.vcxInitWithConfig(vcxConfig).get();
+        // todo: here vcx_init_core, vcx_pool_open, vcx_wallet_open should be used to initialize library state
 
         // define schema with actually needed
         String version = getRandomInt(1, 99) + "." + getRandomInt(1, 99) + "." + getRandomInt(1, 99);
