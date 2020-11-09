@@ -7,7 +7,6 @@ from time import sleep
 
 from vcx.api.connection import Connection
 from vcx.api.utils import vcx_agent_provision
-from vcx.api.vcx_init import vcx_init_with_config
 
 from demo_utils import *
 
@@ -49,7 +48,7 @@ async def main():
     config['genesis_path'] = 'docker.txn'
 
     print("#8 Initialize libvcx with new configuration")
-    await vcx_init_with_config(json.dumps(config))
+    # todo: here should be called init methods
 
     print("#9 Input faber.py invitation details")
     details = input('invite details: ')

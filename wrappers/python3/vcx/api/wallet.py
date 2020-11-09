@@ -495,8 +495,8 @@ class Wallet:
     async def import_wallet(config):
         """
         Imports wallet from file with given key.
-        Cannot be used if wallet is already opened (Especially if vcx_init has already been used).
-        :param config: Can be same config that is passed to vcx_init.
+        Cannot be used if wallet is already opened.
+        :param config: Can be same config that is passed to vcx_init_core.
         Must include: '{"wallet_name":"","wallet_key":"","exported_wallet_path":"","backup_key":""}'
         :return:
         Error code - success indicates that the wallet was successfully imported.
@@ -517,15 +517,6 @@ class Wallet:
         logger.debug("vcx_wallet_export completed")
         return result
 
-    @staticmethod
-    def set_handle(handle: int) -> None:
-        """
-        Sets the wallet handle for libvcx to use, called before vcx_init_minimal
-        :param handle: wallet handle
-        """
-        c_handle = c_uint32(handle)
-
-        do_call_sync('vcx_wallet_set_handle', c_handle)
 
     @staticmethod
     async def sign_with_address(address: str, msg: bytes) -> bytes:

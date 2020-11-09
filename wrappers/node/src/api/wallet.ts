@@ -768,7 +768,7 @@ export class Wallet {
 
   /**
    * Imports wallet from file with given key.
-   * Cannot be used if wallet is already opened (Especially if vcx_init has already been used).
+   * Cannot be used if wallet is already opened.
    *
    * Example:
    * ```
