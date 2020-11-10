@@ -70,7 +70,7 @@ macro_rules! check_useful_c_byte_array {
             return VcxError::from_msg($err2, "Array length must be greater than 0").into()
         }
 
-        let $ptr = unsafe { $crate::std::slice::from_raw_parts($ptr, $len as usize) };
+        let $ptr = unsafe { std::slice::from_raw_parts($ptr, $len as usize) };
         let $ptr = $ptr.to_vec();
     }
 }

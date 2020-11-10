@@ -1,9 +1,9 @@
-use aries::handlers::proof_presentation::prover::states::finished::FinishedState;
-use aries::messages::error::ProblemReport;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_ack::PresentationAck;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::status::Status;
+use crate::aries::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_ack::PresentationAck;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationSentState {

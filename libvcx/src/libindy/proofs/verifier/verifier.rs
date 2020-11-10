@@ -1,15 +1,12 @@
 use serde_json;
 use serde_json::Value;
 
-use error::prelude::*;
-use libindy::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json,
-    build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes,
-};
-use settings;
-use libindy::utils::anoncreds;
-use utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
-use utils::openssl::encode;
+use crate::error::prelude::*;
+use crate::libindy::proofs::verifier::verifier_internal::{build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes};
+use crate::libindy::utils::anoncreds;
+use crate::settings;
+use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
+use crate::utils::openssl::encode;
 
 pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
@@ -45,9 +42,11 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
+    use crate::{libindy, utils};
+    use crate::libindy::proofs::proof_request::ProofRequestData;
+    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
+
     use super::*;
-    use utils::devsetup::SetupLibraryWalletPoolZeroFees;
-    use libindy::proofs::proof_request::ProofRequestData;
 
     #[test]
     #[cfg(feature = "pool_tests")]
@@ -77,7 +76,7 @@ pub mod tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
               "self_attested_attributes":{
@@ -127,11 +126,11 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
@@ -188,11 +187,11 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = ::libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{

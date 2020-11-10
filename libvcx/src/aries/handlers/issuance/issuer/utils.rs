@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::error;
-use utils::openssl::encode;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::utils::error;
+use crate::utils::openssl::encode;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut attributes: HashMap<String, serde_json::Value> = serde_json::from_str(attributes)
@@ -59,10 +59,10 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use settings;
-    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use utils::constants::SCHEMAS_JSON;
-    use utils::devsetup::*;
+    use crate::settings;
+    use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use crate::utils::constants::SCHEMAS_JSON;
+    use crate::utils::devsetup::*;
 
     use super::*;
 

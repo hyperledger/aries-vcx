@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
-use agency_client::get_message::{get_connection_messages, Message};
-use agency_client::{MessageStatusCode, agency_settings};
-use agency_client::update_connection::send_delete_connection_message;
-use agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
-use aries::messages::a2a::A2AMessage;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::utils::encryption_envelope::EncryptionEnvelope;
-use connection::create_agent_keys;
-use error::prelude::*;
-use libindy::utils::signus::create_and_store_my_did;
-use settings;
-use agency_client::httpclient;
+use crate::agency_client::get_message::{get_connection_messages, Message};
+use crate::agency_client::{MessageStatusCode, agency_settings};
+use crate::agency_client::update_connection::send_delete_connection_message;
+use crate::agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::utils::encryption_envelope::EncryptionEnvelope;
+use crate::connection::create_agent_keys;
+use crate::error::prelude::*;
+use crate::libindy::utils::signus::create_and_store_my_did;
+use crate::settings;
+use crate::agency_client::httpclient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {

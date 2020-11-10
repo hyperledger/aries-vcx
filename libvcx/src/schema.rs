@@ -3,13 +3,14 @@ use std::string::ToString;
 use serde_json;
 
 use agency_client::ObjectWithVersion;
-use api::PublicEntityStateType;
-use error::prelude::*;
-use libindy::utils::anoncreds;
-use libindy::utils::ledger;
-use libindy::utils::payments::PaymentTxn;
-use utils::constants::DEFAULT_SERIALIZE_VERSION;
-use utils::object_cache::ObjectCache;
+
+use crate::api::PublicEntityStateType;
+use crate::error::prelude::*;
+use crate::libindy::utils::anoncreds;
+use crate::libindy::utils::ledger;
+use crate::libindy::utils::payments::PaymentTxn;
+use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
+use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
@@ -216,16 +217,16 @@ pub mod tests {
 
     use rand::Rng;
 
+    use crate::{libindy, settings};
     #[cfg(feature = "pool_tests")]
-    use libindy::utils::anoncreds::tests::create_and_write_test_schema;
+    use crate::libindy::utils::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
-    use libindy::utils::payments::add_new_did;
-    use libindy::utils::wallet::get_wallet_handle;
-    use settings;
+    use crate::libindy::utils::payments::add_new_did;
+    use crate::libindy::utils::wallet::get_wallet_handle;
     #[cfg(feature = "pool_tests")]
-    use utils::constants;
-    use utils::constants::SCHEMA_ID;
-    use utils::devsetup::*;
+    use crate::utils::constants;
+    use crate::utils::constants::SCHEMA_ID;
+    use crate::utils::devsetup::*;
 
     use super::*;
 
@@ -431,11 +432,11 @@ pub mod tests {
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
         ledger::endorse_transaction(&schema_request).unwrap();
 
-        ::std::thread::sleep(::std::time::Duration::from_millis(1000));
+        std::thread::sleep(std::time::Duration::from_millis(1000));
 
         assert_eq!(1, update_state(handle).unwrap());
         assert_eq!(1, get_state(handle).unwrap());
-        ::libindy::utils::wallet::close_main_wallet();
+        libindy::utils::wallet::close_main_wallet();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -445,6 +446,6 @@ pub mod tests {
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());
-        ::libindy::utils::wallet::close_main_wallet();
+        libindy::utils::wallet::close_main_wallet();
     }
 }

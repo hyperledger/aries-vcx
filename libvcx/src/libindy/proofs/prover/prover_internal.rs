@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use error::prelude::*;
-use libindy::proofs::proof_request::ProofRequestData;
-use libindy::proofs::proof_request_internal::NonRevokedInterval;
-use settings;
-use libindy::utils::anoncreds;
-use libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
+use crate::error::prelude::*;
+use crate::libindy::proofs::proof_request::ProofRequestData;
+use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
+use crate::libindy::utils::anoncreds;
+use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
+use crate::libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
+use crate::settings;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -259,17 +259,17 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
 
 #[cfg(test)]
 pub mod tests {
-    use connection;
-    use libindy::proofs::proof_request_internal::NonRevokedInterval;
-    use libindy::proofs::prover::prover_internal::{CredInfoProver};
-    use utils::{
+    use crate::{connection, libindy};
+    use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
+    use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
+    use crate::utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
                     CRED_DEF_ID, CRED_REV_ID, GET_MESSAGES_DECRYPTED_RESPONSE, LICENCE_CRED_ID, REV_REG_ID,
                     REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
         get_temp_dir_path,
     };
-    use utils::devsetup::*;
+    use crate::utils::devsetup::*;
 
     use super::*;
 
@@ -697,7 +697,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
+            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -740,7 +740,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
+            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -795,7 +795,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
+            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,
@@ -850,7 +850,7 @@ pub mod tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            ::libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
+            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
         let cred2 = CredInfoProver {
             requested_attr: "height".to_string(),
             referent: cred_id,

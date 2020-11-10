@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use error::prelude::*;
-use aries::handlers::issuance::holder::states::finished::FinishedHolderState;
-use aries::handlers::issuance::holder::states::request_sent::RequestSentState;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential_offer::CredentialOffer;
-use aries::messages::status::Status;
+use crate::error::prelude::*;
+use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
+use crate::aries::handlers::issuance::holder::states::request_sent::RequestSentState;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferReceivedState {

@@ -1,4 +1,4 @@
-use aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Query {

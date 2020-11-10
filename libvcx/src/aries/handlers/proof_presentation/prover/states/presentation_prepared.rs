@@ -1,8 +1,8 @@
-use aries::handlers::proof_presentation::prover::states::finished::FinishedState;
-use aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::status::Status;
+use crate::aries::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationPreparedState {

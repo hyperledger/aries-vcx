@@ -5,9 +5,9 @@ pub mod presentation_ack;
 
 #[cfg(test)]
 pub mod test {
-    use aries::messages::ack;
-    use aries::messages::error;
-    use aries::messages::proof_presentation::presentation_request::tests::_presentation_request;
+    use crate::aries::messages::ack;
+    use crate::aries::messages::error;
+    use crate::aries::messages::proof_presentation::presentation_request::tests::_presentation_request;
 
     pub fn _ack() -> ack::Ack {
         ack::tests::_ack().set_thread_id(&_presentation_request().id.0)

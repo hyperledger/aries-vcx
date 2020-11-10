@@ -1,11 +1,11 @@
 use serde_json;
 
-use aries::handlers::issuance::issuer::issuer::Issuer;
-use aries::messages::a2a::A2AMessage;
-use connection;
-use error::prelude::*;
-use utils::error;
-use utils::object_cache::ObjectCache;
+use crate::aries::handlers::issuance::issuer::issuer::Issuer;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::utils::error;
+use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -38,7 +38,7 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Optio
         if credential.is_terminal_state() { return credential.get_state(); }
 
         if let Some(message) = message {
-            let message: A2AMessage = ::serde_json::from_str(&message)
+            let message: A2AMessage = serde_json::from_str(&message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
 
             credential.step(message.into())?;
@@ -158,7 +158,7 @@ pub fn get_credential_attributes(handle: u32) -> VcxResult<String> {
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_rev_reg_id() 
+        credential.get_rev_reg_id()
     })
 }
 
@@ -170,18 +170,19 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use ::{issuer_credential, settings};
-    use api::VcxStateType;
-    use connection::tests::build_test_connection_inviter_requested;
-    use credential_def::tests::create_cred_def_fake;
-    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use libindy::utils::LibindyMock;
-    use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION, REV_REG_ID};
-    #[allow(unused_imports)]
-    use utils::devsetup::*;
     use agency_client::mocking::HttpClientMockResponse;
-    use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
-    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+
+    use crate::{issuer_credential, settings};
+    use crate::api::VcxStateType;
+    use crate::connection::tests::build_test_connection_inviter_requested;
+    use crate::credential_def::tests::create_cred_def_fake;
+    use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use crate::libindy::utils::LibindyMock;
+    use crate::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    #[allow(unused_imports)]
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
+    use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use super::*;
 
@@ -296,7 +297,7 @@ pub mod tests {
         assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(::agency_client::utils::error::AgencyClientResult::Err(::agency_client::utils::error::AgencyClientError::from_msg(::agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(agency_client::utils::error::AgencyClientResult::Err(agency_client::utils::error::AgencyClientError::from_msg(agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);

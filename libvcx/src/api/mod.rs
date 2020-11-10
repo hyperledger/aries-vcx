@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub mod vcx;
 pub mod connection;
 pub mod issuer_credential;
@@ -11,8 +13,6 @@ pub mod wallet;
 pub mod logger;
 pub mod return_types_u32;
 mod filters;
-
-use std::fmt;
 
 /// This macro allows the VcxStateType to be
 /// serialized within serde as an integer (represented as
@@ -113,13 +113,13 @@ enum_number!(PublicEntityStateType
     Published = 1,
 });
 
-impl Default for PublicEntityStateType{
+impl Default for PublicEntityStateType {
     fn default() -> Self {
         PublicEntityStateType::Published
     }
 }
 
-impl Default for VcxStateType{
+impl Default for VcxStateType {
     fn default() -> Self {
         VcxStateType::VcxStateNone
     }
@@ -135,15 +135,17 @@ pub struct VcxStatus {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json;
+
+    use super::*;
+
     use self::VcxStateType::*;
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_serialize_vcx_state_type(){
+    fn test_serialize_vcx_state_type() {
         let z = VcxStateNone;
         let y = serde_json::to_string(&z).unwrap();
-        assert_eq!(y,"0");
+        assert_eq!(y, "0");
     }
 }

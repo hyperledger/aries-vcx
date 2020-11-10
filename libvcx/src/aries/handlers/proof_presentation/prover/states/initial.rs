@@ -1,10 +1,10 @@
-use error::prelude::*;
-use aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
-use aries::messages::error::ProblemReport;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use libindy::proofs::prover::prover::generate_indy_proof;
+use crate::error::prelude::*;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::libindy::proofs::prover::prover::generate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {

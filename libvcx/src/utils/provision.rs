@@ -2,9 +2,10 @@ use serde::Deserialize;
 
 use agency_client::agency_settings;
 use agency_client::utils::agent_utils;
-use libindy::utils::{anoncreds, wallet, signus};
-use error::prelude::*;
-use settings;
+
+use crate::error::prelude::*;
+use crate::libindy::utils::{anoncreds, signus, wallet};
+use crate::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -75,7 +76,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     trace!("initialized wallet");
 
     // If MS is already in wallet then just continue
-    anoncreds::libindy_prover_create_master_secret(::settings::DEFAULT_LINK_SECRET_ALIAS).ok();
+    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
 
     let (my_did, my_vk) = signus::create_and_store_my_did(
         my_config.agent_seed.as_ref().map(String::as_str),
@@ -174,9 +175,10 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 mod tests {
     use std::env;
 
+    use crate::api::vcx::vcx_shutdown;
+    use crate::utils::devsetup::{SetupDefaults, SetupLibraryAgencyV2, SetupMocks};
+
     use super::*;
-    use api::vcx::vcx_shutdown;
-    use utils::devsetup::{SetupDefaults, SetupLibraryAgencyV2, SetupMocks};
 
     #[test]
     #[cfg(feature = "agency")]

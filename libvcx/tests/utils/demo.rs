@@ -446,6 +446,6 @@ pub fn create_schema(source_id: &str, schema_name: &str, schema_data: &str, vers
                                                      cb);
     assert_eq!(rc, 0);
     let (rc, handle) = receiver.recv_timeout(TimeoutUtils::long_timeout()).unwrap();
-    let schema_id = ::vcx::schema::get_schema_id(handle).unwrap();
+    let schema_id = vcx::schema::get_schema_id(handle).unwrap();
     (rc, handle, schema_id)
 }

@@ -6,21 +6,21 @@ use indy::WalletHandle;
 use rand::Rng;
 use serde_json::Value;
 
-use ::{init, settings, utils};
 use agency_client::agency_settings;
-use agency_client::mocking::{AgencyMockDecrypted, enable_agency_mocks, disable_agency_mocks};
-use libindy::utils::pool::reset_pool_handle;
-use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
-use libindy::utils::wallet;
-use libindy::utils::wallet::create_and_open_as_main_wallet;
-use settings::set_testing_defaults;
-use utils::{get_temp_dir_path, threadpool};
-use utils::constants;
-use utils::file::write_file;
-use utils::logger::LibvcxDefaultLogger;
-use utils::object_cache::ObjectCache;
-use utils::plugins::init_plugin;
+use agency_client::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
+
+use crate::{api, init, libindy, settings, utils};
+use crate::libindy::utils::pool::reset_pool_handle;
+use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
+use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
+use crate::libindy::utils::wallet;
+use crate::settings::set_testing_defaults;
+use crate::utils::{get_temp_dir_path, threadpool};
+use crate::utils::constants;
+use crate::utils::file::write_file;
+use crate::utils::logger::LibvcxDefaultLogger;
+use crate::utils::object_cache::ObjectCache;
+use crate::utils::plugins::init_plugin;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -34,7 +34,7 @@ pub struct SetupWallet {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
-    skip_cleanup: bool
+    skip_cleanup: bool,
 } // creates wallet with random name, configures wallet settings
 
 pub struct SetupPoolConfig {
@@ -168,7 +168,7 @@ impl SetupWallet {
         SetupWallet { wallet_name, wallet_key, wallet_kdf, skip_cleanup: false }
     }
 
-    pub fn skip_cleanup(mut self) -> SetupWallet{
+    pub fn skip_cleanup(mut self) -> SetupWallet {
         self.skip_cleanup = true;
         self
     }
@@ -354,15 +354,15 @@ pub fn create_new_seed() -> String {
 
 pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    ::libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
-    let (my_did, my_vk) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
+    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
 pub fn setup_libnullpay_nofees() {
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    ::libindy::utils::payments::tests::token_setup(None, None, true);
+    libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
 pub fn setup_indy_env(use_zero_fees: bool) {
@@ -377,13 +377,13 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    ::libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
+    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
 
-    let (my_did, my_vk) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 
-    ::libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
+    libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
 pub fn cleanup_indy_env() {
@@ -445,9 +445,9 @@ fn assign_trustee_role(institution_handle: Option<u32>) {
     settings::clear_config();
 
     wallet::create_and_open_as_main_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
-    let (trustee_did, _) = ::libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    let req_nym = ::indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
-    ::libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
+    let (trustee_did, _) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    let req_nym = indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
+    libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
 
     close_main_wallet();
     wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
@@ -477,9 +477,9 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
-    ::api::vcx::vcx_shutdown(false);
+    api::vcx::vcx_shutdown(false);
 
     let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, settings::DEFAULT_WALLET_NAME);
     let seed2 = create_new_seed();
@@ -498,7 +498,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     unsafe {
         INSTITUTION_CONFIG = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config)).unwrap();
@@ -513,7 +513,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
 
     // as trustees, mint tokens into each wallet
     set_institution(None);
-    ::libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
+    libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
 pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
@@ -548,7 +548,7 @@ pub fn create_consumer_config() -> u32 {
         });
 
     debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
 }
@@ -577,7 +577,7 @@ pub fn create_institution_config() -> u32 {
         });
 
     debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
 
@@ -621,6 +621,8 @@ impl Drop for TempFile {
 
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
+    use crate::connection;
+
     use super::*;
 
     #[cfg(feature = "agency_pool_tests")]
@@ -628,7 +630,7 @@ mod tests {
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
 
-        let (_faber, _alice) = ::connection::tests::create_connected_connections(None, None);
-        let (_faber, _alice) = ::connection::tests::create_connected_connections(None, None);
+        let (_faber, _alice) = connection::tests::create_connected_connections(None, None);
+        let (_faber, _alice) = connection::tests::create_connected_connections(None, None);
     }
 }

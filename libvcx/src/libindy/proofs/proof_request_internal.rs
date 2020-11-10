@@ -12,7 +12,7 @@ pub struct Filter {
 #[serde(untagged)]
 pub enum Restrictions {
     V1(Vec<Filter>),
-    V2(::serde_json::Value),
+    V2(serde_json::Value),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]

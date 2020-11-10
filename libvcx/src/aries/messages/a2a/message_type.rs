@@ -2,7 +2,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use agency_client::message_type::parse_message_type;
-use aries::messages::a2a::message_family::MessageFamilies;
+use crate::aries::messages::a2a::message_family::MessageFamilies;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct MessageType {
@@ -50,7 +50,7 @@ impl Serialize for MessageType {
     }
 }
 
-impl ::std::string::ToString for MessageType {
+impl std::string::ToString for MessageType {
     fn to_string(&self) -> String {
         format!("{};spec/{}/{}/{}", self.did, self.family.to_string(), self.version, self.type_)
     }

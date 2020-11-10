@@ -1,5 +1,5 @@
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::thread::Thread;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ack {
@@ -55,7 +55,7 @@ macro_rules! please_ack (($type:ident) => (
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::connection::response::tests::*;
+    use crate::aries::messages::connection::response::tests::*;
 
     use super::*;
 

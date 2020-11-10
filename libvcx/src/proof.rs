@@ -1,10 +1,10 @@
 use serde_json;
 
-use aries::handlers::proof_presentation::verifier::verifier::Verifier;
-use connection;
-use error::prelude::*;
-use utils::error;
-use utils::object_cache::ObjectCache;
+use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::utils::error;
+use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -118,17 +118,18 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use api::VcxStateType;
-    use aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use aries::messages::proof_presentation::presentation::Presentation;
-    use aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-    use connection::tests::build_test_connection_inviter_requested;
-    use settings;
-    use utils::constants::*;
-    use utils::devsetup::*;
     use agency_client::mocking::HttpClientMockResponse;
-    use utils::mockdata::mock_settings::MockBuilder;
-    use utils::mockdata::mockdata_proof;
+
+    use crate::{proof, settings};
+    use crate::api::VcxStateType;
+    use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
+    use crate::aries::messages::proof_presentation::presentation::Presentation;
+    use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use crate::connection::tests::build_test_connection_inviter_requested;
+    use crate::utils::constants::*;
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
 
@@ -274,7 +275,7 @@ pub mod tests {
         proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        ::connection::release(connection_handle);
+        connection::release(connection_handle);
         let connection_handle = build_test_connection_inviter_requested();
 
         let handle = PROOF_MAP.add(proof).unwrap();
@@ -356,7 +357,7 @@ pub mod tests {
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
-        HttpClientMockResponse::set_next_response(::agency_client::utils::error::AgencyClientResult::Err(::agency_client::utils::error::AgencyClientError::from_msg(::agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(agency_client::utils::error::AgencyClientResult::Err(agency_client::utils::error::AgencyClientError::from_msg(agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap_err().kind(), VcxErrorKind::IOError);
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
@@ -382,7 +383,7 @@ pub mod tests {
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         send_proof_request(handle_proof, handle_conn).unwrap();
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(handle_conn)).unwrap();
-        assert_eq!(::proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
+        assert_eq!(proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]

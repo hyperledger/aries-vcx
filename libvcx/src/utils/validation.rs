@@ -1,9 +1,11 @@
 extern crate openssl;
 extern crate rust_base58;
 
-use error::prelude::*;
-use settings::Actors;
-use utils::qualifier;
+use url::Url;
+
+use crate::error::prelude::*;
+use crate::settings::Actors;
+use crate::utils::qualifier;
 
 use self::openssl::bn::BigNum;
 use self::rust_base58::FromBase58;
@@ -71,7 +73,7 @@ pub fn validate_payment_method(payment_method: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use utils::devsetup::SetupDefaults;
+    use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
 

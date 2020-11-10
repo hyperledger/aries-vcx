@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use error::prelude::*;
-use aries::messages::issuance::credential::{Credential, CredentialData};
-use aries::messages::status::Status;
+use crate::error::prelude::*;
+use crate::aries::messages::issuance::credential::{Credential, CredentialData};
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {

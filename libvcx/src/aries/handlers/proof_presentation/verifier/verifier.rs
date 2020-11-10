@@ -1,9 +1,9 @@
-use error::prelude::*;
-use aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use aries::handlers::proof_presentation::verifier::state_machine::VerifierSM;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_request::*;
+use crate::error::prelude::*;
+use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::aries::handlers::proof_presentation::verifier::state_machine::VerifierSM;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_request::*;
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -48,7 +48,7 @@ impl Verifier {
     pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<u32> {
         trace!("Verifier::update_state_with_message >>> message: {:?}", message);
 
-        let message: A2AMessage = ::serde_json::from_str(&message)
+        let message: A2AMessage = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state with message: Message deserialization failed: {:?}", err)))?;
 
         self.handle_message(message.into())?;
@@ -108,15 +108,15 @@ impl Verifier {
 
 #[cfg(test)]
 pub mod tests {
-    use api::VcxStateType;
-    use connection::tests::build_test_connection_inviter_requested;
-    use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
-    use utils::devsetup::*;
-    use settings;
+    use crate::api::VcxStateType;
+    use crate::connection::tests::build_test_connection_inviter_requested;
+    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
+    use crate::utils::devsetup::*;
+    use crate::settings;
 
     use super::*;
-    use utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
-    use utils::mockdata::mock_settings::MockBuilder;
+    use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
 
     #[test]
     #[cfg(feature = "general_test")]

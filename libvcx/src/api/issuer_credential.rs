@@ -3,13 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use connection;
-use error::prelude::*;
-use issuer_credential;
-use settings;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{connection, credential_def, issuer_credential, settings};
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -111,11 +109,11 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
         Err(err) => return VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot parse price: {}", err)).into(),
     };
 
-    if !::credential_def::is_valid_handle(cred_def_handle) {
+    if !credential_def::is_valid_handle(cred_def_handle) {
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    if !::credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
+    if !credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
         return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the Published State yet").into();
     }
 
@@ -530,7 +528,7 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
 ///
 /// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
-/// my_pw_did: Use Connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
+/// my_pw_did: use crate::connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
 ///
 /// cb:  Callback that provides any error status of the credential
 ///
@@ -576,8 +574,8 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle,
-                                            credential_handle: u32,
-                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
+                                                   credential_handle: u32,
+                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
     info!("vcx_issuer_credential_get_rev_reg_id >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -844,13 +842,14 @@ pub mod tests {
     use std::ptr;
 
     use agency_client::mocking::AgencyMockDecrypted;
-    use api::{return_types_u32, VcxStateType};
-    use settings;
-    use utils::constants::*;
-    use utils::devsetup::*;
-    use utils::get_temp_dir_path;
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use utils::timeout::TimeoutUtils;
+
+    use crate::api::{return_types_u32, VcxStateType};
+    use crate::settings;
+    use crate::utils::constants::*;
+    use crate::utils::devsetup::*;
+    use crate::utils::get_temp_dir_path;
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -926,7 +925,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_issuer_create_credential(cb.command_handle,
                                               CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                              ::credential_def::tests::create_cred_def_fake(),
+                                              credential_def::tests::create_cred_def_fake(),
                                               CString::new(DEFAULT_DID).unwrap().into_raw(),
                                               CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                               CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
@@ -955,7 +954,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_issuer_create_credential(cb.command_handle,
                                                 CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                                ::credential_def::tests::create_cred_def_fake(),
+                                                credential_def::tests::create_cred_def_fake(),
                                                 ptr::null(),
                                                 ptr::null(),
                                                 CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
@@ -996,7 +995,7 @@ pub mod tests {
     fn test_vcx_issuer_send_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1022,7 +1021,7 @@ pub mod tests {
     fn test_vcx_issuer_update_state_v2() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection_invitee_completed();
+        let connection_handle = connection::tests::build_test_connection_invitee_completed();
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         let cb = return_types_u32::Return_U32::new().unwrap();
 
@@ -1034,9 +1033,9 @@ pub mod tests {
 
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        let connection_serialized = ::connection::to_string(connection_handle).unwrap();
-        ::connection::release(connection_handle).unwrap();
-        let connection_handle = ::connection::from_string(&connection_serialized).unwrap();
+        let connection_serialized = connection::to_string(connection_handle).unwrap();
+        connection::release(connection_handle).unwrap();
+        let connection_handle = connection::from_string(&connection_serialized).unwrap();
 
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1079,7 +1078,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
-        let handle_conn = ::connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = connection::tests::build_test_connection_inviter_invited();
         info!("test_vcx_issuer_send_a_credential:: created connection with handle {}", handle_conn);
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);

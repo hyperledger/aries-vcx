@@ -1,14 +1,14 @@
-use error::prelude::*;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::inviter::states::complete::CompleteState;
-use aries::handlers::connection::inviter::states::null::NullState;
-use aries::handlers::connection::util::handle_ping;
-use aries::messages::ack::Ack;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::problem_report::ProblemReport;
-use aries::messages::connection::response::SignedResponse;
-use aries::messages::trust_ping::ping::Ping;
-use aries::messages::trust_ping::ping_response::PingResponse;
+use crate::error::prelude::*;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
+use crate::aries::handlers::connection::inviter::states::null::NullState;
+use crate::aries::handlers::connection::util::handle_ping;
+use crate::aries::messages::ack::Ack;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::problem_report::ProblemReport;
+use crate::aries::messages::connection::response::SignedResponse;
+use crate::aries::messages::trust_ping::ping::Ping;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {

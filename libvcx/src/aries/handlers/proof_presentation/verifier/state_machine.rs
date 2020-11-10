@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use connection::{get_pw_did, get_their_pw_verkey};
-use connection;
-use error::prelude::*;
-use aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-use aries::messages::status::Status;
-use aries::handlers::proof_presentation::verifier::states::initial::InitialState;
-use aries::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
+use crate::api::VcxStateType;
+use crate::connection::{get_pw_did, get_their_pw_verkey};
+use crate::{connection, settings};
+use crate::error::prelude::*;
+use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use crate::aries::messages::status::Status;
+use crate::aries::handlers::proof_presentation::verifier::states::initial::InitialState;
+use crate::aries::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use crate::aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VerifierSM {
@@ -95,7 +95,7 @@ impl VerifierSM {
                                 .set_format_version_for_did(&my_did, &remote_did)?;
 
                         let title = format!("{} wants you to share {}",
-                                            ::settings::get_config_value(::settings::CONFIG_INSTITUTION_NAME)?, presentation_request.name);
+                                            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME)?, presentation_request.name);
 
                         let presentation_request =
                             PresentationRequest::create()
@@ -241,14 +241,14 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupMocks;
-    use aries::handlers::connection::tests::mock_connection;
-    use aries::messages::proof_presentation::presentation::tests::_presentation;
-    use aries::messages::proof_presentation::presentation_proposal::tests::_presentation_proposal;
-    use aries::messages::proof_presentation::presentation_request::tests::_presentation_request;
-    use aries::messages::proof_presentation::presentation_request::tests::_presentation_request_data;
-    use aries::messages::proof_presentation::test::{_ack, _problem_report};
-    use aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
+    use crate::aries::handlers::connection::tests::mock_connection;
+    use crate::aries::messages::proof_presentation::presentation::tests::_presentation;
+    use crate::aries::messages::proof_presentation::presentation_proposal::tests::_presentation_proposal;
+    use crate::aries::messages::proof_presentation::presentation_request::tests::_presentation_request;
+    use crate::aries::messages::proof_presentation::presentation_request::tests::_presentation_request_data;
+    use crate::aries::messages::proof_presentation::test::{_ack, _problem_report};
+    use crate::aries::test::source_id;
 
     use super::*;
 
@@ -285,11 +285,11 @@ pub mod test {
     }
 
     mod step {
-        use settings;
-        use settings::set_config_value;
+        use crate::settings;
+        use crate::settings::set_config_value;
 
         use super::*;
-        use utils::mockdata::mock_settings::MockBuilder;
+        use crate::utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -539,7 +539,7 @@ pub mod test {
 
     mod get_state {
         use super::*;
-        use utils::mockdata::mock_settings::MockBuilder;
+        use crate::utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]

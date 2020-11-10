@@ -4,12 +4,11 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use credential_def;
-use error::prelude::*;
-use settings;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{credential_def, settings};
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -609,8 +608,8 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
 
 #[no_mangle]
 pub extern fn vcx_credentialdef_get_tails_hash(command_handle: CommandHandle,
-                                                handle: u32,
-                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+                                               handle: u32,
+                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
     info!("vcx_credentialdef_get_tails_hash >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -642,8 +641,8 @@ pub extern fn vcx_credentialdef_get_tails_hash(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
-                                                handle: u32,
-                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
+                                               handle: u32,
+                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
     info!("vcx_credentialdef_get_rev_reg_id >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -679,11 +678,11 @@ mod tests {
 
     use std::ffi::CString;
 
-    use api::return_types_u32;
-    use settings;
-    use utils::constants::SCHEMA_ID;
-    use utils::devsetup::*;
-    use utils::timeout::TimeoutUtils;
+    use crate::{api, settings, utils};
+    use crate::api::return_types_u32;
+    use crate::utils::constants::SCHEMA_ID;
+    use crate::utils::devsetup::*;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -856,7 +855,7 @@ mod tests {
         let (_handle, cred_def_transaction, rev_reg_def_transaction, rev_reg_delta_transaction) = cb.receive(TimeoutUtils::some_short()).unwrap();
         let cred_def_transaction = cred_def_transaction.unwrap();
         let cred_def_transaction: serde_json::Value = serde_json::from_str(&cred_def_transaction).unwrap();
-        let expected_cred_def_transaction: serde_json::Value = serde_json::from_str(::utils::constants::REQUEST_WITH_ENDORSER).unwrap();
+        let expected_cred_def_transaction: serde_json::Value = serde_json::from_str(utils::constants::REQUEST_WITH_ENDORSER).unwrap();
         assert_eq!(expected_cred_def_transaction, cred_def_transaction);
         assert!(rev_reg_def_transaction.is_none());
         assert!(rev_reg_delta_transaction.is_none());
@@ -880,7 +879,7 @@ mod tests {
         let (_handle, cred_def_transaction, rev_reg_def_transaction, rev_reg_delta_transaction) = cb.receive(TimeoutUtils::some_short()).unwrap();
         let cred_def_transaction = cred_def_transaction.unwrap();
         let cred_def_transaction: serde_json::Value = serde_json::from_str(&cred_def_transaction).unwrap();
-        let expected_cred_def_transaction: serde_json::Value = serde_json::from_str(::utils::constants::REQUEST_WITH_ENDORSER).unwrap();
+        let expected_cred_def_transaction: serde_json::Value = serde_json::from_str(utils::constants::REQUEST_WITH_ENDORSER).unwrap();
         assert_eq!(expected_cred_def_transaction, cred_def_transaction);
         assert!(rev_reg_def_transaction.is_some());
         assert!(rev_reg_delta_transaction.is_some());
@@ -901,17 +900,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32)
         }
     }
 }

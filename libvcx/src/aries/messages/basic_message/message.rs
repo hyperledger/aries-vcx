@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::localization::Localization;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::localization::Localization;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct BasicMessage {

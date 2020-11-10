@@ -2,7 +2,7 @@ use std::str::from_utf8;
 
 use serde_json;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Attachments(pub Vec<Attachment>);
@@ -74,11 +74,11 @@ impl Json {
                 AttachmentData::Base64(
                     base64::encode(&
                         match json {
-                            ::serde_json::Value::Object(obj) => {
+                            serde_json::Value::Object(obj) => {
                                 serde_json::to_string(&obj)
                                     .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Attachment Json".to_string()))?
                             }
-                            ::serde_json::Value::String(str) => str,
+                            serde_json::Value::String(str) => str,
                             val => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unsupported Json value: {:?}", val)))
                         }
                     )

@@ -5,10 +5,10 @@ use indy::cache;
 use indy::ledger;
 use serde_json;
 
-use error::prelude::*;
-use settings;
-use libindy::utils::pool::get_pool_handle;
-use libindy::utils::wallet::get_wallet_handle;
+use crate::{settings, utils};
+use crate::error::prelude::*;
+use crate::libindy::utils::pool::get_pool_handle;
+use crate::libindy::utils::wallet::get_wallet_handle;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -55,7 +55,7 @@ pub fn libindy_build_create_credential_def_txn(submitter_did: &str,
 }
 
 pub fn libindy_get_txn_author_agreement() -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok(::utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()); }
+    if settings::indy_mocks_enabled() { return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()); }
 
     let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
@@ -86,7 +86,7 @@ pub fn libindy_get_txn_author_agreement() -> VcxResult<String> {
 }
 
 pub fn append_txn_author_agreement_to_request(request_json: &str) -> VcxResult<String> {
-    if let Some(author_agreement) = ::utils::author_agreement::get_txn_author_agreement()? {
+    if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
         ledger::append_txn_author_agreement_acceptance_to_request(request_json,
                                                                   author_agreement.text.as_ref().map(String::as_str),
                                                                   author_agreement.version.as_ref().map(String::as_str),
@@ -126,13 +126,15 @@ pub mod auth_rule {
 
     use indy::future::Future;
 
+    use crate::libindy;
+
     use super::*;
 
     /**
-            Structure for parsing GET_AUTH_RULE response
-             # parameters
-                result - the payload containing data relevant to the GET_AUTH_RULE transaction
-            */
+                    Structure for parsing GET_AUTH_RULE response
+                     # parameters
+                        result - the payload containing data relevant to the GET_AUTH_RULE transaction
+                    */
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     pub struct GetAuthRuleResponse {
@@ -255,7 +257,7 @@ pub mod auth_rule {
 
         let auth_rules = AUTH_RULES.lock().unwrap();
 
-        let fees: HashMap<String, String> = ::serde_json::from_str(rules_fee)
+        let fees: HashMap<String, String> = serde_json::from_str(rules_fee)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize fees: {:?}", err)))?;
 
         let mut auth_rules: Vec<AuthRule> = auth_rules.clone();
@@ -280,7 +282,7 @@ pub mod auth_rule {
         let response = ledger::sign_and_submit_request(get_pool_handle()?, get_wallet_handle(), submitter_did, &auth_rules_request)
             .wait()?;
 
-        let response: serde_json::Value = ::serde_json::from_str(&response)
+        let response: serde_json::Value = serde_json::from_str(&response)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
 
         match response["op"].as_str().unwrap_or_default() {
@@ -296,10 +298,10 @@ pub mod auth_rule {
         }
 
         GET_DEFAULT_AUTH_CONSTRAINTS.call_once(|| {
-            let get_auth_rule_request = ::indy::ledger::build_get_auth_rule_request(None, None, None, None, None, None).wait().unwrap();
-            let get_auth_rule_response = ::libindy::utils::ledger::libindy_submit_request(&get_auth_rule_request).unwrap();
+            let get_auth_rule_request = indy::ledger::build_get_auth_rule_request(None, None, None, None, None, None).wait().unwrap();
+            let get_auth_rule_response = libindy::utils::ledger::libindy_submit_request(&get_auth_rule_request).unwrap();
 
-            let response: GetAuthRuleResponse = ::serde_json::from_str(&get_auth_rule_response)
+            let response: GetAuthRuleResponse = serde_json::from_str(&get_auth_rule_response)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, err)).unwrap();
 
             let mut auth_rules = AUTH_RULES.lock().unwrap();
@@ -332,7 +334,7 @@ pub mod auth_rule {
 
         let response_json = libindy_submit_request(&request)?;
 
-        let response: serde_json::Value = ::serde_json::from_str(&response_json)
+        let response: serde_json::Value = serde_json::from_str(&response_json)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
 
         match response["op"].as_str().unwrap_or_default() {
@@ -385,7 +387,7 @@ pub fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
 }
 
 pub fn set_endorser(request: &str, endorser: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok(::utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
+    if settings::indy_mocks_enabled() { return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
 
     let _did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
@@ -435,7 +437,7 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
 
 #[cfg(test)]
 mod test {
-    use utils::devsetup::*;
+    use crate::utils::devsetup::*;
 
     use super::*;
 
@@ -462,14 +464,14 @@ mod test {
     fn test_endorse_transaction() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        use libindy::utils::payments::add_new_did;
+        use crate::libindy::utils::payments::add_new_did;
 
         let (author_did, _) = add_new_did(None);
         let (endorser_did, _) = add_new_did(Some("ENDORSER"));
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
 
-        let schema_request = libindy_build_schema_request(&author_did, ::utils::constants::SCHEMA_DATA).unwrap();
+        let schema_request = libindy_build_schema_request(&author_did, utils::constants::SCHEMA_DATA).unwrap();
         let schema_request = ledger::append_request_endorser(&schema_request, &endorser_did).wait().unwrap();
         let schema_request = multisign_request(&author_did, &schema_request).unwrap();
 

@@ -3,12 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use connection;
-use disclosed_proof;
-use error::prelude::*;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{connection, disclosed_proof};
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.
@@ -995,14 +994,14 @@ mod tests {
     use serde_json::Value;
 
     use agency_client::mocking::AgencyMockDecrypted;
-    use api::return_types_u32;
-    use api::VcxStateType;
-    use utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    use utils::devsetup::*;
-    use utils::mockdata::mock_settings::MockBuilder;
-    use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use utils::timeout::TimeoutUtils;
+
+    use crate::api::{return_types_u32, VcxStateType};
+    use crate::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -1043,7 +1042,7 @@ mod tests {
     fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection_inviter_requested();
+        let cxn = connection::tests::build_test_connection_inviter_requested();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_disclosed_proof_create_with_msgid(cb.command_handle,
@@ -1164,7 +1163,7 @@ mod tests {
     fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
-        let cxn = ::connection::tests::build_test_connection_inviter_requested();
+        let cxn = connection::tests::build_test_connection_inviter_requested();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);

@@ -1,4 +1,4 @@
-use aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
 pub struct Invitation {
@@ -50,7 +50,7 @@ a2a_message!(Invitation, ConnectionInvitation);
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use aries::messages::connection::did_doc::tests::*;
+    use crate::aries::messages::connection::did_doc::tests::*;
 
     pub fn _invitation() -> Invitation {
         Invitation {
@@ -63,7 +63,7 @@ pub mod tests {
     }
 
     pub fn _invitation_json() -> String {
-        ::serde_json::to_string(&_invitation().to_a2a_message()).unwrap()
+        serde_json::to_string(&_invitation().to_a2a_message()).unwrap()
     }
 
     #[test]

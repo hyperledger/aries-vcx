@@ -1,18 +1,19 @@
 use serde_json;
 
 use agency_client::mocking::AgencyMockDecrypted;
-use aries::{
+
+use crate::aries::{
     handlers::issuance::holder::holder::Holder,
     messages::a2a::A2AMessage,
     messages::issuance::credential_offer::CredentialOffer,
 };
-use connection;
-use error::prelude::*;
-use settings::indy_mocks_enabled;
-use utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use utils::error;
-use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
-use utils::object_cache::ObjectCache;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::settings::indy_mocks_enabled;
+use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use crate::utils::error;
+use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -40,7 +41,7 @@ fn handle_err(err: VcxError) -> VcxError {
 fn create_credential(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> {
     trace!("create_credential >>> source_id: {}, offer: {}", source_id, secret!(&offer));
 
-    let offer_message = ::serde_json::from_str::<serde_json::Value>(offer)
+    let offer_message = serde_json::from_str::<serde_json::Value>(offer)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Message: {:?}", err)))?;
 
     let offer_message = match offer_message {
@@ -89,7 +90,7 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Optio
         if credential.is_terminal_state() { return Ok(credential.get_status()); }
 
         if let Some(message) = message {
-            let message: A2AMessage = ::serde_json::from_str(&message)
+            let message: A2AMessage = serde_json::from_str(&message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
 
             credential.step(message.into())?;
@@ -267,12 +268,14 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 
 #[cfg(test)]
 pub mod tests {
-    use api::VcxStateType;
-    use aries::messages::issuance::credential::Credential;
-    use connection;
-    use utils::devsetup::*;
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
-    use utils::mockdata::mockdata_credex;
+    use crate::api::VcxStateType;
+    use crate::aries::messages::issuance::credential::Credential;
+    use crate::connection;
+    use crate::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
+    use crate::error::VcxErrorKind;
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use crate::utils::mockdata::mockdata_credex;
 
     use super::*;
 
@@ -380,14 +383,14 @@ pub mod tests {
 
         let offer = _get_offer(connection_h);
 
-        let my_pw_did = ::connection::get_pw_did(connection_h).unwrap();
-        let their_pw_did = ::connection::get_their_pw_did(connection_h).unwrap();
+        let my_pw_did = connection::get_pw_did(connection_h).unwrap();
+        let their_pw_did = connection::get_their_pw_did(connection_h).unwrap();
 
         let c_h = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(c_h).unwrap());
 
         let msg = generate_credential_request_msg(c_h, &my_pw_did, &their_pw_did).unwrap();
-        // ::serde_json::from_str::<CredentialRequest>(&msg).unwrap();
+        // serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
     #[test]

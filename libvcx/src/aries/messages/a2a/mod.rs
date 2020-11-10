@@ -9,29 +9,29 @@ use self::message_family::MessageFamilies;
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use aries::messages::connection::invite::Invitation;
-use aries::messages::connection::request::Request;
-use aries::messages::connection::response::SignedResponse;
-use aries::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
-use aries::messages::trust_ping::ping::Ping;
-use aries::messages::trust_ping::ping_response::PingResponse;
-use aries::messages::forward::Forward;
-use aries::messages::error::ProblemReport as CommonProblemReport;
-use aries::messages::issuance::credential_proposal::CredentialProposal;
-use aries::messages::ack::Ack;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::request::Request;
+use crate::aries::messages::connection::response::SignedResponse;
+use crate::aries::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
+use crate::aries::messages::trust_ping::ping::Ping;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
+use crate::aries::messages::forward::Forward;
+use crate::aries::messages::error::ProblemReport as CommonProblemReport;
+use crate::aries::messages::issuance::credential_proposal::CredentialProposal;
+use crate::aries::messages::ack::Ack;
 
-use aries::messages::issuance::credential_offer::CredentialOffer;
-use aries::messages::issuance::credential_request::CredentialRequest;
-use aries::messages::issuance::credential::Credential;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::issuance::credential::Credential;
 
-use aries::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_proposal::PresentationProposal;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
 
-use aries::messages::discovery::query::Query;
-use aries::messages::discovery::disclose::Disclose;
+use crate::aries::messages::discovery::query::Query;
+use crate::aries::messages::discovery::disclose::Disclose;
 
-use aries::messages::basic_message::message::BasicMessage;
+use crate::aries::messages::basic_message::message::BasicMessage;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum A2AMessage {
@@ -267,7 +267,7 @@ impl Default for MessageId {
 
     #[cfg(not(test))]
     fn default() -> MessageId {
-        use utils::uuid;
+        use crate::utils::uuid;
         MessageId(uuid::uuid())
     }
 }

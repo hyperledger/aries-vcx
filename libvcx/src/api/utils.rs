@@ -7,13 +7,14 @@ use serde_json;
 
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
-use connection;
-use error::prelude::*;
-use libindy::utils::payments;
-use utils::constants::*;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+
+use crate::connection;
+use crate::error::prelude::*;
+use crate::libindy::utils::payments;
+use crate::utils::constants::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -43,7 +44,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 
     trace!("vcx_provision_agent(config: {})", config);
 
-    match ::utils::provision::connect_register_provision(&config) {
+    match crate::utils::provision::connect_register_provision(&config) {
         Err(e) => {
             error!("Provision Agent Error {}.", e);
             let _res: u32 = e.into();
@@ -83,7 +84,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match ::utils::provision::connect_register_provision(&config) {
+        match crate::utils::provision::connect_register_provision(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -162,7 +163,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
            command_handle);
 
     spawn(move || {
-        match ::libindy::utils::payments::get_ledger_fees() {
+        match crate::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -328,7 +329,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -481,7 +482,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     spawn(move || {
-        match ::agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
+        match agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -512,7 +513,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { ::libindy::utils::pool::set_pool_handle(None); } else { ::libindy::utils::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { crate::libindy::utils::pool::set_pool_handle(None); } else { crate::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -591,7 +592,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     spawn(move || {
-        match ::libindy::utils::ledger::endorse_transaction(&transaction) {
+        match crate::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -617,10 +618,11 @@ mod tests {
     use std::ffi::CString;
 
     use agency_client::mocking::AgencyMockDecrypted;
-    use api::return_types_u32;
-    use utils::constants;
-    use utils::devsetup::*;
-    use utils::timeout::TimeoutUtils;
+
+    use crate::api::return_types_u32;
+    use crate::utils::constants;
+    use crate::utils::devsetup::*;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 

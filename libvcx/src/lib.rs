@@ -2,6 +2,7 @@
 #![crate_name = "vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
+extern crate agency_client;
 extern crate base64;
 extern crate chrono;
 extern crate failure;
@@ -29,13 +30,11 @@ extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
-extern crate agency_client;
 
 #[macro_use]
 pub mod utils;
 pub mod settings;
 #[macro_use]
-
 pub mod api;
 pub mod init;
 pub mod connection;
@@ -61,22 +60,22 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use api::ProofStateType;
-    use api::VcxStateType;
-    use connection;
-    use credential;
-    use credential_def;
-    use disclosed_proof;
-    use filters;
-    use issuer_credential;
-    use proof;
-    use settings;
-    use utils::{
+    use crate::api::ProofStateType;
+    use crate::api::VcxStateType;
+    use crate::connection;
+    use crate::credential;
+    use crate::credential_def;
+    use crate::disclosed_proof;
+    use crate::filters;
+    use crate::issuer_credential;
+    use crate::proof;
+    use crate::settings;
+    use crate::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         devsetup::{set_consumer, set_institution},
         get_temp_dir_path,
     };
-    use utils::devsetup::*;
+    use crate::utils::devsetup::*;
 
     use super::*;
 
@@ -204,7 +203,7 @@ mod tests {
         issuer_credential::send_credential(issuer_handle, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
         // AS CONSUMER STORE CREDENTIAL
-        ::utils::devsetup::set_consumer(consumer_handle);
+        utils::devsetup::set_consumer(consumer_handle);
         credential::update_state(credential_handle, None, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         info!("storing credential");
@@ -246,7 +245,7 @@ mod tests {
         let requests = requests.as_array().unwrap();
         assert_eq!(requests.len(), 1);
         let request = serde_json::to_string(&requests[0]).unwrap();
-        disclosed_proof::create_proof(::utils::constants::DEFAULT_PROOF_NAME, &request).unwrap()
+        disclosed_proof::create_proof(utils::constants::DEFAULT_PROOF_NAME, &request).unwrap()
     }
 
     fn generate_and_send_proof(proof_handle: u32, connection_handle: u32, selected_credentials: &str, consumer_handle: Option<u32>) {
@@ -265,19 +264,19 @@ mod tests {
     fn revoke_credential(issuer_handle: u32, rev_reg_id: Option<String>) {
         set_institution(None);
         // GET REV REG DELTA BEFORE REVOCATION
-        let (_, delta, timestamp) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
         info!("revoking credential");
-        ::issuer_credential::revoke_credential(issuer_handle).unwrap();
-        let (_, delta_after_revoke, _) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
+        issuer_credential::revoke_credential(issuer_handle).unwrap();
+        let (_, delta_after_revoke, _) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
         assert_ne!(delta, delta_after_revoke);
     }
 
     fn revoke_credential_local(issuer_handle: u32, rev_reg_id: Option<String>) {
         set_institution(None);
-        let (_, delta, timestamp) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone().unwrap(), None, None).unwrap();
         info!("revoking credential locally");
-        ::issuer_credential::revoke_credential_local(issuer_handle).unwrap();
-        let (_, delta_after_revoke, _) = ::libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
+        issuer_credential::revoke_credential_local(issuer_handle).unwrap();
+        let (_, delta_after_revoke, _) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.unwrap(), Some(timestamp + 1), None).unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
@@ -293,13 +292,13 @@ mod tests {
 
     fn publish_revocation(rev_reg_id: String) {
         set_institution(None);
-        ::libindy::utils::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
+        libindy::utils::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
     }
 
     fn _create_address_schema() -> (String, String, String, String, u32, Option<String>) {
         info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        ::libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
+        libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
     }
 
     fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
@@ -355,7 +354,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
+        let (faber, alice) = connection::tests::create_connected_connections(None, None);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
 
         let time_before_revocation = time::get_time().sec as u64;
@@ -386,7 +385,7 @@ mod tests {
 
         set_institution(None);
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (consumer_to_institution, institution_to_consumer) = ::connection::tests::create_connected_connections(None, None);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(None, None);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_institution, institution_to_consumer, None);
 
         revoke_credential_local(credential_handle, rev_reg_id.clone());
@@ -417,10 +416,10 @@ mod tests {
         let verifier = create_institution_config();
         let consumer1 = create_consumer_config();
         let consumer2 = create_consumer_config();
-        let (consumer1_to_verifier, verifier_to_consumer1) = ::connection::tests::create_connected_connections(Some(consumer1), Some(verifier));
-        let (consumer1_to_issuer, issuer_to_consumer1) = ::connection::tests::create_connected_connections(Some(consumer1), None); // Issuer
-        let (consumer2_to_verifier, verifier_to_consumer2) = ::connection::tests::create_connected_connections(Some(consumer2), Some(verifier));
-        let (consumer2_to_issuer, issuer_to_consumer2) = ::connection::tests::create_connected_connections(Some(consumer2), None); // Issuer
+        let (consumer1_to_verifier, verifier_to_consumer1) = connection::tests::create_connected_connections(Some(consumer1), Some(verifier));
+        let (consumer1_to_issuer, issuer_to_consumer1) = connection::tests::create_connected_connections(Some(consumer1), None); // Issuer
+        let (consumer2_to_verifier, verifier_to_consumer2) = connection::tests::create_connected_connections(Some(consumer2), Some(verifier));
+        let (consumer2_to_issuer, issuer_to_consumer2) = connection::tests::create_connected_connections(Some(consumer2), None); // Issuer
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -452,8 +451,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None); // Issuer
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None); // Issuer
 
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_issuer, issuer_to_consumer, Some(consumer));
         let request_name1 = Some("request1");
@@ -477,7 +476,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let (consumer_to_institution, institution_to_consumer) = ::connection::tests::create_connected_connections(None, None);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(None, None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address, city, state, zip) = attr_names();
@@ -508,9 +507,9 @@ mod tests {
         let consumer1 = create_consumer_config();
         let consumer2 = create_consumer_config();
         let consumer3 = create_consumer_config();
-        let (consumer_to_institution1, institution_to_consumer1) = ::connection::tests::create_connected_connections(Some(consumer1), None);
-        let (consumer_to_institution2, institution_to_consumer2) = ::connection::tests::create_connected_connections(Some(consumer2), None);
-        let (consumer_to_institution3, institution_to_consumer3) = ::connection::tests::create_connected_connections(Some(consumer3), None);
+        let (consumer_to_institution1, institution_to_consumer1) = connection::tests::create_connected_connections(Some(consumer1), None);
+        let (consumer_to_institution2, institution_to_consumer2) = connection::tests::create_connected_connections(Some(consumer2), None);
+        let (consumer_to_institution3, institution_to_consumer3) = connection::tests::create_connected_connections(Some(consumer3), None);
         assert_ne!(institution_to_consumer1, institution_to_consumer2);
         assert_ne!(institution_to_consumer1, institution_to_consumer3);
         assert_ne!(institution_to_consumer2, institution_to_consumer3);
@@ -578,7 +577,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
+        let (faber, alice) = connection::tests::create_connected_connections(None, None);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
 
         thread::sleep(Duration::from_millis(1000));
@@ -673,7 +672,7 @@ mod tests {
         let number_of_attributes = 10;
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = ::connection::tests::create_connected_connections(None, None);
+        let (faber, alice) = connection::tests::create_connected_connections(None, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let mut attrs_list: Value = serde_json::Value::Array(vec![]);
@@ -681,7 +680,7 @@ mod tests {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
         }
         let attrs_list = attrs_list.to_string();
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = ::libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
@@ -698,7 +697,7 @@ mod tests {
         send_credential(credential_offer, alice, credential, None, false);
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
-        ::utils::devsetup::set_institution(None);
+        utils::devsetup::set_institution(None);
 
         let restrictions = json!({ "issuer_did": institution_did, "schema_id": schema_id, "cred_def_id": cred_def_id, });
         let mut attrs: Value = serde_json::Value::Array(vec![]);
@@ -733,8 +732,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -765,8 +764,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -799,8 +798,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -833,8 +832,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -866,8 +865,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -901,8 +900,8 @@ mod tests {
 
         let verifier = create_institution_config();
         let consumer = create_consumer_config();
-        let (consumer_to_verifier, verifier_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), Some(verifier));
-        let (consumer_to_issuer, issuer_to_consumer) = ::connection::tests::create_connected_connections(Some(consumer), None);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(Some(consumer), Some(verifier));
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(Some(consumer), None);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();

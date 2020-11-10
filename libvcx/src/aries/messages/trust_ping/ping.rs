@@ -1,5 +1,5 @@
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::thread::Thread;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
@@ -39,7 +39,7 @@ a2a_message!(Ping);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::connection::response::tests::*;
+    use crate::aries::messages::connection::response::tests::*;
 
     use super::*;
 

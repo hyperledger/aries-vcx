@@ -1,11 +1,12 @@
 use futures::Future;
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
+
 use agency_client::utils::wallet as agency_wallet;
 
-use error::prelude::*;
-use init::open_as_main_wallet;
-use settings;
+use crate::error::prelude::*;
+use crate::init::open_as_main_wallet;
+use crate::settings;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletRecord {
@@ -70,7 +71,7 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
         "id": wallet_name,
         "storage_type": wallet_type
     });
-    if let Some(_config) = storage_config {	config["storage_config"] = serde_json::from_str(_config).unwrap(); }
+    if let Some(_config) = storage_config { config["storage_config"] = serde_json::from_str(_config).unwrap(); }
     config.to_string()
 }
 
@@ -282,7 +283,7 @@ pub fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
 pub fn import(config: &str) -> VcxResult<()> {
     trace!("import >>> config {}", config);
 
-    ::settings::process_config_string(config, false)?;
+    settings::process_config_string(config, false)?;
 
     let restore_config = RestoreWalletConfigs::from_str(config)?;
     let new_wallet_name = restore_config.wallet_name;
@@ -303,12 +304,14 @@ pub fn import(config: &str) -> VcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use ::libindy::utils::signus::create_and_store_my_did;
-    use utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
-    use utils::get_temp_dir_path;
+    use agency_client::agency_settings;
+
+    use crate::api;
+    use crate::libindy::utils::signus::create_and_store_my_did;
+    use crate::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
+    use crate::utils::get_temp_dir_path;
 
     use super::*;
-    use agency_client::agency_settings;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -375,7 +378,7 @@ pub mod tests {
         assert!(open_as_main_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).is_ok());
 
 
-        ::settings::clear_config();
+        settings::clear_config();
         close_main_wallet();
 
         // Delete fails
@@ -400,7 +403,7 @@ pub mod tests {
         let id = "id1";
         let value = "value1";
 
-        ::api::vcx::vcx_shutdown(true);
+        api::vcx::vcx_shutdown(true);
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
@@ -428,7 +431,7 @@ pub mod tests {
 
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
-        ::settings::clear_config();
+        settings::clear_config();
 
         let (type_, id, value) = _record();
 

@@ -2,17 +2,12 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use error::prelude::*;
-use libindy::proofs::proof_request::ProofRequestData;
-use libindy::proofs::prover::prover_internal::{
-    build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json,
-    build_schemas_json_prover, credential_def_identifiers,
-};
-use settings;
-use libindy::utils::anoncreds;
-use libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
-use utils::mockdata::mock_settings::get_mock_generate_indy_proof;
+use crate::error::prelude::*;
+use crate::libindy::proofs::proof_request::ProofRequestData;
+use crate::libindy::proofs::prover::prover_internal::{build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover, credential_def_identifiers};
+use crate::libindy::utils::anoncreds;
+use crate::settings;
+use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
     trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));

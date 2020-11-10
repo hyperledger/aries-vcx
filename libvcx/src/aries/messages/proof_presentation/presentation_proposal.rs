@@ -1,8 +1,8 @@
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::a2a::message_family::MessageFamilies;
-use aries::messages::a2a::message_type::MessageType;
-use aries::messages::mime_type::MimeType;
+use crate::aries::messages::thread::Thread;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::a2a::message_family::MessageFamilies;
+use crate::aries::messages::a2a::message_type::MessageType;
+use crate::aries::messages::mime_type::MimeType;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -68,7 +68,7 @@ a2a_message!(PresentationProposal);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+    use crate::aries::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
 
     use super::*;
 

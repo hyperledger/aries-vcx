@@ -1,6 +1,6 @@
-use aries::messages::thread::Thread;
-use settings::Actors;
-use aries::messages::a2a::{MessageId, A2AMessage};
+use crate::aries::messages::thread::Thread;
+use crate::settings::Actors;
+use crate::aries::messages::a2a::{MessageId, A2AMessage};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -45,7 +45,7 @@ impl Disclose {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use aries::messages::connection::response::tests::*;
+    use crate::aries::messages::connection::response::tests::*;
 
     fn _protocol_descriptor() -> ProtocolDescriptor {
         ProtocolDescriptor { pid: String::from("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/"), roles: None }

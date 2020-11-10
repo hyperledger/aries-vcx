@@ -1,13 +1,13 @@
-use aries::messages::a2a::A2AMessage;
-use aries::messages::ack::Ack;
-use aries::messages::connection::invite::Invitation;
-use aries::messages::connection::problem_report::ProblemReport;
-use aries::messages::connection::request::Request;
-use aries::messages::connection::response::SignedResponse;
-use aries::messages::discovery::disclose::Disclose;
-use aries::messages::discovery::query::Query;
-use aries::messages::trust_ping::ping::Ping;
-use aries::messages::trust_ping::ping_response::PingResponse;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::ack::Ack;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::problem_report::ProblemReport;
+use crate::aries::messages::connection::request::Request;
+use crate::aries::messages::connection::response::SignedResponse;
+use crate::aries::messages::discovery::disclose::Disclose;
+use crate::aries::messages::discovery::query::Query;
+use crate::aries::messages::trust_ping::ping::Ping;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DidExchangeMessages {
