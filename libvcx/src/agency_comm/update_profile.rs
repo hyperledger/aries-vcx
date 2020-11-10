@@ -2,7 +2,7 @@ use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, pa
 use agency_comm::message_type::MessageTypes;
 use agency_comm::mocking::AgencyMock;
 use agency_comm::utils::comm::post_to_agency;
-use error::{VcxError, VcxErrorKind, VcxResult};
+use agency_comm::utils::error::prelude::*;
 use agency_comm::utils::{validation, constants};
 
 #[derive(Debug)]

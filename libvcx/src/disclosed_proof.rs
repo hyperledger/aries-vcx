@@ -1,10 +1,5 @@
-use std::convert::TryInto;
-
 use serde_json;
 
-use agency_comm::{
-    get_message::Message,
-};
 use agency_comm::mocking::AgencyMockDecrypted;
 use aries::{
     handlers::proof_presentation::prover::prover::Prover,

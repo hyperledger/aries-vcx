@@ -44,7 +44,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 
     trace!("vcx_provision_agent(config: {})", config);
 
-    match agency_comm::utils::agent_utils::connect_register_provision(&config) {
+    match ::utils::provision::connect_register_provision(&config) {
         Err(e) => {
             error!("Provision Agent Error {}.", e);
             let _res: u32 = e.into();
@@ -84,7 +84,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match agency_comm::utils::agent_utils::connect_register_provision(&config) {
+        match ::utils::provision::connect_register_provision(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());

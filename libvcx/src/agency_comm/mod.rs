@@ -6,11 +6,11 @@ use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
 use log;
-use error::prelude::*;
-use libindy::utils::crypto;
-use utils::validation;
+use self::utils::error::prelude::*;
+use self::utils::libindy::crypto;
 
 use self::utils::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use self::utils::validation;
 use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
@@ -19,9 +19,9 @@ use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatus
 use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
 use self::mocking::AgencyMockDecrypted;
 
-pub mod create_key;
+mod create_key;
+mod update_profile;
 pub mod get_message;
-pub mod update_profile;
 pub mod utils;
 pub mod update_connection;
 pub mod update_message;
@@ -31,6 +31,7 @@ pub mod payload;
 pub mod thread;
 pub mod agency_settings;
 pub mod mocking;
+pub mod httpclient;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -73,7 +74,7 @@ pub enum A2AMessageV2 {
 impl<'de> Deserialize<'de> for A2AMessageV2 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageTypeV2 = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
+        let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
         if log::log_enabled!(log::Level::Trace) {
             let message_json = serde_json::ser::to_string(&value);
@@ -205,6 +206,7 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
     }
 }
 
+// We don't want to use this anymore
 #[derive(Debug)]
 pub enum A2AMessage {
     Version2(A2AMessageV2),
@@ -233,7 +235,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
         }
 
         match message_type {
-            MessageTypes::MessageTypeV2(_) =>
+            MessageTypes::MessageType(_) =>
                 A2AMessageV2::deserialize(value)
                     .map(A2AMessage::Version2)
                     .map_err(de::Error::custom)
@@ -245,7 +247,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct ForwardV2 {
     #[serde(rename = "@type")]
-    msg_type: MessageTypeV2,
+    msg_type: MessageType,
     #[serde(rename = "@fwd")]
     fwd: String,
     #[serde(rename = "@msg")]
@@ -271,7 +273,7 @@ impl ForwardV2 {
 #[serde(rename_all = "camelCase")]
 pub struct SendRemoteMessage {
     #[serde(rename = "@type")]
-    pub msg_type: MessageTypeV2,
+    pub msg_type: MessageType,
     #[serde(rename = "@id")]
     pub id: String,
     pub mtype: RemoteMessageType,
@@ -708,11 +710,7 @@ impl<'a, 'de, T> ObjectWithVersion<'a, T> where T: ::serde::Serialize + ::serde:
 #[serde(tag = "version")]
 pub enum SerializableObjectWithState<T, P> {
     #[serde(rename = "1.0")]
-    V1 { data: T },
-    #[serde(rename = "2.0")]
-    V2 { data: T, state: P },
-    #[serde(rename = "3.0")]
-    V3 { data: T, state: P, source_id: String },
+    V1 { data: T, state: P, source_id: String },
 }
 
 pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }

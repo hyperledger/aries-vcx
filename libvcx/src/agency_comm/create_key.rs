@@ -4,7 +4,7 @@ use agency_comm::mocking::AgencyMock;
 use agency_comm::utils::comm::post_to_agency;
 use agency_comm::utils::{constants, validation};
 use agency_comm::mocking;
-use error::prelude::*;
+use agency_comm::utils::error::prelude::*;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -72,7 +72,7 @@ impl CreateKeyBuilder {
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::CreateKey(CreateKey {
-                msg_type: MessageTypes::MessageTypeV2(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
+                msg_type: MessageTypes::MessageType(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
                 for_did: self.for_did.to_string(),
                 for_verkey: self.for_verkey.to_string(),
             })
@@ -95,7 +95,6 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use agency_comm::create_keys;
-    use libindy::utils::signus::create_and_store_my_did;
     use utils::devsetup::*;
 
     use super::*;
@@ -111,26 +110,6 @@ mod tests {
         create_keys()
             .for_did(for_did).unwrap()
             .for_verkey(for_verkey).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_create_key_set_values_and_serialize() {
-        let _setup = SetupLibraryWallet::init();
-
-        let (_agent_did, agent_vk) = create_and_store_my_did(Some(constants::MY2_SEED), None).unwrap();
-        let (my_did, my_vk) = create_and_store_my_did(Some(constants::MY1_SEED), None).unwrap();
-        let (_agency_did, agency_vk) = create_and_store_my_did(Some(constants::MY3_SEED), None).unwrap();
-
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
-
-        let bytes = create_keys()
-            .for_did(&my_did).unwrap()
-            .for_verkey(&my_vk).unwrap()
-            .prepare_request().unwrap();
-        assert!(bytes.len() > 0);
     }
 
     #[test]

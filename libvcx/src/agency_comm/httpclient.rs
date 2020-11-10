@@ -5,10 +5,8 @@ use std::sync::Mutex;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use agency_comm::agency_settings;
 use agency_comm::mocking::{AgencyMock, AgencyMockDecrypted};
-use error::prelude::*;
-use settings;
+use agency_comm::utils::error::prelude::*;
 use crate::agency_comm::mocking;
 
 lazy_static! {

@@ -4,7 +4,7 @@ use regex::Regex;
 use url::Url;
 use self::rust_base58::FromBase58;
 
-use error::prelude::*;
+use agency_comm::utils::error::prelude::*;
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();

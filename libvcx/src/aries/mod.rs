@@ -1,7 +1,7 @@
 #[macro_use]
-pub mod utils;
 pub mod handlers;
 pub mod messages;
+pub mod utils;
 
 pub const SERIALIZE_VERSION: &'static str = "2.0";
 
@@ -11,7 +11,7 @@ pub mod test {
     use ::{rand, settings};
     use rand::Rng;
 
-    use agency_comm::utils::agent_utils::connect_register_provision;
+    use utils::provision::connect_register_provision;
     use agency_comm::payload::{PayloadKinds};
     use utils::devsetup::*;
     use libindy::utils::wallet::*;

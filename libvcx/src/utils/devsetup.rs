@@ -460,7 +460,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     ::api::vcx::vcx_shutdown(false);
 
@@ -481,7 +481,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     unsafe {
         INSTITUTION_CONFIG = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config)).unwrap();
@@ -531,7 +531,7 @@ pub fn create_consumer_config() -> u32 {
         });
 
     debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
 }
@@ -560,7 +560,7 @@ pub fn create_institution_config() -> u32 {
         });
 
     debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
 

@@ -83,13 +83,15 @@ impl CredentialDef {
     pub fn from_str(data: &str) -> VcxResult<CredentialDef> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<CredentialDef>| obj.data)
-            .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot deserialize CredentialDefinition"))
+            .map_err(|err| err.into())
+            .map_err(|err: VcxError| err.map(VcxErrorKind::CreateCredDef, "Cannot deserialize CredentialDefinition"))
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err.extend("Cannot serialize CredentialDefinition"))
+            .map_err(|err| err.into())
+            .map_err(|err: VcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 
     pub fn get_source_id(&self) -> &String { &self.source_id }

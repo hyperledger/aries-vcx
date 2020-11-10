@@ -4,7 +4,7 @@ use serde_json;
 
 use agency_comm;
 use agency_comm::{MessageStatusCode, SerializableObjectWithState};
-use agency_comm::get_message::{get_bootstrap_agent_messages, Message, MessageByConnection};
+use agency_comm::get_message::{Message, MessageByConnection};
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::connection::{Connection, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
@@ -118,6 +118,18 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
     })
 }
 
+fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
+    let expected_sender_vk = match remote_vk {
+        Ok(vk) => vk,
+        Err(_) => return Ok(None)
+    };
+    if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+        let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+        return Ok(Some((messages, bootstrap_agent_info.clone())));
+    }
+    Ok(None)
+}
+
 /**
 Tries to update state of connection state machine in 3 steps:
   1. find relevant message in agency,
@@ -178,7 +190,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         let (state, data, source_id) = connection.to_owned().into();
-        let object = SerializableObjectWithState::V3 { data, state, source_id };
+        let object = SerializableObjectWithState::V1 { data, state, source_id };
 
         ::serde_json::to_string(&object)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
@@ -190,7 +202,7 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
-        SerializableObjectWithState::V3 { data, state, source_id } => {
+        SerializableObjectWithState::V1 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
         }
         _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
@@ -289,7 +301,7 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
                     .agent_info()
                     .download_encrypted_messages(uids.clone(), status_codes.clone())?
                     .iter()
-                    .map(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
                     .collect::<VcxResult<Vec<Message>>>()?;
                 Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
             },

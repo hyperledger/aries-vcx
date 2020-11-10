@@ -5,9 +5,9 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::error;
-use crate::agency_comm::utils::validation;
+use agency_comm::utils::error::prelude::*;
+use agency_comm::utils::error_utils;
+use agency_comm::utils::validation;
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
 pub static CONFIG_AGENCY_DID: &str = "agency_did";
@@ -39,17 +39,17 @@ fn validate_mandatory_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKin
     closure(val.as_ref().ok_or(VcxError::from(err))?)
         .or(Err(VcxError::from(err)))?;
 
-    Ok(error::SUCCESS.code_num)
+    Ok(error_utils::SUCCESS.code_num)
 }
 
 fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind, closure: F) -> VcxResult<u32>
     where F: Fn(&str) -> Result<S, E> {
-    if val.is_none() { return Ok(error::SUCCESS.code_num); }
+    if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
 
     closure(val.as_ref().ok_or(VcxError::from(VcxErrorKind::InvalidConfiguration))?)
         .or(Err(VcxError::from(err)))?;
 
-    Ok(error::SUCCESS.code_num)
+    Ok(error_utils::SUCCESS.code_num)
 }
 
 pub fn set_testing_defaults_agency() -> u32 {
@@ -70,7 +70,7 @@ pub fn set_testing_defaults_agency() -> u32 {
     agency_settings.insert(CONFIG_SDK_TO_REMOTE_DID.to_string(), DEFAULT_DID.to_string());
     agency_settings.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
 
-    error::SUCCESS.code_num
+    error_utils::SUCCESS.code_num
 }
 
 pub fn clear_config_agency() {
@@ -94,7 +94,7 @@ pub fn validate_agency_config(config: &HashMap<String, String>) -> VcxResult<u32
 
     validate_optional_config_val(config.get(CONFIG_AGENCY_ENDPOINT), VcxErrorKind::InvalidUrl, Url::parse)?;
 
-    Ok(error::SUCCESS.code_num)
+    Ok(error_utils::SUCCESS.code_num)
 }
 
 
@@ -124,7 +124,7 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
             .or(Err(VcxError::from(VcxErrorKind::InvalidConfiguration)))?;
         validate_agency_config(&setting.borrow())
     } else {
-        Ok(error::SUCCESS.code_num)
+        Ok(error_utils::SUCCESS.code_num)
     }
 }
 

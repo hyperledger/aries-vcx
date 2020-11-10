@@ -40,7 +40,6 @@ macro_rules! map (
 );
 
 pub mod error;
-pub mod httpclient;
 pub mod constants;
 pub mod timeout;
 pub mod openssl;
@@ -50,8 +49,9 @@ pub mod uuid;
 pub mod author_agreement;
 pub mod qualifier;
 pub mod file;
-pub mod option_util;
 pub mod mockdata;
+pub mod provision;
+pub mod option_util;
 
 #[cfg(test)]
 pub mod plugins;

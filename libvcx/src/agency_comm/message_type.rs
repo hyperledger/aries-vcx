@@ -3,7 +3,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use agency_comm::A2AMessageKinds;
-use error::prelude::*;
+use agency_comm::utils::error::prelude::*;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
 pub const DID: &str = "did:sov:123456789abcdefghi1234";
@@ -11,19 +11,12 @@ pub const DID: &str = "did:sov:123456789abcdefghi1234";
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum MessageTypes {
-    MessageTypeV2(MessageTypeV2),
+    MessageType(MessageType),
 }
 
 impl MessageTypes {
-    pub fn build_v1(kind: A2AMessageKinds) -> MessageTypeV1 {
-        MessageTypeV1 {
-            name: kind.name(),
-            ver: MESSAGE_VERSION_V1.to_string(),
-        }
-    }
-
-    pub fn build_v2(kind: A2AMessageKinds) -> MessageTypeV2 {
-        MessageTypeV2 {
+    pub fn build_v2(kind: A2AMessageKinds) -> MessageType {
+        MessageType {
             did: DID.to_string(),
             family: kind.family(),
             version: kind.family().version().to_string(),
@@ -32,24 +25,18 @@ impl MessageTypes {
     }
 
     pub fn build(kind: A2AMessageKinds) -> MessageTypes {
-        MessageTypes::MessageTypeV2(MessageTypes::build_v2(kind))
+        MessageTypes::MessageType(MessageTypes::build_v2(kind))
     }
 
     pub fn name<'a>(&'a self) -> &'a str {
         match self {
-            MessageTypes::MessageTypeV2(type_) => type_.type_.as_str(),
+            MessageTypes::MessageType(type_) => type_.type_.as_str(),
         }
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
-pub struct MessageTypeV1 {
-    pub name: String,
-    pub ver: String,
-}
-
 #[derive(Debug, Clone, PartialEq)]
-pub struct MessageTypeV2 {
+pub struct MessageType {
     pub did: String,
     pub family: MessageFamilies,
     pub version: String,
@@ -131,14 +118,14 @@ pub fn parse_message_type(message_type: &str) -> VcxResult<(String, String, Stri
         }).ok_or(VcxError::from_msg(VcxErrorKind::InvalidOption, "Cannot parse @type"))
 }
 
-impl<'de> Deserialize<'de> for MessageTypeV2 {
+impl<'de> Deserialize<'de> for MessageType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
         match value.as_str() {
             Some(type_) => {
                 let (did, family, version, type_) = parse_message_type(type_).map_err(de::Error::custom)?;
-                Ok(MessageTypeV2 {
+                Ok(MessageType {
                     did,
                     family: MessageFamilies::from(family),
                     version,
@@ -150,7 +137,7 @@ impl<'de> Deserialize<'de> for MessageTypeV2 {
     }
 }
 
-impl Serialize for MessageTypeV2 {
+impl Serialize for MessageType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         let value = Value::String(format!("{};spec/{}/{}/{}", self.did, self.family.to_string(), self.version, self.type_));
         value.serialize(serializer)
