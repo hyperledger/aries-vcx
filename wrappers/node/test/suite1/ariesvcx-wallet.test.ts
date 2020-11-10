@@ -3,7 +3,7 @@ import '../module-resolver-helper'
 import { assert } from 'chai'
 import { validateUTXO } from 'helpers/asserts'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
-import { setPoolHandle, shutdownVcx, VCXCode, Wallet } from 'src'
+import { shutdownVcx, VCXCode, Wallet } from 'src'
 
 const WALLET_RECORD = {
   id: 'RecordId',

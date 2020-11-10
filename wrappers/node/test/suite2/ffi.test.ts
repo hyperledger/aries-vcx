@@ -2,21 +2,9 @@ import '../module-resolver-helper'
 
 import { assert } from 'chai'
 import * as ffi from 'ffi-napi'
-import { initVcxTestMode, shouldThrow } from 'helpers/utils'
+import { initVcxTestMode } from 'helpers/utils'
 import * as os from 'os'
-import { initVcx, VCXCode, VCXRuntime } from 'src'
-
-describe('vcxInit', () => {
-  it('should throw if invalid path provided', async () => {
-    const err = await shouldThrow(() => initVcx('invalidPath'))
-    assert.equal(err.vcxCode, VCXCode.INVALID_CONFIGURATION)
-  })
-
-  it('should throw if null path provided', async () => {
-    const err = await shouldThrow(() => initVcx(null as any))
-    assert.equal(err.vcxCode, VCXCode.INVALID_CONFIGURATION)
-  })
-})
+import { VCXCode, VCXRuntime } from 'src'
 
 // these tests were created to only test that the ffi could be called with each function
 
