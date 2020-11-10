@@ -59,6 +59,7 @@ export type rust_connection_handle = rust_object_handle
 export interface IFFIEntryPoint {
   vcx_open_pool: (commandId: number, cb: any) => number,
   vcx_open_wallet: (commandId: number, cb: any) => number,
+  vcx_init_core: (config: string) => number,
 
   vcx_shutdown: (deleteIndyInfo: boolean) => number,
   vcx_error_c_message: (errorCode: number) => string,
