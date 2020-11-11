@@ -37,7 +37,7 @@ RUN useradd -ms /bin/bash -u $UID indy
 
 USER indy
 WORKDIR /home/indy
-COPY --chown=indy libvcx libvcx
+COPY --chown=indy ./ ./
 
 # Install Rust toolchain
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
@@ -56,7 +56,7 @@ RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
 USER indy
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/libnullpay/Cargo.toml
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
-RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
+RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 
 USER root
 RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so \
