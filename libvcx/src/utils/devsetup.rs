@@ -109,6 +109,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        ::std::env::set_var("DUMMY_TEST_MODE", "true");
         agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         SetupMocks
     }
@@ -116,6 +117,7 @@ impl SetupMocks {
 
 impl Drop for SetupMocks {
     fn drop(&mut self) {
+        ::std::env::set_var("DUMMY_TEST_MODE", "false");
         tear_down()
     }
 }
