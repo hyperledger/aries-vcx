@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use agency_comm::agency_settings;
+use agency_settings;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());

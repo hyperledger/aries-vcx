@@ -2,8 +2,8 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::A2AMessageKinds;
-use agency_comm::utils::error::prelude::*;
+use A2AMessageKinds;
+use utils::error::prelude::*;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
 pub const DID: &str = "did:sov:123456789abcdefghi1234";

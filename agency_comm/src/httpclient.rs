@@ -5,9 +5,9 @@ use std::sync::Mutex;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use agency_comm::mocking::{AgencyMock, AgencyMockDecrypted};
-use agency_comm::utils::error::prelude::*;
-use crate::agency_comm::mocking;
+use mocking::{AgencyMock, AgencyMockDecrypted};
+use utils::error::prelude::*;
+use mocking;
 
 lazy_static! {
     static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());

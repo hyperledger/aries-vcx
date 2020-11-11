@@ -1,10 +1,9 @@
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
-use agency_comm::message_type::MessageTypes;
-use agency_comm::utils::comm::post_to_agency;
-use aries::utils::encryption_envelope::EncryptionEnvelope;
-use agency_comm::utils::error::prelude::*;
-use agency_comm::mocking;
-use agency_comm::httpclient;
+use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, GeneralMessage, get_messages, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
+use message_type::MessageTypes;
+use utils::comm::post_to_agency;
+use utils::encryption_envelope::EncryptionEnvelope;
+use utils::error::prelude::*;
+use mocking;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -284,13 +283,11 @@ impl Message {
     }
 
     fn _noauth_decrypt_v3_message(&self) -> VcxResult<String> {
-        let a2a_message = EncryptionEnvelope::anon_unpack(self.payload()?)?;
-        Ok(json!(&a2a_message).to_string())
+        EncryptionEnvelope::anon_unpack(self.payload()?)
     }
 
     fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> VcxResult<String> {
-        let a2a_message = EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk)?;
-        Ok(json!(&a2a_message).to_string())
+        EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk)
     }
 }
 

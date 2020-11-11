@@ -1,14 +1,14 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use agency_comm::mocking::agency_mocks_enabled;
-use agency_comm::message_type::MessageTypes;
-use agency_comm::mocking::AgencyMockDecrypted;
-use agency_comm::utils::constants;
-use agency_comm::utils::error_utils;
-use agency_comm::utils::error::prelude::*;
-use agency_comm::utils::comm::post_to_agency;
+use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
+use mocking::agency_mocks_enabled;
+use message_type::MessageTypes;
+use mocking::AgencyMockDecrypted;
+use utils::constants;
+use utils::error_utils;
+use utils::error::prelude::*;
+use utils::comm::post_to_agency;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {

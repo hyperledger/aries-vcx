@@ -1,33 +1,7 @@
 [package]
-
-name = "libvcx"
-version = "0.13.0"
-authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
-publish = false
-description = "Absa's fork of HL LibVCX"
-license = "Apache-2.0"
-
-[lib]
-name = "vcx"
-path = "src/lib.rs"
-crate-type = ["staticlib","rlib", "cdylib"]
-
-[features]
-default = []
-pool_tests = []
-agency = [] # migrate these to v2 agency
-agency_pool_tests = []
-agency_v2 = []
-pool_legacy_agency_tests = [] # migrate the test using this
-aries = []
-general_test = []
-to_restore = []
-# Causes the build to fail on all warnings
-fatal_warnings = []
-warnlog_fetched_messages = []
-
-# turn on release versioning
-ci = []
+name = "agency_comm"
+version = "0.1.0"
+authors = ["Miroslav Kovar <miroslavkovar@protonmail.com>"]
 
 [dependencies]
 env_logger = "0.5.10"
@@ -57,7 +31,6 @@ uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
 failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
-agency_comm = { version = "0.1.0", path = "../agency_comm" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
@@ -88,11 +61,3 @@ assets = [
 ]
 maintainer-scripts = "./debian"
 changelog = "./debian/changelog"
-
-[package.metadata.deb.variants.libvcx-xenial]
-name = "libvcx"
-provides = "libvcx (= 0.8.0)"
-
-[package.metadata.deb.variants.libvcx-bionic]
-name = "libvcx"
-provides = "libvcx (= 0.8.0)"

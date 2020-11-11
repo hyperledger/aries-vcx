@@ -8,8 +8,7 @@ use libc::c_char;
 
 use indy::IndyError;
 
-use utils::cstring::CStringUtils;
-use agency_comm::utils::error_utils;
+use utils::error_utils;
 
 pub mod prelude {
     pub use super::*;
@@ -280,13 +279,6 @@ pub fn err_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
     VcxError::from_msg(kind, msg)
 }
 
-impl From<::error::VcxError> for VcxError {
-    fn from(vcx_err: ::error::VcxError) -> VcxError {
-        let kind_num: u32 = vcx_err.kind().into();
-        VcxError::from_msg(kind_num.into(), ::utils::error::error_message(&vcx_err.kind().clone().into()))
-    }
-}
-
 impl From<VcxErrorKind> for VcxError {
     fn from(kind: VcxErrorKind) -> VcxError {
         VcxError::from_msg(kind, error_utils::error_message(&kind.clone().into()))
@@ -551,6 +543,10 @@ pub fn reset_current_error() {
     })
 }
 
+fn string_to_cstring(s: String) -> CString {
+    CString::new(s).unwrap()
+}
+
 pub fn set_current_error(err: &VcxError) {
     CURRENT_ERROR_C_JSON.try_with(|error| {
         let error_json = json!({
@@ -559,7 +555,7 @@ pub fn set_current_error(err: &VcxError) {
             "cause": Fail::find_root_cause(err).to_string(),
             "backtrace": err.backtrace().map(|bt| bt.to_string())
         }).to_string();
-        error.replace(Some(CStringUtils::string_to_cstring(error_json)));
+        error.replace(Some(string_to_cstring(error_json)));
     })
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err)).ok();
 }

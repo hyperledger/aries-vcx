@@ -1,10 +1,10 @@
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use agency_comm::message_type::MessageTypes;
-use agency_comm::mocking::AgencyMock;
-use agency_comm::utils::comm::post_to_agency;
-use agency_comm::utils::{constants, validation};
-use agency_comm::mocking;
-use agency_comm::utils::error::prelude::*;
+use {A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
+use message_type::MessageTypes;
+use mocking::AgencyMock;
+use utils::comm::post_to_agency;
+use utils::{constants, validation};
+use mocking;
+use utils::error::prelude::*;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

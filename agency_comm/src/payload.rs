@@ -1,4 +1,4 @@
-use agency_comm::message_type::MessageType;
+use message_type::MessageType;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]

@@ -1,4 +1,4 @@
-use agency_comm::utils::error::prelude::*;
+use utils::error::prelude::*;
 
 pub fn get_or_default(config: &Option<String>, default: &str) -> String {
     config.to_owned().unwrap_or(default.to_string())

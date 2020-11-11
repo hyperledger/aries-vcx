@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    "libvcx",
+    "agency_comm"
+]
+
+[profile.release]
+debug = true
+panic = 'unwind'
+incremental = false

@@ -5,4 +5,7 @@ pub mod error;
 pub mod error_utils;
 pub mod libindy;
 pub mod option_util;
+pub mod encryption_envelope;
+pub mod wallet;
+pub mod timeout;
 pub(super) mod comm;

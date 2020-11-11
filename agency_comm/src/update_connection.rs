@@ -1,10 +1,10 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use agency_comm::message_type::MessageTypes;
-use agency_comm::utils::comm::post_to_agency;
-use agency_comm::utils::error::prelude::*;
+use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use message_type::MessageTypes;
+use utils::comm::post_to_agency;
+use utils::error::prelude::*;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

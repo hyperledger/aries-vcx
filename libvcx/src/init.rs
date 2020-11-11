@@ -6,6 +6,7 @@ use indy_sys::WalletHandle;
 use error::{VcxErrorExt, VcxErrorKind, VcxResult};
 use libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
+use agency_comm::utils::wallet;
 use settings;
 
 pub fn init_core(config: &str) -> VcxResult<()> {
@@ -59,6 +60,7 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
             })?;
 
     set_wallet_handle(handle);
+    wallet.set_wallet_handle(handle);
 
     Ok(handle)
 }

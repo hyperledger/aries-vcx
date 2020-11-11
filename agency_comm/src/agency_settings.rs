@@ -5,9 +5,9 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use agency_comm::utils::error::prelude::*;
-use agency_comm::utils::error_utils;
-use agency_comm::utils::validation;
+use utils::error::prelude::*;
+use utils::error_utils;
+use utils::validation;
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
 pub static CONFIG_AGENCY_DID: &str = "agency_did";
