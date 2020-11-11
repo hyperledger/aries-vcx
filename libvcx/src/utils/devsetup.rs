@@ -76,6 +76,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
+    ::std::env::set_var("DUMMY_TEST_MODE", "false");
     AgencyMockDecrypted::clear_mocks();
 }
 
@@ -109,15 +110,14 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        ::std::env::set_var("DUMMY_TEST_MODE", "true");
         agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        ::std::env::set_var("DUMMY_TEST_MODE", "true");
         SetupMocks
     }
 }
 
 impl Drop for SetupMocks {
     fn drop(&mut self) {
-        ::std::env::set_var("DUMMY_TEST_MODE", "false");
         tear_down()
     }
 }
@@ -197,6 +197,7 @@ impl SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        ::std::env::set_var("DUMMY_TEST_MODE", "true");
         SetupIndyMocks {}
     }
 }

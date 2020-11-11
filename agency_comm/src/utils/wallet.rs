@@ -8,3 +8,5 @@ pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
 }
 
 pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
+
+pub fn reset_wallet_handle() { set_wallet_handle(INVALID_WALLET_HANDLE); }
