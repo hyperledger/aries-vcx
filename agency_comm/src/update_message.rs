@@ -128,18 +128,18 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
 
 #[cfg(test)]
 mod tests {
-    #[cfg(any(feature = "agency_pool_tests"))]
-    use std::thread;
-    #[cfg(any(feature = "agency_pool_tests"))]
-    use std::time::Duration;
+    // #[cfg(any(feature = "agency_pool_tests"))]
+    // use std::thread;
+    // #[cfg(any(feature = "agency_pool_tests"))]
+    // use std::time::Duration;
 
-    use agency_comm::get_message::download_messages_noauth;
-    use agency_comm::MessageStatusCode;
-    use agency_comm::mocking::AgencyMockDecrypted;
-    use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
-    use connection::send_generic_message;
-    use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    // use agency_comm::get_message::download_messages_noauth;
+    // use agency_comm::MessageStatusCode;
+    // use agency_comm::mocking::AgencyMockDecrypted;
+    // use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    // use connection::send_generic_message;
+    // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
+    // use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
 
     #[test]
     #[cfg(feature = "general_test")]

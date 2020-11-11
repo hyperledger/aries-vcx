@@ -245,8 +245,8 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 mod tests {
     use std::env;
 
-    use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    use agency_comm::utils::agent_utils::{ComMethodType, update_agent_webhook};
+    // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
+    // use agency_comm::utils::agent_utils::{ComMethodType, update_agent_webhook};
 
     #[test]
     #[cfg(feature = "general_test")]

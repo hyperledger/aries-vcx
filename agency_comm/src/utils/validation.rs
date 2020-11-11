@@ -50,7 +50,7 @@ pub fn validate_url(url: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 mod tests {
-    use utils::devsetup::SetupDefaults;
+    // use utils::devsetup::SetupDefaults;
 
     use super::*;
 
