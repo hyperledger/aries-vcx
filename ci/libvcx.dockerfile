@@ -22,6 +22,7 @@ COPY --from=builder /usr/lib/libindy.so /home/indy/lib*.so /usr/lib/
 
 WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx
+COPY --chown=node ./agency_comm ./agency_comm
 COPY --chown=node ./wrappers/node ./wrappers/node
 COPY --chown=node ./agents/node ./agents/node
 
