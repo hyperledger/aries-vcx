@@ -2,7 +2,7 @@ use base64;
 use time;
 
 use error::prelude::*;
-use agency_comm::thread::Thread;
+use aries::messages::thread::Thread;
 use libindy::utils::crypto;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::a2a::message_family::MessageFamilies;

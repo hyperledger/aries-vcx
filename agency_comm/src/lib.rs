@@ -21,7 +21,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate strum;
-#[macro_use]
 extern crate strum_macros;
 extern crate time;
 extern crate url;
@@ -54,7 +53,6 @@ pub mod update_message;
 pub mod message_type;
 pub mod payload;
 #[macro_use]
-pub mod thread;
 pub mod agency_settings;
 pub mod mocking;
 pub mod httpclient;

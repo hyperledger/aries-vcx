@@ -1,4 +1,4 @@
-use agency_comm::thread::Thread;
+use aries::messages::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
