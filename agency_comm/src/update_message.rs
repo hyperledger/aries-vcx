@@ -1,10 +1,9 @@
-use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
-use message_type::MessageTypes;
-use mocking::AgencyMock;
-use utils::comm::post_to_agency;
-use utils::error::prelude::*;
-use utils::constants;
-use mocking;
+use crate::{mocking, MessageStatusCode, A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
+use crate::utils::error::{VcxResult, VcxErrorKind, VcxError};
+use crate::message_type::MessageTypes;
+use crate::utils::comm::post_to_agency;
+use crate::utils::constants;
+use crate::mocking::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -140,6 +139,13 @@ mod tests {
     // use connection::send_generic_message;
     // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
     // use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+
+    use crate::MessageStatusCode;
+    use crate::get_message::download_messages_noauth;
+    use crate::update_message::{update_agency_messages, UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
+    use std::thread;
+    use crate::mocking::AgencyMockDecrypted;
+    use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]

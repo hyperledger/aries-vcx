@@ -1,4 +1,4 @@
-use message_type::MessageType;
+use crate::message_type::MessageType;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]

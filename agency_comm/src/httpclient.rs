@@ -5,9 +5,9 @@ use std::sync::Mutex;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use mocking::{AgencyMock, AgencyMockDecrypted};
-use utils::error::prelude::*;
-use mocking;
+use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::mocking::{AgencyMock, AgencyMockDecrypted};
+use crate::mocking;
 
 lazy_static! {
     static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
@@ -55,7 +55,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
         info!("::Android code");
         set_ssl_cert_location();
     }
-    let client = reqwest::ClientBuilder::new().timeout(::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
+    let client = reqwest::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
         error!("error: {}", err);
         VcxError::from_msg(VcxErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
     })?;

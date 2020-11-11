@@ -1,4 +1,4 @@
-use utils::error::prelude::*;
+use crate::utils::error::{VcxErrorKind, VcxResult, VcxError};
 
 pub fn get_or_default(config: &Option<String>, default: &str) -> String {
     config.to_owned().unwrap_or(default.to_string())

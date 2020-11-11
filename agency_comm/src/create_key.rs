@@ -1,10 +1,9 @@
-use {A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use message_type::MessageTypes;
-use mocking::AgencyMock;
-use utils::comm::post_to_agency;
-use utils::{constants, validation};
-use mocking;
-use utils::error::prelude::*;
+use crate::utils::error::{VcxErrorKind, VcxResult, VcxError};
+use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds, mocking};
+use crate::message_type::MessageTypes;
+use crate::utils::comm::post_to_agency;
+use crate::utils::{constants, validation};
+use crate::mocking::AgencyMock;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -98,6 +97,9 @@ mod tests {
     // use utils::devsetup::*;
 
     use super::*;
+    use crate::utils::error::VcxErrorKind;
+    use crate::create_keys;
+    use crate::utils::constants;
 
     #[test]
     #[cfg(feature = "general_test")]

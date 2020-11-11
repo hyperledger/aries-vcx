@@ -5,9 +5,8 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use utils::error::prelude::*;
-use utils::error_utils;
-use utils::validation;
+use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::utils::{error_utils, validation};
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
 pub static CONFIG_AGENCY_DID: &str = "agency_did";

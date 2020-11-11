@@ -1,14 +1,12 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use mocking::agency_mocks_enabled;
-use message_type::MessageTypes;
-use mocking::AgencyMockDecrypted;
-use utils::constants;
-use utils::error_utils;
-use utils::error::prelude::*;
-use utils::comm::post_to_agency;
+use crate::message_type::MessageTypes;
+use crate::{parse_response_from_agency, prepare_message_for_agency, A2AMessage, A2AMessageV2, agency_settings, A2AMessageKinds};
+use crate::utils::{error_utils, constants};
+use crate::utils::error::{VcxErrorKind, VcxResult, VcxError};
+use crate::utils::comm::post_to_agency;
+use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
@@ -244,6 +242,7 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
 #[cfg(test)]
 mod tests {
     use std::env;
+    use crate::utils::agent_utils::{update_agent_webhook, ComMethodType};
 
     // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
     // use agency_comm::utils::agent_utils::{ComMethodType, update_agent_webhook};

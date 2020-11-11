@@ -1,10 +1,10 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use message_type::MessageTypes;
-use utils::comm::post_to_agency;
-use utils::error::prelude::*;
+use crate::{prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, delete_connection, parse_response_from_agency};
+use crate::message_type::MessageTypes;
+use crate::utils::error::{VcxResult, VcxErrorKind, VcxError};
+use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -144,6 +144,8 @@ mod tests {
     // use utils::devsetup::SetupDefaults;
 
     // use super::*;
+
+    use crate::update_connection::{ConnectionStatus, UpdateConnectionResponse};
 
     #[test]
     #[cfg(feature = "general_test")]

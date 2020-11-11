@@ -8,7 +8,7 @@ use libc::c_char;
 
 use indy::IndyError;
 
-use utils::error_utils;
+use crate::utils::error_utils;
 
 pub mod prelude {
     pub use super::*;

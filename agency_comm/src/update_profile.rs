@@ -1,9 +1,9 @@
-use ::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use message_type::MessageTypes;
-use mocking::AgencyMock;
-use utils::comm::post_to_agency;
-use utils::error::prelude::*;
-use utils::{validation, constants};
+use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
+use crate::message_type::MessageTypes;
+use crate::utils::comm::post_to_agency;
+use crate::utils::{constants, validation};
+use crate::mocking::AgencyMock;
 
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
@@ -118,6 +118,11 @@ mod tests {
     // use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
 
     // use super::*;
+
+    use crate::update_profile::UpdateProfileDataBuilder;
+    use crate::mocking::AgencyMockDecrypted;
+    use crate::{update_data, agency_settings};
+    use crate::utils::constants::{MY3_SEED, MY1_SEED, MY2_SEED};
 
     #[test]
     #[cfg(feature = "general_test")]

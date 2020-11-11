@@ -1,6 +1,6 @@
-use mocking::AgencyMockDecrypted;
-use utils::error::prelude::*;
-use utils::libindy::crypto;
+use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::mocking::AgencyMockDecrypted;
+use crate::utils::libindy::crypto;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
