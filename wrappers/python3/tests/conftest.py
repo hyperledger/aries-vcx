@@ -1,7 +1,6 @@
 import logging
 import pytest
 import time
-from vcx.api.vcx_init import vcx_init
 from vcx.common import shutdown as vcx_shutdown
 
 flag = False
@@ -15,7 +14,7 @@ async def vcx_init_test_mode():
     global flag
 
     if not flag:
-        await vcx_init('ENABLE_TEST_MODE')
+        # todo: should make FFI call to set up aries-vcx into testing mode
         flag = True
 
 

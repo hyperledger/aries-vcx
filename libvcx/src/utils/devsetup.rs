@@ -35,9 +35,12 @@ pub struct SetupWallet {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
+    skip_cleanup: bool
 } // creates wallet with random name, configures wallet settings
 
-pub struct SetupPoolConfig;
+pub struct SetupPoolConfig {
+    skip_cleanup: bool
+}
 
 pub struct SetupLibraryWallet {
     pub wallet_name: String,
@@ -164,15 +167,22 @@ impl SetupWallet {
         create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
         info!("SetupWallet:: init :: Wallet {} created", wallet_name);
 
-        SetupWallet { wallet_name, wallet_key, wallet_kdf }
+        SetupWallet { wallet_name, wallet_key, wallet_kdf, skip_cleanup: false }
+    }
+
+    pub fn skip_cleanup(mut self) -> SetupWallet{
+        self.skip_cleanup = true;
+        self
     }
 }
 
 impl Drop for SetupWallet {
     fn drop(&mut self) {
-        close_main_wallet();
-        delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
-        reset_wallet_handle();
+        if self.skip_cleanup == false {
+            close_main_wallet();
+            delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
+            reset_wallet_handle();
+        }
     }
 }
 
@@ -181,14 +191,21 @@ impl SetupPoolConfig {
         create_test_ledger_config();
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
 
-        SetupPoolConfig {}
+        SetupPoolConfig { skip_cleanup: false }
+    }
+
+    pub fn skip_cleanup(mut self) -> SetupPoolConfig {
+        self.skip_cleanup = true;
+        self
     }
 }
 
 impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
-        delete_test_pool();
-        reset_pool_handle();
+        if self.skip_cleanup == false {
+            delete_test_pool();
+            reset_pool_handle();
+        }
     }
 }
 

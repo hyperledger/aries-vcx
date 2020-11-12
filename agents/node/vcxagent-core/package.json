@@ -35,11 +35,13 @@
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:legacy:integration": "node demo/integration-test.js",
     "test:legacy:integration:revocation": "REVOCATION=true node demo/integration-test.js",
-    "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails",
+    "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery",
     "test:integration:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js",
     "test:integration:messaging": "jest --forceExit --env=node --runInBand test/sign-messaging.spec.js",
-    "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js"
+    "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js",
+    "test:integration:trustping": "jest --forceExit --env=node --runInBand test/trustping.spec.js",
+    "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js"
   },
   "dependencies": {
     "axios": "^0.20.0",

@@ -11,7 +11,6 @@ from vcx.api.issuer_credential import IssuerCredential
 from vcx.api.proof import Proof
 from vcx.api.schema import Schema
 from vcx.api.utils import vcx_agent_provision
-from vcx.api.vcx_init import vcx_init_with_config
 from vcx.state import State, ProofState
 
 
@@ -48,7 +47,7 @@ async def main():
     config['use_latest_protocols'] = 'True'
 
     print("#2 Initialize libvcx with new configuration")
-    await vcx_init_with_config(json.dumps(config))
+    # todo: here should be called init methods
 
     print("#5 Create a connection to alice and print out the invite details")
     connection_to_alice = await Connection.create('alice')

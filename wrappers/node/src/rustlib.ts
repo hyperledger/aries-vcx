@@ -57,12 +57,9 @@ export type rust_listener_handle = rust_object_handle
 export type rust_connection_handle = rust_object_handle
 
 export interface IFFIEntryPoint {
-  vcx_init: (commandId: number, configPath: string, cb: any) => number,
-  vcx_init_with_config: (commandId: number, config: string, cb: any) => number,
-  vcx_init_core: (config: string) => number,
   vcx_open_pool: (commandId: number, cb: any) => number,
   vcx_open_wallet: (commandId: number, cb: any) => number,
-  vcx_init_minimal: (config: string) => number,
+  vcx_init_core: (config: string) => number,
 
   vcx_shutdown: (deleteIndyInfo: boolean) => number,
   vcx_error_c_message: (errorCode: number) => string,
@@ -259,9 +256,6 @@ export interface IFFIEntryPoint {
 // tslint:disable object-literal-sort-keys
 export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
 
-  vcx_init: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONFIG_PATH, FFI_CALLBACK_PTR]],
-  vcx_init_with_config: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CONFIG_PATH, FFI_CALLBACK_PTR]],
-  vcx_init_minimal: [FFI_ERROR_CODE, [FFI_STRING]],
   vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
   vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],

@@ -116,6 +116,30 @@ module.exports.createAlice = async function createAlice () {
     return tailsHash
   }
 
+  async function downloadReceivedMessagesV2 () {
+    logger.info('Alice is going to download messages using getMessagesV2')
+    await vcxAgent.agentInitVcx()
+    const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ["MS-103"])
+    await vcxAgent.agentShutdownVcx()
+    return agencyMessages
+  }
+
+  async function sendPing() {
+    logger.info(`Alice is going to send ping`)
+    await vcxAgent.agentInitVcx()
+    const res = await vcxAgent.serviceConnections.sendPing(connectionId)
+    logger.info(`Operation result = ${JSON.stringify(res)}`)
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function discoverTheirFeatures() {
+    logger.info(`Alice is going to request Faber's Aries features.`)
+    await vcxAgent.agentInitVcx()
+    const res = await vcxAgent.serviceConnections.discoverTheirFeatures(connectionId)
+    logger.info(`Operation result = ${JSON.stringify(res)}`)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
     sendMessage,
     signData,
@@ -126,6 +150,9 @@ module.exports.createAlice = async function createAlice () {
     sendHolderProof,
     updateStateHolderProofV2,
     getTailsLocation,
-    getTailsHash
+    getTailsHash,
+    downloadReceivedMessagesV2,
+    sendPing,
+    discoverTheirFeatures
   }
 }

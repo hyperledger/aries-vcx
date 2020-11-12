@@ -22,7 +22,7 @@ async def vcx_agent_provision(config: str) -> None:
     }
     vcx_config = await vcx_agent_provision(json.dumps(enterprise_config))
     :param config: JSON configuration
-    :return: Configuration for vcx_init call.
+    :return: Configuration for vcx_init_core call.
     """
     logger = logging.getLogger(__name__)
 
@@ -159,16 +159,6 @@ async def vcx_messages_update_status(msg_json: str):
 
     logger.debug("vcx_messages_update_status completed")
     return result
-
-
-def vcx_pool_set_handle(handle: int) -> None:
-    """
-    Sets the pool handle for libvcx to use, called before vcx_init_minimal
-    :param handle: pool handle
-    """
-    c_handle = c_uint32(handle)
-
-    do_call_sync('vcx_pool_set_handle', c_handle)
 
 
 async def vcx_get_ledger_author_agreement():

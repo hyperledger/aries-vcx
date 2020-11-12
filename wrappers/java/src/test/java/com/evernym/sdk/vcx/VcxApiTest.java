@@ -15,25 +15,9 @@ public class VcxApiTest {
     void setup() throws Exception {
         System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
         if (!TestHelper.vcxInitialized) {
-            TestHelper.getResultFromFuture(VcxApi.vcxInit(TestHelper.VCX_CONFIG_TEST_MODE));
+            VcxApi.vcxInitCore(TestHelper.VCX_CONFIG_TEST_MODE);
             TestHelper.vcxInitialized = true;
         }
-    }
-
-    @Test
-    @DisplayName("initialise vcx")
-    void vcxInit() throws VcxException {
-        assert (true); // Asserting true because the api is called and is tested in setup() function above above.
-    }
-
-    @Test
-    @DisplayName("shut down and initialise vcx with a config")
-    void vcxInitWithConfig() throws VcxException, ExecutionException, InterruptedException {
-        //This unit test tests two apis vcxShutdown and vcxInitWithConfig
-        int shutdownResult = VcxApi.vcxShutdown(false);
-        assert (shutdownResult == 0);
-        int result = TestHelper.getResultFromFuture(VcxApi.vcxInitWithConfig(TestHelper.VCX_CONFIG_TEST_MODE));
-        assert (result == 0);
     }
 
     @Test
@@ -50,12 +34,5 @@ public class VcxApiTest {
         assert (errorCMessage.equals("Unknown Error"));
     }
 
-    @Test
-    @DisplayName("init minimal")
-    void initMinimal() throws VcxException {
-        WalletApi.setWalletHandle(1);
-        UtilsApi.setPoolHandle(1);
-        assert (VcxApi.vcxInitMinimal("{\"institution_name\":\"f\",\"institution_did\":\"4\", \"institution_verkey\":\"4\"}") == 0);
-    }
 
 }

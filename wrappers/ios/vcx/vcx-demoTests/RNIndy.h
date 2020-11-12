@@ -23,10 +23,6 @@
 //+(NSString*)findValue:(NSString*)values withKey:(NSString*)key;
 //+(NSString*)replace:(NSString*)config findKey:(NSString*)key withValue:(NSString*)value;
 
--(void)simpleInit: (NSString *)config
-       completion:(void (^)(BOOL success))successful;
--(void)init: (NSString *)config
-    completion:(void (^)(BOOL success))successful;
 -(void)getSerializedConnection: (NSInteger)connectionHandle
                     completion:(void (^)(BOOL success))successful;
 -(void)deserializeConnection: (NSString *)serializedConnection
@@ -46,7 +42,6 @@
    withConnectionHandle: (VcxHandle) connectionHandle
       withPaymentHandle: (vcx_payment_handle_t) paymentHandle
              completion:(void (^)(BOOL success))successful;
--(void)initWithConfig: (NSString *)config;
 -(void)createOneTimeInfo: (NSString *)config
     completion:(void (^)(BOOL success))successful;
 -(void)createConnectionWithInvite: (NSString *)invitationId

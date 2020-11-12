@@ -6,7 +6,6 @@ from vcx.api.connection import Connection
 from vcx.api.credential import Credential
 from vcx.api.disclosed_proof import DisclosedProof
 from vcx.api.utils import vcx_agent_provision
-from vcx.api.vcx_init import vcx_init_with_config
 from vcx.state import State
 from vc_auth_oidc.alice_vc_auth import handle_challenge
 
@@ -73,7 +72,7 @@ async def init():
     config = json.dumps(config)
 
     print("#8 Initialize libvcx with new configuration")
-    await vcx_init_with_config(config)
+    # todo: here sohuld be called init methods
 
 
 async def connect():
