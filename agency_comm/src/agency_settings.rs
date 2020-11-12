@@ -5,7 +5,7 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
 use crate::utils::{error_utils, validation};
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
@@ -33,20 +33,20 @@ lazy_static! {
 }
 
 
-fn validate_mandatory_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind, closure: F) -> VcxResult<u32>
+fn validate_mandatory_config_val<F, S, E>(val: Option<&String>, err: AgencyCommErrorKind, closure: F) -> VcxResult<u32>
     where F: Fn(&str) -> Result<S, E> {
-    closure(val.as_ref().ok_or(VcxError::from(err))?)
-        .or(Err(VcxError::from(err)))?;
+    closure(val.as_ref().ok_or(AgencyCommError::from(err))?)
+        .or(Err(AgencyCommError::from(err)))?;
 
     Ok(error_utils::SUCCESS.code_num)
 }
 
-fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind, closure: F) -> VcxResult<u32>
+fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyCommErrorKind, closure: F) -> VcxResult<u32>
     where F: Fn(&str) -> Result<S, E> {
     if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
 
-    closure(val.as_ref().ok_or(VcxError::from(VcxErrorKind::InvalidConfiguration))?)
-        .or(Err(VcxError::from(err)))?;
+    closure(val.as_ref().ok_or(AgencyCommError::from(AgencyCommErrorKind::InvalidConfiguration))?)
+        .or(Err(AgencyCommError::from(err)))?;
 
     Ok(error_utils::SUCCESS.code_num)
 }
@@ -82,16 +82,16 @@ pub fn validate_agency_config(config: &HashMap<String, String>) -> VcxResult<u32
     trace!("validate_agency_config >>> config: {:?}", config);
 
     // todo: Since we scope these setting to agency module, these are not really optional anymore!
-    validate_optional_config_val(config.get(CONFIG_AGENCY_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_AGENCY_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
+    validate_optional_config_val(config.get(CONFIG_AGENCY_DID), AgencyCommErrorKind::InvalidDid, validation::validate_did)?;
+    validate_optional_config_val(config.get(CONFIG_AGENCY_VERKEY), AgencyCommErrorKind::InvalidVerkey, validation::validate_verkey)?;
 
-    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
+    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_DID), AgencyCommErrorKind::InvalidDid, validation::validate_did)?;
+    validate_optional_config_val(config.get(CONFIG_SDK_TO_REMOTE_VERKEY), AgencyCommErrorKind::InvalidVerkey, validation::validate_verkey)?;
 
-    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
+    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_DID), AgencyCommErrorKind::InvalidDid, validation::validate_did)?;
+    validate_optional_config_val(config.get(CONFIG_REMOTE_TO_SDK_VERKEY), AgencyCommErrorKind::InvalidVerkey, validation::validate_verkey)?;
 
-    validate_optional_config_val(config.get(CONFIG_AGENCY_ENDPOINT), VcxErrorKind::InvalidUrl, Url::parse)?;
+    validate_optional_config_val(config.get(CONFIG_AGENCY_ENDPOINT), AgencyCommErrorKind::InvalidUrl, Url::parse)?;
 
     Ok(error_utils::SUCCESS.code_num)
 }
@@ -101,7 +101,7 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
     trace!("process_config_string >>> config {}", config);
 
     let configuration: Value = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
+        .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
 
     if let Value::Object(ref map) = configuration {
         for (key, value) in map {
@@ -111,8 +111,8 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
                 match value {
                     Value::String(value_) => set_config_value(key, &value_),
                     Value::Bool(value_) => set_config_value(key, &json!(value_).to_string()),
-                    _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                                       format!("Invalid agency config value for key {}", key))),
+                    _ => return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson,
+                                                              format!("Invalid agency config value for key {}", key))),
                 }
             }
         }
@@ -120,7 +120,7 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
 
     if do_validation {
         let setting = AGENCY_SETTINGS.read()
-            .or(Err(VcxError::from(VcxErrorKind::InvalidConfiguration)))?;
+            .or(Err(AgencyCommError::from(AgencyCommErrorKind::InvalidConfiguration)))?;
         validate_agency_config(&setting.borrow())
     } else {
         Ok(error_utils::SUCCESS.code_num)
@@ -133,10 +133,10 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
 
     AGENCY_SETTINGS
         .read()
-        .or(Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Cannot read AGENCY_SETTINGS")))?
+        .or(Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidConfiguration, "Cannot read AGENCY_SETTINGS")))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from AGENCY_SETTINGS", key)))
+        .ok_or(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from AGENCY_SETTINGS", key)))
 }
 
 pub fn set_config_value(key: &str, value: &str) {

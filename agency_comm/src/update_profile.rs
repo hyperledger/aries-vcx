@@ -1,4 +1,4 @@
-use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
@@ -103,7 +103,7 @@ impl UpdateProfileDataBuilder {
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
+            _ => Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
         }
     }
 }

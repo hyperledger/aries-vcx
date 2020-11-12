@@ -9,5 +9,5 @@ pub fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) ->
 
     did::create_and_store_my_did(get_wallet_handle(), &my_did_json.to_string())
         .wait()
-        .map_err(VcxError::from)
+        .map_err(AgencyCommError::from)
 }

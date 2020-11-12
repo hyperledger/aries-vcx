@@ -356,7 +356,7 @@ pub mod tests {
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 
-        HttpClientMockResponse::set_next_response(::agency_comm::utils::error::VcxResult::Err(::agency_comm::utils::error::VcxError::from_msg(::agency_comm::utils::error::VcxErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(::agency_comm::utils::error::VcxResult::Err(::agency_comm::utils::error::AgencyCommError::from_msg(::agency_comm::utils::error::AgencyCommErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap_err().kind(), VcxErrorKind::IOError);
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateInitialized as u32);
 

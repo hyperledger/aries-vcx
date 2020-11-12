@@ -285,8 +285,8 @@ impl From<VcxErrorKind> for VcxError {
     }
 }
 
-impl From<agency_comm::utils::error::VcxError> for VcxError {
-    fn from(agency_err: agency_comm::utils::error::VcxError) -> VcxError {
+impl From<agency_comm::utils::error::AgencyCommError> for VcxError {
+    fn from(agency_err: agency_comm::utils::error::AgencyCommError) -> VcxError {
         let kind_num: u32 = agency_err.kind().into();
         VcxError::from_msg(kind_num.into(), ::utils::error::error_message(&agency_err.kind().clone().into()))
     }

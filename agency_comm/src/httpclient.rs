@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
 use crate::mocking::{AgencyMock, AgencyMockDecrypted};
 use crate::mocking;
 
@@ -57,7 +57,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     }
     let client = reqwest::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
         error!("error: {}", err);
-        VcxError::from_msg(VcxErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
+        AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
     })?;
     debug!("Posting encrypted bundle to: \"{}\"", url);
 
@@ -68,7 +68,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             .send()
             .map_err(|err| {
                 error!("error: {}", err);
-                VcxError::from_msg(VcxErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
+                AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
             })?;
 
     trace!("Response Header: {:?}", response);
@@ -78,12 +78,12 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             Ok(_) => info!("Request failed: {}", content),
             Err(_) => info!("could not read response"),
         };
-        return Err(VcxError::from_msg(VcxErrorKind::PostMessageFailed, format!("POST failed with: {}", content)));
+        return Err(AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("POST failed with: {}", content)));
     }
 
     let mut content = Vec::new();
     response.read_to_end(&mut content)
-        .or(Err(VcxError::from_msg(VcxErrorKind::PostMessageFailed, "could not read response")))?;
+        .or(Err(AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, "could not read response")))?;
 
     Ok(content)
 }

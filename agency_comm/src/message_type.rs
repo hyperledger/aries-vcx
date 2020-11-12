@@ -2,7 +2,7 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::utils::error::{VcxErrorKind, VcxError, VcxResult};
+use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
 use crate::A2AMessageKinds;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
@@ -115,7 +115,7 @@ pub fn parse_message_type(message_type: &str) -> VcxResult<(String, String, Stri
                     Some((did.to_string(), family.to_string(), version.to_string(), type_.to_string())),
                 _ => None
             }
-        }).ok_or(VcxError::from_msg(VcxErrorKind::InvalidOption, "Cannot parse @type"))
+        }).ok_or(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidOption, "Cannot parse @type"))
 }
 
 impl<'de> Deserialize<'de> for MessageType {

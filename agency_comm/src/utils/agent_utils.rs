@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::message_type::MessageTypes;
 use crate::{parse_response_from_agency, prepare_message_for_agency, A2AMessage, A2AMessageV2, agency_settings, A2AMessageKinds};
 use crate::utils::{error_utils, constants};
-use crate::utils::error::{VcxErrorKind, VcxResult, VcxError};
+use crate::utils::error::{AgencyCommErrorKind, VcxResult, AgencyCommError};
 use crate::utils::comm::post_to_agency;
 use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
 
@@ -154,8 +154,8 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Str
             A2AMessage::Version2(A2AMessageV2::ConnectResponse(resp)) =>
                 resp,
             _ => return
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidHttpResponse,
+                Err(AgencyCommError::from_msg(
+                    AgencyCommErrorKind::InvalidHttpResponse,
                     "Message does not match any variant of ConnectResponse")
                 )
         };
@@ -179,7 +179,7 @@ pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(
     let _response: SignUpResponse =
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::SignUpResponse(resp)) => resp,
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of SignUpResponse"))
+            _ => return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of SignUpResponse"))
         };
 
     /* STEP 3 - CREATE AGENT */
@@ -192,7 +192,7 @@ pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(
     let response: CreateAgentResponse =
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateAgentResponse(resp)) => resp,
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
+            _ => return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
         };
 
     Ok((response.from_did, response.from_vk))
@@ -234,7 +234,7 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<
     let data = prepare_message_for_agency(message, &did)?;
 
     let response = post_to_agency(&data)
-        .map_err(|err| err.map(VcxErrorKind::InvalidHttpResponse, error_utils::INVALID_HTTP_RESPONSE.message))?;
+        .map_err(|err| err.map(AgencyCommErrorKind::InvalidHttpResponse, error_utils::INVALID_HTTP_RESPONSE.message))?;
 
     parse_response_from_agency(&response)
 }
