@@ -101,6 +101,7 @@ impl EncryptionEnvelope {
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload)?;
+            trace!("anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}", a2a_message, sender_vk);
 
             match sender_vk {
                 Some(sender_vk) => {

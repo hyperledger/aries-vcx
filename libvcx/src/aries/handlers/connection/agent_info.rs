@@ -92,6 +92,7 @@ impl AgentInfo {
     }
 
     pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
+        trace!("download_encrypted_messages >>>");
         get_connection_messages(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
             .map_err(|err| err.into())
     }

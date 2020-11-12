@@ -42,7 +42,7 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_comm=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
@@ -92,6 +92,7 @@ async function runAlice (options) {
 }
 
 function _validateMsgs (msgs) {
+  logger.debug(`Validating messages:\n${JSON.stringify(msgs, null, 2)}`)
   assert(msgs.length === 5)
   assert(msgs[0].uid)
   assert(msgs[0].statusCode)
@@ -102,7 +103,7 @@ function _validateMsgs (msgs) {
 }
 
 async function _validateTestTailsLocation (holderCredentialId, revRegId, vcxAgent) {
-  logger.info(`Going to check that holder's tails location is ${testTailsUrl}`)
+  logger.debug(`Going to check that holder's tails location is ${testTailsUrl}`)
   const tailsLocation = await vcxAgent.serviceCredHolder.getTailsLocation(holderCredentialId)
   assert(tailsLocation === testTailsUrl)
 }

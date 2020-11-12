@@ -15,7 +15,7 @@ const tailsFile = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_comm=error')
   let faberServer
   let exitcode = 0
   let vcxAgent

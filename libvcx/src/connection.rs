@@ -292,6 +292,7 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
 }
 
 pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+    trace!("download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}", conn_handles, status_codes, uids);
     let mut res = Vec::new();
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
@@ -308,6 +309,7 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
         )?;
         res.push(msg_by_conn);
     };
+    trace!("download_messages <<< res: {:?}", res);
     Ok(res)
 }
 

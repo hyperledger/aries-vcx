@@ -276,6 +276,7 @@ impl Message {
     pub fn decrypt_auth(&self, expected_sender_vk: &str) -> VcxResult<Message> {
         let mut new_message = self.clone();
         let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk)?;
+        trace!("decrypt_auth >>> decrypted_msg: {:?}", decrypted_msg);
         new_message.decrypted_msg = Some(decrypted_msg);
         new_message.payload = None;
         Ok(new_message)
