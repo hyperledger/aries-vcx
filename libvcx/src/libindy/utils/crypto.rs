@@ -1,5 +1,5 @@
 /* test isn't ready until > libindy 1.0.1 */
-use futures::Future;
+use indy::future::Future;
 use indy::crypto;
 
 use crate::{libindy, settings};

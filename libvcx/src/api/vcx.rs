@@ -12,7 +12,7 @@ use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 use crate::utils::version_constants;
 
 /// Initializes VCX with config settings
@@ -63,7 +63,7 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
     let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
 
-    spawn(move || {
+    execute(move || {
         match open_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
             Ok(()) => {
                 info!("vcx_open_pool :: Vcx Pool Init Successful");
@@ -116,7 +116,7 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
 
-    spawn(move || {
+    execute(move || {
         if settings::indy_mocks_enabled() {
             set_wallet_handle(WalletHandle(1));
             info!("vcx_open_wallet :: Mocked Success");
@@ -255,7 +255,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 
     settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
-    spawn(move || {
+    execute(move || {
         match agency_client::utils::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
@@ -299,7 +299,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     trace!("vcx_get_ledger_author_agreement(command_handle: {})",
            command_handle);
 
-    spawn(move || {
+    execute(move || {
         match ledger::libindy_get_txn_author_agreement() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, author_agreement: {})",

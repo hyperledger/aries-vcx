@@ -8,7 +8,7 @@ use crate::credential;
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -74,7 +74,7 @@ pub extern fn vcx_credential_get_payment_info(command_handle: CommandHandle,
     info!("vcx_credential_get_payment_info >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    spawn(move || {
+    execute(move || {
         error!("Payments not supported anymore");
         cb(command_handle, 1, ptr::null());
         Ok(())
@@ -116,7 +116,7 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
     trace!("vcx_credential_create_with_offer(command_handle: {}, source_id: {}, offer: {})",
            command_handle, source_id, secret!(&offer));
 
-    spawn(move || {
+    execute(move || {
         match credential::credential_create_with_offer(&source_id, &offer) {
             Ok(x) => {
                 trace!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {})",
@@ -169,7 +169,7 @@ pub extern fn vcx_get_credential(command_handle: CommandHandle,
     trace!("vcx_get_credential(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_credential(credential_handle) {
             Ok(s) => {
                 trace!("vcx_get_credential_cb(commmand_handle: {}, rc: {}, msg: {}) source_id: {}",
@@ -218,7 +218,7 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_delete_credential(command_handle: {}, credential_handle: {}), source_id: {})", command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::delete_credential(credential_handle) {
             Ok(_) => {
                 trace!("vcx_delete_credential_cb(command_handle: {}, rc: {}), credential_handle: {}, source_id: {})", command_handle, error::SUCCESS.message, credential_handle, source_id);
@@ -251,7 +251,7 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
     trace!("vcx_credential_get_attributes(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_attributes(credential_handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_attribute_cb(commmand_handle: {}, rc: {}, attributes: {}) source_id: {}",
@@ -287,7 +287,7 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
     trace!("vcx_credential_get_attachment(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_attachment(credential_handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_attachment_cb(commmand_handle: {}, rc: {}, attachment: {}) source_id: {}",
@@ -323,7 +323,7 @@ pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
     trace!("vcx_credential_get_tails_location(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_tails_location(credential_handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_tails_location_cb(commmand_handle: {}, rc: {}, location: {}) source_id: {}",
@@ -359,7 +359,7 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
     trace!("vcx_credential_get_tails_hash(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_tails_hash(credential_handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_tails_hash_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
@@ -395,7 +395,7 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
     trace!("vcx_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_rev_reg_id(credential_handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
@@ -447,7 +447,7 @@ pub extern fn vcx_credential_create_with_msgid(command_handle: CommandHandle,
     trace!("vcx_credential_create_with_msgid(command_handle: {}, source_id: {}, connection_handle: {}, msg_id: {})",
            command_handle, source_id, connection_handle, msg_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::credential_create_with_msgid(&source_id, connection_handle, &msg_id) {
             Ok((handle, offer_string)) => {
                 let c_offer = CStringUtils::string_to_cstring(offer_string);
@@ -503,7 +503,7 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
     trace!("vcx_credential_send_request(command_handle: {}, credential_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, credential_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::send_credential_request(credential_handle, connection_handle) {
             Ok(x) => {
                 trace!("vcx_credential_send_request_cb(command_handle: {}, rc: {}) source_id: {}",
@@ -559,7 +559,7 @@ pub extern fn vcx_credential_get_request_msg(command_handle: CommandHandle,
     trace!("vcx_credential_get_request_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}, their_pw_did: {:?}), source_id: {:?}",
            command_handle, credential_handle, my_pw_did, their_pw_did, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::generate_credential_request_msg(credential_handle, &my_pw_did, &their_pw_did.unwrap_or_default()) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
@@ -608,7 +608,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
     trace!("vcx_credential_get_offers(command_handle: {}, connection_handle: {})",
            command_handle, connection_handle);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_credential_offer_messages(connection_handle) {
             Ok(x) => {
                 trace!("vcx_credential_get_offers_cb(command_handle: {}, rc: {}, msg: {})",
@@ -659,7 +659,7 @@ pub extern fn vcx_credential_update_state(command_handle: CommandHandle,
     trace!("vcx_credential_update_state(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::update_state(credential_handle, None, None) {
             Ok(_) => (),
             Err(e) => {
@@ -709,7 +709,7 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
     trace!("vcx_v2_credential_update_state(command_handle: {}, credential_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, credential_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::update_state(credential_handle, None, Some(connection_handle)) {
             Ok(_) => (),
             Err(e) => {
@@ -769,7 +769,7 @@ pub extern fn vcx_credential_update_state_with_message(command_handle: CommandHa
     trace!("vcx_credential_update_state_with_message(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::update_state(credential_handle, Some(&message), None) {
             Ok(_) => (),
             Err(e) => {
@@ -828,7 +828,7 @@ pub extern fn vcx_credential_get_state(command_handle: CommandHandle,
     trace!("vcx_credential_get_state(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::get_state(handle) {
             Ok(s) => {
                 trace!("vcx_credential_get_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -876,7 +876,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
     trace!("vcx_credential_serialize(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential::to_string(handle) {
             Ok(x) => {
                 trace!("vcx_credential_serialize_cb(command_handle: {}, rc: {}, data: {}), source_id: {:?}",
@@ -921,7 +921,7 @@ pub extern fn vcx_credential_deserialize(command_handle: CommandHandle,
     trace!("vcx_credential_deserialize(command_handle: {}, credential_data: {})",
            command_handle, credential_data);
 
-    spawn(move || {
+    execute(move || {
         match credential::from_string(&credential_data) {
             Ok(x) => {
                 trace!("vcx_credential_deserialize_cb(command_handle: {}, rc: {}, credential_handle: {}) source_id: {}",
@@ -980,7 +980,7 @@ pub extern fn vcx_credential_get_payment_txn(command_handle: CommandHandle,
     let source_id = credential::get_source_id(handle).unwrap_or_default();
     trace!("vcx_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         error!("Payments not supported yet");
         cb(command_handle, 1, ptr::null());
         Ok(())

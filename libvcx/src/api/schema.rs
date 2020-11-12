@@ -8,7 +8,7 @@ use crate::{schema, settings};
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -57,7 +57,7 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
     trace!(target: "vcx", "vcx_schema_create(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {})",
            command_handle, source_id, schema_name, schema_data);
 
-    spawn(move || {
+    execute(move || {
         match schema::create_and_publish_schema(&source_id,
                                                 issuer_did,
                                                 schema_name,
@@ -130,7 +130,7 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
     trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {},  endorser: {})",
            command_handle, source_id, schema_name, schema_data, endorser);
 
-    spawn(move || {
+    execute(move || {
         match schema::prepare_schema_for_endorser(&source_id,
                                                   issuer_did,
                                                   schema_name,
@@ -183,7 +183,7 @@ pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     };
 
-    spawn(move || {
+    execute(move || {
         match schema::to_string(schema_handle) {
             Ok(x) => {
                 trace!("vcx_schema_serialize_cb(command_handle: {}, schema_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -225,7 +225,7 @@ pub extern fn vcx_schema_deserialize(command_handle: CommandHandle,
     check_useful_c_str!(schema_data, VcxErrorKind::InvalidOption);
 
     trace!("vcx_schema_deserialize(command_handle: {}, schema_data: {})", command_handle, schema_data);
-    spawn(move || {
+    execute(move || {
         match schema::from_string(&schema_data) {
             Ok(x) => {
                 trace!("vcx_schema_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
@@ -293,7 +293,7 @@ pub extern fn vcx_schema_get_schema_id(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match schema::get_schema_id(schema_handle) {
             Ok(x) => {
                 trace!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {}, rc: {}, schema_seq_no: {})",
@@ -343,7 +343,7 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
     trace!("vcx_schema_get_attributes(command_handle: {}, source_id: {}, schema_id: {})",
            command_handle, source_id, schema_id);
 
-    spawn(move || {
+    execute(move || {
         match schema::get_schema_attrs(source_id, schema_id) {
             Ok((handle, data)) => {
                 let data: serde_json::Value = serde_json::from_str(&data).unwrap();
@@ -394,7 +394,7 @@ pub extern fn vcx_schema_get_payment_txn(command_handle: CommandHandle,
 
     trace!("vcx_schema_get_payment_txn(command_handle: {})", command_handle);
 
-    spawn(move || {
+    execute(move || {
         match schema::get_payment_txn(handle) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
@@ -456,7 +456,7 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     };
 
-    spawn(move || {
+    execute(move || {
         match schema::update_state(schema_handle) {
             Ok(state) => {
                 trace!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
@@ -506,7 +506,7 @@ pub extern fn vcx_schema_get_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     };
 
-    spawn(move || {
+    execute(move || {
         match schema::get_state(schema_handle) {
             Ok(state) => {
                 trace!("vcx_schema_get_state(command_handle: {}, rc: {}, state: {})",

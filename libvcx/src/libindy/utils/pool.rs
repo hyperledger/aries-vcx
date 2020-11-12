@@ -1,6 +1,6 @@
 use std::sync::RwLock;
 
-use futures::Future;
+use indy::future::Future;
 use indy::{ErrorCode, pool};
 
 use crate::error::prelude::*;

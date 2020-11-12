@@ -7,7 +7,7 @@ use crate::{connection, credential_def, issuer_credential, settings};
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -125,7 +125,7 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
            secret!(&credential_data),
            credential_name);
 
-    spawn(move || {
+    execute(move || {
         let (rc, handle) = match issuer_credential::issuer_credential_create(cred_def_handle, source_id, issuer_did, credential_name, credential_data, price) {
             Ok(x) => {
                 trace!("vcx_issuer_create_credential_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -181,7 +181,7 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         let err = match issuer_credential::send_credential_offer(credential_handle, connection_handle, None) {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -230,7 +230,7 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match issuer_credential::generate_credential_offer_msg(credential_handle) {
             Ok((msg, _)) => {
                 let msg = CStringUtils::string_to_cstring(msg);
@@ -285,7 +285,7 @@ pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match issuer_credential::update_state(credential_handle, None, None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -326,7 +326,7 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match issuer_credential::update_state(credential_handle, None, Some(connection_handle)) {
             Ok(x) => {
                 trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -382,7 +382,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match issuer_credential::update_state(credential_handle, Some(&message), None) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -434,7 +434,7 @@ pub extern fn vcx_issuer_credential_get_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match issuer_credential::get_state(credential_handle) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -499,7 +499,7 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_send_credential(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, credential_handle, connection_handle, source_id);
-    spawn(move || {
+    execute(move || {
         let err = match issuer_credential::send_credential(credential_handle, connection_handle) {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -551,7 +551,7 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_get_credential_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}) source_id: {}",
            command_handle, credential_handle, my_pw_did, source_id);
-    spawn(move || {
+    execute(move || {
         match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
@@ -587,7 +587,7 @@ pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, credential_handle, source_id);
-    spawn(move || {
+    execute(move || {
         match issuer_credential::get_rev_reg_id(credential_handle) {
             Ok(rev_reg_id) => {
                 let rev_reg_id = CStringUtils::string_to_cstring(rev_reg_id);
@@ -641,7 +641,7 @@ pub extern fn vcx_issuer_credential_serialize(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_serialize(credential_serialize(command_handle: {}, credential_handle: {}), source_id: {}",
            command_handle, credential_handle, source_id);
-    spawn(move || {
+    execute(move || {
         match issuer_credential::to_string(credential_handle) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_serialize_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -684,7 +684,7 @@ pub extern fn vcx_issuer_credential_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_issuer_credential_deserialize(command_handle: {}, credential_data: {})", command_handle, credential_data);
 
-    spawn(move || {
+    execute(move || {
         let (rc, handle) = match issuer_credential::from_string(&credential_data) {
             Ok(x) => {
                 trace!("vcx_issuer_credential_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
@@ -742,7 +742,7 @@ pub extern fn vcx_issuer_credential_get_payment_txn(command_handle: CommandHandl
     let source_id = issuer_credential::get_source_id(handle).unwrap_or_default();
     trace!("vcx_issuer_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         error!("Payments not supported yet");
         cb(command_handle, 1, ptr::null());
         Ok(())
@@ -776,7 +776,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         let err = match issuer_credential::revoke_credential(credential_handle) {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -812,7 +812,7 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         let err = match issuer_credential::revoke_credential_local(credential_handle) {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
