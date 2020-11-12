@@ -13,7 +13,6 @@ from vcx.api.issuer_credential import IssuerCredential
 from vcx.api.proof import Proof
 from vcx.api.schema import Schema
 from vcx.api.utils import vcx_agent_provision, vcx_get_ledger_author_agreement, vcx_set_active_txn_author_agreement_meta
-from vcx.api.vcx_init import vcx_init_with_config
 from vcx.state import State, ProofState
 
 TAA_ACCEPT = bool(os.getenv("TAA_ACCEPT", "0") == "1")
@@ -51,7 +50,7 @@ async def main():
     config['payment_method'] = 'null'
 
     print("#2 Initialize libvcx with new configuration")
-    await vcx_init_with_config(json.dumps(config))
+    # todo: here should be called init methods
 
     if TAA_ACCEPT:
         # To support ledger which transaction author agreement accept needed

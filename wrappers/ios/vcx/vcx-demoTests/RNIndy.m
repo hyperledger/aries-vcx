@@ -37,58 +37,6 @@
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
--(void)simpleInit: (NSString *)config
-       completion:(void (^)(BOOL success))successful
-{
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-        [[[ConnectMeVcx alloc] init] initWithConfig:config completion:^(NSError *error) {
-            if (error != nil && error.code != 0 && error.code != 1044)
-            {
-                NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while initializing vcx: %@ :: %ld", error.domain, (long)error.code];
-                NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
-                //return @false;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(NO);
-                });
-            }else{
-                NSLog(@"init was successful!");
-                //return @true;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(YES);
-                });
-            }
-        }];
-    });
-}
-
--(void)init: (NSString *)config
-    completion:(void (^)(BOOL success))successful
-{
-
-    config = [RNIndy updateInitConfig:config withValues:[self lastOneTimeInfo]];
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-        [[[ConnectMeVcx alloc] init] initWithConfig:config completion:^(NSError *error) {
-            if (error != nil && error.code != 0 && error.code != 1044)
-            {
-                NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while initializing vcx: %@ :: %ld", error.domain, (long)error.code];
-                NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
-                //return @false;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(NO);
-                });
-            }else{
-                NSLog(@"init was successful!");
-                //return @true;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(YES);
-                });
-            }
-        }];
-    });
-}
-
 -(void)getSerializedConnection: (NSInteger)connectionHandle
                     completion:(void (^)(BOOL success))successful
 {
@@ -299,24 +247,6 @@
             }];
     });
 }
-
--(void)initWithConfig: (NSString *)config
-{
-    // TODO: call vcx_init_with_config of libvcx
-    // pass a config as json string
-    // callback would get an error code and a json string back in case of success
-    NSError *error = nil; // remove this line after integrating libvcx method
-    if (error != nil && error.code != 0)
-    {
-        NSString *indyErrorCode = [NSString stringWithFormat:@"%ld", (long)error.code];
-        //reject(indyErrorCode, @"Init failed with error", error);
-        NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
-    } else {
-        //resolve(@{});
-        NSLog(@"initWithConfig was successful!");
-    }
-}
-
 
 //[[[ConnectMeVcx alloc] init] agentProvisionAsync:config completion:^(NSError *error, NSString *oneTimeInfo) {
 //    NSLog(@"applicationDidBecomeActive callback:%@",oneTimeInfo);

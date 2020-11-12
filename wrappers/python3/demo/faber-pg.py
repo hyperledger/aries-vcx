@@ -7,7 +7,6 @@ from time import sleep
 
 from vcx.api.connection import Connection
 from vcx.api.utils import vcx_agent_provision
-from vcx.api.vcx_init import vcx_init_with_config
 from vcx.state import State
 
 from demo_utils import *
@@ -59,7 +58,7 @@ async def main():
     config['genesis_path'] = 'docker.txn'
     
     print("#2 Initialize libvcx with new configuration")
-    await vcx_init_with_config(json.dumps(config))
+    # todo: here should be called init methods expose by aries-vcx
 
     print("#3 Create a new schema and cred def on the ledger")
     schema_uuid = 'schema_uuid'

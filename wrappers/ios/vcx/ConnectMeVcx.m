@@ -311,23 +311,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
 
 @implementation ConnectMeVcx
 
-- (void)initWithConfig:(NSString *)config
-            completion:(void (^)(NSError *error))completion
-{
-    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
-    vcx_error_t ret = vcx_init_with_config(handle, config_char, VcxWrapperCommonCallback);
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"ERROR: initWithConfig: calling completion");
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
 - (vcx_error_t) vcxInitCore:(NSString *)config
 {
     const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];

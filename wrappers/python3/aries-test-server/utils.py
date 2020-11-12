@@ -6,7 +6,6 @@ from ctypes import cdll
 import platform
 
 from vcx.api.utils import vcx_agent_provision
-from vcx.api.vcx_init import vcx_init_with_config
 
 
 EXTENSION = {"darwin": ".dylib", "linux": ".so", "win32": ".dll", 'windows': '.dll'}
@@ -49,7 +48,7 @@ async def init_vcx():
     config['genesis_path'] = 'docker.txn'
 
     print("Initialize libvcx with new configuration")
-    await vcx_init_with_config(json.dumps(config))
+    # todo: here should be called aries-vcx init methods
 
 
 def run_coroutine(coroutine, loop=None):
