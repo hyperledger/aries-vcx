@@ -4,7 +4,6 @@ use indy::{CommandHandle, INVALID_WALLET_HANDLE};
 use indy_sys::{INVALID_POOL_HANDLE, WalletHandle};
 use libc::c_char;
 
-use agency_client::agency_settings;
 use error::prelude::*;
 use init::{init_core, open_as_main_wallet, open_pool};
 use libindy::utils::{ledger, pool, wallet};

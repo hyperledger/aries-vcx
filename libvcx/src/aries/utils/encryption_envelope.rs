@@ -127,7 +127,6 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_client::agency_settings;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
     use libindy::utils::crypto::create_key;

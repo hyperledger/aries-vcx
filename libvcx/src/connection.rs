@@ -324,6 +324,7 @@ pub mod tests {
     use agency_client::get_message::download_messages_noauth;
     use agency_client::MessageStatusCode;
     use agency_client::mocking::AgencyMockDecrypted;
+    use agency_client::update_message::{update_agency_messages, UIDsByConn};
     use api::VcxStateType;
     use utils::constants::*;
     use utils::constants;
@@ -729,5 +730,43 @@ pub mod tests {
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
         assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
         assert!(consumer1_reviewed_msgs[0].msgs[0].decrypted_msg.is_some());
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_update_agency_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
+
+        send_generic_message(faber_to_alice, "Hello 1").unwrap();
+        send_generic_message(faber_to_alice, "Hello 2").unwrap();
+        send_generic_message(faber_to_alice, "Hello 3").unwrap();
+
+        thread::sleep(Duration::from_millis(1000));
+        ::utils::devsetup::set_consumer(None);
+
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 3);
+        let pairwise_did = received[0].pairwise_did.clone();
+        let uid = received[0].msgs[0].uid.clone();
+
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_before = reviewed[0].msgs.len();
+
+        // update status
+        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
+        update_agency_messages("MS-106", &message).unwrap();
+
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_after = reviewed[0].msgs.len();
+        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
+
+        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
+        assert_eq!(specific_review[0].msgs[0].uid, uid);
     }
 }

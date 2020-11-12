@@ -95,8 +95,6 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    // use utils::devsetup::*;
-
     use super::*;
     use crate::utils::error::AgencyCommErrorKind;
     use crate::create_keys;
@@ -115,20 +113,13 @@ mod tests {
     }
 
     #[test]	
-    #[cfg(feature = "to_restore")]	
+    #[cfg(feature = "general_test")]	
     fn test_create_key_set_values_and_serialize() {	
-        let _setup = SetupLibraryWallet::init();	
-
-        let (_agent_did, agent_vk) = create_and_store_my_did(Some(MY2_SEED), None).unwrap();	
-        let (my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();	
-        let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();	
-
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);	
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);	
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);	
-
+        let _setup = SetupMocks::init();
+        let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
+        let my_vk = "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9";
         let bytes = CreateKeyBuilder::create()	
-            .for_did(&my_did).unwrap()	
+            .for_did(&to_did).unwrap()	
             .for_verkey(&my_vk).unwrap()	
             .prepare_request().unwrap();	
         assert!(bytes.len() > 0);	

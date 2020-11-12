@@ -127,27 +127,11 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
 
 #[cfg(test)]
 mod tests {
-    // #[cfg(any(feature = "agency_pool_tests"))]
-    // use std::thread;
-    // #[cfg(any(feature = "agency_pool_tests"))]
-    // use std::time::Duration;
-
-    // use agency_client::get_message::download_messages_noauth;
-    // use agency_client::MessageStatusCode;
-    // use agency_client::mocking::AgencyMockDecrypted;
-    // use agency_client::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
-    // use connection::send_generic_message;
-    // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
     use crate::utils::constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
     use crate::utils::test_utils::SetupMocks;
 
-    use crate::MessageStatusCode;
-    use crate::agency_settings;
-    use crate::get_message::download_messages_noauth;
-    use crate::update_message::{update_agency_messages, UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
-    use std::thread;
+    use crate::update_message::UpdateMessageStatusByConnectionsBuilder;
     use crate::mocking;
-    use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -155,43 +139,5 @@ mod tests {
         let _setup = SetupMocks::init();
         mocking::AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).unwrap();
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[test]
-    fn test_update_agency_messages() {
-        let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
-
-        send_generic_message(faber_to_alice, "Hello 1").unwrap();
-        send_generic_message(faber_to_alice, "Hello 2").unwrap();
-        send_generic_message(faber_to_alice, "Hello 3").unwrap();
-
-        thread::sleep(Duration::from_millis(1000));
-        ::utils::devsetup::set_consumer(None);
-
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 3);
-        let pairwise_did = received[0].pairwise_did.clone();
-        let uid = received[0].msgs[0].uid.clone();
-
-        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        let reviewed_count_before = reviewed[0].msgs.len();
-
-        // update status
-        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
-        update_agency_messages("MS-106", &message).unwrap();
-
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
-
-        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        let reviewed_count_after = reviewed[0].msgs.len();
-        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
-
-        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
-        assert_eq!(specific_review[0].msgs[0].uid, uid);
     }
 }

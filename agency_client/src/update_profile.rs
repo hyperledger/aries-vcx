@@ -110,20 +110,11 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    // use agency_client::{agency_settings, update_data};
-    // use agency_client::mocking::AgencyMockDecrypted;
-    // use libindy::utils::signus::create_and_store_my_did;
-    // use agency_client::utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
-    // use utils::devsetup::*;
     use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
-
-    // use super::*;
-
     use crate::update_profile::UpdateProfileDataBuilder;
-    use crate::mocking::{AgencyMockDecrypted };
+    use crate::mocking::AgencyMockDecrypted;
     use crate::utils::test_utils::SetupMocks;
     use crate::{update_data, agency_settings};
-    use crate::utils::constants::{MY3_SEED, MY1_SEED, MY2_SEED};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -137,26 +128,6 @@ mod tests {
             .to(to_did).unwrap()
             .name(&name).unwrap()
             .prepare_request().unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "to_restore")]
-    fn test_update_data_set_values_and_post() {
-        let _setup = SetupLibraryWallet::init();
-
-        let (agent_did, agent_vk) = create_and_store_my_did(Some(MY2_SEED), None).unwrap();
-        let (_my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();
-        let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();
-
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
-
-        let msg = update_data()
-            .to(agent_did.as_ref()).unwrap()
-            .name("name").unwrap()
-            .prepare_request().unwrap();
-        assert!(msg.len() > 0);
     }
 
     #[test]

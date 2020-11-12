@@ -66,7 +66,6 @@ pub mod tests {
     use super::*;
     use utils::constants::*;
     use utils::devsetup::*;
-    use agency_client::httpclient::HttpClientMockResponse;
     use utils::mockdata::mockdata_proof;
 
     #[test]
