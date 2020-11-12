@@ -1,18 +1,12 @@
 #![crate_name = "agency_comm"]
-extern crate base64;
-extern crate chrono;
 extern crate failure;
 extern crate futures;
-extern crate indy_sys;
 extern crate indyrs as indy;
 #[macro_use]
 extern crate lazy_static;
-extern crate libc;
 #[macro_use]
 extern crate log;
-extern crate openssl;
-extern crate rand;
-extern crate regex;
+extern crate libc;
 extern crate reqwest;
 extern crate rmp_serde;
 extern crate serde;
@@ -20,11 +14,7 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate strum;
-extern crate strum_macros;
-extern crate time;
 extern crate url;
-extern crate uuid;
 
 use std::u8;
 

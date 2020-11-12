@@ -20,21 +20,13 @@ name = "agency_comm"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "base64 0.8.0",
- "chrono",
  "env_logger",
  "failure",
  "futures",
  "indy",
- "indy-sys",
- "json",
  "lazy_static",
  "libc",
- "libloading",
  "log",
- "num-traits",
- "openssl",
- "rand 0.3.23",
  "regex",
  "reqwest",
  "rmp-serde",
@@ -42,13 +34,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "strum",
- "strum_macros",
- "time",
- "tokio-threadpool",
- "toml",
  "url 1.7.2",
- "uuid",
 ]
 
 [[package]]
