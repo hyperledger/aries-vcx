@@ -1,7 +1,7 @@
-use futures::Future;
 use indy;
 use indy::ErrorCode;
 use indy_sys::WalletHandle;
+use indy::future::Future;
 
 use crate::{settings, utils};
 use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
@@ -12,7 +12,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::threadpool::init();
+    utils::runtime::init_runtime();
     Ok(())
 }
 

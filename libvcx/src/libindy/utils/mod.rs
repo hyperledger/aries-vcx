@@ -49,7 +49,7 @@ impl LibindyMock {
 #[allow(unused_imports)]
 #[cfg(test)]
 pub mod tests {
-    use futures::Future;
+    use indy::future::Future;
 
     use crate::init::open_pool;
     use crate::settings;

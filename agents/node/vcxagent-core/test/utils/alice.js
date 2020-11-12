@@ -7,7 +7,7 @@ module.exports.createAlice = async function createAlice () {
   const connectionId = 'connection-alice-to-faber'
   const holderCredentialId = 'credential-of-alice'
   const disclosedProofId = 'proof-from-alice'
-  const logger = require('../../../vcxagent-cli/logger')('Alice')
+  const logger = require('../../demo/logger')('Alice')
 
   const aliceAgentConfig = {
     agentName,

@@ -11,7 +11,7 @@ use crate::libindy::utils::wallet::{export_main_wallet, import};
 use crate::utils;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -209,7 +209,7 @@ pub extern fn vcx_wallet_get_token_info(command_handle: CommandHandle,
     trace!("vcx_wallet_get_token_info(command_handle: {}, payment_handle: {})",
            command_handle, payment_handle);
 
-    spawn(move || {
+    execute(move || {
         match get_wallet_token_info() {
             Ok(x) => {
                 trace!("vcx_wallet_get_token_info_cb(command_handle: {}, rc: {}, info: {})",
@@ -260,7 +260,7 @@ pub extern fn vcx_wallet_create_payment_address(command_handle: CommandHandle,
     trace!("vcx_wallet_create_payment_address(command_handle: {})",
            command_handle);
 
-    spawn(move || {
+    execute(move || {
         match create_address(seed) {
             Ok(x) => {
                 trace!("vcx_wallet_create_payment_address_cb(command_handle: {}, rc: {}, address: {})",
@@ -311,7 +311,7 @@ pub extern fn vcx_wallet_sign_with_address(command_handle: CommandHandle,
     trace!("vcx_wallet_sign_with_address(command_handle: {}, payment_address: {}, message_raw: {:?})",
            command_handle, payment_address, message_raw);
 
-    spawn(move || {
+    execute(move || {
         match sign_with_address(&payment_address, message_raw.as_slice()) {
             Ok(signature) => {
                 trace!("vcx_wallet_sign_with_address_cb(command_handle: {}, rc: {}, signature: {:?})",
@@ -367,7 +367,7 @@ pub extern fn vcx_wallet_verify_with_address(command_handle: CommandHandle,
     trace!("vcx_wallet_verify_with_address(command_handle: {}, payment_address: {}, message_raw: {:?}, signature_raw: {:?})",
            command_handle, payment_address, message_raw, signature_raw);
 
-    spawn(move || {
+    execute(move || {
         match verify_with_address(&payment_address, message_raw.as_slice(), signature_raw.as_slice()) {
             Ok(valid) => {
                 trace!("vcx_wallet_verify_with_address_cb(command_handle: {}, rc: {}, valid: {})",
@@ -434,7 +434,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
     trace!("vcx_wallet_add_record(command_handle: {}, type_: {}, id: {}, value: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&value), secret!(&tags_json));
 
-    spawn(move || {
+    execute(move || {
         match wallet::add_record(&type_, &id, &value, Some(&tags_json)) {
             Ok(()) => {
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
@@ -489,7 +489,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
     trace!("vcx_wallet_update_record_value(command_handle: {}, type_: {}, id: {}, value: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&value));
 
-    spawn(move || {
+    execute(move || {
         match wallet::update_record_value(&type_, &id, &value) {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
@@ -544,7 +544,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_update_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
-    spawn(move || {
+    execute(move || {
         match wallet::update_record_tags(&type_, &id, &tags_json) {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
@@ -599,7 +599,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_add_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
-    spawn(move || {
+    execute(move || {
         match wallet::add_record_tags(&type_, &id, &tags_json) {
             Ok(()) => {
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
@@ -654,7 +654,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_delete_record_tags(command_handle: {}, type_: {}, id: {}, tag_names_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tag_names_json));
 
-    spawn(move || {
+    execute(move || {
         match wallet::delete_record_tags(&type_, &id, &tag_names_json) {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
@@ -708,7 +708,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
     trace!("vcx_wallet_get_record(command_handle: {}, type_: {}, id: {}, options: {})",
            command_handle, secret!(&type_), secret!(&id), options_json);
 
-    spawn(move || {
+    execute(move || {
         match wallet::get_record(&type_, &id, &options_json) {
             Ok(x) => {
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
@@ -763,7 +763,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
     trace!("vcx_wallet_delete_record(command_handle: {}, type_: {}, id: {})",
            command_handle, secret!(&type_), secret!(&id));
 
-    spawn(move || {
+    execute(move || {
         match wallet::delete_record(&type_, &id) {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
@@ -821,7 +821,7 @@ pub extern fn vcx_wallet_send_tokens(command_handle: CommandHandle,
     trace!("vcx_wallet_send_tokens(command_handle: {}, payment_handle: {}, tokens: {}, recipient: {})",
            command_handle, payment_handle, tokens, recipient);
 
-    spawn(move || {
+    execute(move || {
         match pay_a_payee(tokens, &recipient) {
             Ok((_payment, msg)) => {
                 trace!("vcx_wallet_send_tokens_cb(command_handle: {}, rc: {}, receipt: {})",
@@ -888,7 +888,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
     trace!("vcx_wallet_open_search(command_handle: {}, type_: {}, query_json: {}, options_json: {})",
            command_handle, secret!(&type_), secret!(&query_json), secret!(&options_json));
 
-    spawn(move || {
+    execute(move || {
         match wallet::open_search(&type_, &query_json, &options_json) {
             Ok(x) => {
                 trace!("vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
@@ -943,7 +943,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
     trace!("vcx_wallet_search_next_records(command_handle: {}, wallet_search_handle: {})",
            command_handle, wallet_search_handle);
 
-    spawn(move || {
+    execute(move || {
         match wallet::fetch_next_records(wallet_search_handle, count) {
             Ok(x) => {
                 trace!("vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
@@ -991,7 +991,7 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
     trace!("vcx_wallet_close_search(command_handle: {}, search_handle: {})",
            command_handle, search_handle);
 
-    spawn(move || {
+    execute(move || {
         trace!("vcx_wallet_close_search(command_handle: {}, rc: {})",
                command_handle, error::SUCCESS.message);
         match wallet::close_search(search_handle) {
@@ -1040,7 +1040,7 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
            command_handle, path);
 
 
-    spawn(move || {
+    execute(move || {
         trace!("vcx_wallet_export(command_handle: {}, path: {}, backup_key: ****)", command_handle, path);
         match export_main_wallet(&path, &backup_key) {
             Ok(()) => {
@@ -1133,7 +1133,7 @@ pub extern fn vcx_wallet_validate_payment_address(command_handle: i32,
     trace!("vcx_wallet_validate_payment_address(command_handle: {}, payment_address: {})",
            command_handle, payment_address);
 
-    spawn(move || {
+    execute(move || {
         cb(command_handle, error::SUCCESS.code_num);
         Ok(())
     });

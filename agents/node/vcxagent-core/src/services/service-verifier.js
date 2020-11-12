@@ -17,8 +17,8 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     const proof = await loadProof(proofId)
     await proof.requestProof(connection)
     const state = await proof.getState()
+    const proofRequestMessage = await proof.getProofRequestMessage()
     await saveProof(proofId, proof)
-    const proofRequestMessage = proof.getProofRequestMessage()
     return { state, proofRequestMessage }
   }
 

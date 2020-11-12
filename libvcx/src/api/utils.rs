@@ -14,7 +14,7 @@ use crate::libindy::utils::payments;
 use crate::utils::constants::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -197,7 +197,7 @@ pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
         }
     };
 
-    spawn(move || {
+    execute(move || {
         error!("vcx_agent_update_info is not supported anymore");
         cb(command_handle, error::NOT_READY.code_num);
         Ok(())
@@ -226,7 +226,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
     trace!("vcx_ledger_get_fees(command_handle: {})",
            command_handle);
 
-    spawn(move || {
+    execute(move || {
         match crate::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
@@ -310,7 +310,7 @@ pub extern fn vcx_download_agent_messages(command_handle: u32,
     trace!("vcx_download_agent_messages(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, uids);
 
-    spawn(move || {
+    execute(move || {
         error!("vcx_download_agent_messages is not supported anymore");
         cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
@@ -392,7 +392,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
     trace!("vcx_messages_download(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, uids);
 
-    spawn(move || {
+    execute(move || {
         match agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
@@ -476,7 +476,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
     trace!("vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
            command_handle, message_statuses, uids);
 
-    spawn(move || {
+    execute(move || {
         match connection::download_messages(conn_handles, message_statuses, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
@@ -545,7 +545,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     trace!("vcx_messages_set_status(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, msg_json);
 
-    spawn(move || {
+    execute(move || {
         match agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
@@ -614,7 +614,7 @@ pub extern fn vcx_get_request_price(command_handle: CommandHandle,
     trace!(target: "vcx", "vcx_get_request_price(command_handle: {}, action_json: {}, requester_info_json: {:?})",
            command_handle, action_json, requester_info_json);
 
-    spawn(move || {
+    execute(move || {
         match payments::get_request_price(action_json, requester_info_json) {
             Ok(x) => {
                 trace!(target: "vcx", "vcx_get_request_price(command_handle: {}, rc: {}, handle: {})",
@@ -655,7 +655,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
     trace!("vcx_endorse_transaction(command_handle: {}, transaction: {})",
            command_handle, transaction);
 
-    spawn(move || {
+    execute(move || {
         match crate::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",

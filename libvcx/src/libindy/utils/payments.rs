@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use futures::Future;
+use indy::future::Future;
 use indy::payments;
 use serde_json::Value;
 
