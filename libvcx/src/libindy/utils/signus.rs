@@ -1,4 +1,4 @@
-use futures::Future;
+use indy::future::Future;
 use indy::did;
 
 use crate::{settings, utils};

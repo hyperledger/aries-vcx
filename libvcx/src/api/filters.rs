@@ -7,7 +7,7 @@ use crate::error::prelude::*;
 use crate::filters;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///
@@ -34,7 +34,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
     trace!("vcx_filter_proof_requests_by_name(command_handle: {}, requests: {}, match_name: {})",
            command_handle, requests, match_name);
 
-    spawn(move || {
+    execute(move || {
         match filters::filter_proof_requests_by_name(&requests, &match_name) {
             Ok(x) => {
                 trace!("vcx_filter_proof_requests_by_name_cb(command_handle: {}, requests: {}, rc: {}, requests: {})",

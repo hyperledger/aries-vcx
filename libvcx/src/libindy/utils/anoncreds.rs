@@ -1,4 +1,4 @@
-use futures::Future;
+use indy::future::Future;
 use indy::{anoncreds, blob_storage, ledger};
 use serde_json;
 use serde_json::{map::Map, Value};
