@@ -2,7 +2,7 @@ use std::string::ToString;
 
 use serde_json;
 
-use agency_comm::ObjectWithVersion;
+use agency_client::ObjectWithVersion;
 use api::PublicEntityStateType;
 use error::prelude::*;
 use libindy::utils::anoncreds;

@@ -16,7 +16,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee2a4ec343196209d6594e19543ae87a39f96d5534d7174822a3ad825dd6ed7e"
 
 [[package]]
-name = "agency_comm"
+name = "agency_client"
 version = "0.1.0"
 dependencies = [
  "android_logger",
@@ -689,7 +689,7 @@ dependencies = [
 name = "libvcx"
 version = "0.13.1"
 dependencies = [
- "agency_comm",
+ "agency_client",
  "android_logger",
  "base64 0.8.0",
  "chrono",

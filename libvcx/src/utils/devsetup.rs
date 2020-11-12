@@ -8,8 +8,8 @@ use serde_json::Value;
 
 use ::{indy, init};
 use ::{settings, utils};
-use agency_comm::agency_settings;
-use agency_comm::mocking::AgencyMockDecrypted;
+use agency_client::agency_settings;
+use agency_client::mocking::AgencyMockDecrypted;
 use libindy::utils::pool::reset_pool_handle;
 use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};

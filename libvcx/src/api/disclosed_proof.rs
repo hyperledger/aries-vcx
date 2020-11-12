@@ -994,7 +994,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use api::VcxStateType;
     use utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};

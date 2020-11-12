@@ -470,7 +470,7 @@ jobs:
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test aries" && \
-                                cd $HOME/agency_comm && \
+                                cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test")'
 
   test-libvcx-image-pool_tests:

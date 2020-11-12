@@ -88,7 +88,7 @@ pub mod tests {
                 }
             }
 
-            let _res = ::agency_comm::get_message::download_messages_noauth(None, None, Some(vec![uid.clone()])).unwrap();
+            let _res = ::agency_client::get_message::download_messages_noauth(None, None, Some(vec![uid.clone()])).unwrap();
 
             info!("test_connection_send_works:: Test if Get Message by id works");
             {
@@ -135,7 +135,7 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Download Messages");
             {
-                use agency_comm::get_message::{download_messages_noauth, MessageByConnection, Message};
+                use agency_client::get_message::{download_messages_noauth, MessageByConnection, Message};
 
                 let credential_offer = ::aries::messages::issuance::credential_offer::tests::_credential_offer();
 

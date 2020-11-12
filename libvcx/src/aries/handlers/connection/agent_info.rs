@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use agency_comm::get_message::{get_connection_messages, Message};
-use agency_comm::{MessageStatusCode, agency_settings};
-use agency_comm::update_connection::send_delete_connection_message;
-use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
+use agency_client::get_message::{get_connection_messages, Message};
+use agency_client::{MessageStatusCode, agency_settings};
+use agency_client::update_connection::send_delete_connection_message;
+use agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
@@ -11,7 +11,7 @@ use connection::create_agent_keys;
 use error::prelude::*;
 use libindy::utils::signus::create_and_store_my_did;
 use settings;
-use agency_comm::httpclient;
+use agency_client::httpclient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {

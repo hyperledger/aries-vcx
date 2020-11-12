@@ -1,10 +1,10 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, prepare_message_for_agency};
-use agency_comm::mocking::agency_mocks_enabled;
-use agency_comm::message_type::MessageTypes;
-use agency_comm::utils::agent_utils;
+use agency_client::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, prepare_message_for_agency};
+use agency_client::mocking::agency_mocks_enabled;
+use agency_client::message_type::MessageTypes;
+use agency_client::utils::agent_utils;
 use utils::option_util::get_or_default;
 use libindy::utils::{anoncreds, wallet, signus};
 use error::prelude::*;

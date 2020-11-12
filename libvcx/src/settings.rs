@@ -11,7 +11,7 @@ use serde_json::Value;
 use strum::IntoEnumIterator;
 use url::Url;
 
-use agency_comm::agency_settings;
+use agency_client::agency_settings;
 use error::prelude::*;
 use utils::{error, get_temp_dir_path};
 use utils::file::read_file;
@@ -336,7 +336,7 @@ pub fn clear_config() {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_comm::agency_settings;
+    use agency_client::agency_settings;
     use utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;

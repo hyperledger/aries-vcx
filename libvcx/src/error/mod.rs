@@ -8,7 +8,7 @@ use libc::c_char;
 
 use utils::cstring::CStringUtils;
 use utils::error;
-use agency_comm;
+use agency_client;
 
 pub mod prelude {
     pub use super::{err_msg, get_current_error_c_json, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -285,8 +285,8 @@ impl From<VcxErrorKind> for VcxError {
     }
 }
 
-impl From<agency_comm::utils::error::AgencyCommError> for VcxError {
-    fn from(agency_err: agency_comm::utils::error::AgencyCommError) -> VcxError {
+impl From<agency_client::utils::error::AgencyCommError> for VcxError {
+    fn from(agency_err: agency_client::utils::error::AgencyCommError) -> VcxError {
         let kind_num: u32 = agency_err.kind().into();
         VcxError::from_msg(kind_num.into(), ::utils::error::error_message(&agency_err.kind().clone().into()))
     }

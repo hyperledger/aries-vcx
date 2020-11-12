@@ -1,5 +1,5 @@
 [package]
-name = "agency_comm"
+name = "agency_client"
 version = "0.1.0"
 authors = ["Miroslav Kovar <miroslavkovar@protonmail.com>"]
 edition = "2018"

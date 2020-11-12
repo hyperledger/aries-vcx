@@ -1,7 +1,7 @@
 use futures::Future;
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
-use agency_comm::utils::wallet as agency_wallet;
+use agency_client::utils::wallet as agency_wallet;
 
 use error::prelude::*;
 use init::open_as_main_wallet;
@@ -308,7 +308,7 @@ pub mod tests {
     use utils::get_temp_dir_path;
 
     use super::*;
-    use agency_comm::agency_settings;
+    use agency_client::agency_settings;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")

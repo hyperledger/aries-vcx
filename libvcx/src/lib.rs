@@ -29,7 +29,7 @@ extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
-extern crate agency_comm;
+extern crate agency_client;
 
 #[macro_use]
 pub mod utils;

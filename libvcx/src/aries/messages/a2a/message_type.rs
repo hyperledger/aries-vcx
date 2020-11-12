@@ -1,7 +1,7 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::message_type::parse_message_type;
+use agency_client::message_type::parse_message_type;
 use aries::messages::a2a::message_family::MessageFamilies;
 
 #[derive(Debug, Clone, PartialEq, Default)]

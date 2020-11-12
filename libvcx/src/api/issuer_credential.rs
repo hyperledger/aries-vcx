@@ -843,7 +843,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::{return_types_u32, VcxStateType};
     use settings;
     use utils::constants::*;

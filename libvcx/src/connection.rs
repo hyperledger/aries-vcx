@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use agency_comm;
-use agency_comm::{MessageStatusCode, SerializableObjectWithState};
-use agency_comm::get_message::{Message, MessageByConnection};
+use agency_client;
+use agency_client::{MessageStatusCode, SerializableObjectWithState};
+use agency_client::get_message::{Message, MessageByConnection};
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::connection::{Connection, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
@@ -22,7 +22,7 @@ lazy_static! {
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
-    let (agent_did, agent_verkey) = agency_comm::create_keys()
+    let (agent_did, agent_verkey) = agency_client::create_keys()
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
         .send_secure()
@@ -321,9 +321,9 @@ pub mod tests {
 
     use serde_json::Value;
 
-    use agency_comm::get_message::download_messages_noauth;
-    use agency_comm::MessageStatusCode;
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::get_message::download_messages_noauth;
+    use agency_client::MessageStatusCode;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::VcxStateType;
     use utils::constants::*;
     use utils::constants;

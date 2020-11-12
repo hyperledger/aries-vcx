@@ -110,10 +110,10 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    // use agency_comm::{agency_settings, update_data};
-    // use agency_comm::mocking::AgencyMockDecrypted;
+    // use agency_client::{agency_settings, update_data};
+    // use agency_client::mocking::AgencyMockDecrypted;
     // use libindy::utils::signus::create_and_store_my_did;
-    // use agency_comm::utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
+    // use agency_client::utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     // use utils::devsetup::*;
     use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
 

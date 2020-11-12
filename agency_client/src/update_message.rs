@@ -132,10 +132,10 @@ mod tests {
     // #[cfg(any(feature = "agency_pool_tests"))]
     // use std::time::Duration;
 
-    // use agency_comm::get_message::download_messages_noauth;
-    // use agency_comm::MessageStatusCode;
-    // use agency_comm::mocking::AgencyMockDecrypted;
-    // use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
+    // use agency_client::get_message::download_messages_noauth;
+    // use agency_client::MessageStatusCode;
+    // use agency_client::mocking::AgencyMockDecrypted;
+    // use agency_client::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     // use connection::send_generic_message;
     // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
     use crate::utils::constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;

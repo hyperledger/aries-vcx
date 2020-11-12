@@ -1,4 +1,4 @@
-#![crate_name = "agency_comm"]
+#![crate_name = "agency_client"]
 extern crate failure;
 extern crate futures;
 extern crate indyrs as indy;

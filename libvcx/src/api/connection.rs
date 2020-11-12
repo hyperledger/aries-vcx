@@ -1207,7 +1207,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::{return_types_u32, VcxStateType};
     use connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};

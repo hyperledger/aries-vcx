@@ -245,7 +245,7 @@ mod tests {
     use crate::utils::agent_utils::{update_agent_webhook, ComMethodType};
 
     // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    // use agency_comm::utils::agent_utils::{ComMethodType, update_agent_webhook};
+    // use agency_client::utils::agent_utils::{ComMethodType, update_agent_webhook};
 
     #[test]
     #[cfg(feature = "general_test")]

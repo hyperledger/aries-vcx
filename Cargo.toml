@@ -2,7 +2,7 @@
 
 members = [
     "libvcx",
-    "agency_comm"
+    "agency_client"
 ]
 
 [profile.release]

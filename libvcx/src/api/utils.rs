@@ -5,9 +5,9 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use agency_comm;
-use agency_comm::get_message::{parse_connection_handles, parse_status_codes};
-use agency_comm::mocking::AgencyMock;
+use agency_client;
+use agency_client::get_message::{parse_connection_handles, parse_status_codes};
+use agency_client::mocking::AgencyMock;
 use connection;
 use error::prelude::*;
 use libindy::utils::payments;
@@ -329,7 +329,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::agency_comm::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match ::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -482,7 +482,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     spawn(move || {
-        match ::agency_comm::update_message::update_agency_messages(&message_status, &msg_json) {
+        match ::agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -617,7 +617,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use utils::constants;
     use utils::devsetup::*;

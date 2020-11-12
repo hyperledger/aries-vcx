@@ -12,7 +12,7 @@ pub mod test {
     use rand::Rng;
 
     use utils::provision::connect_register_provision;
-    use agency_comm::payload::{PayloadKinds};
+    use agency_client::payload::{PayloadKinds};
     use utils::devsetup::*;
     use libindy::utils::wallet::*;
     use utils::plugins::init_plugin;
@@ -77,7 +77,7 @@ pub mod test {
     }
 
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
-        let mut messages = ::agency_comm::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+        let mut messages = ::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 

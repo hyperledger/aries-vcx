@@ -42,7 +42,7 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_comm=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_client=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'

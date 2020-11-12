@@ -1,4 +1,4 @@
-use agency_comm::mocking::AgencyMockDecrypted;
+use agency_client::mocking::AgencyMockDecrypted;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::forward::Forward;
@@ -127,7 +127,7 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_comm::agency_settings;
+    use agency_client::agency_settings;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
     use libindy::utils::crypto::create_key;
