@@ -10,7 +10,7 @@ module.exports.createFaber = async function createFaber () {
   const issuerCredId = 'credential-for-alice'
   let credDefId
   const proofId = 'proof-from-alice'
-  const logger = require('../../../vcxagent-cli/logger')('Faber')
+  const logger = require('../../demo/logger')('Faber')
 
   const faberAgentConfig = {
     agentName,
@@ -101,7 +101,9 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
     const issuerDid = vcxAgent.getInstitutionDid()
     const proofData = getFaberProofData(issuerDid, proofId)
+    logger.info(`Faber is creating proof ${proofId}`)
     await vcxAgent.serviceVerifier.createProof(proofId, proofData)
+    logger.info(`Faber is sending proof request to connection ${connectionId}`)
     const { state, proofRequestMessage } = await vcxAgent.serviceVerifier.sendProofRequest(connectionId, proofId)
     expect(state).toBe(StateType.OfferSent)
     await vcxAgent.agentShutdownVcx()

@@ -1,7 +1,7 @@
 use std::fs;
 use std::sync::Once;
 
-use futures::Future;
+use indy::future::Future;
 use indy::WalletHandle;
 use rand::Rng;
 use serde_json::Value;
@@ -14,7 +14,7 @@ use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
 use crate::libindy::utils::wallet;
 use crate::settings::set_testing_defaults;
-use crate::utils::{get_temp_dir_path, threadpool};
+use crate::utils::{get_temp_dir_path, runtime};
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::logger::LibvcxDefaultLogger;
@@ -61,15 +61,15 @@ pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 age
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
 fn setup() {
+    init_test_logging();
     settings::clear_config();
     set_testing_defaults();
-    threadpool::init(None);
-    init_test_logging();
+    runtime::init_runtime();
 }
 
 fn setup_empty() {
     settings::clear_config();
-    threadpool::init(None);
+    runtime::init_runtime();
     init_test_logging();
 }
 

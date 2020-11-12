@@ -7,7 +7,7 @@ use crate::{connection, disclosed_proof};
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.
@@ -81,7 +81,7 @@ pub extern fn vcx_disclosed_proof_create_with_request(command_handle: CommandHan
     trace!("vcx_disclosed_proof_create_with_request(command_handle: {}, source_id: {}, proof_req: {})",
            command_handle, source_id, proof_req);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::create_proof(&source_id, &proof_req) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_create_with_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -133,7 +133,7 @@ pub extern fn vcx_disclosed_proof_create_with_msgid(command_handle: CommandHandl
     trace!("vcx_disclosed_proof_create_with_msgid(command_handle: {}, source_id: {}, connection_handle: {}, msg_id: {})",
            command_handle, source_id, connection_handle, msg_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::create_proof_with_msgid(&source_id, connection_handle, &msg_id) {
             Ok((handle, request)) => {
                 trace!("vcx_disclosed_proof_create_with_msgid_cb(command_handle: {}, rc: {}, handle: {}, proof_req: {}) source_id: {}",
@@ -182,7 +182,7 @@ pub extern fn vcx_disclosed_proof_send_proof(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_send_proof(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::send_proof(proof_handle, connection_handle) {
             Ok(_) => {
                 trace!("vcx_disclosed_proof_send_proof_cb(command_handle: {}, rc: {}) source_id: {}",
@@ -236,7 +236,7 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_reject_proof(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::reject_proof(proof_handle, connection_handle) {
             Ok(_) => {
                 trace!("vcx_disclosed_proof_reject_proof_cb(command_handle: {}, rc: {}) source_id: {}",
@@ -283,7 +283,7 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_proof_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::generate_proof_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
@@ -331,7 +331,7 @@ pub extern fn vcx_disclosed_proof_get_reject_msg(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_reject_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::generate_reject_proof_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
@@ -379,7 +379,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_requests(command_handle: {}, connection_handle: {})",
            command_handle, connection_handle);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::get_proof_request_messages(connection_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
@@ -430,7 +430,7 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_state(command_handle: {}, proof_handle: {}), source_id: {:?}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::get_state(proof_handle) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_get_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -466,7 +466,7 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
     trace!("vcx_disclosed_proof_get_attachment(command_handle: {}, proof_handle: {}), source_id: {:?}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::get_proof_request_attachment(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
@@ -517,7 +517,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
     trace!("vcx_v2_disclosed_proof_update_state(command_handle: {} proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::update_state(proof_handle, None, connection_handle) {
             Ok(s) => {
                 trace!("vcx_v2_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -586,7 +586,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: C
     trace!("vcx_v2_disclosed_proof_update_state_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::update_state(proof_handle, Some(&message), connection_handle) {
             Ok(state) => {
                 trace!("vcx_v2_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -633,7 +633,7 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_serialize(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::to_string(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_serialize_cb(command_handle: {}, rc: {}, data: {}) source_id: {}",
@@ -678,7 +678,7 @@ pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_deserialize(command_handle: {}, proof_data: {})",
            command_handle, proof_data);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::from_string(&proof_data) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_deserialize_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
@@ -729,7 +729,7 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
     trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::retrieve_credentials(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, rc: {}, data: {}) source_id: {}",
@@ -811,7 +811,7 @@ pub extern fn vcx_disclosed_proof_generate_proof(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_generate_proof(command_handle: {}, proof_handle: {}, selected_credentials: {}, self_attested_attrs: {}) source_id: {}",
            command_handle, proof_handle, selected_credentials, self_attested_attrs, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::generate_proof(proof_handle, selected_credentials, self_attested_attrs) {
             Ok(_) => {
                 trace!("vcx_disclosed_proof_generate_proof(command_handle: {}, rc: {}) source_id: {}",
@@ -917,7 +917,7 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
     trace!("vcx_disclosed_proof_decline_presentation_request(command_handle: {}, proof_handle: {}, connection_handle: {}, reason: {:?}, proposal: {:?}) source_id: {}",
            command_handle, proof_handle, connection_handle, reason, proposal, source_id);
 
-    spawn(move || {
+    execute(move || {
         match disclosed_proof::decline_presentation_request(proof_handle, connection_handle, reason, proposal) {
             Ok(_) => {
                 trace!("vcx_disclosed_proof_decline_presentation_request(command_handle: {}, rc: {}) source_id: {}",
@@ -1082,12 +1082,13 @@ mod tests {
                                                       CString::new("{}").unwrap().into_raw(),
                                                       CString::new("{}").unwrap().into_raw(),
                                                       Some(cb.get_callback())), error::SUCCESS.code_num);
+        let _s = cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_disclosed_proof_get_proof_msg(cb.command_handle,
                                                      handle,
                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
-        let _s = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
+        let _s = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
     #[test]

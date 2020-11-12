@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use futures::Future;
+use indy::future::Future;
 use indy::cache;
 use indy::ledger;
 use serde_json;

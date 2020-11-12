@@ -9,7 +9,7 @@ use crate::connection::*;
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -125,7 +125,7 @@ pub extern fn vcx_connection_delete_connection(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
     trace!("vcx_connection_delete_connection(command_handle: {}, connection_handle: {})", command_handle, connection_handle);
-    spawn(move || {
+    execute(move || {
         match delete_connection(connection_handle) {
             Ok(_) => {
                 trace!("vcx_connection_delete_connection_cb(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
@@ -166,7 +166,7 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
 
     trace!("vcx_connection_create(command_handle: {}, source_id: {})", command_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match create_connection(&source_id) {
             Ok(handle) => {
                 trace!("vcx_connection_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -221,7 +221,7 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
     check_useful_c_str!(invite_details, VcxErrorKind::InvalidOption);
     trace!("vcx_connection_create_with_invite(command_handle: {}, source_id: {})", command_handle, source_id);
-    spawn(move || {
+    execute(move || {
         match create_connection_with_invite(&source_id, &invite_details) {
             Ok(handle) => {
                 trace!("vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -284,7 +284,7 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
     trace!("vcx_connection_connect(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match connect(connection_handle) {
             Ok(invitation) => {
                 let invitation = invitation.unwrap_or(String::from("{}"));
@@ -329,7 +329,7 @@ pub extern fn vcx_connection_redirect(command_handle: CommandHandle,
     trace!("vcx_connection_redirect(command_handle: {}, connection_handle: {}, redirect_connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, redirect_connection_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         error!("Action not supported");
         cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num);
         Ok(())
@@ -355,7 +355,7 @@ pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         error!("Action not supported");
         cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
         Ok(())
@@ -392,7 +392,7 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match to_string(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -435,7 +435,7 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_connection_deserialize(command_handle: {}, connection_data: {})", command_handle, connection_data);
 
-    spawn(move || {
+    execute(move || {
         let (rc, handle) = match from_string(&connection_data) {
             Ok(x) => {
                 let source_id = get_source_id(x).unwrap_or_default();
@@ -492,7 +492,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         let rc = match update_state(connection_handle) {
             Ok(x) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
@@ -551,7 +551,7 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
         Err(_) => return VcxError::from(VcxErrorKind::InvalidJson).into(),
     };
 
-    spawn(move || {
+    execute(move || {
         let result = update_state_with_message(connection_handle, message);
 
         let rc = match result {
@@ -608,7 +608,7 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
         cb(command_handle, error::SUCCESS.code_num, get_state(connection_handle));
@@ -664,7 +664,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match get_invite_details(connection_handle) {
             Ok(str) => {
                 trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
@@ -717,7 +717,7 @@ pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
     trace!("vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {})",
            command_handle, connection_handle, msg);
 
-    spawn(move || {
+    execute(move || {
         match send_generic_message(connection_handle, &msg) {
             Ok(x) => {
                 trace!("vcx_connection_send_message_cb(command_handle: {}, rc: {}, msg_id: {})",
@@ -772,7 +772,7 @@ pub extern fn vcx_connection_send_ping(command_handle: u32,
     trace!("vcx_connection_send_ping(command_handle: {}, connection_handle: {}, comment: {:?})",
            command_handle, connection_handle, comment);
 
-    spawn(move || {
+    execute(move || {
         match send_ping(connection_handle, comment) {
             Ok(()) => {
                 trace!("vcx_connection_send_ping(command_handle: {}, rc: {})",
@@ -842,7 +842,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         Err(e) => return e.into(),
     };
 
-    spawn(move || {
+    execute(move || {
         match libindy::utils::crypto::sign(&vk, &data_raw) {
             Ok(x) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -922,7 +922,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         Err(e) => return e.into(),
     };
 
-    spawn(move || {
+    execute(move || {
         match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
             Ok(x) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
@@ -1011,7 +1011,7 @@ pub extern fn vcx_connection_send_discovery_features(command_handle: u32,
     trace!("vcx_connection_send_discovery_features(command_handle: {}, connection_handle: {}, query: {:?}, comment: {:?})",
            command_handle, connection_handle, query, comment);
 
-    spawn(move || {
+    execute(move || {
         match send_discovery_features(connection_handle, query, comment) {
             Ok(()) => {
                 trace!("vcx_connection_send_discovery_features(command_handle: {}, rc: {})",
@@ -1082,7 +1082,7 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match get_connection_info(connection_handle) {
             Ok(info) => {
                 trace!("vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}), source_id: {:?}",
@@ -1131,7 +1131,7 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match get_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
@@ -1180,7 +1180,7 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match get_their_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",

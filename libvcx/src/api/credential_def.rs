@@ -8,7 +8,7 @@ use crate::{credential_def, settings};
 use crate::error::prelude::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -83,7 +83,7 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
            tag,
            revocation_details);
 
-    spawn(move || {
+    execute(move || {
         let (rc, handle) = match credential_def::create_and_publish_credentialdef(source_id,
                                                                                   credentialdef_name,
                                                                                   issuer_did,
@@ -136,7 +136,7 @@ pub extern fn vcx_credentialdef_serialize(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     };
 
-    spawn(move || {
+    execute(move || {
         match credential_def::to_string(credentialdef_handle) {
             Ok(x) => {
                 trace!("vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -179,7 +179,7 @@ pub extern fn vcx_credentialdef_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_credentialdef_deserialize(command_handle: {}, credentialdef_data: {})", command_handle, credentialdef_data);
 
-    spawn(move || {
+    execute(move || {
         let (rc, handle) = match credential_def::from_string(&credentialdef_data) {
             Ok(x) => {
                 trace!("vcx_credentialdef_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
@@ -223,7 +223,7 @@ pub extern fn vcx_credentialdef_get_cred_def_id(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match credential_def::get_cred_def_id(cred_def_handle) {
             Ok(x) => {
                 trace!("vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: {}) source_id: {}",
@@ -301,7 +301,7 @@ pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match credential_def::update_state(credentialdef_handle) {
             Ok(state) => {
                 trace!("vcx_credentialdef_update_state(command_handle: {}, rc: {}, state: {})",
@@ -351,7 +351,7 @@ pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match credential_def::get_state(credentialdef_handle) {
             Ok(state) => {
                 trace!("vcx_credentialdef_get_state(command_handle: {}, rc: {}, state: {})",
@@ -389,7 +389,7 @@ pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details) {
             Ok(x) => {
                 trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
@@ -427,7 +427,7 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    spawn(move || {
+    execute(move || {
         match credential_def::publish_revocations(credentialdef_handle) {
             Ok(()) => {
                 trace!("vcx_credentialdef_publish_revocations(command_handle: {}, credentialdef_handle: {}, rc: {})",
@@ -458,7 +458,7 @@ pub extern fn vcx_credentialdef_get_tails_hash(command_handle: CommandHandle,
     let source_id = credential_def::get_source_id(handle).unwrap_or_default();
     trace!("vcx_credentialdef_get_tails_hash(command_handle: {}) source_id: {}", command_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential_def::get_tails_hash(handle) {
             Ok(x) => {
                 trace!("vcx_credentialdef_get_tails_hash_cb(command_handle: {}, rc: {}, hash: {}), source_id: {}",
@@ -491,7 +491,7 @@ pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
     let source_id = credential_def::get_source_id(handle).unwrap_or_default();
     trace!("vcx_credentialdef_get_rev_reg_id(command_handle: {}) source_id: {}", command_handle, source_id);
 
-    spawn(move || {
+    execute(move || {
         match credential_def::get_rev_reg_id(handle) {
             Ok(x) => {
                 trace!("vcx_credentialdef_get_rev_reg_id_cb(command_handle: {}, rc: {}, rev_reg_id: {}), source_id: {}",

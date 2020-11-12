@@ -1,7 +1,7 @@
-use futures::Future;
 use indy;
 use indy::ErrorCode;
 use indy_sys::WalletHandle;
+use indy::future::Future;
 
 use crate::{settings, utils};
 use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
@@ -38,7 +38,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::threadpool::init(None);
+    utils::runtime::init_runtime();
     Ok(())
 }
 
@@ -58,7 +58,7 @@ pub fn init_issuer_config(config: &str) -> VcxResult<()> {
     } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_DID).is_none() {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution DID not passed when initializing issuer config and is not already set"))
     }
-        
+
     if let Some(institution_verkey) = config.institution_verkey {
         settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
     } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_VERKEY).is_none() {
