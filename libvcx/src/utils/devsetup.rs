@@ -438,7 +438,7 @@ pub fn set_consumer(consumer_handle: Option<u32>) {
 
 fn change_wallet_handle() {
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
-    unsafe { wallet::WALLET_HANDLE = WalletHandle(wallet_handle.parse::<i32>().unwrap()) }
+    wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
 }
 
 fn assign_trustee_role(institution_handle: Option<u32>) {

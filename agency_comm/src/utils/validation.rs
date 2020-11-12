@@ -58,8 +58,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_did_is_b58_and_valid_length() {
-        let _setup = SetupDefaults::init();
-
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         match validate_did(&to_did) {
             Err(_) => panic!("Should be valid did"),
@@ -70,8 +68,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_did_is_b58_but_invalid_length() {
-        let _setup = SetupDefaults::init();
-
         let to_did = "8XFh8yBzrpJQmNyZzgoT";
         match validate_did(&to_did) {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::InvalidDid),
@@ -82,8 +78,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_validate_did_with_non_base58() {
-        let _setup = SetupDefaults::init();
-
         let to_did = "8*Fh8yBzrpJQmNyZzgoTqB";
         match validate_did(&to_did) {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),
@@ -94,8 +88,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_and_valid_length() {
-        let _setup = SetupDefaults::init();
-
         let verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
             Err(_) => panic!("Should be valid verkey"),
@@ -106,8 +98,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_but_invalid_length() {
-        let _setup = SetupDefaults::init();
-
         let verkey = "8XFh8yBzrpJQmNyZzgoT";
         match validate_verkey(&verkey) {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::InvalidVerkey),
@@ -118,8 +108,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_validate_verkey_with_non_base58() {
-        let _setup = SetupDefaults::init();
-
         let verkey = "*kVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),

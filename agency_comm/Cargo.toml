@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Miroslav Kovar <miroslavkovar@protonmail.com>"]
 edition = "2018"
 
+[features]
+general_test = []
+to_restore = []
+
 [dependencies]
 env_logger = "0.5.10"
 log = "0.4"

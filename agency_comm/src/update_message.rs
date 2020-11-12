@@ -138,20 +138,22 @@ mod tests {
     // use agency_comm::update_message::{UIDsByConn, update_agency_messages, UpdateMessageStatusByConnectionsBuilder};
     // use connection::send_generic_message;
     // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    // use utils::mockdata::mockdata_agency::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    use crate::utils::constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    use crate::utils::test_utils::SetupMocks;
 
     use crate::MessageStatusCode;
+    use crate::agency_settings;
     use crate::get_message::download_messages_noauth;
     use crate::update_message::{update_agency_messages, UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
     use std::thread;
-    use crate::mocking::AgencyMockDecrypted;
+    use crate::mocking;
     use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_parse_parse_update_messages_response() {
+    fn test_parse_update_messages_response() {
         let _setup = SetupMocks::init();
-        AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
+        mocking::AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
         UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).unwrap();
     }
 

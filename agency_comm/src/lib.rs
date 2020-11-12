@@ -530,6 +530,7 @@ pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str) -> Vcx
 }
 
 fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
+    trace!("pack_for_agency_v2 >>>");
     let agent_vk = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
     let my_vk = agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
 
@@ -630,6 +631,7 @@ pub fn bundle_from_u8(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
 }
 
 fn prepare_forward_message(message: Vec<u8>, did: &str) -> VcxResult<Vec<u8>> {
+    trace!("prepare_forward_message >>>");
     let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
 
     let message = ForwardV2::new(did.to_string(), message)?;
@@ -747,15 +749,11 @@ pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
 
 #[cfg(test)]
 pub mod tests {
-    // use utils::devsetup::*;
-
     use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_u8() {
-        let _setup = SetupDefaults::init();
-
         let vec: Vec<i8> = vec![-127, -89, 98, 117, 110, 100, 108, 101, 100, -111, -36, 5, -74];
 
         let buf = to_u8(&vec);
@@ -765,8 +763,6 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_i8() {
-        let _setup = SetupDefaults::init();
-
         let vec: Vec<u8> = vec![129, 167, 98, 117, 110, 100, 108, 101, 100, 145, 220, 19, 13];
         let buf = to_i8(&vec);
         info!("new bundle: {:?}", buf);

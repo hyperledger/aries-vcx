@@ -28,6 +28,7 @@ pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxR
         .send_secure()
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
+    trace!("create_agent_keys <<< agent_did: {}, agent_verkey: {}", agent_did, agent_verkey);
     Ok((agent_did, agent_verkey))
 }
 

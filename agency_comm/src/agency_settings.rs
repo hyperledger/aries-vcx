@@ -149,5 +149,3 @@ pub fn set_config_value(key: &str, value: &str) {
             .insert(key.to_string(), value.to_string());
     }
 }
-
-

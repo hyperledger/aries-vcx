@@ -8,4 +8,5 @@ pub mod option_util;
 pub mod encryption_envelope;
 pub mod wallet;
 pub mod timeout;
+pub mod test_utils;
 pub(super) mod comm;

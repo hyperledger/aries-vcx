@@ -93,3 +93,10 @@ pub fn agency_decrypted_mocks_enabled() -> bool {
     }
 }
 
+pub fn enable_agency_mocks() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "true");
+}
+
+pub fn disable_agency_mocks() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "false");
+}

@@ -58,6 +58,7 @@ impl CreateKeyBuilder {
         trace!("CreateKeyBuilder::send_secure >>>");
 
         if mocking::agency_mocks_enabled() {
+            warn!("CreateKeyBuilder::send_secure >>> agency mocks enabled, setting next mocked response");
             AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
@@ -69,6 +70,7 @@ impl CreateKeyBuilder {
     }
 
     fn prepare_request(&self) -> VcxResult<Vec<u8>> {
+        trace!("CreateKeyBuilder::prepare_request >>>");
         let message = A2AMessage::Version2(
             A2AMessageV2::CreateKey(CreateKey {
                 msg_type: MessageTypes::MessageType(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
@@ -93,25 +95,43 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    // use agency_comm::create_keys;
     // use utils::devsetup::*;
 
     use super::*;
     use crate::utils::error::VcxErrorKind;
     use crate::create_keys;
     use crate::utils::constants;
+    use crate::utils::test_utils::SetupMocks;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_key_set_values() {
-        let _setup = SetupDefaults::init();
-
         let for_did = "11235yBzrpJQmNyZzgoTqB";
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
 
-        create_keys()
+        CreateKeyBuilder::create()
             .for_did(for_did).unwrap()
             .for_verkey(for_verkey).unwrap();
+    }
+
+    #[test]	
+    #[cfg(feature = "to_restore")]	
+    fn test_create_key_set_values_and_serialize() {	
+        let _setup = SetupLibraryWallet::init();	
+
+        let (_agent_did, agent_vk) = create_and_store_my_did(Some(MY2_SEED), None).unwrap();	
+        let (my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();	
+        let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();	
+
+        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);	
+        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);	
+        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);	
+
+        let bytes = CreateKeyBuilder::create()	
+            .for_did(&my_did).unwrap()	
+            .for_verkey(&my_vk).unwrap()	
+            .prepare_request().unwrap();	
+        assert!(bytes.len() > 0);	
     }
 
     #[test]
@@ -119,7 +139,7 @@ mod tests {
     fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
 
-        let mut builder = create_keys();
+        let mut builder = CreateKeyBuilder::create();
 
         let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
 
@@ -130,10 +150,8 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
-        let _setup = SetupDefaults::init();
-
         let for_did = "11235yBzrpJQmNyZzgoT";
-        let res = create_keys()
+        let res = CreateKeyBuilder::create()
             .for_did(for_did)
             .unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidDid);

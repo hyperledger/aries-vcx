@@ -140,17 +140,12 @@ impl GeneralMessage for DeleteConnectionBuilder {
 
 #[cfg(test)]
 mod tests {
-    // use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
-    // use utils::devsetup::SetupDefaults;
-
-    // use super::*;
-
-    use crate::update_connection::{ConnectionStatus, UpdateConnectionResponse};
+    use super::*;
+    use crate::utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
-        let _setup = SetupDefaults::init();
 
         let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(DELETE_CONNECTION_DECRYPTED_RESPONSE).unwrap();
         assert_eq!(delete_connection_payload.status_code, ConnectionStatus::Deleted);

@@ -115,12 +115,13 @@ mod tests {
     // use libindy::utils::signus::create_and_store_my_did;
     // use agency_comm::utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
     // use utils::devsetup::*;
-    // use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
+    use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
 
     // use super::*;
 
     use crate::update_profile::UpdateProfileDataBuilder;
-    use crate::mocking::AgencyMockDecrypted;
+    use crate::mocking::{AgencyMockDecrypted };
+    use crate::utils::test_utils::SetupMocks;
     use crate::{update_data, agency_settings};
     use crate::utils::constants::{MY3_SEED, MY1_SEED, MY2_SEED};
 
@@ -139,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "to_restore")]
     fn test_update_data_set_values_and_post() {
         let _setup = SetupLibraryWallet::init();
 

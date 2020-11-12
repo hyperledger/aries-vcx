@@ -262,8 +262,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")]
+    #[cfg(feature = "general_test")]
     fn test_update_agent_info() {
         let _setup = SetupMocks::init();
         // todo: Need to mock agency v2 response, only agency v1 mocking works
