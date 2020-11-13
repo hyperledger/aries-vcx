@@ -4,7 +4,7 @@ use regex::Regex;
 use url::Url;
 use self::rust_base58::FromBase58;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -14,7 +14,7 @@ pub fn is_fully_qualified(entity: &str) -> bool {
     REGEX.is_match(&entity)
 }
 
-pub fn validate_did(did: &str) -> VcxResult<String> {
+pub fn validate_did(did: &str) -> AgencyClientResult<String> {
     if is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
@@ -33,7 +33,7 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
     }
 }
 
-pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
+pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
@@ -42,7 +42,7 @@ pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
     }
 }
 
-pub fn validate_url(url: &str) -> VcxResult<String> {
+pub fn validate_url(url: &str) -> AgencyClientResult<String> {
     Url::parse(url)
         .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidUrl, err))?;
     Ok(url.to_string())

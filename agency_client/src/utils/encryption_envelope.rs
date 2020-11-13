@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
 
@@ -6,7 +6,7 @@ use crate::utils::libindy::crypto;
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
-    fn _unpack_a2a_message(payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
+    fn _unpack_a2a_message(payload: Vec<u8>) -> AgencyClientResult<(String, Option<String>)> {
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> processing payload of {} bytes", payload.len());
 
         let unpacked_msg = crypto::unpack_message(&payload)?;
@@ -27,7 +27,7 @@ impl EncryptionEnvelope {
     }
 
     // todo: we should use auth_unpack wherever possible
-    pub fn anon_unpack(payload: Vec<u8>) -> VcxResult<String> {
+    pub fn anon_unpack(payload: Vec<u8>) -> AgencyClientResult<String> {
         trace!("EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes", payload.len());
         if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
@@ -39,7 +39,7 @@ impl EncryptionEnvelope {
         }
     }
 
-    pub fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> VcxResult<String> {
+    pub fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> AgencyClientResult<String> {
         trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk={}", payload.len(), expected_vk);
 
         if AgencyMockDecrypted::has_decrypted_mock_messages() {

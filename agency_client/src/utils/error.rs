@@ -268,16 +268,16 @@ impl From<IndyError> for AgencyClientError {
     }
 }
 
-pub type VcxResult<T> = Result<T, AgencyClientError>;
+pub type AgencyClientResult<T> = Result<T, AgencyClientError>;
 
 /// Extension methods for `Result`.
 pub trait VcxResultExt<T, E> {
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> VcxResult<T> where D: fmt::Display + Send + Sync + 'static;
+    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientResult<T> where D: fmt::Display + Send + Sync + 'static;
 }
 
 impl<T, E> VcxResultExt<T, E> for Result<T, E> where E: Fail
 {
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> VcxResult<T> where D: fmt::Display + Send + Sync + 'static {
+    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientResult<T> where D: fmt::Display + Send + Sync + 'static {
         self.map_err(|err| err.context(msg).context(kind).into())
     }
 }

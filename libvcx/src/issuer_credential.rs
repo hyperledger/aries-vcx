@@ -296,7 +296,7 @@ pub mod tests {
         assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(::agency_client::utils::error::VcxResult::Err(::agency_client::utils::error::AgencyClientError::from_msg(::agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(::agency_client::utils::error::AgencyClientResult::Err(::agency_client::utils::error::AgencyClientError::from_msg(::agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);

@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyClientErrorKind, VcxResult, AgencyClientError};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds, mocking};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
@@ -42,19 +42,19 @@ impl CreateKeyBuilder {
         }
     }
 
-    pub fn for_did(&mut self, did: &str) -> VcxResult<&mut Self> {
+    pub fn for_did(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_did(did)?;
         self.for_did = did.to_string();
         Ok(self)
     }
 
-    pub fn for_verkey(&mut self, verkey: &str) -> VcxResult<&mut Self> {
+    pub fn for_verkey(&mut self, verkey: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_verkey(verkey)?;
         self.for_verkey = verkey.to_string();
         Ok(self)
     }
 
-    pub fn send_secure(&self) -> VcxResult<(String, String)> {
+    pub fn send_secure(&self) -> AgencyClientResult<(String, String)> {
         trace!("CreateKeyBuilder::send_secure >>>");
 
         if mocking::agency_mocks_enabled() {
@@ -69,7 +69,7 @@ impl CreateKeyBuilder {
         self.parse_response(&response)
     }
 
-    fn prepare_request(&self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         trace!("CreateKeyBuilder::prepare_request >>>");
         let message = A2AMessage::Version2(
             A2AMessageV2::CreateKey(CreateKey {
@@ -84,7 +84,7 @@ impl CreateKeyBuilder {
         prepare_message_for_agency(&message, &agency_did)
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> VcxResult<(String, String)> {
+    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
         let mut response = parse_response_from_agency(response)?;
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),

@@ -1,5 +1,5 @@
 use crate::{get_messages, MessageStatusCode, prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, mocking};
-use crate::utils::error::{VcxResult, AgencyClientErrorKind, AgencyClientError};
+use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::utils::comm::post_to_agency;
 use crate::message_type::MessageTypes;
@@ -92,30 +92,30 @@ impl GetMessagesBuilder {
         GetMessagesBuilder::create()
     }
 
-    pub fn uid(&mut self, uids: Option<Vec<String>>) -> VcxResult<&mut Self> {
+    pub fn uid(&mut self, uids: Option<Vec<String>>) -> AgencyClientResult<&mut Self> {
         //Todo: validate msg_uid??
         self.uids = uids;
         Ok(self)
     }
 
-    pub fn status_codes(&mut self, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<&mut Self> {
+    pub fn status_codes(&mut self, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<&mut Self> {
         self.status_codes = status_codes;
         Ok(self)
     }
 
-    pub fn pairwise_dids(&mut self, pairwise_dids: Option<Vec<String>>) -> VcxResult<&mut Self> {
+    pub fn pairwise_dids(&mut self, pairwise_dids: Option<Vec<String>>) -> AgencyClientResult<&mut Self> {
         //Todo: validate msg_uid??
         self.pairwise_dids = pairwise_dids;
         Ok(self)
     }
 
-    pub fn include_edge_payload(&mut self, payload: &str) -> VcxResult<&mut Self> {
+    pub fn include_edge_payload(&mut self, payload: &str) -> AgencyClientResult<&mut Self> {
         //todo: is this a json value, String??
         self.exclude_payload = Some(payload.to_string());
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> VcxResult<Vec<Message>> {
+    pub fn send_secure(&mut self) -> AgencyClientResult<Vec<Message>> {
         debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
         let data = self.prepare_request()?;
@@ -125,7 +125,7 @@ impl GetMessagesBuilder {
         self.parse_response(response)
     }
 
-    fn parse_response(&self, response: Vec<u8>) -> VcxResult<Vec<Message>> {
+    fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<Message>> {
         trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
 
         let mut response = parse_response_from_agency(&response)?;
@@ -141,7 +141,7 @@ impl GetMessagesBuilder {
         }
     }
 
-    pub fn download_messages_noauth(&mut self) -> VcxResult<Vec<MessageByConnection>> {
+    pub fn download_messages_noauth(&mut self) -> AgencyClientResult<Vec<MessageByConnection>> {
         trace!("GetMessages::download >>>");
 
         let data = self.prepare_download_request()?;
@@ -157,7 +157,7 @@ impl GetMessagesBuilder {
         Ok(response)
     }
 
-    fn prepare_download_request(&self) -> VcxResult<Vec<u8>> {
+    fn prepare_download_request(&self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::GetMessages(
                 GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
@@ -173,7 +173,7 @@ impl GetMessagesBuilder {
     }
 
     // todo: This should be removed after public method vcx_messages_download is removed
-    fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> VcxResult<Vec<MessageByConnection>> {
+    fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> AgencyClientResult<Vec<MessageByConnection>> {
         trace!("parse_download_messages_response >>>");
         let mut response = parse_response_from_agency(&response)?;
 
@@ -204,7 +204,7 @@ impl GeneralMessage for GetMessagesBuilder {
     fn set_agent_did(&mut self, did: String) { self.agent_did = did; }
     fn set_agent_vk(&mut self, vk: String) { self.agent_vk = vk; }
 
-    fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_request >>");
         let message = A2AMessage::Version2(
             A2AMessageV2::GetMessages(
@@ -255,7 +255,7 @@ macro_rules! convert_aries_message {
 }
 
 impl Message {
-    pub fn payload(&self) -> VcxResult<Vec<u8>> {
+    pub fn payload(&self) -> AgencyClientResult<Vec<u8>> {
         match self.payload {
             Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
             _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidState)),
@@ -273,7 +273,7 @@ impl Message {
         new_message
     }
 
-    pub fn decrypt_auth(&self, expected_sender_vk: &str) -> VcxResult<Message> {
+    pub fn decrypt_auth(&self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
         let mut new_message = self.clone();
         let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk)?;
         trace!("decrypt_auth >>> decrypted_msg: {:?}", decrypted_msg);
@@ -282,16 +282,16 @@ impl Message {
         Ok(new_message)
     }
 
-    fn _noauth_decrypt_v3_message(&self) -> VcxResult<String> {
+    fn _noauth_decrypt_v3_message(&self) -> AgencyClientResult<String> {
         EncryptionEnvelope::anon_unpack(self.payload()?)
     }
 
-    fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> VcxResult<String> {
+    fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> AgencyClientResult<String> {
         EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk)
     }
 }
 
-pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
+pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<Message>> {
     trace!("get_connection_messages >>> pw_did: {}, pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
            pw_did, pw_vk, agent_vk, msg_uid);
 
@@ -309,7 +309,7 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
     Ok(response)
 }
 
-pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
+pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> AgencyClientResult<Option<Vec<MessageStatusCode>>> {
     match status_codes {
         Some(codes) => {
             let codes = codes
@@ -317,25 +317,25 @@ pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option
                 .map(|code|
                     ::serde_json::from_str::<MessageStatusCode>(&format!("\"{}\"", code))
                         .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse message status code: {}", err)))
-                ).collect::<VcxResult<Vec<MessageStatusCode>>>()?;
+                ).collect::<AgencyClientResult<Vec<MessageStatusCode>>>()?;
             Ok(Some(codes))
         }
         None => Ok(None)
     }
 }
 
-pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+pub fn parse_connection_handles(conn_handles: Vec<String>) -> AgencyClientResult<Vec<u32>> {
     trace!("parse_connection_handles >>> conn_handles: {:?}", conn_handles);
     let codes = conn_handles
         .iter()
         .map(|handle|
             ::serde_json::from_str::<u32>(handle)
                 .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
-        ).collect::<VcxResult<Vec<u32>>>()?;
+        ).collect::<AgencyClientResult<Vec<u32>>>()?;
     Ok(codes)
 }
 
-pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> AgencyClientResult<Vec<MessageByConnection>> {
     trace!("download_messages_noauth >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
            pairwise_dids, status_codes, uids);
 

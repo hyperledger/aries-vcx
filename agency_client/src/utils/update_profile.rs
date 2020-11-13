@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
@@ -42,19 +42,19 @@ impl UpdateProfileDataBuilder {
         }
     }
 
-    pub fn to(&mut self, did: &str) -> VcxResult<&mut Self> {
+    pub fn to(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_did(did)?;
         self.to_did = did.to_string();
         Ok(self)
     }
 
-    pub fn name(&mut self, name: &str) -> VcxResult<&mut Self> {
+    pub fn name(&mut self, name: &str) -> AgencyClientResult<&mut Self> {
         let config = ConfigOption { name: "name".to_string(), value: name.to_string() };
         self.configs.push(config);
         Ok(self)
     }
 
-    pub fn webhook_url(&mut self, url: &Option<String>) -> VcxResult<&mut Self> {
+    pub fn webhook_url(&mut self, url: &Option<String>) -> AgencyClientResult<&mut Self> {
         if let Some(x) = url {
             validation::validate_url(x)?;
             let config = ConfigOption { name: "notificationWebhookUrl".to_string(), value: x.to_string() };
@@ -63,7 +63,7 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn use_public_did(&mut self, did: &Option<String>) -> VcxResult<&mut Self> {
+    pub fn use_public_did(&mut self, did: &Option<String>) -> AgencyClientResult<&mut Self> {
         if let Some(x) = did {
             let config = ConfigOption { name: "publicDid".to_string(), value: x.to_string() };
             self.configs.push(config);
@@ -71,7 +71,7 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> VcxResult<()> {
+    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("UpdateProfileData::send_secure >>>");
 
         AgencyMock::set_next_response(constants::UPDATE_PROFILE_RESPONSE.to_vec());
@@ -83,7 +83,7 @@ impl UpdateProfileDataBuilder {
         self.parse_response(response)
     }
 
-    fn prepare_request(&self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateConfigs(
                 UpdateConfigs {
@@ -98,7 +98,7 @@ impl UpdateProfileDataBuilder {
         prepare_message_for_agency(&message, &agency_did)
     }
 
-    fn parse_response(&self, response: Vec<u8>) -> VcxResult<()> {
+    fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<()> {
         let mut response = parse_response_from_agency(&response)?;
 
         match response.remove(0) {

@@ -5,7 +5,6 @@ use agency_client::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, 
 use agency_client::mocking::agency_mocks_enabled;
 use agency_client::message_type::MessageTypes;
 use agency_client::utils::agent_utils;
-use utils::option_util::get_or_default;
 use libindy::utils::{anoncreds, wallet, signus};
 use error::prelude::*;
 use settings;
@@ -40,6 +39,10 @@ pub fn parse_config(config: &str) -> VcxResult<Config> {
             )
         )?;
     Ok(my_config)
+}
+
+pub fn get_or_default(config: &Option<String>, default: &str) -> String {
+    config.to_owned().unwrap_or(default.to_string())
 }
 
 pub fn set_config_values(my_config: &Config) {

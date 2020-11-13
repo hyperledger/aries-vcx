@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::utils::error::VcxResult;
+use crate::utils::error::AgencyClientResult;
 use crate::agency_settings;
 
 lazy_static! {
@@ -15,11 +15,11 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct HttpClientMockResponse {
-    responses: Vec<VcxResult<Vec<u8>>>
+    responses: Vec<AgencyClientResult<Vec<u8>>>
 }
 
 impl HttpClientMockResponse {
-    pub fn set_next_response(response: VcxResult<Vec<u8>>) {
+    pub fn set_next_response(response: AgencyClientResult<Vec<u8>>) {
         if agency_mocks_enabled() {
             HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
         }
@@ -29,7 +29,7 @@ impl HttpClientMockResponse {
         HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
     }
 
-    pub fn get_response() -> VcxResult<Vec<u8>> {
+    pub fn get_response() -> AgencyClientResult<Vec<u8>> {
         HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
     }
 }

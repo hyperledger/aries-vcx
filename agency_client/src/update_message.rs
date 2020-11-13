@@ -1,5 +1,5 @@
 use crate::{mocking, MessageStatusCode, A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
-use crate::utils::error::{VcxResult, AgencyClientErrorKind, AgencyClientError};
+use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
 use crate::utils::constants;
@@ -46,19 +46,19 @@ impl UpdateMessageStatusByConnectionsBuilder {
         }
     }
 
-    pub fn uids_by_conns(&mut self, uids_by_conns: Vec<UIDsByConn>) -> VcxResult<&mut Self> {
+    pub fn uids_by_conns(&mut self, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<&mut Self> {
         //Todo: validate msg_uid??
         self.uids_by_conns = uids_by_conns;
         Ok(self)
     }
 
-    pub fn status_code(&mut self, code: MessageStatusCode) -> VcxResult<&mut Self> {
+    pub fn status_code(&mut self, code: MessageStatusCode) -> AgencyClientResult<&mut Self> {
         //Todo: validate that it can be parsed to number??
         self.status_code = Some(code.clone());
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> VcxResult<()> {
+    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("UpdateMessages::send >>>");
 
         AgencyMock::set_next_response(constants::UPDATE_MESSAGES_RESPONSE.to_vec());
@@ -70,7 +70,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         self.parse_response(&response)
     }
 
-    fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateMessageStatusByConnections(
                 UpdateMessageStatusByConnections {
@@ -85,7 +85,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         prepare_message_for_agency(&message, &agency_did)
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> VcxResult<()> {
+    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
         trace!("UpdateMessageStatusByConnectionsBuilder::parse_response >>>");
 
         let mut response = parse_response_from_agency(response)?;
@@ -97,7 +97,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 }
 
-pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()> {
+pub fn update_agency_messages(status_code: &str, msg_json: &str) -> AgencyClientResult<()> {
     trace!("update_agency_messages >>> status_code: {:?}, msg_json: {:?}", status_code, msg_json);
 
     let status_code: MessageStatusCode = ::serde_json::from_str(&format!("\"{}\"", status_code))
@@ -111,7 +111,7 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()
     update_messages(status_code, uids_by_conns)
 }
 
-pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> VcxResult<()> {
+pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<()> {
     trace!("update_messages >>> ");
 
     if mocking::agency_mocks_enabled() {

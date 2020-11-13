@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::message_type::MessageTypes;
 use crate::{parse_response_from_agency, prepare_message_for_agency, A2AMessage, A2AMessageV2, agency_settings, A2AMessageKinds};
 use crate::utils::{error_utils, constants};
-use crate::utils::error::{AgencyClientErrorKind, VcxResult, AgencyClientError};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
 
@@ -141,7 +141,7 @@ pub struct ComMethod {
     value: String,
 }
 
-pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
+pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     /* STEP 1 - CONNECT */
     let message = A2AMessage::Version2(
         A2AMessageV2::Connect(Connect::build(my_did, my_vk))
@@ -164,7 +164,7 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(Str
     Ok((agency_pw_did, agency_pw_vk))
 }
 
-pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(String, String)> {
+pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
     let (agency_pw_did, _) = connect_v2(my_did, my_vk, agency_did)?;
 
@@ -198,7 +198,7 @@ pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> VcxResult<(
     Ok((response.from_did, response.from_vk))
 }
 
-pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
+pub fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
     info!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
 
     let com_method: ComMethod = ComMethod {
@@ -216,7 +216,7 @@ pub fn update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
     Ok(())
 }
 
-fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()> {
+fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientResult<()> {
     info!("> update_agent_webhook_v2");
     if agency_mocks_enabled() {
         warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
@@ -230,7 +230,7 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> VcxResult<()>
     Ok(())
 }
 
-pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> VcxResult<Vec<A2AMessage>> {
+pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
     let data = prepare_message_for_agency(message, &did)?;
 
     let response = post_to_agency(&data)

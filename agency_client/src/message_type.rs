@@ -2,7 +2,7 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::A2AMessageKinds;
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";
@@ -93,7 +93,7 @@ impl ::std::string::ToString for MessageFamilies {
 }
 
 
-pub fn parse_message_type(message_type: &str) -> VcxResult<(String, String, String, String)> {
+pub fn parse_message_type(message_type: &str) -> AgencyClientResult<(String, String, String, String)> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(?x)
             (?P<did>[\d\w:]*);

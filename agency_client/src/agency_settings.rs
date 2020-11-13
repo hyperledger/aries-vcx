@@ -5,7 +5,7 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::utils::{error_utils, validation};
 
 pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
@@ -33,7 +33,7 @@ lazy_static! {
 }
 
 
-fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> VcxResult<u32>
+fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
     where F: Fn(&str) -> Result<S, E> {
     if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
 
@@ -70,7 +70,7 @@ pub fn clear_config_agency() {
     config.clear();
 }
 
-pub fn validate_agency_config(config: &HashMap<String, String>) -> VcxResult<u32> {
+pub fn validate_agency_config(config: &HashMap<String, String>) -> AgencyClientResult<u32> {
     trace!("validate_agency_config >>> config: {:?}", config);
 
     // todo: Since we scope these setting to agency module, these are not really optional anymore!
@@ -89,7 +89,7 @@ pub fn validate_agency_config(config: &HashMap<String, String>) -> VcxResult<u32
 }
 
 
-pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxResult<u32> {
+pub fn process_agency_config_string(config: &str, do_validation: bool) -> AgencyClientResult<u32> {
     trace!("process_config_string >>> config {}", config);
 
     let configuration: Value = serde_json::from_str(config)
@@ -119,7 +119,7 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
     }
 }
 
-pub fn get_config_value(key: &str) -> VcxResult<String> {
+pub fn get_config_value(key: &str) -> AgencyClientResult<String> {
     trace!("get_config_value >>> key: {}", key);
 
     AGENCY_SETTINGS

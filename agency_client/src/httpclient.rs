@@ -4,11 +4,11 @@ use std::io::Read;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 use crate::mocking;
 
-pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
+pub fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
     // todo: this function should be general, not knowing that agency exists -> move agency mocks to agency module
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
