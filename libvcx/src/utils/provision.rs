@@ -1,9 +1,6 @@
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
+use serde::Deserialize;
 
-use agency_client::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, prepare_message_for_agency};
-use agency_client::mocking::agency_mocks_enabled;
-use agency_client::message_type::MessageTypes;
+use agency_client::agency_settings;
 use agency_client::utils::agent_utils;
 use libindy::utils::{anoncreds, wallet, signus};
 use error::prelude::*;

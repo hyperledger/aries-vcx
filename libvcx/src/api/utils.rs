@@ -5,7 +5,6 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use agency_client;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 use connection;
