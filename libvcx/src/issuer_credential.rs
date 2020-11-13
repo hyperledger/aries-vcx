@@ -179,7 +179,7 @@ pub mod tests {
     use utils::constants::{SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION, REV_REG_ID};
     #[allow(unused_imports)]
     use utils::devsetup::*;
-    use agency_client::httpclient::HttpClientMockResponse;
+    use agency_client::mocking::HttpClientMockResponse;
     use utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
@@ -296,7 +296,7 @@ pub mod tests {
         assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(::agency_client::utils::error::VcxResult::Err(::agency_client::utils::error::AgencyCommError::from_msg(::agency_client::utils::error::AgencyCommErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(::agency_client::utils::error::VcxResult::Err(::agency_client::utils::error::AgencyClientError::from_msg(::agency_client::utils::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);

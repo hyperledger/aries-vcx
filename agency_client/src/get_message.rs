@@ -1,5 +1,5 @@
 use crate::{get_messages, MessageStatusCode, prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, mocking};
-use crate::utils::error::{VcxResult, AgencyCommErrorKind, AgencyCommError};
+use crate::utils::error::{VcxResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::utils::comm::post_to_agency;
 use crate::message_type::MessageTypes;
@@ -137,7 +137,7 @@ impl GetMessagesBuilder {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
             }
-            _ => Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
         }
     }
 
@@ -180,7 +180,7 @@ impl GetMessagesBuilder {
         trace!("parse_download_messages_response: parsed response {:?}", response);
         let msgs = match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::GetMessagesByConnectionsResponse(res)) => res.msgs,
-            _ => return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
+            _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
         };
 
         msgs
@@ -257,8 +257,8 @@ macro_rules! convert_aries_message {
 impl Message {
     pub fn payload(&self) -> VcxResult<Vec<u8>> {
         match self.payload {
-            Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, err)),
-            _ => Err(AgencyCommError::from(AgencyCommErrorKind::InvalidState)),
+            Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
+            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidState)),
         }
     }
 
@@ -303,7 +303,7 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
         .uid(msg_uid)?
         .status_codes(status_codes)?
         .send_secure()
-        .map_err(|err| err.map(AgencyCommErrorKind::PostMessageFailed, "Cannot get messages"))?;
+        .map_err(|err| err.map(AgencyClientErrorKind::PostMessageFailed, "Cannot get messages"))?;
 
     trace!("message returned: {:?}", response);
     Ok(response)
@@ -316,7 +316,7 @@ pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option
                 .iter()
                 .map(|code|
                     ::serde_json::from_str::<MessageStatusCode>(&format!("\"{}\"", code))
-                        .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot parse message status code: {}", err)))
+                        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse message status code: {}", err)))
                 ).collect::<VcxResult<Vec<MessageStatusCode>>>()?;
             Ok(Some(codes))
         }
@@ -330,7 +330,7 @@ pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>
         .iter()
         .map(|handle|
             ::serde_json::from_str::<u32>(handle)
-                .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
+                .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
         ).collect::<VcxResult<Vec<u32>>>()?;
     Ok(codes)
 }

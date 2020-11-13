@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::{prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, delete_connection, parse_response_from_agency};
 use crate::message_type::MessageTypes;
-use crate::utils::error::{VcxResult, AgencyCommErrorKind, AgencyCommError};
+use crate::utils::error::{VcxResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -92,7 +92,7 @@ impl DeleteConnectionBuilder {
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
-            _ => Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
         }
     }
 }

@@ -1,11 +1,37 @@
 use std::sync::Mutex;
 
+use crate::utils::error::VcxResult;
 use crate::agency_settings;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
     static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
     static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> = Mutex::new(AgencyMockDecryptedMessages::default());
+}
+
+lazy_static! {
+    static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
+}
+
+#[derive(Default)]
+pub struct HttpClientMockResponse {
+    responses: Vec<VcxResult<Vec<u8>>>
+}
+
+impl HttpClientMockResponse {
+    pub fn set_next_response(response: VcxResult<Vec<u8>>) {
+        if agency_mocks_enabled() {
+            HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
+        }
+    }
+
+    pub fn has_response() -> bool {
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+    }
+
+    pub fn get_response() -> VcxResult<Vec<u8>> {
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
+    }
 }
 
 #[derive(Default)]

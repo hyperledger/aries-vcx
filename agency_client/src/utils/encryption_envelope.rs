@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
 use crate::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
 
@@ -12,14 +12,14 @@ impl EncryptionEnvelope {
         let unpacked_msg = crypto::unpack_message(&payload)?;
 
         let msg_value: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
-            .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
+            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> msg_value: {:?}", msg_value);
 
         let sender_vk = msg_value["sender_verkey"].as_str().map(String::from);
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> sender_vk: {:?}", sender_vk);
 
         let msg_string = msg_value["message"].as_str()
-            .ok_or(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
+            .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
 
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> msg_string: {:?}", msg_string);
 
@@ -53,14 +53,14 @@ impl EncryptionEnvelope {
                 Some(sender_vk) => {
                     if sender_vk != expected_vk {
                         error!("auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
-                        return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson,
+                        return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson,
                                                              format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
                         );
                     }
                 }
                 None => {
                     error!("auth_unpack :: message was authcrypted");
-                    return Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, "Can't authenticate message because it was anoncrypted."));
+                    return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Can't authenticate message because it was anoncrypted."));
                 }
             }
             trace!("EncryptionEnvelope::auth_unpack >>> a2a_message: {:?}", a2a_message);

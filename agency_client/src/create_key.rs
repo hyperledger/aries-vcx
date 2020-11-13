@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyCommErrorKind, VcxResult, AgencyCommError};
+use crate::utils::error::{AgencyClientErrorKind, VcxResult, AgencyClientError};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds, mocking};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
@@ -88,7 +88,7 @@ impl CreateKeyBuilder {
         let mut response = parse_response_from_agency(response)?;
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
-            _ => Err(AgencyCommError::from(AgencyCommErrorKind::InvalidHttpResponse))
+            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse))
         }
     }
 }
@@ -96,7 +96,7 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::error::AgencyCommErrorKind;
+    use crate::utils::error::AgencyClientErrorKind;
     use crate::create_keys;
     use crate::utils::constants;
     use crate::utils::test_utils::SetupMocks;
@@ -145,7 +145,7 @@ mod tests {
         let res = CreateKeyBuilder::create()
             .for_did(for_did)
             .unwrap_err();
-        assert_eq!(res.kind(), AgencyCommErrorKind::InvalidDid);
+        assert_eq!(res.kind(), AgencyClientErrorKind::InvalidDid);
     }
 }
 

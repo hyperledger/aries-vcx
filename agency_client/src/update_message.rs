@@ -1,5 +1,5 @@
 use crate::{mocking, MessageStatusCode, A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
-use crate::utils::error::{VcxResult, AgencyCommErrorKind, AgencyCommError};
+use crate::utils::error::{VcxResult, AgencyClientErrorKind, AgencyClientError};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
 use crate::utils::constants;
@@ -92,7 +92,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
-            _ => Err(AgencyCommError::from_msg(AgencyCommErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
         }
     }
 }
@@ -101,12 +101,12 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()
     trace!("update_agency_messages >>> status_code: {:?}, msg_json: {:?}", status_code, msg_json);
 
     let status_code: MessageStatusCode = ::serde_json::from_str(&format!("\"{}\"", status_code))
-        .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot deserialize MessageStatusCode: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize MessageStatusCode: {}", err)))?;
 
     debug!("updating agency messages {} to status code: {:?}", msg_json, status_code);
 
     let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(msg_json)
-        .map_err(|err| AgencyCommError::from_msg(AgencyCommErrorKind::InvalidJson, format!("Cannot deserialize UIDsByConn: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize UIDsByConn: {}", err)))?;
 
     update_messages(status_code, uids_by_conns)
 }

@@ -1,38 +1,11 @@
 use std::env;
-use std::io::Read;
-use std::sync::Mutex;
 
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use crate::utils::error::{AgencyCommErrorKind, AgencyCommError, VcxResult};
-use crate::mocking::{AgencyMock, AgencyMockDecrypted};
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, VcxResult};
+use crate::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 use crate::mocking;
-
-lazy_static! {
-    static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
-}
-
-#[derive(Default)]
-pub struct HttpClientMockResponse {
-    responses: Vec<VcxResult<Vec<u8>>>
-}
-
-impl HttpClientMockResponse {
-    pub fn set_next_response(response: VcxResult<Vec<u8>>) {
-        if mocking::agency_mocks_enabled() {
-            HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
-        }
-    }
-
-    pub fn has_response() -> bool {
-        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
-    }
-
-    pub fn get_response() -> VcxResult<Vec<u8>> {
-        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
-    }
-}
 
 pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     // todo: this function should be general, not knowing that agency exists -> move agency mocks to agency module
@@ -57,7 +30,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     }
     let client = reqwest::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
         error!("error: {}", err);
-        AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
+        AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
     })?;
     debug!("Posting encrypted bundle to: \"{}\"", url);
 
@@ -68,7 +41,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             .send()
             .map_err(|err| {
                 error!("error: {}", err);
-                AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
+                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
             })?;
 
     trace!("Response Header: {:?}", response);
@@ -78,12 +51,12 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
             Ok(_) => info!("Request failed: {}", content),
             Err(_) => info!("could not read response"),
         };
-        return Err(AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, format!("POST failed with: {}", content)));
+        return Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST failed with: {}", content)));
     }
 
     let mut content = Vec::new();
     response.read_to_end(&mut content)
-        .or(Err(AgencyCommError::from_msg(AgencyCommErrorKind::PostMessageFailed, "could not read response")))?;
+        .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, "could not read response")))?;
 
     Ok(content)
 }
