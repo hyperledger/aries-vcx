@@ -1,4 +1,4 @@
-use agency_comm::mocking::AgencyMockDecrypted;
+use agency_client::mocking::AgencyMockDecrypted;
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::messages::forward::Forward;
@@ -101,6 +101,7 @@ impl EncryptionEnvelope {
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload)?;
+            trace!("anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}", a2a_message, sender_vk);
 
             match sender_vk {
                 Some(sender_vk) => {
@@ -126,7 +127,6 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_comm::agency_settings;
     use aries::messages::ack::tests::_ack;
     use aries::messages::connection::did_doc::tests::*;
     use libindy::utils::crypto::create_key;

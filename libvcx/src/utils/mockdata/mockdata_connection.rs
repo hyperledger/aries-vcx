@@ -17,7 +17,7 @@ pub const ARIES_CONNECTION_INVITATION: &str = r#"
 // Alice created and serialized connection created from received invitation
 pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
 {
-    "version": "3.0",
+    "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
         "pw_did": "",
@@ -93,7 +93,7 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
 // Alice sends connection request to Faber
 pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
 {
-    "version": "3.0",
+    "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
@@ -204,7 +204,7 @@ pub const ARIES_CONNECTION_RESPONSE: &str = r#"
 // Alice (invitee) connection SM after Faber accepted connection by sending connection response
 pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
 {
-    "version": "3.0",
+    "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
     "data": {
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
@@ -270,7 +270,7 @@ pub const ARIES_CONNECTION_ACK: &str = r#"
 // Inviter (Faber) after finished connection protocol by sending connection ack
 pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
 {
-    "version": "3.0",
+    "version": "1.0",
     "source_id": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
     "data": {
         "pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
@@ -322,7 +322,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
 
 pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
 {
-  "version": "3.0",
+  "version": "1.0",
   "source_id": "test_serialize_deserialize",
   "data": {
     "pw_did": "",

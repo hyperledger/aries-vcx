@@ -1,11 +1,9 @@
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
-use agency_comm::message_type::MessageTypes;
-use agency_comm::mocking::AgencyMock;
-use agency_comm::utils::comm::post_to_agency;
-use error::{VcxError, VcxErrorKind, VcxResult};
-use settings;
-use utils::{httpclient, validation};
-use utils::constants::UPDATE_PROFILE_RESPONSE;
+use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
+use crate::message_type::MessageTypes;
+use crate::utils::comm::post_to_agency;
+use crate::utils::{constants, validation};
+use crate::mocking::AgencyMock;
 
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
@@ -44,19 +42,19 @@ impl UpdateProfileDataBuilder {
         }
     }
 
-    pub fn to(&mut self, did: &str) -> VcxResult<&mut Self> {
+    pub fn to(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_did(did)?;
         self.to_did = did.to_string();
         Ok(self)
     }
 
-    pub fn name(&mut self, name: &str) -> VcxResult<&mut Self> {
+    pub fn name(&mut self, name: &str) -> AgencyClientResult<&mut Self> {
         let config = ConfigOption { name: "name".to_string(), value: name.to_string() };
         self.configs.push(config);
         Ok(self)
     }
 
-    pub fn webhook_url(&mut self, url: &Option<String>) -> VcxResult<&mut Self> {
+    pub fn webhook_url(&mut self, url: &Option<String>) -> AgencyClientResult<&mut Self> {
         if let Some(x) = url {
             validation::validate_url(x)?;
             let config = ConfigOption { name: "notificationWebhookUrl".to_string(), value: x.to_string() };
@@ -65,7 +63,7 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn use_public_did(&mut self, did: &Option<String>) -> VcxResult<&mut Self> {
+    pub fn use_public_did(&mut self, did: &Option<String>) -> AgencyClientResult<&mut Self> {
         if let Some(x) = did {
             let config = ConfigOption { name: "publicDid".to_string(), value: x.to_string() };
             self.configs.push(config);
@@ -73,10 +71,10 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> VcxResult<()> {
+    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("UpdateProfileData::send_secure >>>");
 
-        AgencyMock::set_next_response(UPDATE_PROFILE_RESPONSE.to_vec());
+        AgencyMock::set_next_response(constants::UPDATE_PROFILE_RESPONSE.to_vec());
 
         let data = self.prepare_request()?;
 
@@ -85,7 +83,7 @@ impl UpdateProfileDataBuilder {
         self.parse_response(response)
     }
 
-    fn prepare_request(&self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateConfigs(
                 UpdateConfigs {
@@ -100,26 +98,23 @@ impl UpdateProfileDataBuilder {
         prepare_message_for_agency(&message, &agency_did)
     }
 
-    fn parse_response(&self, response: Vec<u8>) -> VcxResult<()> {
+    fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<()> {
         let mut response = parse_response_from_agency(&response)?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConfigsResponse"))
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use agency_comm::{agency_settings, update_data};
-    use agency_comm::mocking::AgencyMockDecrypted;
-    use libindy::utils::signus::create_and_store_my_did;
-    use utils::constants::{MY1_SEED, MY2_SEED, MY3_SEED};
-    use utils::devsetup::*;
-    use utils::mockdata::mockdata_agency::AGENCY_CONFIGS_UPDATED;
-
-    use super::*;
+    use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
+    use crate::utils::update_profile::UpdateProfileDataBuilder;
+    use crate::mocking::AgencyMockDecrypted;
+    use crate::utils::test_utils::SetupMocks;
+    use crate::{update_data, agency_settings};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -133,26 +128,6 @@ mod tests {
             .to(to_did).unwrap()
             .name(&name).unwrap()
             .prepare_request().unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_update_data_set_values_and_post() {
-        let _setup = SetupLibraryWallet::init();
-
-        let (agent_did, agent_vk) = create_and_store_my_did(Some(MY2_SEED), None).unwrap();
-        let (_my_did, my_vk) = create_and_store_my_did(Some(MY1_SEED), None).unwrap();
-        let (_agency_did, agency_vk) = create_and_store_my_did(Some(MY3_SEED), None).unwrap();
-
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
-
-        let msg = update_data()
-            .to(agent_did.as_ref()).unwrap()
-            .name("name").unwrap()
-            .prepare_request().unwrap();
-        assert!(msg.len() > 0);
     }
 
     #[test]

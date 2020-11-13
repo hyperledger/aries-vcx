@@ -243,6 +243,12 @@ pub struct Error {
     pub message: &'static str,
 }
 
+impl Error {
+    pub fn get_code(&self) -> u32 {
+        self.code_num
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let msg = error_message(&self.code_num);

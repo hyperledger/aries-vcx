@@ -4,7 +4,6 @@ use indy::{CommandHandle, INVALID_WALLET_HANDLE};
 use indy_sys::{INVALID_POOL_HANDLE, WalletHandle};
 use libc::c_char;
 
-use agency_comm::agency_settings;
 use error::prelude::*;
 use init::{init_core, open_as_main_wallet, open_pool};
 use libindy::utils::{ledger, pool, wallet};
@@ -257,7 +256,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     settings::set_config_value(::settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
     spawn(move || {
-        match ::agency_comm::utils::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+        match ::agency_client::utils::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -421,7 +420,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use indy_sys::INVALID_POOL_HANDLE;
 
-    use agency_comm::agency_settings;
+    use agency_client::agency_settings;
     use api::return_types_u32;
     use api::VcxStateType;
     use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};

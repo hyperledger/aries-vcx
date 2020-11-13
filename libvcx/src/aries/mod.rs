@@ -1,7 +1,7 @@
 #[macro_use]
-pub mod utils;
 pub mod handlers;
 pub mod messages;
+pub mod utils;
 
 pub const SERIALIZE_VERSION: &'static str = "2.0";
 
@@ -11,14 +11,13 @@ pub mod test {
     use ::{rand, settings};
     use rand::Rng;
 
-    use agency_comm::utils::agent_utils::connect_register_provision;
-    use agency_comm::payload::{PayloadKinds};
+    use utils::provision::connect_register_provision;
+    use agency_client::payload::PayloadKinds;
     use utils::devsetup::*;
     use libindy::utils::wallet::*;
     use utils::plugins::init_plugin;
     use aries::messages::a2a::A2AMessage;
     use error::{VcxResult, VcxErrorKind, VcxError};
-    use serde_json::Value;
 
     pub fn source_id() -> String {
         String::from("test source id")
@@ -77,7 +76,7 @@ pub mod test {
     }
 
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
-        let mut messages = ::agency_comm::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+        let mut messages = ::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 

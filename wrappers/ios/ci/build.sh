@@ -227,7 +227,7 @@ copy_libvcx_architectures() {
 
         mkdir -p $OUTPUT_DIR/libs/$LIB_NAME/$ARCH
 
-        cp -v $REPO_DIR/libvcx/target/$TRIPLET/release/libvcx.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libvcx.a
+        cp -v $REPO_DIR/target/$TRIPLET/release/libvcx.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libvcx.a
     done
 }
 

@@ -1,13 +1,37 @@
 use std::sync::Mutex;
 
-use agency_comm::agency_settings;
-use settings;
-use settings::CONFIG_ENABLE_TEST_MODE;
+use crate::utils::error::AgencyClientResult;
+use crate::agency_settings;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
     static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
     static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> = Mutex::new(AgencyMockDecryptedMessages::default());
+}
+
+lazy_static! {
+    static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
+}
+
+#[derive(Default)]
+pub struct HttpClientMockResponse {
+    responses: Vec<AgencyClientResult<Vec<u8>>>
+}
+
+impl HttpClientMockResponse {
+    pub fn set_next_response(response: AgencyClientResult<Vec<u8>>) {
+        if agency_mocks_enabled() {
+            HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.push(response);
+        }
+    }
+
+    pub fn has_response() -> bool {
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+    }
+
+    pub fn get_response() -> AgencyClientResult<Vec<u8>> {
+        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.pop().unwrap()
+    }
 }
 
 #[derive(Default)]
@@ -82,16 +106,23 @@ impl AgencyMockDecrypted {
 }
 
 pub fn agency_mocks_enabled() -> bool {
-    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+    match agency_settings::get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE).ok() {
         None => false,
         Some(value) => value == "true" || value == "agency"
     }
 }
 
 pub fn agency_decrypted_mocks_enabled() -> bool {
-    match agency_settings::get_config_value(CONFIG_ENABLE_TEST_MODE).ok() {
+    match agency_settings::get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE).ok() {
         None => false,
         Some(value) => value == "true"
     }
 }
 
+pub fn enable_agency_mocks() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "true");
+}
+
+pub fn disable_agency_mocks() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "false");
+}

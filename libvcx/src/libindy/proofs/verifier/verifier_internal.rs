@@ -171,7 +171,7 @@ pub mod tests {
     use connection::tests::build_test_connection_inviter_requested;
     use utils::constants::*;
     use utils::devsetup::*;
-    use utils::httpclient::HttpClientMockResponse;
+    use agency_client::mocking::HttpClientMockResponse;
     use utils::mockdata::mockdata_proof;
 
     use super::*;

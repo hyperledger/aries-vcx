@@ -2,7 +2,7 @@ use std::string::ToString;
 
 use serde_json;
 
-use agency_comm::ObjectWithVersion;
+use agency_client::ObjectWithVersion;
 use api::PublicEntityStateType;
 use error::prelude::*;
 use libindy::utils::anoncreds;
@@ -49,13 +49,15 @@ impl CreateSchema {
     fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err.extend("Cannot serialize Schema"))
+            .map_err(|err| err.into())
+            .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
     }
 
     fn from_str(data: &str) -> VcxResult<CreateSchema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<CreateSchema>| obj.data)
-            .map_err(|err| err.extend("Cannot deserialize Schema"))
+            .map_err(|err| err.into())
+            .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
     }
 
     fn update_state(&mut self) -> VcxResult<u32> {

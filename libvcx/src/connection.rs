@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use agency_comm;
-use agency_comm::{MessageStatusCode, SerializableObjectWithState};
-use agency_comm::get_message::{get_bootstrap_agent_messages, Message, MessageByConnection};
+use agency_client;
+use agency_client::{MessageStatusCode, SerializableObjectWithState};
+use agency_client::get_message::{Message, MessageByConnection};
 use aries::handlers::connection::agent_info::AgentInfo;
 use aries::handlers::connection::connection::{Connection, SmConnectionState};
 use aries::messages::a2a::A2AMessage;
@@ -22,12 +22,13 @@ lazy_static! {
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
 
-    let (agent_did, agent_verkey) = agency_comm::create_keys()
+    let (agent_did, agent_verkey) = agency_client::create_keys()
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
         .send_secure()
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
+    trace!("create_agent_keys <<< agent_did: {}, agent_verkey: {}", agent_did, agent_verkey);
     Ok((agent_did, agent_verkey))
 }
 
@@ -118,6 +119,18 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
     })
 }
 
+fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
+    let expected_sender_vk = match remote_vk {
+        Ok(vk) => vk,
+        Err(_) => return Ok(None)
+    };
+    if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+        let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+        return Ok(Some((messages, bootstrap_agent_info.clone())));
+    }
+    Ok(None)
+}
+
 /**
 Tries to update state of connection state machine in 3 steps:
   1. find relevant message in agency,
@@ -178,7 +191,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         let (state, data, source_id) = connection.to_owned().into();
-        let object = SerializableObjectWithState::V3 { data, state, source_id };
+        let object = SerializableObjectWithState::V1 { data, state, source_id };
 
         ::serde_json::to_string(&object)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
@@ -190,7 +203,7 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
-        SerializableObjectWithState::V3 { data, state, source_id } => {
+        SerializableObjectWithState::V1 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
         }
         _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
@@ -280,6 +293,7 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
 }
 
 pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
+    trace!("download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}", conn_handles, status_codes, uids);
     let mut res = Vec::new();
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
@@ -289,13 +303,14 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
                     .agent_info()
                     .download_encrypted_messages(uids.clone(), status_codes.clone())?
                     .iter()
-                    .map(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
                     .collect::<VcxResult<Vec<Message>>>()?;
                 Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
             },
         )?;
         res.push(msg_by_conn);
     };
+    trace!("download_messages <<< res: {:?}", res);
     Ok(res)
 }
 
@@ -306,9 +321,10 @@ pub mod tests {
 
     use serde_json::Value;
 
-    use agency_comm::get_message::download_messages_noauth;
-    use agency_comm::MessageStatusCode;
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::get_message::download_messages_noauth;
+    use agency_client::MessageStatusCode;
+    use agency_client::mocking::AgencyMockDecrypted;
+    use agency_client::update_message::{update_agency_messages, UIDsByConn};
     use api::VcxStateType;
     use utils::constants::*;
     use utils::constants;
@@ -714,5 +730,43 @@ pub mod tests {
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
         assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
         assert!(consumer1_reviewed_msgs[0].msgs[0].decrypted_msg.is_some());
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_update_agency_messages() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
+
+        send_generic_message(faber_to_alice, "Hello 1").unwrap();
+        send_generic_message(faber_to_alice, "Hello 2").unwrap();
+        send_generic_message(faber_to_alice, "Hello 3").unwrap();
+
+        thread::sleep(Duration::from_millis(1000));
+        ::utils::devsetup::set_consumer(None);
+
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 3);
+        let pairwise_did = received[0].pairwise_did.clone();
+        let uid = received[0].msgs[0].uid.clone();
+
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_before = reviewed[0].msgs.len();
+
+        // update status
+        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
+        update_agency_messages("MS-106", &message).unwrap();
+
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_after = reviewed[0].msgs.len();
+        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
+
+        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
+        assert_eq!(specific_review[0].msgs[0].uid, uid);
     }
 }

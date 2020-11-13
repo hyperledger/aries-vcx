@@ -5,9 +5,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use agency_comm;
-use agency_comm::get_message::{parse_connection_handles, parse_status_codes};
-use agency_comm::mocking::AgencyMock;
+use agency_client::get_message::{parse_connection_handles, parse_status_codes};
+use agency_client::mocking::AgencyMock;
 use connection;
 use error::prelude::*;
 use libindy::utils::payments;
@@ -44,7 +43,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 
     trace!("vcx_provision_agent(config: {})", config);
 
-    match agency_comm::utils::agent_utils::connect_register_provision(&config) {
+    match ::utils::provision::connect_register_provision(&config) {
         Err(e) => {
             error!("Provision Agent Error {}.", e);
             let _res: u32 = e.into();
@@ -84,7 +83,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match agency_comm::utils::agent_utils::connect_register_provision(&config) {
+        match ::utils::provision::connect_register_provision(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -190,8 +189,6 @@ pub extern fn vcx_set_next_agency_response(message_index: u32) {
     info!("vcx_set_next_agency_response >>>");
 
     let message = match message_index {
-        2 => UPDATE_PROFILE_RESPONSE.to_vec(),
-        3 => GET_MESSAGES_RESPONSE.to_vec(),
         4 => UPDATE_CREDENTIAL_RESPONSE.to_vec(),
         5 => UPDATE_PROOF_RESPONSE.to_vec(),
         6 => CREDENTIAL_REQ_RESPONSE.to_vec(),
@@ -331,7 +328,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     spawn(move || {
-        match ::agency_comm::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match ::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -484,7 +481,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     spawn(move || {
-        match ::agency_comm::update_message::update_agency_messages(&message_status, &msg_json) {
+        match ::agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -619,7 +616,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use utils::constants;
     use utils::devsetup::*;

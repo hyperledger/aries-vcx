@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use agency_comm::get_message::{get_connection_messages, Message};
-use agency_comm::{MessageStatusCode, agency_settings};
-use agency_comm::update_connection::send_delete_connection_message;
-use agency_comm::update_message::{UIDsByConn, update_messages as update_messages_status};
+use agency_client::get_message::{get_connection_messages, Message};
+use agency_client::{MessageStatusCode, agency_settings};
+use agency_client::update_connection::send_delete_connection_message;
+use agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
 use aries::messages::a2a::A2AMessage;
 use aries::messages::connection::did_doc::DidDoc;
 use aries::utils::encryption_envelope::EncryptionEnvelope;
@@ -11,7 +11,7 @@ use connection::create_agent_keys;
 use error::prelude::*;
 use libindy::utils::signus::create_and_store_my_did;
 use settings;
-use utils::httpclient;
+use agency_client::httpclient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {
@@ -67,6 +67,7 @@ impl AgentInfo {
     pub fn agency_endpoint(&self) -> VcxResult<String> {
         agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT)
             .map(|str| format!("{}/agency/msg", str))
+            .map_err(|err| err.into())
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
@@ -87,10 +88,13 @@ impl AgentInfo {
         }];
 
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
+            .map_err(|err| err.into())
     }
 
     pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> VcxResult<Vec<Message>> {
+        trace!("download_encrypted_messages >>>");
         get_connection_messages(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
+            .map_err(|err| err.into())
     }
 
     pub fn get_messages(&self, expect_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
@@ -171,5 +175,6 @@ impl AgentInfo {
     pub fn delete(&self) -> VcxResult<()> {
         trace!("Agent::delete >>>");
         send_delete_connection_message(&self.pw_did, &self.pw_vk, &self.agent_did, &self.agent_vk)
+            .map_err(|err| err.into())
     }
 }

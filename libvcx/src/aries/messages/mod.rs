@@ -1,4 +1,6 @@
 #[macro_use]
+pub mod thread;
+#[macro_use]
 pub mod a2a;
 #[macro_use]
 pub mod ack;

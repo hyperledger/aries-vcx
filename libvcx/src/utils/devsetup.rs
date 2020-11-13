@@ -6,10 +6,9 @@ use indy::WalletHandle;
 use rand::Rng;
 use serde_json::Value;
 
-use ::{indy, init};
-use ::{settings, utils};
-use agency_comm::agency_settings;
-use agency_comm::mocking::AgencyMockDecrypted;
+use ::{init, settings, utils};
+use agency_client::agency_settings;
+use agency_client::mocking::{AgencyMockDecrypted, enable_agency_mocks, disable_agency_mocks};
 use libindy::utils::pool::reset_pool_handle;
 use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -79,6 +78,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
+    disable_agency_mocks();
     AgencyMockDecrypted::clear_mocks();
 }
 
@@ -112,7 +112,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        enable_agency_mocks();
         SetupMocks
     }
 }
@@ -211,7 +211,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+        enable_agency_mocks();
         SetupIndyMocks {}
     }
 }
@@ -435,7 +435,7 @@ pub fn set_consumer(consumer_handle: Option<u32>) {
 
 fn change_wallet_handle() {
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
-    unsafe { wallet::WALLET_HANDLE = WalletHandle(wallet_handle.parse::<i32>().unwrap()) }
+    wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
 }
 
 fn assign_trustee_role(institution_handle: Option<u32>) {
@@ -477,7 +477,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     ::api::vcx::vcx_shutdown(false);
 
@@ -498,7 +498,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
         });
 
     debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     unsafe {
         INSTITUTION_CONFIG = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config)).unwrap();
@@ -548,7 +548,7 @@ pub fn create_consumer_config() -> u32 {
         });
 
     debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let consumer_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
 }
@@ -577,7 +577,7 @@ pub fn create_institution_config() -> u32 {
         });
 
     debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = ::agency_comm::utils::agent_utils::connect_register_provision(&config.to_string()).unwrap();
+    let enterprise_config = ::utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
     let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
 

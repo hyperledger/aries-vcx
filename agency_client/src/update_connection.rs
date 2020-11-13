@@ -1,12 +1,10 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use agency_comm::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use agency_comm::message_type::MessageTypes;
-use agency_comm::utils::comm::post_to_agency;
-use error::prelude::*;
-use settings;
-use utils::httpclient;
+use crate::{prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, delete_connection, parse_response_from_agency};
+use crate::message_type::MessageTypes;
+use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
+use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -77,7 +75,7 @@ impl DeleteConnectionBuilder {
         }
     }
 
-    pub fn send_secure(&mut self) -> VcxResult<()> {
+    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("DeleteConnection::send >>>");
 
         let data = self.prepare_request()?;
@@ -87,19 +85,19 @@ impl DeleteConnectionBuilder {
         self.parse_response(&response)
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> VcxResult<()> {
+    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
         trace!("parse_response >>>");
 
         let mut response = parse_response_from_agency(response)?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
         }
     }
 }
 
-pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: &str, agent_vk: &str) -> VcxResult<()> {
+pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<()> {
     trace!("send_delete_connection_message >>>");
 
     delete_connection()
@@ -126,7 +124,7 @@ impl GeneralMessage for DeleteConnectionBuilder {
         self.agent_vk = vk;
     }
 
-    fn prepare_request(&mut self) -> VcxResult<Vec<u8>> {
+    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateConnection(
                 UpdateConnection {
@@ -142,15 +140,12 @@ impl GeneralMessage for DeleteConnectionBuilder {
 
 #[cfg(test)]
 mod tests {
-    use utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
-    use utils::devsetup::SetupDefaults;
-
     use super::*;
+    use crate::utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
-        let _setup = SetupDefaults::init();
 
         let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(DELETE_CONNECTION_DECRYPTED_RESPONSE).unwrap();
         assert_eq!(delete_connection_payload.status_code, ConnectionStatus::Deleted);

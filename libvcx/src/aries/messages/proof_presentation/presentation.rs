@@ -1,7 +1,5 @@
-use std::convert::TryInto;
-
 use error::prelude::*;
-use agency_comm::thread::Thread;
+use aries::messages::thread::Thread;
 use aries::messages::a2a::{A2AMessage, MessageId};
 use aries::messages::ack::PleaseAck;
 use aries::messages::attachment::{AttachmentId, Attachments};

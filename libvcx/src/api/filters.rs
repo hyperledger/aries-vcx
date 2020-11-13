@@ -60,7 +60,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use agency_comm::mocking::AgencyMockDecrypted;
+    use agency_client::mocking::AgencyMockDecrypted;
     use api::return_types_u32;
     use connection;
     use disclosed_proof::get_proof_request_messages;

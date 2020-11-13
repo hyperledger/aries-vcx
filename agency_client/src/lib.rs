@@ -1,34 +1,49 @@
+#![crate_name = "agency_client"]
+extern crate failure;
+extern crate futures;
+extern crate indyrs as indy;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate log;
+extern crate libc;
+extern crate reqwest;
+extern crate rmp_serde;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
+extern crate url;
+
 use std::u8;
 
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use ::{log, settings};
-use error::prelude::*;
-use libindy::utils::crypto;
-use utils::validation;
+use self::utils::error::prelude::*;
+use self::utils::libindy::crypto;
 
 use self::utils::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
-use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
+use self::utils::validation;
+use self::utils::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
-use agency_comm::mocking::AgencyMockDecrypted;
+use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
+use self::mocking::AgencyMockDecrypted;
 
-pub mod create_key;
 pub mod get_message;
-pub mod update_profile;
 pub mod utils;
 pub mod update_connection;
 pub mod update_message;
 pub mod message_type;
 pub mod payload;
 #[macro_use]
-pub mod thread;
 pub mod agency_settings;
 pub mod mocking;
+pub mod httpclient;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -71,7 +86,7 @@ pub enum A2AMessageV2 {
 impl<'de> Deserialize<'de> for A2AMessageV2 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageTypeV2 = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
+        let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
         if log::log_enabled!(log::Level::Trace) {
             let message_json = serde_json::ser::to_string(&value);
@@ -203,6 +218,7 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
     }
 }
 
+// We don't want to use this anymore
 #[derive(Debug)]
 pub enum A2AMessage {
     Version2(A2AMessageV2),
@@ -231,7 +247,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
         }
 
         match message_type {
-            MessageTypes::MessageTypeV2(_) =>
+            MessageTypes::MessageType(_) =>
                 A2AMessageV2::deserialize(value)
                     .map(A2AMessage::Version2)
                     .map_err(de::Error::custom)
@@ -243,7 +259,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct ForwardV2 {
     #[serde(rename = "@type")]
-    msg_type: MessageTypeV2,
+    msg_type: MessageType,
     #[serde(rename = "@fwd")]
     fwd: String,
     #[serde(rename = "@msg")]
@@ -251,9 +267,9 @@ pub struct ForwardV2 {
 }
 
 impl ForwardV2 {
-    fn new(fwd: String, msg: Vec<u8>) -> VcxResult<A2AMessage> {
+    fn new(fwd: String, msg: Vec<u8>) -> AgencyClientResult<A2AMessage> {
         let msg = serde_json::from_slice(msg.as_slice())
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
+            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, err))?;
 
         Ok(A2AMessage::Version2(A2AMessageV2::Forward(
             ForwardV2 {
@@ -269,7 +285,7 @@ impl ForwardV2 {
 #[serde(rename_all = "camelCase")]
 pub struct SendRemoteMessage {
     #[serde(rename = "@type")]
-    pub msg_type: MessageTypeV2,
+    pub msg_type: MessageType,
     #[serde(rename = "@id")]
     pub id: String,
     pub mtype: RemoteMessageType,
@@ -497,36 +513,37 @@ impl A2AMessageKinds {
     }
 }
 
-pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
+pub fn prepare_message_for_agency(message: &A2AMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
     pack_for_agency_v2(message, agency_did)
 }
 
-fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> VcxResult<Vec<u8>> {
+fn pack_for_agency_v2(message: &A2AMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
+    trace!("pack_for_agency_v2 >>>");
     let agent_vk = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
     let my_vk = agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
 
     let message = ::serde_json::to_string(&message)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
 
     let receiver_keys = ::serde_json::to_string(&vec![&agent_vk])
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
 
     let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes())?;
 
     prepare_forward_message(message, agency_did)
 }
 
-pub fn parse_message_from_response(response: &Vec<u8>) -> VcxResult<String> {
+pub fn parse_message_from_response(response: &Vec<u8>) -> AgencyClientResult<String> {
     let unpacked_msg = crypto::unpack_message(&response[..])?;
 
     let message: Value = ::serde_json::from_slice(unpacked_msg.as_slice())
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize response: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize response: {}", err)))?;
 
     Ok(message["message"].as_str()
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Cannot find `message` field on response"))?.to_string())
+        .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Cannot find `message` field on response"))?.to_string())
 }
 
-fn parse_response_from_agency(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> {
+fn parse_response_from_agency(response: &Vec<u8>) -> AgencyClientResult<Vec<A2AMessage>> {
     trace!("parse_response_from_agency >>> processing payload of {} bytes", response.len());
 
     let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
@@ -539,7 +556,7 @@ fn parse_response_from_agency(response: &Vec<u8>) -> VcxResult<Vec<A2AMessage>> 
     trace!("AgencyComm Inbound V2 A2AMessage: {}", message);
 
     let message: A2AMessage = serde_json::from_str(&message)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
 
     Ok(vec![message])
 }
@@ -558,21 +575,21 @@ impl<T> Bundled<T> {
         }
     }
 
-    pub fn encode(&self) -> VcxResult<Vec<u8>> where T: serde::Serialize {
+    pub fn encode(&self) -> AgencyClientResult<Vec<u8>> where T: serde::Serialize {
         rmp_serde::to_vec_named(self)
             .map_err(|err| {
                 error!("Could not convert bundle to messagepack: {}", err);
-                VcxError::from_msg(VcxErrorKind::InvalidMessagePack, format!("Could not encode bundle: {}", err))
+                AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, format!("Could not encode bundle: {}", err))
             })
     }
 }
 
-pub fn try_i8_bundle(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
+pub fn try_i8_bundle(data: Vec<u8>) -> AgencyClientResult<Bundled<Vec<u8>>> {
     let bundle: Bundled<Vec<i8>> =
         rmp_serde::from_slice(&data[..])
             .map_err(|_| {
                 trace!("could not deserialize bundle with i8, will try u8");
-                VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8")
+                AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8")
             })?;
 
     let mut new_bundle: Bundled<Vec<u8>> = Bundled { bundled: Vec::new() };
@@ -592,46 +609,47 @@ pub fn to_i8(bytes: &Vec<u8>) -> Vec<i8> {
     bytes.iter().map(|i| *i as i8).collect()
 }
 
-pub fn bundle_from_u8(data: Vec<u8>) -> VcxResult<Bundled<Vec<u8>>> {
+pub fn bundle_from_u8(data: Vec<u8>) -> AgencyClientResult<Bundled<Vec<u8>>> {
     try_i8_bundle(data.clone())
         .or_else(|_| rmp_serde::from_slice::<Bundled<Vec<u8>>>(&data[..]))
         .map_err(|err| {
             error!("could not deserialize bundle with i8 or u8: {}", err);
-            VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8 or u8")
+            AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8 or u8")
         })
 }
 
-fn prepare_forward_message(message: Vec<u8>, did: &str) -> VcxResult<Vec<u8>> {
+fn prepare_forward_message(message: Vec<u8>, did: &str) -> AgencyClientResult<Vec<u8>> {
+    trace!("prepare_forward_message >>>");
     let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
 
     let message = ForwardV2::new(did.to_string(), message)?;
 
     match message {
         A2AMessage::Version2(A2AMessageV2::Forward(msg)) => prepare_forward_message_for_agency_v2(&msg, &agency_vk),
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Invalid message type"))
+        _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, "Invalid message type"))
     }
 }
 
-fn prepare_forward_message_for_agency_v2(message: &ForwardV2, agency_vk: &str) -> VcxResult<Vec<u8>> {
+fn prepare_forward_message_for_agency_v2(message: &ForwardV2, agency_vk: &str) -> AgencyClientResult<Vec<u8>> {
     let message = serde_json::to_string(message)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Forward message: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize Forward message: {}", err)))?;
 
     let receiver_keys = serde_json::to_string(&vec![agency_vk])
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
 
     crypto::pack_message(None, &receiver_keys, message.as_bytes())
 }
 
-fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> VcxResult<Vec<u8>> {
+fn prepare_message_for_agent(messages: Vec<A2AMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
     debug!("prepare_message_for_agent >> {:?}", messages);
     let message = messages.get(0)
-        .ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, "Cannot get message"))?;
+        .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, "Cannot get message"))?;
 
     let message = serde_json::to_string(message)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
 
     let receiver_keys = serde_json::to_string(&vec![&agent_vk])
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot receiver keys: {}", err)))?;
+        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot receiver keys: {}", err)))?;
 
     let message = crypto::pack_message(Some(pw_vk), &receiver_keys, message.as_bytes())?;
 
@@ -648,25 +666,25 @@ pub trait GeneralMessage {
 
     //todo: deserialize_message
 
-    fn to(&mut self, to_did: &str) -> VcxResult<&mut Self> {
+    fn to(&mut self, to_did: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_did(to_did)?;
         self.set_to_did(to_did.to_string());
         Ok(self)
     }
 
-    fn to_vk(&mut self, to_vk: &str) -> VcxResult<&mut Self> {
+    fn to_vk(&mut self, to_vk: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_verkey(to_vk)?;
         self.set_to_vk(to_vk.to_string());
         Ok(self)
     }
 
-    fn agent_did(&mut self, did: &str) -> VcxResult<&mut Self> {
+    fn agent_did(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_did(did)?;
         self.set_agent_did(did.to_string());
         Ok(self)
     }
 
-    fn agent_vk(&mut self, to_vk: &str) -> VcxResult<&mut Self> {
+    fn agent_vk(&mut self, to_vk: &str) -> AgencyClientResult<&mut Self> {
         validation::validate_verkey(to_vk)?;
         self.set_agent_vk(to_vk.to_string());
         Ok(self)
@@ -677,7 +695,7 @@ pub trait GeneralMessage {
     fn set_agent_did(&mut self, did: String);
     fn set_agent_vk(&mut self, vk: String);
 
-    fn prepare_request(&mut self) -> VcxResult<Vec<u8>>;
+    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -691,14 +709,14 @@ impl<'a, 'de, T> ObjectWithVersion<'a, T> where T: ::serde::Serialize + ::serde:
         ObjectWithVersion { version, data }
     }
 
-    pub fn serialize(&self) -> VcxResult<String> {
+    pub fn serialize(&self) -> AgencyClientResult<String> {
         ::serde_json::to_string(self)
-            .to_vcx(VcxErrorKind::InvalidState, "Cannot serialize object")
+            .to_vcx(AgencyClientErrorKind::InvalidState, "Cannot serialize object")
     }
 
-    pub fn deserialize(data: &str) -> VcxResult<ObjectWithVersion<T>> where T: ::serde::de::DeserializeOwned {
+    pub fn deserialize(data: &str) -> AgencyClientResult<ObjectWithVersion<T>> where T: ::serde::de::DeserializeOwned {
         ::serde_json::from_str(data)
-            .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize object")
+            .to_vcx(AgencyClientErrorKind::InvalidJson, "Cannot deserialize object")
     }
 }
 
@@ -706,11 +724,7 @@ impl<'a, 'de, T> ObjectWithVersion<'a, T> where T: ::serde::Serialize + ::serde:
 #[serde(tag = "version")]
 pub enum SerializableObjectWithState<T, P> {
     #[serde(rename = "1.0")]
-    V1 { data: T },
-    #[serde(rename = "2.0")]
-    V2 { data: T, state: P },
-    #[serde(rename = "3.0")]
-    V3 { data: T, state: P, source_id: String },
+    V1 { data: T, state: P, source_id: String },
 }
 
 pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }
@@ -723,15 +737,11 @@ pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
 
 #[cfg(test)]
 pub mod tests {
-    use utils::devsetup::*;
-
     use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_u8() {
-        let _setup = SetupDefaults::init();
-
         let vec: Vec<i8> = vec![-127, -89, 98, 117, 110, 100, 108, 101, 100, -111, -36, 5, -74];
 
         let buf = to_u8(&vec);
@@ -741,8 +751,6 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_to_i8() {
-        let _setup = SetupDefaults::init();
-
         let vec: Vec<u8> = vec![129, 167, 98, 117, 110, 100, 108, 101, 100, 145, 220, 19, 13];
         let buf = to_i8(&vec);
         info!("new bundle: {:?}", buf);

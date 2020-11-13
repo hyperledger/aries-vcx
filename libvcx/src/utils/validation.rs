@@ -1,8 +1,6 @@
 extern crate openssl;
 extern crate rust_base58;
 
-use url::Url;
-
 use error::prelude::*;
 use settings::Actors;
 use utils::qualifier;
@@ -53,12 +51,6 @@ pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
     //todo: find out what needs to be validated for key_delegate
     let check_delegate = String::from(delegate);
     Ok(check_delegate)
-}
-
-pub fn validate_url(url: &str) -> VcxResult<String> {
-    Url::parse(url)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidUrl, err))?;
-    Ok(url.to_string())
 }
 
 pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {

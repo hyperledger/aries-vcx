@@ -16,13 +16,3 @@ pub fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) ->
         .wait()
         .map_err(VcxError::from)
 }
-
-pub fn get_local_verkey(did: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(::utils::constants::VERKEY.to_string());
-    }
-
-    did::key_for_local_did(get_wallet_handle(), did)
-        .wait()
-        .map_err(VcxError::from)
-}

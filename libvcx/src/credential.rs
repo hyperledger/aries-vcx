@@ -1,6 +1,6 @@
 use serde_json;
 
-use agency_comm::mocking::AgencyMockDecrypted;
+use agency_client::mocking::AgencyMockDecrypted;
 use aries::{
     handlers::issuance::holder::holder::Holder,
     messages::a2a::A2AMessage,
