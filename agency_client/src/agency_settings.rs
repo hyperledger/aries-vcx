@@ -119,7 +119,6 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> VcxRes
     }
 }
 
-
 pub fn get_config_value(key: &str) -> VcxResult<String> {
     trace!("get_config_value >>> key: {}", key);
 

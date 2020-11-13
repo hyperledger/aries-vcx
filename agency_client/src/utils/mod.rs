@@ -9,4 +9,6 @@ pub mod encryption_envelope;
 pub mod wallet;
 pub mod timeout;
 pub mod test_utils;
+pub mod create_key;
+pub mod update_profile;
 pub(super) mod comm;

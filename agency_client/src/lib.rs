@@ -26,16 +26,14 @@ use self::utils::libindy::crypto;
 
 use self::utils::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
 use self::utils::validation;
-use self::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
+use self::utils::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
 use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
 use self::message_type::*;
 use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
 use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use self::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
+use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
 use self::mocking::AgencyMockDecrypted;
 
-mod create_key;
-mod update_profile;
 pub mod get_message;
 pub mod utils;
 pub mod update_connection;
@@ -46,7 +44,6 @@ pub mod payload;
 pub mod agency_settings;
 pub mod mocking;
 pub mod httpclient;
-pub mod agency_client;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

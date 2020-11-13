@@ -111,7 +111,7 @@ impl UpdateProfileDataBuilder {
 #[cfg(test)]
 mod tests {
     use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
-    use crate::update_profile::UpdateProfileDataBuilder;
+    use crate::utils::update_profile::UpdateProfileDataBuilder;
     use crate::mocking::AgencyMockDecrypted;
     use crate::utils::test_utils::SetupMocks;
     use crate::{update_data, agency_settings};

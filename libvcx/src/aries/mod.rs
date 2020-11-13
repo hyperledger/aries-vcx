@@ -12,13 +12,12 @@ pub mod test {
     use rand::Rng;
 
     use utils::provision::connect_register_provision;
-    use agency_client::payload::{PayloadKinds};
+    use agency_client::payload::PayloadKinds;
     use utils::devsetup::*;
     use libindy::utils::wallet::*;
     use utils::plugins::init_plugin;
     use aries::messages::a2a::A2AMessage;
     use error::{VcxResult, VcxErrorKind, VcxError};
-    use serde_json::Value;
 
     pub fn source_id() -> String {
         String::from("test source id")
