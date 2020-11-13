@@ -205,11 +205,6 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
 
     agency_settings::process_agency_config_string(config, do_validation)?;
 
-    match configuration["enable_test_mode"].as_str() {
-        Some(value) if value == "true" => ::std::env::set_var("DUMMY_TEST_MODE", "true"),
-        _ => {}
-    };
-
     if do_validation {
         let setting = SETTINGS.read()
             .or(Err(VcxError::from(VcxErrorKind::InvalidConfiguration)))?;

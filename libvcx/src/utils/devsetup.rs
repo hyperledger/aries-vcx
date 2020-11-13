@@ -6,10 +6,9 @@ use indy::WalletHandle;
 use rand::Rng;
 use serde_json::Value;
 
-use ::{indy, init};
-use ::{settings, utils};
+use ::{init, settings, utils};
 use agency_client::agency_settings;
-use agency_client::mocking::AgencyMockDecrypted;
+use agency_client::mocking::{AgencyMockDecrypted, enable_agency_mocks, disable_agency_mocks};
 use libindy::utils::pool::reset_pool_handle;
 use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -79,7 +78,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
-    ::std::env::set_var("DUMMY_TEST_MODE", "false");
+    disable_agency_mocks();
     AgencyMockDecrypted::clear_mocks();
 }
 
@@ -113,8 +112,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        ::std::env::set_var("DUMMY_TEST_MODE", "true");
+        enable_agency_mocks();
         SetupMocks
     }
 }
@@ -213,8 +211,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        ::std::env::set_var("DUMMY_TEST_MODE", "true");
+        enable_agency_mocks();
         SetupIndyMocks {}
     }
 }

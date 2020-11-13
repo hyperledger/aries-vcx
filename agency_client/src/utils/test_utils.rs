@@ -30,7 +30,6 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         mocking::enable_agency_mocks();
-        ::std::env::set_var("DUMMY_TEST_MODE", "true");
         SetupMocks
     }
 }
@@ -38,7 +37,6 @@ impl SetupMocks {
 impl Drop for SetupMocks {
     fn drop(&mut self) {
         AgencyMockDecrypted::clear_mocks();
-        ::std::env::set_var("DUMMY_TEST_MODE", "false");
         reset_wallet_handle();
         mocking::disable_agency_mocks();
     }
