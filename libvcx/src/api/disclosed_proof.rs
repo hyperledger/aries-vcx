@@ -1108,7 +1108,7 @@ mod tests {
         assert_eq!(vcx_disclosed_proof_get_proof_msg(cb.command_handle,
                                                      handle,
                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
-        let _s = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
+        let _s = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
 
     #[test]
