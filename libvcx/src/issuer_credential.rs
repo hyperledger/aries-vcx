@@ -186,17 +186,6 @@ pub mod tests {
 
     use super::*;
 
-    static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
-    static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";
-
-    static CREDENTIAL_DATA: &str =
-        r#"{"address2":["101 Wilson Lane"],
-        "zip":["87121"],
-        "state":["UT"],
-        "city":["SLC"],
-        "address1":["101 Tela Lane"]
-        }"#;
-
     pub fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let tag = "test_tag";

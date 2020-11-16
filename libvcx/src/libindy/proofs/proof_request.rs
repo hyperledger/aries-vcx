@@ -131,30 +131,20 @@ impl Default for ProofRequestVersion {
 
 #[cfg(test)]
 mod tests {
-    use serde::Serialize;
-    use serde_json::Value;
-
     use crate::utils;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
+    use serde_json::Value;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        //proof data
-        let data_name = "Test";
-        let nonce = "123432421212";
-        let data_version = "3.75";
-        let version = "1.3";
-        let tid = 89;
-        let mid = 98;
-
         let request = ProofRequestData::create()
-            .set_name(data_name.into())
+            .set_name("Test".into())
             .set_nonce().unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
             .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()

@@ -4,7 +4,6 @@ use serde_json::Value;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 use crate::settings;
-use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -166,14 +165,8 @@ pub fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
-    use agency_client::mocking::HttpClientMockResponse;
-
-    use crate::api::VcxStateType;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
 

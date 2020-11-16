@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::error::prelude::*;
 use crate::aries::messages::issuance::credential::{Credential, CredentialData};
 use crate::aries::messages::status::Status;

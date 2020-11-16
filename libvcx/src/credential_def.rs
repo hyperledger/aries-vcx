@@ -666,7 +666,7 @@ pub mod tests {
                                                       revocation_details).unwrap();
         let rev_reg_def = get_rev_reg_def(handle).unwrap().unwrap();
         let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def).unwrap();
-        let rev_reg_id = get_rev_reg_id(handle).unwrap();
+        let _rev_reg_id = get_rev_reg_id(handle).unwrap();
         assert_eq!(rev_reg_def["value"]["tailsLocation"], utils::constants::TEST_TAILS_URL.to_string());
     }
 

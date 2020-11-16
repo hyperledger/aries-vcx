@@ -397,7 +397,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        Err(_err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
     };
 
     let uids = if !uids.is_null() {

@@ -2,7 +2,6 @@ use crate::aries::messages::a2a::{A2AMessage, MessageId};
 use crate::aries::messages::ack::PleaseAck;
 use crate::aries::messages::attachment::{AttachmentId, Attachments};
 use crate::aries::messages::thread::Thread;
-use crate::error::prelude::*;
 use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]

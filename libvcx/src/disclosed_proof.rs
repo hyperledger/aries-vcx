@@ -2,7 +2,7 @@ use serde_json;
 
 use agency_client::mocking::AgencyMockDecrypted;
 
-use crate::{connection, settings};
+use crate::connection;
 use crate::aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
@@ -233,18 +233,9 @@ mod tests {
     extern crate serde_json;
 
     use serde_json::Value;
-    #[cfg(feature = "pool_tests")]
-    use time;
-
     use crate::api::VcxStateType;
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-    use crate::utils::{
-        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS,
-                    CRED_DEF_ID, CRED_REV_ID, GET_MESSAGES_DECRYPTED_RESPONSE, LICENCE_CRED_ID, REV_REG_ID,
-                    REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
-        get_temp_dir_path,
-    };
+    use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
@@ -317,19 +308,19 @@ mod tests {
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
 
-        generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string());
+        generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string()).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
 
         send_proof(handle, connection_handle).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle).unwrap());
 
-        connection::release(connection_handle);
+        connection::release(connection_handle).unwrap();
         let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
 
-        update_state(handle, None, Some(connection_handle));
+        update_state(handle, None, Some(connection_handle)).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
     }
 
@@ -422,6 +413,6 @@ mod tests {
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle).unwrap());
 
         let attrs = get_proof_request_attachment(handle).unwrap();
-        let attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
+        let _attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
     }
 }

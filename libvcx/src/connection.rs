@@ -12,7 +12,6 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
-use crate::settings;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
 
@@ -207,7 +206,6 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
         SerializableObjectWithState::V1 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
         }
-        _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
     };
     Ok(handle)
 }
@@ -327,9 +325,8 @@ pub mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::{connection, utils};
+    use crate::{connection, utils, settings};
     use crate::api::VcxStateType;
-    use crate::utils::constants::*;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};

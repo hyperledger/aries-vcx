@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::error::prelude::*;
 use crate::aries::messages::a2a::{A2AMessage, MessageId};
 use crate::aries::messages::attachment::{AttachmentId, Attachments};

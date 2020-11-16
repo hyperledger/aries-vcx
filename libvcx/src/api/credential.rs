@@ -530,9 +530,9 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
 ///
 /// credential_handle: credential handle that was provided during creation. Used to identify credential object
 ///
-/// my_pw_did: use crate::connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
+/// my_pw_did: Use Connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
 ///
-/// their_pw_did: use crate::connection api (vcx_connection_get_their_pw_did) with specified connection_handle to retrieve theri pw_did
+/// their_pw_did: Use Connection api (vcx_connection_get_their_pw_did) with specified connection_handle to retrieve theri pw_did
 ///
 /// cb: Callback that provides error status of credential request
 ///
@@ -1001,11 +1001,10 @@ mod tests {
 
     use crate::api::return_types_u32;
     use crate::api::VcxStateType;
-    use crate::aries::messages::issuance::credential_request::CredentialRequest;
     use crate::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;

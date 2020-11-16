@@ -335,7 +335,7 @@ pub mod test {
 
         mod step {
             use super::*;
-            use crate::utils::devsetup::{SetupDefaults, SetupIndyMocks};
+            use crate::utils::devsetup::{SetupIndyMocks};
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -515,7 +515,6 @@ pub mod test {
 
         mod find_message_to_handle {
             use super::*;
-            use crate::settings;
             use crate::utils::devsetup::SetupIndyMocks;
 
             #[test]

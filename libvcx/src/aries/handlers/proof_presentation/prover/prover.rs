@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-use std::convert::TryInto;
 
 use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::aries::handlers::proof_presentation::prover::state_machine::ProverSM;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
-use crate::aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
@@ -180,8 +179,8 @@ mod tests {
         let (_, _, req, _) = libindy::utils::anoncreds::tests::create_proof();
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
-        let mut proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("1", proof_req).unwrap();
 
         let retrieved_creds = proof.retrieve_credentials().unwrap();
         assert!(retrieved_creds.len() > 500);

@@ -142,7 +142,7 @@ impl SetupLibraryWallet {
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
-        close_main_wallet();
+        let _res = close_main_wallet();
         delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
         tear_down()
     }
@@ -177,7 +177,7 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            close_main_wallet();
+            let _res = close_main_wallet();
             delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
             reset_wallet_handle();
         }
@@ -270,7 +270,7 @@ impl SetupAgencyMock {
 
 impl Drop for SetupAgencyMock {
     fn drop(&mut self) {
-        close_main_wallet();
+        let _res = close_main_wallet();
         delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
         tear_down()
     }
@@ -387,7 +387,7 @@ pub fn setup_indy_env(use_zero_fees: bool) {
 }
 
 pub fn cleanup_indy_env() {
-    close_main_wallet();
+    let _res = close_main_wallet();
     delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None)
         .unwrap_or_else(|_| error!("Error deleting wallet {}", settings::DEFAULT_WALLET_NAME));
     delete_test_pool();
@@ -395,11 +395,11 @@ pub fn cleanup_indy_env() {
 
 pub fn cleanup_agency_env() {
     set_institution(None);
-    close_main_wallet();
+    let _res = close_main_wallet();
     delete_wallet(&settings::get_wallet_name().unwrap(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
     set_consumer(None);
-    close_main_wallet();
+    let _res = close_main_wallet();
     delete_wallet(&settings::get_wallet_name().unwrap(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
     delete_test_pool();
@@ -449,7 +449,7 @@ fn assign_trustee_role(institution_handle: Option<u32>) {
     let req_nym = indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
     libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
 
-    close_main_wallet();
+    let _res = close_main_wallet();
     wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 }
 
@@ -462,7 +462,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
     let enterprise_wallet_name = format!("{}_{}", constants::ENTERPRISE_PREFIX, settings::DEFAULT_WALLET_NAME);
 
     let seed1 = create_new_seed();
-    let mut config = json!({
+    let config = json!({
             "agency_url": AGENCY_ENDPOINT.to_string(),
             "agency_did": AGENCY_DID.to_string(),
             "agency_verkey": AGENCY_VERKEY.to_string(),
@@ -483,7 +483,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
 
     let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, settings::DEFAULT_WALLET_NAME);
     let seed2 = create_new_seed();
-    let mut config = json!({
+    let config = json!({
             "agency_url": C_AGENCY_ENDPOINT.to_string(),
             "agency_did": C_AGENCY_DID.to_string(),
             "agency_verkey": C_AGENCY_VERKEY.to_string(),
@@ -562,7 +562,7 @@ pub fn create_institution_config() -> u32 {
     let enterprise_wallet_name = format!("{}_{}_{}", constants::ENTERPRISE_PREFIX, enterprise_id, random_salt);
 
     let seed = create_new_seed();
-    let mut config = json!({
+    let config = json!({
             "agency_url": AGENCY_ENDPOINT.to_string(),
             "agency_did": AGENCY_DID.to_string(),
             "agency_verkey": AGENCY_VERKEY.to_string(),

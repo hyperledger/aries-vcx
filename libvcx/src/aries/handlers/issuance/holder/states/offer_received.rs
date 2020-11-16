@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::error::prelude::*;
 use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::aries::handlers::issuance::holder::states::request_sent::RequestSentState;

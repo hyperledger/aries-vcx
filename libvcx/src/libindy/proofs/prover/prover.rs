@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use serde_json::Value;
-
 use crate::error::prelude::*;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::prover::prover_internal::{build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover, credential_def_identifiers};

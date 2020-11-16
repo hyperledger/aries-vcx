@@ -9,7 +9,6 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 pub mod test {
     use indy_sys::WalletHandle;
     use rand::Rng;
-    use serde_json::Value;
 
     use agency_client::payload::PayloadKinds;
 
@@ -59,10 +58,10 @@ pub mod test {
         debug!("determine_message_type >>> a2a_message={:?}", a2a_message);
         match a2a_message.clone() {
             A2AMessage::PresentationRequest(_) => PayloadKinds::ProofRequest,
-            A2AMessage::CredentialOffer(offer) => PayloadKinds::CredOffer,
+            A2AMessage::CredentialOffer(_) => PayloadKinds::CredOffer,
             A2AMessage::Credential(_) => PayloadKinds::Cred,
             A2AMessage::Presentation(_) => PayloadKinds::Proof,
-            msg => PayloadKinds::Other(String::from("aries"))
+            _msg => PayloadKinds::Other(String::from("aries"))
         }
     }
 

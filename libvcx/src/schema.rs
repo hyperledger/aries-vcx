@@ -222,7 +222,6 @@ pub mod tests {
     use crate::libindy::utils::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::add_new_did;
-    use crate::libindy::utils::wallet::get_wallet_handle;
     #[cfg(feature = "pool_tests")]
     use crate::utils::constants;
     use crate::utils::constants::SCHEMA_ID;
@@ -436,7 +435,7 @@ pub mod tests {
 
         assert_eq!(1, update_state(handle).unwrap());
         assert_eq!(1, get_state(handle).unwrap());
-        libindy::utils::wallet::close_main_wallet();
+        libindy::utils::wallet::close_main_wallet().unwrap();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -446,6 +445,6 @@ pub mod tests {
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());
-        libindy::utils::wallet::close_main_wallet();
+        libindy::utils::wallet::close_main_wallet().unwrap();
     }
 }

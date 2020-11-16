@@ -1373,7 +1373,7 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        close_main_wallet();
+        close_main_wallet().unwrap();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let import_config = json!({
@@ -1390,7 +1390,6 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        close_main_wallet();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 }

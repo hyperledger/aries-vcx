@@ -112,7 +112,6 @@ pub mod tests {
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use crate::utils::devsetup::*;
-    use crate::settings;
 
     use super::*;
     use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
@@ -173,7 +172,7 @@ pub mod tests {
                                          r#"{"support_revocation":false}"#.to_string(),
                                          "Optional".to_owned()).unwrap();
 
-        proof.send_presentation_request(connection_handle);
+        proof.send_presentation_request(connection_handle).unwrap();
 
         proof.update_state_with_message(PROOF_REJECT_RESPONSE_STR_V2).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);

@@ -17,18 +17,6 @@ pub struct WalletRecord {
     tags: Option<String>,
 }
 
-impl WalletRecord {
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize WalletRecord: {:?}", err)))
-    }
-
-    pub fn from_str(data: &str) -> VcxResult<WalletRecord> {
-        serde_json::from_str(data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletRecord: {:?}", err)))
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RestoreWalletConfigs {
     pub wallet_name: String,
@@ -40,11 +28,6 @@ pub struct RestoreWalletConfigs {
 }
 
 impl RestoreWalletConfigs {
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize RestoreWalletConfigs: {:?}", err)))
-    }
-
     pub fn from_str(data: &str) -> VcxResult<RestoreWalletConfigs> {
         serde_json::from_str(data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RestoreWalletConfigs: {:?}", err)))
@@ -306,7 +289,6 @@ pub fn import(config: &str) -> VcxResult<()> {
 pub mod tests {
     use agency_client::agency_settings;
 
-    use crate::api;
     use crate::libindy::utils::signus::create_and_store_my_did;
     use crate::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
     use crate::utils::get_temp_dir_path;
@@ -322,7 +304,7 @@ pub mod tests {
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        let handle = create_and_open_as_main_wallet(wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        let _handle = create_and_open_as_main_wallet(wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
@@ -379,7 +361,7 @@ pub mod tests {
 
 
         settings::clear_config();
-        close_main_wallet();
+        close_main_wallet().unwrap();
 
         // Delete fails
         assert_eq!(delete_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
@@ -452,7 +434,7 @@ pub mod tests {
         // If wallet was successfully imported, there will be an error trying to add this duplicate record
         assert_eq!(add_record(type_, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
 
-        close_main_wallet();
+        close_main_wallet().unwrap();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 
@@ -506,7 +488,6 @@ pub mod tests {
         let res = import(&import_config).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::DuplicationWallet);
 
-        close_main_wallet();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 
@@ -534,7 +515,6 @@ pub mod tests {
 
         let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
 
-        close_main_wallet();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let wallet_name_new = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());

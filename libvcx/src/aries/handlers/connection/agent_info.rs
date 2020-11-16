@@ -32,10 +32,10 @@ impl Default for AgentInfo {
     }
 }
 
-fn _log_messages_optionally(a2a_messages: &HashMap<String, A2AMessage>) {
+fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
         {
-            for message in a2a_messages.values() {
+            for message in _a2a_messages.values() {
                 let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
                 warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
             }

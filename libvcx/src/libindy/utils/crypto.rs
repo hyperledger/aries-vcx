@@ -2,45 +2,8 @@
 use futures::Future;
 use indy::crypto;
 
-use crate::{libindy, settings, utils};
+use crate::{libindy, settings};
 use crate::error::prelude::*;
-use crate::libindy::utils::LibindyMock;
-
-pub fn prep_msg(sender_vk: &str, recipient_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() {
-        let rc = LibindyMock::get_result();
-        if rc != 0 { return Err(VcxError::from(VcxErrorKind::Common(rc))); };
-        return Ok(Vec::from(msg).to_owned());
-    }
-
-    crypto::auth_crypt(libindy::utils::wallet::get_wallet_handle(), sender_vk, recipient_vk, msg)
-        .wait()
-        .map_err(VcxError::from)
-}
-
-pub fn prep_anonymous_msg(recipient_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() { return Ok(Vec::from(msg).to_owned()); }
-
-    crypto::anon_crypt(recipient_vk, msg)
-        .wait()
-        .map_err(VcxError::from)
-}
-
-pub fn parse_msg(recipient_vk: &str, msg: &[u8]) -> VcxResult<(String, Vec<u8>)> {
-    if settings::indy_mocks_enabled() { return Ok((utils::constants::VERKEY.to_string(), Vec::from(msg).to_owned())); }
-
-    crypto::auth_decrypt(libindy::utils::wallet::get_wallet_handle(), recipient_vk, msg)
-        .wait()
-        .map_err(VcxError::from)
-}
-
-pub fn parse_anonymous_msg(recipient_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
-    if settings::indy_mocks_enabled() { return Ok(Vec::from(msg).to_owned()); }
-
-    crypto::anon_decrypt(libindy::utils::wallet::get_wallet_handle(), recipient_vk, msg)
-        .wait()
-        .map_err(VcxError::from)
-}
 
 pub fn sign(my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() { return Ok(Vec::from(msg).to_owned()); }

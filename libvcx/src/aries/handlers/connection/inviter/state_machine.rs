@@ -315,7 +315,6 @@ impl SmConnectionInviter {
 #[cfg(test)]
 pub mod test {
     use crate::aries::messages::ack::tests::_ack;
-    use crate::aries::messages::connection::invite::tests::_invitation;
     use crate::aries::messages::connection::problem_report::tests::_problem_report;
     use crate::aries::messages::connection::request::tests::_request;
     use crate::aries::messages::connection::response::tests::_signed_response;

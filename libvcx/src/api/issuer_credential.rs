@@ -528,7 +528,7 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
 ///
 /// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
-/// my_pw_did: use crate::connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
+/// my_pw_did: Use Connection api (vcx_connection_get_pw_did) with specified connection_handle to retrieve your pw_did
 ///
 /// cb:  Callback that provides any error status of the credential
 ///
@@ -848,7 +848,7 @@ pub mod tests {
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED, CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED};
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;

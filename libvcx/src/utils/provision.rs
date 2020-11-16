@@ -176,7 +176,7 @@ mod tests {
     use std::env;
 
     use crate::api::vcx::vcx_shutdown;
-    use crate::utils::devsetup::{SetupDefaults, SetupLibraryAgencyV2, SetupMocks};
+    use crate::utils::devsetup::{SetupDefaults, SetupMocks};
 
     use super::*;
 

@@ -689,7 +689,6 @@ mod tests {
     use crate::api::{ProofStateType, return_types_u32, VcxStateType};
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::proof;
-    use crate::settings;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;

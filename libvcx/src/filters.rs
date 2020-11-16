@@ -3,7 +3,6 @@ use serde_json;
 use crate::aries::messages::issuance::credential_offer::CredentialOffer;
 use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::error::prelude::*;
-use crate::utils::error;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests)
@@ -62,8 +61,6 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 
 #[cfg(test)]
 pub mod tests {
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_proof;
 
     use super::*;

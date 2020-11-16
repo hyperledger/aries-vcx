@@ -946,7 +946,7 @@ pub mod tests {
     fn test_empty_fees() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let fees = get_ledger_fees().unwrap();
+        let _fees = get_ledger_fees().unwrap();
         libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 
@@ -956,7 +956,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         mint_tokens_and_set_fees(Some(0), Some(0), Some("{\"101\":0, \"102\":0}".to_string()), None).unwrap();
-        let fees = get_ledger_fees().unwrap();
+        let _fees = get_ledger_fees().unwrap();
         libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 

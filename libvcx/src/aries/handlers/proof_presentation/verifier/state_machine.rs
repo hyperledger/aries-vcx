@@ -285,9 +285,6 @@ pub mod test {
     }
 
     mod step {
-        use crate::settings;
-        use crate::settings::set_config_value;
-
         use super::*;
         use crate::utils::mockdata::mock_settings::MockBuilder;
 

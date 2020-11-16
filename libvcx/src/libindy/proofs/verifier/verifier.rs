@@ -1,12 +1,7 @@
-use serde_json;
-use serde_json::Value;
-
 use crate::error::prelude::*;
 use crate::libindy::proofs::verifier::verifier_internal::{build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes};
 use crate::libindy::utils::anoncreds;
-use crate::settings;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
-use crate::utils::openssl::encode;
 
 pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
@@ -42,7 +37,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{libindy, utils};
+    use crate::{libindy, utils, settings};
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 

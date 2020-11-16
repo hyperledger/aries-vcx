@@ -127,7 +127,7 @@ impl Connection {
             SmConnection::Inviter(sm_inviter) => {
                 sm_inviter.prev_agent_info()
             }
-            SmConnection::Invitee(sm_invitee) => None
+            SmConnection::Invitee(_sm_invitee) => None
         }
     }
 
@@ -331,7 +331,7 @@ Get messages received from connection counterparty.
 
     fn get_expected_sender_vk(&self) -> VcxResult<String> {
         self.remote_vk()
-            .map_err(|err|
+            .map_err(|_err|
                 VcxError::from_msg(VcxErrorKind::NotReady, "Verkey of connection counterparty \
                 is not known, hence it would be impossible to authenticate message downloaded by id.")
             )

@@ -120,11 +120,9 @@ pub mod tests {
 
     use agency_client::mocking::HttpClientMockResponse;
 
-    use crate::{proof, settings};
+    use crate::proof;
     use crate::api::VcxStateType;
     use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use crate::aries::messages::proof_presentation::presentation::Presentation;
-    use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
@@ -140,14 +138,6 @@ pub mod tests {
                                      r#"{"support_revocation":false}"#.to_string(),
                                      "Optional".to_owned()).unwrap();
         return proof;
-    }
-
-    fn progress_proof_to_final_state(proof: &mut Verifier, connection_handle: u32, proof_presentation: &str, proof_handle: u32) {
-        proof.send_presentation_request(connection_handle).unwrap();
-        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
-
-        update_state(proof_handle, Some(proof_presentation), None).unwrap();
-        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
     #[test]
@@ -275,7 +265,7 @@ pub mod tests {
         proof.send_presentation_request(connection_handle).unwrap();
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
-        connection::release(connection_handle);
+        connection::release(connection_handle).unwrap();
         let connection_handle = build_test_connection_inviter_requested();
 
         let handle = PROOF_MAP.add(proof).unwrap();

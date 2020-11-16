@@ -230,7 +230,7 @@ pub mod tests {
         let envelope = EncryptionEnvelope::create(&ack, Some(&sender_key), &did_doc).unwrap();
 
         wallet::set_wallet_handle(recipient_wallet.wh);
-        let message_1 = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key).unwrap();
+        let _message_1 = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key).unwrap();
     }
 
     #[test]
