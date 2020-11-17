@@ -32,15 +32,18 @@ WORKDIR /home/indy
 
 RUN git clone $INDYSDK_REPO && cd indy-sdk && git checkout $INDYSDK_REVISION
 
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
+ENV PATH_LIBINDY=$INDYSDK_PATH/libindy
+ENV PATH_LIBNULLPAY=$INDYSDK_PATH/libnullpay
+ENV PATH_LIBPGWALLET=$INDYSDK_PATH/experimental/plugins/postgres_storage
+RUN cargo build --release --manifest-path=$PATH_LIBINDY/Cargo.toml --target-dir=$PATH_LIBINDY/target
 
 USER root
-RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
+RUN mv $PATH_LIBINDY/target/release/libindy.so /usr/lib
 
 USER indy
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libnullpay/Cargo.toml
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
+RUN cargo build --release --manifest-path=$PATH_LIBNULLPAY/Cargo.toml --target-dir=$PATH_LIBNULLPAY/target
+RUN cargo build --release --manifest-path=$PATH_LIBPGWALLET/Cargo.toml --target-dir=$PATH_LIBPGWALLET/target
 
 USER root
-RUN mv $INDYSDK_PATH/libnullpay/target/release/libnullpay.so .
-RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so .
+RUN mv $PATH_LIBNULLPAY/target/release/libnullpay.so .
+RUN mv $PATH_LIBPGWALLET/target/release/libindystrgpostgres.so .
