@@ -680,7 +680,7 @@ jobs:
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:legacy:integration)'
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:threaded:integration)'
 
       - name: Run wrapper legacy integration revocation test
         run: |
@@ -688,7 +688,7 @@ jobs:
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:legacy:integration:revocation)'
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run test:threaded:integration:revocation)'
 
       - name: Run integration tests
         run: |
