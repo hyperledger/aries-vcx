@@ -36,6 +36,7 @@ pub static INVALID_STATE: Error = Error { code_num: 1081, message: "Object is in
 pub static INVALID_MSGPACK: Error = Error { code_num: 1019, message: "Invalid MessagePack" };
 pub static DUPLICATE_MASTER_SECRET: Error = Error { code_num: 1084, message: "Attempted to add a Master Secret that already existed in wallet" };
 pub static DID_ALREADY_EXISTS_IN_WALLET: Error = Error { code_num: 1083, message: "Attempted to add a DID to wallet when that DID already exists in wallet" };
+pub static CREATE_AGENT: Error = Error { code_num: 2000, message: "Failed to create agent client" };
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {

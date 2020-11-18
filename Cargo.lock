@@ -27,6 +27,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log",
+ "rand 0.3.23",
  "regex",
  "reqwest",
  "rmp-serde",

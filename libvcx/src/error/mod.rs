@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::ffi::CString;
 use std::fmt;
 use std::ptr;
+use std::sync;
 
 use failure::{Backtrace, Context, Fail};
 use libc::c_char;
@@ -218,6 +219,9 @@ pub enum VcxErrorKind {
     UnknownLibndyError,
     #[fail(display = "No Agent pairwise information")]
     NoAgentInformation,
+
+    #[fail(display = "Attempted to unlock poisoned lock")]
+    PoisonedLock,
 }
 
 #[derive(Debug)]
@@ -289,6 +293,12 @@ impl From<agency_client::utils::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::utils::error::AgencyClientError) -> VcxError {
         let kind_num: u32 = agency_err.kind().into();
         VcxError::from_msg(kind_num.into(), ::utils::error::error_message(&agency_err.kind().clone().into()))
+    }
+}
+
+impl<T> From<sync::PoisonError<T>> for VcxError {
+    fn from(_: sync::PoisonError<T>) -> Self {
+        VcxError { inner: Context::new(Backtrace::new()).context(VcxErrorKind::PoisonedLock) }
     }
 }
 
@@ -395,6 +405,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
+            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num
         }
     }
 }

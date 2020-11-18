@@ -7,8 +7,7 @@ use rand::Rng;
 use serde_json::Value;
 
 use ::{init, settings, utils};
-use agency_client::agency_settings;
-use agency_client::mocking::{AgencyMockDecrypted, enable_agency_mocks, disable_agency_mocks};
+use agency_client::mocking::AgencyMockDecrypted;
 use libindy::utils::pool::reset_pool_handle;
 use libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -78,7 +77,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
-    disable_agency_mocks();
+    settings::get_agency_client().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
 }
 
@@ -112,7 +111,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        enable_agency_mocks();
+        settings::get_agency_client().unwrap().enable_test_mode();
         SetupMocks
     }
 }
@@ -134,7 +133,7 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+        settings::get_agency_client().unwrap().disable_test_mode();
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
         SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
     }
@@ -159,8 +158,8 @@ impl SetupWallet {
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
+        settings::get_agency_client().unwrap().disable_test_mode();
 
         create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
         info!("SetupWallet:: init :: Wallet {} created", wallet_name);
@@ -211,7 +210,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        enable_agency_mocks();
+        settings::get_agency_client().unwrap().enable_test_mode();
         SetupIndyMocks {}
     }
 }
@@ -261,7 +260,7 @@ impl SetupAgencyMock {
         settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        settings::get_agency_client().unwrap().enable_test_mode();
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
@@ -367,7 +366,7 @@ pub fn setup_libnullpay_nofees() {
 
 pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
+    settings::get_agency_client().unwrap().disable_test_mode();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
@@ -521,6 +520,7 @@ pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
     let wallet_key = config_val["wallet_key"].as_str().unwrap();
 
     let wallet_handle = init::open_as_main_wallet(wallet_n, wallet_key, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+    init::init_agency_client(config, wallet_handle).unwrap();
     let mut config: serde_json::Value = serde_json::from_str(config).unwrap();
     config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
     config.to_string()

@@ -16,6 +16,12 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
+pub fn init_agency_client(config: &str, wallet_handle: WalletHandle) -> VcxResult<()> {
+    info!("init_agency_client >>> config = {}, wallet_handle: {:?}", config, wallet_handle);
+    settings::get_agency_client()?.process_config_string(config, wallet_handle.0, false)?;
+    Ok(())
+}
+
 pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
     trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 

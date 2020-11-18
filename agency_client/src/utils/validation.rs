@@ -15,6 +15,7 @@ pub fn is_fully_qualified(entity: &str) -> bool {
 }
 
 pub fn validate_did(did: &str) -> AgencyClientResult<String> {
+    trace!("validate_did >>> did: {}", did);
     if is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
@@ -26,7 +27,7 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
                 return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidDid, "Invalid DID length"));
             }
             Err(x) => {
-                warn!("Err(x)");
+                warn!("Err({:?})", x);
                 return Err(AgencyClientError::from_msg(AgencyClientErrorKind::NotBase58, format!("Invalid DID: {}", x)));
             }
         }
@@ -34,6 +35,7 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
 }
 
 pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
+    trace!("validate_verkey >>> verkey: {}", verkey);
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),

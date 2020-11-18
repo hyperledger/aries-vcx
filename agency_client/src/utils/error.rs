@@ -87,6 +87,9 @@ pub enum AgencyClientErrorKind {
     #[fail(display = "Invalid HTTP response.")]
     InvalidHttpResponse,
 
+    #[fail(display = "Failed to create agent client")]
+    CreateAgent,
+
     #[fail(display = "Common error {}", 0)]
     Common(u32),
     #[fail(display = "Libndy error {}", 0)]
@@ -202,6 +205,7 @@ impl From<AgencyClientErrorKind> for u32 {
             AgencyClientErrorKind::NotBase58 => error_utils::NOT_BASE58.code_num,
             AgencyClientErrorKind::InvalidHttpResponse => error_utils::INVALID_HTTP_RESPONSE.code_num,
             AgencyClientErrorKind::UnknownLibndyError => error_utils::UNKNOWN_LIBINDY_ERROR.code_num,
+            AgencyClientErrorKind::CreateAgent => error_utils::CREATE_AGENT.code_num,
             AgencyClientErrorKind::Common(num) => num,
             AgencyClientErrorKind::LibndyError(num) => num,
         }
@@ -241,6 +245,7 @@ impl From<u32> for AgencyClientErrorKind {
             _ if { error_utils::NOT_BASE58.code_num == code } => AgencyClientErrorKind::NotBase58,
             _ if { error_utils::INVALID_HTTP_RESPONSE.code_num == code } => AgencyClientErrorKind::InvalidHttpResponse,
             _ if { error_utils::UNKNOWN_LIBINDY_ERROR.code_num == code } => AgencyClientErrorKind::UnknownLibndyError,
+            _ if { error_utils::CREATE_AGENT.code_num == code } => AgencyClientErrorKind::CreateAgent,
             _ => AgencyClientErrorKind::UnknownError,
         }
     }

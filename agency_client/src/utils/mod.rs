@@ -11,4 +11,5 @@ pub mod timeout;
 pub mod test_utils;
 pub mod create_key;
 pub mod update_profile;
+pub mod object_cache;
 pub(super) mod comm;

@@ -44,6 +44,7 @@ pub mod payload;
 pub mod agency_settings;
 pub mod mocking;
 pub mod httpclient;
+pub mod agency_client;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

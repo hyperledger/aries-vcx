@@ -1,7 +1,6 @@
 use futures::Future;
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
-use agency_client::utils::wallet as agency_wallet;
 
 use error::prelude::*;
 use init::open_as_main_wallet;
@@ -53,8 +52,9 @@ impl RestoreWalletConfigs {
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
 pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
+    trace!("set_wallet_handle >>> handle: {:?}", handle);
     unsafe { WALLET_HANDLE = handle; }
-    agency_wallet::set_wallet_handle(handle);
+    settings::get_agency_client().unwrap().set_wallet_handle(handle.0);
     unsafe { WALLET_HANDLE }
 }
 
@@ -62,7 +62,7 @@ pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
 pub fn reset_wallet_handle() {
     set_wallet_handle(INVALID_WALLET_HANDLE);
-    agency_wallet::reset_wallet_handle();
+    settings::get_agency_client().unwrap().reset_wallet_handle();
 }
 
 pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
@@ -308,7 +308,6 @@ pub mod tests {
     use utils::get_temp_dir_path;
 
     use super::*;
-    use agency_client::agency_settings;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -324,7 +323,7 @@ pub mod tests {
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+        settings::get_agency_client().unwrap().set_my_vk(&my_vk);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 

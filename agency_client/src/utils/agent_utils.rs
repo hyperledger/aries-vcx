@@ -141,7 +141,7 @@ pub struct ComMethod {
     value: String,
 }
 
-pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+pub fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     /* STEP 1 - CONNECT */
     let message = A2AMessage::Version2(
         A2AMessageV2::Connect(Connect::build(my_did, my_vk))
@@ -164,9 +164,9 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
     Ok((agency_pw_did, agency_pw_vk))
 }
 
-pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
-    let (agency_pw_did, _) = connect_v2(my_did, my_vk, agency_did)?;
+    let (agency_pw_did, _) = connect(my_did, my_vk, agency_did)?;
 
     /* STEP 2 - REGISTER */
     let message = A2AMessage::Version2(

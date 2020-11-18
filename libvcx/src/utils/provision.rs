@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use agency_client::agency_settings;
+use indy::WalletHandle;
 use agency_client::utils::agent_utils;
 use libindy::utils::{anoncreds, wallet, signus};
 use error::prelude::*;
@@ -47,10 +47,10 @@ pub fn set_config_values(my_config: &Config) {
 
     settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
     settings::set_config_value(settings::CONFIG_WALLET_KEY, &my_config.wallet_key);
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &my_config.agency_url);
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, &my_config.agency_did);
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &my_config.agency_verkey);
-    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &my_config.agency_verkey);
+    settings::get_agency_client().unwrap().set_agency_url(&my_config.agency_url);
+    settings::get_agency_client().unwrap().set_agency_did(&my_config.agency_did);
+    settings::get_agency_client().unwrap().set_agency_vk(&my_config.agency_verkey);
+    settings::get_agency_client().unwrap().set_agent_vk(&my_config.agency_verkey);
 
     settings::set_opt_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &my_config.wallet_key_derivation);
     settings::set_opt_config_value(settings::CONFIG_WALLET_TYPE, &my_config.wallet_type);
@@ -61,10 +61,10 @@ pub fn set_config_values(my_config: &Config) {
     settings::set_opt_config_value(settings::CONFIG_WEBHOOK_URL, &my_config.webhook_url);
 }
 
-pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String)> {
+pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String, WalletHandle)> {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
-    wallet::create_and_open_as_main_wallet(
+    let wh = wallet::create_and_open_as_main_wallet(
         &wallet_name,
         &my_config.wallet_key,
         &my_config.wallet_key_derivation.as_deref().unwrap_or(settings::WALLET_KDF_DEFAULT.into()),
@@ -72,6 +72,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
         my_config.storage_config.as_ref().map(String::as_str),
         my_config.storage_credentials.as_ref().map(String::as_str),
     )?;
+    wallet::set_wallet_handle(wh);
     trace!("initialized wallet");
 
     // If MS is already in wallet then just continue
@@ -83,9 +84,9 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     )?;
 
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+    settings::get_agency_client()?.set_my_vk(&my_vk);
 
-    Ok((my_did, my_vk, wallet_name))
+    Ok((my_did, my_vk, wallet_name, wh))
 }
 
 fn _create_issuer_keys(my_did: &str, my_vk: &str, my_config: &Config) -> VcxResult<(String, String)> {
@@ -156,12 +157,12 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     set_config_values(&my_config);
 
     trace!("***Configuring Wallet");
-    let (my_did, my_vk, wallet_name) = configure_wallet(&my_config)?;
+    let (my_did, my_vk, wallet_name, _) = configure_wallet(&my_config)?;
 
     debug!("connect_register_provision:: Final settings: {:?}", settings::settings_as_string());
 
     trace!("Connecting to Agency");
-    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &my_config.agency_did)?;
+    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &my_config.agency_did)?;
 
     let config = get_final_config(&my_did, &my_vk, &agent_did, &agent_vk, &wallet_name, &my_config)?;
 

@@ -5,7 +5,7 @@ use indy_sys::{INVALID_POOL_HANDLE, WalletHandle};
 use libc::c_char;
 
 use error::prelude::*;
-use init::{init_core, open_as_main_wallet, open_pool};
+use init::{init_core, init_agency_client, open_as_main_wallet, open_pool};
 use libindy::utils::{ledger, pool, wallet};
 use libindy::utils::pool::is_pool_open;
 use libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
@@ -145,6 +145,31 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
     error::SUCCESS.code_num
 }
 
+/// Creates agent client, which is necessary for communication with the agency. Can be called only after wallet has been opened via vcx_open_wallet.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+/// wallet_handle: wallet handle for the wallet to be used by the agent client (currently not used)
+/// config: config of the agent client (currently not used)
+///
+/// cb: Callback that provides error status of initialization
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_init_agency_client(command_handle: CommandHandle, wallet_handle: WalletHandle, config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("vcx_init_agency_client >>>");
+    let handle = wallet::get_wallet_handle();
+    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+    if handle == INVALID_WALLET_HANDLE {
+        error!("vcx_open_wallet :: Wallet was already initialized.");
+        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Wallet was already initialized").into();
+    }
+    match init_agency_client(&config, handle) {
+        Ok(_) => error::SUCCESS.code_num,
+        Err(_) => error::INVALID_CONFIGURATION.code_num
+    }
+}
 
 lazy_static! {
     pub static ref VERSION_STRING: CString = CString::new(format!("{}{}", version_constants::VERSION, version_constants::REVISION)).unwrap();
@@ -420,7 +445,6 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use indy_sys::INVALID_POOL_HANDLE;
 
-    use agency_client::agency_settings;
     use api::return_types_u32;
     use api::VcxStateType;
     use api::wallet::{vcx_wallet_add_record, vcx_wallet_get_record};
@@ -477,7 +501,7 @@ mod tests {
             error!("vcx_init_core failed");
             return Err(rc);
         }
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        settings::get_agency_client()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -855,16 +879,9 @@ mod tests {
         assert_eq!(::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "general_test")]
     fn get_settings() -> String {
         json!({
-            agency_settings::CONFIG_AGENCY_DID:           agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_DID).unwrap(),
-            agency_settings::CONFIG_AGENCY_VERKEY:        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY).unwrap(),
-            agency_settings::CONFIG_AGENCY_ENDPOINT:      agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT).unwrap(),
-            agency_settings::CONFIG_REMOTE_TO_SDK_DID:    agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID).unwrap(),
-            agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
-            agency_settings::CONFIG_SDK_TO_REMOTE_DID:    agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID).unwrap(),
-            agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
             settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
             settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
             settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
@@ -986,7 +1003,7 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_agency_settings_does_not_have_to_be_initialized() {
+    fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPool::init();
 
         let config = json!({
