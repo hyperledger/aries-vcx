@@ -745,7 +745,7 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && \
                                 cd $HOME/agents/node/vcxagent-cli && npm install && \
-                                cd $HOME/agents/node/vcxagent-core && VCX_LOG_LEVEL=vcx=error npm run test:integration)'
+                                cd $HOME/agents/node/vcxagent-core && VCX_LOG_LEVEL=vcx=warn npm run test:integration)'
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:

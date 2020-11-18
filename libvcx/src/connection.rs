@@ -88,7 +88,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 fn store_connection(connection: Connection) -> VcxResult<u32> {
     let handle = CONNECTION_MAP.add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)));
-    error!("Added new connection, connection handle {:?}", handle);
+    warn!("Added new connection, connection handle {:?}", handle);
     return handle
 }
 
@@ -209,7 +209,7 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
             CONNECTION_MAP.add((state, data, source_id).into())?
         }
     };
-    error!("Deserialized connection, connection handle {:?}", handle);
+    warn!("Deserialized connection, connection handle {:?}", handle);
     Ok(handle)
 }
 

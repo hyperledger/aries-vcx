@@ -491,7 +491,7 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
                                      proof_handle: u32,
                                      connection_handle: u32,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    error!("entering vcx_proof_send_request >>>");
+    warn!("entering vcx_proof_send_request >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -501,17 +501,17 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
 
 
     if !proof::is_valid_handle(proof_handle) {
-        error!("proof_handle '{}' is not valid handle", proof_handle);
+        warn!("proof_handle '{}' is not valid handle", proof_handle);
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
     if !connection::is_valid_handle(connection_handle) {
-        error!("connection_handle '{}' is not valid handle", connection_handle);
+        warn!("connection_handle '{}' is not valid handle", connection_handle);
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
     execute(move || {
-        error!("vcx_proof_send_request:: closure execution proof_handle={} connection_handle={}", proof_handle, connection_handle);
+        warn!("vcx_proof_send_request:: closure execution proof_handle={} connection_handle={}", proof_handle, connection_handle);
         let err = match proof::send_proof_request(proof_handle, connection_handle) {
             Ok(x) => {
                 trace!("vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",

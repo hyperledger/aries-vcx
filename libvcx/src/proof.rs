@@ -25,7 +25,7 @@ pub fn create_proof(source_id: String,
     let verifier = Verifier::create(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
     let handle = PROOF_MAP.add(verifier)
         .or(Err(VcxError::from(VcxErrorKind::CreateProof)));
-    error!("Added new proof, proof handle {:?}", handle);
+    warn!("Added new proof, proof handle {:?}", handle);
     handle
 }
 
@@ -95,7 +95,7 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
     let handle = match proof {
         Proofs::V3(proof) => PROOF_MAP.add(proof)
     };
-    error!("Deserialized connection, connection handle {:?}", handle);
+    warn!("Deserialized proof, proof handle {:?}", handle);
     handle
 }
 
