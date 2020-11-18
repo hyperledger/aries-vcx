@@ -461,7 +461,7 @@ pub extern fn vcx_proof_release(proof_handle: u32) -> u32 {
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     match proof::release(proof_handle) {
         Ok(()) => {
-            trace!("vcx_proof_release(proof_handle: {}, rc: {}), source_id: {}",
+            warn!("vcx_proof_release(proof_handle: {}, rc: {}), source_id: {}",
                    proof_handle, error::SUCCESS.message, source_id);
             error::SUCCESS.code_num
         }
