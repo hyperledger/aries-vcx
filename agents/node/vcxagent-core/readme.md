@@ -3,13 +3,13 @@ VCX Agent Core is implementation of simple agent with persistent file storage. I
 [NodeJS Wrapper](../../../wrappers/node) for `aries-vcx` library.
 
 # Try it
-1. First step is to [compile](../../../libvcx) `aries-vcx` library and make it available on your system.
-2. You need to have `aries-vcx` compatible agency ready. See more [info](../../../README.md).
-3. Run `test:threaded:integration`. This will run sample scenario where:Alice and Faber
-    - establish Aries connection, 
-    - Faber issues credential to Alice
-    - Faber requests Alice to prove certain information using the credential. 
+1. First step is to compile and `aries-vcx` and make it available on your system. Follow [instructions](../../../libvcx).
+2. You need to have mediator agent compatible with `aries-vcx`. See more [info](../../../README.md).
+3. Run `npm run demo`. This will run sample scenario where Alice and Faber
+    - establish connection, 
+    - Faber issues a credential to Alice
+    - Faber requests Alice to prove certain information about herself (using the credential). 
     
 # Note 
-You can also have look at [vcxagent-cli](../vcxagent-cli) - simple CLI Aries agent based 
+You can also have look at [vcxagent-cli](../vcxagent-cli) - CLI Aries agent based 
 on this project.
