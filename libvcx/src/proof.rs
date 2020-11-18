@@ -68,6 +68,7 @@ pub fn get_proof_state(handle: u32) -> VcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
+    warn!("proof release :: handle={}", handle);
     PROOF_MAP.release(handle).or(Err(VcxError::from(VcxErrorKind::InvalidProofHandle)))
 }
 
