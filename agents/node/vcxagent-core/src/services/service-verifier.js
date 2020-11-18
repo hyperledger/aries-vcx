@@ -20,10 +20,10 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     logger.info(`Proof requested, getting state...`)
     const state = await proof.getState()
     logger.info(`Proof state is=${state}, saving proof`)
+    const proofRequestMessage = await proof.getProofRequestMessage()
+    logger.info(`getProofRequestMessage was called`)
     await saveProof(proofId, proof)
-    logger.info(`Proof saved, calling getProofRequestMessage`)
-    // todo: move next line above safeProof, add missing await
-    const proofRequestMessage = proof.getProofRequestMessage()
+    logger.info(`Proof saved`)
     return { state, proofRequestMessage }
   }
 
