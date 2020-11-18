@@ -15,9 +15,14 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
   async function sendProofRequest (connectionId, proofId) {
     const connection = await loadConnection(connectionId)
     const proof = await loadProof(proofId)
+    logger.info(`Requesting proof. Loaded connection(handle=${connection.handle}) proof(handle=${proof.handle})`)
     await proof.requestProof(connection)
+    logger.info(`Proof requested, getting state...`)
     const state = await proof.getState()
+    logger.info(`Proof state is=${state}, saving proof`)
     await saveProof(proofId, proof)
+    logger.info(`Proof saved, calling getProofRequestMessage`)
+    // todo: move next line above safeProof, add missing await
     const proofRequestMessage = proof.getProofRequestMessage()
     return { state, proofRequestMessage }
   }

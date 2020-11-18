@@ -559,10 +559,12 @@ pub extern fn vcx_proof_get_request_msg(command_handle: CommandHandle,
     trace!("vcx_proof_get_request_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
     if !proof::is_valid_handle(proof_handle) {
+        warn!("generate_proof_request_msg:: ffi validation, invalid proof_handle={} ", proof_handle);
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
     execute(move || {
+        warn!("generate_proof_request_msg:: closure execution, proof_handle={} ", proof_handle);
         match proof::generate_proof_request_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
