@@ -31,6 +31,11 @@ WORKDIR /home/indy
 RUN git clone $INDYSDK_REPO && cd indy-sdk && git checkout $INDYSDK_REVISION
 
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
+RUN rustc --print cfg
+RUN ls -lh
+RUN ls -lh $PATH_LIBINDY
+RUN ls -lh $PATH_LIBINDY/target
+RUN ls -lh $PATH_LIBINDY/target/release
 
 USER root
 RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
