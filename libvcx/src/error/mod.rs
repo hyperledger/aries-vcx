@@ -23,7 +23,7 @@ pub enum VcxErrorKind {
     InvalidState,
     #[fail(display = "Invalid Configuration")]
     InvalidConfiguration,
-    #[fail(display = "Obj was not found with handle")]
+    #[fail(display = "InvalidHandle - Obj was not found with handle")]
     InvalidHandle,
     #[fail(display = "Invalid JSON string")]
     InvalidJson,
@@ -111,10 +111,13 @@ pub enum VcxErrorKind {
     // Proof
     #[fail(display = "Invalid proof handle")]
     InvalidProofHandle,
-    #[fail(display = "Obj was not found with handle")]
+
+    #[fail(display = "InvalidDisclosedProofHandle - Obj was not found with handle")]
     InvalidDisclosedProofHandle,
+
     #[fail(display = "Proof had invalid format")]
     InvalidProof,
+
     #[fail(display = "Schema was invalid or corrupt")]
     InvalidSchema,
     #[fail(display = "The Proof received does not have valid credentials listed.")]

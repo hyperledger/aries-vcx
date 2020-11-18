@@ -23,8 +23,10 @@ pub fn create_proof(source_id: String,
                     revocation_details: String,
                     name: String) -> VcxResult<u32> {
     let verifier = Verifier::create(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
-    PROOF_MAP.add(verifier)
-        .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
+    let handle = PROOF_MAP.add(verifier)
+        .or(Err(VcxError::from(VcxErrorKind::CreateProof)));
+    error!("Added new proof, proof handle {:?}", handle);
+    handle
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -90,9 +92,11 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
     let proof: Proofs = serde_json::from_str(proof_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("cannot deserialize Proofs proofect: {:?}", err)))?;
 
-    match proof {
+    let handle = match proof {
         Proofs::V3(proof) => PROOF_MAP.add(proof)
-    }
+    };
+    error!("Deserialized connection, connection handle {:?}", handle);
+    handle
 }
 
 pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
