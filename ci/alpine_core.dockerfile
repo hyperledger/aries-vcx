@@ -36,6 +36,10 @@ ENV PATH_LIBINDY=$INDYSDK_PATH/libindy
 ENV PATH_LIBNULLPAY=$INDYSDK_PATH/libnullpay
 ENV PATH_LIBPGWALLET=$INDYSDK_PATH/experimental/plugins/postgres_storage
 RUN cargo build --release --manifest-path=$PATH_LIBINDY/Cargo.toml --target-dir=$PATH_LIBINDY/target
+RUN ls -lh
+RUN ls -lh $PATH_LIBINDY
+RUN ls -lh $PATH_LIBINDY/target
+RUN ls -lh $PATH_LIBINDY/target/release
 
 USER root
 RUN mv $PATH_LIBINDY/target/release/libindy.so /usr/lib
