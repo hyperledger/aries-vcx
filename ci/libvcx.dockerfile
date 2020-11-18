@@ -46,4 +46,8 @@ USER node
 ARG RUST_VER="1.45.2"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 ENV PATH="/home/node/.cargo/bin:${PATH}"
+ENV RUSTFLAGS='-C target-feature=-crt-static'
 RUN cargo --version
+RUN rustc --print cfg
+RUN rustup show
+RUN rustup target list

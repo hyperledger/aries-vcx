@@ -26,7 +26,13 @@ USER indy
 ARG RUST_VER="1.45.2"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 ENV PATH="/home/indy/.cargo/bin:${PATH}"
+
+# https://github.com/rust-lang/rust/pull/58575
+ENV RUSTFLAGS='-C target-feature=-crt-static'
 RUN cargo --version
+RUN rustc --print cfg
+RUN rustup show
+RUN rustup target list
 
 WORKDIR /home/indy
 
@@ -36,6 +42,8 @@ ENV PATH_LIBINDY=$INDYSDK_PATH/libindy
 ENV PATH_LIBNULLPAY=$INDYSDK_PATH/libnullpay
 ENV PATH_LIBPGWALLET=$INDYSDK_PATH/experimental/plugins/postgres_storage
 RUN cargo build --release --manifest-path=$PATH_LIBINDY/Cargo.toml --target-dir=$PATH_LIBINDY/target
+
+RUN rustc --print cfg
 RUN ls -lh
 RUN ls -lh $PATH_LIBINDY
 RUN ls -lh $PATH_LIBINDY/target
