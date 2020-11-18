@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use libindy::utils::callback::{build_buf, build_string, get_cb};
+use crate::libindy::utils::callback::{build_buf, build_string, get_cb};
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();
@@ -98,7 +98,7 @@ pub extern "C" fn call_cb_u32_u32_str_str_str(command_handle: CommandHandle, arg
 mod tests {
     use std::ffi::CString;
 
-    use utils::devsetup::SetupDefaults;
+    use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
 

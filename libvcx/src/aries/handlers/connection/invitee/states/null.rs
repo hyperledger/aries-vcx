@@ -1,5 +1,5 @@
-use aries::handlers::connection::invitee::states::invited::InvitedState;
-use aries::messages::connection::invite::Invitation;
+use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
+use crate::aries::messages::connection::invite::Invitation;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NullState {}

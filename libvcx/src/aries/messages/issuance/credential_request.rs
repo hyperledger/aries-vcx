@@ -1,7 +1,7 @@
-use error::VcxResult;
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::attachment::{AttachmentId, Attachments};
+use crate::error::VcxResult;
+use crate::aries::messages::thread::Thread;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::attachment::{AttachmentId, Attachments};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -26,7 +26,7 @@ impl CredentialRequest {
     }
 
     pub fn set_requests_attach(mut self, credential_request: String) -> VcxResult<CredentialRequest> {
-        self.requests_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, ::serde_json::Value::String(credential_request))?;
+        self.requests_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, serde_json::Value::String(credential_request))?;
         Ok(self)
     }
 }
@@ -36,11 +36,11 @@ a2a_message!(CredentialRequest);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::issuance::credential_offer::tests::{thread, thread_id};
+    use crate::aries::messages::issuance::credential_offer::tests::{thread, thread_id};
 
     use super::*;
 
-    fn _attachment() -> ::serde_json::Value {
+    fn _attachment() -> serde_json::Value {
         json!({
             "prover_did":"VsKV7grR1BUE29mG2Fm2kX",
             "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1"

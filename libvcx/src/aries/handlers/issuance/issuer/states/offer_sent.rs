@@ -1,9 +1,9 @@
-use aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
-use aries::handlers::issuance::issuer::states::finished::FinishedState;
-use aries::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential_request::CredentialRequest;
-use aries::messages::status::Status;
+use crate::aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::aries::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::aries::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {

@@ -53,7 +53,7 @@ pub fn get_cb<H: Eq + Hash, T>(command_handle: H, map: &Mutex<HashMap<H, T>>) ->
 mod tests {
     use std::ffi::CString;
 
-    use utils::devsetup::SetupDefaults;
+    use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
 

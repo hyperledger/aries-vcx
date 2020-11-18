@@ -1,7 +1,7 @@
-use aries::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::status::Status;
+use crate::aries::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FinishedState {

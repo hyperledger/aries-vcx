@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use error::prelude::*;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
-use aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
-use aries::handlers::connection::messages::DidExchangeMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::basic_message::message::BasicMessage;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::invite::Invitation;
-use aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::error::prelude::*;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
+use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::basic_message::message::BasicMessage;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -127,7 +127,7 @@ impl Connection {
             SmConnection::Inviter(sm_inviter) => {
                 sm_inviter.prev_agent_info()
             }
-            SmConnection::Invitee(sm_invitee) => None
+            SmConnection::Invitee(_sm_invitee) => None
         }
     }
 
@@ -331,7 +331,7 @@ Get messages received from connection counterparty.
 
     fn get_expected_sender_vk(&self) -> VcxResult<String> {
         self.remote_vk()
-            .map_err(|err|
+            .map_err(|_err|
                 VcxError::from_msg(VcxErrorKind::NotReady, "Verkey of connection counterparty \
                 is not known, hence it would be impossible to authenticate message downloaded by id.")
             )

@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::inviter::states::complete::CompleteState;
-use aries::handlers::connection::inviter::states::invited::InvitedState;
-use aries::handlers::connection::inviter::states::null::NullState;
-use aries::handlers::connection::inviter::states::responded::RespondedState;
-use aries::handlers::connection::messages::DidExchangeMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::a2a::protocol_registry::ProtocolRegistry;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::invite::Invitation;
-use aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
-use aries::messages::discovery::disclose::ProtocolDescriptor;
-use aries::messages::trust_ping::ping::Ping;
-use error::prelude::*;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
+use crate::aries::handlers::connection::inviter::states::invited::InvitedState;
+use crate::aries::handlers::connection::inviter::states::null::NullState;
+use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
+use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
+use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::aries::messages::trust_ping::ping::Ping;
+use crate::error::prelude::*;
+use crate::api::VcxStateType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
@@ -314,17 +314,16 @@ impl SmConnectionInviter {
 
 #[cfg(test)]
 pub mod test {
-    use aries::messages::ack::tests::_ack;
-    use aries::messages::connection::invite::tests::_invitation;
-    use aries::messages::connection::problem_report::tests::_problem_report;
-    use aries::messages::connection::request::tests::_request;
-    use aries::messages::connection::response::tests::_signed_response;
-    use aries::messages::discovery::disclose::tests::_disclose;
-    use aries::messages::discovery::query::tests::_query;
-    use aries::messages::trust_ping::ping::tests::_ping;
-    use aries::messages::trust_ping::ping_response::tests::_ping_response;
-    use aries::test::source_id;
-    use utils::devsetup::SetupMocks;
+    use crate::aries::messages::ack::tests::_ack;
+    use crate::aries::messages::connection::problem_report::tests::_problem_report;
+    use crate::aries::messages::connection::request::tests::_request;
+    use crate::aries::messages::connection::response::tests::_signed_response;
+    use crate::aries::messages::discovery::disclose::tests::_disclose;
+    use crate::aries::messages::discovery::query::tests::_query;
+    use crate::aries::messages::trust_ping::ping::tests::_ping;
+    use crate::aries::messages::trust_ping::ping_response::tests::_ping_response;
+    use crate::aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -371,8 +370,9 @@ pub mod test {
         }
 
         mod step {
+            use crate::utils::devsetup::SetupIndyMocks;
+
             use super::*;
-            use utils::devsetup::SetupIndyMocks;
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -557,8 +557,9 @@ pub mod test {
         }
 
         mod find_message_to_handle {
+            use crate::utils::devsetup::SetupIndyMocks;
+
             use super::*;
-            use utils::devsetup::SetupIndyMocks;
 
             #[test]
             #[cfg(feature = "general_test")]

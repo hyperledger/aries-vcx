@@ -1,6 +1,6 @@
-use aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
-use aries::handlers::issuance::issuer::states::finished::FinishedState;
-use aries::messages::status::Status;
+use crate::aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::aries::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {

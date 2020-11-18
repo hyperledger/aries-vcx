@@ -3,8 +3,8 @@ use std::sync::RwLock;
 use futures::Future;
 use indy::{ErrorCode, pool};
 
-use error::prelude::*;
-use settings;
+use crate::error::prelude::*;
+use crate::settings;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -116,12 +116,12 @@ pub mod tests {
     use std::fs;
     use std::io::Write;
 
-    use utils::{
+    use crate::utils::{
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
     };
     #[cfg(feature = "pool_tests")]
-    use utils::devsetup::SetupLibraryWalletPoolZeroFees;
+    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     use super::*;
 

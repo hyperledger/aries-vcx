@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use error::prelude::*;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::invitee::states::complete::CompleteState;
-use aries::handlers::connection::invitee::states::invited::InvitedState;
-use aries::handlers::connection::invitee::states::null::NullState;
-use aries::handlers::connection::invitee::states::requested::RequestedState;
-use aries::handlers::connection::messages::DidExchangeMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::a2a::protocol_registry::ProtocolRegistry;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::invite::Invitation;
-use aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
-use aries::messages::connection::request::Request;
-use aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::api::VcxStateType;
+use crate::error::prelude::*;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::invitee::states::complete::CompleteState;
+use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
+use crate::aries::handlers::connection::invitee::states::null::NullState;
+use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
+use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
+use crate::aries::messages::connection::request::Request;
+use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
@@ -262,23 +262,23 @@ impl SmConnectionInvitee {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupMocks;
-    use aries::messages::ack::tests::_ack;
-    use aries::messages::connection::invite::tests::_invitation;
-    use aries::messages::connection::problem_report::tests::_problem_report;
-    use aries::messages::connection::request::tests::_request;
-    use aries::messages::connection::response::tests::_signed_response;
-    use aries::messages::discovery::disclose::tests::_disclose;
-    use aries::messages::discovery::query::tests::_query;
-    use aries::messages::trust_ping::ping::tests::_ping;
-    use aries::messages::trust_ping::ping_response::tests::_ping_response;
-    use aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
+    use crate::aries::messages::ack::tests::_ack;
+    use crate::aries::messages::connection::invite::tests::_invitation;
+    use crate::aries::messages::connection::problem_report::tests::_problem_report;
+    use crate::aries::messages::connection::request::tests::_request;
+    use crate::aries::messages::connection::response::tests::_signed_response;
+    use crate::aries::messages::discovery::disclose::tests::_disclose;
+    use crate::aries::messages::discovery::query::tests::_query;
+    use crate::aries::messages::trust_ping::ping::tests::_ping;
+    use crate::aries::messages::trust_ping::ping_response::tests::_ping_response;
+    use crate::aries::test::source_id;
 
     use super::*;
 
     pub mod invitee {
-        use aries::messages::connection::did_doc::tests::_service_endpoint;
-        use aries::messages::connection::response::{Response, SignedResponse};
+        use crate::aries::messages::connection::did_doc::tests::_service_endpoint;
+        use crate::aries::messages::connection::response::{Response, SignedResponse};
 
         use super::*;
 
@@ -335,7 +335,7 @@ pub mod test {
 
         mod step {
             use super::*;
-            use utils::devsetup::{SetupDefaults, SetupIndyMocks};
+            use crate::utils::devsetup::{SetupIndyMocks};
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -515,8 +515,7 @@ pub mod test {
 
         mod find_message_to_handle {
             use super::*;
-            use settings;
-            use utils::devsetup::SetupIndyMocks;
+            use crate::utils::devsetup::SetupIndyMocks;
 
             #[test]
             #[cfg(feature = "general_test")]

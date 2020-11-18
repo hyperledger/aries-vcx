@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use connection;
-use error::prelude::*;
-use aries::handlers::proof_presentation::prover::messages::ProverMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::status::Status;
-use aries::handlers::proof_presentation::prover::states::initial::InitialState;
-use aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
-use aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use aries::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::api::VcxStateType;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::status::Status;
+use crate::aries::handlers::proof_presentation::prover::states::initial::InitialState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
+use crate::aries::handlers::proof_presentation::prover::states::finished::FinishedState;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -310,13 +310,13 @@ impl ProverSM {
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupMocks;
-    use aries::handlers::connection::tests::mock_connection;
-    use aries::messages::proof_presentation::presentation::tests::_presentation;
-    use aries::messages::proof_presentation::presentation_proposal::tests::{_presentation_preview, _presentation_proposal};
-    use aries::messages::proof_presentation::presentation_request::tests::{_presentation_request, _presentation_request_with_service};
-    use aries::messages::proof_presentation::test::{_ack, _problem_report};
-    use aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
+    use crate::aries::handlers::connection::tests::mock_connection;
+    use crate::aries::messages::proof_presentation::presentation::tests::_presentation;
+    use crate::aries::messages::proof_presentation::presentation_proposal::tests::{_presentation_preview, _presentation_proposal};
+    use crate::aries::messages::proof_presentation::presentation_request::tests::{_presentation_request, _presentation_request_with_service};
+    use crate::aries::messages::proof_presentation::test::{_ack, _problem_report};
+    use crate::aries::test::source_id;
 
     use super::*;
 
@@ -382,8 +382,8 @@ pub mod test {
 
     mod step {
         use super::*;
-        use utils::constants::CREDS_FROM_PROOF_REQ;
-        use utils::mockdata::mock_settings::MockBuilder;
+        use crate::utils::constants::CREDS_FROM_PROOF_REQ;
+        use crate::utils::mockdata::mock_settings::MockBuilder;
 
         #[test]
         #[cfg(feature = "general_test")]

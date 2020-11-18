@@ -1,14 +1,14 @@
 use base64;
 use time;
 
-use error::prelude::*;
-use aries::messages::thread::Thread;
-use libindy::utils::crypto;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::a2a::message_family::MessageFamilies;
-use aries::messages::a2a::message_type::MessageType;
-use aries::messages::ack::PleaseAck;
-use aries::messages::connection::did_doc::*;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::a2a::message_family::MessageFamilies;
+use crate::aries::messages::a2a::message_type::MessageType;
+use crate::aries::messages::ack::PleaseAck;
+use crate::aries::messages::connection::did_doc::*;
+use crate::aries::messages::thread::Thread;
+use crate::error::prelude::*;
+use crate::libindy::utils::crypto;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -125,7 +125,7 @@ impl SignedResponse {
 
         let sig_data = &sig_data[8..];
 
-        let connection: ConnectionData = ::serde_json::from_slice(&sig_data)
+        let connection: ConnectionData = serde_json::from_slice(&sig_data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, err.to_string()))?;
 
         Ok(Response {
@@ -152,11 +152,11 @@ impl Default for ConnectionSignature {
 
 #[cfg(test)]
 pub mod tests {
-    use libindy::utils::tests::test_setup;
-    use aries::messages::connection::did_doc::tests::*;
+    use crate::aries::messages::connection::did_doc::tests::*;
+    use crate::libindy::utils::tests::test_setup;
+    use crate::libindy::utils::tests::test_setup::create_trustee_key;
 
     use super::*;
-    use libindy::utils::tests::test_setup::create_trustee_key;
 
     fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")

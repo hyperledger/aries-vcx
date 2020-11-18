@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
-use utils::error;
-use utils::openssl::encode;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::utils::error;
+use crate::utils::openssl::encode;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut attributes: HashMap<String, serde_json::Value> = serde_json::from_str(attributes)
@@ -59,31 +59,9 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use settings;
-    use libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use utils::constants::SCHEMAS_JSON;
-    use utils::devsetup::*;
+    use crate::utils::devsetup::*;
 
     use super::*;
-
-    static DEFAULT_CREDENTIAL_NAME: &str = "Credential";
-    static DEFAULT_CREDENTIAL_ID: &str = "defaultCredentialId";
-
-    static CREDENTIAL_DATA: &str =
-        r#"{"address2":["101 Wilson Lane"],
-        "zip":["87121"],
-        "state":["UT"],
-        "city":["SLC"],
-        "address1":["101 Tela Lane"]
-        }"#;
-
-    pub fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let tag = "test_tag";
-        let config = "{support_revocation: false}";
-
-        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).unwrap();
-    }
 
     #[test]
     #[cfg(feature = "general_test")]

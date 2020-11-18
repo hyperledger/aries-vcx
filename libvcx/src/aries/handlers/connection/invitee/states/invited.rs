@@ -1,9 +1,9 @@
-use aries::handlers::connection::invitee::states::null::NullState;
-use aries::handlers::connection::invitee::states::requested::RequestedState;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::invite::Invitation;
-use aries::messages::connection::problem_report::ProblemReport;
-use aries::messages::connection::request::Request;
+use crate::aries::handlers::connection::invitee::states::null::NullState;
+use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::problem_report::ProblemReport;
+use crate::aries::messages::connection::request::Request;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InvitedState {

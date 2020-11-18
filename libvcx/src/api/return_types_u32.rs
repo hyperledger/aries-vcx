@@ -10,12 +10,12 @@ use std::time::Duration;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use utils::error;
-use libindy::utils::callback::POISON_MSG;
-use libindy::utils::callback_u32 as callback;
-use libindy::utils::error_codes::map_indy_error;
-use libindy::utils::next_command_handle;
-use utils::timeout::TimeoutUtils;
+use crate::libindy::utils::callback::POISON_MSG;
+use crate::libindy::utils::callback_u32 as callback;
+use crate::libindy::utils::error_codes::map_indy_error;
+use crate::libindy::utils::next_command_handle;
+use crate::utils::error;
+use crate::utils::timeout::TimeoutUtils;
 
 fn log_error<T: Display>(e: T) {
     warn!("Unable to send through libindy callback in vcx: {}", e);

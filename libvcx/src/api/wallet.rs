@@ -4,13 +4,14 @@ use std::thread;
 use indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
 
-use error::prelude::*;
-use utils::cstring::CStringUtils;
-use utils::error;
-use libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
-use libindy::utils::wallet::{export_main_wallet, get_wallet_handle, import};
-use libindy::utils::wallet;
-use utils::threadpool::spawn;
+use crate::error::prelude::*;
+use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
+use crate::libindy::utils::wallet;
+use crate::libindy::utils::wallet::{export_main_wallet, import};
+use crate::utils;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /// Get the total balance from all addresses contained in the configured wallet
 ///
@@ -144,7 +145,7 @@ pub extern fn vcx_wallet_sign_with_address(command_handle: CommandHandle,
                 trace!("vcx_wallet_sign_with_address_cb(command_handle: {}, rc: {}, signature: {:?})",
                        command_handle, error::SUCCESS.message, signature);
 
-                let (signature_raw, signature_len) = ::utils::cstring::vec_to_pointer(&signature);
+                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&signature);
 
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
@@ -988,13 +989,13 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use api::return_types_u32;
-    use settings;
-    use utils::devsetup::*;
+    use crate::{libindy, settings};
+    use crate::api::return_types_u32;
     #[cfg(feature = "pool_tests")]
-    use libindy::utils::payments::build_test_address;
-    use libindy::utils::wallet::{delete_wallet, create_and_open_as_main_wallet, close_main_wallet};
-    use utils::timeout::TimeoutUtils;
+    use crate::libindy::utils::payments::build_test_address;
+    use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet};
+    use crate::utils::devsetup::*;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -1130,7 +1131,7 @@ pub mod tests {
 
         let recipient = CStringUtils::string_to_cstring(build_test_address("2ZrAm5Jc3sP4NAXMQbaWzDxEa12xxJW3VgWjbbPtMPQCoznJyS"));
         debug!("sending payment to {:?}", recipient);
-        let balance = ::libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
+        let balance = libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
         let tokens = 5;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
@@ -1140,7 +1141,7 @@ pub mod tests {
                                           Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        let new_balance = ::libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
+        let new_balance = libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
         assert_eq!(balance - tokens, new_balance);
     }
 
@@ -1372,7 +1373,7 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        close_main_wallet();
+        close_main_wallet().unwrap();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         let import_config = json!({
@@ -1389,7 +1390,6 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        close_main_wallet();
         delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
     }
 }

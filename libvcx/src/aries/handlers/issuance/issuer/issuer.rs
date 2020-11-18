@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use error::prelude::*;
-use aries::handlers::issuance::issuer::state_machine::IssuerSM;
-use aries::handlers::issuance::messages::CredentialIssuanceMessage;
-use aries::messages::a2a::A2AMessage;
+use crate::aries::handlers::issuance::issuer::state_machine::IssuerSM;
+use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::credential_def;
+use crate::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Issuer {
@@ -14,9 +15,9 @@ impl Issuer {
     pub fn create(cred_def_handle: u32, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
         trace!("Issuer::issuer_create_credential >>> cred_def_handle: {:?}, credential_data: {:?}, source_id: {:?}", cred_def_handle, credential_data, source_id);
 
-        let cred_def_id = ::credential_def::get_cred_def_id(cred_def_handle)?;
-        let rev_reg_id = ::credential_def::get_rev_reg_id(cred_def_handle).ok();
-        let tails_file = ::credential_def::get_tails_file(cred_def_handle)?;
+        let cred_def_id = credential_def::get_cred_def_id(cred_def_handle)?;
+        let rev_reg_id = credential_def::get_rev_reg_id(cred_def_handle).ok();
+        let tails_file = credential_def::get_tails_file(cred_def_handle)?;
         let issuer_sm = IssuerSM::new(&cred_def_id, credential_data, rev_reg_id, tails_file, source_id);
         Ok(Issuer { issuer_sm })
     }
@@ -41,7 +42,7 @@ impl Issuer {
         self.issuer_sm.is_terminal_state()
     }
 
-    pub fn find_message_to_handle(&self,  messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         self.issuer_sm.find_message_to_handle(messages)
     }
 

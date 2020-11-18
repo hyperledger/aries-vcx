@@ -19,7 +19,7 @@ static TP_INIT: Once = Once::new();
 pub static mut TP_HANDLE: u32 = 0;
 
 pub fn init() {
-    let size = ::settings::get_threadpool_size();
+    let size = crate::settings::get_threadpool_size();
 
     if size == 0 {
         info!("no threadpool created, threadpool_size is 0");
@@ -39,7 +39,7 @@ pub fn spawn<F>(future: F)
         F: FnOnce() -> Result<(), ()> + Send + 'static {
     let handle;
     unsafe { handle = TP_HANDLE; }
-    if ::settings::get_threadpool_size() == 0 || handle == 0 {
+    if crate::settings::get_threadpool_size() == 0 || handle == 0 {
         thread::spawn(future);
     } else {
         spawn_thread_in_pool(futures::lazy(future));

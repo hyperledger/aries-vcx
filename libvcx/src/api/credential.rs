@@ -3,12 +3,12 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use connection;
-use credential;
-use error::prelude::*;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::connection;
+use crate::credential;
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -310,8 +310,8 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
-                                 credential_handle: u32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, location: *const c_char)>) -> u32 {
+                                                credential_handle: u32,
+                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, location: *const c_char)>) -> u32 {
     info!("vcx_credential_get_tails_location >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -346,8 +346,8 @@ pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
-                                 credential_handle: u32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
     info!("vcx_credential_get_tails_hash >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -382,8 +382,8 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
-                                 credential_handle: u32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
     info!("vcx_credential_get_rev_reg_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -997,14 +997,15 @@ mod tests {
 
     use serde_json::Value;
 
-    use ::credential::tests::BAD_CREDENTIAL_OFFER;
     use agency_client::mocking::AgencyMockDecrypted;
-    use api::return_types_u32;
-    use api::VcxStateType;
-    use utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    use utils::devsetup::*;
-    use utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_REQUEST, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
-    use utils::timeout::TimeoutUtils;
+
+    use crate::api::return_types_u32;
+    use crate::api::VcxStateType;
+    use crate::credential::tests::BAD_CREDENTIAL_OFFER;
+    use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -1085,7 +1086,7 @@ mod tests {
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_offers(cb.command_handle,
@@ -1100,7 +1101,7 @@ mod tests {
     fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_create_with_msgid(cb.command_handle,
@@ -1128,7 +1129,7 @@ mod tests {
     fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection_inviter_requested();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested();
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle_cred).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
@@ -1159,10 +1160,10 @@ mod tests {
     fn test_vcx_credential_get_request_msg() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = ::connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = connection::tests::build_test_connection_inviter_invited();
 
-        let my_pw_did = CString::new(::connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
-        let their_pw_did = CString::new(::connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();
+        let my_pw_did = CString::new(connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
+        let their_pw_did = CString::new(connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
 
@@ -1170,7 +1171,7 @@ mod tests {
         assert_eq!(vcx_credential_get_request_msg(cb.command_handle, handle_cred, my_pw_did, their_pw_did, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
         let msg = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
-        ::serde_json::from_str::<CredentialRequest>(&msg).unwrap();
+        serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
     #[test]

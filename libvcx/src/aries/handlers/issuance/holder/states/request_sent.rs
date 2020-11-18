@@ -1,7 +1,7 @@
-use aries::handlers::issuance::holder::states::finished::FinishedHolderState;
-use aries::messages::issuance::credential::Credential;
-use aries::messages::error::ProblemReport;
-use aries::messages::status::Status;
+use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
+use crate::aries::messages::issuance::credential::Credential;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {

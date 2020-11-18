@@ -6,6 +6,7 @@ authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-ind
 publish = false
 description = "Absa's fork of HL LibVCX"
 license = "Apache-2.0"
+edition = "2018"
 
 [lib]
 name = "vcx"

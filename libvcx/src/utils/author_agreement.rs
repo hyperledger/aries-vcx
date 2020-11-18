@@ -1,7 +1,7 @@
 use serde_json;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
-use settings;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::settings;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -50,7 +50,7 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 
 #[cfg(test)]
 mod tests {
-    use utils::devsetup::SetupDefaults;
+    use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
 

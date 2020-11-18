@@ -1,10 +1,10 @@
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential::Credential;
-use aries::messages::issuance::credential_ack::CredentialAck;
-use aries::messages::issuance::credential_offer::CredentialOffer;
-use aries::messages::issuance::credential_proposal::CredentialProposal;
-use aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential::Credential;
+use crate::aries::messages::issuance::credential_ack::CredentialAck;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::issuance::credential_proposal::CredentialProposal;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
