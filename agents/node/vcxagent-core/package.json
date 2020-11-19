@@ -26,6 +26,8 @@
   "scripts": {
     "lint:fix": "standard --fix",
     "demo:notifyserver": "node demo/notification-server.js",
+    "demo": "node demo/integration-test.js",
+    "demo:revocation": "REVOCATION=true node demo/integration-test.js",
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
     "demo:faber:rev": "node demo/faber.js --revocation",
@@ -33,8 +35,6 @@
     "demo:faber:pg": "node demo/faber.js --postgresql",
     "demo:alice:sign": "node demo/alice-signature.js",
     "demo:faber:verify": "node demo/faber-verify-signature.js",
-    "test:legacy:integration": "node demo/integration-test.js",
-    "test:legacy:integration:revocation": "REVOCATION=true node demo/integration-test.js",
     "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery",
     "test:integration:update-state": "jest --forceExit --env=node --runInBand test/update-state-v2.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js",

@@ -1,17 +1,17 @@
-# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> Aries Framework Rust
+# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> Aries VCX
 
 ![CI build](https://github.com/hyperledger/aries-vcx/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
 [![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
-- Aries VCX is C-callable implementation written in Rust with language wrappers available in:
+- **Aries VCX** is Rust implementation of Aries with C-Callable API and number of language wrappers:
   - Java (+Android)
   - iOS, 
   - NodeJS
   - Python (looking for a maintainer)  
 - Overview of [implemented Aries protocols](./aries.md)
-- Aries Framework Rust requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
+- Aries VCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
   One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
   
 # Work in progress
@@ -22,7 +22,7 @@
 
 # Get started
 The best way to get your hands on.  
-* NodeJS [demo](https://github.com/hyperledger/aries-vcx/tree/master/wrappers/node)
+* Simple NodeJS [Agent](./agents/node/vcxagent-core)
 * Android [demo](https://github.com/sktston/vcx-demo-android)  (3rd party demo)
 * iOS [demo](https://github.com/sktston/vcx-demo-ios) (3rd party demo)
 * iOS [skeleton project](https://github.com/sktston/vcx-skeleton-ios) (3rd party demo)
@@ -38,7 +38,7 @@ Artifacts tied with particular release can be found on
  [release page](https://github.com/hyperledger/aries-vcx/releases).
  
 Artifacts produced:
-- Alpine based docker image with precompiled Aries Rust Framework
+- Alpine based docker image with precompiled `aries-vcx`
 - iOS wrapper
 - Android wrapper
 - NodeJS wrapper
