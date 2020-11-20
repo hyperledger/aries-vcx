@@ -98,7 +98,6 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
                 cb(command_handle, 0, msg.as_ptr());
             }
         };
-        Ok(())
     });
     error::SUCCESS.code_num
 }
