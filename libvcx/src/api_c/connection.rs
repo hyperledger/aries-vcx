@@ -4,6 +4,7 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::{connection, libindy, utils};
+use crate::api::connection::api_connection_create;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::connection::*;
 use crate::error::prelude::*;
@@ -167,7 +168,8 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
     trace!("vcx_connection_create(command_handle: {}, source_id: {})", command_handle, source_id);
 
     execute(move || {
-        match create_connection(&source_id) {
+        let source_id = String::from(source_id);
+        match api_connection_create(&source_id) {
             Ok(handle) => {
                 trace!("vcx_connection_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, handle, source_id);
@@ -178,11 +180,9 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
                       command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
-        };
-
+        }
         Ok(())
     });
-
     error::SUCCESS.code_num
 }
 
