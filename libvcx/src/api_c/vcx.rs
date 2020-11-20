@@ -415,9 +415,11 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use crate::{api, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api::return_types_u32;
-    use crate::api::wallet::tests::_test_add_and_get_wallet_record;
+    use agency_client::agency_settings;
+
+    use crate::{api_c, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_c::return_types_u32;
+    use crate::api_c::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
@@ -775,7 +777,7 @@ mod tests {
     fn get_current_error_works_for_sync_error() {
         let _setup = SetupDefaults::init();
 
-        api::utils::vcx_provision_agent(ptr::null());
+        api_c::utils::vcx_provision_agent(ptr::null());
 
         let mut error_json_p: *const c_char = ptr::null();
         vcx_get_current_error(&mut error_json_p);
@@ -796,7 +798,7 @@ mod tests {
         }
 
         let config = CString::new("{}").unwrap();
-        api::utils::vcx_agent_provision_async(0, config.as_ptr(), Some(cb));
+        api_c::utils::vcx_agent_provision_async(0, config.as_ptr(), Some(cb));
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
@@ -978,8 +980,8 @@ mod tests {
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
 
-        api::wallet::vcx_wallet_set_handle(get_wallet_handle());
-        api::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
+        api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
+        api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::api::VcxStateType;
+use crate::api_c::VcxStateType;
 use crate::connection;
 use crate::error::prelude::*;
 use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;

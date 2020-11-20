@@ -327,7 +327,7 @@ pub mod tests {
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
     use crate::{connection, utils, settings};
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};

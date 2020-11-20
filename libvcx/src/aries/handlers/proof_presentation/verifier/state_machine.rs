@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::api::VcxStateType;
+use crate::api_c::VcxStateType;
 use crate::connection::{get_pw_did, get_their_pw_verkey};
 use crate::{connection, settings};
 use crate::error::prelude::*;

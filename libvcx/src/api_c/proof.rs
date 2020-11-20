@@ -686,7 +686,7 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use crate::api::{ProofStateType, return_types_u32, VcxStateType};
+    use crate::api_c::{ProofStateType, return_types_u32, VcxStateType};
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::proof;
     use crate::utils::constants::*;

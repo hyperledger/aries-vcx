@@ -213,7 +213,7 @@ pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
 mod tests {
     use std::env;
 
-    use crate::api::vcx::vcx_shutdown;
+    use crate::api_c::vcx::vcx_shutdown;
     use crate::utils::devsetup::{SetupDefaults, SetupMocks};
 
     use super::*;

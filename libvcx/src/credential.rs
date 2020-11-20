@@ -268,7 +268,7 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::aries::messages::issuance::credential::Credential;
     use crate::connection;
     use crate::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};

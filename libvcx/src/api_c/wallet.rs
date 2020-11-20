@@ -1162,7 +1162,7 @@ pub mod tests {
     use std::ptr;
 
     use crate::{libindy, settings};
-    use crate::api::return_types_u32;
+    use crate::api_c::return_types_u32;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::build_test_address;
     use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet};
