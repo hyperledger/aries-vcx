@@ -47,8 +47,10 @@ pub mod credential;
 pub mod disclosed_proof;
 
 pub mod aries;
+pub mod api;
 mod filters;
 mod libindy;
+
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
