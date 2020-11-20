@@ -1,4 +1,4 @@
-use crate::service::connection::create_connection;
+use crate::connection::create_connection;
 use crate::error::VcxResult;
 
 pub fn api_connection_create(source_id: &str) -> VcxResult<u32> {

@@ -1,5 +1,5 @@
 [workspace]
-
+exclude = [ "agents/rust/aries-agent-rs"]
 members = [
     "libvcx",
     "agency_client"

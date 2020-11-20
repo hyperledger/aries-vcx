@@ -3,11 +3,11 @@ use indy_sys::WalletHandle;
 use indy::{INVALID_WALLET_HANDLE};
 
 use crate::error::{VcxResult, VcxError, VcxErrorKind};
-use crate::service::init::{open_as_main_wallet, open_pool};
 use crate::libindy::utils::wallet::{set_wallet_handle, get_wallet_handle};
 use crate::{settings, utils};
 use crate::utils::error;
 use crate::libindy::utils::pool::{is_pool_open, create_pool_ledger_config, open_pool_ledger};
+use crate::init::{open_as_main_wallet, open_pool};
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);

@@ -108,7 +108,6 @@ impl Verifier {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api::VcxStateType;
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
     use crate::utils::devsetup::*;
@@ -116,6 +115,7 @@ pub mod tests {
     use super::*;
     use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
     use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::api_c::VcxStateType;
 
     #[test]
     #[cfg(feature = "general_test")]

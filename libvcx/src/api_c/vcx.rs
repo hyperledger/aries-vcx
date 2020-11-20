@@ -13,7 +13,7 @@ use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::utils::runtime::{execute, init_runtime};
 use crate::utils::version_constants;
 
 /// Initializes VCX with config settings
@@ -36,7 +36,7 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
         Err(_) => return error::INVALID_CONFIGURATION.code_num,
         _ => {}
     }
-    internal::runtime::init_ffi_runtime();
+    init_runtime();
     error::SUCCESS.code_num
 }
 
@@ -428,7 +428,13 @@ mod tests {
             error!("vcx_open_pool failed");
             return Err(rc);
         }
-        cb.receive(TimeoutUtils::some_short()).unwrap();
+        match cb.receive(TimeoutUtils::some_short()) {
+            Err(rc) => {
+                error!("vcx_open_pool failed");
+                return Err(rc);
+            }
+            _ => {}
+        }
 
         info!("_vcx_init_full >>> going to open wallet");
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -437,7 +443,13 @@ mod tests {
             error!("vcx_open_wallet failed");
             return Err(rc);
         }
-        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+        match cb.receive(TimeoutUtils::some_custom(3)) {
+            Err(rc) => {
+                error!("vcx_open_pool failed");
+                return Err(rc);
+            }
+            _ => {}
+        }
         Ok(())
     }
 
