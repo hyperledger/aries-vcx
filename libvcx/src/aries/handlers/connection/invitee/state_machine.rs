@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::api::VcxStateType;
+use crate::api_c::VcxStateType;
 use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::states::complete::CompleteState;

@@ -14,7 +14,7 @@ use crate::aries::messages::connection::problem_report::{ProblemCode, ProblemRep
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::error::prelude::*;
-use crate::api::VcxStateType;
+use crate::api_c::VcxStateType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {

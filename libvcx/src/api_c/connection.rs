@@ -1209,7 +1209,7 @@ mod tests {
     use serde_json::Value;
 
     use crate::agency_client::mocking::AgencyMockDecrypted;
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::api_c::{return_types_u32, VcxStateType};
     use crate::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use crate::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils::devsetup::*;

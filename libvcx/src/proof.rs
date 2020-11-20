@@ -121,7 +121,7 @@ pub mod tests {
     use agency_client::mocking::HttpClientMockResponse;
 
     use crate::proof;
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;

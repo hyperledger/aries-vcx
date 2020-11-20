@@ -9,7 +9,7 @@ use serde_json::Value;
 use agency_client::agency_settings;
 use agency_client::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
 
-use crate::{api, init, libindy, settings, utils};
+use crate::{api_c, init, libindy, settings, utils};
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -479,7 +479,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
     debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
     let enterprise_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
 
-    api::vcx::vcx_shutdown(false);
+    api_c::vcx::vcx_shutdown(false);
 
     let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, settings::DEFAULT_WALLET_NAME);
     let seed2 = create_new_seed();

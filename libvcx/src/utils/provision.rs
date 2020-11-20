@@ -175,7 +175,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 mod tests {
     use std::env;
 
-    use crate::api::vcx::vcx_shutdown;
+    use crate::api_c::vcx::vcx_shutdown;
     use crate::utils::devsetup::{SetupDefaults, SetupMocks};
 
     use super::*;

@@ -843,7 +843,7 @@ pub mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::api_c::{return_types_u32, VcxStateType};
     use crate::settings;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;

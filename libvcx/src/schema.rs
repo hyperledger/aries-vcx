@@ -4,7 +4,7 @@ use serde_json;
 
 use agency_client::ObjectWithVersion;
 
-use crate::api::PublicEntityStateType;
+use crate::api_c::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::ledger;

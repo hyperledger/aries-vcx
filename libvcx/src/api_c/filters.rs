@@ -62,8 +62,8 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::filters::vcx_filter_proof_requests_by_name;
-    use crate::api::return_types_u32;
+    use crate::api_c::filters::vcx_filter_proof_requests_by_name;
+    use crate::api_c::return_types_u32;
     use crate::connection;
     use crate::disclosed_proof::get_proof_request_messages;
     use crate::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof, timeout::TimeoutUtils};
