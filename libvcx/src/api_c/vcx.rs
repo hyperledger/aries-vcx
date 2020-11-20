@@ -5,6 +5,7 @@ use indy_sys::WalletHandle;
 use libc::c_char;
 
 use crate::{libindy, settings, utils};
+use crate::api::vcx::{open_pool_by_settings, open_wallet_by_settings};
 use crate::error::prelude::*;
 use crate::init::{init_core, open_as_main_wallet, open_pool};
 use crate::libindy::utils::{ledger, pool, wallet};
@@ -32,9 +33,11 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
     info!("libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
     match init_core(&config) {
-        Ok(_) => error::SUCCESS.code_num,
-        Err(_) => error::INVALID_CONFIGURATION.code_num
+        Err(_) => return error::INVALID_CONFIGURATION.code_num,
+        _ => {}
     }
+    internal::runtime::init_ffi_runtime();
+    error::SUCCESS.code_num
 }
 
 /// Opens pool based on vcx configuration previously set via vcx_init_core
@@ -48,31 +51,15 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_open_pool >>>");
-    if is_pool_open() {
-        error!("vcx_open_pool :: Pool connection is already open.");
-        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
-    }
-    let path = match settings::get_config_value(settings::CONFIG_GENESIS_PATH) {
-        Ok(result) => result,
-        Err(_) => {
-            error!("vcx_open_pool :: Failed to init pool because CONFIG_GENESIS_PATH was not set");
-            return error::INVALID_CONFIGURATION.code_num;
-        }
-    };
-    let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-    let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
-
     execute(move || {
-        match open_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
-            Ok(()) => {
+        match open_pool_by_settings() {
+            Ok(_) => {
                 info!("vcx_open_pool :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(e) => {
                 error!("vcx_open_pool :: Vcx Pool Init Error {}.", e);
                 cb(command_handle, e.into());
-                return Ok(());
             }
         }
         Ok(())
@@ -91,53 +78,15 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_open_wallet >>>");
-    if get_wallet_handle() != INVALID_WALLET_HANDLE {
-        error!("vcx_open_wallet :: Wallet was already initialized.");
-        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Wallet was already initialized").into();
-    }
-    let wallet_name = match settings::get_config_value(settings::CONFIG_WALLET_NAME) {
-        Ok(x) => x,
-        Err(_) => {
-            error!("vcx_open_wallet :: Value of setting {} was not set.", settings::CONFIG_WALLET_NAME);
-            return error::INVALID_CONFIGURATION.code_num;
-        }
-    };
-
-    let wallet_key = match settings::get_config_value(settings::CONFIG_WALLET_KEY) {
-        Ok(wallet_key) => wallet_key,
-        Err(_) => {
-            error!("vcx_open_wallet :: Value of setting {} was not set.", settings::CONFIG_WALLET_KEY);
-            return error::MISSING_WALLET_KEY.code_num;
-        }
-    };
-    let wallet_kdf = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION).unwrap_or(settings::WALLET_KDF_DEFAULT.into());
-    let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
-    let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
-    let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
-
     execute(move || {
-        if settings::indy_mocks_enabled() {
-            set_wallet_handle(WalletHandle(1));
-            info!("vcx_open_wallet :: Mocked Success");
-            cb(command_handle, error::SUCCESS.code_num)
-        } else {
-            match open_as_main_wallet(&wallet_name,
-                                      &wallet_key,
-                                      &wallet_kdf,
-                                      wallet_type.as_ref().map(String::as_str),
-                                      storage_config.as_ref().map(String::as_str),
-                                      storage_creds.as_ref().map(String::as_str),
-            ) {
-                Ok(_) => {
-                    info!("vcx_open_wallet :: Success");
-                    cb(command_handle, error::SUCCESS.code_num)
-                }
-                Err(e) => {
-                    error!("vcx_open_wallet :: Error {}.", e);
-                    cb(command_handle, e.into());
-                    return Ok(());
-                }
+        match open_wallet_by_settings() {
+            Ok(_) => {
+                info!("vcx_open_wallet :: Success");
+                cb(command_handle, error::SUCCESS.code_num)
+            }
+            Err(e) => {
+                error!("vcx_open_wallet :: Error {}.", e);
+                cb(command_handle, e.into());
             }
         }
         Ok(())
@@ -425,9 +374,9 @@ mod tests {
     use crate::libindy::utils::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::import;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::wallet::get_wallet_handle;
+    use crate::libindy::utils::wallet::import;
     use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
     use crate::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]

@@ -8,6 +8,7 @@ use serde_json;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 
+use crate::api::utils::provision_agent;
 use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments;
@@ -84,7 +85,8 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
            command_handle, config);
 
     thread::spawn(move || {
-        match crate::utils::provision::connect_register_provision(&config) {
+        let config = String::from(config);
+        match provision_agent(&config) {
             Err(e) => {
                 error!("vcx_agent_provision_async_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -95,11 +97,12 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
                 let msg = CStringUtils::string_to_cstring(s);
                 cb(command_handle, 0, msg.as_ptr());
             }
-        }
+        };
+        Ok(())
     });
-
     error::SUCCESS.code_num
 }
+
 
 /// Update information on the agent (ie, comm method and type)
 ///
