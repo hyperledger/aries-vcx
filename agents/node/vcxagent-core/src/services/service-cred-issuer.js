@@ -114,6 +114,11 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     }
   }
 
+  async function getVcxCredentialIssuer (issuerCredentialId) {
+    logger.warn('Usage of getVcxCredentialIssuer is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
+    return loadIssuerCredential(issuerCredentialId)
+  }
+
   return {
     sendOffer,
     sendOfferAndWaitForCredRequest,
@@ -123,6 +128,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     revokeCredential,
     credentialUpdate,
     credentialUpdateV1,
+    getVcxCredentialIssuer,
 
     listIds,
     printInfo,
