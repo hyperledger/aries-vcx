@@ -12,6 +12,7 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
   const selectedCreds = { attrs: {} }
   logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
 
+  let unresolvedRequirements = []
   for (const attrName of Object.keys(resolvedCreds.attrs)) {
     const attrCredInfo = resolvedCreds.attrs[attrName]
     if (Array.isArray(attrCredInfo) === false) {
@@ -27,10 +28,13 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
       }
     } else {
       logger.info(`No credential was resolved for requested attribute key ${attrName}, will have to be supplied via self-attested attributes.`)
+      unresolvedRequirements.push(attrName)
     }
   }
-  logger.debug(`Selected credentials:\n${JSON.stringify(selectedCreds, null, 2)}`)
-  return selectedCreds
+  if (selectedCreds) {
+    logger.debug(`Selected credentials:\n${JSON.stringify(selectedCreds, null, 2)}`)
+  }
+  return {selectedCreds, unresolvedRequirements}
 }
 
 module.exports.extractProofRequestAttachement = function extractProofRequestAttachement (proofRequest) {

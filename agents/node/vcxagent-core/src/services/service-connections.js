@@ -1,5 +1,6 @@
 const { getMessagesForPwDid, getMessagesForConnection } = require('../utils/messages')
 const {
+  updateMessages,
   Connection,
   StateType
 } = require('@hyperledger/node-vcx-wrapper')
@@ -140,6 +141,17 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return getMessagesForConnection([connection], filterStatuses, filterUids)
   }
 
+  async function updateMessagesStatus (connectionId, uids) {
+    const pwDid = await getConnectionPwDid(connectionId)
+    const updateInstructions = [{ pairwiseDID: pwDid, uids }]
+    await updateMessages({ msgJson: JSON.stringify(updateInstructions) })
+  }
+
+  async function updateAllReceivedMessages(connectionId) {
+    const receivedMessages = await getMessagesV2(connectionId, ["MS-103"], [])
+    await updateMessagesStatus(connectionId, receivedMessages.map(m => m.uid))
+  }
+
   async function sendPing(connectionId) {
     const connection = await getVcxConnection(connectionId)
     await connection.sendPing()
@@ -170,6 +182,8 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     sendMessage,
     getMessages,
     getMessagesV2,
+    updateMessagesStatus,
+    updateAllReceivedMessages,
 
     sendPing,
     discoverTheirFeatures,

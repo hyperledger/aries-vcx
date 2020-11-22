@@ -145,6 +145,18 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
+  async function updateMessageStatus (uids) {
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceConnections.updateMessagesStatus(connectionId, uids)
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function updateAllReceivedMessages () {
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceConnections.updateAllReceivedMessages(connectionId)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function downloadReceivedMessagesV2 () {
     logger.info('Faber is going to download messages using getMessagesV2')
     await vcxAgent.agentInitVcx()
@@ -195,6 +207,8 @@ module.exports.createFaber = async function createFaber () {
     updateStateVerifierProofV2,
     getCredentialRevRegId,
     getTailsFile,
-    getTailsHash
+    getTailsHash,
+    updateMessageStatus,
+    updateAllReceivedMessages
   }
 }
