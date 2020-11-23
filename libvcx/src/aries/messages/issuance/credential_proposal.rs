@@ -1,8 +1,8 @@
-use error::VcxResult;
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::issuance::CredentialPreviewData;
-use aries::messages::mime_type::MimeType;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::issuance::CredentialPreviewData;
+use crate::aries::messages::mime_type::MimeType;
+use crate::aries::messages::thread::Thread;
+use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialProposal {
@@ -53,7 +53,7 @@ a2a_message!(CredentialProposal);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::issuance::credential_offer::tests::{_value, thread, thread_id};
+    use crate::aries::messages::issuance::credential_offer::tests::{_value, thread, thread_id};
 
     use super::*;
 

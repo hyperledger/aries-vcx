@@ -10,8 +10,8 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
-use error::prelude::*;
-use utils::cstring::CStringUtils;
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
@@ -20,7 +20,7 @@ use self::env_logger::Builder as EnvLoggerBuilder;
 pub use self::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
-use libindy;
+use crate::libindy;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();

@@ -1,9 +1,8 @@
-use error::VcxResult;
-use error::prelude::*;
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::ack::PleaseAck;
-use aries::messages::attachment::{AttachmentId, Attachments};
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::ack::PleaseAck;
+use crate::aries::messages::attachment::{AttachmentId, Attachments};
+use crate::aries::messages::thread::Thread;
+use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct Credential {
@@ -57,8 +56,8 @@ a2a_message!(Credential);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::issuance::credential_offer::tests::{thread, thread_id};
-    use utils::constants;
+    use crate::aries::messages::issuance::credential_offer::tests::{thread, thread_id};
+    use crate::utils::constants;
 
     use super::*;
 

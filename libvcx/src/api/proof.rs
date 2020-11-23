@@ -3,12 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use connection;
-use error::prelude::*;
-use proof;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{connection, proof};
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.
@@ -687,14 +686,14 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use ::{proof, settings};
-    use api::{ProofStateType, return_types_u32, VcxStateType};
-    use connection::tests::build_test_connection_inviter_requested;
-    use utils::constants::*;
-    use utils::devsetup::*;
-    use utils::mockdata::mock_settings::MockBuilder;
-    use utils::mockdata::mockdata_proof;
-    use utils::timeout::TimeoutUtils;
+    use crate::api::{ProofStateType, return_types_u32, VcxStateType};
+    use crate::connection::tests::build_test_connection_inviter_requested;
+    use crate::proof;
+    use crate::utils::constants::*;
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::utils::mockdata::mockdata_proof;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 

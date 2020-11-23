@@ -1,16 +1,14 @@
-use std::convert::TryInto;
 use std::collections::HashMap;
 
-use ::{connection, settings};
-use error::prelude::*;
-use libindy::utils::anoncreds;
-use aries::handlers::proof_presentation::prover::messages::ProverMessages;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
-use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-use aries::handlers::proof_presentation::prover::state_machine::ProverSM;
-
+use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;
+use crate::aries::handlers::proof_presentation::prover::state_machine::ProverSM;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::libindy::utils::anoncreds;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Prover {
@@ -76,7 +74,7 @@ impl Prover {
     pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<u32> {
         trace!("Prover::update_state_with_message >>> message: {:?}", message);
 
-        let a2a_message: A2AMessage = ::serde_json::from_str(&message)
+        let a2a_message: A2AMessage = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
 
         self.handle_message(a2a_message.into())?;
@@ -164,23 +162,25 @@ impl Prover {
 
 #[cfg(test)]
 mod tests {
+    use crate::{libindy, settings, utils};
+    use crate::aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use crate::utils::constants::TEST_TAILS_FILE;
+    use crate::utils::devsetup::*;
+    use crate::utils::get_temp_dir_path;
+
     use super::*;
-    use utils::devsetup::*;
-    use utils::get_temp_dir_path;
-    use utils::constants::TEST_TAILS_FILE;
-    use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
     #[test]
     #[cfg(feature = "pool_tests")]
     fn test_retrieve_credentials() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let (_, _, req, _) = ::libindy::utils::anoncreds::tests::create_proof();
+        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, req, _) = libindy::utils::anoncreds::tests::create_proof();
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
-        let mut proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
+        let proof: Prover = Prover::create("1", proof_req).unwrap();
 
         let retrieved_creds = proof.retrieve_credentials().unwrap();
         assert!(retrieved_creds.len() > 500);
@@ -220,7 +220,7 @@ mod tests {
     fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let mut req = json!({
            "nonce":"123432421212",
@@ -278,7 +278,7 @@ mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -365,7 +365,7 @@ mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        ::libindy::utils::anoncreds::tests::create_and_store_credential(::utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",

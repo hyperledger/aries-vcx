@@ -1,8 +1,8 @@
-use error::VcxResult;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::trust_ping::ping::Ping;
-use aries::messages::trust_ping::ping_response::PingResponse;
+use crate::error::VcxResult;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::trust_ping::ping::Ping;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
 
 pub fn handle_ping(ping: &Ping, agent_info: &AgentInfo, did_doc: &DidDoc) -> VcxResult<()> {
     if ping.response_requested {

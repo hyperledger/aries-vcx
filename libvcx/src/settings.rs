@@ -14,11 +14,12 @@ use strum::IntoEnumIterator;
 use url::Url;
 
 use agency_client::agency_settings;
-use agency_client::agency_client::AgencyClient;
-use error::prelude::*;
-use utils::{error, get_temp_dir_path};
-use utils::file::read_file;
-use utils::validation;
+
+use crate::error::prelude::*;
+use crate::utils::{error, get_temp_dir_path};
+use crate::utils::file::read_file;
+use crate::utils::validation;
+use crate::agency_client::agency_client::AgencyClient;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
@@ -136,7 +137,7 @@ pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
     trace!("validate_config >>> config: {:?}", config);
 
     //Mandatory parameters
-    if ::libindy::utils::wallet::get_wallet_handle() == INVALID_WALLET_HANDLE && config.get(CONFIG_WALLET_KEY).is_none() {
+    if crate::libindy::utils::wallet::get_wallet_handle() == INVALID_WALLET_HANDLE && config.get(CONFIG_WALLET_KEY).is_none() {
         return Err(VcxError::from(VcxErrorKind::MissingWalletKey));
     }
 
@@ -247,6 +248,7 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
         .map(|v| v.to_string())
         .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from settings", key)))
 }
+
 pub fn set_config_value(key: &str, value: &str) {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
@@ -315,7 +317,7 @@ pub fn get_payment_method() -> String {
 pub fn get_actors() -> Vec<Actors> {
     get_config_value(CONFIG_ACTORS)
         .and_then(|actors|
-            ::serde_json::from_str(&actors)
+            serde_json::from_str(&actors)
                 .map_err(|_| VcxError::from(VcxErrorKind::InvalidOption))
         ).unwrap_or_else(|_| Actors::iter().collect())
 }
@@ -344,7 +346,7 @@ pub fn clear_config() {
 
 #[cfg(test)]
 pub mod tests {
-    use utils::devsetup::{SetupDefaults, TempFile};
+    use crate::utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;
 

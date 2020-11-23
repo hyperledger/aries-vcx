@@ -1,5 +1,5 @@
-use aries::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use crate::aries::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use crate::aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {

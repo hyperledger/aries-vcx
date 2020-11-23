@@ -5,15 +5,15 @@ use serde_json;
 use agency_client;
 use agency_client::{MessageStatusCode, SerializableObjectWithState};
 use agency_client::get_message::{Message, MessageByConnection};
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::connection::{Connection, SmConnectionState};
-use aries::messages::a2a::A2AMessage;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::connection::invite::Invitation as InvitationV3;
-use error::prelude::*;
-use settings;
-use utils::error;
-use utils::object_cache::ObjectCache;
+
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::invite::Invitation as InvitationV3;
+use crate::error::prelude::*;
+use crate::utils::error;
+use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
@@ -194,20 +194,19 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
         let (state, data, source_id) = connection.to_owned().into();
         let object = SerializableObjectWithState::V1 { data, state, source_id };
 
-        ::serde_json::to_string(&object)
+        serde_json::to_string(&object)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
     })
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = ::serde_json::from_str(connection_data)
+    let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
         SerializableObjectWithState::V1 { data, state, source_id } => {
             CONNECTION_MAP.add((state, data, source_id).into())?
         }
-        _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unexpected format of serialized connection: {:?}", object)))
     };
     Ok(handle)
 }
@@ -325,12 +324,13 @@ pub mod tests {
     use agency_client::get_message::download_messages_noauth;
     use agency_client::MessageStatusCode;
     use agency_client::mocking::AgencyMockDecrypted;
-    use agency_client::update_message::{update_agency_messages, UIDsByConn};
-    use api::VcxStateType;
-    use utils::constants::*;
-    use utils::constants;
-    use utils::devsetup::*;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use agency_client::update_message::{UIDsByConn, update_agency_messages};
+
+    use crate::{connection, utils, settings};
+    use crate::api::VcxStateType;
+    use crate::utils::constants;
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 
@@ -359,31 +359,31 @@ pub mod tests {
 
     pub fn create_connected_connections(consumer_handle: Option<u32>, institution_handle: Option<u32>) -> (u32, u32) {
         debug!("Institution is going to create connection.");
-        ::utils::devsetup::set_institution(institution_handle);
+        utils::devsetup::set_institution(institution_handle);
         let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let details = connect(institution_to_consumer).unwrap().unwrap();
         // update_state(institution_to_consumer).unwrap();
 
-        ::utils::devsetup::set_consumer(consumer_handle);
+        utils::devsetup::set_consumer(consumer_handle);
         debug!("Consumer is going to accept connection invitation.");
         let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
         connect(consumer_to_institution).unwrap();
         update_state(consumer_to_institution).unwrap();
 
         debug!("Institution is going to process connection request.");
-        ::utils::devsetup::set_institution(institution_handle);
+        utils::devsetup::set_institution(institution_handle);
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
 
         debug!("Consumer is going to complete the connection protocol.");
-        ::utils::devsetup::set_consumer(consumer_handle);
+        utils::devsetup::set_consumer(consumer_handle);
         update_state(consumer_to_institution).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
 
         debug!("Institution is going to complete the connection protocol.");
-        ::utils::devsetup::set_institution(institution_handle);
+        utils::devsetup::set_institution(institution_handle);
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
@@ -627,7 +627,7 @@ pub mod tests {
     fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = ::connection::tests::build_test_connection_inviter_invited();
+        let handle = connection::tests::build_test_connection_inviter_invited();
 
         let err = send_generic_message(handle, "this is the message").unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
@@ -637,13 +637,13 @@ pub mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
+        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
-        ::utils::devsetup::set_consumer(None);
+        utils::devsetup::set_consumer(None);
         send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
         // make sure messages has bee delivered
@@ -701,12 +701,12 @@ pub mod tests {
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
-        ::utils::devsetup::set_consumer(Some(consumer1));
+        utils::devsetup::set_consumer(Some(consumer1));
         send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        ::utils::devsetup::set_consumer(Some(consumer2));
+        utils::devsetup::set_consumer(Some(consumer2));
         send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
 
-        ::utils::devsetup::set_institution(None);
+        utils::devsetup::set_institution(None);
         let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
         assert_eq!(all_msgs.len(), 2);
         assert_eq!(all_msgs[0].msgs.len(), 2);
@@ -737,14 +737,14 @@ pub mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = ::connection::tests::create_connected_connections(None, None);
+        let (_alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();
         send_generic_message(faber_to_alice, "Hello 3").unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        ::utils::devsetup::set_consumer(None);
+        utils::devsetup::set_consumer(None);
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);

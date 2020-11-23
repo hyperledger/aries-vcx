@@ -1,7 +1,7 @@
 use serde_json;
 
-use error::{VcxError, VcxErrorKind, VcxResult};
-use libindy::utils::wallet::{add_record, delete_record, get_record, update_record_value};
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::libindy::utils::wallet::{add_record, delete_record, get_record, update_record_value};
 
 static CACHE_TYPE: &str = "cache";
 static REV_REG_CACHE_PREFIX: &str = "rev_reg:";
@@ -244,7 +244,7 @@ pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use utils::devsetup::SetupLibraryWallet;
+    use crate::utils::devsetup::SetupLibraryWallet;
 
     use super::*;
 

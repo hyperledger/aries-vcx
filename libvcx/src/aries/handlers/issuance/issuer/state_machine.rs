@@ -1,24 +1,24 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use connection::{get_messages, send_message};
-use connection;
-use error::{VcxError, VcxErrorKind, VcxResult};
-use libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
-use aries::handlers::issuance::messages::CredentialIssuanceMessage;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential::Credential;
-use aries::messages::issuance::credential_offer::CredentialOffer;
-use aries::messages::issuance::credential_request::CredentialRequest;
-use aries::messages::mime_type::MimeType;
-use aries::messages::status::Status;
-use aries::handlers::issuance::issuer::states::initial::InitialState;
-use aries::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-use aries::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use aries::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
-use aries::handlers::issuance::issuer::states::finished::FinishedState;
-use aries::handlers::issuance::issuer::utils::encode_attributes;
+use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
+
+use crate::aries::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::aries::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::aries::handlers::issuance::issuer::states::initial::InitialState;
+use crate::aries::handlers::issuance::issuer::states::offer_sent::OfferSentState;
+use crate::aries::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
+use crate::aries::handlers::issuance::issuer::utils::encode_attributes;
+use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential::Credential;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::mime_type::MimeType;
+use crate::aries::messages::status::Status;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::api::VcxStateType;
+use crate::connection::send_message;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerState {
@@ -49,9 +49,9 @@ impl IssuerState {
 
     pub fn set_connection_handle(&mut self, connection_handle: u32) {
         match self {
-            IssuerState::OfferSent(state) => { state.connection_handle = connection_handle; },
-            IssuerState::RequestReceived(state) => { state.connection_handle = connection_handle; },
-            IssuerState::CredentialSent(state) => { state.connection_handle = connection_handle; },
+            IssuerState::OfferSent(state) => { state.connection_handle = connection_handle; }
+            IssuerState::RequestReceived(state) => { state.connection_handle = connection_handle; }
+            IssuerState::CredentialSent(state) => { state.connection_handle = connection_handle; }
             _ => {}
         }
     }
@@ -117,8 +117,8 @@ impl IssuerSM {
         }
     }
 
-   pub fn get_rev_reg_id(&self) -> VcxResult<String> {
-       let rev_registry = match &self.state {
+    pub fn get_rev_reg_id(&self) -> VcxResult<String> {
+        let rev_registry = match &self.state {
             IssuerState::Initial(state) => state.rev_reg_id.clone(),
             IssuerState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerState::RequestReceived(state) => state.rev_reg_id.clone(),
@@ -128,9 +128,9 @@ impl IssuerSM {
             IssuerState::Finished(state) => state.revocation_info_v1.clone()
                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?"))?
                 .rev_reg_id
-       };
-       rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
-   }
+        };
+        rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
+    }
 
     pub fn get_connection_handle(&self) -> u32 {
         self.state.get_connection_handle()
@@ -358,14 +358,14 @@ fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, 
 
 #[cfg(test)]
 pub mod test {
-    use utils::devsetup::SetupMocks;
-    use aries::handlers::connection::tests::mock_connection;
-    use aries::messages::issuance::credential::tests::_credential;
-    use aries::messages::issuance::credential_offer::tests::_credential_offer;
-    use aries::messages::issuance::credential_proposal::tests::_credential_proposal;
-    use aries::messages::issuance::credential_request::tests::_credential_request;
-    use aries::messages::issuance::test::{_ack, _problem_report};
-    use aries::test::source_id;
+    use crate::aries::handlers::connection::tests::mock_connection;
+    use crate::aries::messages::issuance::credential::tests::_credential;
+    use crate::aries::messages::issuance::credential_offer::tests::_credential_offer;
+    use crate::aries::messages::issuance::credential_proposal::tests::_credential_proposal;
+    use crate::aries::messages::issuance::credential_request::tests::_credential_request;
+    use crate::aries::messages::issuance::test::{_ack, _problem_report};
+    use crate::aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 

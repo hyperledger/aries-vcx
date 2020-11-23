@@ -1,8 +1,8 @@
-use error::prelude::*;
-use aries::messages::thread::Thread;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::ack::PleaseAck;
-use aries::messages::attachment::{AttachmentId, Attachments};
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::ack::PleaseAck;
+use crate::aries::messages::attachment::{AttachmentId, Attachments};
+use crate::aries::messages::thread::Thread;
+use crate::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -30,7 +30,7 @@ impl Presentation {
     }
 
     pub fn set_presentations_attach(mut self, presentations: String) -> VcxResult<Presentation> {
-        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation, ::serde_json::Value::String(presentations))?;
+        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
         Ok(self)
     }
 }
@@ -42,11 +42,11 @@ a2a_message!(Presentation);
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+    use crate::aries::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
 
     use super::*;
 
-    fn _attachment() -> ::serde_json::Value {
+    fn _attachment() -> serde_json::Value {
         json!({"presentation": {}})
     }
 

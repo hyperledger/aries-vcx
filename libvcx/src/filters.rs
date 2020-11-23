@@ -1,10 +1,8 @@
 use serde_json;
 
-use error::prelude::*;
-use utils::error;
-
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::error::prelude::*;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests)
@@ -14,16 +12,16 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
         .filter_map(|presentation_request| {
             match presentation_request.request_presentations_attach.content().ok() {
                 Some(content) => {
-                     match serde_json::from_str::<serde_json::Value>(&content) {
-                         Ok(value) => match value.get("name") {
-                             Some(name) => match name.as_str() {
-                                 Some(name) if name.to_string() == String::from(match_name) => Some(presentation_request),
-                                 _ => None // Not a string or not equal
-                             }
-                             _ => None // No name field found in the content
-                         }
-                         _ => None // Content deserialization failed
-                     }
+                    match serde_json::from_str::<serde_json::Value>(&content) {
+                        Ok(value) => match value.get("name") {
+                            Some(name) => match name.as_str() {
+                                Some(name) if name.to_string() == String::from(match_name) => Some(presentation_request),
+                                _ => None // Not a string or not equal
+                            }
+                            _ => None // No name field found in the content
+                        }
+                        _ => None // Content deserialization failed
+                    }
                 }
                 _ => None // No content
             }
@@ -63,10 +61,9 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 
 #[cfg(test)]
 pub mod tests {
+    use crate::utils::mockdata::mockdata_proof;
+
     use super::*;
-    use utils::constants::*;
-    use utils::devsetup::*;
-    use utils::mockdata::mockdata_proof;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,7 +1,7 @@
 use openssl::bn::BigNum;
 use openssl::sha::sha256;
 
-use error::prelude::*;
+use crate::error::prelude::*;
 
 pub fn encode(s: &str) -> VcxResult<String> {
     match s.parse::<u32>() {

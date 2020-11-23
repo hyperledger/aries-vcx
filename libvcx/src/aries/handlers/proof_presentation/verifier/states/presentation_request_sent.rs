@@ -1,14 +1,14 @@
-use connection;
-use error::{VcxError, VcxErrorKind, VcxResult};
-use aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
-use aries::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::proof_presentation::presentation::Presentation;
-use aries::messages::proof_presentation::presentation_ack::PresentationAck;
-use aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries::messages::status::Status;
-use libindy::proofs::verifier::verifier::validate_indy_proof;
+use crate::connection;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
+use crate::aries::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::proof_presentation::presentation::Presentation;
+use crate::aries::messages::proof_presentation::presentation_ack::PresentationAck;
+use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::messages::status::Status;
+use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {

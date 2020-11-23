@@ -7,9 +7,11 @@ use std::sync;
 use failure::{Backtrace, Context, Fail};
 use libc::c_char;
 
-use utils::cstring::CStringUtils;
-use utils::error;
 use agency_client;
+
+use crate::utils;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
 
 pub mod prelude {
     pub use super::{err_msg, get_current_error_c_json, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -285,14 +287,14 @@ pub fn err_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
 
 impl From<VcxErrorKind> for VcxError {
     fn from(kind: VcxErrorKind) -> VcxError {
-        VcxError::from_msg(kind, ::utils::error::error_message(&kind.clone().into()))
+        VcxError::from_msg(kind, crate::utils::error::error_message(&kind.clone().into()))
     }
 }
 
 impl From<agency_client::utils::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::utils::error::AgencyClientError) -> VcxError {
         let kind_num: u32 = agency_err.kind().into();
-        VcxError::from_msg(kind_num.into(), ::utils::error::error_message(&agency_err.kind().clone().into()))
+        VcxError::from_msg(kind_num.into(), utils::error::error_message(&agency_err.kind().clone().into()))
     }
 }
 

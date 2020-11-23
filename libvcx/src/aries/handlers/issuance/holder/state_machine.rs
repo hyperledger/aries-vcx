@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use api::VcxStateType;
-use connection;
-use error::prelude::*;
-use libindy::utils::anoncreds::{self, libindy_prover_delete_credential, libindy_prover_store_credential, libindy_prover_create_credential_req, get_cred_def_json};
-use aries::handlers::issuance::messages::CredentialIssuanceMessage;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential::Credential;
-use aries::messages::issuance::credential_ack::CredentialAck;
-use aries::messages::issuance::credential_offer::CredentialOffer;
-use aries::messages::issuance::credential_request::CredentialRequest;
-use aries::messages::status::Status;
-use aries::handlers::issuance::holder::states::offer_received::OfferReceivedState;
-use aries::handlers::issuance::holder::states::request_sent::RequestSentState;
-use aries::handlers::issuance::holder::states::finished::FinishedHolderState;
+use crate::api::VcxStateType;
+use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
+use crate::aries::handlers::issuance::holder::states::offer_received::OfferReceivedState;
+use crate::aries::handlers::issuance::holder::states::request_sent::RequestSentState;
+use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential::Credential;
+use crate::aries::messages::issuance::credential_ack::CredentialAck;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::status::Status;
+use crate::connection;
+use crate::error::prelude::*;
+use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderState {
@@ -311,14 +311,14 @@ fn _delete_credential(cred_id: &str) -> VcxResult<()> {
     libindy_prover_delete_credential(cred_id)
 }
 
-    pub fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
-        let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id)?;
+pub fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
+    let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id)?;
 
-        libindy_prover_create_credential_req(&prover_did,
-                                             &cred_offer,
-                                             &cred_def_json)
-            .map_err(|err| err.extend("Cannot create credential request")).map(|(s1, s2)| (s1, s2, cred_def_id, cred_def_json))
-    }
+    libindy_prover_create_credential_req(&prover_did,
+                                         &cred_offer,
+                                         &cred_def_json)
+        .map_err(|err| err.extend("Cannot create credential request")).map(|(s1, s2)| (s1, s2, cred_def_id, cred_def_json))
+}
 
 fn _make_credential_request(conn_handle: u32, offer: &CredentialOffer) -> VcxResult<(CredentialRequest, String, String)> {
     trace!("Holder::_make_credential_request >>> conn_handle: {:?}, offer: {:?}", conn_handle, offer);
@@ -332,15 +332,15 @@ fn _make_credential_request(conn_handle: u32, offer: &CredentialOffer) -> VcxRes
 
 #[cfg(test)]
 mod test {
-    use utils::devsetup::SetupMocks;
-    use aries::handlers::connection::tests::mock_connection;
-    use aries::messages::issuance::credential::tests::_credential;
-    use aries::messages::issuance::credential_offer::tests::_credential_offer;
-    use aries::messages::issuance::credential_proposal::tests::_credential_proposal;
-    use aries::messages::issuance::credential_request::tests::_credential_request;
-    use aries::messages::issuance::test::{_ack, _problem_report};
-    use aries::test::source_id;
-    use utils::constants;
+    use crate::aries::handlers::connection::tests::mock_connection;
+    use crate::aries::messages::issuance::credential::tests::_credential;
+    use crate::aries::messages::issuance::credential_offer::tests::_credential_offer;
+    use crate::aries::messages::issuance::credential_proposal::tests::_credential_proposal;
+    use crate::aries::messages::issuance::credential_request::tests::_credential_request;
+    use crate::aries::messages::issuance::test::{_ack, _problem_report};
+    use crate::aries::test::source_id;
+    use crate::utils::constants;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 

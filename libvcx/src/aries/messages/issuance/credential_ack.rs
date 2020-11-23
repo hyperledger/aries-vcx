@@ -1,3 +1,3 @@
-use aries::messages::ack::Ack;
+use crate::aries::messages::ack::Ack;
 
 pub type CredentialAck = Ack;

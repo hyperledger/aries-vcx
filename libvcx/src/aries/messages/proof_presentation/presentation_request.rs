@@ -1,10 +1,8 @@
-use std::convert::TryInto;
-
-use error::prelude::*;
-use aries::messages::a2a::{A2AMessage, MessageId};
-use aries::messages::attachment::{AttachmentId, Attachments};
-use aries::messages::connection::service::Service;
-use libindy::proofs::proof_request::ProofRequestData;
+use crate::error::prelude::*;
+use crate::aries::messages::a2a::{A2AMessage, MessageId};
+use crate::aries::messages::attachment::{AttachmentId, Attachments};
+use crate::aries::messages::connection::service::Service;
+use crate::libindy::proofs::proof_request::ProofRequestData;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -56,8 +54,8 @@ pub type PresentationRequestData = ProofRequestData;
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::thread::Thread;
-    use aries::messages::connection::service::tests::_service;
+    use crate::aries::messages::thread::Thread;
+    use crate::aries::messages::connection::service::tests::_service;
 
     use super::*;
 

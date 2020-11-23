@@ -3,12 +3,13 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use aries::messages::a2a::A2AMessage;
-use connection::*;
-use error::prelude::*;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{connection, libindy, utils};
+use crate::aries::messages::a2a::A2AMessage;
+use crate::connection::*;
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -836,18 +837,18 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match ::connection::get_pw_verkey(connection_handle) {
+    let vk = match connection::get_pw_verkey(connection_handle) {
         Ok(x) => x,
         Err(e) => return e.into(),
     };
 
     spawn(move || {
-        match ::libindy::utils::crypto::sign(&vk, &data_raw) {
+        match libindy::utils::crypto::sign(&vk, &data_raw) {
             Ok(x) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
 
-                let (signature_raw, signature_len) = ::utils::cstring::vec_to_pointer(&x);
+                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&x);
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
             Err(e) => {
@@ -916,13 +917,13 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match ::connection::get_their_pw_verkey(connection_handle) {
+    let vk = match connection::get_their_pw_verkey(connection_handle) {
         Ok(x) => x,
         Err(e) => return e.into(),
     };
 
     spawn(move || {
-        match ::libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
+        match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
             Ok(x) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -1207,15 +1208,15 @@ mod tests {
 
     use serde_json::Value;
 
-    use agency_client::mocking::AgencyMockDecrypted;
-    use api::{return_types_u32, VcxStateType};
-    use connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
-    use utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
-    use utils::devsetup::*;
-    use utils::error;
-    use utils::error::SUCCESS;
-    use utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
-    use utils::timeout::TimeoutUtils;
+    use crate::agency_client::mocking::AgencyMockDecrypted;
+    use crate::api::{return_types_u32, VcxStateType};
+    use crate::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
+    use crate::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
+    use crate::utils::devsetup::*;
+    use crate::utils::error;
+    use crate::utils::error::SUCCESS;
+    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -1415,7 +1416,7 @@ mod tests {
         assert_eq!(vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(::connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
     #[test]
@@ -1437,7 +1438,7 @@ mod tests {
     fn test_sign() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection_inviter_invited();
+        let connection_handle = connection::tests::build_test_connection_inviter_invited();
 
         let msg = format!("My message");
         let msg_len = msg.len();
@@ -1456,7 +1457,7 @@ mod tests {
     fn test_verify_signature() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = ::connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
         let msg = format!("My message");
         let msg_len = msg.len();

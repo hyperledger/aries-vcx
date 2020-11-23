@@ -1,13 +1,13 @@
-use error::VcxResult;
-use aries::handlers::connection::agent_info::AgentInfo;
-use aries::handlers::connection::invitee::state_machine::InviteeState;
-use aries::handlers::connection::messages::DidExchangeMessages;
-use aries::handlers::connection::util::handle_ping;
-use aries::messages::a2a::protocol_registry::ProtocolRegistry;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use aries::messages::discovery::query::Query;
-use aries::messages::trust_ping::ping::Ping;
+use crate::error::VcxResult;
+use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
+use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::handlers::connection::util::handle_ping;
+use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use crate::aries::messages::discovery::query::Query;
+use crate::aries::messages::trust_ping::ping::Ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {

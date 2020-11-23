@@ -6,7 +6,7 @@ use std::sync::MutexGuard;
 
 use rand::Rng;
 
-use error::prelude::*;
+use crate::error::prelude::*;
 
 pub struct ObjectCache<T> {
     pub cache_name: String,
@@ -109,8 +109,8 @@ impl<T> ObjectCache<T> {
 
 #[cfg(test)]
 mod tests {
-    use utils::object_cache::ObjectCache;
-    use utils::devsetup::SetupDefaults;
+    use crate::utils::object_cache::ObjectCache;
+    use crate::utils::devsetup::SetupDefaults;
 
     #[test]
     #[cfg(feature = "general_test")]

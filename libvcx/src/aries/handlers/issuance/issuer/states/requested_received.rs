@@ -1,10 +1,10 @@
-use aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
-use aries::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
-use aries::handlers::issuance::issuer::states::finished::FinishedState;
-use aries::messages::a2a::MessageId;
-use aries::messages::error::ProblemReport;
-use aries::messages::issuance::credential_request::CredentialRequest;
-use aries::messages::status::Status;
+use crate::aries::handlers::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::aries::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::aries::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::aries::messages::a2a::MessageId;
+use crate::aries::messages::error::ProblemReport;
+use crate::aries::messages::issuance::credential_request::CredentialRequest;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestReceivedState {

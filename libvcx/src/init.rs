@@ -3,16 +3,16 @@ use indy;
 use indy::ErrorCode;
 use indy_sys::WalletHandle;
 
-use error::{VcxErrorExt, VcxErrorKind, VcxResult};
-use libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
-use libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
-use settings;
+use crate::{settings, utils};
+use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
+use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    ::utils::threadpool::init();
+    utils::threadpool::init();
     Ok(())
 }
 

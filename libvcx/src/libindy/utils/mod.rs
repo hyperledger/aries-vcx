@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use indy_sys::CommandHandle;
 
-use settings;
+use crate::settings;
 
 pub mod ledger;
 pub mod anoncreds;
@@ -51,9 +51,9 @@ impl LibindyMock {
 pub mod tests {
     use futures::Future;
 
-    use init::open_pool;
-    use settings;
-    use utils::devsetup::*;
+    use crate::init::open_pool;
+    use crate::settings;
+    use crate::utils::devsetup::*;
 
     use super::*;
 

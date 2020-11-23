@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use connection;
-use error::prelude::*;
-use aries::handlers::issuance::holder::state_machine::HolderSM;
-use aries::handlers::issuance::messages::CredentialIssuanceMessage;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries::handlers::issuance::holder::state_machine::HolderSM;
+use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::issuance::credential_offer::CredentialOffer;
+use crate::connection;
+use crate::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Holder {
@@ -35,7 +35,7 @@ impl Holder {
         self.holder_sm.is_terminal_state()
     }
 
-    pub fn find_message_to_handle(&self,  messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         self.holder_sm.find_message_to_handle(messages)
     }
 

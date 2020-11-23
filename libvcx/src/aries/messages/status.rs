@@ -1,4 +1,4 @@
-use aries::messages::error::ProblemReport;
+use crate::aries::messages::error::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {

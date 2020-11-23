@@ -1,4 +1,4 @@
-use aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::did_doc::DidDoc;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -41,7 +41,7 @@ impl Into<DidDoc> for Service {
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::connection::did_doc::tests::{_recipient_keys, _routing_keys, _service_endpoint};
+    use crate::aries::messages::connection::did_doc::tests::{_recipient_keys, _routing_keys, _service_endpoint};
 
     use super::*;
 

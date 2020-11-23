@@ -3,10 +3,10 @@ use std::vec::Vec;
 
 use serde_json;
 
-use error::prelude::*;
-use libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
-use libindy::utils::anoncreds;
-use utils::qualifier;
+use crate::error::prelude::*;
+use crate::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
+use crate::libindy::utils::anoncreds;
+use crate::utils::qualifier;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofRequestData {
@@ -46,13 +46,13 @@ impl ProofRequestData {
         for attribute in requested_attributes.iter() {
             if attribute.name.is_some() && attribute.names.is_some() {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                              format!("Requested attribute can contain either 'name' or 'names'. Not both.")))
+                                              format!("Requested attribute can contain either 'name' or 'names'. Not both.")));
             };
         }
         self.requested_attributes = requested_attributes
             .into_iter()
             .enumerate()
-            .map(|(index, attribute)|(format!("attribute_{}", index), attribute))
+            .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
             .collect();
         Ok(self)
     }
@@ -131,29 +131,20 @@ impl Default for ProofRequestVersion {
 
 #[cfg(test)]
 mod tests {
-    use serde::Serialize;
-    use serde_json::Value;
-
-    use utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use utils::devsetup::SetupDefaults;
+    use crate::utils;
+    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+    use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
+    use serde_json::Value;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        //proof data
-        let data_name = "Test";
-        let nonce = "123432421212";
-        let data_version = "3.75";
-        let version = "1.3";
-        let tid = 89;
-        let mid = 98;
-
         let request = ProofRequestData::create()
-            .set_name(data_name.into())
+            .set_name("Test".into())
             .set_nonce().unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
             .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
@@ -320,6 +311,6 @@ mod tests {
     fn test_indy_proof_req_parses_correctly() {
         let _setup = SetupDefaults::init();
 
-        let _proof_req: ProofRequestData = serde_json::from_str(::utils::constants::INDY_PROOF_REQ_JSON).unwrap();
+        let _proof_req: ProofRequestData = serde_json::from_str(utils::constants::INDY_PROOF_REQ_JSON).unwrap();
     }
 }

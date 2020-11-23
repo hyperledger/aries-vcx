@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use error::{VcxError, VcxResult};
+use crate::error::{VcxError, VcxResult};
 
 static MOCKED_GENERATED_PROOF: &str = "mocked_proof";
 static MOCKED_RETRIEVED_CREDS: &str = "mocked_retrieved_creds";

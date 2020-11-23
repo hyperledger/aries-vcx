@@ -1,9 +1,10 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
-use settings::Actors;
-use aries::messages::a2a::message_family::MessageFamilies;
-use aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::aries::messages::a2a::message_family::MessageFamilies;
+use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::settings::Actors;
+use crate::settings;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>
@@ -12,7 +13,7 @@ pub struct ProtocolRegistry {
 impl ProtocolRegistry {
     pub fn init() -> ProtocolRegistry {
         let mut registry = ProtocolRegistry { protocols: Vec::new() };
-        let actors = ::settings::get_actors();
+        let actors = settings::get_actors();
 
         for family in MessageFamilies::iter() {
             match family {
@@ -75,7 +76,8 @@ impl ProtocolRegistry {
 
 #[cfg(test)]
 pub mod tests {
-    use utils::devsetup::SetupEmpty;
+    use crate::settings;
+    use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
@@ -192,7 +194,7 @@ pub mod tests {
     fn test_get_protocols_for_query_works_for_limited_actors() {
         let _setup = SetupEmpty::init();
 
-        ::settings::set_config_value(::settings::CONFIG_ACTORS, &json!([Actors::Invitee]).to_string());
+        settings::set_config_value(settings::CONFIG_ACTORS, &json!([Actors::Invitee]).to_string());
 
         let registry: ProtocolRegistry = ProtocolRegistry::init();
 

@@ -1,9 +1,11 @@
 use agency_client::mocking::AgencyMockDecrypted;
-use aries::messages::a2a::A2AMessage;
-use aries::messages::connection::did_doc::DidDoc;
-use aries::messages::forward::Forward;
-use error::prelude::*;
-use libindy::utils::crypto;
+
+use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::forward::Forward;
+use crate::error::prelude::*;
+use crate::libindy::utils::crypto;
+use crate::settings;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -14,7 +16,7 @@ impl EncryptionEnvelope {
                   did_doc: &DidDoc) -> VcxResult<EncryptionEnvelope> {
         trace!("EncryptionEnvelope::create >>> message: {:?}, pw_verkey: {:?}, did_doc: {:?}", message, pw_verkey, did_doc);
 
-        if ::settings::indy_mocks_enabled() { return Ok(EncryptionEnvelope(vec![])); }
+        if settings::indy_mocks_enabled() { return Ok(EncryptionEnvelope(vec![])); }
 
         EncryptionEnvelope::encrypt_for_pairwise(message, pw_verkey, did_doc)
             .and_then(|message| EncryptionEnvelope::wrap_into_forward_messages(message, did_doc))
@@ -67,7 +69,7 @@ impl EncryptionEnvelope {
 
         let unpacked_msg = crypto::unpack_message(&payload)?;
 
-        let msg_value: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
+        let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice())
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
 
         let sender_vk = msg_value["sender_verkey"].as_str().map(String::from);
@@ -88,7 +90,7 @@ impl EncryptionEnvelope {
             let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(payload)?;
             a2a_message
         };
-        let a2a_message = ::serde_json::from_str(&message)
+        let a2a_message = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
         Ok(a2a_message)
     }
@@ -106,20 +108,20 @@ impl EncryptionEnvelope {
             match sender_vk {
                 Some(sender_vk) => {
                     if sender_vk != expected_vk {
-                        error!("auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
+                        error!("auth_unpack  sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
                         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
                                                       format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
                         );
                     }
                 }
                 None => {
-                    error!("auth_unpack :: message was authcrypted");
+                    error!("auth_unpack  message was authcrypted");
                     return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Can't authenticate message because it was anoncrypted."));
                 }
             }
             a2a_message
         };
-        let a2a_message = ::serde_json::from_str(&message)
+        let a2a_message = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
         Ok(a2a_message)
     }
@@ -127,18 +129,18 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
-    use aries::messages::ack::tests::_ack;
-    use aries::messages::connection::did_doc::tests::*;
-    use libindy::utils::crypto::create_key;
-    use libindy::utils::tests::test_setup;
-    use libindy::utils::tests::test_setup::create_trustee_key;
-    use libindy::utils::wallet;
-    use utils::devsetup::SetupEmpty;
+    use crate::aries::messages::ack::tests::_ack;
+    use crate::aries::messages::connection::did_doc::tests::*;
+    use crate::libindy::utils::crypto::create_key;
+    use crate::libindy::utils::tests::test_setup;
+    use crate::libindy::utils::tests::test_setup::create_trustee_key;
+    use crate::libindy::utils::wallet;
+    use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
     fn _setup() {
-        ::settings::set_config_value(::settings::CONFIG_ENABLE_TEST_MODE, "false");
+        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     }
 
     #[test]
@@ -228,7 +230,7 @@ pub mod tests {
         let envelope = EncryptionEnvelope::create(&ack, Some(&sender_key), &did_doc).unwrap();
 
         wallet::set_wallet_handle(recipient_wallet.wh);
-        let message_1 = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key).unwrap();
+        let _message_1 = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key).unwrap();
     }
 
     #[test]

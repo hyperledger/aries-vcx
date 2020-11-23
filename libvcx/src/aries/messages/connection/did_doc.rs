@@ -1,8 +1,8 @@
-use aries::messages::connection::invite::Invitation;
+use crate::aries::messages::connection::invite::Invitation;
 
-use error::prelude::*;
+use crate::error::prelude::*;
 use url::Url;
-use utils::validation::validate_verkey;
+use crate::utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -314,8 +314,8 @@ impl From<DidDoc> for Invitation {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use aries::messages::a2a::MessageId;
-    use aries::messages::connection::invite::tests::_invitation;
+    use crate::aries::messages::a2a::MessageId;
+    use crate::aries::messages::connection::invite::tests::_invitation;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")

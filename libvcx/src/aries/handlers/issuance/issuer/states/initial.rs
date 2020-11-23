@@ -1,7 +1,7 @@
-use aries::handlers::issuance::issuer::states::finished::FinishedState;
-use aries::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-use aries::messages::a2a::MessageId;
-use aries::messages::status::Status;
+use crate::aries::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::aries::handlers::issuance::issuer::states::offer_sent::OfferSentState;
+use crate::aries::messages::a2a::MessageId;
+use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InitialState {

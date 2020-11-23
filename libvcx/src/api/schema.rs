@@ -4,12 +4,11 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use error::prelude::*;
-use schema;
-use settings;
-use utils::cstring::CStringUtils;
-use utils::error;
-use utils::threadpool::spawn;
+use crate::{schema, settings};
+use crate::error::prelude::*;
+use crate::utils::cstring::CStringUtils;
+use crate::utils::error;
+use crate::utils::threadpool::spawn;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -538,15 +537,14 @@ mod tests {
     #[allow(unused_imports)]
     use rand::Rng;
 
-    use api::return_types_u32;
-    #[cfg(feature = "pool_tests")]
-    use schema::CreateSchema;
-    use schema::tests::prepare_schema_data;
-    use settings;
+    use crate::{api, libindy, settings, utils};
+    use crate::api::return_types_u32;
+    use crate::schema::CreateSchema;
+    use crate::schema::tests::prepare_schema_data;
     #[allow(unused_imports)]
-    use utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use utils::devsetup::*;
-    use utils::timeout::TimeoutUtils;
+    use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use crate::utils::devsetup::*;
+    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -599,7 +597,7 @@ mod tests {
     fn test_vcx_schema_get_attrs_with_pool() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = ::libindy::utils::anoncreds::tests::create_and_write_test_schema(::utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,
@@ -725,7 +723,7 @@ mod tests {
         let (_handle, schema_transaction) = cb.receive(TimeoutUtils::some_short()).unwrap();
         let schema_transaction = schema_transaction.unwrap();
         let schema_transaction: serde_json::Value = serde_json::from_str(&schema_transaction).unwrap();
-        let expected_schema_transaction: serde_json::Value = serde_json::from_str(::utils::constants::REQUEST_WITH_ENDORSER).unwrap();
+        let expected_schema_transaction: serde_json::Value = serde_json::from_str(utils::constants::REQUEST_WITH_ENDORSER).unwrap();
         assert_eq!(expected_schema_transaction, schema_transaction);
     }
 
@@ -739,17 +737,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), ::api::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32)
         }
     }
 }
