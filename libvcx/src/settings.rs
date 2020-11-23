@@ -88,14 +88,14 @@ lazy_static! {
 }
 
 trait ToString {
-    fn to_string(&self) -> Self;
+    fn to_string(&self) -> String;
 }
 
 impl ToString for HashMap<String, String> {
-    fn to_string(&self) -> Self {
+    fn to_string(&self) -> String {
         let mut v = self.clone();
         v.insert(CONFIG_WALLET_KEY.to_string(), MASK_VALUE.to_string());
-        v
+        serde_json::to_string(&v).unwrap()
     }
 }
 
@@ -174,7 +174,7 @@ pub fn validate_payment_method() -> VcxResult<u32> {
                                   VcxErrorKind::MissingPaymentMethod, validation::validate_payment_method)
 }
 
-pub fn settings_as_string() -> HashMap<String, String> {
+pub fn settings_as_string() -> String {
     SETTINGS.read().unwrap().to_string()
 }
 

@@ -65,6 +65,7 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
             })?;
 
     set_wallet_handle(handle);
+    init_agency_client(&settings::settings_as_string(), handle)?;
 
     Ok(handle)
 }

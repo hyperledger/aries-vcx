@@ -6,7 +6,7 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{init_core, init_agency_client, open_as_main_wallet, open_pool};
+use crate::init::{init_core, open_as_main_wallet, open_pool};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
@@ -143,32 +143,6 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
         Ok(())
     });
     error::SUCCESS.code_num
-}
-
-/// Creates agent client, which is necessary for communication with the agency. Can be called only after wallet has been opened via vcx_open_wallet.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-/// wallet_handle: wallet handle for the wallet to be used by the agent client (currently not used)
-/// config: config of the agent client (currently not used)
-///
-/// cb: Callback that provides error status of initialization
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern fn vcx_init_agency_client(command_handle: CommandHandle, wallet_handle: WalletHandle, config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_init_agency_client >>>");
-    let handle = wallet::get_wallet_handle();
-    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
-    if handle == INVALID_WALLET_HANDLE {
-        error!("vcx_open_wallet :: Wallet was already initialized.");
-        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Wallet was already initialized").into();
-    }
-    match init_agency_client(&config, handle) {
-        Ok(_) => error::SUCCESS.code_num,
-        Err(_) => error::INVALID_CONFIGURATION.code_num
-    }
 }
 
 lazy_static! {
