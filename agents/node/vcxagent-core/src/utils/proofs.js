@@ -23,7 +23,7 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
         credential: resolvedCreds.attrs[attrName][0]
       }
       const revRegId = resolvedCreds.attrs[attrName][0].cred_info.rev_reg_id
-      if (revRegId) {
+      if (revRegId && mapRevRegIdToTailsFilePath) {
         selectedCreds.attrs[attrName].tails_file = await mapRevRegIdToTailsFilePath(revRegId)
       }
     } else {
