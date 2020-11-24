@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::message_type::MessageTypes;
 use crate::{parse_response_from_agency, prepare_message_for_agency, A2AMessage, A2AMessageV2, agency_settings, A2AMessageKinds};
 use crate::utils::{error_utils, constants};
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
+use crate::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
 
@@ -242,10 +242,7 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientRe
 #[cfg(test)]
 mod tests {
     use std::env;
-    use crate::utils::agent_utils::{update_agent_webhook, ComMethodType};
-
-    // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    // use agency_client::utils::agent_utils::{ComMethodType, update_agent_webhook};
+    use crate::agent_utils::{update_agent_webhook, ComMethodType};
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -4,7 +4,7 @@ use std::io::Read;
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 use crate::mocking;
 

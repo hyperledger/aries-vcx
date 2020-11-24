@@ -255,7 +255,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
     spawn(move || {
-        match agency_client::utils::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+        match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -842,7 +842,7 @@ mod tests {
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         let agreement = cb.receive(TimeoutUtils::some_short()).unwrap();
-        assert_eq!(::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
+        assert_eq!(crate::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
     }
 
     #[cfg(feature = "general_test")]

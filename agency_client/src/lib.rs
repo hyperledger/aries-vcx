@@ -16,26 +16,8 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate url;
 
-use std::u8;
-
-use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
-use serde_json::Value;
-
-use self::utils::error::prelude::*;
-use self::utils::libindy::crypto;
-
-use self::utils::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
-use self::utils::validation;
-use self::utils::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
-use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
-use self::message_type::*;
-use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
-use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
-use self::mocking::AgencyMockDecrypted;
-
 pub mod get_message;
-pub mod utils;
+mod utils;
 pub mod update_connection;
 pub mod update_message;
 pub mod message_type;
@@ -45,6 +27,26 @@ pub mod agency_settings;
 pub mod mocking;
 pub mod httpclient;
 pub mod agency_client;
+pub mod agent_utils;
+pub mod error;
+
+use std::u8;
+
+use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
+use serde_json::Value;
+
+use self::error::prelude::*;
+use self::utils::libindy::crypto;
+
+use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use self::utils::validation;
+use self::utils::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
+use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
+use self::message_type::*;
+use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
+use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
+use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
+use self::mocking::AgencyMockDecrypted;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

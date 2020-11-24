@@ -5,7 +5,7 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::utils::{error_utils, validation};
 
 pub const CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";

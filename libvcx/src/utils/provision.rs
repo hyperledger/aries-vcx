@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use indy::WalletHandle;
-use agency_client::utils::agent_utils;
+use agency_client::agent_utils;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, signus, wallet};

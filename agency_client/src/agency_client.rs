@@ -1,6 +1,6 @@
 use crate::agency_settings;
 
-use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
+use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use serde_json::Value;
 use crate::utils::{error_utils, validation};
 use crate::mocking;

@@ -1,5 +1,5 @@
 use crate::{get_messages, MessageStatusCode, prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, mocking};
-use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
+use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::utils::comm::post_to_agency;
 use crate::message_type::MessageTypes;

@@ -4,7 +4,7 @@ use regex::Regex;
 use url::Url;
 use self::rust_base58::FromBase58;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -55,7 +55,7 @@ mod tests {
     // use utils::devsetup::SetupDefaults;
 
     use super::*;
-    use crate::utils::error::AgencyClientErrorKind;
+    use crate::error::AgencyClientErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

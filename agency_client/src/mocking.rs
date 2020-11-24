@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::utils::error::AgencyClientResult;
+use crate::error::AgencyClientResult;
 use crate::agency_settings;
 
 lazy_static! {
