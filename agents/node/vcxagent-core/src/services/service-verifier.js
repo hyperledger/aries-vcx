@@ -46,10 +46,16 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     }
   }
 
+  async function getVcxProof (proofId) {
+    logger.warn('Usage of getVcxProof is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
+    return loadProof(proofId)
+  }
+
   return {
     createProof,
     sendProofRequest,
     proofUpdate,
+    getVcxProof,
 
     listIds,
     printInfo,

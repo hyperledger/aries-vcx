@@ -1,3 +1,4 @@
+const {filterOffersByCredentialName} = require('../utils/credentials')
 const { filterOffersByAttr } = require('../utils/credentials')
 const { filterOffersBySchema } = require('../utils/credentials')
 const {
@@ -142,6 +143,11 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
     }
   }
 
+  async function getVcxCredential (credHolderId) {
+    logger.warn('Usage of getVcxCredential is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
+    return loadHolderCredential(credHolderId)
+  }
+
   return {
     waitForCredentialOffer,
     createCredentialFromOfferAndSendRequest,
@@ -153,6 +159,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
     getTailsLocation,
     getRevRegId,
     getTailsHash,
+    getVcxCredential,
 
     listIds,
     printInfo,

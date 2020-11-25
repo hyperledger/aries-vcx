@@ -113,6 +113,11 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
     }
   }
 
+  async function getVcxDisclosedProof (disclosedProofId) {
+    logger.warn('Usage of getVcxDisclosedProof is not recommended. You should use vcxagent-core API rather than work with vcx object directly.')
+    return loadDisclosedProof(disclosedProofId)
+  }
+
   return {
     generateProof,
     selectCredentials,
