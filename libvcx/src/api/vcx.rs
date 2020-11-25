@@ -533,7 +533,7 @@ mod tests {
         }).to_string();
 
         let err = init_core(&content).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::MissingWalletKey);
+        assert_eq!(err.kind(), VcxErrorKind::InvalidDid);
         let rc = _vcx_open_wallet_c_closure().unwrap_err();
         assert_eq!(rc, error::MISSING_WALLET_KEY.code_num);
     }
