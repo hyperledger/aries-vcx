@@ -205,7 +205,6 @@ pub mod tests {
     use crate::libindy;
     use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
-    use crate::libindy::utils::cache::get_rev_reg_cache;
     use crate::utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
@@ -632,33 +631,6 @@ pub mod tests {
             timestamp: None,
         };
         assert_eq!(build_rev_states_json(vec![cred1].as_mut()).unwrap(), "{}".to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_build_rev_states_json_real_no_cache() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: cred_id,
-            schema_id,
-            cred_def_id,
-            rev_reg_id: rev_reg_id.clone(),
-            cred_rev_id: cred_rev_id.clone(),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-        };
-        let rev_reg_id = rev_reg_id.unwrap();
-        let rev_id = cred_rev_id.unwrap();
-
-        // assert cache is empty
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache.rev_state, None);
     }
 
     #[test]
