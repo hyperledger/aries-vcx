@@ -147,7 +147,7 @@ pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
     validate_optional_config_val(config.get(CONFIG_WEBHOOK_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
     validate_optional_config_val(config.get(CONFIG_ACTORS), VcxErrorKind::InvalidOption, validation::validate_actors)?;
 
-    get_agency_client()?.validate()?;
+    // get_agency_client()?.validate()?; // TODO: Fix
     Ok(error::SUCCESS.code_num)
 }
 
@@ -214,7 +214,7 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
     }
 
     // TODO: This won't be necessary - move to open wallet for now?
-    get_agency_client()?.process_config_string(config, 0, do_validation)?;
+    // get_agency_client()?.process_config_string(config, 0, do_validation)?;
     // settings::get_agency_client()?.process_config_string(config, 0, do_validation)?;
 
     if do_validation {

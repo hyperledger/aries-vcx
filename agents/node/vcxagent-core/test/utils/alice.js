@@ -53,7 +53,7 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentInitVcx()
     const mapRevRegId = _mapRevRegId || ((_revRegId) => { throw Error('Tails file should not be need') })
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
-    const selectedCreds = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
+    const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
     const selfAttestedAttrs = { attribute_3: 'Smith' }
     await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
     expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(StateType.OfferSent)
