@@ -7,7 +7,6 @@ use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use crate::libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -126,75 +125,20 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
                 { (interval.from, interval.to) } else { (None, None) };
 
-                let cache = get_rev_reg_cache(&rev_reg_id, &cred_rev_id);
+                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
 
-                let (rev_state_json, timestamp) =
-                    if let (Some(cached_rev_state), Some(to)) = (cache.rev_state, to) {
-                        if cached_rev_state.timestamp >= from.unwrap_or(0)
-                            && cached_rev_state.timestamp <= to {
-                            (cached_rev_state.value, cached_rev_state.timestamp)
-                        } else {
-                            let from = match from {
-                                Some(from) if from >= cached_rev_state.timestamp => {
-                                    Some(cached_rev_state.timestamp)
-                                }
-                                _ => None
-                            };
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
+                    &rev_reg_id,
+                    from,
+                    to,
+                )?;
 
-                            let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
-
-                            let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                                &rev_reg_id,
-                                from,
-                                Some(to),
-                            )?;
-
-                            let rev_state_json = anoncreds::libindy_prover_update_revocation_state(
-                                &rev_reg_def_json,
-                                &cached_rev_state.value,
-                                &rev_reg_delta_json,
-                                &cred_rev_id,
-                                &tails_file,
-                            )?;
-
-                            if timestamp > cached_rev_state.timestamp {
-                                let new_cache = RevRegCache {
-                                    rev_state: Some(RevState {
-                                        timestamp,
-                                        value: rev_state_json.clone(),
-                                    })
-                                };
-                                set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-                            }
-
-                            (rev_state_json, timestamp)
-                        }
-                    } else {
-                        let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
-
-                        let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                            &rev_reg_id,
-                            None,
-                            to,
-                        )?;
-
-                        let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
-                            &rev_reg_def_json,
-                            &rev_reg_delta_json,
-                            &cred_rev_id,
-                            &tails_file,
-                        )?;
-
-                        let new_cache = RevRegCache {
-                            rev_state: Some(RevState {
-                                timestamp,
-                                value: rev_state_json.clone(),
-                            })
-                        };
-                        set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-
-                        (rev_state_json, timestamp)
-                    };
+                let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
+                    &rev_reg_def_json,
+                    &rev_reg_delta_json,
+                    &cred_rev_id,
+                    &tails_file,
+                )?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RevocationState: {}", err)))?;
@@ -261,6 +205,7 @@ pub mod tests {
     use crate::libindy;
     use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
+    use crate::libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
     use crate::utils::{
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
