@@ -760,7 +760,7 @@ jobs:
     needs: [workflow-setup, build-image-android]
     env:
       DOCKER_BUILDKIT: 1
-      FULL_VERSION_NAME: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
+      FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
