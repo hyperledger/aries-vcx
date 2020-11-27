@@ -134,6 +134,14 @@ jobs:
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_POOL }}
+
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: If NOT found in cache, build and cache image.
         if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
