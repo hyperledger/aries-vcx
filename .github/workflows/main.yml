@@ -126,29 +126,9 @@ jobs:
       CACHE_KEY_POOL: ${{ needs.workflow-setup.outputs.CACHE_KEY_POOL }}
       DOCKER_IMG_NAME_POOL: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_POOL }}
     steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
-      - name: Try load from cache.
-        id: cache-image-pool
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_POOL }}
-      - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image-pool.outputs.cache-hit != 'true'
+      - name: Dummy step.
         run: |
-          set -x
-          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
-          mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
-
-      - name: Load image from cache
-        run: |
-          docker load < /tmp/imgcache/img_indypool.rar
-      - name: Verify indypool image was loaded
-        run: |
-          docker images
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_POOL" || { echo "Image $DOCKER_IMG_NAME_POOL was not found!" ; exit 1; }
+          echo "Restore build the pool later."
 
   build-image-alpine-core:
     needs: workflow-setup
