@@ -1013,6 +1013,7 @@ jobs:
           excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
           breakingLabels: backwards-incompatible,breaking
           deprecatedLabels: deprecated
+          addSections: '{"ci":{"prefix":"**CI changes:**","labels":["ci"]}}'
 
       - name: Create a new release
         id: create-release
