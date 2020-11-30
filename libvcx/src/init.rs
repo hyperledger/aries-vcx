@@ -10,15 +10,15 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
-    settings::process_config_string(&config, true)?;
+    settings::process_config_string(&config, false)?;
     settings::log_settings();
     utils::threadpool::init();
     Ok(())
 }
 
-pub fn init_agency_client(config: &str, wallet_handle: WalletHandle) -> VcxResult<()> {
-    info!("init_agency_client >>> config = {}, wallet_handle: {:?}", config, wallet_handle);
-    settings::get_agency_client()?.process_config_string(config, wallet_handle.0, false)?;
+pub fn init_agency_client(config: &str) -> VcxResult<()> {
+    info!("init_agency_client >>> config = {}", config);
+    settings::get_agency_client()?.process_config_string(config, false)?;
     Ok(())
 }
 
@@ -64,8 +64,8 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
                 }
             })?;
 
+    init_agency_client(&settings::settings_as_string())?;
     set_wallet_handle(handle);
-    init_agency_client(&settings::settings_as_string(), handle)?;
 
     Ok(handle)
 }

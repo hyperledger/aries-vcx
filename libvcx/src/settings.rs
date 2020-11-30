@@ -214,8 +214,7 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
     }
 
     // TODO: This won't be necessary - move to open wallet for now?
-    // get_agency_client()?.process_config_string(config, 0, do_validation)?;
-    // settings::get_agency_client()?.process_config_string(config, 0, do_validation)?;
+    get_agency_client()?.process_config_string(config, do_validation)?;
 
     if do_validation {
         let setting = SETTINGS.read()
