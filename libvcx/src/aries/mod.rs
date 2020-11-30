@@ -461,7 +461,7 @@ pub mod test {
         }
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo() {
         PaymentPlugin::load();
@@ -499,7 +499,7 @@ pub mod test {
     }
 
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_handle_connection_related_messages() {
         PaymentPlugin::load();
@@ -544,7 +544,7 @@ pub mod test {
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
@@ -610,7 +610,7 @@ pub mod test {
         faber.verify_presentation();
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_download_message_flow() {
         SetupEmpty::init();
