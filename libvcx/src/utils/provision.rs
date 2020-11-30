@@ -171,6 +171,26 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     Ok(config)
 }
 
+pub fn provision_agent(agency_did: &str, agency_vk: &str, agency_endpoint: &str) -> VcxResult<String> {
+
+    let my_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let my_vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY)?;
+
+    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &agency_endpoint)?;
+
+    let agency_config = json!({
+        "agency_did": String::from(agency_did),
+        "agency_endpoint": String::from(agency_endpoint),
+        "agency_verkey": String::from(agency_vk),
+        "remote_to_sdk_did": agent_did,
+        "remote_to_sdk_verkey": agent_vk,
+        "sdk_to_remote_did": my_did,
+        "sdk_to_remote_verkey": my_vk,
+    });
+
+    Ok(agency_config.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use std::env;

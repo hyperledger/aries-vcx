@@ -31,6 +31,7 @@ pub struct UpdateAgentInfo {
 /// #Returns
 /// Configuration (wallet also populated), on error returns NULL
 #[no_mangle]
+#[deprecated(since = "0.14.0", note = "")]
 pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
     info!("vcx_provision_agent >>>");
 
@@ -72,6 +73,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 /// #Returns
 /// Configuration (wallet also populated), on error returns NULL
 #[no_mangle]
+#[deprecated(since = "0.14.0", note = "")]
 pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
                                         config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, _config: *const c_char)>) -> u32 {
@@ -100,6 +102,67 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
+
+/// Provision an agent in the agency.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// agency_did: did of agency to provision an agent in
+///
+/// agency_vk: verkey of agency to provision an agent in
+///
+/// agency_endpoint: url of the agency
+///
+/// cb: Callback that provides agency configuration or error status
+///
+/// #Example agency configuration ->
+/// {
+///  "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+///  "agency_endpoint": "http://127.0.0.1:8080",
+///  "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+///  "remote_to_sdk_did": "GkdUhwyWqNw3vGs6FQFFHb",
+///  "remote_to_sdk_verkey": "9axcTwXeJ1haJBw9LqexT8dRpiFCJwA6ZUevM5nfiDKg",
+///  "sdk_to_remote_did": "C5DiHD1n3MqNcv5h7PBK9J",
+///  "sdk_to_remote_verkey": "732pD7kDiBjSyS57aNXi52Xpg2DLCTb43aLpddo2X8CG"
+/// }
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_provision_new_agent(command_handle: CommandHandle,
+                                        agency_did: *const c_char,
+                                        agency_vk: *const c_char,
+                                        agency_endpoint: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>) -> u32 {
+    info!("vcx_provision_new_agent >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(agency_did, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(agency_vk, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(agency_endpoint, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_provision_new_agent(command_handle: {}, agency_did: {}, agency_vk: {}, agency_endpoint: {})",
+           command_handle, agency_did, agency_vk, agency_endpoint);
+
+    thread::spawn(move || {
+        match crate::utils::provision::provision_agent(&agency_did, &agency_vk, &agency_endpoint) {
+            Err(e) => {
+                error!("vcx_provision_new_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+            Ok(s) => {
+                trace!("vcx_provision_new_agent_cb(command_handle: {}, rc: {}, config: {})",
+                       command_handle, error::SUCCESS.message, s);
+                let msg = CStringUtils::string_to_cstring(s);
+                cb(command_handle, 0, msg.as_ptr());
+            }
+        }
+    });
+
+    error::SUCCESS.code_num
+}
+
 
 /// Update information on the agent (ie, comm method and type)
 ///

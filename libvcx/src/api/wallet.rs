@@ -13,6 +13,178 @@ use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::threadpool::spawn;
 
+/// Creates new wallet and master secret using provided config. Keeps wallet closed.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// wallet_config: wallet configuration
+///
+/// cb: Callback that provides configuration or error status
+///
+/// # Example wallet config ->
+/// {
+///   "wallet_name": "my_wallet_name",
+///   "wallet_key": "123456",
+///   "wallet_key_derivation": "ARGON2I_MOD",
+///   "wallet_type": "postgres_storage",
+///   "storage_config": "{\"url\":\"localhost:5432\"}",
+///   "storage_credentials": "{\"account\":\"postgres\",\"password\":\"password_123\",\"admin_account\":\"postgres\",\"admin_password\":\"password_foo\"}"
+/// }
+#[no_mangle]
+pub extern fn vcx_create_wallet(command_handle: CommandHandle,
+                                        wallet_config: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_create_wallet >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_create_wallet(command_handle: {}, wallet_config: {})",
+           command_handle, wallet_config);
+
+    thread::spawn(move || {
+        match wallet::create_wallet_from_config(&wallet_config) {
+            Err(e) => {
+                error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
+                cb(command_handle, e.into());
+            }
+            Ok(_) => {
+                trace!("vcx_create_wallet_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, 0);
+            }
+        }
+    });
+
+    error::SUCCESS.code_num
+}
+
+/// Creates issuer's did and keypair and stores them in the wallet.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// enterprise_seed: Seed used to generate institution did, keypair and other secrets
+///
+/// institution_name: Name of the issuaing institution
+///
+/// cb: Callback that provides institution config or error status
+///
+/// # Example institution config ->{
+///   "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
+///   "institution_name": "my_agent_name",
+///   "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
+/// }
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
+                                        enterprise_seed: *const c_char,
+                                        institution_name: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
+    info!("vcx_vcx_configure_issuer_wallet >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(enterprise_seed, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(institution_name, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_vcx_configure_issuer_wallet(command_handle: {}, enterprise_seed: {}, institution_name: {})",
+           command_handle, enterprise_seed, institution_name);
+
+    thread::spawn(move || {
+        match wallet::configure_issuer_wallet(&enterprise_seed, &institution_name) {
+            Err(e) => {
+                error!("vcx_vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
+                cb(command_handle, e.into(), null());
+            }
+            Ok(conf) => {
+                trace!("vcx_vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
+                       command_handle, error::SUCCESS.message, conf);
+                let conf = CStringUtils::string_to_cstring(conf.to_string());
+                cb(command_handle, 0, conf.as_ptr());
+            }
+        }
+    });
+
+    error::SUCCESS.code_num
+}
+
+/// Opens wallet chosen using provided config and returns its wallet handle.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// wallet_config: wallet configuration
+///
+/// #Returns
+/// Error code as a u32 and wallet handle as i32
+#[no_mangle]
+pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
+                                        wallet_config: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
+    info!("vcx_open_wallet_directly >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_open_wallet(command_handle: {})", command_handle);
+
+    thread::spawn(move || {
+        match wallet::vcx_open_wallet_directly(&wallet_config) {
+            Err(e) => {
+                error!("vcx_open_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
+                cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
+            }
+            Ok(wh) => {
+                trace!("vcx_open_wallet_directly_cb(command_handle: {}, rc: {}, wh: {})",
+                       command_handle, error::SUCCESS.message, wh.0);
+                cb(command_handle, 0, wh.0);
+            }
+        }
+    });
+
+    error::SUCCESS.code_num
+}
+
+/// Closes wallet chosen using provided wallet handle.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// wallet_handle: wallet handle
+///
+/// #Returns
+/// Error code as a u32 and wallet handle as i32
+#[no_mangle]
+pub extern fn vcx_close_wallet_directly(command_handle: CommandHandle,
+                                        wallet_handle: i32,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_close_wallet_directly >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_close_wallet_directly(command_handle: {}, wallet_handle: {})", command_handle, wallet_handle);
+
+    thread::spawn(move || {
+        match wallet::vcx_close_wallet_directly(indy::WalletHandle(wallet_handle)) {
+            Err(e) => {
+                error!("vcx_close_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
+                cb(command_handle, e.into());
+            }
+            Ok(_) => {
+                trace!("vcx_close_wallet_directly_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, 0);
+            }
+        }
+    });
+
+    error::SUCCESS.code_num
+}
+
+
 /// Get the total balance from all addresses contained in the configured wallet
 ///
 /// #Params

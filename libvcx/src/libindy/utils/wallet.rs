@@ -7,6 +7,17 @@ use agency_client::utils::wallet as agency_wallet;
 use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::settings;
+use crate::libindy::utils::{anoncreds, signus};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct WalletConfig {
+    wallet_name: String,
+    wallet_key: String,
+    wallet_key_derivation: String,
+    wallet_type: Option<String>,
+    storage_config: Option<String>,
+    storage_credentials: Option<String>
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletRecord {
@@ -47,6 +58,43 @@ pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 pub fn reset_wallet_handle() {
     set_wallet_handle(INVALID_WALLET_HANDLE);
     agency_wallet::reset_wallet_handle();
+}
+
+pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
+    let config: WalletConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", config, err)))?;
+
+    let wh = create_and_open_as_main_wallet(
+        &config.wallet_name,
+        &config.wallet_key,
+        &config.wallet_key_derivation,
+        config.wallet_type.as_ref().map(String::as_str),
+        config.storage_config.as_ref().map(String::as_str),
+        config.storage_credentials.as_ref().map(String::as_str),
+    )?;
+    set_wallet_handle(wh);
+    trace!("initialized wallet");
+
+    // If MS is already in wallet then just continue
+    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
+    
+    close_main_wallet()?;
+    Ok(())
+}
+
+pub fn configure_issuer_wallet(enterprise_seed: &str, institution_name: &str) -> VcxResult<String> {
+
+    let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?; // TODO: agent_seed used to be for this for some reason
+
+    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
+    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
+    // settings::get_agency_client()?.set_my_vk(&my_vk); // TODO: Set on client init
+    let institution_config = json!({
+        "institution_name": String::from(institution_name),
+        "institution_did": institution_did,
+        "institution_verkey": institution_verkey,
+    });
+    Ok(institution_config.to_string())
 }
 
 pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
@@ -96,6 +144,21 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
     create_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)?;
     open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)
 }
+
+pub fn vcx_open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
+    let config: WalletConfig = serde_json::from_str(wallet_config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
+    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())
+}
+
+pub fn vcx_close_wallet_directly(wallet_handle: WalletHandle) -> VcxResult<()> {
+    wallet::close_wallet(wallet_handle)
+        .wait()?;
+
+    reset_wallet_handle();
+    Ok(())
+}
+
 
 pub fn close_main_wallet() -> VcxResult<()> {
     trace!("close_main_wallet >>>");
