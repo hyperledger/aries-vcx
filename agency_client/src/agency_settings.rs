@@ -152,17 +152,19 @@ pub fn set_config_value(key: &str, value: &str) {
 }
 
 mod tests {
+    use super::*;
+
     #[cfg(feature = "general_test")]
     fn get_settings() -> String {
         json!({
 
-            agency_settings::CONFIG_AGENCY_DID:           agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_DID).unwrap(),
-            agency_settings::CONFIG_AGENCY_VERKEY:        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY).unwrap(),
-            agency_settings::CONFIG_AGENCY_ENDPOINT:      agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT).unwrap(),
-            agency_settings::CONFIG_REMOTE_TO_SDK_DID:    agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID).unwrap(),
-            agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
-            agency_settings::CONFIG_SDK_TO_REMOTE_DID:    agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID).unwrap(),
-            agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY: agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
+            CONFIG_AGENCY_DID:           get_config_value(CONFIG_AGENCY_DID).unwrap(),
+            CONFIG_AGENCY_VERKEY:        get_config_value(CONFIG_AGENCY_VERKEY).unwrap(),
+            CONFIG_AGENCY_ENDPOINT:      get_config_value(CONFIG_AGENCY_ENDPOINT).unwrap(),
+            CONFIG_REMOTE_TO_SDK_DID:    get_config_value(CONFIG_REMOTE_TO_SDK_DID).unwrap(),
+            CONFIG_REMOTE_TO_SDK_VERKEY: get_config_value(CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
+            CONFIG_SDK_TO_REMOTE_DID:    get_config_value(CONFIG_SDK_TO_REMOTE_DID).unwrap(),
+            CONFIG_SDK_TO_REMOTE_VERKEY: get_config_value(CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
         }).to_string()
     }
 }

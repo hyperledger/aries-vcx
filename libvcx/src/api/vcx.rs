@@ -533,7 +533,7 @@ mod tests {
         }).to_string();
 
         let err = init_core(&content).unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidDid);
+        assert_eq!(err.kind(), VcxErrorKind::MissingWalletKey);
         let rc = _vcx_open_wallet_c_closure().unwrap_err();
         assert_eq!(rc, error::MISSING_WALLET_KEY.code_num);
     }
@@ -984,8 +984,8 @@ mod tests {
 
         assert_eq!(vcx_init_core(CString::new(config).unwrap().into_raw()), error::SUCCESS.code_num);
 
-        let connection_handle = connection::create_connection("test_create_fails").unwrap();
-        connection::connect(connection_handle).unwrap_err();
+        let connection_handle = connection::create_connection("test_create_works").unwrap();
+        connection::connect(connection_handle).unwrap();
 
         settings::set_testing_defaults();
     }

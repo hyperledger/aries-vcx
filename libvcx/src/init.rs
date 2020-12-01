@@ -10,7 +10,7 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
-    settings::process_config_string(&config, false)?;
+    settings::process_config_string(&config, true)?;
     settings::log_settings();
     utils::threadpool::init();
     Ok(())
