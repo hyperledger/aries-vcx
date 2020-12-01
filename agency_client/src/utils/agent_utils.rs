@@ -142,6 +142,8 @@ pub struct ComMethod {
 }
 
 pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+    trace!("connect_v2 >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
+
     /* STEP 1 - CONNECT */
     let message = A2AMessage::Version2(
         A2AMessageV2::Connect(Connect::build(my_did, my_vk))
@@ -161,10 +163,13 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
         };
 
     agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
+
+    trace!("connect_v2 <<< agency_pw_did: {}, agency_pw_vk: {}", agency_pw_did, agency_pw_vk);
     Ok((agency_pw_did, agency_pw_vk))
 }
 
 pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+    info!("onboarding_v2 >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
     let (agency_pw_did, _) = connect_v2(my_did, my_vk, agency_did)?;
 
@@ -195,6 +200,7 @@ pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClien
             _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
         };
 
+    trace!("onboarding_v2 <<< from_did: {}, from_vk: {}", response.from_did, response.from_vk);
     Ok((response.from_did, response.from_vk))
 }
 
@@ -231,6 +237,7 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientR
 }
 
 pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
+    trace!("send_message_to_agency >>> message: ..., did: {}", did);
     let data = prepare_message_for_agency(message, &did)?;
 
     let response = post_to_agency(&data)

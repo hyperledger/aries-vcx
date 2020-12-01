@@ -173,10 +173,20 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
 pub fn provision_agent(agency_did: &str, agency_vk: &str, agency_endpoint: &str) -> VcxResult<String> {
 
-    let my_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-    let my_vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY)?;
+    let (my_did, my_vk) = signus::create_and_store_my_did(None, None)?; // TODO: Extend config to did method and agent seed
 
-    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &agency_endpoint)?;
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, agency_did);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, agency_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, agency_endpoint);
+    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID, &my_did);
+
+    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
+
+    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &agency_did)?;
+
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, &agent_did);
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agent_vk);
 
     let agency_config = json!({
         "agency_did": String::from(agency_did),

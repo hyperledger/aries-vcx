@@ -31,6 +31,9 @@ use crate::utils::threadpool::spawn;
 ///   "storage_config": "{\"url\":\"localhost:5432\"}",
 ///   "storage_credentials": "{\"account\":\"postgres\",\"password\":\"password_123\",\"admin_account\":\"postgres\",\"admin_password\":\"password_foo\"}"
 /// }
+///
+/// #Returns
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_create_wallet(command_handle: CommandHandle,
                                         wallet_config: *const c_char,
@@ -118,8 +121,10 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 ///
 /// wallet_config: wallet configuration
 ///
+/// cb: Callback that provides wallet handle or error status
+///
 /// #Returns
-/// Error code as a u32 and wallet handle as i32
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
                                         wallet_config: *const c_char,
@@ -132,7 +137,7 @@ pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
     trace!("vcx_open_wallet(command_handle: {})", command_handle);
 
     thread::spawn(move || {
-        match wallet::vcx_open_wallet_directly(&wallet_config) {
+        match wallet::open_wallet_directly(&wallet_config) {
             Err(e) => {
                 error!("vcx_open_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
@@ -156,7 +161,7 @@ pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
 /// wallet_handle: wallet handle
 ///
 /// #Returns
-/// Error code as a u32 and wallet handle as i32
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_close_wallet_directly(command_handle: CommandHandle,
                                         wallet_handle: i32,
@@ -168,7 +173,7 @@ pub extern fn vcx_close_wallet_directly(command_handle: CommandHandle,
     trace!("vcx_close_wallet_directly(command_handle: {}, wallet_handle: {})", command_handle, wallet_handle);
 
     thread::spawn(move || {
-        match wallet::vcx_close_wallet_directly(indy::WalletHandle(wallet_handle)) {
+        match wallet::close_wallet_directly(indy::WalletHandle(wallet_handle)) {
             Err(e) => {
                 error!("vcx_close_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());

@@ -8,7 +8,6 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 #[cfg(test)]
 pub mod test {
     use indy_sys::WalletHandle;
-    use rand::Rng;
 
     use agency_client::payload::PayloadKinds;
 
@@ -18,7 +17,7 @@ pub mod test {
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
     use crate::utils::plugins::init_plugin;
-    use crate::utils::provision::connect_register_provision;
+    use crate::utils::provision::provision_agent;
 
     pub fn source_id() -> String {
         String::from("test source id")
@@ -110,23 +109,24 @@ pub mod test {
     impl Faber {
         pub fn setup() -> Faber {
             settings::clear_config();
+            init_test_logging();
             let wallet_name: String = format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string());
             let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
+            let enterprise_seed = "000000000000000000000000Trustee1";
+            let institution_name = "Acme";
 
-            let config = json!({
-                "agency_url": AGENCY_ENDPOINT,
-                "agency_did": AGENCY_DID,
-                "agency_verkey": AGENCY_VERKEY,
+            let wallet_config = json!({
                 "wallet_name": &wallet_name,
                 "wallet_key": &wallet_key,
                 "wallet_key_derivation": settings::WALLET_KDF_RAW,
-                "payment_method": "null",
-                "enterprise_seed": "000000000000000000000000Trustee1",
             }).to_string();
 
-            let config = connect_register_provision(&config).unwrap();
+            create_wallet_from_config(&wallet_config).unwrap();
+            let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
+            let institution_config = configure_issuer_wallet(enterprise_seed, institution_name).unwrap();
+            let agency_config = provision_agent(AGENCY_DID, AGENCY_VERKEY, AGENCY_ENDPOINT).unwrap();
 
-            let config = config_with_wallet_handle(&wallet_name, &config);
+            let config = combine_configs(&wallet_config, &agency_config, Some(&institution_config), wallet_handle);
 
             Faber {
                 config,
@@ -152,7 +152,7 @@ pub mod test {
             self.activate();
             let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let data = r#"["name","date","degree", "empty_param"]"#.to_string();
-            let name: String = rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
+            let name: String = crate::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
             self.schema_handle = schema::create_and_publish_schema("test_schema", did.clone(), name, version, data).unwrap();
@@ -294,23 +294,22 @@ pub mod test {
     impl Alice {
         pub fn setup() -> Alice {
             settings::clear_config();
+            init_test_logging();
 
             let wallet_name: String = format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string());
             let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
 
-            let config = json!({
-                "agency_url": C_AGENCY_ENDPOINT,
-                "agency_did": C_AGENCY_DID,
-                "agency_verkey": C_AGENCY_VERKEY,
+            let wallet_config = json!({
                 "wallet_name": &wallet_name,
                 "wallet_key": &wallet_key,
                 "wallet_key_derivation": settings::WALLET_KDF_RAW,
-                "payment_method": "null",
             }).to_string();
 
-            let config = connect_register_provision(&config).unwrap();
+            create_wallet_from_config(&wallet_config).unwrap();
+            let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
+            let agency_config = provision_agent(C_AGENCY_DID, C_AGENCY_VERKEY, C_AGENCY_ENDPOINT).unwrap();
 
-            let config = config_with_wallet_handle(&wallet_name, &config);
+            let config = combine_configs(&wallet_config, &agency_config, None, wallet_handle);
 
             Alice {
                 config,
@@ -461,7 +460,7 @@ pub mod test {
         }
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo() {
         PaymentPlugin::load();
@@ -499,7 +498,7 @@ pub mod test {
     }
 
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_handle_connection_related_messages() {
         PaymentPlugin::load();
@@ -544,7 +543,7 @@ pub mod test {
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
@@ -610,7 +609,7 @@ pub mod test {
         faber.verify_presentation();
     }
 
-    #[cfg(feature = "pool_tests")]
+    #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_download_message_flow() {
         SetupEmpty::init();

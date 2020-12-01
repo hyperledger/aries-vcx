@@ -51,6 +51,7 @@ pub mod qualifier;
 pub mod file;
 pub mod mockdata;
 pub mod provision;
+pub mod random;
 
 #[cfg(test)]
 pub mod plugins;

@@ -84,7 +84,7 @@ pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
 
 pub fn configure_issuer_wallet(enterprise_seed: &str, institution_name: &str) -> VcxResult<String> {
 
-    let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?; // TODO: agent_seed used to be for this for some reason
+    let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
 
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
@@ -145,13 +145,13 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
     open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)
 }
 
-pub fn vcx_open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
+pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
     let config: WalletConfig = serde_json::from_str(wallet_config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
     open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())
 }
 
-pub fn vcx_close_wallet_directly(wallet_handle: WalletHandle) -> VcxResult<()> {
+pub fn close_wallet_directly(wallet_handle: WalletHandle) -> VcxResult<()> {
     wallet::close_wallet(wallet_handle)
         .wait()?;
 
