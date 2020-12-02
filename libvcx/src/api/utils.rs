@@ -110,15 +110,19 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// agency_did: did of agency to provision an agent in
-///
-/// agency_vk: verkey of agency to provision an agent in
-///
-/// agency_endpoint: url of the agency
+/// agency_config: agency config as a string
 ///
 /// cb: Callback that provides agency configuration or error status
 ///
-/// #Example agency configuration ->
+/// #Example input agency config ->
+/// {
+///  "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+///  "agency_endpoint": "http://127.0.0.1:8080",
+///  "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+///  "agent_seed": "000000000000000000Aliceagentseed" // OPTIONAL
+/// }
+///
+/// #Example output agency configuration ->
 /// {
 ///  "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
 ///  "agency_endpoint": "http://127.0.0.1:8080",
@@ -133,22 +137,17 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_provision_new_agent(command_handle: CommandHandle,
-                                        agency_did: *const c_char,
-                                        agency_vk: *const c_char,
-                                        agency_endpoint: *const c_char,
+                                        agency_config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>) -> u32 {
     info!("vcx_provision_new_agent >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(agency_did, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(agency_vk, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(agency_endpoint, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(agency_config, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_provision_new_agent(command_handle: {}, agency_did: {}, agency_vk: {}, agency_endpoint: {})",
-           command_handle, agency_did, agency_vk, agency_endpoint);
+    trace!("vcx_provision_new_agent(command_handle: {}, agency_config: {})", command_handle, agency_config);
 
     thread::spawn(move || {
-        match crate::utils::provision::provision_agent(&agency_did, &agency_vk, &agency_endpoint) {
+        match crate::utils::provision::provision_agent(&agency_config) {
             Err(e) => {
                 error!("vcx_provision_new_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());

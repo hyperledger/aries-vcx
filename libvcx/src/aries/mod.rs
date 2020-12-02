@@ -121,10 +121,16 @@ pub mod test {
                 "wallet_key_derivation": settings::WALLET_KDF_RAW,
             }).to_string();
 
+            let agency_config = json!({
+                "agency_did": AGENCY_DID,
+                "agency_verkey": AGENCY_VERKEY,
+                "agency_endpoint": AGENCY_ENDPOINT,
+            }).to_string();
+
             create_wallet_from_config(&wallet_config).unwrap();
             let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
             let institution_config = configure_issuer_wallet(enterprise_seed, institution_name).unwrap();
-            let agency_config = provision_agent(AGENCY_DID, AGENCY_VERKEY, AGENCY_ENDPOINT).unwrap();
+            let agency_config = provision_agent(&agency_config).unwrap();
 
             let config = combine_configs(&wallet_config, &agency_config, Some(&institution_config), wallet_handle);
 
@@ -305,9 +311,15 @@ pub mod test {
                 "wallet_key_derivation": settings::WALLET_KDF_RAW,
             }).to_string();
 
+            let agency_config = json!({
+                "agency_did": C_AGENCY_DID,
+                "agency_verkey": C_AGENCY_VERKEY,
+                "agency_endpoint": C_AGENCY_ENDPOINT,
+            }).to_string();
+
             create_wallet_from_config(&wallet_config).unwrap();
             let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
-            let agency_config = provision_agent(C_AGENCY_DID, C_AGENCY_VERKEY, C_AGENCY_ENDPOINT).unwrap();
+            let agency_config = provision_agent(&agency_config).unwrap();
 
             let config = combine_configs(&wallet_config, &agency_config, None, wallet_handle);
 
