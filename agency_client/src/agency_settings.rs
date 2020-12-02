@@ -157,7 +157,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn get_settings() -> String {
         json!({
-
             CONFIG_AGENCY_DID:           get_config_value(CONFIG_AGENCY_DID).unwrap(),
             CONFIG_AGENCY_VERKEY:        get_config_value(CONFIG_AGENCY_VERKEY).unwrap(),
             CONFIG_AGENCY_ENDPOINT:      get_config_value(CONFIG_AGENCY_ENDPOINT).unwrap(),
