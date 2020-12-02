@@ -38,6 +38,7 @@ pub fn set_txn_author_agreement(text: Option<String>,
 }
 
 pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptanceData>> {
+    trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {
             let meta: TxnAuthorAgreementAcceptanceData = serde_json::from_str(&value)

@@ -24,6 +24,7 @@ pub fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String> {
 }
 
 pub fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &str) -> VcxResult<String> {
+    trace!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
     if settings::indy_mocks_enabled() { return Ok(r#"{"rc":"success"}"#.to_string()); }
 
     let pool_handle = get_pool_handle()?;
@@ -396,7 +397,7 @@ pub fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
 pub fn set_endorser(request: &str, endorser: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
 
-    let did = generate_random_did();
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     let request = ledger::append_request_endorser(request, endorser)
         .wait()?;
@@ -408,7 +409,7 @@ pub fn endorse_transaction(transaction_json: &str) -> VcxResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    let submitter_did = generate_random_did();
+    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     _verify_transaction_can_be_endorsed(transaction_json, &submitter_did)?;
 
