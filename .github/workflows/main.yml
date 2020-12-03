@@ -172,12 +172,8 @@ jobs:
         if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
-          # TODO: Restore indy-pool.dockerfile
-          # docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
+          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
-          POOL_REMOTE_IMG=docker.pkg.github.com/hyperledger/aries-vcx/indy_pool:1.12.1
-          docker pull $POOL_REMOTE_IMG
-          docker tag $POOL_REMOTE_IMG $DOCKER_IMG_NAME_POOL
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 
       - name: Load image from cache
