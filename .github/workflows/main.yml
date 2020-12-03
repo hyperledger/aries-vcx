@@ -25,7 +25,7 @@ jobs:
       DOCKER_IMG_NAME_ALPINE_CORE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ALPINE_CORE }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
-      PRERELEASE: ${{ steps.mainstep.outputs.PRELEASE }}
+      PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
       TAG_NAME: ${{ steps.mainstep.outputs.TAG_NAME }}
     steps:
       - name: Git checkout
