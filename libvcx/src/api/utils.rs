@@ -114,6 +114,7 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
 ///
 /// #Returns
 /// Error code as a u32
+#[deprecated(since = "0.12.0", note = "Not supported anymore.")]
 #[no_mangle]
 pub extern fn vcx_agent_update_info(command_handle: CommandHandle,
                                     json: *const c_char,
