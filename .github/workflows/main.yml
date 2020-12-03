@@ -26,7 +26,6 @@ jobs:
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
       PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
-      TAG_NAME: ${{ steps.mainstep.outputs.TAG_NAME }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
@@ -104,13 +103,6 @@ jobs:
             PUBLISH_VERSION=""
           fi;
 
-          if [[ "$PRERELEASE" == "true" ]]
-          then
-            TAG_NAME="prerelease:$PUBLISH_VERSION"
-          else
-            TAG_NAME="$PUBLISH_VERSION"
-          fi;
-
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
           CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-ubuntu.dockerfile') }}
@@ -129,7 +121,6 @@ jobs:
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
           echo "::set-output name=PRERELEASE::$PRERELEASE"
-          echo "::set-output name=TAG_NAME::$TAG_NAME"
 
           echo "::set-output name=CACHE_KEY_LIBVCX::$LIBVCX_HASH"
           echo "::set-output name=CACHE_KEY_CODECOV::$CODECOV_HASH"
@@ -1050,7 +1041,7 @@ jobs:
           issuesLabel: '### Other issues'
           prLabel: '### Other pull requests'
           addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
-          excludeTagsRegex: '^prerelease:'
+          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
 
       - name: Create a new release
         id: create-release
@@ -1058,7 +1049,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.workflow-setup.outputs.TAG_NAME }}
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           body_path: ./CHANGELOG.md
           draft: needs.workflow-setup.outputs.PRERELEASE == 'true'
