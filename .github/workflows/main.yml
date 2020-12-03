@@ -84,7 +84,7 @@ jobs:
                 echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
               elif [[ "${{ github.event_name }}" == "pull_request" ]]
               then
-                PUBLISH_VERSION="$REPO_VERSION_DESIRED-${{ github.run_number }}"
+                PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-${{ github.run_number }}"
                 PRERELEASE="true"
                 echo "This is push to a non-master branch on a PR, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a pre-release of $REPO_VERSION_DESIRED."
               fi;
@@ -1042,6 +1042,9 @@ jobs:
           prLabel: '### Other pull requests'
           addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
           excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
+
+      - name: Show generated changelog
+        run: cat ./CHANGELOG.md
 
       - name: Create a new release
         id: create-release
