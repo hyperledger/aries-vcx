@@ -87,7 +87,7 @@ pub enum AgencyClientErrorKind {
     #[fail(display = "Invalid HTTP response.")]
     InvalidHttpResponse,
 
-    #[fail(display = "Failed to create agent client")]
+    #[fail(display = "Failed to create agency client")]
     CreateAgent,
 
     #[fail(display = "Common error {}", 0)]

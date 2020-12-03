@@ -16,9 +16,9 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn init_agency_client(config: &str) -> VcxResult<()> {
+pub fn init_agency_client(config: &str, ) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client()?.process_config_string(config, false)?;
+    settings::get_agency_client()?.process_config_string(config, true)?;
     Ok(())
 }
 
@@ -64,7 +64,6 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
                 }
             })?;
 
-    init_agency_client(&settings::settings_as_string())?;
     set_wallet_handle(handle);
 
     Ok(handle)

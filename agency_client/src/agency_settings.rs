@@ -150,20 +150,3 @@ pub fn set_config_value(key: &str, value: &str) {
             .insert(key.to_string(), value.to_string());
     }
 }
-
-mod tests {
-    use super::*;
-
-    #[cfg(feature = "general_test")]
-    fn get_settings() -> String {
-        json!({
-            CONFIG_AGENCY_DID:           get_config_value(CONFIG_AGENCY_DID).unwrap(),
-            CONFIG_AGENCY_VERKEY:        get_config_value(CONFIG_AGENCY_VERKEY).unwrap(),
-            CONFIG_AGENCY_ENDPOINT:      get_config_value(CONFIG_AGENCY_ENDPOINT).unwrap(),
-            CONFIG_REMOTE_TO_SDK_DID:    get_config_value(CONFIG_REMOTE_TO_SDK_DID).unwrap(),
-            CONFIG_REMOTE_TO_SDK_VERKEY: get_config_value(CONFIG_REMOTE_TO_SDK_VERKEY).unwrap(),
-            CONFIG_SDK_TO_REMOTE_DID:    get_config_value(CONFIG_SDK_TO_REMOTE_DID).unwrap(),
-            CONFIG_SDK_TO_REMOTE_VERKEY: get_config_value(CONFIG_SDK_TO_REMOTE_VERKEY).unwrap(),
-        }).to_string()
-    }
-}

@@ -968,6 +968,7 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
+    #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPool::init();
 

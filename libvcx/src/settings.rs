@@ -4,7 +4,7 @@ extern crate url;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::MutexGuard;
+use std::sync::RwLockWriteGuard;
 use std::sync::RwLock;
 use std::sync::Mutex;
 
@@ -84,7 +84,7 @@ pub static MOCK_DEFAULT_INDY_PROOF_VALIDATION: &str = "true";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
-    pub static ref AGENCY_CLIENT: Mutex<AgencyClient> = Mutex::new(AgencyClient::default()); // TODO: Do need a mutex to make it mutable?
+    pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());
 }
 
 trait ToString {
@@ -99,8 +99,8 @@ impl ToString for HashMap<String, String> {
     }
 }
 
-pub fn get_agency_client() -> VcxResult<MutexGuard<'static, AgencyClient>> {
-    let agency_client = AGENCY_CLIENT.lock()?;
+pub fn get_agency_client() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
+    let agency_client = AGENCY_CLIENT.write()?;
     Ok(agency_client)
 }
 
@@ -129,7 +129,6 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_USE_LATEST_PROTOCOLS.to_string(), DEFAULT_USE_LATEST_PROTOCOLS.to_string());
 
     get_agency_client().unwrap().set_testing_defaults_agency();
-    agency_settings::set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 
@@ -147,7 +146,7 @@ pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
     validate_optional_config_val(config.get(CONFIG_WEBHOOK_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
     validate_optional_config_val(config.get(CONFIG_ACTORS), VcxErrorKind::InvalidOption, validation::validate_actors)?;
 
-    // get_agency_client()?.validate()?; // TODO: Fix
+    get_agency_client()?.validate()?;
     Ok(error::SUCCESS.code_num)
 }
 
@@ -337,7 +336,7 @@ pub enum Actors {
 pub fn clear_config() {
     trace!("clear_config >>>");
     let mut config = SETTINGS.write().unwrap();
-    let mut agency_client = AGENCY_CLIENT.lock().unwrap();
+    let mut agency_client = AGENCY_CLIENT.write().unwrap();
     config.clear();
     *agency_client = AgencyClient::default();
 
