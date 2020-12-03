@@ -70,13 +70,10 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
 ///
 /// enterprise_seed: Seed used to generate institution did, keypair and other secrets
 ///
-/// institution_name: Name of the issuaing institution
-///
 /// cb: Callback that provides institution config or error status
 ///
 /// # Example institution config ->{
 ///   "institution_did": "V4SGRU86Z58d6TV7PBUe6f",
-///   "institution_name": "my_agent_name",
 ///   "institution_verkey": "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL",
 /// }
 ///
@@ -85,25 +82,23 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
                                         enterprise_seed: *const c_char,
-                                        institution_name: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
-    info!("vcx_vcx_configure_issuer_wallet >>>");
+    info!("vcx_configure_issuer_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(enterprise_seed, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(institution_name, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_vcx_configure_issuer_wallet(command_handle: {}, enterprise_seed: {}, institution_name: {})",
-           command_handle, enterprise_seed, institution_name);
+    trace!("vcx_configure_issuer_wallet(command_handle: {}, enterprise_seed: {})",
+           command_handle, enterprise_seed);
 
     thread::spawn(move || {
-        match wallet::configure_issuer_wallet(&enterprise_seed, &institution_name) {
+        match wallet::configure_issuer_wallet(&enterprise_seed) {
             Err(e) => {
-                error!("vcx_vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
+                error!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into(), null());
             }
             Ok(conf) => {
-                trace!("vcx_vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
+                trace!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
                        command_handle, error::SUCCESS.message, conf);
                 let conf = CStringUtils::string_to_cstring(conf.to_string());
                 cb(command_handle, 0, conf.as_ptr());
@@ -126,24 +121,24 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
+pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
                                         wallet_config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
-    info!("vcx_open_wallet_directly >>>");
+    info!("vcx_open_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_open_wallet(command_handle: {})", command_handle);
+    trace!("vcx_open_main_wallet(command_handle: {})", command_handle);
 
     thread::spawn(move || {
         match wallet::open_wallet_directly(&wallet_config) {
             Err(e) => {
-                error!("vcx_open_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
+                error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
             }
             Ok(wh) => {
-                trace!("vcx_open_wallet_directly_cb(command_handle: {}, rc: {}, wh: {})",
+                trace!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                        command_handle, error::SUCCESS.message, wh.0);
                 cb(command_handle, 0, wh.0);
             }
@@ -163,23 +158,23 @@ pub extern fn vcx_open_wallet_directly(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_close_wallet_directly(command_handle: CommandHandle,
+pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
                                         wallet_handle: i32,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_close_wallet_directly >>>");
+    info!("vcx_close_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_close_wallet_directly(command_handle: {}, wallet_handle: {})", command_handle, wallet_handle);
+    trace!("vcx_close_main_wallet(command_handle: {}, wallet_handle: {})", command_handle, wallet_handle);
 
     thread::spawn(move || {
         match wallet::close_wallet_directly(indy::WalletHandle(wallet_handle)) {
             Err(e) => {
-                error!("vcx_close_wallet_directly_cb(command_handle: {}, rc: {}", command_handle, e);
+                error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());
             }
             Ok(_) => {
-                trace!("vcx_close_wallet_directly_cb(command_handle: {}, rc: {})",
+                trace!("vcx_close_main_wallet_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, 0);
             }

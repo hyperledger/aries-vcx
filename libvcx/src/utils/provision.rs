@@ -179,7 +179,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     Ok(config)
 }
 
-pub fn provision_agent(agency_config: &str) -> VcxResult<String> {
+pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
     let agency_config: AgencyConfig = serde_json::from_str(agency_config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                           format!("Failed to serialize agency config: {:?}, err: {:?}", agency_config,  err)))?;

@@ -516,7 +516,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
-pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_config: Option<&str>, wallet_handle: WalletHandle) -> String {
+pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_config: Option<&str>, wallet_handle: WalletHandle, institution_name: Option<&str>) -> String {
     fn merge(a: &mut Value, b: &Value) {
         match (a, b) {
             (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
@@ -535,7 +535,8 @@ pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_con
     merge(&mut final_config, &agency_config);
 
     if let Some(institution_config) = institution_config {
-        let institution_config = serde_json::from_str::<serde_json::Value>(institution_config).unwrap();
+        let mut institution_config = serde_json::from_str::<serde_json::Value>(institution_config).unwrap();
+        institution_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
         merge(&mut final_config, &institution_config);
     }
     

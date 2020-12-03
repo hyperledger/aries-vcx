@@ -17,7 +17,7 @@ pub mod test {
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
     use crate::utils::plugins::init_plugin;
-    use crate::utils::provision::provision_agent;
+    use crate::utils::provision::provision_cloud_agent;
 
     pub fn source_id() -> String {
         String::from("test source id")
@@ -129,10 +129,10 @@ pub mod test {
 
             create_wallet_from_config(&wallet_config).unwrap();
             let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
-            let institution_config = configure_issuer_wallet(enterprise_seed, institution_name).unwrap();
-            let agency_config = provision_agent(&agency_config).unwrap();
+            let institution_config = configure_issuer_wallet(enterprise_seed).unwrap();
+            let agency_config = provision_cloud_agent(&agency_config).unwrap();
 
-            let config = combine_configs(&wallet_config, &agency_config, Some(&institution_config), wallet_handle);
+            let config = combine_configs(&wallet_config, &agency_config, Some(&institution_config), wallet_handle, Some(institution_name));
 
             Faber {
                 config,
@@ -319,9 +319,9 @@ pub mod test {
 
             create_wallet_from_config(&wallet_config).unwrap();
             let wallet_handle = open_wallet_directly(&wallet_config).unwrap();
-            let agency_config = provision_agent(&agency_config).unwrap();
+            let agency_config = provision_cloud_agent(&agency_config).unwrap();
 
-            let config = combine_configs(&wallet_config, &agency_config, None, wallet_handle);
+            let config = combine_configs(&wallet_config, &agency_config, None, wallet_handle, None);
 
             Alice {
                 config,

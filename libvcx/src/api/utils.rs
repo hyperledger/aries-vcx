@@ -31,8 +31,8 @@ pub struct UpdateAgentInfo {
 /// #Returns
 /// Configuration (wallet also populated), on error returns NULL
 #[no_mangle]
-#[deprecated(since = "0.14.0", note = "Use a combination of vcx_create_wallet, vcx_open_wallet_directly, vcx_configure_issuer_wallet, 
-vcx_provision_new_agent, and vcx_close_wallet_directly instead.")]
+#[deprecated(since = "0.14.0", note = "Use a combination of vcx_create_wallet, vcx_open_main_wallet, vcx_configure_issuer_wallet, 
+vcx_provision_cloud_agent, and vcx_close_main_wallet instead.")]
 pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
     info!("vcx_provision_agent >>>");
 
@@ -75,7 +75,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 /// Configuration (wallet also populated), on error returns NULL
 #[no_mangle]
 #[deprecated(since = "0.14.0", note = "Use a combination of vcx_create_wallet, vcx_open_wallet_directly, vcx_configure_issuer_wallet, 
-vcx_provision_new_agent, and vcx_close_wallet_directly instead.")]
+vcx_provision_cloud_agent, and vcx_close_main_wallet instead.")]
 pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
                                         config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, _config: *const c_char)>) -> u32 {
@@ -136,24 +136,24 @@ pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_provision_new_agent(command_handle: CommandHandle,
+pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                                         agency_config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>) -> u32 {
-    info!("vcx_provision_new_agent >>>");
+    info!("vcx_provision_cloud_agent >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(agency_config, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_provision_new_agent(command_handle: {}, agency_config: {})", command_handle, agency_config);
+    trace!("vcx_provision_cloud_agent(command_handle: {}, agency_config: {})", command_handle, agency_config);
 
     thread::spawn(move || {
-        match crate::utils::provision::provision_agent(&agency_config) {
+        match crate::utils::provision::provision_cloud_agent(&agency_config) {
             Err(e) => {
-                error!("vcx_provision_new_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
+                error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
             }
             Ok(s) => {
-                trace!("vcx_provision_new_agent_cb(command_handle: {}, rc: {}, config: {})",
+                trace!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
                        command_handle, error::SUCCESS.message, s);
                 let msg = CStringUtils::string_to_cstring(s);
                 cb(command_handle, 0, msg.as_ptr());

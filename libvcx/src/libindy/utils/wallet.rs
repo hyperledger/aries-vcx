@@ -72,8 +72,7 @@ pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
         config.storage_config.as_ref().map(String::as_str),
         config.storage_credentials.as_ref().map(String::as_str),
     )?;
-    set_wallet_handle(wh);
-    trace!("initialized wallet");
+    trace!("Wallet with handle {:?} and config {:?} created", wh, config);
 
     // If MS is already in wallet then just continue
     anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
@@ -82,7 +81,7 @@ pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn configure_issuer_wallet(enterprise_seed: &str, institution_name: &str) -> VcxResult<String> {
+pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<String> {
 
     let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
 
@@ -90,7 +89,6 @@ pub fn configure_issuer_wallet(enterprise_seed: &str, institution_name: &str) ->
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
     // settings::get_agency_client()?.set_my_vk(&my_vk); // TODO: Set on client init
     let institution_config = json!({
-        "institution_name": String::from(institution_name),
         "institution_did": institution_did,
         "institution_verkey": institution_verkey,
     });
