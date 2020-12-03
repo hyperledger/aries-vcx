@@ -997,7 +997,14 @@ mod tests {
         let _setup = SetupWallet::init();
 
         let content = json!({
-            "genesis_path": "invalid/txn/path"
+            "genesis_path": "invalid/txn/path",
+            "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+            "agency_endpoint": "http://localhost:8080",
+            "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+            "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
+            "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
+            "sdk_to_remote_did": "6Ke2y7C9WVSwDa4PieDtc9",
+            "sdk_to_remote_verkey": "3uDfyP3As6aMQSjYdd95y3UNVkpn2wqTZ6MHrJcCCSFc",
         }).to_string();
 
         init_core(&content).unwrap();
