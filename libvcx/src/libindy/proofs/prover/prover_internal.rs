@@ -7,7 +7,6 @@ use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
-use crate::libindy::utils::cache::{get_rev_reg_cache, RevRegCache, RevState, set_rev_reg_cache};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -126,75 +125,20 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
                 { (interval.from, interval.to) } else { (None, None) };
 
-                let cache = get_rev_reg_cache(&rev_reg_id, &cred_rev_id);
+                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
 
-                let (rev_state_json, timestamp) =
-                    if let (Some(cached_rev_state), Some(to)) = (cache.rev_state, to) {
-                        if cached_rev_state.timestamp >= from.unwrap_or(0)
-                            && cached_rev_state.timestamp <= to {
-                            (cached_rev_state.value, cached_rev_state.timestamp)
-                        } else {
-                            let from = match from {
-                                Some(from) if from >= cached_rev_state.timestamp => {
-                                    Some(cached_rev_state.timestamp)
-                                }
-                                _ => None
-                            };
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
+                    &rev_reg_id,
+                    from,
+                    to,
+                )?;
 
-                            let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
-
-                            let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                                &rev_reg_id,
-                                from,
-                                Some(to),
-                            )?;
-
-                            let rev_state_json = anoncreds::libindy_prover_update_revocation_state(
-                                &rev_reg_def_json,
-                                &cached_rev_state.value,
-                                &rev_reg_delta_json,
-                                &cred_rev_id,
-                                &tails_file,
-                            )?;
-
-                            if timestamp > cached_rev_state.timestamp {
-                                let new_cache = RevRegCache {
-                                    rev_state: Some(RevState {
-                                        timestamp,
-                                        value: rev_state_json.clone(),
-                                    })
-                                };
-                                set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-                            }
-
-                            (rev_state_json, timestamp)
-                        }
-                    } else {
-                        let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
-
-                        let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                            &rev_reg_id,
-                            None,
-                            to,
-                        )?;
-
-                        let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
-                            &rev_reg_def_json,
-                            &rev_reg_delta_json,
-                            &cred_rev_id,
-                            &tails_file,
-                        )?;
-
-                        let new_cache = RevRegCache {
-                            rev_state: Some(RevState {
-                                timestamp,
-                                value: rev_state_json.clone(),
-                            })
-                        };
-                        set_rev_reg_cache(&rev_reg_id, &cred_rev_id, &new_cache);
-
-                        (rev_state_json, timestamp)
-                    };
+                let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
+                    &rev_reg_def_json,
+                    &rev_reg_delta_json,
+                    &cred_rev_id,
+                    &tails_file,
+                )?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RevocationState: {}", err)))?;
@@ -687,210 +631,6 @@ pub mod tests {
             timestamp: None,
         };
         assert_eq!(build_rev_states_json(vec![cred1].as_mut()).unwrap(), "{}".to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_build_rev_states_json_real_no_cache() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: cred_id,
-            schema_id,
-            cred_def_id,
-            rev_reg_id: rev_reg_id.clone(),
-            cred_rev_id: cred_rev_id.clone(),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-        };
-        let rev_reg_id = rev_reg_id.unwrap();
-        let rev_id = cred_rev_id.unwrap();
-
-        // assert cache is empty
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache.rev_state, None);
-
-        let states = build_rev_states_json(vec![cred2].as_mut()).unwrap();
-        assert!(states.contains(&rev_reg_id));
-
-        // check if this value is in cache now.
-        let states: Value = serde_json::from_str(&states).unwrap();
-        let state: HashMap<String, Value> = serde_json::from_value(states[&rev_reg_id].clone()).unwrap();
-
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        let cache_rev_state = cache.rev_state.unwrap();
-        let cache_rev_state_value: Value = serde_json::from_str(&cache_rev_state.value).unwrap();
-        assert_eq!(cache_rev_state.timestamp, state.keys().next().unwrap().parse::<u64>().unwrap());
-        assert_eq!(cache_rev_state_value.to_string(), state.values().next().unwrap().to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_build_rev_states_json_real_cached() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let current_timestamp = time::get_time().sec as u64;
-        let cached_rev_state = "{\"some\": \"json\"}".to_string();
-
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: cred_id,
-            schema_id,
-            cred_def_id,
-            rev_reg_id: rev_reg_id.clone(),
-            cred_rev_id: cred_rev_id.clone(),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-        };
-        let rev_reg_id = rev_reg_id.unwrap();
-        let rev_id = cred_rev_id.unwrap();
-
-        let cached_data = RevRegCache {
-            rev_state: Some(RevState {
-                timestamp: current_timestamp,
-                value: cached_rev_state.clone(),
-            })
-        };
-        set_rev_reg_cache(&rev_reg_id, &rev_id, &cached_data);
-
-        // assert data is successfully cached.
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache, cached_data);
-
-        let states = build_rev_states_json(vec![cred2].as_mut()).unwrap();
-        assert!(states.contains(&rev_reg_id));
-
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        // no revocation interval set -> assumed infinite --> the cache is updated with new value
-        // assert_eq!(cache, cached_data);
-
-        // check if this value is in cache now.
-        let states: Value = serde_json::from_str(&states).unwrap();
-        let state: HashMap<String, Value> = serde_json::from_value(states[&rev_reg_id].clone()).unwrap();
-
-        let cache_rev_state = cache.rev_state.unwrap();
-        let cache_rev_state_value: Value = serde_json::from_str(&cache_rev_state.value).unwrap();
-        assert_eq!(cache_rev_state.timestamp, state.keys().next().unwrap().parse::<u64>().unwrap());
-        assert_eq!(cache_rev_state_value.to_string(), state.values().next().unwrap().to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_build_rev_states_json_real_with_older_cache() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let current_timestamp = time::get_time().sec as u64;
-        let cached_timestamp = current_timestamp - 100;
-        let cached_rev_state = "{\"witness\":{\"omega\":\"2 0BB3DE371F14384496D1F4FEB47B86A935C858BC21033B16251442FCBC5370A1 2 026F2848F2972B74079BEE16CDA9D48AD2FF7C7E39087515CB9B6E9B38D73BCB 2 10C48056D8C226141A8D7030E9FA17B7F02A39B414B9B64B6AECDDA5AFD1E538 2 11DCECD73A8FA6CFCD0468C659C2F845A9215842B69BA10355C1F4BF2D9A9557 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000\"},\"rev_reg\":{\"accum\":\"2 033C0E6FAC660DF3582EF46021FAFDD93E111D1DC9DA59C4EA9B92BB21F8E0A4 2 02E0F749312228A93CF67BB5F86CA263FAE535A0F1CA449237D736939518EFF0 2 19BB82474D0BD0A1DDE72D377C8A965D6393071118B79D4220D4C9B93D090314 2 1895AAFD8050A8FAE4A93770C6C82881AB13134EE082C64CF6A7A379B3F6B217 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000\"},\"timestamp\":100}".to_string();
-
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: cred_id,
-            schema_id,
-            cred_def_id,
-            rev_reg_id: rev_reg_id.clone(),
-            cred_rev_id: cred_rev_id.clone(),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            revocation_interval: Some(NonRevokedInterval { from: Some(cached_timestamp + 1), to: None }),
-            timestamp: None,
-        };
-        let rev_reg_id = rev_reg_id.unwrap();
-
-        let cached_data = RevRegCache {
-            rev_state: Some(RevState {
-                timestamp: cached_timestamp,
-                value: cached_rev_state.clone(),
-            })
-        };
-        let rev_id = cred_rev_id.unwrap();
-        set_rev_reg_cache(&rev_reg_id, &rev_id, &cached_data);
-
-        // assert data is successfully cached.
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache, cached_data);
-
-        let states = build_rev_states_json(vec![cred2].as_mut()).unwrap();
-        assert!(states.contains(&rev_reg_id));
-
-        // assert cached data is updated.
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_ne!(cache, cached_data);
-
-        // check if this value is in cache now.
-        let states: Value = serde_json::from_str(&states).unwrap();
-        let state: HashMap<String, Value> = serde_json::from_value(states[&rev_reg_id].clone()).unwrap();
-
-        let cache_rev_state = cache.rev_state.unwrap();
-        let cache_rev_state_value: Value = serde_json::from_str(&cache_rev_state.value).unwrap();
-        assert_eq!(cache_rev_state.timestamp, state.keys().next().unwrap().parse::<u64>().unwrap());
-        assert_eq!(cache_rev_state_value.to_string(), state.values().next().unwrap().to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_build_rev_states_json_real_with_newer_cache() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let current_timestamp = time::get_time().sec as u64;
-        let cached_timestamp = current_timestamp + 100;
-        let cached_rev_state = "{\"witness\":{\"omega\":\"2 0BB3DE371F14384496D1F4FEB47B86A935C858BC21033B16251442FCBC5370A1 2 026F2848F2972B74079BEE16CDA9D48AD2FF7C7E39087515CB9B6E9B38D73BCB 2 10C48056D8C226141A8D7030E9FA17B7F02A39B414B9B64B6AECDDA5AFD1E538 2 11DCECD73A8FA6CFCD0468C659C2F845A9215842B69BA10355C1F4BF2D9A9557 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000\"},\"rev_reg\":{\"accum\":\"2 033C0E6FAC660DF3582EF46021FAFDD93E111D1DC9DA59C4EA9B92BB21F8E0A4 2 02E0F749312228A93CF67BB5F86CA263FAE535A0F1CA449237D736939518EFF0 2 19BB82474D0BD0A1DDE72D377C8A965D6393071118B79D4220D4C9B93D090314 2 1895AAFD8050A8FAE4A93770C6C82881AB13134EE082C64CF6A7A379B3F6B217 2 095E45DDF417D05FB10933FFC63D474548B7FFFF7888802F07FFFFFF7D07A8A8 1 0000000000000000000000000000000000000000000000000000000000000000\"},\"timestamp\":100}".to_string();
-
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (schema_id, _, cred_def_id, _, _, _, _, cred_id, rev_reg_id, cred_rev_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential(attrs, true);
-        let cred2 = CredInfoProver {
-            requested_attr: "height".to_string(),
-            referent: cred_id,
-            schema_id,
-            cred_def_id,
-            rev_reg_id: rev_reg_id.clone(),
-            cred_rev_id: cred_rev_id.clone(),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            revocation_interval: Some(NonRevokedInterval { from: None, to: Some(cached_timestamp - 1) }),
-            timestamp: None,
-        };
-        let rev_reg_id = rev_reg_id.unwrap();
-
-        let cached_data = RevRegCache {
-            rev_state: Some(RevState {
-                timestamp: cached_timestamp,
-                value: cached_rev_state.clone(),
-            })
-        };
-        let rev_id = cred_rev_id.unwrap();
-        set_rev_reg_cache(&rev_reg_id, &rev_id, &cached_data);
-
-        // assert data is successfully cached.
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache, cached_data);
-
-        let states = build_rev_states_json(vec![cred2].as_mut()).unwrap();
-        assert!(states.contains(&rev_reg_id));
-
-        // assert cached data is unchanged.
-        let cache = get_rev_reg_cache(&rev_reg_id, &rev_id);
-        assert_eq!(cache, cached_data);
-
-        // check if this value is not in cache.
-        let states: Value = serde_json::from_str(&states).unwrap();
-        let state: HashMap<String, Value> = serde_json::from_value(states[&rev_reg_id].clone()).unwrap();
-
-        let cache_rev_state = cache.rev_state.unwrap();
-        let cache_rev_state_value: Value = serde_json::from_str(&cache_rev_state.value).unwrap();
-        assert_ne!(cache_rev_state.timestamp, state.keys().next().unwrap().parse::<u64>().unwrap());
-        assert_ne!(cache_rev_state_value.to_string(), state.values().next().unwrap().to_string());
     }
 
     #[test]

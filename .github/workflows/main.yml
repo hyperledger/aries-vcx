@@ -25,6 +25,8 @@ jobs:
       DOCKER_IMG_NAME_ALPINE_CORE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ALPINE_CORE }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
+      PRERELEASE: ${{ steps.mainstep.outputs.PRELEASE }}
+      TAG_NAME: ${{ steps.mainstep.outputs.TAG_NAME }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
@@ -71,20 +73,42 @@ jobs:
           echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in Cargo.toml) is $REPO_VERSION_DESIRED"
 
           RELEASE="false"
+          PRERELEASE="false"
           if [[ "$IS_FORK" == "false" ]]
           then
-            if [[ "$BRANCH_NAME" == "master" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]
+            if [[ "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]
             then
-              PUBLISH_VERSION="$REPO_VERSION_DESIRED"
-              RELEASE="true"
-              echo "This is push to master, and version was bumped $REPO_VERSION_MOST_RECENT->$REPO_VERSION_DESIRED. Will publish and release $REPO_VERSION_DESIRED."
+              if [[ "$BRANCH_NAME" == "master" ]]
+              then
+                PUBLISH_VERSION="$REPO_VERSION_DESIRED"
+                RELEASE="true"
+                echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
+              elif [[ "${{ github.event_name }}" == "pull_request" ]]
+              then
+                PUBLISH_VERSION="$REPO_VERSION_DESIRED-${{ github.run_number }}"
+                PRERELEASE="true"
+                echo "This is push to a non-master branch on a PR, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a pre-release of $REPO_VERSION_DESIRED."
+              fi;
             else
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
-              echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
+              if [[ "${{ github.event_name }}" == "pull_request" && ${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }} ]]
+              then
+                PRERELEASE="true" 
+                echo "This is a PR with `pre-release` label set. Will publish and prerelease version: $PUBLISH_VERSION."
+              else
+                echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
+              fi;
             fi;
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
             PUBLISH_VERSION=""
+          fi;
+
+          if [[ "$PRERELEASE" == "true" ]]
+          then
+            TAG_NAME="prerelease:$PUBLISH_VERSION"
+          else
+            TAG_NAME="$PUBLISH_VERSION"
           fi;
 
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
@@ -105,6 +129,8 @@ jobs:
           set -x
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
+          echo "::set-output name=PRERELEASE::$PRERELEASE"
+          echo "::set-output name=TAG_NAME::$TAG_NAME"
 
           echo "::set-output name=CACHE_KEY_LIBVCX::$LIBVCX_HASH"
           echo "::set-output name=CACHE_KEY_CODECOV::$CODECOV_HASH"
@@ -135,12 +161,24 @@ jobs:
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_POOL }}
+
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: If NOT found in cache, build and cache image.
         if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
+          # TODO: Restore indy-pool.dockerfile
+          # docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
+          POOL_REMOTE_IMG=docker.pkg.github.com/hyperledger/aries-vcx/indy_pool:1.12.1
+          docker pull $POOL_REMOTE_IMG
+          docker tag $POOL_REMOTE_IMG $DOCKER_IMG_NAME_POOL
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 
       - name: Load image from cache
@@ -761,7 +799,7 @@ jobs:
     needs: [workflow-setup, build-image-android]
     env:
       DOCKER_BUILDKIT: 1
-      FULL_VERSION_NAME: ${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
+      FULL_VERSION_NAME: libvcx-android-${{needs.workflow-setup.outputs.PUBLISH_VERSION}}-device
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -979,7 +1017,7 @@ jobs:
   make-release:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
-    if: needs.workflow-setup.outputs.RELEASE == 'true'
+    if: needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true'
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
     steps:
@@ -1002,6 +1040,8 @@ jobs:
           excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
           breakingLabels: backwards-incompatible,breaking
           deprecatedLabels: deprecated
+          addSections: '{"ci":{"prefix":"**CI changes:**","labels":["ci"]}}'
+          excludeTagsRegex: '^prerelease:'
 
       - name: Create a new release
         id: create-release
@@ -1009,11 +1049,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          tag_name: ${{ needs.workflow-setup.outputs.TAG_NAME }}
           release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           body_path: ./CHANGELOG.md
-          draft: false
-          prerelease: false
+          draft: needs.workflow-setup.outputs.PRERELEASE == 'true'
+          prerelease: needs.workflow-setup.outputs.PRERELEASE == 'true'
 
   release-android-device:
     runs-on: ubuntu-16.04
