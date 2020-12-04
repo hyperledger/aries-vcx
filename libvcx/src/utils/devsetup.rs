@@ -515,6 +515,35 @@ pub fn setup_agency_env(use_zero_fees: bool) {
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
+pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_config: Option<&str>, wallet_handle: WalletHandle, institution_name: Option<&str>) -> String {
+    fn merge(a: &mut Value, b: &Value) {
+        match (a, b) {
+            (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
+                for (k, v) in b {
+                    merge(a.entry(k.clone()).or_insert(serde_json::Value::Null), v);
+                }
+            }
+            (a, b) => {
+                *a = b.clone();
+            }
+        }
+    }
+
+    let mut final_config: Value = serde_json::from_str(wallet_config).unwrap();
+    let agency_config: Value = serde_json::from_str(agency_config).unwrap();
+    merge(&mut final_config, &agency_config);
+
+    if let Some(institution_config) = institution_config {
+        let mut institution_config = serde_json::from_str::<serde_json::Value>(institution_config).unwrap();
+        institution_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
+        merge(&mut final_config, &institution_config);
+    }
+    
+    final_config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
+
+    final_config.to_string()
+}
+
 pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
     let config_val: Value = serde_json::from_str(config).unwrap();
     let wallet_key = config_val["wallet_key"].as_str().unwrap();

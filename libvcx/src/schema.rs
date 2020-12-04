@@ -235,7 +235,7 @@ pub mod tests {
 
     pub fn prepare_schema_data() -> (String, String, String, String) {
         let data = json!(data()).to_string();
-        let schema_name: String = rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
+        let schema_name: String = crate::utils::random::generate_random_schema_name();
         let schema_version: String = format!("{}.{}", rand::thread_rng().gen::<u32>().to_string(),
                                              rand::thread_rng().gen::<u32>().to_string());
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
