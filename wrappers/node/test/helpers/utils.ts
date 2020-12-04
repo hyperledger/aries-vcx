@@ -1,3 +1,4 @@
+import { assert } from 'chai'
 import { initRustAPI } from 'src'
 import * as vcx from 'src'
 import * as uuid from 'uuid'
@@ -37,7 +38,8 @@ function generateTestConfig () {
   return sampleConfig
 }
 
-export async function initVcxTestMode () {
+export async function initVcxTestMode() {
+  scheduleGarbageCollectionBeforeExit();
   initRustAPI()
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
   await vcx.defaultLogger(rustLogPattern)
@@ -55,3 +57,19 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> => new
 })
 
 export const sleep = (timeout: number) => new Promise((resolve, reject) => setTimeout(resolve, timeout))
+
+
+
+
+let garbageCollectionBeforeExitIsScheduled = false
+
+// For some reason, The Rust library segfaults if global.gc() is not called explicitly.
+const scheduleGarbageCollectionBeforeExit = () => {
+  if (!garbageCollectionBeforeExitIsScheduled) {
+    assert(global.gc)
+    process.on('beforeExit', () => {
+      global.gc();
+    });
+  }
+  garbageCollectionBeforeExitIsScheduled = true;
+}
