@@ -187,15 +187,14 @@ pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
 
     let (my_did, my_vk) = signus::create_and_store_my_did(agency_config.agent_seed.as_ref().map(String::as_str), None)?;
 
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, &agency_config.agency_did);
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_config.agency_verkey);
-    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &agency_config.agency_endpoint);
-    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
-    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID, &my_did);
-    // agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, &agency_did);
-    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_config.agency_verkey); // This is reset when connection is established
+    settings::get_agency_client_mut().unwrap().set_agency_did(&agency_config.agency_did);
+    settings::get_agency_client_mut().unwrap().set_agency_vk(&agency_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agency_url(&agency_config.agency_endpoint);
+    settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
+    settings::get_agency_client_mut().unwrap().set_my_pwdid(&my_did);
+    settings::get_agency_client_mut().unwrap().set_agent_vk(&agency_config.agency_verkey); // This is reset when connection is established and agent did needs not be set before onboarding
 
-    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &agency_config.agency_did)?;
+    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &agency_config.agency_did)?;
 
     let agency_config = json!({
         "agency_did": agency_config.agency_did,
