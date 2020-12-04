@@ -16,11 +16,14 @@ use crate::utils::threadpool::spawn;
 use crate::utils::version_constants;
 
 #[no_mangle]
-pub extern fn vcx_init_threadpool() -> u32 {
+pub extern fn vcx_init_threadpool(command_handle: CommandHandle, config: *const c_char) -> u32 {
     info!("vcx_init_threadpool >>>");
-    match init_threadpool() {
+
+    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+
+    match init_threadpool(&config) {
         Ok(_) => error::SUCCESS.code_num,
-        Err(err) => error::UNKNOWN_ERROR.code_num
+        Err(_) => error::UNKNOWN_ERROR.code_num
     }
 }
 
@@ -47,22 +50,22 @@ pub extern fn vcx_init_threadpool() -> u32 {
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_create_agency_client(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_create_agency_client >>>");
+pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_create_agency_client_for_main_wallet >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_create_agency_client >>> config: {}", config);
+    trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
     spawn(move || {
         match init_agency_client(&config) {
             Ok(()) => {
-                info!("create_agency_client_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
+                info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(e) => {
-                error!("create_agency_client_cb >>> command_handle: {}, error {}", command_handle, e);
+                error!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}", command_handle, e);
                 cb(command_handle, e.into());
                 return Ok(());
             }
@@ -78,7 +81,7 @@ pub extern fn vcx_create_agency_client(command_handle: CommandHandle, config: *c
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// issuer_config: Pool configuration
+/// issuer_config: Issuer configuration
 /// {
 ///     "institution_name" - Name of the issueing / verifying institution
 ///     "institution_did" (optional) - Institution did obtained on vcx_configure_issuer_wallet

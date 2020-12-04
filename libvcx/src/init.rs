@@ -9,10 +9,8 @@ use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct IssuerConfig {
-    institution_name: String,
-    institution_did: Option<String>,
-    institution_verkey: Option<String>,
+struct ThreadpoolConfig {
+    num_threads: Option<u32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -20,6 +18,20 @@ struct PoolConfig {
     genesis_path: String,
     pool_name: Option<String>,
     pool_config: Option<String>,
+}
+
+pub fn init_threadpool(config: &str) -> VcxResult<()> {
+    let config: ThreadpoolConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
+    utils::threadpool::init();
+    Ok(())
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct IssuerConfig {
+    institution_name: String,
+    institution_did: Option<String>,
+    institution_verkey: Option<String>,
 }
 
 pub fn init_core(config: &str) -> VcxResult<()> {
@@ -33,11 +45,6 @@ pub fn init_core(config: &str) -> VcxResult<()> {
 pub fn init_agency_client(config: &str) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
     settings::get_agency_client()?.process_config_string(config, false)?;
-    Ok(())
-}
-
-pub fn init_threadpool() -> VcxResult<()> {
-    utils::threadpool::init();
     Ok(())
 }
 
