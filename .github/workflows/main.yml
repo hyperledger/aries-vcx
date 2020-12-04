@@ -25,8 +25,7 @@ jobs:
       DOCKER_IMG_NAME_ALPINE_CORE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_ALPINE_CORE }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
-      PRERELEASE: ${{ steps.mainstep.outputs.PRELEASE }}
-      TAG_NAME: ${{ steps.mainstep.outputs.TAG_NAME }}
+      PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
@@ -70,7 +69,7 @@ jobs:
 
           REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
           REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
-          echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in Cargo.toml) is $REPO_VERSION_DESIRED"
+          echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in libvcx/Cargo.toml) is $REPO_VERSION_DESIRED"
 
           RELEASE="false"
           PRERELEASE="false"
@@ -85,7 +84,7 @@ jobs:
                 echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
               elif [[ "${{ github.event_name }}" == "pull_request" ]]
               then
-                PUBLISH_VERSION="$REPO_VERSION_DESIRED-${{ github.run_number }}"
+                PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-${{ github.run_number }}"
                 PRERELEASE="true"
                 echo "This is push to a non-master branch on a PR, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a pre-release of $REPO_VERSION_DESIRED."
               fi;
@@ -102,13 +101,6 @@ jobs:
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
             PUBLISH_VERSION=""
-          fi;
-
-          if [[ "$PRERELEASE" == "true" ]]
-          then
-            TAG_NAME="prerelease:$PUBLISH_VERSION"
-          else
-            TAG_NAME="$PUBLISH_VERSION"
           fi;
 
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
@@ -130,7 +122,6 @@ jobs:
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
           echo "::set-output name=PRERELEASE::$PRERELEASE"
-          echo "::set-output name=TAG_NAME::$TAG_NAME"
 
           echo "::set-output name=CACHE_KEY_LIBVCX::$LIBVCX_HASH"
           echo "::set-output name=CACHE_KEY_CODECOV::$CODECOV_HASH"
@@ -1013,7 +1004,7 @@ jobs:
   make-release:
     runs-on: ubuntu-16.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
-    if: needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true'
+    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
     steps:
@@ -1021,7 +1012,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        uses: heinrichreimer/github-changelog-generator-action@v2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
@@ -1033,11 +1024,21 @@ jobs:
           prWoLabels: true
           stripGeneratorNotice: true
           stripHeaders: false
+          maxIssues: 50
           excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
           breakingLabels: backwards-incompatible,breaking
           deprecatedLabels: deprecated
-          addSections: '{"ci":{"prefix":"**CI changes:**","labels":["ci"]}}'
-          excludeTagsRegex: '^prerelease:'
+          headerLabel: "# Changelog"
+          breakingLabel: '### Breaking changes'
+          enhancementLabel: '### Enhancements'
+          bugsLabel: '### Bug fixes'
+          deprecatedLabel: '###  Deprecations'
+          removedLabel: '### Removals'
+          securityLabel: '### Security fixes'
+          issuesLabel: '### Other issues'
+          prLabel: '### Other pull requests'
+          addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
+          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
 
       - name: Create a new release
         id: create-release
@@ -1045,11 +1046,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.workflow-setup.outputs.TAG_NAME }}
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           body_path: ./CHANGELOG.md
-          draft: needs.workflow-setup.outputs.PRERELEASE == 'true'
-          prerelease: needs.workflow-setup.outputs.PRERELEASE == 'true'
+          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
 
   release-android-device:
     runs-on: ubuntu-16.04
