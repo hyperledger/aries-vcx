@@ -5,18 +5,18 @@ import { initRustAPI, rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
 
-export async function initThreadpool (config: string, options: IInitVCXOptions = {}) {
-  const rc = rustAPI().vcx_init_threadpool(config)
+export async function initThreadpool (config: object, options: IInitVCXOptions = {}) {
+  const rc = rustAPI().vcx_init_threadpool(JSON.stringify(config))
   if (rc !== 0) {
     throw new VCXInternalError(rc)
   }
 }
 
-export async function createAgencyClientForMainWallet (config: string): Promise<void> {
+export async function createAgencyClientForMainWallet (config: object): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
             (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_create_agency_client_for_main_wallet(0, config, cb)
+              const rc = rustAPI().vcx_create_agency_client_for_main_wallet(0, JSON.stringify(config), cb)
               if (rc) {
                 reject(rc)
               }
@@ -37,11 +37,11 @@ export async function createAgencyClientForMainWallet (config: string): Promise<
   }
 }
 
-export async function vcxInitIssuerConfig (config: string): Promise<void> {
+export async function initIssuerConfig (config: object): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
             (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_init_issuer_config(0, config, cb)
+              const rc = rustAPI().vcx_init_issuer_config(0, JSON.stringify(config), cb)
               if (rc) {
                 reject(rc)
               }
@@ -62,11 +62,11 @@ export async function vcxInitIssuerConfig (config: string): Promise<void> {
   }
 }
 
-export async function vcxOpenPoolDirectly (config: string): Promise<void> {
+export async function openPoolDirectly (config: object): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
             (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_open_pool_directly(0, config, cb)
+              const rc = rustAPI().vcx_open_pool_directly(0, JSON.stringify(config), cb)
               if (rc) {
                 reject(rc)
               }

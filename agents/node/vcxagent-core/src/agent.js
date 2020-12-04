@@ -8,9 +8,11 @@ const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
-  initVcxCore,
-  openVcxWallet,
-  openVcxPool,
+  initThreadpool,
+  createAgencyClientForMainWallet,
+  initIssuerConfig,
+  openMainWallet,
+  openPoolDirectly,
   vcxUpdateWebhookUrl,
   shutdownVcx
 } = require('@hyperledger/node-vcx-wrapper')
@@ -32,12 +34,16 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
   async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    await initVcxCore(JSON.stringify(agentProvision))
+    logger.silly('Initializing threadpool')
+    await initThreadpool({})
+    logger.silly('Initializing issuer config')
+    await initIssuerConfig(agentProvision.issuerConfig)
+    logger.silly('Opening main wallet')
+    await openMainWallet(agentProvision.walletConfig)
+    logger.silly('Creating cloud agency config')
+    await createAgencyClientForMainWallet(agentProvision.agencyConfig)
     logger.silly('Opening pool')
-    await openVcxPool()
-    logger.silly('Opening wallet')
-    await openVcxWallet()
-    logger.silly('LibVCX fully initialized')
+    await openPoolDirectly({ genesis_path: genesisPath })
   }
 
   async function agentShutdownVcx () {

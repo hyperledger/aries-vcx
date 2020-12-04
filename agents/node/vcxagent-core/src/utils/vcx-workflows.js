@@ -1,8 +1,7 @@
 const {
-  initRustAPI, initVcxWithConfig, provisionAgent,
-  provisionCloudAgent, openMainWallet, closeMainWallet,
-  configureIssuerWallet, initThreadpool, openPoolDirectly,
-  createWallet
+  initRustAPI, initVcxWithConfig, provisionCloudAgent,
+  createWallet, openMainWallet, closeMainWallet,
+  configureIssuerWallet
 } = require('@hyperledger/node-vcx-wrapper')
 const ffi = require('ffi-napi')
 const os = require('os')
@@ -85,19 +84,13 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   const wh = await openMainWallet(walletConfig)
   logger.debug(`Configuring issuer's wallet with seed: ${seed}`)
   const issuerConfig = JSON.parse(await configureIssuerWallet(seed))
+  issuerConfig.institution_name = agentName
   logger.debug(`Provisioning agent with config: ${JSON.stringify(agencyConfig, null, 2)}`)
   agencyConfig = JSON.parse(await provisionCloudAgent(agencyConfig))
   logger.debug(`Provisined agent with config: ${JSON.stringify(agencyConfig, null, 2)}`)
   await closeMainWallet(wh) // TODO: Get rid of wh
 
-  const finalConfig = { ...agencyConfig, ...issuerConfig, ...walletConfig }
-
-  finalConfig.institution_name = agentName
-  finalConfig.genesis_path = genesisPath
-
-  logger.info(`Final config: ${JSON.stringify(finalConfig, null, 2)}`)
-
-  return finalConfig
+  return { agencyConfig, issuerConfig, walletConfig }
 }
 
 module.exports.loadPostgresPlugin = loadPostgresPlugin
