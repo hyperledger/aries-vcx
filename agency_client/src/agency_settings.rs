@@ -5,17 +5,18 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::utils::{error_utils, validation};
 
-pub static CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
-pub static CONFIG_AGENCY_DID: &str = "agency_did";
-pub static CONFIG_AGENCY_VERKEY: &str = "agency_verkey";
-pub static CONFIG_REMOTE_TO_SDK_DID: &str = "remote_to_sdk_did";
-pub static CONFIG_REMOTE_TO_SDK_VERKEY: &str = "remote_to_sdk_verkey";
-pub static CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";
-pub static CONFIG_SDK_TO_REMOTE_VERKEY: &str = "sdk_to_remote_verkey";
-pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
+pub const CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
+pub const CONFIG_AGENCY_DID: &str = "agency_did";
+pub const CONFIG_AGENCY_VERKEY: &str = "agency_verkey";
+pub const CONFIG_REMOTE_TO_SDK_DID: &str = "remote_to_sdk_did";
+pub const CONFIG_REMOTE_TO_SDK_VERKEY: &str = "remote_to_sdk_verkey";
+pub const CONFIG_SDK_TO_REMOTE_DID: &str = "sdk_to_remote_did";
+pub const CONFIG_SDK_TO_REMOTE_VERKEY: &str = "sdk_to_remote_verkey";
+pub const CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
+pub const CONFIG_WALLET_HANDLE: &str = "wallet_handle";
 
 pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
     CONFIG_AGENCY_ENDPOINT,
@@ -25,7 +26,8 @@ pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
     CONFIG_REMOTE_TO_SDK_VERKEY,
     CONFIG_SDK_TO_REMOTE_DID,
     CONFIG_SDK_TO_REMOTE_VERKEY,
-    CONFIG_ENABLE_TEST_MODE
+    CONFIG_ENABLE_TEST_MODE,
+    CONFIG_WALLET_HANDLE,
 ];
 
 lazy_static! {
@@ -33,7 +35,7 @@ lazy_static! {
 }
 
 
-fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
+pub fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
     where F: Fn(&str) -> Result<S, E> {
     if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
 
@@ -43,11 +45,19 @@ fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClient
     Ok(error_utils::SUCCESS.code_num)
 }
 
+pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
+    where F: Fn(&str) -> Result<S, E> {
+    closure(val)
+        .or(Err(AgencyClientError::from(err)))?;
+
+    Ok(error_utils::SUCCESS.code_num)
+}
+
 pub fn set_testing_defaults_agency() -> u32 {
     trace!("set_testing_defaults_agency >>>");
 
-    let DEFAULT_DID= "2hoqvcwupRTUNkXn6ArYzs";
-    let DEFAULT_VERKEY= "FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB";
+    let DEFAULT_DID= "VsKV7grR1BUE29mG2Fm2kX";
+    let DEFAULT_VERKEY= "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
     let DEFAULT_URL= "http://127.0.0.1:8080";
 
     // if this fails the test should exit
@@ -89,7 +99,7 @@ pub fn validate_agency_config(config: &HashMap<String, String>) -> AgencyClientR
 }
 
 
-pub fn process_agency_config_string(config: &str, do_validation: bool) -> AgencyClientResult<u32> {
+pub fn process_agency_config_string(config: &str, validate: bool) -> AgencyClientResult<u32> {
     trace!("process_config_string >>> config {}", config);
 
     let configuration: Value = serde_json::from_str(config)
@@ -110,7 +120,7 @@ pub fn process_agency_config_string(config: &str, do_validation: bool) -> Agency
         }
     }
 
-    if do_validation {
+    if validate {
         let setting = AGENCY_SETTINGS.read()
             .or(Err(AgencyClientError::from(AgencyClientErrorKind::InvalidConfiguration)))?;
         validate_agency_config(&setting.borrow())

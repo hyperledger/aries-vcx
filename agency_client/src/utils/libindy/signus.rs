@@ -1,7 +1,7 @@
 use futures::Future;
 use indy::did;
 
-use crate::utils::error::prelude::*;
+use crate::error::prelude::*;
 use crate::utils::wallet::get_wallet_handle;
 
 pub fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> AgencyClientResult<(String, String)> {

@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
