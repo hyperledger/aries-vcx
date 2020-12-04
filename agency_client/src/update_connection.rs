@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::{prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, delete_connection, parse_response_from_agency};
 use crate::message_type::MessageTypes;
-use crate::utils::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
+use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]

@@ -1,4 +1,4 @@
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
+use crate::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
 use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds, mocking};
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
@@ -43,12 +43,14 @@ impl CreateKeyBuilder {
     }
 
     pub fn for_did(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
+        trace!("CreateKeyBuilder::for_did >>> did: {}", did);
         validation::validate_did(did)?;
         self.for_did = did.to_string();
         Ok(self)
     }
 
     pub fn for_verkey(&mut self, verkey: &str) -> AgencyClientResult<&mut Self> {
+        trace!("CreateKeyBuilder::for_verkey >>> verkey: {}", verkey);
         validation::validate_verkey(verkey)?;
         self.for_verkey = verkey.to_string();
         Ok(self)
@@ -96,7 +98,7 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::error::AgencyClientErrorKind;
+    use crate::error::AgencyClientErrorKind;
     use crate::create_keys;
     use crate::utils::constants;
     use crate::utils::test_utils::SetupMocks;

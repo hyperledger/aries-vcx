@@ -108,11 +108,12 @@ jobs:
           CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-ubuntu.dockerfile') }}
           LIBVCX_NODE_WRAPPERS_HASH=${{ hashFiles('wrappers/node') }}
           LIBVCX_NODE_AGENT_HASH=${{ hashFiles('agents/node') }}
+          AGENCY_CLIENT_HASH=${{ hashFiles('agency_client') }}
           JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
           ALPINE_CORE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
 
-          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:15}-${LIBVCX_NODE_WRAPPERS_HASH:0:15}-${LIBVCX_NODE_AGENT_HASH:0:15}-${LIBVCX_DOCKERFILE_HASH:0:15}
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
@@ -163,12 +164,8 @@ jobs:
         if: steps.cache-image-pool.outputs.cache-hit != 'true'
         run: |
           set -x
-          # TODO: Restore indy-pool.dockerfile
-          # docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
+          docker build -t "$DOCKER_IMG_NAME_POOL" -f ci/indy-pool.dockerfile ci
           mkdir -p /tmp/imgcache
-          POOL_REMOTE_IMG=docker.pkg.github.com/hyperledger/aries-vcx/indy_pool:1.12.1
-          docker pull $POOL_REMOTE_IMG
-          docker tag $POOL_REMOTE_IMG $DOCKER_IMG_NAME_POOL
           docker save "$DOCKER_IMG_NAME_POOL" > /tmp/imgcache/img_indypool.rar
 
       - name: Load image from cache

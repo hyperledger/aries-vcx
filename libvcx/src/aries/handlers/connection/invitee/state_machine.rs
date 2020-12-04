@@ -215,6 +215,7 @@ impl SmConnectionInvitee {
                             .set_service_endpoint(agent_info.agency_endpoint()?)
                             .set_keys(agent_info.recipient_keys(), agent_info.routing_keys()?);
 
+                        trace!("invitation {:?}", state.invitation);
                         agent_info.send_message(&request.to_a2a_message(), &DidDoc::from(state.invitation.clone()))?;
                         InviteeState::Requested((state, request).into())
                     }

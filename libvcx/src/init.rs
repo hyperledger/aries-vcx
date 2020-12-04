@@ -16,6 +16,12 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
+pub fn init_agency_client(config: &str, ) -> VcxResult<()> {
+    info!("init_agency_client >>> config = {}", config);
+    settings::get_agency_client_mut()?.process_config_string(config, true)?;
+    Ok(())
+}
+
 pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
     trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
 

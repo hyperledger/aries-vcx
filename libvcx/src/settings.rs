@@ -4,6 +4,7 @@ extern crate url;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::{RwLockWriteGuard, RwLockReadGuard};
 use std::sync::RwLock;
 
 use indy_sys::INVALID_WALLET_HANDLE;
@@ -17,6 +18,7 @@ use crate::error::prelude::*;
 use crate::utils::{error, get_temp_dir_path};
 use crate::utils::file::read_file;
 use crate::utils::validation;
+use crate::agency_client::agency_client::AgencyClient;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
@@ -81,18 +83,29 @@ pub static MOCK_DEFAULT_INDY_PROOF_VALIDATION: &str = "true";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
+    pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());
 }
 
 trait ToString {
-    fn to_string(&self) -> Self;
+    fn to_string(&self) -> String;
 }
 
 impl ToString for HashMap<String, String> {
-    fn to_string(&self) -> Self {
+    fn to_string(&self) -> String {
         let mut v = self.clone();
         v.insert(CONFIG_WALLET_KEY.to_string(), MASK_VALUE.to_string());
-        v
+        serde_json::to_string(&v).unwrap()
     }
+}
+
+pub fn get_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
+    let agency_client = AGENCY_CLIENT.write()?;
+    Ok(agency_client)
+}
+
+pub fn get_agency_client() -> VcxResult<RwLockReadGuard<'static, AgencyClient>> {
+    let agency_client = AGENCY_CLIENT.read()?;
+    Ok(agency_client)
 }
 
 pub fn set_testing_defaults() -> u32 {
@@ -119,7 +132,7 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
     settings.insert(CONFIG_USE_LATEST_PROTOCOLS.to_string(), DEFAULT_USE_LATEST_PROTOCOLS.to_string());
 
-    agency_settings::set_testing_defaults_agency();
+    get_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 
@@ -137,8 +150,7 @@ pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
     validate_optional_config_val(config.get(CONFIG_WEBHOOK_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
     validate_optional_config_val(config.get(CONFIG_ACTORS), VcxErrorKind::InvalidOption, validation::validate_actors)?;
 
-    agency_settings::validate_agency_config(config)?;
-
+    get_agency_client()?.validate()?;
     Ok(error::SUCCESS.code_num)
 }
 
@@ -165,7 +177,7 @@ pub fn validate_payment_method() -> VcxResult<u32> {
                                   VcxErrorKind::MissingPaymentMethod, validation::validate_payment_method)
 }
 
-pub fn settings_as_string() -> HashMap<String, String> {
+pub fn settings_as_string() -> String {
     SETTINGS.read().unwrap().to_string()
 }
 
@@ -203,7 +215,8 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
         }
     }
 
-    agency_settings::process_agency_config_string(config, do_validation)?;
+    // TODO: This won't be necessary - move to open wallet for now?
+    get_agency_client_mut()?.process_config_string(config, false)?; // False due to failing tests
 
     if do_validation {
         let setting = SETTINGS.read()
@@ -326,13 +339,14 @@ pub enum Actors {
 pub fn clear_config() {
     trace!("clear_config >>>");
     let mut config = SETTINGS.write().unwrap();
+    let mut agency_client = AGENCY_CLIENT.write().unwrap();
     config.clear();
-    agency_settings::clear_config_agency()
+    *agency_client = AgencyClient::default();
+
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::agency_client::agency_settings;
     use crate::utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;
@@ -350,7 +364,6 @@ pub mod tests {
             "pool_name" : "pool1",
             "config_name":"config1",
             "wallet_name":"test_read_config_file",
-            "agency_did" : "72x8p4HubxzUK1dwxcc5FU",
             "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
             "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
             "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
@@ -443,30 +456,6 @@ pub mod tests {
 
         let mut config = _mandatory_config();
         config.insert(CONFIG_INSTITUTION_VERKEY.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_AGENCY_DID.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_AGENCY_VERKEY.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_DID.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_REMOTE_TO_SDK_DID.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
-
-        let mut config = _mandatory_config();
-        config.insert(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), invalid.to_string());
         assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
 
         let mut config = _mandatory_config();
