@@ -6,6 +6,7 @@ import { credentialDefCreate, credentialDefPrepareForEndorser } from 'helpers/en
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import { CredentialDef, CredentialDefPaymentManager, CredentialDefState, VCXCode } from 'src'
 
+
 describe('CredentialDef:', () => {
   before(() => initVcxTestMode())
 
