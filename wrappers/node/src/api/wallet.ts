@@ -83,6 +83,108 @@ export interface IPaymentAddressSeed {
  */
 export class Wallet {
 
+  public static async createWallet (config: string): Promise<void> {
+    try {
+      await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_create_wallet(0, config, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32','uint32'],
+          (xhandle: number, err: number) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve()
+          })
+      )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public static async configureIssuerWallet (seed: string): Promise<string> {
+    try {
+      const issuerConfig = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_configure_issuer_wallet(0, seed, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32','uint32','string'],
+          (xhandle: number, err: number, config: string) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(config)
+          })
+      )
+      return issuerConfig
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public static async openMainWallet (config: string): Promise<number> {
+    try {
+      const handle = await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_open_main_wallet(0, config, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32','uint32','string'],
+          (xhandle: number, err: number, _handle: number) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve(_handle)
+          })
+      )
+      return handle
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
+  public static async closeMainWallet (handle: number): Promise<void> {
+    try {
+      await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_close_main_wallet(0, handle, cb)
+          if (rc) {
+            reject(rc)
+          }
+        },
+        (resolve, reject) => Callback(
+          'void',
+          ['uint32','uint32','string'],
+          (xhandle: number, err: number) => {
+            if (err) {
+              reject(err)
+              return
+            }
+            resolve()
+          })
+      )
+    } catch (err) {
+      throw new VCXInternalError(err)
+    }
+  }
+
   /**
    * Gets wallet token info
    *

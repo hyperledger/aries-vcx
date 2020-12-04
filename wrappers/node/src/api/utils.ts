@@ -4,7 +4,32 @@ import { VCXInternalError } from '../errors'
 import { initRustAPI, rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
-// import { resolve } from 'url';
+
+export async function provisionCloudAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
+  try {
+    initRustAPI(options.libVCXPath)
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_provision_cloud_agent(0, configAgent, cb)
+        if (rc) {
+          reject(rc)
+        }
+      },
+      (resolve, reject) => Callback(
+        'void',
+        ['uint32','uint32','string'],
+        (xhandle: number, err: number, config: string) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          resolve(config)
+        })
+    )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
 
 export async function provisionAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
   /**
