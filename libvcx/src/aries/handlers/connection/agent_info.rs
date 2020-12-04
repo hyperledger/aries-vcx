@@ -46,6 +46,7 @@ impl AgentInfo {
     /**
     Create connection agent in one's agency
      */
+    // TODO: There should be a way to set a specific agent_client for AgentInfo
     pub fn create_agent(&self) -> VcxResult<AgentInfo> {
         trace!("Agent::create_agent >>>");
 
@@ -65,14 +66,13 @@ impl AgentInfo {
     Builds one's agency's URL endpoint
      */
     pub fn agency_endpoint(&self) -> VcxResult<String> {
-        agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT)
-            .map(|str| format!("{}/agency/msg", str))
+        settings::get_agency_client()?.get_agency_url()
             .map_err(|err| err.into())
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
-        Ok(vec![self.agent_vk.to_string(), agency_vk])
+        let agency_vk = &settings::get_agency_client()?.get_agency_vk()?;
+        Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
     pub fn recipient_keys(&self) -> Vec<String> {

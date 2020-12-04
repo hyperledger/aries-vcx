@@ -4,7 +4,7 @@ use serde_json::Value;
 use crate::message_type::MessageTypes;
 use crate::{parse_response_from_agency, prepare_message_for_agency, A2AMessage, A2AMessageV2, agency_settings, A2AMessageKinds};
 use crate::utils::{error_utils, constants};
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
+use crate::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
 
@@ -141,9 +141,8 @@ pub struct ComMethod {
     value: String,
 }
 
-pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
-    trace!("connect_v2 >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
-
+pub fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+    trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     /* STEP 1 - CONNECT */
     let message = A2AMessage::Version2(
         A2AMessageV2::Connect(Connect::build(my_did, my_vk))
@@ -164,14 +163,14 @@ pub fn connect_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
 
     agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
 
-    trace!("connect_v2 <<< agency_pw_did: {}, agency_pw_vk: {}", agency_pw_did, agency_pw_vk);
+    trace!("connect <<< agency_pw_did: {}, agency_pw_vk: {}", agency_pw_did, agency_pw_vk);
     Ok((agency_pw_did, agency_pw_vk))
 }
 
-pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
-    info!("onboarding_v2 >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
+pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+    info!("onboarding >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
-    let (agency_pw_did, _) = connect_v2(my_did, my_vk, agency_did)?;
+    let (agency_pw_did, _) = connect(my_did, my_vk, agency_did)?;
 
     /* STEP 2 - REGISTER */
     let message = A2AMessage::Version2(
@@ -200,7 +199,7 @@ pub fn onboarding_v2(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClien
             _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
         };
 
-    trace!("onboarding_v2 <<< from_did: {}, from_vk: {}", response.from_did, response.from_vk);
+    trace!("onboarding <<< from_did: {}, from_vk: {}", response.from_did, response.from_vk);
     Ok((response.from_did, response.from_vk))
 }
 
@@ -249,10 +248,7 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientRe
 #[cfg(test)]
 mod tests {
     use std::env;
-    use crate::utils::agent_utils::{update_agent_webhook, ComMethodType};
-
-    // use utils::devsetup::{SetupLibraryAgencyV2, SetupMocks};
-    // use agency_client::utils::agent_utils::{ComMethodType, update_agent_webhook};
+    use crate::agent_utils::{update_agent_webhook, ComMethodType};
 
     #[test]
     #[cfg(feature = "general_test")]

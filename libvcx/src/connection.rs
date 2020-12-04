@@ -21,6 +21,7 @@ lazy_static! {
 
 pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
+    trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
 
     let (agent_did, agent_verkey) = agency_client::create_keys()
         .for_did(pw_did)?

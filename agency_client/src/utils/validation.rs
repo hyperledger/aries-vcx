@@ -4,7 +4,7 @@ use regex::Regex;
 use url::Url;
 use self::rust_base58::FromBase58;
 
-use crate::utils::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -15,6 +15,7 @@ pub fn is_fully_qualified(entity: &str) -> bool {
 }
 
 pub fn validate_did(did: &str) -> AgencyClientResult<String> {
+    trace!("validate_did >>> did: {}", did);
     if is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
@@ -22,11 +23,10 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
             Ok(_) => {
-                warn!("ok(_)");
                 return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidDid, "Invalid DID length"));
             }
             Err(x) => {
-                warn!("Err(x)");
+                warn!("Err({:?})", x);
                 return Err(AgencyClientError::from_msg(AgencyClientErrorKind::NotBase58, format!("Invalid DID: {}", x)));
             }
         }
@@ -34,6 +34,7 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
 }
 
 pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
+    trace!("validate_verkey >>> verkey: {}", verkey);
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
@@ -53,7 +54,7 @@ mod tests {
     // use utils::devsetup::SetupDefaults;
 
     use super::*;
-    use crate::utils::error::AgencyClientErrorKind;
+    use crate::error::AgencyClientErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

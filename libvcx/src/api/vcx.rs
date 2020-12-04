@@ -145,7 +145,6 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
     error::SUCCESS.code_num
 }
 
-
 lazy_static! {
     pub static ref VERSION_STRING: CString = CString::new(format!("{}{}", version_constants::VERSION, version_constants::REVISION)).unwrap();
 }
@@ -256,7 +255,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
     spawn(move || {
-        match agency_client::utils::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+        match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -416,8 +415,6 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use agency_client::agency_settings;
-
     use crate::{api, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
     use crate::api::return_types_u32;
     use crate::api::wallet::tests::_test_add_and_get_wallet_record;
@@ -471,7 +468,7 @@ mod tests {
             error!("vcx_init_core failed");
             return Err(rc);
         }
-        agency_settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "agency");
+        settings::get_agency_client_mut()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -845,7 +842,16 @@ mod tests {
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         let agreement = cb.receive(TimeoutUtils::some_short()).unwrap();
-        assert_eq!(utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
+        assert_eq!(crate::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
+    }
+
+    #[cfg(feature = "general_test")]
+    fn get_settings() -> String {
+        json!({
+            settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
+            settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
+            settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
+        }).to_string()
     }
 
     #[test]
@@ -962,7 +968,8 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_agency_settings_does_not_have_to_be_initialized() {
+    #[ignore]
+    fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPool::init();
 
         let config = json!({
@@ -978,8 +985,8 @@ mod tests {
 
         assert_eq!(vcx_init_core(CString::new(config).unwrap().into_raw()), error::SUCCESS.code_num);
 
-        let connection_handle = connection::create_connection("test_create_fails").unwrap();
-        connection::connect(connection_handle).unwrap_err();
+        let connection_handle = connection::create_connection("test_create_works").unwrap();
+        connection::connect(connection_handle).unwrap();
 
         settings::set_testing_defaults();
     }
@@ -990,7 +997,14 @@ mod tests {
         let _setup = SetupWallet::init();
 
         let content = json!({
-            "genesis_path": "invalid/txn/path"
+            "genesis_path": "invalid/txn/path",
+            "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+            "agency_endpoint": "http://localhost:8080",
+            "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+            "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
+            "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
+            "sdk_to_remote_did": "6Ke2y7C9WVSwDa4PieDtc9",
+            "sdk_to_remote_verkey": "3uDfyP3As6aMQSjYdd95y3UNVkpn2wqTZ6MHrJcCCSFc",
         }).to_string();
 
         init_core(&content).unwrap();
