@@ -60,7 +60,6 @@ pub mod tests {
     // TODO:  Is used for Aries tests...try to remove and use one of devsetup's
     pub mod test_setup {
         use indy;
-        use rand::Rng;
 
         use super::*;
 
@@ -74,8 +73,7 @@ pub mod tests {
         }
 
         pub fn setup_wallet() -> WalletSetup {
-            let name: String = ::rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
-
+            let name: String = crate::utils::random::generate_random_name();
             let wallet_config = json!({"id": name}).to_string();
 
             indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
@@ -91,7 +89,7 @@ pub mod tests {
         }
 
         pub fn create_key(wallet_handle: indy::WalletHandle) -> String {
-            let seed = ::rand::thread_rng().gen_ascii_chars().take(32).collect::<String>();
+            let seed: String = crate::utils::random::generate_random_seed();
             let key_config = json!({"seed": seed}).to_string();
             indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
         }

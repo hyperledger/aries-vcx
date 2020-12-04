@@ -279,6 +279,8 @@ pub fn libindy_issuer_create_schema(issuer_did: &str,
                                     name: &str,
                                     version: &str,
                                     attrs: &str) -> VcxResult<(String, String)> {
+    trace!("libindy_issuer_create_schema >>> issuer_did: {}, name: {}, version: {}, attrs: {}", issuer_did, name, version, attrs);
+
     anoncreds::issuer_create_schema(issuer_did,
                                     name,
                                     version,
@@ -367,6 +369,8 @@ pub fn libindy_parse_get_revoc_reg_delta_response(get_rev_reg_delta_response: &s
 }
 
 pub fn create_schema(name: &str, version: &str, data: &str) -> VcxResult<(String, String)> {
+    trace!("create_schema >>> name: {}, version: {}, data: {}", name, version, data);
+
     if settings::indy_mocks_enabled() {
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
     }
@@ -379,11 +383,13 @@ pub fn create_schema(name: &str, version: &str, data: &str) -> VcxResult<(String
 }
 
 pub fn build_schema_request(schema: &str) -> VcxResult<String> {
+    trace!("build_schema_request >>> schema: {}", schema);
+
     if settings::indy_mocks_enabled() {
         return Ok(SCHEMA_TXN.to_string());
     }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let request = libindy_build_schema_request(&submitter_did, schema)?;
 
@@ -393,6 +399,8 @@ pub fn build_schema_request(schema: &str) -> VcxResult<String> {
 }
 
 pub fn publish_schema(schema: &str) -> VcxResult<Option<PaymentTxn>> {
+    trace!("publish_schema >>> schema: {}", schema);
+
     if settings::indy_mocks_enabled() {
         let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
         let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
@@ -411,7 +419,7 @@ pub fn publish_schema(schema: &str) -> VcxResult<Option<PaymentTxn>> {
 pub fn get_schema_json(schema_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() { return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string())); }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = crate::utils::random::generate_random_did();
 
     let schema_json = libindy_get_schema(&submitter_did, schema_id)?;
 
@@ -449,6 +457,7 @@ pub fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> VcxResul
 }
 
 pub fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<Option<PaymentTxn>> {
+    trace!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
     if settings::indy_mocks_enabled() {
         let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
         let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
@@ -493,6 +502,7 @@ pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxRes
 }
 
 pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<Option<PaymentTxn>> {
+    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def_json: ...", issuer_did);
     if settings::indy_mocks_enabled() { return Ok(None); }
 
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json)?;
@@ -503,7 +513,7 @@ pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResul
 pub fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), rev_def_json())); }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = crate::utils::random::generate_random_did();
 
     libindy_build_get_revoc_reg_def_request(&submitter_did, rev_reg_id)
         .and_then(|req| libindy_submit_request(&req))
@@ -512,6 +522,7 @@ pub fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
 
 pub fn build_rev_reg_delta_request(issuer_did: &str, rev_reg_id: &str, rev_reg_entry_json: &str)
                                    -> VcxResult<String> {
+    trace!("build_rev_reg_delta_request >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}", issuer_did, rev_reg_id, rev_reg_entry_json);
     let request = libindy_build_revoc_reg_entry_request(issuer_did, rev_reg_id, REVOC_REG_TYPE, rev_reg_entry_json)?;
     let request = append_txn_author_agreement_to_request(&request)?;
     Ok(request)
@@ -519,15 +530,18 @@ pub fn build_rev_reg_delta_request(issuer_did: &str, rev_reg_id: &str, rev_reg_e
 
 pub fn publish_rev_reg_delta(issuer_did: &str, rev_reg_id: &str, rev_reg_entry_json: &str)
                              -> VcxResult<(Option<PaymentTxn>, String)> {
+    trace!("publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}", issuer_did, rev_reg_id, rev_reg_entry_json);
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json)?;
     pay_for_txn(&request, CREATE_REV_REG_DELTA_ACTION)
 }
 
 pub fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Option<u64>)
                               -> VcxResult<(String, String, u64)> {
+    trace!("get_rev_reg_delta_json >>> rev_reg_id: {}, from: {:?}, to: {:?}", rev_reg_id, from, to);
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1)); }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = crate::utils::random::generate_random_did();
+
     let from: i64 = if let Some(_from) = from { _from as i64 } else { -1 };
     let to = if let Some(_to) = to { _to as i64 } else { time::get_time().sec };
 
@@ -539,7 +553,7 @@ pub fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Option<u6
 pub fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, String, u64)> {
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1)); }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = crate::utils::random::generate_random_did();
 
     libindy_build_get_revoc_reg_request(&submitter_did, rev_reg_id, timestamp)
         .and_then(|req| libindy_submit_request(&req))
@@ -553,7 +567,7 @@ pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) 
         return Ok((Some(PaymentTxn::from_parts(inputs, outputs, 1, false)), REV_REG_DELTA_JSON.to_string()));
     }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
     let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
@@ -571,7 +585,7 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
 
 pub fn publish_local_revocations(rev_reg_id: &str)
                                  -> VcxResult<(Option<PaymentTxn>, String)> {
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     if let Some(delta) = get_rev_reg_delta_cache(rev_reg_id) {
         match clear_rev_reg_delta_cache(rev_reg_id) {
             Ok(_) => Ok(publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?),
@@ -608,8 +622,6 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
-    use rand::Rng;
-
     use crate::{credential_def, libindy, settings};
     use crate::aries::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::*;
@@ -621,13 +633,11 @@ pub mod tests {
     use super::*;
 
     extern crate serde_json;
-    extern crate rand;
 
     pub fn create_schema(attr_list: &str) -> (String, String) {
         let data = attr_list.to_string();
-        let schema_name: String = rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
-        let schema_version: String = format!("{}.{}", rand::thread_rng().gen::<u32>().to_string(),
-                                             rand::thread_rng().gen::<u32>().to_string());
+        let schema_name: String = crate::utils::random::generate_random_schema_name();
+        let schema_version: String = crate::utils::random::generate_random_schema_version();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         libindy_issuer_create_schema(&institution_did, &schema_name, &schema_version, &data).unwrap()
@@ -651,7 +661,7 @@ pub mod tests {
         /* create schema */
         let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
 
-        let name: String = rand::thread_rng().gen_ascii_chars().take(25).collect::<String>();
+        let name: String = crate::utils::random::generate_random_name();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         /* create cred-def */

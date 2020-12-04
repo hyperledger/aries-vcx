@@ -28,6 +28,14 @@ pub struct Config {
     use_latest_protocols: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct AgencyConfig {
+    agency_did: String,
+    agency_verkey: String,
+    agency_endpoint: String,
+    agent_seed: Option<String>
+}
+
 pub fn parse_config(config: &str) -> VcxResult<Config> {
     let my_config: Config = ::serde_json::from_str(&config)
         .map_err(|err|
@@ -169,6 +177,36 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     wallet::close_main_wallet()?;
 
     Ok(config)
+}
+
+pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
+    let agency_config: AgencyConfig = serde_json::from_str(agency_config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                          format!("Failed to serialize agency config: {:?}, err: {:?}", agency_config,  err)))?;
+
+    let (my_did, my_vk) = signus::create_and_store_my_did(agency_config.agent_seed.as_ref().map(String::as_str), None)?;
+
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, &agency_config.agency_did);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, &agency_config.agency_verkey);
+    agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &agency_config.agency_endpoint);
+    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, &my_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID, &my_did);
+    // agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, &agency_did);
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_config.agency_verkey); // This is reset when connection is established
+
+    let (agent_did, agent_vk) = agent_utils::onboarding_v2(&my_did, &my_vk, &agency_config.agency_did)?;
+
+    let agency_config = json!({
+        "agency_did": agency_config.agency_did,
+        "agency_endpoint": agency_config.agency_endpoint,
+        "agency_verkey": agency_config.agency_verkey,
+        "remote_to_sdk_did": agent_did,
+        "remote_to_sdk_verkey": agent_vk,
+        "sdk_to_remote_did": my_did,
+        "sdk_to_remote_verkey": my_vk,
+    });
+
+    Ok(agency_config.to_string())
 }
 
 #[cfg(test)]
