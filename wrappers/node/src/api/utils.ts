@@ -5,12 +5,12 @@ import { initRustAPI, rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
 
-export async function provisionCloudAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
+export async function provisionCloudAgent (configAgent: object, options: IInitVCXOptions = {}): Promise<string> {
   try {
     initRustAPI(options.libVCXPath)
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_provision_cloud_agent(0, configAgent, cb)
+        const rc = rustAPI().vcx_provision_cloud_agent(0, JSON.stringify(configAgent), cb)
         if (rc) {
           reject(rc)
         }
