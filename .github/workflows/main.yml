@@ -1040,9 +1040,6 @@ jobs:
           addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
           excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
 
-      - name: Show generated changelog
-        run: cat ./CHANGELOG.md
-
       - name: Create a new release
         id: create-release
         uses: actions/create-release@v1
@@ -1052,8 +1049,8 @@ jobs:
           tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           body_path: ./CHANGELOG.md
-          draft: needs.workflow-setup.outputs.PRERELEASE == 'true'
-          prerelease: needs.workflow-setup.outputs.PRERELEASE == 'true'
+          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
 
   release-android-device:
     runs-on: ubuntu-16.04
