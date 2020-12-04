@@ -28,6 +28,14 @@ pub struct Config {
     use_latest_protocols: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct AgencyConfig {
+    agency_did: String,
+    agency_verkey: String,
+    agency_endpoint: String,
+    agent_seed: Option<String>
+}
+
 pub fn parse_config(config: &str) -> VcxResult<Config> {
     let my_config: Config = ::serde_json::from_str(&config)
         .map_err(|err|
@@ -48,10 +56,10 @@ pub fn set_config_values(my_config: &Config) {
 
     settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
     settings::set_config_value(settings::CONFIG_WALLET_KEY, &my_config.wallet_key);
-    settings::get_agency_client().unwrap().set_agency_url(&my_config.agency_url);
-    settings::get_agency_client().unwrap().set_agency_did(&my_config.agency_did);
-    settings::get_agency_client().unwrap().set_agency_vk(&my_config.agency_verkey);
-    settings::get_agency_client().unwrap().set_agent_vk(&my_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agency_url(&my_config.agency_url);
+    settings::get_agency_client_mut().unwrap().set_agency_did(&my_config.agency_did);
+    settings::get_agency_client_mut().unwrap().set_agency_vk(&my_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agent_vk(&my_config.agency_verkey);
 
     settings::set_opt_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &my_config.wallet_key_derivation);
     settings::set_opt_config_value(settings::CONFIG_WALLET_TYPE, &my_config.wallet_type);
@@ -85,7 +93,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     )?;
 
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-    settings::get_agency_client()?.set_my_vk(&my_vk);
+    settings::get_agency_client_mut()?.set_my_vk(&my_vk);
 
     Ok((my_did, my_vk, wallet_name, wh))
 }
@@ -170,6 +178,35 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
     wallet::close_main_wallet()?;
 
     Ok(config)
+}
+
+pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
+    let agency_config: AgencyConfig = serde_json::from_str(agency_config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                          format!("Failed to serialize agency config: {:?}, err: {:?}", agency_config,  err)))?;
+
+    let (my_did, my_vk) = signus::create_and_store_my_did(agency_config.agent_seed.as_ref().map(String::as_str), None)?;
+
+    settings::get_agency_client_mut().unwrap().set_agency_did(&agency_config.agency_did);
+    settings::get_agency_client_mut().unwrap().set_agency_vk(&agency_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agency_url(&agency_config.agency_endpoint);
+    settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
+    settings::get_agency_client_mut().unwrap().set_my_pwdid(&my_did);
+    settings::get_agency_client_mut().unwrap().set_agent_vk(&agency_config.agency_verkey); // This is reset when connection is established and agent did needs not be set before onboarding
+
+    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &agency_config.agency_did)?;
+
+    let agency_config = json!({
+        "agency_did": agency_config.agency_did,
+        "agency_endpoint": agency_config.agency_endpoint,
+        "agency_verkey": agency_config.agency_verkey,
+        "remote_to_sdk_did": agent_did,
+        "remote_to_sdk_verkey": agent_vk,
+        "sdk_to_remote_did": my_did,
+        "sdk_to_remote_verkey": my_vk,
+    });
+
+    Ok(agency_config.to_string())
 }
 
 #[cfg(test)]

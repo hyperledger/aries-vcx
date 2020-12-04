@@ -64,6 +64,7 @@ impl AgencyMock {
 impl AgencyMockDecrypted {
     pub fn set_next_decrypted_response(body: &str) {
         if agency_mocks_enabled() {
+            trace!("Mocks enabled, setting next decrypted response");
             AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.push(body.into());
         } else {
             warn!("Attempting to set mocked decrypted response when mocks are not enabled!");
@@ -72,6 +73,7 @@ impl AgencyMockDecrypted {
 
     pub fn get_next_decrypted_response() -> String {
         if Self::has_decrypted_mock_responses() {
+            trace!("Mocks enabled, getting next decrypted response");
             AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.pop().unwrap()
         } else {
             debug!("Attempting to obtain decrypted response when none were set, but decrypted messages available - returning empty response...");
@@ -85,6 +87,7 @@ impl AgencyMockDecrypted {
 
     pub fn set_next_decrypted_message(message: &str) {
         if agency_mocks_enabled() {
+            trace!("Mocks enabled, getting next decrypted message");
             AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.push(message.into());
         } else {
             warn!("Attempting to set mocked decrypted message when mocks are not enabled!");

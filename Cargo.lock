@@ -706,7 +706,7 @@ dependencies = [
  "log",
  "num-traits",
  "openssl",
- "rand 0.3.23",
+ "rand 0.7.3",
  "regex",
  "reqwest",
  "rmp-serde",

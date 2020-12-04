@@ -9,6 +9,7 @@ use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::wallet::get_wallet_handle;
+use crate::utils::random::generate_random_did;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -23,6 +24,7 @@ pub fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String> {
 }
 
 pub fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &str) -> VcxResult<String> {
+    trace!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
     if settings::indy_mocks_enabled() { return Ok(r#"{"rc":"success"}"#.to_string()); }
 
     let pool_handle = get_pool_handle()?;
@@ -42,6 +44,7 @@ pub fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
 }
 
 pub fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxResult<String> {
+    trace!("libindy_build_schema_request >>> submitter_did: {}, data: {}", submitter_did, data);
     ledger::build_schema_request(submitter_did, data)
         .wait()
         .map_err(VcxError::from)
@@ -49,6 +52,7 @@ pub fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxResul
 
 pub fn libindy_build_create_credential_def_txn(submitter_did: &str,
                                                credential_def_json: &str) -> VcxResult<String> {
+    trace!("libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}", submitter_did, credential_def_json);
     ledger::build_cred_def_request(submitter_did, credential_def_json)
         .wait()
         .map_err(VcxError::from)
@@ -57,7 +61,7 @@ pub fn libindy_build_create_credential_def_txn(submitter_did: &str,
 pub fn libindy_get_txn_author_agreement() -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()); }
 
-    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let did = generate_random_did();
 
     let get_author_agreement_request = ledger::build_get_txn_author_agreement_request(Some(&did), None)
         .wait()?;
@@ -86,6 +90,7 @@ pub fn libindy_get_txn_author_agreement() -> VcxResult<String> {
 }
 
 pub fn append_txn_author_agreement_to_request(request_json: &str) -> VcxResult<String> {
+    trace!("append_txn_author_agreement_to_request >>> request_json: ...");
     if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
         ledger::append_txn_author_agreement_acceptance_to_request(request_json,
                                                                   author_agreement.text.as_ref().map(String::as_str),
@@ -328,7 +333,8 @@ pub mod auth_rule {
 
         if settings::indy_mocks_enabled() { return Ok(json!({"result":{"data":[{"new_value":"0","constraint":{"need_to_be_owner":false,"sig_count":1,"metadata":{"fees":txn_type},"role":"0","constraint_id":"ROLE"},"field":"role","auth_type":"1","auth_action":"ADD"}],"identifier":"LibindyDid111111111111","auth_action":"ADD","new_value":"0","reqId":15616,"auth_type":"1","type":"121","field":"role"},"op":"REPLY"}).to_string()); }
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+        let did = generate_random_did();
+
 
         let request = libindy_build_get_auth_rule_request(Some(&did), Some(txn_type), Some(action), Some(field), old_value, new_value)?;
 
@@ -345,7 +351,8 @@ pub mod auth_rule {
 }
 
 pub fn get_nym(did: &str) -> VcxResult<String> {
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = generate_random_did();
+
     let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), &did)?;
     libindy_submit_request(&get_nym_req)
 }
@@ -379,7 +386,8 @@ pub fn libindy_get_schema(submitter_did: &str, schema_id: &str) -> VcxResult<Str
 pub fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
     let pool_handle = get_pool_handle()?;
     let wallet_handle = get_wallet_handle();
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let submitter_did = generate_random_did();
+    trace!("libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}", pool_handle, wallet_handle, submitter_did);
 
     cache::get_cred_def(pool_handle, wallet_handle, &submitter_did, cred_def_id, "{}")
         .wait()
@@ -389,12 +397,12 @@ pub fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
 pub fn set_endorser(request: &str, endorser: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
 
-    let _did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     let request = ledger::append_request_endorser(request, endorser)
         .wait()?;
 
-    multisign_request(&_did, &request)
+    multisign_request(&did, &request)
 }
 
 pub fn endorse_transaction(transaction_json: &str) -> VcxResult<()> {

@@ -629,7 +629,7 @@ mod tests {
             error!("vcx_init_core failed");
             return Err(rc);
         }
-        settings::get_agency_client()?.enable_test_mode();
+        settings::get_agency_client_mut()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1129,6 +1129,7 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
+    #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPool::init();
 
@@ -1157,7 +1158,14 @@ mod tests {
         let _setup = SetupWallet::init();
 
         let content = json!({
-            "genesis_path": "invalid/txn/path"
+            "genesis_path": "invalid/txn/path",
+            "agency_did": "VsKV7grR1BUE29mG2Fm2kX",
+            "agency_endpoint": "http://localhost:8080",
+            "agency_verkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR",
+            "remote_to_sdk_did": "L8U9Ae48mLGxx3drppU8Ph",
+            "remote_to_sdk_verkey": "BRhUCTk6KFgUk9cnnL9ozfjtvEwXnSPRfUduzjpMaZca",
+            "sdk_to_remote_did": "6Ke2y7C9WVSwDa4PieDtc9",
+            "sdk_to_remote_verkey": "3uDfyP3As6aMQSjYdd95y3UNVkpn2wqTZ6MHrJcCCSFc",
         }).to_string();
 
         init_core(&content).unwrap();
