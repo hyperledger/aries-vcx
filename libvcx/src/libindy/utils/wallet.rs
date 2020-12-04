@@ -37,7 +37,7 @@ pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
     trace!("set_wallet_handle >>> handle: {:?}", handle);
     unsafe { WALLET_HANDLE = handle; }
-    settings::get_agency_client().unwrap().set_wallet_handle(handle.0);
+    settings::get_agency_client_mut().unwrap().set_wallet_handle(handle.0);
     unsafe { WALLET_HANDLE }
 }
 
@@ -45,7 +45,7 @@ pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
 pub fn reset_wallet_handle() {
     set_wallet_handle(INVALID_WALLET_HANDLE);
-    settings::get_agency_client().unwrap().reset_wallet_handle();
+    settings::get_agency_client_mut().unwrap().reset_wallet_handle();
 }
 
 pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
@@ -308,7 +308,7 @@ pub mod tests {
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-        settings::get_agency_client().unwrap().set_my_vk(&my_vk);
+        settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 

@@ -468,7 +468,7 @@ mod tests {
             error!("vcx_init_core failed");
             return Err(rc);
         }
-        settings::get_agency_client()?.enable_test_mode();
+        settings::get_agency_client_mut()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();

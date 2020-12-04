@@ -18,7 +18,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
 
 pub fn init_agency_client(config: &str, ) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client()?.process_config_string(config, true)?;
+    settings::get_agency_client_mut()?.process_config_string(config, true)?;
     Ok(())
 }
 

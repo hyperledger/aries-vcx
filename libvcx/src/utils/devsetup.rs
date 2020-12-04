@@ -77,7 +77,7 @@ fn tear_down() {
     settings::clear_config();
     reset_wallet_handle();
     reset_pool_handle();
-    settings::get_agency_client().unwrap().disable_test_mode();
+    settings::get_agency_client_mut().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
 }
 
@@ -111,7 +111,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::get_agency_client().unwrap().enable_test_mode();
+        settings::get_agency_client_mut().unwrap().enable_test_mode();
         SetupMocks
     }
 }
@@ -133,7 +133,7 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-        settings::get_agency_client().unwrap().disable_test_mode();
+        settings::get_agency_client_mut().unwrap().disable_test_mode();
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
         SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
     }
@@ -159,7 +159,7 @@ impl SetupWallet {
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
-        settings::get_agency_client().unwrap().disable_test_mode();
+        settings::get_agency_client_mut().unwrap().disable_test_mode();
 
         create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
         info!("SetupWallet:: init :: Wallet {} created", wallet_name);
@@ -210,7 +210,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-        settings::get_agency_client().unwrap().enable_test_mode();
+        settings::get_agency_client_mut().unwrap().enable_test_mode();
         SetupIndyMocks {}
     }
 }
@@ -260,7 +260,7 @@ impl SetupAgencyMock {
         settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
-        settings::get_agency_client().unwrap().enable_test_mode();
+        settings::get_agency_client_mut().unwrap().enable_test_mode();
         create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
 
         SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
@@ -366,7 +366,7 @@ pub fn setup_libnullpay_nofees() {
 
 pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    settings::get_agency_client().unwrap().disable_test_mode();
+    settings::get_agency_client_mut().unwrap().disable_test_mode();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 

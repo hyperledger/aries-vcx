@@ -4,9 +4,8 @@ extern crate url;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::RwLockWriteGuard;
+use std::sync::{RwLockWriteGuard, RwLockReadGuard};
 use std::sync::RwLock;
-use std::sync::Mutex;
 
 use indy_sys::INVALID_WALLET_HANDLE;
 use serde_json::Value;
@@ -99,8 +98,13 @@ impl ToString for HashMap<String, String> {
     }
 }
 
-pub fn get_agency_client() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
+pub fn get_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
     let agency_client = AGENCY_CLIENT.write()?;
+    Ok(agency_client)
+}
+
+pub fn get_agency_client() -> VcxResult<RwLockReadGuard<'static, AgencyClient>> {
+    let agency_client = AGENCY_CLIENT.read()?;
     Ok(agency_client)
 }
 
@@ -128,7 +132,7 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
     settings.insert(CONFIG_USE_LATEST_PROTOCOLS.to_string(), DEFAULT_USE_LATEST_PROTOCOLS.to_string());
 
-    get_agency_client().unwrap().set_testing_defaults_agency();
+    get_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 
@@ -213,7 +217,7 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
     }
 
     // TODO: This won't be necessary - move to open wallet for now?
-    get_agency_client()?.process_config_string(config, false)?; // False due to failing tests
+    get_agency_client_mut()?.process_config_string(config, false)?; // False due to failing tests
 
     if do_validation {
         let setting = SETTINGS.read()

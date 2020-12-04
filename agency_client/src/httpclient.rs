@@ -45,7 +45,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec
                 error!("error: {}", err);
                 AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
             })?;
-trace!("Response Header: {:?}", response);
+    trace!("Response Header: {:?}", response);
     if !response.status().is_success() {
         let mut content = String::new();
         match response.read_to_string(&mut content) {

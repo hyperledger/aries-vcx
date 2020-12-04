@@ -48,10 +48,10 @@ pub fn set_config_values(my_config: &Config) {
 
     settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
     settings::set_config_value(settings::CONFIG_WALLET_KEY, &my_config.wallet_key);
-    settings::get_agency_client().unwrap().set_agency_url(&my_config.agency_url);
-    settings::get_agency_client().unwrap().set_agency_did(&my_config.agency_did);
-    settings::get_agency_client().unwrap().set_agency_vk(&my_config.agency_verkey);
-    settings::get_agency_client().unwrap().set_agent_vk(&my_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agency_url(&my_config.agency_url);
+    settings::get_agency_client_mut().unwrap().set_agency_did(&my_config.agency_did);
+    settings::get_agency_client_mut().unwrap().set_agency_vk(&my_config.agency_verkey);
+    settings::get_agency_client_mut().unwrap().set_agent_vk(&my_config.agency_verkey);
 
     settings::set_opt_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &my_config.wallet_key_derivation);
     settings::set_opt_config_value(settings::CONFIG_WALLET_TYPE, &my_config.wallet_type);
@@ -85,7 +85,7 @@ pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String
     )?;
 
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-    settings::get_agency_client()?.set_my_vk(&my_vk);
+    settings::get_agency_client_mut()?.set_my_vk(&my_vk);
 
     Ok((my_did, my_vk, wallet_name, wh))
 }
