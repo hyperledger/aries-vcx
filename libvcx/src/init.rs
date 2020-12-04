@@ -10,7 +10,7 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct ThreadpoolConfig {
-    num_threads: Option<u32>,
+    num_threads: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -23,7 +23,7 @@ struct PoolConfig {
 pub fn init_threadpool(config: &str) -> VcxResult<()> {
     let config: ThreadpoolConfig = serde_json::from_str(config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
-    utils::threadpool::init();
+    utils::threadpool::init(config.num_threads.as_deref());
     Ok(())
 }
 
@@ -38,13 +38,13 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::threadpool::init();
+    utils::threadpool::init(None);
     Ok(())
 }
 
 pub fn init_agency_client(config: &str) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client()?.process_config_string(config, false)?;
+    settings::get_agency_client_mut()?.process_config_string(config, false)?;
     Ok(())
 }
 

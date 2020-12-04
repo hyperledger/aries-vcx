@@ -261,19 +261,6 @@ pub fn get_wallet_name() -> VcxResult<String> {
         .map_err(|_| VcxError::from(VcxErrorKind::MissingWalletKey))
 }
 
-pub fn get_threadpool_size() -> usize {
-    let size = match get_config_value(CONFIG_THREADPOOL_SIZE) {
-        Ok(x) => x.parse::<usize>().unwrap_or(DEFAULT_THREADPOOL_SIZE),
-        Err(_) => DEFAULT_THREADPOOL_SIZE,
-    };
-
-    if size > MAX_THREADPOOL_SIZE {
-        MAX_THREADPOOL_SIZE
-    } else {
-        size
-    }
-}
-
 pub fn get_protocol_version() -> usize {
     let protocol_version = match get_config_value(CONFIG_PROTOCOL_VERSION) {
         Ok(ver) => ver.parse::<usize>().unwrap_or_else(|err| {
