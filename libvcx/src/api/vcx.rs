@@ -15,6 +15,21 @@ use crate::utils::error;
 use crate::utils::threadpool::spawn;
 use crate::utils::version_constants;
 
+
+/// Initializes threadpool.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// threadpool_config: Config of the threadpool
+/// {
+///    num_threads (optional) - number of threads in the threadpool (default: 8)
+/// }
+///
+/// cb: Callback that provides error status
+///
+/// #Returns
+/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_init_threadpool(config: *const c_char) -> u32 {
     info!("vcx_init_threadpool >>>");

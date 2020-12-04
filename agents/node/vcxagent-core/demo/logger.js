@@ -9,7 +9,7 @@ const prettyFormatter = format.combine(
 
 module.exports = loggerLabel => {
   return createLogger({
-    level: 'silly',
+    level: 'debug',
     format: format.combine(
       label({ label: loggerLabel }),
       format.colorize({ all: true }),
