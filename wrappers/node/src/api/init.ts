@@ -5,6 +5,88 @@ import { initRustAPI, rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
 
+export async function initThreadpool (config: string, options: IInitVCXOptions = {}) {
+  const rc = rustAPI().vcx_init_threadpool(config)
+  if (rc !== 0) {
+    throw new VCXInternalError(rc)
+  }
+}
+
+export async function createAgencyClientForMainWallet (config: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+            (resolve, reject, cb) => {
+              const rc = rustAPI().vcx_create_agency_client_for_main_wallet(0, config, cb)
+              if (rc) {
+                reject(rc)
+              }
+            },
+            (resolve, reject) => Callback(
+                'void',
+                ['uint32', 'uint32'],
+                (xhandle: number, err: number) => {
+                  if (err) {
+                    reject(err)
+                    return
+                  }
+                  resolve()
+                })
+        )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
+
+export async function vcxInitIssuerConfig (config: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+            (resolve, reject, cb) => {
+              const rc = rustAPI().vcx_init_issuer_config(0, config, cb)
+              if (rc) {
+                reject(rc)
+              }
+            },
+            (resolve, reject) => Callback(
+                'void',
+                ['uint32', 'uint32'],
+                (xhandle: number, err: number) => {
+                  if (err) {
+                    reject(err)
+                    return
+                  }
+                  resolve()
+                })
+        )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
+
+export async function vcxOpenPoolDirectly (config: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+            (resolve, reject, cb) => {
+              const rc = rustAPI().vcx_open_pool_directly(0, config, cb)
+              if (rc) {
+                reject(rc)
+              }
+            },
+            (resolve, reject) => Callback(
+                'void',
+                ['uint32', 'uint32'],
+                (xhandle: number, err: number) => {
+                  if (err) {
+                    reject(err)
+                    return
+                  }
+                  resolve()
+                })
+        )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
+
 /**
  * Initializes VCX memory with provided configuration
  *

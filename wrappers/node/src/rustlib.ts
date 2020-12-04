@@ -58,8 +58,13 @@ export type rust_connection_handle = rust_object_handle
 
 export interface IFFIEntryPoint {
   vcx_open_pool: (commandId: number, cb: any) => number,
+  vcx_open_pool_directly: (commandId: number, config: string, cb: any) => number,
+
   vcx_open_wallet: (commandId: number, cb: any) => number,
+  vcx_create_agency_client_for_main_wallet: (commandId: number, config: string, cb: any) => number,
   vcx_init_core: (config: string) => number,
+  vcx_init_threadpool: (config: string) => number,
+  vcx_init_issuer_config: (commandId: number, config: string, cb: any) => number,
 
   vcx_shutdown: (deleteIndyInfo: boolean) => number,
   vcx_error_c_message: (errorCode: number) => string,
@@ -257,7 +262,12 @@ export interface IFFIEntryPoint {
 export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
 
   vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
+  vcx_init_threadpool: [FFI_ERROR_CODE, [FFI_STRING_DATA]],
+  vcx_init_issuer_config: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_create_agency_client_for_main_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+
   vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_open_pool_directly: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_shutdown: [FFI_ERROR_CODE, [FFI_BOOL]],
   vcx_error_c_message: [FFI_STRING, [FFI_ERROR_CODE]],

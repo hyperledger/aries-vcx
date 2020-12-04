@@ -16,7 +16,7 @@ use crate::utils::threadpool::spawn;
 use crate::utils::version_constants;
 
 #[no_mangle]
-pub extern fn vcx_init_threadpool(command_handle: CommandHandle, config: *const c_char) -> u32 {
+pub extern fn vcx_init_threadpool(config: *const c_char) -> u32 {
     info!("vcx_init_threadpool >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
