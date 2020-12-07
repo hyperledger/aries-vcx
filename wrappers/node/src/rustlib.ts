@@ -482,5 +482,19 @@ export const FFIConfiguration: { [ Key in keyof IFFIEntryPoint ]: any } = {
 }
 
 let _rustAPI: IFFIEntryPoint
-export const initRustAPI = (path?: string) => _rustAPI = new VCXRuntime({ basepath: path }).ffi
-export const rustAPI = () => _rustAPI
+let wasInitialized = false
+export const initRustAPI = (path?: string): IFFIEntryPoint => {
+  if (wasInitialized) {
+    throw new Error('initRustAPI was already initialized. Make sure you only call it once in the lifetime of the process.')
+  }
+  _rustAPI = new VCXRuntime({ basepath: path }).ffi
+  wasInitialized = true
+  return _rustAPI
+}
+export const rustAPI = (): IFFIEntryPoint => {
+  if (!_rustAPI) {
+    throw new Error('RustAPI not loaded. Make sure you are calling initRustAPI(...)');
+  }
+  return _rustAPI
+}
+
