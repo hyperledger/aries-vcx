@@ -3,10 +3,9 @@ import { Callback } from 'ffi-napi'
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { IInitVCXOptions } from './common'
 // import { resolve } from 'url';
 
-export async function provisionAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
+export async function provisionAgent (configAgent: string): Promise<string> {
   /**
    * Provision an agent in the agency, populate configuration and wallet for this agent.
    *

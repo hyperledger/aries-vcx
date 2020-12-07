@@ -1,5 +1,5 @@
 import { assert } from 'chai'
-import { initRustAPI } from 'src'
+import { initRustAPI, isRustApiInitialized } from 'src'
 import * as vcx from 'src'
 import * as uuid from 'uuid'
 import '../module-resolver-helper'
@@ -40,7 +40,9 @@ function generateTestConfig () {
 
 export async function initVcxTestMode() {
   scheduleGarbageCollectionBeforeExit();
-  initRustAPI()
+  if (!isRustApiInitialized()) {
+    initRustAPI()
+  }
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
   await vcx.defaultLogger(rustLogPattern)
   const useTestConfig = generateTestConfig()
