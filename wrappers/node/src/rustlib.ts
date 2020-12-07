@@ -498,3 +498,4 @@ export const rustAPI = (): IFFIEntryPoint => {
   return _rustAPI
 }
 
+export const isRustApiInitialized = (): boolean => Boolean(_rustAPI)
