@@ -4,7 +4,12 @@ import { assert } from 'chai'
 import * as ffi from 'ffi-napi'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils'
 import * as os from 'os'
-import { initVcx, VCXCode, VCXRuntime } from 'src'
+import { initRustAPI, initVcx, VCXCode, VCXRuntime } from 'src'
+
+before(() => {
+  initRustAPI();
+})
+
 
 describe('vcxInit', () => {
   it('should throw if invalid path provided', async () => {

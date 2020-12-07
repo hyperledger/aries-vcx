@@ -15,7 +15,7 @@ import { IInitVCXOptions } from './common'
  * await initVcx('/home/username/vcxconfig.json')
  * ```
  */
-export async function initVcx (configPath: string, options: IInitVCXOptions = {}): Promise<void> {
+export async function initVcx (configPath: string): Promise<void> {
   let rc = null
   try {
     return await createFFICallbackPromise<void>(
