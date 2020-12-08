@@ -7,7 +7,7 @@ import { ISerializedData } from './common'
 export type IVCXBaseCreateFn = (cb: ICbRef) => number
 
 export abstract class VCXBase<SerializedData> extends GCWatcher {
-  protected static async _deserialize<T extends VCXBase<any> = any, P = object> (
+  protected static async _deserialize<T extends VCXBase<any> = any, P = unknown> (
     VCXClass: new(sourceId: string, ...args: any[]) => T,
     objData: ISerializedData<{ source_id: string }>,
     constructorParams?: P
@@ -101,7 +101,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
     this._setHandle(handleRes)
   }
 
-  private async _initFromData (objData: object): Promise<void> {
+  private async _initFromData (objData: ISerializedData<{ source_id: string }>): Promise<void> {
     const commandHandle = 0
     const objHandle = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {

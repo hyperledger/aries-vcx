@@ -84,7 +84,8 @@ export interface IIssuerCredentialParams {
  * This interface is expected as the type for deserialize's parameter and serialize's return value
  */
 export interface IIssuerCredentialData {
-  issuer_sm: object,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  issuer_sm: Record<string, any>,
   source_id: string
 }
 
