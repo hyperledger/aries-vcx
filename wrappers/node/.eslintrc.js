@@ -12,7 +12,11 @@ module.exports = {
   rules: {
     'prettier/prettier': 'warn',
     'no-console': 'warn',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', ignoreRestSiblings: true },
+    ],
     '@typescript-eslint/no-inferrable-types': 'warn',
-    '@typescript-eslint/no-empty-function': 'warn',
+    '@typescript-eslint/no-empty-function': 'off',
   },
-}
+};
