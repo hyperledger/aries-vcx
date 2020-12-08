@@ -8,7 +8,6 @@
     "baseUrl": "./",
     "strict": true,
     "strictFunctionTypes": false,
-    "noUnusedLocals": true,
     "preserveConstEnums": true
   },
   "include": [
