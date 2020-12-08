@@ -61,8 +61,6 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> => new
 export const sleep = (timeout: number) => new Promise((resolve, reject) => setTimeout(resolve, timeout))
 
 
-
-
 let garbageCollectionBeforeExitIsScheduled = false
 
 // For some reason, The Rust library segfaults if global.gc() is not called explicitly.

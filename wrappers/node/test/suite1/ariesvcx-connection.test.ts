@@ -11,8 +11,6 @@ import { INVITE_ACCEPTED_MESSAGE } from 'helpers/test-constants'
 import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils'
 import { Connection, StateType, VCXCode, VCXMock, VCXMockMessage } from 'src'
 
-
-
 describe('Connection:', () => {
   before(() => initVcxTestMode())
 
