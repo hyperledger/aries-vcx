@@ -80,25 +80,18 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
   }
 
   protected async _create (createFn: IVCXBaseCreateFn): Promise<void> {
-    const handleRes = await createFFICallbackPromise<number>(
-        (resolve, reject, cb) => {
-          const rc = createFn(cb)
-          if (rc) {
-            reject(rc)
-          }
-        },
-        (resolve, reject) => ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'uint32'],
-          (xHandle: number, err: number, handle: number) => {
-            if (err) {
-              reject(err)
-              return
-            }
-            resolve(handle)
-          })
-    )
-    this._setHandle(handleRes)
+    const handle = await new Promise<number>((resolve, reject) => {
+      try {
+        const creationFfiCallback = ffi.Callback(
+          'void', ['uint32', 'uint32', 'uint32'],
+          (xHandle: number, err: number, handle: number) => err ? reject(err) : resolve(handle)
+        )
+        createFn(creationFfiCallback)
+      } catch (error) {
+        reject(error)
+      }
+    })
+    this._setHandle(handle)
   }
 
   private async _initFromData (objData: object): Promise<void> {
