@@ -55,8 +55,8 @@ describe('Proof:', () => {
       const proof = await proofCreate()
       const { data } = await proof.serialize()
       assert.ok(data)
-      // @ts-ignore todo: IProofData is reflecting legacy structure, not vcxaries
-      assert.equal(data.verifier_sm.source_id, proof.sourceId)
+      // todo: IProofData is reflecting legacy structure, not vcxaries
+      assert.equal((data as any).verifier_sm.source_id, proof.sourceId)
     })
 
     it('throws: not initialized', async () => {

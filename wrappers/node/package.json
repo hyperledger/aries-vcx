@@ -46,6 +46,7 @@
     "weak-napi": "^2.0.2"
   },
   "devDependencies": {
+    "@types/app-module-path": "^2.2.0",
     "@types/chai": "^4.1.4",
     "@types/ffi-napi": "^2.4.1",
     "@types/lodash": "^4.14.109",
@@ -62,7 +63,6 @@
     "jsdoc": "^3.6.3",
     "mocha": "^7.2.0",
     "ts-node": "^6.1.2",
-    "tslint-config-standard": "^7.1.0",
     "typedoc": "^0.15.4",
     "typescript": "^3.0.0"
   },
