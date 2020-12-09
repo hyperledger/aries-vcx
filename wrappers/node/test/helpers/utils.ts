@@ -63,7 +63,10 @@ export const sleep = (timeout: number) => new Promise((resolve, reject) => setTi
 
 let garbageCollectionBeforeExitIsScheduled = false
 
-// For some reason, The Rust library segfaults if global.gc() is not called explicitly.
+// For some (yet unknown) reason, The Rust library segfaults on exit if global.gc() is not called explicitly.
+// To solve this issue, we call global.gc() on `beforeExit` event.
+// NB: This solution only works with Mocha. 
+//     With Jest the 'beforeExit' event doesn't seem fired, so we are instead still using --forceExit before it segfaults.
 const scheduleGarbageCollectionBeforeExit = () => {
   if (!garbageCollectionBeforeExitIsScheduled) {
     assert(global.gc)
