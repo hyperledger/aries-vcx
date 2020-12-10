@@ -644,7 +644,7 @@ jobs:
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run compile && \
-                                npm run test:aries)'
+                                npm run test)'
 
   # TODO: Run in parallel once https://github.com/actions/runner/issues/646 is ready
   test-integration-node-wrapper:
