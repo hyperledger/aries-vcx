@@ -1,7 +1,7 @@
 import { Callback } from 'ffi-napi'
 
 import { VCXInternalError } from '../errors'
-import { initRustAPI, rustAPI } from '../rustlib'
+import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
 
@@ -28,7 +28,6 @@ import { IInitVCXOptions } from './common'
  */
 
 export async function initVcxCore (config: string, options: IInitVCXOptions = {}) {
-  initRustAPI(options.libVCXPath)
   const rc = rustAPI().vcx_init_core(config)
   if (rc !== 0) {
     throw new VCXInternalError(rc)

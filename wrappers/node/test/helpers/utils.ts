@@ -1,4 +1,5 @@
-import { initRustAPI } from 'src'
+import { assert } from 'chai'
+import { initRustAPI, isRustApiInitialized } from 'src'
 import * as vcx from 'src'
 import * as uuid from 'uuid'
 import '../module-resolver-helper'
@@ -37,8 +38,11 @@ function generateTestConfig () {
   return sampleConfig
 }
 
-export async function initVcxTestMode () {
-  initRustAPI()
+export async function initVcxTestMode() {
+  scheduleGarbageCollectionBeforeExit();
+  if (!isRustApiInitialized()) {
+    initRustAPI()
+  }
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error'
   await vcx.defaultLogger(rustLogPattern)
   const useTestConfig = generateTestConfig()
@@ -55,3 +59,20 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> => new
 })
 
 export const sleep = (timeout: number) => new Promise((resolve, reject) => setTimeout(resolve, timeout))
+
+
+let garbageCollectionBeforeExitIsScheduled = false
+
+// For some (yet unknown) reason, The Rust library segfaults on exit if global.gc() is not called explicitly.
+// To solve this issue, we call global.gc() on `beforeExit` event.
+// NB: This solution only works with Mocha. 
+//     With Jest the 'beforeExit' event doesn't seem fired, so we are instead still using --forceExit before it segfaults.
+const scheduleGarbageCollectionBeforeExit = () => {
+  if (!garbageCollectionBeforeExitIsScheduled) {
+    assert(global.gc)
+    process.on('beforeExit', () => {
+      global.gc();
+    });
+  }
+  garbageCollectionBeforeExitIsScheduled = true;
+}

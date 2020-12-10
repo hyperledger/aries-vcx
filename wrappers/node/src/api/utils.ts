@@ -1,12 +1,11 @@
 import { Callback } from 'ffi-napi'
 
 import { VCXInternalError } from '../errors'
-import { initRustAPI, rustAPI } from '../rustlib'
+import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { IInitVCXOptions } from './common'
 // import { resolve } from 'url';
 
-export async function provisionAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
+export async function provisionAgent (configAgent: string): Promise<string> {
   /**
    * Provision an agent in the agency, populate configuration and wallet for this agent.
    *
@@ -24,7 +23,6 @@ export async function provisionAgent (configAgent: string, options: IInitVCXOpti
    * vcxConfig = await provisionAgent(JSON.stringify(enterprise_config))
    */
   try {
-    initRustAPI(options.libVCXPath)
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_agent_provision_async(0, configAgent, cb)
