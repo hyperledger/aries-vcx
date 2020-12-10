@@ -41,8 +41,9 @@
   },
   "devDependencies": {
     "@types/app-module-path": "^2.2.0",
-    "@types/chai": "^4.1.4",
+    "@types/chai": "^4.2.14",
     "@types/ffi-napi": "^2.4.1",
+    "@types/lodash": "^4.14.165",
     "@types/mocha": "^8.2.0",
     "@types/node": "^8.0.47",
     "@types/ref-napi": "^1.4.0",
