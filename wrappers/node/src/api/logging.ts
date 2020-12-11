@@ -5,6 +5,15 @@ import * as buildStructType from 'ref-struct-di';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 
+export type LogFunction = (
+  level: number,
+  target: string,
+  message: string,
+  modulePath: string,
+  file: string,
+  line: number,
+) => void;
+
 const Struct = buildStructType(ref);
 
 export const Logger = Struct({
@@ -12,14 +21,17 @@ export const Logger = Struct({
   logFn: ffi.Function('void', ['int', 'string', 'string', 'string', 'string', 'int']),
 });
 
+type LoggerType = typeof Logger;
+type LoggerPtr = any;
+
 // The _logger must in fact be instance of Struct type we generated above using buildStructType(ref)
-export function loggerToVoidPtr(_logger: any): Buffer {
+export function loggerToVoidPtr(_logger: LoggerType): Buffer {
   const _pointer = ref.alloc('void *');
   ref.writePointer(_pointer, 0, _logger.ref());
   return _pointer;
 }
 
-function voidPtrToLogger(loggerPtr: any): any {
+function voidPtrToLogger(loggerPtr: LoggerPtr): LoggerType {
   const loggerPtrType = ref.refType(Logger);
   loggerPtr.type = loggerPtrType;
   return loggerPtr.deref().deref();
@@ -35,13 +47,13 @@ const Ilogger = {
   target: 'string',
 };
 
-function flushFunction(context: any) {
-  const _logger = voidPtrToLogger(context);
+function flushFunction(loggerPtr: LoggerPtr) {
+  const _logger = voidPtrToLogger(loggerPtr);
   _logger.flushFn();
 }
 
 export function loggerFunction(
-  context: any,
+  loggerPtr: LoggerPtr,
   level: number,
   target: string,
   message: string,
@@ -49,7 +61,7 @@ export function loggerFunction(
   file: string,
   line: number,
 ): void {
-  const _logger = voidPtrToLogger(context);
+  const _logger = voidPtrToLogger(loggerPtr);
   _logger.logFn(level, target, message, modulePath, file, line);
 }
 
@@ -65,20 +77,20 @@ const loggerFnCb = ffi.Callback(
     Ilogger.line,
   ],
   (
-    _context: any,
-    _level: number,
-    _target: string,
-    _message: string,
-    _modulePath: string,
-    _file: string,
-    _line: number,
+    loggerPtr: LoggerPtr,
+    level: number,
+    target: string,
+    message: string,
+    modulePath: string,
+    file: string,
+    line: number,
   ) => {
-    loggerFunction(_context, _level, _target, _message, _modulePath, _file, _line);
+    loggerFunction(loggerPtr, level, target, message, modulePath, file, line);
   },
 );
 
-const flushFnCb = ffi.Callback('void', [Ilogger.context], (_context: any) => {
-  flushFunction(_context);
+const flushFnCb = ffi.Callback('void', [Ilogger.context], (loggerPtr: LoggerPtr) => {
+  flushFunction(loggerPtr);
 });
 // need to keep these in this scope so they are not garbage collected.
 const logger = Logger();
@@ -104,7 +116,7 @@ let pointer;
  *
  */
 /* tslint:disable:no-empty */
-export function setLogger(userLogFn: any): void {
+export function setLogger(userLogFn: LogFunction): void {
   logger.logFn = userLogFn;
   logger.flushFn = () => {};
   pointer = loggerToVoidPtr(logger);

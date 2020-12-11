@@ -359,7 +359,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, state: SchemaState) => {
+            (handle: number, err: number, state: SchemaState) => {
               if (err) {
                 reject(err);
               }

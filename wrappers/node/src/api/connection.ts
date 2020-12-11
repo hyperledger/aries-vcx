@@ -184,7 +184,7 @@ export interface ISignatureData {
  */
 export type IConnectionInfo = string;
 
-export function voidPtrToUint8Array(origPtr: any, length: number): Buffer {
+export function voidPtrToUint8Array(origPtr: ref.Type, length: number): Buffer {
   /**
    * Read the contents of the pointer and copy it into a new Buffer
    */
@@ -335,7 +335,7 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: StateType) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
@@ -498,16 +498,16 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, details: any, length: number) => {
+            (xHandle: number, err: number, detailsPtr: ref.Type, length: number) => {
               if (err) {
                 reject(err);
                 return;
               }
-              if (!details) {
+              if (!detailsPtr) {
                 reject(`Connection ${this.sourceId}  returned empty buffer`);
                 return;
               }
-              const newBuffer = voidPtrToUint8Array(details, length);
+              const newBuffer = voidPtrToUint8Array(detailsPtr, length);
               resolve(newBuffer);
             },
           ),

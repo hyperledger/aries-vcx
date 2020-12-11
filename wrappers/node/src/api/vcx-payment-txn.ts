@@ -1,6 +1,6 @@
 import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { IPaymentOutput } from './common';
 
 export interface IPaymentTxn {
@@ -14,7 +14,7 @@ export interface IPamentManagerConstructorData {
 }
 export abstract class PaymentManager {
   public readonly handle: number;
-  protected abstract _getPaymentTxnFn: (commandId: number, handle: number, cb: any) => number;
+  protected abstract _getPaymentTxnFn: (commandId: number, handle: number, cb: ICbRef) => number;
   constructor({ handle }: IPamentManagerConstructorData) {
     this.handle = handle;
   }
@@ -31,7 +31,7 @@ export abstract class PaymentManager {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'string'],
-            (xcommandHandle: number, err: number, info: any) => {
+            (xcommandHandle: number, err: number, info: string) => {
               if (err) {
                 reject(err);
                 return;

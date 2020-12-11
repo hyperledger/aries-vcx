@@ -45,7 +45,7 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: StateType) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
@@ -73,7 +73,7 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: StateType) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
@@ -111,7 +111,7 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: StateType) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
