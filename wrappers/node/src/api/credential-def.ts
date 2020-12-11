@@ -256,7 +256,9 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * credentialDef2 = await CredentialDef.deserialzie(data1)
    * ```
    */
-  public static async deserialize(credentialDef: ISerializedData<ICredentialDefData>): Promise<CredentialDef> {
+  public static async deserialize(
+    credentialDef: ISerializedData<ICredentialDefData>,
+  ): Promise<CredentialDef> {
     // Todo: update the ICredentialDefObj
     const {
       data: { name },

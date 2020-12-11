@@ -18,18 +18,5 @@ module.exports = {
     ],
     '@typescript-eslint/no-inferrable-types': 'warn',
     '@typescript-eslint/no-empty-function': 'off',
-    '@typescript-eslint/member-delimiter-style': [
-      'warn',
-      {
-        multiline: {
-          delimiter: 'semi',
-          requireLast: true,
-        },
-        singleline: {
-          delimiter: 'semi',
-          requireLast: true,
-        },
-      },
-    ],
   },
-}
+};
