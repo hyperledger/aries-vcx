@@ -28,6 +28,7 @@ export const createFFICallbackPromise = <T>(
       return res;
     })
     .catch((err) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       cbRef = null;
       clearTimeout(processKeepAliveTimer);
       throw err;

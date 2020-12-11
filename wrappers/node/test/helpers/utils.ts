@@ -60,7 +60,7 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> =>
   });
 
 export const sleep = (timeout: number) =>
-  new Promise((resolve, reject) => setTimeout(resolve, timeout));
+  new Promise((resolve, _reject) => setTimeout(resolve, timeout));
 
 let garbageCollectionBeforeExitIsScheduled = false;
 
