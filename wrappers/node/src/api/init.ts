@@ -26,7 +26,7 @@ import { createFFICallbackPromise } from '../utils/ffi-helpers';
  * ```
  */
 
-export async function initVcxCore(config: string) {
+export async function initVcxCore(config: string): Promise<void> {
   const rc = rustAPI().vcx_init_core(config);
   if (rc !== 0) {
     throw new VCXInternalError(rc);

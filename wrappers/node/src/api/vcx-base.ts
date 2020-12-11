@@ -76,7 +76,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
     }
   }
   /** The source Id assigned by the user for this object */
-  get sourceId() {
+  get sourceId(): string {
     return this._sourceId;
   }
 

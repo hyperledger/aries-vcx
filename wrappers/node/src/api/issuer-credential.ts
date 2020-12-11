@@ -458,23 +458,23 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
     }
   }
 
-  get credDefHandle() {
+  get credDefHandle(): number {
     return this._credDefHandle;
   }
 
-  get attr() {
+  get attr(): IIssuerCredentialVCXAttributes {
     return this._attr;
   }
 
-  get credentialName() {
+  get credentialName(): string {
     return this._credentialName;
   }
 
-  get price() {
+  get price(): string {
     return this._price;
   }
 
-  protected _setHandle(handle: number) {
+  protected _setHandle(handle: number): void {
     super._setHandle(handle);
     this.paymentManager = new IssuerCredentialPaymentManager({ handle });
   }

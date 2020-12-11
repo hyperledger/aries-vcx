@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { IPaymentTxn, IUTXO } from 'src';
 
-export const validateUTXO = (utxo: IUTXO) => {
+export const validateUTXO = (utxo: IUTXO): IUTXO => {
   assert.equal(typeof utxo, 'object');
   assert.property(utxo, 'paymentAddress');
   assert.equal(typeof utxo.paymentAddress, 'string');
@@ -16,7 +16,7 @@ export const validateUTXO = (utxo: IUTXO) => {
   return utxo;
 };
 
-export const validatePaymentTxn = (paymentTxn: IPaymentTxn) => {
+export const validatePaymentTxn = (paymentTxn: IPaymentTxn): IPaymentTxn => {
   assert.equal(typeof paymentTxn, 'object');
   assert.property(paymentTxn, 'amount');
   assert.equal(typeof paymentTxn.amount, 'number');

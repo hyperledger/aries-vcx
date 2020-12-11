@@ -120,7 +120,7 @@ export function setActiveTxnAuthorAgreementMeta(
   hash: string | null | undefined,
   acc_mech_type: string,
   time_of_acceptance: number,
-) {
+): number {
   /**
    * Set some accepted agreement as active.
    * As result of successful call of this function appropriate metadata will be appended to each write request.

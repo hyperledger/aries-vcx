@@ -17,7 +17,7 @@ export type ICreateFFICallbackPromiseCb<T> = (
 export const createFFICallbackPromise = <T>(
   fn: ICreateFFICallbackPromiseFn<T>,
   cb: ICreateFFICallbackPromiseCb<T>,
-) => {
+): Promise<T> => {
   let cbRef = null;
   // TODO: Research why registering a callback doesn't keep parent thread alive https://github.com/node-ffi/node-ffi
   const processKeepAliveTimer = setTimeout(() => undefined, maxTimeout);

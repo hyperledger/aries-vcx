@@ -48,7 +48,7 @@ export function loggerFunction(
   modulePath: string,
   file: string,
   line: number,
-) {
+): void {
   const _logger = voidPtrToLogger(context);
   _logger.logFn(level, target, message, modulePath, file, line);
 }
@@ -104,7 +104,7 @@ let pointer;
  *
  */
 /* tslint:disable:no-empty */
-export function setLogger(userLogFn: any) {
+export function setLogger(userLogFn: any): void {
   logger.logFn = userLogFn;
   logger.flushFn = () => {};
   pointer = loggerToVoidPtr(logger);
@@ -126,7 +126,7 @@ export function setLogger(userLogFn: any) {
  *
  */
 
-export function defaultLogger(level: string) {
+export function defaultLogger(level: string): void {
   try {
     rustAPI().vcx_set_default_logger(level);
   } catch (err) {

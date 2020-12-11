@@ -207,11 +207,11 @@ export class Proof extends VCXBaseWithState<IProofData> {
    * assert.equal(await proof.requestedAttributes(), data.attrs)
    * ```
    */
-  get requestedAttributes() {
+  get requestedAttributes(): IProofAttr[] {
     return this._requestedAttributes;
   }
 
-  get requestedPredicates() {
+  get requestedPredicates(): IProofPredicate[] {
     return this._requestedPredicates;
   }
 
@@ -235,7 +235,7 @@ export class Proof extends VCXBaseWithState<IProofData> {
    * assert.equal(await proof.name(), data.name)
    * ```
    */
-  get name() {
+  get name(): string {
     return this._name;
   }
   /**

@@ -256,7 +256,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * credentialDef2 = await CredentialDef.deserialzie(data1)
    * ```
    */
-  public static async deserialize(credentialDef: ISerializedData<ICredentialDefData>) {
+  public static async deserialize(credentialDef: ISerializedData<ICredentialDefData>): Promise<CredentialDef> {
     // Todo: update the ICredentialDefObj
     const {
       data: { name },
@@ -530,23 +530,23 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  get name() {
+  get name(): string | undefined {
     return this._name;
   }
 
-  get schemaId() {
+  get schemaId(): string | undefined {
     return this._schemaId;
   }
 
-  get credDefId() {
+  get credDefId(): string | undefined {
     return this._credDefId;
   }
 
-  get tailsFile() {
+  get tailsFile(): string | undefined {
     return this._tailsFile;
   }
 
-  protected _setHandle(handle: number) {
+  protected _setHandle(handle: number): void {
     super._setHandle(handle);
     this.paymentManager = new CredentialDefPaymentManager({ handle });
   }

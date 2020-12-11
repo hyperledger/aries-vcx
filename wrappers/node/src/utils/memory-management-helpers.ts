@@ -1,7 +1,7 @@
 import * as weak from 'weak-napi';
 
 export abstract class GCWatcher {
-  protected abstract _releaseFn: any;
+  protected abstract _releaseFn: (handle: number) => void;
   // LibVCX handles invalid handles
   private _handleRef!: number;
 
@@ -19,7 +19,7 @@ export abstract class GCWatcher {
 
   // _clearOnExit creates a callback that will release the Rust Object
   // when the node Connection object is Garbage collected
-  protected _clearOnExit() {
+  protected _clearOnExit(): void {
     const weakRef = weak(this);
     const release = this._releaseFn;
     const handle = this._handleRef;
@@ -28,7 +28,7 @@ export abstract class GCWatcher {
     });
   }
 
-  get handle() {
+  get handle(): number {
     return this._handleRef;
   }
 }
