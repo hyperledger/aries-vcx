@@ -28,10 +28,8 @@ export class VCXRuntime {
 
   private _initializeBasepath = (): string => {
     const platform = os.platform()
-    // @ts-ignore
-    const postfix = extension[platform.toLowerCase()] || extension.linux
-    // @ts-ignore
-    const libDir = libPath[platform.toLowerCase()] || libPath.linux
+    const postfix = extension[platform.toLowerCase() as keyof typeof extension] || extension.linux
+    const libDir = libPath[platform.toLowerCase() as keyof typeof libPath] || libPath.linux
     const library = `libvcx${postfix}`
     const customPath = process.env.LIBVCX_PATH ? process.env.LIBVCX_PATH + library : undefined
     return customPath || this._config.basepath || `${libDir}${library}`

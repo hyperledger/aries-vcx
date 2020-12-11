@@ -13,10 +13,8 @@ describe('Using the vcx ffi directly', () => {
   const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
 
   const platform = os.platform()
-  // @ts-ignore
-  const postfix = extension[platform.toLowerCase()] || extension.linux
-  // @ts-ignore
-  const libDir = libPath[platform.toLowerCase()] || libPath.linux
+  const postfix = extension[platform.toLowerCase() as keyof typeof extension] || extension.linux
+  const libDir = libPath[platform.toLowerCase() as keyof typeof libPath] || libPath.linux
   const run = new VCXRuntime({ basepath: `${libDir}libvcx${postfix}` })
 
   before(() => initVcxTestMode())

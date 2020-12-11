@@ -51,7 +51,8 @@ export interface IDisclosedProofData {
   source_id: string,
 }
 
-export type IDisclosedProofRequest = object
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type IDisclosedProofRequest = Record<string, any>
 
 /**
  * @description Interface that represents the parameters for `DisclosedProof.create` function.
@@ -233,7 +234,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    */
   public static async deserialize (data: ISerializedData<IDisclosedProofData>) {
     try {
-      const newObj = await super._deserialize<DisclosedProof, {}>(DisclosedProof, data)
+      const newObj = await super._deserialize<DisclosedProof>(DisclosedProof, data)
       return newObj
     } catch (err) {
       throw new VCXInternalError(err)

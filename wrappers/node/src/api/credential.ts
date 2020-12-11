@@ -48,6 +48,7 @@ export interface ICredentialStructData {
   source_id: string,
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type ICredentialOffer = [ object, object ]
 
 /**
@@ -210,7 +211,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
    * ```
    */
   public static async deserialize (credentialData: ISerializedData<ICredentialStructData>) {
-    const credential = await super._deserialize<Credential, {}>(Credential, credentialData)
+    const credential = await super._deserialize<Credential>(Credential, credentialData)
     return credential
   }
 
