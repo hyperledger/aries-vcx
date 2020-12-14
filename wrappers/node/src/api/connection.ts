@@ -2,7 +2,7 @@ import * as ffi from 'ffi-napi';
 import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, StateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
@@ -298,7 +298,14 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
 
   protected _releaseFn = rustAPI().vcx_connection_release;
   protected _updateStFn = rustAPI().vcx_connection_update_state;
-  protected _updateStFnV2 = rustAPI().vcx_connection_update_state; // TODO: Implement
+  protected _updateStFnV2 = (
+    _commandHandle: number,
+    _handle: number,
+    _connHandle: number,
+    _cb: ICbRef,
+  ): number => {
+    throw new Error('_updateStFnV2 cannot be called for a Connection object');
+  };
   protected _updateStWithMessageFn = rustAPI().vcx_connection_update_state_with_message;
   protected _getStFn = rustAPI().vcx_connection_get_state;
   protected _serializeFn = rustAPI().vcx_connection_serialize;
