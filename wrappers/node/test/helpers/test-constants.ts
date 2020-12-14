@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-multi-str
-export const INVITE_ACCEPTED_MESSAGE: string = '{ "statusCode": "MS-104", "payload": \
+export const INVITE_ACCEPTED_MESSAGE =
+  '{ "statusCode": "MS-104", "payload": \
 [ -126, -91, 64, 116, 121, 112, 101, -125, -92, 110, 97, 109, 101, -83, 67, 111, \
   110, 110, 82, 101, 113, 65, 110, 115, 119, 101, 114, -93, 118, 101, 114, -93, 49, \
   46, 48, -93, 102, 109, 116, -92, 106, 115, 111, 110, -92, 64, 109, 115, 103, -36, \
@@ -23,4 +24,4 @@ export const INVITE_ACCEPTED_MESSAGE: string = '{ "statusCode": "MS-104", "paylo
   44, 66, 75, 84, 50, 67, 85, 78, 71, 66, 82, 107, 81, 67, 104, 54, 118, 85, 89, 118, 65, \
   111, 110, 101, 107, 110, 54, 88, 75, 122, 122, 122, 86, 68, 90, 107, 98, 114, 74, 85, \
   56, 86, 104, 99, 114 ], "senderDID": "NsQ1rvm6TrsHx1TB4xEh55", "uid": "owm5yta", \
-  "type": "connReqAnswer", "deliveryDetails": [] }'
+  "type": "connReqAnswer", "deliveryDetails": [] }';

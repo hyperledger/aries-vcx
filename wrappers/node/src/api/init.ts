@@ -1,9 +1,9 @@
-import { Callback } from 'ffi-napi'
+import { Callback } from 'ffi-napi';
 
-import { VCXInternalError } from '../errors'
-import { rustAPI } from '../rustlib'
-import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { IInitVCXOptions } from './common'
+import { VCXInternalError } from '../errors';
+import { rustAPI } from '../rustlib';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { IInitVCXOptions } from './common';
 
 /**
  * Initializes VCX memory with provided configuration
@@ -27,65 +27,61 @@ import { IInitVCXOptions } from './common'
  * ```
  */
 
-export async function initVcxCore (config: string, options: IInitVCXOptions = {}) {
-  const rc = rustAPI().vcx_init_core(config)
+export async function initVcxCore(config: string, options: IInitVCXOptions = {}) {
+  const rc = rustAPI().vcx_init_core(config);
   if (rc !== 0) {
-    throw new VCXInternalError(rc)
+    throw new VCXInternalError(rc);
   }
 }
 
 /**
  * Opens wallet using information provided via initVcxCore
  */
-export async function openVcxWallet (): Promise<void> {
+export async function openVcxWallet(): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
-            (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_open_wallet(0, cb)
-              if (rc) {
-                reject(rc)
-              }
-            },
-            (resolve, reject) => Callback(
-                'void',
-                ['uint32', 'uint32'],
-                (xhandle: number, err: number) => {
-                  if (err) {
-                    reject(err)
-                    return
-                  }
-                  resolve()
-                })
-        )
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_open_wallet(0, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
 /**
  * Opens pool connection using information provided via initVcxCore
  */
-export async function openVcxPool (): Promise<void> {
+export async function openVcxPool(): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
-            (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_open_pool(0, cb)
-              if (rc) {
-                reject(rc)
-              }
-            },
-            (resolve, reject) => Callback(
-                'void',
-                ['uint32', 'uint32'],
-                (xhandle: number, err: number) => {
-                  if (err) {
-                    reject(err)
-                    return
-                  }
-                  resolve()
-                })
-        )
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_open_pool(0, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }

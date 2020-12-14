@@ -1,10 +1,10 @@
-import * as ffi from 'ffi-napi'
-import * as os from 'os'
+import * as ffi from 'ffi-napi';
+import * as os from 'os';
 
-import { FFIConfiguration, IFFIEntryPoint } from './rustlib'
+import { FFIConfiguration, IFFIEntryPoint } from './rustlib';
 
 export interface IVCXRuntimeConfig {
-  basepath?: string
+  basepath?: string;
 }
 
 // VCXRuntime is the object that interfaces with the vcx sdk functions
@@ -12,26 +12,26 @@ export interface IVCXRuntimeConfig {
 // VCXRuntimeConfg is a class that currently only contains a chosen basepath for the .so file
 // I made it a class just in case we think of more needed configs
 
-const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
-const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
+const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' };
+const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' };
 
 export class VCXRuntime {
-  public readonly ffi: IFFIEntryPoint
-  private _config: IVCXRuntimeConfig
+  public readonly ffi: IFFIEntryPoint;
+  private _config: IVCXRuntimeConfig;
 
-  constructor (config: IVCXRuntimeConfig = {}) {
-    this._config = config
+  constructor(config: IVCXRuntimeConfig = {}) {
+    this._config = config;
     // initialize FFI
-    const libraryPath = this._initializeBasepath()
-    this.ffi = ffi.Library(libraryPath, FFIConfiguration)
+    const libraryPath = this._initializeBasepath();
+    this.ffi = ffi.Library(libraryPath, FFIConfiguration);
   }
 
   private _initializeBasepath = (): string => {
-    const platform = os.platform()
-    const postfix = extension[platform.toLowerCase() as keyof typeof extension] || extension.linux
-    const libDir = libPath[platform.toLowerCase() as keyof typeof libPath] || libPath.linux
-    const library = `libvcx${postfix}`
-    const customPath = process.env.LIBVCX_PATH ? process.env.LIBVCX_PATH + library : undefined
-    return customPath || this._config.basepath || `${libDir}${library}`
-  }
+    const platform = os.platform();
+    const postfix = extension[platform.toLowerCase() as keyof typeof extension] || extension.linux;
+    const libDir = libPath[platform.toLowerCase() as keyof typeof libPath] || libPath.linux;
+    const library = `libvcx${postfix}`;
+    const customPath = process.env.LIBVCX_PATH ? process.env.LIBVCX_PATH + library : undefined;
+    return customPath || this._config.basepath || `${libDir}${library}`;
+  };
 }
