@@ -22,7 +22,7 @@ export const Logger = Struct({
 });
 
 type LoggerType = typeof Logger;
-type LoggerPtr = any;
+type LoggerPtr = Buffer & { deref: () => Buffer | LoggerType };
 
 // The _logger must in fact be instance of Struct type we generated above using buildStructType(ref)
 export function loggerToVoidPtr(_logger: LoggerType): Buffer {
