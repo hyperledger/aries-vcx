@@ -38,7 +38,7 @@ function generateTestConfig() {
   return sampleConfig;
 }
 
-export async function initVcxTestMode() {
+export async function initVcxTestMode(): Promise<void> {
   scheduleGarbageCollectionBeforeExit();
   if (!isRustApiInitialized()) {
     initRustAPI();
@@ -59,8 +59,10 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> =>
     }
   });
 
-export const sleep = (timeout: number) =>
-  new Promise((resolve, reject) => setTimeout(resolve, timeout));
+export const sleep = (timeout: number): Promise<void> =>
+  new Promise((resolve, _reject) => {
+    setTimeout(resolve, timeout);
+  });
 
 let garbageCollectionBeforeExitIsScheduled = false;
 

@@ -71,7 +71,7 @@ export const ARIES_CREDENTIAL_OFFER: string = JSON.stringify({
 });
 
 export class VCXMock {
-  public static setVcxMock(message: VCXMockMessage) {
+  public static setVcxMock(message: VCXMockMessage): void {
     rustAPI().vcx_set_next_agency_response(message);
   }
 

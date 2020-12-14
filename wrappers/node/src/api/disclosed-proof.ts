@@ -241,7 +241,9 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * data = await disclosedProof.serialize()
    * ```
    */
-  public static async deserialize(data: ISerializedData<IDisclosedProofData>) {
+  public static async deserialize(
+    data: ISerializedData<IDisclosedProofData>,
+  ): Promise<DisclosedProof> {
     try {
       const newObj = await super._deserialize<DisclosedProof>(DisclosedProof, data);
       return newObj;

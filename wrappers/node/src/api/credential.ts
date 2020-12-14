@@ -216,7 +216,9 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
    * data = credential.deserialize()
    * ```
    */
-  public static async deserialize(credentialData: ISerializedData<ICredentialStructData>) {
+  public static async deserialize(
+    credentialData: ISerializedData<ICredentialStructData>,
+  ): Promise<Credential> {
     const credential = await super._deserialize<Credential>(Credential, credentialData);
     return credential;
   }
@@ -542,7 +544,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData> {
     }
   }
 
-  protected _setHandle(handle: number) {
+  protected _setHandle(handle: number): void {
     super._setHandle(handle);
     this.paymentManager = new CredentialPaymentManager({ handle });
   }

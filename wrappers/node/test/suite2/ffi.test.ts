@@ -30,7 +30,7 @@ describe('Using the vcx ffi directly', () => {
       ffi.Callback(
         'void',
         ['uint32', 'uint32', 'uint32'],
-        (xhandle: number, err: number, connectionHandle: number) => null,
+        (_xhandle: number, _err: number, _connectionHandle: number) => null,
       ),
     );
     assert.equal(result, 0);
@@ -44,7 +44,7 @@ describe('Using the vcx ffi directly', () => {
       ffi.Callback(
         'void',
         ['uint32', 'uint32', 'uint32'],
-        (xhandle: number, err: number, connectionHandle: number) => null,
+        (_xhandle: number, _err: number, _connectionHandle: number) => null,
       ),
     );
     assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);
@@ -57,7 +57,7 @@ describe('Using the vcx ffi directly', () => {
       ffi.Callback(
         'void',
         ['uint32', 'uint32', 'string'],
-        (xhandle: number, err: number, data: string) => null,
+        (_xhandle: number, _err: number, _data: string) => null,
       ),
     );
     assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);
@@ -70,7 +70,7 @@ describe('Using the vcx ffi directly', () => {
       ffi.Callback(
         'void',
         ['uint32', 'uint32', 'uint32'],
-        (xhandle: number, err: number, state: number) => null,
+        (_xhandle: number, _err: number, _state: number) => null,
       ),
     );
     assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);

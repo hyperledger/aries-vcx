@@ -93,11 +93,11 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
     return this._schemaAttrs;
   }
 
-  get schemaId() {
+  get schemaId(): string {
     return this._schemaId;
   }
 
-  get name() {
+  get name(): string {
     return this._name;
   }
 
@@ -242,7 +242,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
    * data1 = await schema1.serialize()
    * schema2 = Schema.deserialize(data1)
    */
-  public static async deserialize(schema: ISerializedData<ISchemaSerializedData>) {
+  public static async deserialize(schema: ISerializedData<ISchemaSerializedData>): Promise<Schema> {
     const {
       data: { name, schema_id, version, data },
     } = schema;
@@ -457,7 +457,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
     }
   }
 
-  protected _setHandle(handle: number) {
+  protected _setHandle(handle: number): void {
     super._setHandle(handle);
     this.paymentManager = new SchemaPaymentManager({ handle });
   }

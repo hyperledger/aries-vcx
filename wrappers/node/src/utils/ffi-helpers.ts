@@ -17,7 +17,7 @@ export type ICreateFFICallbackPromiseCb<T> = (
 export const createFFICallbackPromise = <T>(
   fn: ICreateFFICallbackPromiseFn<T>,
   cb: ICreateFFICallbackPromiseCb<T>,
-) => {
+): Promise<T> => {
   let cbRef = null;
   // TODO: Research why registering a callback doesn't keep parent thread alive https://github.com/node-ffi/node-ffi
   const processKeepAliveTimer = setTimeout(() => undefined, maxTimeout);
@@ -28,6 +28,7 @@ export const createFFICallbackPromise = <T>(
       return res;
     })
     .catch((err) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       cbRef = null;
       clearTimeout(processKeepAliveTimer);
       throw err;

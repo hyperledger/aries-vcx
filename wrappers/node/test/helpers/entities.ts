@@ -70,21 +70,27 @@ export const dataConnectionCreate = (): IConnectionCreateData => ({
   id: `testConnectionId-${uuid.v4()}`,
 });
 
-export const connectionCreateInviterNull = async (data = dataConnectionCreate()) => {
+export const connectionCreateInviterNull = async (
+  data = dataConnectionCreate(),
+): Promise<Connection> => {
   const connection = await Connection.create(data);
   assert.notEqual(connection.handle, undefined);
   assert.equal(connection.sourceId, data.id);
   return connection;
 };
 
-export const createConnectionInviterInvited = async (data = dataConnectionCreate()) => {
+export const createConnectionInviterInvited = async (
+  data = dataConnectionCreate(),
+): Promise<Connection> => {
   const connection = await connectionCreateInviterNull(data);
   const inviteDetails = await connection.connect({ data: '{}' });
   assert.ok(inviteDetails);
   return connection;
 };
 
-export const createConnectionInviterRequested = async (data = dataConnectionCreate()) => {
+export const createConnectionInviterRequested = async (
+  data = dataConnectionCreate(),
+): Promise<Connection> => {
   const connection = await createConnectionInviterInvited(data);
   await connection.updateStateWithMessage(JSON.stringify(ARIES_CONNECTION_REQUEST));
   return connection;
@@ -114,7 +120,9 @@ export const dataCredentialDefPrepareForEndorser = (): ICredentialDefPrepareForE
   sourceId: 'testCredentialDefSourceId',
 });
 
-export const credentialDefCreate = async (data = dataCredentialDefCreate()) => {
+export const credentialDefCreate = async (
+  data = dataCredentialDefCreate(),
+): Promise<CredentialDef> => {
   const credentialDef = await CredentialDef.create(data);
   assert.notEqual(credentialDef.handle, undefined);
   assert.equal(credentialDef.sourceId, data.sourceId);
@@ -125,7 +133,7 @@ export const credentialDefCreate = async (data = dataCredentialDefCreate()) => {
 
 export const credentialDefPrepareForEndorser = async (
   data = dataCredentialDefPrepareForEndorser(),
-) => {
+): Promise<CredentialDef> => {
   const credentialDef = await CredentialDef.prepareForEndorser(data);
   assert.notEqual(credentialDef.handle, undefined);
   assert.equal(credentialDef.sourceId, data.sourceId);
@@ -144,7 +152,9 @@ export const dataCredentialCreateWithOffer = async (): Promise<ICredentialCreate
   };
 };
 
-export const credentialCreateWithOffer = async (data?: ICredentialCreateWithOffer) => {
+export const credentialCreateWithOffer = async (
+  data?: ICredentialCreateWithOffer,
+): Promise<Credential> => {
   if (!data) {
     data = await dataCredentialCreateWithOffer();
   }
@@ -163,7 +173,9 @@ export const dataCredentialCreateWithMsgId = async (): Promise<ICredentialCreate
   };
 };
 
-export const credentialCreateWithMsgId = async (data?: ICredentialCreateWithMsgId) => {
+export const credentialCreateWithMsgId = async (
+  data?: ICredentialCreateWithMsgId,
+): Promise<Credential> => {
   if (!data) {
     data = await dataCredentialCreateWithMsgId();
   }
@@ -183,7 +195,9 @@ export const dataDisclosedProofCreateWithRequest = async (): Promise<IDisclosedP
   };
 };
 
-export const disclosedProofCreateWithRequest = async (data?: IDisclosedProofCreateData) => {
+export const disclosedProofCreateWithRequest = async (
+  data?: IDisclosedProofCreateData,
+): Promise<DisclosedProof> => {
   if (!data) {
     data = await dataDisclosedProofCreateWithRequest();
   }
@@ -202,7 +216,9 @@ export const dataDisclosedProofCreateWithMsgId = async (): Promise<IDisclosedPro
   };
 };
 
-export const disclosedProofCreateWithMsgId = async (data?: IDisclosedProofCreateWithMsgIdData) => {
+export const disclosedProofCreateWithMsgId = async (
+  data?: IDisclosedProofCreateWithMsgIdData,
+): Promise<DisclosedProof> => {
   if (!data) {
     data = await dataDisclosedProofCreateWithMsgId();
   }
@@ -240,7 +256,9 @@ export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialCre
 //   sourceId: 'testCredentialSourceId'
 // })
 
-export const issuerCredentialCreate = async (_data = dataIssuerCredentialCreate()) => {
+export const issuerCredentialCreate = async (
+  _data = dataIssuerCredentialCreate(),
+): Promise<IssuerCredential> => {
   const data = await _data;
   const issuerCredential = await IssuerCredential.create(data);
   assert.notEqual(issuerCredential.handle, undefined);
@@ -262,7 +280,7 @@ export const dataProofCreate = (): IProofCreateData => ({
   sourceId: 'testProofSourceId',
 });
 
-export const proofCreate = async (data = dataProofCreate()) => {
+export const proofCreate = async (data = dataProofCreate()): Promise<Proof> => {
   const proof = await Proof.create(data);
   assert.notEqual(proof.handle, undefined);
   assert.equal(proof.sourceId, data.sourceId);
@@ -293,7 +311,7 @@ export const dataSchemaPrepareForEndorser = (): ISchemaPrepareForEndorserData =>
   sourceId: 'testSchemaSourceId',
 });
 
-export const schemaCreate = async (data = dataSchemaCreate()) => {
+export const schemaCreate = async (data = dataSchemaCreate()): Promise<Schema> => {
   const schema = await Schema.create(data);
   assert.notEqual(schema.handle, undefined);
   assert.equal(schema.sourceId, data.sourceId);
@@ -303,7 +321,9 @@ export const schemaCreate = async (data = dataSchemaCreate()) => {
   return schema;
 };
 
-export const schemaPrepareForEndorser = async (data = dataSchemaPrepareForEndorser()) => {
+export const schemaPrepareForEndorser = async (
+  data = dataSchemaPrepareForEndorser(),
+): Promise<Schema> => {
   const schema = await Schema.prepareForEndorser(data);
   assert.notEqual(schema.handle, undefined);
   assert.equal(schema.sourceId, data.sourceId);
@@ -319,7 +339,7 @@ export const dataSchemaLookup = (): ISchemaLookupData => ({
   sourceId: 'testSchemaSourceId',
 });
 
-export const schemaLookup = async (data = dataSchemaLookup()) => {
+export const schemaLookup = async (data = dataSchemaLookup()): Promise<Schema> => {
   const schema = await Schema.lookup(data);
   assert.notEqual(schema.handle, undefined);
   assert.equal(schema.sourceId, data.sourceId);

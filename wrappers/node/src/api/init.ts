@@ -3,7 +3,6 @@ import { Callback } from 'ffi-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { IInitVCXOptions } from './common';
 
 /**
  * Initializes VCX memory with provided configuration
@@ -27,7 +26,7 @@ import { IInitVCXOptions } from './common';
  * ```
  */
 
-export async function initVcxCore(config: string, options: IInitVCXOptions = {}) {
+export async function initVcxCore(config: string): Promise<void> {
   const rc = rustAPI().vcx_init_core(config);
   if (rc !== 0) {
     throw new VCXInternalError(rc);
