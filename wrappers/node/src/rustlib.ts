@@ -584,21 +584,18 @@ export interface IFFIEntryPoint {
 
 // tslint:disable object-literal-sort-keys
 export const FFIConfiguration = {
-  vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]] as const,
-  vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]] as const,
-  vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]] as const,
-  vcx_shutdown: [FFI_ERROR_CODE, [FFI_BOOL]] as const,
-  vcx_error_c_message: [FFI_STRING, [FFI_ERROR_CODE]] as const,
-  vcx_version: [FFI_STRING, []] as const,
+  vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
+  vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_shutdown: [FFI_ERROR_CODE, [FFI_BOOL]],
+  vcx_error_c_message: [FFI_STRING, [FFI_ERROR_CODE]],
+  vcx_version: [FFI_STRING, []],
   vcx_agent_provision_async: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_update_webhook_url: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ] as const,
-  vcx_mint_tokens: [FFI_VOID, [FFI_STRING_DATA, FFI_STRING_DATA]] as const,
+  vcx_update_webhook_url: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_mint_tokens: [FFI_VOID, [FFI_STRING_DATA, FFI_STRING_DATA]],
   vcx_messages_download: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -611,10 +608,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_get_ledger_author_agreement: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_get_ledger_author_agreement: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_set_active_txn_author_agreement_meta: [
     FFI_ERROR_CODE,
     [FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_UNSIGNED_LONG],
@@ -653,9 +647,9 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PAYMENT_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_wallet_set_handle: [FFI_INDY_NUMBER, [FFI_INDY_NUMBER]] as const,
-  vcx_pool_set_handle: [FFI_INDY_NUMBER, [FFI_INDY_NUMBER]] as const,
-  vcx_ledger_get_fees: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]] as const,
+  vcx_wallet_set_handle: [FFI_INDY_NUMBER, [FFI_INDY_NUMBER]],
+  vcx_pool_set_handle: [FFI_INDY_NUMBER, [FFI_INDY_NUMBER]],
+  vcx_ledger_get_fees: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_wallet_add_record: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING, FFI_STRING, FFI_STRING, FFI_STRING, FFI_CALLBACK_PTR],
@@ -696,7 +690,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_COMMAND_HANDLE, FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR],
   ],
-  vcx_wallet_import: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING, FFI_CALLBACK_PTR]] as const,
+  vcx_wallet_import: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING, FFI_CALLBACK_PTR]],
   vcx_wallet_export: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING, FFI_STRING, FFI_CALLBACK_PTR],
@@ -715,10 +709,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CONNECTION_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_connection_create: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_connection_create: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_connection_create_with_invite: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -727,7 +718,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_connection_release: [FFI_ERROR_CODE, [FFI_CONNECTION_HANDLE]] as const,
+  vcx_connection_release: [FFI_ERROR_CODE, [FFI_CONNECTION_HANDLE]],
   vcx_connection_serialize: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
@@ -861,7 +852,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
-  vcx_issuer_credential_release: [FFI_ERROR_CODE, [FFI_CREDENTIAL_HANDLE]] as const,
+  vcx_issuer_credential_release: [FFI_ERROR_CODE, [FFI_CREDENTIAL_HANDLE]],
   vcx_issuer_credential_get_payment_txn: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
@@ -880,15 +871,12 @@ export const FFIConfiguration = {
       FFI_CALLBACK_PTR,
     ],
   ],
-  vcx_proof_deserialize: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_proof_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_get_proof: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ], // tslint:disable-line
-  vcx_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]] as const,
+  vcx_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]],
   vcx_proof_send_request: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
@@ -897,10 +885,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
   ],
-  vcx_proof_serialize: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_proof_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR]],
   vcx_proof_update_state: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
@@ -913,10 +898,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_proof_get_state: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_proof_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR]],
 
   // disclosed proof
   vcx_disclosed_proof_create_with_request: [
@@ -927,7 +909,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_SOURCE_ID, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_disclosed_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]] as const,
+  vcx_disclosed_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]],
   vcx_disclosed_proof_send_proof: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
@@ -1005,7 +987,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_SOURCE_ID, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_credential_release: [FFI_ERROR_CODE, [FFI_CREDENTIAL_HANDLE]] as const,
+  vcx_credential_release: [FFI_ERROR_CODE, [FFI_CREDENTIAL_HANDLE]],
   vcx_credential_send_request: [
     FFI_ERROR_CODE,
     [
@@ -1117,7 +1099,7 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_credentialdef_release: [FFI_ERROR_CODE, [FFI_CREDENTIALDEF_HANDLE]] as const,
+  vcx_credentialdef_release: [FFI_ERROR_CODE, [FFI_CREDENTIALDEF_HANDLE]],
   vcx_credentialdef_serialize: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CALLBACK_PTR],
@@ -1156,14 +1138,14 @@ export const FFIConfiguration = {
   ],
 
   // logger
-  vcx_set_default_logger: [FFI_ERROR_CODE, [FFI_STRING]] as const,
+  vcx_set_default_logger: [FFI_ERROR_CODE, [FFI_STRING]],
   vcx_set_logger: [
     FFI_ERROR_CODE,
     [FFI_VOID_POINTER, FFI_CALLBACK_PTR, FFI_CALLBACK_PTR, FFI_CALLBACK_PTR],
   ],
 
   // mock
-  vcx_set_next_agency_response: [FFI_VOID, [FFI_UNSIGNED_INT]] as const,
+  vcx_set_next_agency_response: [FFI_VOID, [FFI_UNSIGNED_INT]],
 
   // schema
   vcx_schema_get_attributes: [
@@ -1198,15 +1180,9 @@ export const FFIConfiguration = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_SCHEMA_HANDLE, FFI_CALLBACK_PTR],
   ],
-  vcx_schema_deserialize: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ] as const,
-  vcx_schema_release: [FFI_ERROR_CODE, [FFI_SCHEMA_HANDLE]] as const,
-  vcx_schema_serialize: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_SCHEMA_HANDLE, FFI_CALLBACK_PTR],
-  ] as const,
+  vcx_schema_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_schema_release: [FFI_ERROR_CODE, [FFI_SCHEMA_HANDLE]],
+  vcx_schema_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_SCHEMA_HANDLE, FFI_CALLBACK_PTR]],
   vcx_schema_get_payment_txn: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
