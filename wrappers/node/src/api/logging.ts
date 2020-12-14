@@ -22,11 +22,18 @@ export const Logger = Struct({
 });
 
 type LoggerType = typeof Logger;
-type LoggerPtr = Buffer & { deref: () => Buffer | LoggerType };
+
+interface PtrBuffer extends Buffer {
+  // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
+  // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
+  deref: () => PtrBuffer;
+}
+
+type LoggerPtr = PtrBuffer;
 
 // The _logger must in fact be instance of Struct type we generated above using buildStructType(ref)
-export function loggerToVoidPtr(_logger: LoggerType): Buffer {
-  const _pointer = ref.alloc('void *');
+export function loggerToVoidPtr(_logger: LoggerType): PtrBuffer {
+  const _pointer = ref.alloc('void *') as PtrBuffer;
   ref.writePointer(_pointer, 0, _logger.ref());
   return _pointer;
 }
