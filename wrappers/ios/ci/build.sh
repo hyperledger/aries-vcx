@@ -7,14 +7,6 @@ export CARGO_INCREMENTAL=1
 export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
-# OpenSSL path changes with version number, so export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2n would not work correctly
-OPENSSL_PATH=/usr/local/Cellar/openssl@1.0.2t
-for i in $(ls -t $OPENSSL_PATH); do
-    export OPENSSL_VERSION=$i
-    export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
-    break
-done
-
 INDY_VERSION="v1.15.0"
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -88,6 +80,17 @@ setup() {
     brew list openssl &>/dev/null || brew install openssl
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
+
+
+    # Figure out which OPENSSL setup() has installed for us
+    OPENSSL_PATH=/usr/local/Cellar/openssl@1.1
+    for i in $(ls -t $OPENSSL_PATH); do
+        export OPENSSL_VERSION=$i
+        export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
+        break
+    done
+    echo OPENSSL_DIR = $OPENSSL_DIR
+
 
     mkdir -p $OUTPUT_DIR
 }
@@ -427,6 +430,7 @@ abspath() {
 
 # Setup environment
 setup
+
  
 # Build 3rd party libraries
 build_crypto
