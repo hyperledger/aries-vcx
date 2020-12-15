@@ -83,12 +83,7 @@ setup() {
 
 
     # Figure out which OPENSSL setup() has installed for us
-    OPENSSL_PATH=/usr/local/Cellar/openssl@1.1
-    for i in $(ls -t $OPENSSL_PATH); do
-        export OPENSSL_VERSION=$i
-        export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
-        break
-    done
+    OPENSSL_PATH=$(brew --prefix openssl)
     echo OPENSSL_DIR = $OPENSSL_DIR
 
 
