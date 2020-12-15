@@ -86,7 +86,10 @@ setup() {
     OPENSSL_DIR=$(brew --cellar openssl)
     echo OPENSSL_DIR = "$OPENSSL_DIR"
     for f in $OPENSSL_DIR; do
-      if [ -d "$f" ] && [ -f "$f/lib" ]; then
+      local ABSOLUTE_FILE_PATH="${OPENSSL_DIR}/${f}"
+      echo "Found file $ABSOLUTE_FILE_PATH"
+      if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -f "$ABSOLUTE_FILE_PATH/lib" ]; then
+        echo "Choosing file $ABSOLUTE_FILE_PATH"
         export OPENSSL_VERSION=$f
         break
       fi
