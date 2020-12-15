@@ -83,8 +83,19 @@ setup() {
 
 
     # Figure out which OPENSSL setup() has installed for us
-    OPENSSL_PATH=$(brew --cellar openssl)
-    echo OPENSSL_DIR = $OPENSSL_DIR
+    OPENSSL_DIR=$(brew --cellar openssl)
+    echo OPENSSL_DIR = "$OPENSSL_DIR"
+    for f in $OPENSSL_DIR; do
+      if [ -d "$f" ] && [ -f "$f/lib" ]; then
+        export OPENSSL_VERSION=$f
+        break
+      fi
+    done
+    echo OPENSSL_VERSION = "$OPENSSL_VERSION"
+    if [ -z "$OPENSSL_VERSION" ]; then
+      echo >&2 "Error: Failed to find a openssl installation in $OPENSSL_DIR"
+      exit 1
+    fi
 
 
     mkdir -p $OUTPUT_DIR
