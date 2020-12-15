@@ -5,6 +5,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, StateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
+import {PtrBuffer} from "./utils";
 
 /**
  *   The object of the VCX API representing a pairwise relationship with another identity owner.
@@ -184,7 +185,7 @@ export interface ISignatureData {
  */
 export type IConnectionInfo = string;
 
-export function voidPtrToUint8Array(origPtr: ref.Type, length: number): Buffer {
+export function voidPtrToUint8Array(origPtr: Buffer, length: number): Buffer {
   /**
    * Read the contents of the pointer and copy it into a new Buffer
    */
@@ -505,7 +506,7 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, detailsPtr: ref.Type, length: number) => {
+            (xHandle: number, err: number, detailsPtr: PtrBuffer, length: number) => {
               if (err) {
                 reject(err);
                 return;

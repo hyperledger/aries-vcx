@@ -6,6 +6,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { IUTXO } from './common';
 import { voidPtrToUint8Array } from './connection';
+import {PtrBuffer} from "./utils";
 
 export type PaymentAddress = string;
 export type PaymentAmount = number;
@@ -215,7 +216,7 @@ export class Wallet {
           Callback(
             'void',
             ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, detailsPtr: ref.Type, length: number) => {
+            (xHandle: number, err: number, detailsPtr: PtrBuffer, length: number) => {
               if (err) {
                 reject(err);
                 return;

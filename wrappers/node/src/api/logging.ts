@@ -4,6 +4,7 @@ import * as buildStructType from 'ref-struct-di';
 
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
+import {PtrBuffer} from "./utils";
 
 export type LogFunction = (
   level: number,
@@ -22,12 +23,6 @@ export const Logger = Struct({
 });
 
 type LoggerType = typeof Logger;
-
-interface PtrBuffer extends Buffer {
-  // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
-  // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
-  deref: () => PtrBuffer;
-}
 
 type LoggerPtr = PtrBuffer;
 
