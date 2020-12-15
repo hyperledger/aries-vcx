@@ -83,7 +83,7 @@ setup() {
 
 
     # Figure out which OPENSSL setup() has installed for us
-    OPENSSL_PATH=$(brew --prefix openssl)
+    OPENSSL_PATH=$(brew --cellar openssl)
     echo OPENSSL_DIR = $OPENSSL_DIR
 
 
