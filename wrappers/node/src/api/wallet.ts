@@ -6,7 +6,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { IUTXO } from './common';
 import { voidPtrToUint8Array } from './connection';
-import {PtrBuffer} from "./utils";
+import { PtrBuffer } from './utils';
 
 export type PaymentAddress = string;
 export type PaymentAmount = number;

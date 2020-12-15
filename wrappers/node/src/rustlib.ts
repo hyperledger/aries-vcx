@@ -583,7 +583,7 @@ export interface IFFIEntryPoint {
 }
 
 // tslint:disable object-literal-sort-keys
-export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any }  = {
+export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
   vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],

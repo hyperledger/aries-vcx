@@ -4,7 +4,7 @@ import * as buildStructType from 'ref-struct-di';
 
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import {PtrBuffer} from "./utils";
+import { PtrBuffer } from './utils';
 
 export type LogFunction = (
   level: number,

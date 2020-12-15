@@ -5,11 +5,10 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 // import { resolve } from 'url';
 
-
 export interface PtrBuffer extends Buffer {
-    // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
-    // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
-    deref: () => PtrBuffer;
+  // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
+  // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
+  deref: () => PtrBuffer;
 }
 
 export async function provisionAgent(configAgent: string): Promise<string> {

@@ -5,7 +5,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, StateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
-import {PtrBuffer} from "./utils";
+import { PtrBuffer } from './utils';
 
 /**
  *   The object of the VCX API representing a pairwise relationship with another identity owner.
