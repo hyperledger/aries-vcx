@@ -17,14 +17,14 @@ export type PaymentHandle = number;
 export interface IRecord {
   type_: string;
   id: string;
-  value: any;
-  tags_json: any;
+  value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  tags_json: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface IRecordUpdate {
   type_: string;
   id: string;
-  value: any;
+  value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface ISendTokens {

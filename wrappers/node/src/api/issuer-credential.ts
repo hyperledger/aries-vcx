@@ -89,7 +89,6 @@ export interface IIssuerCredentialData {
   source_id: string;
 }
 
-// tslint:disable max-classes-per-file
 export class IssuerCredentialPaymentManager extends PaymentManager {
   protected _getPaymentTxnFn = rustAPI().vcx_issuer_credential_get_payment_txn;
 }

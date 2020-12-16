@@ -81,7 +81,7 @@ export interface IProofData {
   state: StateType;
   name: string;
   proof_state: ProofState;
-  proof: any;
+  proof: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface IProofResponses {

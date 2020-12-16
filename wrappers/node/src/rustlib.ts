@@ -582,7 +582,7 @@ export interface IFFIEntryPoint {
   vcx_schema_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
 }
 
-// tslint:disable object-literal-sort-keys
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
   vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
@@ -875,7 +875,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_get_proof: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
-  ], // tslint:disable-line
+  ],
   vcx_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]],
   vcx_proof_send_request: [
     FFI_ERROR_CODE,

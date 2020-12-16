@@ -18,7 +18,6 @@ import { errorMessage } from '../../src/utils/error-message';
 describe('utils:', () => {
   before(() => initVcxTestMode());
 
-  // tslint:disable-next-line max-line-length
   const downloadMessagesData = {
     pairwiseDids: 'asdf',
     status: 'MS-104',

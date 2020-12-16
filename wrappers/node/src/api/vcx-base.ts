@@ -7,8 +7,9 @@ import { ISerializedData } from './common';
 export type IVCXBaseCreateFn = (cb: ICbRef) => number;
 
 export abstract class VCXBase<SerializedData> extends GCWatcher {
-  protected static async _deserialize<T extends VCXBase<any> = any, P = unknown>(
-    VCXClass: new (sourceId: string, ...args: any[]) => T,
+  protected static async _deserialize<T extends VCXBase<unknown>, P = unknown>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    VCXClass: new (sourceId: string, args?: any) => T,
     objData: ISerializedData<{ source_id: string }>,
     constructorParams?: P,
   ): Promise<T> {

@@ -3,7 +3,6 @@ build/
 test/
 src/
 tsconfig.json
-tslint.json
 
 *.map
 
