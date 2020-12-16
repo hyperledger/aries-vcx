@@ -56,7 +56,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'string'],
-            (handle: string, err: any, serializedData?: string) => {
+            (handle: string, err: number, serializedData?: string) => {
               if (err) {
                 reject(err);
                 return;

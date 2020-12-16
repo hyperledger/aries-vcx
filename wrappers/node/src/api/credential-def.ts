@@ -416,7 +416,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: CredentialDefState) => {
+            (handle: number, err: number, _state: CredentialDefState) => {
               if (err) {
                 reject(err);
               }
@@ -491,7 +491,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'string'],
-            (handle: number, err: any, x: string) => {
+            (handle: number, err: number, x: string) => {
               if (err) {
                 reject(err);
               }
@@ -519,7 +519,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, state: CredentialDefState) => {
+            (handle: number, err: number, state: CredentialDefState) => {
               if (err) {
                 reject(err);
               }

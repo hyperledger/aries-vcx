@@ -6,7 +6,7 @@ export class ConnectionTimeoutError extends Error {}
 
 export class VCXInternalError extends Error {
   public readonly vcxCode: number;
-  public readonly inheritedStackTraces: any[] = [];
+  public readonly inheritedStackTraces: string[] = [];
 
   constructor(code: number | Error) {
     super(errorMessage(code));

@@ -2,9 +2,10 @@ import * as ffi from 'ffi-napi';
 import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, StateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
+import { PtrBuffer } from './utils';
 
 /**
  *   The object of the VCX API representing a pairwise relationship with another identity owner.
@@ -184,7 +185,7 @@ export interface ISignatureData {
  */
 export type IConnectionInfo = string;
 
-export function voidPtrToUint8Array(origPtr: any, length: number): Buffer {
+export function voidPtrToUint8Array(origPtr: Buffer, length: number): Buffer {
   /**
    * Read the contents of the pointer and copy it into a new Buffer
    */
@@ -298,7 +299,14 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
 
   protected _releaseFn = rustAPI().vcx_connection_release;
   protected _updateStFn = rustAPI().vcx_connection_update_state;
-  protected _updateStFnV2 = rustAPI().vcx_connection_update_state; // TODO: Implement
+  protected _updateStFnV2 = (
+    _commandHandle: number,
+    _handle: number,
+    _connHandle: number,
+    _cb: ICbRef,
+  ): number => {
+    throw new Error('_updateStFnV2 cannot be called for a Connection object');
+  };
   protected _updateStWithMessageFn = rustAPI().vcx_connection_update_state_with_message;
   protected _getStFn = rustAPI().vcx_connection_get_state;
   protected _serializeFn = rustAPI().vcx_connection_serialize;
@@ -335,7 +343,7 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: any, _state: StateType) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
@@ -498,16 +506,16 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, details: any, length: number) => {
+            (xHandle: number, err: number, detailsPtr: PtrBuffer, length: number) => {
               if (err) {
                 reject(err);
                 return;
               }
-              if (!details) {
+              if (!detailsPtr) {
                 reject(`Connection ${this.sourceId}  returned empty buffer`);
                 return;
               }
-              const newBuffer = voidPtrToUint8Array(details, length);
+              const newBuffer = voidPtrToUint8Array(detailsPtr, length);
               resolve(newBuffer);
             },
           ),

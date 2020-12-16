@@ -1,5 +1,6 @@
 import * as ref from 'ref-napi';
 import * as StructType from 'ref-struct-di';
+import { ICbRef } from './utils/ffi-helpers';
 
 import { VCXRuntime } from './vcx';
 
@@ -57,8 +58,8 @@ export type rust_listener_handle = rust_object_handle;
 export type rust_connection_handle = rust_object_handle;
 
 export interface IFFIEntryPoint {
-  vcx_open_pool: (commandId: number, cb: any) => number;
-  vcx_open_wallet: (commandId: number, cb: any) => number;
+  vcx_open_pool: (commandId: number, cb: ICbRef) => number;
+  vcx_open_wallet: (commandId: number, cb: ICbRef) => number;
   vcx_init_core: (config: string) => number;
 
   vcx_shutdown: (deleteIndyInfo: boolean) => number;
@@ -70,22 +71,22 @@ export interface IFFIEntryPoint {
     status: string,
     uids: string,
     pairwiseDids: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_v2_messages_download: (
     commandId: number,
     status: string,
     uids: string,
     pairwiseDids: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_messages_update_status: (
     commandId: number,
     status: string,
     msgIds: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_get_ledger_author_agreement: (commandId: number, cb: any) => number;
+  vcx_get_ledger_author_agreement: (commandId: number, cb: ICbRef) => number;
   vcx_set_active_txn_author_agreement_meta: (
     text: string | undefined | null,
     version: string | undefined | null,
@@ -98,15 +99,15 @@ export interface IFFIEntryPoint {
   vcx_wallet_get_token_info: (
     commandId: number,
     payment: number | undefined | null,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_wallet_create_payment_address: (commandId: number, seed: string | null, cb: any) => number;
+  vcx_wallet_create_payment_address: (commandId: number, seed: string | null, cb: ICbRef) => number;
   vcx_wallet_sign_with_address: (
     commandID: number,
     address: string,
     message: number,
     messageLen: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_verify_with_address: (
     commandID: number,
@@ -115,14 +116,14 @@ export interface IFFIEntryPoint {
     messageLen: number,
     signature: number,
     signatureLen: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_send_tokens: (
     commandId: number,
     payment: number,
     tokens: string,
     recipient: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_add_record: (
     commandId: number,
@@ -130,112 +131,117 @@ export interface IFFIEntryPoint {
     id: string,
     value: string,
     tags: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_update_record_value: (
     commandId: number,
     type: string,
     id: string,
     value: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_update_record_tags: (
     commandId: number,
     type: string,
     id: string,
     tags: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_add_record_tags: (
     commandId: number,
     type: string,
     id: string,
     tags: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_delete_record_tags: (
     commandId: number,
     type: string,
     id: string,
     tagsList: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_wallet_delete_record: (commandId: number, type: string, id: string, cb: any) => number;
+  vcx_wallet_delete_record: (commandId: number, type: string, id: string, cb: ICbRef) => number;
   vcx_wallet_get_record: (
     commandId: number,
     type: string,
     id: string,
     options: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_open_search: (
     commandId: number,
     type: string,
     query: string,
     options: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_wallet_close_search: (commandId: number, handle: number, cb: any) => number;
+  vcx_wallet_close_search: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_wallet_search_next_records: (
     commandId: number,
     handle: number,
     count: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_wallet_set_handle: (handle: number) => void;
-  vcx_ledger_get_fees: (commandId: number, cb: any) => number;
-  vcx_agent_provision_async: (commandId: number, config: string, cb: any) => number;
-  vcx_wallet_import: (commandId: number, config: string, cb: any) => number;
-  vcx_wallet_export: (commandId: number, importPath: string, backupKey: string, cb: any) => number;
+  vcx_ledger_get_fees: (commandId: number, cb: ICbRef) => number;
+  vcx_agent_provision_async: (commandId: number, config: string, cb: ICbRef) => number;
+  vcx_wallet_import: (commandId: number, config: string, cb: ICbRef) => number;
+  vcx_wallet_export: (
+    commandId: number,
+    importPath: string,
+    backupKey: string,
+    cb: ICbRef,
+  ) => number;
   vcx_wallet_validate_payment_address: (
     commandId: number,
     paymentAddress: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_update_webhook_url: (commandId: number, webhookUrl: string, cb: any) => number;
+  vcx_update_webhook_url: (commandId: number, webhookUrl: string, cb: ICbRef) => number;
   vcx_pool_set_handle: (handle: number) => void;
-  vcx_endorse_transaction: (commandId: number, transaction: string, cb: any) => number;
+  vcx_endorse_transaction: (commandId: number, transaction: string, cb: ICbRef) => number;
 
   // connection
-  vcx_connection_delete_connection: (commandId: number, handle: number, cb: any) => number;
-  vcx_connection_connect: (commandId: number, handle: number, data: string, cb: any) => number;
-  vcx_connection_create: (commandId: number, data: string, cb: any) => number;
+  vcx_connection_delete_connection: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_connection_connect: (commandId: number, handle: number, data: string, cb: ICbRef) => number;
+  vcx_connection_create: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_connection_create_with_invite: (
     commandId: number,
     data: string,
     invite: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_connection_deserialize: (commandId: number, data: string, cb: any) => number;
+  vcx_connection_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_connection_release: (handle: number) => number;
-  vcx_connection_serialize: (commandId: number, handle: number, cb: any) => number;
-  vcx_connection_update_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_connection_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_connection_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_update_state_with_message: (
     commandId: number,
     handle: number,
     message: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_connection_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_connection_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_invite_details: (
     commandId: number,
     handle: number,
     abbreviated: boolean,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_connection_send_message: (
     commandId: number,
     handle: number,
     msg: string,
     sendMsgOptions: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_connection_sign_data: (
     commandId: number,
     handle: number,
     data: number,
     dataLength: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_connection_verify_signature: (
     commandId: number,
@@ -244,47 +250,47 @@ export interface IFFIEntryPoint {
     dataLength: number,
     signature: number,
     signatureLength: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_connection_send_ping: (
     commandId: number,
     handle: number,
     comment: string | null | undefined,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_connection_send_discovery_features: (
     commandId: number,
     handle: number,
     query: string | null | undefined,
     comment: string | null | undefined,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_connection_get_pw_did: (commandId: number, handle: number, cb: any) => number;
-  vcx_connection_get_their_pw_did: (commandId: number, handle: number, cb: any) => number;
-  vcx_connection_info: (commandId: number, handle: number, cb: any) => number;
+  vcx_connection_get_pw_did: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_connection_get_their_pw_did: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_connection_info: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number;
-  vcx_issuer_credential_deserialize: (commandId: number, data: string, cb: any) => number;
-  vcx_issuer_credential_serialize: (commandId: number, handle: number, cb: any) => number;
-  vcx_issuer_credential_update_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_issuer_credential_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_issuer_credential_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_issuer_credential_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_v2_issuer_credential_update_state: (
     commandId: number,
     handle: number,
     connHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_issuer_credential_update_state_with_message: (
     commandId: number,
     handle: number,
     message: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_issuer_credential_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_issuer_credential_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_credential_get_rev_reg_id: (
     commandId: number,
     credentialHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_issuer_create_credential: (
     commandId: number,
@@ -294,34 +300,34 @@ export interface IFFIEntryPoint {
     attr: string,
     credentialName: string,
     price: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: any) => number;
-  vcx_issuer_revoke_credential_local: (commandId: number, handle: number, cb: any) => number;
+  vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_issuer_revoke_credential_local: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_send_credential: (
     commandId: number,
     credentialHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_issuer_get_credential_msg: (
     commandId: number,
     credentialHandle: number,
     myPwDid: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_issuer_send_credential_offer: (
     commandId: number,
     credentialHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_issuer_get_credential_offer_msg: (
     commandId: number,
     credentialHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_issuer_credential_get_payment_txn: (commandId: number, handle: number, cb: any) => number;
+  vcx_issuer_credential_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // proof
   vcx_proof_create: (
@@ -331,101 +337,105 @@ export interface IFFIEntryPoint {
     predicates: string,
     revocationInterval: string,
     name: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_proof_deserialize: (commandId: number, data: string, cb: any) => number;
+  vcx_proof_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_get_proof: (
     commandId: number,
     proofHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_proof_release: (handle: number) => number;
   vcx_proof_send_request: (
     commandId: number,
     proofHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_proof_get_request_msg: (commandId: number, proofHandle: number, cb: any) => number;
-  vcx_proof_serialize: (commandId: number, handle: number, cb: any) => number;
-  vcx_proof_update_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_proof_get_request_msg: (commandId: number, proofHandle: number, cb: ICbRef) => number;
+  vcx_proof_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_proof_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_v2_proof_update_state: (
     commandId: number,
     handle: number,
     connHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_proof_update_state_with_message: (
     commandId: number,
     handle: number,
     message: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_proof_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_proof_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // disclosed proof
   vcx_disclosed_proof_create_with_request: (
     commandId: number,
     sourceId: string,
     req: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_create_with_msgid: (
     commandId: number,
     sourceId: string,
     connectionHandle: number,
     msgId: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_release: (handle: number) => number;
   vcx_disclosed_proof_send_proof: (
     commandId: number,
     proofHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_reject_proof: (
     commandId: number,
     proofHandle: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_disclosed_proof_get_proof_msg: (commandId: number, handle: number, cb: any) => number;
-  vcx_disclosed_proof_get_reject_msg: (commandId: number, handle: number, cb: any) => number;
-  vcx_disclosed_proof_serialize: (commandId: number, handle: number, cb: any) => number;
-  vcx_disclosed_proof_deserialize: (commandId: number, data: string, cb: any) => number;
-  vcx_disclosed_proof_update_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_disclosed_proof_get_proof_msg: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_disclosed_proof_get_reject_msg: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_disclosed_proof_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_disclosed_proof_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_disclosed_proof_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_v2_disclosed_proof_update_state: (
     commandId: number,
     handle: number,
     connHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_update_state_with_message: (
     commandId: number,
     handle: number,
     message: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_disclosed_proof_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_disclosed_proof_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_disclosed_proof_get_requests: (
     commandId: number,
     connectionHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_disclosed_proof_retrieve_credentials: (commandId: number, handle: number, cb: any) => number;
+  vcx_disclosed_proof_retrieve_credentials: (
+    commandId: number,
+    handle: number,
+    cb: ICbRef,
+  ) => number;
   vcx_disclosed_proof_get_proof_request_attachment: (
     commandId: number,
     handle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_generate_proof: (
     commandId: number,
     handle: number,
     selectedCreds: string,
     selfAttestedAttrs: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_disclosed_proof_decline_presentation_request: (
     commandId: number,
@@ -433,7 +443,7 @@ export interface IFFIEntryPoint {
     connectionHandle: number,
     reason: string | undefined | null,
     proposal: string | undefined | null,
-    cb: any,
+    cb: ICbRef,
   ) => number;
 
   // credential
@@ -441,14 +451,14 @@ export interface IFFIEntryPoint {
     commandId: number,
     sourceId: string,
     offer: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_credential_create_with_msgid: (
     commandId: number,
     sourceId: string,
     connectionHandle: number,
     msgId: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_credential_release: (handle: number) => number;
   vcx_credential_send_request: (
@@ -456,7 +466,7 @@ export interface IFFIEntryPoint {
     handle: number,
     connectionHandle: number,
     payment: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_credential_get_request_msg: (
     commandId: number,
@@ -464,36 +474,36 @@ export interface IFFIEntryPoint {
     myPwDid: string,
     theirPwDid: string | undefined | null,
     payment: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_credential_serialize: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_deserialize: (commandId: number, data: string, cb: any) => number;
-  vcx_credential_update_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_credential_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_credential_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_v2_credential_update_state: (
     commandId: number,
     handle: number,
     connHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_credential_update_state_with_message: (
     commandId: number,
     handle: number,
     message: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_credential_get_state: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_offers: (commandId: number, connectionHandle: number, cb: any) => number;
-  vcx_credential_get_attributes: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_attachment: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_tails_location: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_tails_hash: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_rev_reg_id: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_payment_info: (commandId: number, handle: number, cb: any) => number;
-  vcx_credential_get_payment_txn: (commandId: number, handle: number, cb: any) => number;
+  vcx_credential_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_offers: (commandId: number, connectionHandle: number, cb: ICbRef) => number;
+  vcx_credential_get_attributes: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_attachment: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_tails_location: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_payment_info: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credential_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // logger
   vcx_set_default_logger: (level: string) => number;
-  vcx_set_logger: (context: any, enabled: any, logFn: any, flush: any) => number;
+  vcx_set_logger: (context: Buffer, enabled: ICbRef, logFn: ICbRef, flush: ICbRef) => number;
 
   // mock
   vcx_set_next_agency_response: (messageIndex: number) => void;
@@ -508,7 +518,7 @@ export interface IFFIEntryPoint {
     tag: string,
     config: string,
     payment: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_credentialdef_prepare_for_endorser: (
     commandId: number,
@@ -519,31 +529,31 @@ export interface IFFIEntryPoint {
     tag: string,
     config: string,
     endorser: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_credentialdef_deserialize: (commandId: number, data: string, cb: any) => number;
-  vcx_credentialdef_serialize: (commandId: number, handle: number, cb: any) => number;
+  vcx_credentialdef_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_credentialdef_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_release: (handle: number) => number;
-  vcx_credentialdef_get_cred_def_id: (commandId: number, handle: number, cb: any) => string;
-  vcx_credentialdef_get_payment_txn: (commandId: number, handle: number, cb: any) => number;
-  vcx_credentialdef_update_state: (commandId: number, handle: number, cb: any) => number;
-  vcx_credentialdef_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_credentialdef_get_cred_def_id: (commandId: number, handle: number, cb: ICbRef) => string;
+  vcx_credentialdef_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credentialdef_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credentialdef_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_rotate_rev_reg_def: (
     commandId: number,
     handle: number,
     details: string,
-    cb: any,
+    cb: ICbRef,
   ) => string;
-  vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: any) => number;
-  vcx_credentialdef_get_tails_hash: (commandId: number, handle: number, cb: any) => number;
-  vcx_credentialdef_get_rev_reg_id: (commandId: number, handle: number, cb: any) => number;
+  vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credentialdef_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_credentialdef_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // schema
   vcx_schema_get_attributes: (
     commandId: number,
     sourceId: string,
     schemaId: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_schema_create: (
     commandId: number,
@@ -552,7 +562,7 @@ export interface IFFIEntryPoint {
     version: string,
     schemaData: string,
     paymentHandle: number,
-    cb: any,
+    cb: ICbRef,
   ) => number;
   vcx_schema_prepare_for_endorser: (
     commandId: number,
@@ -561,15 +571,15 @@ export interface IFFIEntryPoint {
     version: string,
     schemaData: string,
     endorser: string,
-    cb: any,
+    cb: ICbRef,
   ) => number;
-  vcx_schema_get_schema_id: (commandId: number, handle: number, cb: any) => number;
-  vcx_schema_deserialize: (commandId: number, data: string, cb: any) => number;
-  vcx_schema_serialize: (commandId: number, handle: number, cb: any) => number;
+  vcx_schema_get_schema_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_schema_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_schema_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_schema_release: (handle: number) => number;
-  vcx_schema_get_payment_txn: (commandId: number, handle: number, cb: any) => number;
-  vcx_schema_update_state: (commandId: number, handle: number, cb: any) => number;
-  vcx_schema_get_state: (commandId: number, handle: number, cb: any) => number;
+  vcx_schema_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_schema_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_schema_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
 }
 
 // tslint:disable object-literal-sort-keys
