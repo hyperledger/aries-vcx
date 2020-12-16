@@ -58,7 +58,7 @@ export interface ICredentialDefDataObj {
   ref: number;
   origin: string;
   signature_type: string;
-  data: any;
+  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface ICredentialDefParams {

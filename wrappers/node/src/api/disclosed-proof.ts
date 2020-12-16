@@ -89,14 +89,14 @@ export interface IRetrievedCreds {
   attrs: {
     [index: string]: ICredData[];
   };
-  predicates: any;
+  predicates: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface ICredData {
   cred_info: {
-    [index: string]: any;
+    [index: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
-  interval: any;
+  interval: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
@@ -123,7 +123,7 @@ export interface IDeclinePresentationRequestData {
   // Human-readable string that explain the reason of decline
   reason?: string;
   // The proposed format of presentation request
-  proposal?: any;
+  proposal?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
