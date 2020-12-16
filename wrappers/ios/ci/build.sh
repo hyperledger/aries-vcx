@@ -38,19 +38,18 @@ setup() {
         exit 1
     fi
 
-
-    # github actions issue is causing "brew update" to fail
-    # provided temporary workaround:
-    # https://github.com/actions/virtual-environments/issues/1811#issuecomment-708480190
-    brew uninstall openssl@1.0.2t || true
-    brew uninstall openssl@1.0.2n || true
-    brew uninstall python@2.7.17
-    brew untap local/openssl
-    brew untap local/python2
-    brew cask install xquartz
-    brew update
-    brew upgrade
-    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
+#
+#    # github actions issue is causing "brew update" to fail
+#    # provided temporary workaround:
+#    # https://github.com/actions/virtual-environments/issues/1811#issuecomment-708480190
+#    brew uninstall openssl@1.0.2t
+#    brew uninstall python@2.7.17
+#    brew untap local/openssl
+#    brew untap local/python2
+#    brew cask install xquartz
+#    brew update
+#    brew upgrade
+#    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
 
 #    echo "Update Homebrew"
 #    brew doctor || 1
