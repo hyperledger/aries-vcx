@@ -875,7 +875,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_get_proof: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
-  ], // tslint:disable-line
+  ],
   vcx_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]],
   vcx_proof_send_request: [
     FFI_ERROR_CODE,

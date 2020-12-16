@@ -80,7 +80,6 @@ export enum CredentialDefState {
   Published = 1,
 }
 
-// tslint:disable max-classes-per-file
 export class CredentialDefPaymentManager extends PaymentManager {
   protected _getPaymentTxnFn = rustAPI().vcx_credentialdef_get_payment_txn;
 }

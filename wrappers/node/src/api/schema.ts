@@ -83,7 +83,6 @@ export enum SchemaState {
   Published = 1,
 }
 
-// tslint:disable max-classes-per-file
 export class SchemaPaymentManager extends PaymentManager {
   protected _getPaymentTxnFn = rustAPI().vcx_schema_get_payment_txn;
 }

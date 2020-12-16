@@ -6,7 +6,6 @@ import { Logger, loggerFunction, loggerToVoidPtr, setLogger } from 'src';
 import { initRustAPI } from '../../src/rustlib';
 import { errorMessage } from '../../src/utils/error-message';
 
-/* tslint:disable:no-console */
 describe('Void Pointer: ', () => {
   it('success: A Logger Class can be cast to a C void pointer', () => {
     let count = 0;

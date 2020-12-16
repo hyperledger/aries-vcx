@@ -11,7 +11,6 @@ Make sure you have these packages installed:
 
 * StandardJS
 * Typescript
-* TSLint
 
 
 Also this has a dependency on:

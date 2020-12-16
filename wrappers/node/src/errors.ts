@@ -1,7 +1,6 @@
 import { VCXCode } from './api/common';
 import { errorMessage } from './utils/error-message';
 
-// tslint:disable max-classes-per-file
 export class ConnectionTimeoutError extends Error {}
 
 export class VCXInternalError extends Error {

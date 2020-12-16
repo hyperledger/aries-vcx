@@ -97,7 +97,6 @@ export interface ICredentialGetRequestMessageData {
   payment: number;
 }
 
-// tslint:disable max-classes-per-file
 export class CredentialPaymentManager extends PaymentManager {
   protected _getPaymentTxnFn = rustAPI().vcx_credential_get_payment_txn;
 }

@@ -117,7 +117,6 @@ let pointer;
  * ```
  *
  */
-/* tslint:disable:no-empty */
 export function setLogger(userLogFn: LogFunction): void {
   logger.logFn = userLogFn;
   logger.flushFn = () => {};

@@ -7,7 +7,6 @@ import '../module-resolver-helper';
 const testConfig = {
   agency_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
   remote_to_sdk_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
-  // tslint:disable-next-line:object-literal-sort-keys
   link_secret_alias: 'main',
   protocol_version: '2',
   exported_wallet_path: '/var/folders/libvcx_nodetest/sample.wallet',
