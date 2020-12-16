@@ -235,10 +235,7 @@ jobs:
         xcodebuild -version
     - name: Build iOS wrapper
       run: |
-          ./wrappers/ios/ci/build.sh || true
-          echo START OF CAT
-          cat /tmp/artifacts/OpenSSL-for-iPhone/bin/iPhoneSimulator13.7-x86_64.sdk/build-openssl-1.0.2t.log
-          echo END OF CAT
+          ./wrappers/ios/ci/build.sh
     - uses: actions/upload-artifact@v2
       with:
         name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
