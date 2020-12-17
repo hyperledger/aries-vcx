@@ -13,6 +13,16 @@ SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
 INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
 
+# OpenSSL path changes with version number, so export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2n would not work correctly
+ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl*
+brew list openssl
+brew info openssl
+brew install openssl
+ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl*
+brew info openssl
+brew list openssl
+
+
 setup() {
     echo "Setup rustup"
     rustup default 1.45.2
@@ -438,35 +448,35 @@ abspath() {
     fi
 }
 
-# Setup environment
-setup
-
- 
-# Build 3rd party libraries
-build_crypto
-build_libsodium
-build_libzmq
-
-# Extract architectures from fat files into non-fat files
-extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
-extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
-
-# Build libindy
-checkout_indy_sdk
-build_libindy
-copy_libindy_architectures
-
-# Build vcx
-build_libvcx
-copy_libvcx_architectures
-
-# Copy libraries to combine
-copy_libs_to_combine
-
-# Combine libs by arch and merge libs to single fat binary
-combine_libs libvcx_all
-
-# Build vcx.framework
-build_vcx_framework libvcx_all
+## Setup environment
+#setup
+#
+#
+## Build 3rd party libraries
+#build_crypto
+#build_libsodium
+#build_libzmq
+#
+## Extract architectures from fat files into non-fat files
+#extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
+#extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
+#extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
+#extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
+#
+## Build libindy
+#checkout_indy_sdk
+#build_libindy
+#copy_libindy_architectures
+#
+## Build vcx
+#build_libvcx
+#copy_libvcx_architectures
+#
+## Copy libraries to combine
+#copy_libs_to_combine
+#
+## Combine libs by arch and merge libs to single fat binary
+#combine_libs libvcx_all
+#
+## Build vcx.framework
+#build_vcx_framework libvcx_all
