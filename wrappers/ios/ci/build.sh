@@ -8,12 +8,6 @@ export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
 # OpenSSL path changes with version number, so export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2n would not work correctly
-OPENSSL_PATH=/usr/local/Cellar/openssl@1.1
-for i in $(ls -t $OPENSSL_PATH); do
-    export OPENSSL_VERSION=$i
-    export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
-    break
-done
 
 INDY_VERSION="v1.15.0"
 REPO_DIR=$PWD
@@ -50,14 +44,14 @@ setup() {
     # github actions issue is causing "brew update" to fail
     # provided temporary workaround:
     # https://github.com/actions/virtual-environments/issues/1811#issuecomment-708480190
-    brew uninstall openssl@1.0.2t
-    brew uninstall python@2.7.17
-    brew untap local/openssl
-    brew untap local/python2
-    brew cask install xquartz
-    brew update
-    brew upgrade
-    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
+#    brew uninstall openssl@1.0.2t
+#    brew uninstall python@2.7.17
+#    brew untap local/openssl
+#    brew untap local/python2
+#    brew cask install xquartz
+#    brew update
+#    brew upgrade
+#    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
 
 #    echo "Update Homebrew"
 #    brew doctor || 1
@@ -76,6 +70,15 @@ setup() {
 #      sleep 5;
 #    done
 
+#    export OPENSSL_VERSION=1.1.1i
+#    export OPENSSL_DIR=/usr/local/Cellar/openssl@1.1
+#    export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
+    brew info openssl
+    brew list openssl &>/dev/null || brew install openssl
+    ls -lah /usr/local/Cellar/
+    ls -lah /usr/local/Cellar/openssl@1.1
+    ls -lah /usr/local/Cellar/openssl@1.1/1.1.1i
+
     echo "Install required native libraries and utilities"
     which pkg-config &>/dev/null || brew install pkg-config
     # Libsodium version<1.0.15 is required
@@ -85,7 +88,6 @@ setup() {
     which cmake &>/dev/null || brew install cmake
     which wget &>/dev/null || brew install wget
     which truncate &>/dev/null || brew install truncate
-    brew list openssl &>/dev/null || brew install openssl
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
 
@@ -100,7 +102,7 @@ build_crypto() {
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
-        ./build-libssl.sh --version=$OPENSSL_VERSION
+        ./build-libssl.sh --version="1.1.1i"
     popd
 }
 
