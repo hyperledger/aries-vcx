@@ -14,11 +14,11 @@ OUTPUT_DIR=/tmp/artifacts
 INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
 
 # OpenSSL path changes with version number, so export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2n would not work correctly
-ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl*
+ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl || true
 brew list openssl
 brew info openssl
 brew install openssl
-ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl*
+ls -laR OPENSSL_PATH=/usr/local/Cellar/openssl
 brew info openssl
 brew list openssl
 
