@@ -590,6 +590,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.15.0", note = "Use vcx_disclosed_proof_update_state_v2_with_message instead.")]
 pub extern fn vcx_disclosed_proof_update_state_with_message(command_handle: CommandHandle,
                                                             proof_handle: u32,
                                                             message: *const c_char,
@@ -609,13 +610,70 @@ pub extern fn vcx_disclosed_proof_update_state_with_message(command_handle: Comm
 
     spawn(move || {
         match disclosed_proof::update_state(proof_handle, Some(&message), None) {
-            Ok(s) => {
+            Ok(state) => {
                 trace!("vcx_disclosed_proof_update_state__with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, s, source_id);
-                cb(command_handle, error::SUCCESS.code_num, s)
+                       command_handle, error::SUCCESS.message, state, source_id);
+                cb(command_handle, error::SUCCESS.code_num, state)
             }
             Err(e) => {
                 error!("vcx_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, e, 0, source_id);
+                cb(command_handle, e.into(), 0)
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
+/// Checks for any state change from the given message and updates the state attribute
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// proof_handle: Credential handle that was provided during creation. Used to identify disclosed proof object
+///
+/// message: message to process for state changes
+///
+/// cb: Callback that provides most current state of the disclosed proof and error status of request
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_disclosed_proof_update_state_v2_with_message(command_handle: CommandHandle,
+                                                            proof_handle: u32,
+                                                            connection_handle: u32,
+                                                            message: *const c_char,
+                                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_disclosed_proof_update_state_v2_with_message >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+
+    if !disclosed_proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
+    }
+
+    let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_disclosed_proof_update_state_v2_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
+           command_handle, proof_handle, source_id);
+
+    spawn(move || {
+        match disclosed_proof::update_state(proof_handle, Some(&message), Some(connection_handle)) {
+            Ok(state) => {
+                trace!("vcx_disclosed_proof_update_state_v2_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, error::SUCCESS.message, state, source_id);
+                cb(command_handle, error::SUCCESS.code_num, state)
+            }
+            Err(e) => {
+                error!("vcx_disclosed_proof_update_state_v2_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, e, 0, source_id);
                 cb(command_handle, e.into(), 0)
             }
