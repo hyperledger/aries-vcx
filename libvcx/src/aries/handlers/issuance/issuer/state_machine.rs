@@ -37,25 +37,6 @@ pub struct RevocationInfoV1 {
 }
 
 impl IssuerState {
-    pub fn get_connection_handle(&self) -> u32 {
-        match self {
-            IssuerState::Initial(_) => 0,
-            IssuerState::OfferSent(state) => state.connection_handle,
-            IssuerState::RequestReceived(state) => state.connection_handle,
-            IssuerState::CredentialSent(state) => state.connection_handle,
-            IssuerState::Finished(_) => 0
-        }
-    }
-
-    pub fn set_connection_handle(&mut self, connection_handle: u32) {
-        match self {
-            IssuerState::OfferSent(state) => { state.connection_handle = connection_handle; }
-            IssuerState::RequestReceived(state) => { state.connection_handle = connection_handle; }
-            IssuerState::CredentialSent(state) => { state.connection_handle = connection_handle; }
-            _ => {}
-        }
-    }
-
     pub fn thread_id(&self) -> String {
         match self {
             IssuerState::Initial(_) => String::new(),
@@ -132,14 +113,6 @@ impl IssuerSM {
         rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
     }
 
-    pub fn get_connection_handle(&self) -> u32 {
-        self.state.get_connection_handle()
-    }
-
-    pub fn set_connection_handle(&mut self, conn_handle: u32) {
-        self.state.set_connection_handle(conn_handle)
-    }
-
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Issuer::find_message_to_handle >>> messages: {:?}", messages);
 
@@ -212,13 +185,13 @@ impl IssuerSM {
         }
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage) -> VcxResult<IssuerSM> {
+    pub fn handle_message(self, cim: CredentialIssuanceMessage, connection_handle: u32) -> VcxResult<IssuerSM> {
         trace!("IssuerSM::handle_message >>> cim: {:?}", cim);
 
         let IssuerSM { state, source_id } = self;
         let state = match state {
             IssuerState::Initial(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialInit(connection_handle, comment) => {
+                CredentialIssuanceMessage::CredentialInit(comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
                         .set_offers_attach(&cred_offer)?
@@ -241,7 +214,7 @@ impl IssuerSM {
                         .set_comment(String::from("CredentialProposal is not supported"))
                         .set_thread_id(&state_data.thread_id);
 
-                    send_message(state_data.connection_handle, problem_report.to_a2a_message())?;
+                    send_message(connection_handle, problem_report.to_a2a_message())?;
                     IssuerState::Finished((state_data, problem_report).into())
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
@@ -253,7 +226,7 @@ impl IssuerSM {
                 }
             },
             IssuerState::RequestReceived(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialSend(connection_handle) => {
+                CredentialIssuanceMessage::CredentialSend() => {
                     let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data);
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
@@ -266,7 +239,7 @@ impl IssuerSM {
                                 .set_comment(err.to_string())
                                 .set_thread_id(&state_data.thread_id);
 
-                            send_message(state_data.connection_handle, problem_report.to_a2a_message())?;
+                            send_message(connection_handle, problem_report.to_a2a_message())?;
                             IssuerState::Finished((state_data, problem_report).into())
                         }
                     }
@@ -383,21 +356,21 @@ pub mod test {
 
     impl IssuerSM {
         fn to_offer_sent_state(mut self) -> IssuerSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
             self
         }
 
         fn to_request_received_state(mut self) -> IssuerSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> IssuerSM {
             let conn_handle = mock_connection();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(conn_handle, None)).unwrap();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
             self
         }
     }
@@ -436,7 +409,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
 
             assert_match!(IssuerState::OfferSent(_), issuer_sm.state);
         }
@@ -448,10 +421,10 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), mock_connection()).unwrap();
             assert_match!(IssuerState::Initial(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
             assert_match!(IssuerState::Initial(_), issuer_sm.state);
         }
 
@@ -461,8 +434,8 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
 
             assert_match!(IssuerState::RequestReceived(_), issuer_sm.state);
         }
@@ -473,8 +446,8 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), mock_connection()).unwrap();
 
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -486,8 +459,8 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), mock_connection()).unwrap();
 
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -499,8 +472,8 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), mock_connection()).unwrap();
 
             assert_match!(IssuerState::OfferSent(_), issuer_sm.state);
         }
@@ -512,9 +485,9 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(conn_handle, None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
 
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Success.code(), issuer_sm.credential_status());
@@ -527,9 +500,9 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(conn_handle, None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(CredentialRequest::create())).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(CredentialRequest::create()), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
 
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -542,14 +515,14 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(conn_handle, None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), mock_connection()).unwrap();
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
         }
 
@@ -562,17 +535,17 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             let conn_handle = mock_connection();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(conn_handle, None)).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(conn_handle)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(mock_connection(), None)).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential())).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), mock_connection()).unwrap();
             assert_match!(IssuerState::Finished(_), issuer_sm.state);
         }
     }

@@ -83,7 +83,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
     Ok((handle, offer))
 }
 
-pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |credential| {
         trace!("credential::update_state >>> ");
 
@@ -93,17 +93,15 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Optio
             let message: A2AMessage = serde_json::from_str(&message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
 
-            credential.step(message.into())?;
+            credential.step(message.into(), connection_handle)?;
             return Ok(credential.get_status());
         }
-
-        let conn_handle = credential.maybe_update_connection_handle(connection_handle);
 
         let messages = connection::get_messages(conn_handle)?;
 
         match credential.find_message_to_handle(messages) {
             Some((uid, msg)) => {
-                credential.step(msg.into())?;
+                credential.step(msg.into(), connection_handle)?;
                 connection::update_message_status(conn_handle, uid)?;
                 Ok(credential.get_status())
             }
@@ -274,7 +272,7 @@ pub mod tests {
     use crate::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
     use crate::error::VcxErrorKind;
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use crate::utils::mockdata::mockdata_credex;
 
     use super::*;

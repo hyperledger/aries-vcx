@@ -6,8 +6,7 @@ use crate::aries::messages::status::Status;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {
     pub req_meta: String,
-    pub cred_def_json: String,
-    pub connection_handle: u32,
+    pub cred_def_json: String
 }
 
 impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHolderState {

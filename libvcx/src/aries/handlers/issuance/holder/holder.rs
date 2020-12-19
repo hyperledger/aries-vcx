@@ -22,7 +22,7 @@ impl Holder {
     }
 
     pub fn send_request(&mut self, connection_handle: u32) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialRequestSend(connection_handle))
+        self.step(CredentialIssuanceMessage::CredentialRequestSend(), connection_handle)
     }
 
     pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> u32 {
@@ -79,8 +79,8 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().handle_message(message)?;
+    pub fn step(&mut self, message: CredentialIssuanceMessage, connection_handle: u32) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().handle_message(message, connection_handle)?;
         Ok(())
     }
 

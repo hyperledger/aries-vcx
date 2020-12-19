@@ -35,14 +35,13 @@ impl From<InitialState> for FinishedState {
 }
 
 impl From<(InitialState, String, u32, MessageId)> for OfferSentState {
-    fn from((state, offer, connection_handle, sent_id): (InitialState, String, u32, MessageId)) -> Self {
+    fn from((state, offer, sent_id): (InitialState, String, u32, MessageId)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,
             cred_data: state.credential_json,
             rev_reg_id: state.rev_reg_id,
             tails_file: state.tails_file,
-            connection_handle,
             thread_id: sent_id.0,
         }
     }

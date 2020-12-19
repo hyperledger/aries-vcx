@@ -11,12 +11,11 @@ pub struct OfferReceivedState {
 }
 
 impl From<(OfferReceivedState, String, String, u32)> for RequestSentState {
-    fn from((_state, req_meta, cred_def_json, connection_handle): (OfferReceivedState, String, String, u32)) -> Self {
+    fn from((_state, req_meta, cred_def_json): (OfferReceivedState, String, String, u32)) -> Self {
         trace!("SM is now in RequestSent state");
         RequestSentState {
             req_meta,
-            cred_def_json,
-            connection_handle,
+            cred_def_json
         }
     }
 }

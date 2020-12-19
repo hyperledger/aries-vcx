@@ -240,17 +240,17 @@ pub mod test {
                                                                                  credential_data,
                                                                                  0).unwrap();
             issuer_credential::send_credential_offer(self.credential_handle, self.connection_handle, None).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
         }
 
         pub fn send_credential(&self) {
             self.activate();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(3, issuer_credential::get_state(self.credential_handle).unwrap());
 
             issuer_credential::send_credential(self.credential_handle, self.connection_handle).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
         }
@@ -376,7 +376,7 @@ pub mod test {
 
         pub fn accept_credential(&self) {
             self.activate();
-            credential::update_state(self.credential_handle, None, None).unwrap();
+            credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(4, credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
         }
