@@ -267,7 +267,7 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-#[deprecated(since = "0.15.0", note = "Use vcx_proof_update_state_v2_with_message instead.")]
+#[deprecated(since = "0.15.0", note = "Use vcx_v2_proof_update_state_with_message instead.")]
 pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
                                                   proof_handle: u32,
                                                   message: *const c_char,
@@ -326,18 +326,18 @@ pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_proof_update_state_v2_with_message(command_handle: CommandHandle,
+pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHandle,
                                                   proof_handle: u32,
                                                   connection_handle: u32,
                                                   message: *const c_char,
                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_proof_update_state_v2_with_message >>>");
+    info!("vcx_v2_proof_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_proof_update_state_v2_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
+    trace!("vcx_v2_proof_update_state_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
     if !proof::is_valid_handle(proof_handle) {
@@ -351,12 +351,12 @@ pub extern fn vcx_proof_update_state_v2_with_message(command_handle: CommandHand
     spawn(move || {
         match proof::update_state(proof_handle, Some(&message), Some(connection_handle)) {
             Ok(x) => {
-                trace!("vcx_proof_update_state_v2_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
+                trace!("vcx_v2_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                warn!("vcx_proof_update_state_v2_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
+                warn!("vcx_v2_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }
