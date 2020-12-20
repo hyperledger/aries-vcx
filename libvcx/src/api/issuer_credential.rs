@@ -411,6 +411,8 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
 ///
 /// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
+/// connection_handle: Connection handle of connection associated with this credential exchange interaction.
+///
 /// message: message to process for state changes
 ///
 /// cb: Callback that provides most current state of the credential and error status of request
@@ -434,7 +436,7 @@ pub extern fn vcx_issuer_credential_update_state_v2_with_message(command_handle:
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_issuer_credential_update_state_with_message(command_handle: {}, credential_handle: {}, message: {}) source_id: {}",
+    trace!("vcx_issuer_credential_update_state_v2_with_message(command_handle: {}, credential_handle: {}, message: {}) source_id: {}",
            command_handle, credential_handle, message, source_id);
 
     if !issuer_credential::is_valid_handle(credential_handle) {

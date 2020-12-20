@@ -636,6 +636,8 @@ pub extern fn vcx_disclosed_proof_update_state_with_message(command_handle: Comm
 ///
 /// proof_handle: Credential handle that was provided during creation. Used to identify disclosed proof object
 ///
+/// connection_handle: Connection handle of connection associated with this proof exchange interaction.
+///
 /// message: message to process for state changes
 ///
 /// cb: Callback that provides most current state of the disclosed proof and error status of request
