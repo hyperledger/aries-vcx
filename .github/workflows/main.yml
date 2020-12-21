@@ -75,26 +75,25 @@ jobs:
 
           RELEASE="false"
           PRERELEASE="false"
-          if [[ "$IS_FORK" == "false" ]]
-          then
-            if [[ "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]
-            then
-              if [[ "$BRANCH_NAME" == "master" ]]
-              then
+
+          if [[ "$IS_FORK" == "false" ]] then
+            if [[ "${{ github.event_name }}" == "pull_request"]] then
+              if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]] then
+                PRERELEASE="true"
+              fi;
+            elif [[ "${{ github.event_name }}" == "push" ]] then
+              if [[ "$BRANCH_NAME" == "master" ]] then
                 PUBLISH_VERSION="$REPO_VERSION_DESIRED"
                 RELEASE="true"
                 echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
               fi;
-            else
-              PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
-              if [[ "${{ github.event_name }}" == "pull_request" && "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]
-              then
-                PRERELEASE="true" 
-                echo "This is a PR with `pre-release` label set. Will publish and prerelease version: $PUBLISH_VERSION."
-              else
-                echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
-              fi;
             fi;
+
+            if [[ ! -z "$PUBLISH_VERSION" ]] then
+              PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
+            fi;
+
+             echo "CI will publish artifacts at version: $PUBLISH_VERSION"
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
             PUBLISH_VERSION=""
