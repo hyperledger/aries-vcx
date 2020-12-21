@@ -37,8 +37,7 @@ jobs:
         run: |
           set -x
 
-          if [[ -z "$GITHUB_HEAD_REF" ]] # is set only if pipeline run is triggered as pull request
-          then
+          if [[ -z "$GITHUB_HEAD_REF" ]]; then # is set only if pipeline run is triggered as pull request
             BRANCH_NAME="${GITHUB_REF#refs/heads/}"
             echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Push"
           else
@@ -48,16 +47,14 @@ jobs:
 
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
 
-          if [[ "${{ github.event_name }}" == "pull_request" ]]
-          then
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "PR Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
 
             REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
             REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
             echo "This is pull request from $REPO_HEAD to $REPO_BASE"
 
-            if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]
-            then
+            if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]; then
               echo "This CI run is PR from non-forked repository."
               IS_FORK="false";
             else
@@ -76,24 +73,24 @@ jobs:
           RELEASE="false"
           PRERELEASE="false"
 
-          if [[ "$IS_FORK" == "false" ]] then
-            if [[ "${{ github.event_name }}" == "pull_request"]] then
-              if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]] then
+          if [[ "$IS_FORK" == "false" ]]; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]; then
                 PRERELEASE="true"
               fi;
-            elif [[ "${{ github.event_name }}" == "push" ]] then
-              if [[ "$BRANCH_NAME" == "master" ]] then
+            elif [[ "${{ github.event_name }}" == "push" ]]; then
+              if [[ "$BRANCH_NAME" == "master" ]]; then
                 PUBLISH_VERSION="$REPO_VERSION_DESIRED"
                 RELEASE="true"
                 echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
               fi;
             fi;
 
-            if [[ ! -z "$PUBLISH_VERSION" ]] then
+            if [[ ! -z "$PUBLISH_VERSION" ]]; then
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
             fi;
 
-             echo "CI will publish artifacts at version: $PUBLISH_VERSION"
+            echo "CI will publish artifacts at version: $PUBLISH_VERSION"
           else
             echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
             PUBLISH_VERSION=""
@@ -114,7 +111,6 @@ jobs:
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
-          set -x
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
           echo "::set-output name=PRERELEASE::$PRERELEASE"
