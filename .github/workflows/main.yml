@@ -86,7 +86,7 @@ jobs:
               fi;
             fi;
 
-            if [[ ! -z "$PUBLISH_VERSION" ]]; then
+            if [[ -z "$PUBLISH_VERSION" ]]; then
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
             fi;
 
