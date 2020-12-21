@@ -50,6 +50,8 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
+            echo "PR Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
+
             REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
             REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
             echo "This is pull request from $REPO_HEAD to $REPO_BASE"
@@ -82,15 +84,10 @@ jobs:
                 PUBLISH_VERSION="$REPO_VERSION_DESIRED"
                 RELEASE="true"
                 echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
-              elif [[ "${{ github.event_name }}" == "pull_request" ]]
-              then
-                PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-${{ github.run_number }}"
-                PRERELEASE="true"
-                echo "This is push to a non-master branch on a PR, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a pre-release of $REPO_VERSION_DESIRED."
               fi;
             else
               PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
-              if [[ "${{ github.event_name }}" == "pull_request" && ${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }} ]]
+              if [[ "${{ github.event_name }}" == "pull_request" && "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]
               then
                 PRERELEASE="true" 
                 echo "This is a PR with `pre-release` label set. Will publish and prerelease version: $PUBLISH_VERSION."
