@@ -90,14 +90,6 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     return state
   }
 
-  // deprecated
-  async function credentialUpdateV1 (issuerCredId) {
-    const issuerCred = await loadIssuerCredential(issuerCredId)
-    const state = await issuerCred.updateState()
-    await saveIssuerCredential(issuerCredId, issuerCred)
-    return state
-  }
-
   async function getState (issuerCredentialId) {
     const issuerCredential = await loadIssuerCredential(issuerCredentialId)
     return issuerCredential.getState()
@@ -127,7 +119,6 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     sendOfferAndCredential,
     revokeCredential,
     credentialUpdate,
-    credentialUpdateV1,
     getVcxCredentialIssuer,
 
     listIds,

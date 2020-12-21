@@ -77,16 +77,6 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateStateCredentialV1 () {
-    logger.info('Issuer updating state of credential')
-    await vcxAgent.agentInitVcx()
-
-    logger.info('Issuer updating state of credential with connection')
-    await vcxAgent.serviceCredIssuer.credentialUpdateV1(issuerCredId)
-
-    await vcxAgent.agentShutdownVcx()
-  }
-
   async function updateStateCredentialV2 (expectedState) {
     await vcxAgent.agentInitVcx()
 
@@ -200,7 +190,6 @@ module.exports.createFaber = async function createFaber () {
     updateConnection,
     sendConnectionResponse,
     sendCredentialOffer,
-    updateStateCredentialV1,
     updateStateCredentialV2,
     sendCredential,
     requestProofFromAlice,
