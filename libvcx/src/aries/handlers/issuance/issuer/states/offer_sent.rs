@@ -11,7 +11,6 @@ pub struct OfferSentState {
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-    pub connection_handle: u32,
     pub thread_id: String,
 }
 
@@ -39,7 +38,6 @@ impl From<(OfferSentState, CredentialRequest)> for RequestReceivedState {
             cred_data: state.cred_data,
             rev_reg_id: state.rev_reg_id,
             tails_file: state.tails_file,
-            connection_handle: state.connection_handle,
             request,
             thread_id: state.thread_id,
         }

@@ -193,18 +193,18 @@ mod tests {
         credential
     }
 
-    fn send_credential(issuer_handle: u32, connection: u32, credential_handle: u32, consumer_handle: Option<u32>, revokable: bool) {
+    fn send_credential(issuer_handle: u32, issuer_to_consumer: u32, consumer_to_issuer: u32, credential_handle: u32, consumer_handle: Option<u32>, revokable: bool) {
         info!("send_credential >>> switching to institution");
         set_institution(None);
         info!("send_credential >>> getting offers");
-        issuer_credential::update_state(issuer_handle, None, None).unwrap();
+        issuer_credential::update_state(issuer_handle, None, issuer_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(issuer_handle).unwrap());
         info!("sending credential");
-        issuer_credential::send_credential(issuer_handle, connection).unwrap();
+        issuer_credential::send_credential(issuer_handle, issuer_to_consumer).unwrap();
         thread::sleep(Duration::from_millis(2000));
         // AS CONSUMER STORE CREDENTIAL
         utils::devsetup::set_consumer(consumer_handle);
-        credential::update_state(credential_handle, None, None).unwrap();
+        credential::update_state(credential_handle, None, consumer_to_issuer).unwrap();
         thread::sleep(Duration::from_millis(2000));
         info!("storing credential");
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
@@ -301,14 +301,14 @@ mod tests {
         libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
     }
 
-    fn _exchange_credential(credential_data: String, cred_def_handle: u32, faber: u32, alice: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
+    fn _exchange_credential(credential_data: String, cred_def_handle: u32, consumer_to_issuer: u32, issuer_to_consumer: u32, consumer_handle: Option<u32>, comment: Option<&str>) -> u32 {
         set_institution(None);
         info!("Generated credential data: {}", credential_data);
-        let credential_offer = create_and_send_cred_offer(settings::CONFIG_INSTITUTION_DID, cred_def_handle, alice, &credential_data, comment);
+        let credential_offer = create_and_send_cred_offer(settings::CONFIG_INSTITUTION_DID, cred_def_handle, issuer_to_consumer, &credential_data, comment);
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let credential = send_cred_req(faber, consumer_handle, comment);
+        let credential = send_cred_req(consumer_to_issuer, consumer_handle, comment);
         info!("AS INSTITUTION SEND CREDENTIAL");
-        send_credential(credential_offer, alice, credential, consumer_handle, true);
+        send_credential(credential_offer, issuer_to_consumer, consumer_to_issuer, credential, consumer_handle, true);
         credential_offer
     }
 
@@ -671,7 +671,7 @@ mod tests {
         let number_of_attributes = 10;
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = connection::tests::create_connected_connections(None, None);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(None, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let mut attrs_list: Value = serde_json::Value::Array(vec![]);
@@ -687,13 +687,13 @@ mod tests {
         info!("test_real_proof :: sending credential offer");
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
-        let credential_offer = create_and_send_cred_offer(&institution_did, cred_def_handle, alice, &credential_data, None);
+        let credential_offer = create_and_send_cred_offer(&institution_did, cred_def_handle, issuer_to_consumer, &credential_data, None);
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
-        let credential = send_cred_req(faber, None, None);
+        let credential = send_cred_req(consumer_to_issuer, None, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-        send_credential(credential_offer, alice, credential, None, false);
+        send_credential(credential_offer, issuer_to_consumer, consumer_to_issuer, credential, None, false);
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         utils::devsetup::set_institution(None);
@@ -705,17 +705,17 @@ mod tests {
         }
         let requested_attrs = attrs.to_string();
         info!("test_real_proof :: Going to seng proof request with attributes {}", requested_attrs);
-        let proof_req_handle = send_proof_request(alice, &requested_attrs, "[]", "{}", None, None);
+        let proof_req_handle = send_proof_request(issuer_to_consumer, &requested_attrs, "[]", "{}", None, None);
 
         info!("test_real_proof :: Going to create proof");
-        let proof_handle = create_proof(faber, None, None);
+        let proof_handle = create_proof(consumer_to_issuer, None, None);
         info!("test_real_proof :: retrieving matching credentials");
 
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle).unwrap();
         let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
         info!("test_real_proof :: generating and sending proof");
-        generate_and_send_proof(proof_handle, faber, &serde_json::to_string(&selected_credentials).unwrap(), None);
+        generate_and_send_proof(proof_handle, consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap(), None);
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         set_institution(None);

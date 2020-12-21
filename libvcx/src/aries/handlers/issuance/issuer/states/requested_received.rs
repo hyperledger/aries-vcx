@@ -12,7 +12,6 @@ pub struct RequestReceivedState {
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-    pub connection_handle: u32,
     pub request: CredentialRequest,
     pub thread_id: String,
 }
@@ -21,7 +20,6 @@ impl From<(RequestReceivedState, MessageId)> for CredentialSentState {
     fn from((state, _sent_id): (RequestReceivedState, MessageId)) -> Self {
         trace!("SM is now in CredentialSent state");
         CredentialSentState {
-            connection_handle: state.connection_handle,
             revocation_info_v1: Some(RevocationInfoV1 {
                 cred_rev_id: None,
                 rev_reg_id: state.rev_reg_id,

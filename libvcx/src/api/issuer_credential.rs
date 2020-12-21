@@ -251,6 +251,15 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_v2_issuer_credential_update_state instead.")]
+pub extern fn vcx_issuer_credential_update_state(_command_handle: CommandHandle,
+                                                 _credential_handle: u32,
+                                                 _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    error!("vcx_issuer_credential_update_state >>> operation not supported");
+    error::ACTION_NOT_SUPPORTED.code_num
+}
+
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the object and updates the state attribute.
 ///
@@ -258,6 +267,8 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
 /// command_handle: command handle to map callback to user context.
 ///
 /// credential_handle: Credential handle that was provided during creation. Used to identify credential object
+///
+/// connection_handle: Connection handle of the credential interaction is associated with.
 ///
 /// cb: Callback that provides most current state of the credential and error status of request
 ///     States:
@@ -268,43 +279,6 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
 ///
 /// #Returns
 /// Error code as a u32
-#[no_mangle]
-#[deprecated(since = "0.12.0", note = "Use vcx_v2_issuer_credential_update_state instead.")]
-pub extern fn vcx_issuer_credential_update_state(command_handle: CommandHandle,
-                                                 credential_handle: u32,
-                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_issuer_credential_update_state >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_issuer_credential_update_state(command_handle: {}, credential_handle: {}) source_id: {}",
-           command_handle, credential_handle, source_id);
-
-    if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
-    }
-
-    spawn(move || {
-        match issuer_credential::update_state(credential_handle, None, None) {
-            Ok(x) => {
-                trace!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
-                cb(command_handle, error::SUCCESS.code_num, x);
-            }
-            Err(x) => {
-                warn!("vcx_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                      command_handle, credential_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
 #[no_mangle]
 pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandle,
                                                     credential_handle: u32,
@@ -327,7 +301,7 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, None, Some(connection_handle)) {
+        match issuer_credential::update_state(credential_handle, None, connection_handle) {
             Ok(x) => {
                 trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, connection_handle, error::SUCCESS.message, x, source_id);
@@ -346,61 +320,14 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
     error::SUCCESS.code_num
 }
 
-/// Update the state of the credential based on the given message.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
-///
-/// message: message to process for state changes
-///
-/// cb: Callback that provides most current state of the credential and error status of request
-///     States:
-///         1 - Initialized
-///         2 - Offer Sent
-///         3 - Request Received
-///         4 - Issued
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 #[deprecated(since = "0.15.0", note = "Use vcx_v2_issuer_credential_update_state_with_message instead.")]
-pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: CommandHandle,
-                                                              credential_handle: u32,
-                                                              message: *const c_char,
-                                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_issuer_credential_update_state_with_message >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
-
-    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_issuer_credential_update_state_with_message(command_handle: {}, credential_handle: {}, message: {}) source_id: {}",
-           command_handle, credential_handle, message, source_id);
-
-    if !issuer_credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
-    }
-
-    spawn(move || {
-        match issuer_credential::update_state(credential_handle, Some(&message), None) {
-            Ok(x) => {
-                trace!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
-                cb(command_handle, error::SUCCESS.code_num, x);
-            }
-            Err(x) => {
-                warn!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
-                      command_handle, credential_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+pub extern fn vcx_issuer_credential_update_state_with_message(_command_handle: CommandHandle,
+                                                              _credential_handle: u32,
+                                                              _message: *const c_char,
+                                                              _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    error!("vcx_issuer_credential_update_state_with_message >>> operation not supported");
+    error::ACTION_NOT_SUPPORTED.code_num
 }
 
 
@@ -411,7 +338,7 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
 ///
 /// credential_handle: Credential handle that was provided during creation. Used to identify credential object
 ///
-/// connection_handle: Connection handle of connection associated with this credential exchange interaction.
+/// connection_handle: Connection handle of the credential interaction is associated with.
 ///
 /// message: message to process for state changes
 ///
@@ -448,7 +375,7 @@ pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle:
     }
 
     spawn(move || {
-        match issuer_credential::update_state(credential_handle, Some(&message), Some(connection_handle)) {
+        match issuer_credential::update_state(credential_handle, Some(&message), connection_handle) {
             Ok(x) => {
                 trace!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -1062,21 +989,22 @@ pub mod tests {
 
         let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
-        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
+        let credential_handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
-                                                    handle,
+                                                    credential_handle,
                                                     connection_handle,
                                                     Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_issuer_credential_update_state_with_message(cb.command_handle,
-                                                                   handle,
-                                                                   CString::new(ARIES_CREDENTIAL_REQUEST).unwrap().into_raw(),
-                                                                   Some(cb.get_callback())), error::SUCCESS.code_num);
+        assert_eq!(vcx_v2_issuer_credential_update_state_with_message(cb.command_handle,
+                                                                      credential_handle,
+                                                                      connection_handle,
+                                                                      CString::new(ARIES_CREDENTIAL_REQUEST).unwrap().into_raw(),
+                                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateRequestReceived as u32);
     }

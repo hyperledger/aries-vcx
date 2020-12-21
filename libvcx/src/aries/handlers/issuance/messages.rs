@@ -8,11 +8,11 @@ use crate::aries::messages::issuance::credential_request::CredentialRequest;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialInit(u32, Option<String>),
-    CredentialSend(u32),
+    CredentialInit(Option<String>),
+    CredentialSend(),
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
-    CredentialRequestSend(u32),
+    CredentialRequestSend(),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
     CredentialAck(CredentialAck),
