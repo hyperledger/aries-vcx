@@ -31,21 +31,19 @@ pub fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
-pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
         trace!("proof::update_state >>> ", );
         if !proof.has_transitions() { return Ok(proof.state()); }
 
-        let connection_handle = proof.maybe_update_connection_handle(connection_handle)?;
-
         if let Some(message_) = message {
-            return proof.update_state_with_message(&message_);
+            return proof.update_state_with_message(&message_, connection_handle);
         }
 
         let messages = connection::get_messages(connection_handle)?;
 
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof.handle_message(message.into())?;
+            proof.handle_message(message.into(), connection_handle)?;
             connection::update_message_status(connection_handle, uid)?;
         };
 
@@ -269,7 +267,7 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested();
 
         let handle = PROOF_MAP.add(proof).unwrap();
-        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(connection_handle)).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), connection_handle).unwrap();
 
         assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
@@ -289,7 +287,7 @@ pub mod tests {
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
         let handle = PROOF_MAP.add(proof).unwrap();
-        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), None).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), connection_handle).unwrap();
         assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
@@ -307,7 +305,7 @@ pub mod tests {
         assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
 
         let handle = PROOF_MAP.add(proof).unwrap();
-        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), None).unwrap();
+        update_state(handle, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), connection_handle).unwrap();
         assert_eq!(get_state(handle).unwrap(), VcxStateType::VcxStateAccepted as u32);
 
         let proof_str = get_proof(handle).unwrap();
@@ -372,7 +370,7 @@ pub mod tests {
                                         "Optional".to_owned()).unwrap();
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         send_proof_request(handle_proof, handle_conn).unwrap();
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), Some(handle_conn)).unwrap();
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
         assert_eq!(proof::get_state(handle_proof).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 

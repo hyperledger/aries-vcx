@@ -8,13 +8,13 @@ use crate::aries::messages::proof_presentation::presentation_request::Presentati
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
     PresentationRequestReceived(PresentationRequestData),
-    RejectPresentationRequest((u32, String)),
+    RejectPresentationRequest(String),
     SetPresentation(Presentation),
     PreparePresentation((String, String)),
-    SendPresentation(u32),
+    SendPresentation,
     PresentationAckReceived(PresentationAck),
     PresentationRejectReceived(ProblemReport),
-    ProposePresentation((u32, PresentationPreview)),
+    ProposePresentation(PresentationPreview),
     Unknown,
 }
 

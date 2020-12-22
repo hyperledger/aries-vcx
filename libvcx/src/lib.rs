@@ -329,10 +329,10 @@ mod tests {
         send_proof_request(alice, &requested_attrs_string, "[]", "{}", institution_handle, request_name)
     }
 
-    fn _prover_select_credentials_and_send_proof(faber: u32, consumer_handle: Option<u32>, request_name: Option<&str>, requested_values: Option<&str>) {
+    fn _prover_select_credentials_and_send_proof(consumer_to_institution: u32, consumer_handle: Option<u32>, request_name: Option<&str>, requested_values: Option<&str>) {
         set_consumer(consumer_handle);
         info!("Prover :: Going to create proof");
-        let proof_handle_prover = create_proof(faber, consumer_handle, request_name);
+        let proof_handle_prover = create_proof(consumer_to_institution, consumer_handle, request_name);
         info!("Prover :: Retrieving matching credentials");
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
         info!("Prover :: Based on proof, retrieved credentials: {}", &retrieved_credentials);
@@ -345,7 +345,7 @@ mod tests {
         };
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str, consumer_handle);
+        generate_and_send_proof(proof_handle_prover, consumer_to_institution, &selected_credentials_str, consumer_handle);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -354,8 +354,8 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = connection::tests::create_connected_connections(None, None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(None, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_institution, institution_to_consumer, None);
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -368,13 +368,13 @@ mod tests {
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
         info!("test_basic_revocation :: Going to seng proof request with attributes {}", &requested_attrs_string);
-        let proof_handle_verifier = send_proof_request(alice, &requested_attrs_string, "[]", &interval, None, None);
+        let proof_handle_verifier = send_proof_request(institution_to_consumer, &requested_attrs_string, "[]", &interval, None, None);
 
-        _prover_select_credentials_and_send_proof(faber, None, None, None);
+        _prover_select_credentials_and_send_proof(consumer_to_institution, None, None, None);
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -394,7 +394,7 @@ mod tests {
         _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name1, None);
 
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         publish_revocation(rev_reg_id.clone().unwrap());
@@ -403,7 +403,7 @@ mod tests {
         _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name2, None);
 
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -432,14 +432,14 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer1, Some(verifier), request_name1);
         _prover_select_credentials_and_send_proof(consumer1_to_verifier, Some(consumer1), None, None);
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer1).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer2, Some(verifier), request_name2);
         _prover_select_credentials_and_send_proof(consumer2_to_verifier, Some(consumer2), None, None);
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer2).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -459,14 +459,14 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), request_name1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), request_name1, None);
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), request_name2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), request_name2, None);
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -487,14 +487,14 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name1);
         _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name1, None);
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, institution_to_consumer, None, request_name2);
         _prover_select_credentials_and_send_proof(consumer_to_institution, None, request_name2, None);
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -540,9 +540,9 @@ mod tests {
         _prover_select_credentials_and_send_proof(consumer_to_institution3, Some(consumer3), request_name1, None);
 
         set_institution(None);
-        proof::update_state(proof_handle_verifier1, None, None).unwrap();
-        proof::update_state(proof_handle_verifier2, None, None).unwrap();
-        proof::update_state(proof_handle_verifier3, None, None).unwrap();
+        proof::update_state(proof_handle_verifier1, None, institution_to_consumer1).unwrap();
+        proof::update_state(proof_handle_verifier2, None, institution_to_consumer2).unwrap();
+        proof::update_state(proof_handle_verifier3, None, institution_to_consumer3).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier1).unwrap(), ProofStateType::ProofValidated as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier2).unwrap(), ProofStateType::ProofValidated as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier3).unwrap(), ProofStateType::ProofValidated as u32);
@@ -562,9 +562,9 @@ mod tests {
         assert_ne!(proof_handle_verifier2, proof_handle_verifier3);
 
         set_institution(None);
-        proof::update_state(proof_handle_verifier1, None, None).unwrap();
-        proof::update_state(proof_handle_verifier2, None, None).unwrap();
-        proof::update_state(proof_handle_verifier3, None, None).unwrap();
+        proof::update_state(proof_handle_verifier1, None, institution_to_consumer1).unwrap();
+        proof::update_state(proof_handle_verifier2, None, institution_to_consumer2).unwrap();
+        proof::update_state(proof_handle_verifier3, None, institution_to_consumer3).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier1).unwrap(), ProofStateType::ProofInvalid as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier2).unwrap(), ProofStateType::ProofInvalid as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier3).unwrap(), ProofStateType::ProofValidated as u32);
@@ -576,8 +576,8 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (faber, alice) = connection::tests::create_connected_connections(None, None);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(faber, alice, None);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(None, None);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(consumer_to_institution, institution_to_consumer, None);
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
@@ -593,10 +593,10 @@ mod tests {
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
         info!("test_revoked_credential_might_still_work :: Going to seng proof request with attributes {}", &requested_attrs_string);
-        let proof_handle_verifier = send_proof_request(alice, &requested_attrs_string, "[]", &interval, None, None);
+        let proof_handle_verifier = send_proof_request(institution_to_consumer, &requested_attrs_string, "[]", &interval, None, None);
 
         info!("test_revoked_credential_might_still_work :: Going to create proof");
-        let proof_handle_prover = create_proof(faber, None, None);
+        let proof_handle_prover = create_proof(consumer_to_institution, None, None);
         info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
@@ -605,11 +605,11 @@ mod tests {
         let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(proof_handle_prover, faber, &selected_credentials_str, None);
+        generate_and_send_proof(proof_handle_prover, consumer_to_institution, &selected_credentials_str, None);
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         set_institution(None);
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -719,7 +719,7 @@ mod tests {
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         set_institution(None);
-        proof::update_state(proof_req_handle, None, None).unwrap();
+        proof::update_state(proof_req_handle, None,  issuer_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_req_handle).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -745,13 +745,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -779,13 +779,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -813,13 +813,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -846,13 +846,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -881,13 +881,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -916,13 +916,13 @@ mod tests {
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req1);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req1, Some(&credential_data1));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&institution_did, &schema_id, &cred_def_id, verifier_to_consumer, Some(verifier), req2);
         _prover_select_credentials_and_send_proof(consumer_to_verifier, Some(consumer), req2, Some(&credential_data2));
         set_institution(Some(verifier));
-        proof::update_state(proof_handle_verifier, None, None).unwrap();
+        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 }

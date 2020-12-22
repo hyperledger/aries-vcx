@@ -514,7 +514,6 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            let conn_handle = mock_connection();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), mock_connection()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), mock_connection()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), mock_connection()).unwrap();

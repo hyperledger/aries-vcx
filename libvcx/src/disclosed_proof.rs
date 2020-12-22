@@ -70,7 +70,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Option<u32>) -> VcxResult<u32> {
+pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
 
@@ -79,17 +79,15 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: Optio
             return Ok(proof.state());
         }
 
-        let connection_handle = proof.maybe_update_connection_handle(connection_handle)?;
-
         if let Some(message_) = message {
-            return proof.update_state_with_message(message_);
+            return proof.update_state_with_message(message_, connection_handle);
         }
 
         let messages = connection::get_messages(connection_handle)?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
 
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof.handle_message(message.into())?;
+            proof.handle_message(message.into(), Some(connection_handle))?;
             connection::update_message_status(connection_handle, uid)?;
         };
 
@@ -289,7 +287,7 @@ mod tests {
         send_proof(handle_proof, connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateOfferSent as u32, get_state(handle_proof).unwrap());
 
-        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), Some(connection_h)).unwrap();
+        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), connection_h).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle_proof).unwrap());
     }
 
@@ -320,7 +318,7 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
 
-        update_state(handle, None, Some(connection_handle)).unwrap();
+        update_state(handle, None, connection_handle).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(handle).unwrap());
     }
 

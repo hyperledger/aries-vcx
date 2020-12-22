@@ -38,7 +38,7 @@ impl Prover {
 
     pub fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {
         trace!("Prover::generate_presentation >>> credentials: {}, self_attested_attrs: {:?}", credentials, self_attested_attrs);
-        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)))
+        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)), None)
     }
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
@@ -49,12 +49,12 @@ impl Prover {
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        self.step(ProverMessages::SetPresentation(presentation))
+        self.step(ProverMessages::SetPresentation(presentation), None)
     }
 
     pub fn send_presentation(&mut self, connection_handle: u32) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.step(ProverMessages::SendPresentation(connection_handle))
+        self.step(ProverMessages::SendPresentation, Some(connection_handle))
     }
 
     pub fn has_transitions(&self) -> bool {
@@ -65,26 +65,20 @@ impl Prover {
         self.prover_sm.find_message_to_handle(messages)
     }
 
-    pub fn maybe_update_connection_handle(&mut self, connection_handle: Option<u32>) -> VcxResult<u32> {
-        let connection_handle = connection_handle.unwrap_or(self.prover_sm.connection_handle()?);
-        self.prover_sm.set_connection_handle(connection_handle);
-        Ok(connection_handle)
-    }
-
-    pub fn update_state_with_message(&mut self, message: &str) -> VcxResult<u32> {
+    pub fn update_state_with_message(&mut self, message: &str, connection_handle: u32) -> VcxResult<u32> {
         trace!("Prover::update_state_with_message >>> message: {:?}", message);
 
         let a2a_message: A2AMessage = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
 
-        self.handle_message(a2a_message.into())?;
+        self.handle_message(a2a_message.into(), Some(connection_handle))?;
 
         Ok(self.state())
     }
 
-    pub fn handle_message(&mut self, message: ProverMessages) -> VcxResult<()> {
+    pub fn handle_message(&mut self, message: ProverMessages, connection_handle: Option<u32>) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(message)
+        self.step(message, connection_handle)
     }
 
     pub fn get_presentation_request(connection_handle: u32, msg_id: &str) -> VcxResult<PresentationRequest> {
@@ -133,8 +127,8 @@ impl Prover {
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }
 
-    pub fn step(&mut self, message: ProverMessages) -> VcxResult<()> {
-        self.prover_sm = self.prover_sm.clone().step(message)?;
+    pub fn step(&mut self, message: ProverMessages, connection_handle: Option<u32>) -> VcxResult<()> {
+        self.prover_sm = self.prover_sm.clone().step(message, connection_handle)?;
         Ok(())
     }
 
@@ -142,13 +136,13 @@ impl Prover {
         trace!("Prover::decline_presentation_request >>> connection_handle: {}, reason: {:?}, proposal: {:?}", connection_handle, reason, proposal);
         match (reason, proposal) {
             (Some(reason), None) => {
-                self.step(ProverMessages::RejectPresentationRequest((connection_handle, reason)))
+                self.step(ProverMessages::RejectPresentationRequest((reason)), Some(connection_handle))
             }
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize Presentation Preview: {:?}", err)))?;
 
-                self.step(ProverMessages::ProposePresentation((connection_handle, presentation_preview)))
+                self.step(ProverMessages::ProposePresentation((presentation_preview)), Some(connection_handle))
             }
             (None, None) => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Either `reason` or `proposal` parameter must be specified."));

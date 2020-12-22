@@ -5,7 +5,7 @@ use crate::aries::messages::proof_presentation::presentation_proposal::Presentat
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum VerifierMessages {
-    SendPresentationRequest(u32),
+    SendPresentationRequest,
     VerifyPresentation(Presentation),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),
