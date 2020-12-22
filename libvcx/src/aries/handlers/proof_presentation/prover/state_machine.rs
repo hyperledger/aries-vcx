@@ -169,8 +169,10 @@ impl ProverSM {
                     ProverMessages::SendPresentation => {
                         let connection_handle = connection_handle
                         .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent")) ?;
-                        connection::send_message(connection_handle, state.problem_report.to_a2a_message()) ?;
-                        ProverState::Finished((state).into())
+                        let connection_handle = connection_handle
+                                    .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
+                                connection::send_message(connection_handle, state.problem_report.to_a2a_message())?;
+                            ProverState::Finished((state).into())
                     }
                     _ => {
                         ProverState::PresentationPreparationFailed(state)
