@@ -10,6 +10,7 @@ const bodyParser = require('body-parser')
 const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
 const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
+require('@hyperledger/node-vcx-wrapper')
 
 const tailsFile = '/tmp/tails'
 
@@ -99,12 +100,12 @@ async function runFaber (options) {
     }
 
     logger.info('#27 Process the proof provided by alice.')
-    const { proofState, proof } = await vcxProof.getProof(connectionToAlice)
+    const { proofState, proof } = await vcxProof.getProof()
     assert(proofState)
     assert(proof)
     logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)
     logger.info(`Proof verification state =${proofState}`)
-    logger.info(`Proof = ${JSON.stringify(vcxProof)}`)
+    logger.debug(`Proof presentation = ${JSON.stringify(proof, null, 2)}`)
     logger.debug(`Serialized Proof state machine ${JSON.stringify(await vcxProof.serialize())}`)
 
     if (proofState === ProofState.Verified) {

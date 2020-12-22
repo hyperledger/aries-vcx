@@ -340,10 +340,9 @@ export interface IFFIEntryPoint {
     cb: ICbRef,
   ) => number;
   vcx_proof_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
-  vcx_get_proof: (
+  vcx_get_proof_msg: (
     commandId: number,
     proofHandle: number,
-    connectionHandle: number,
     cb: ICbRef,
   ) => number;
   vcx_proof_release: (handle: number) => number;
@@ -872,9 +871,9 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     ],
   ],
   vcx_proof_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
-  vcx_get_proof: [
+  vcx_get_proof_msg: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_proof_release: [FFI_ERROR_CODE, [FFI_PROOF_HANDLE]],
   vcx_proof_send_request: [

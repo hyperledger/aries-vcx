@@ -138,39 +138,6 @@ describe('Proof:', () => {
       assert(msg);
     });
 
-    // todo: adjust for aries, need to use aries data mocks
-    it.skip('success -> received', async () => {
-      const connection = await createConnectionInviterRequested();
-      const proof = await proofCreate();
-      await proof.requestProof(connection);
-      assert.equal(await proof.getState(), StateType.OfferSent);
-      VCXMock.setVcxMock(VCXMockMessage.Proof);
-      VCXMock.setVcxMock(VCXMockMessage.UpdateProof);
-      await proof.updateState();
-      assert.equal(await proof.getState(), StateType.Accepted);
-      const proofData = await proof.getProof(connection);
-      assert.ok(proofData);
-      assert.ok(proofData.proof);
-      assert.equal(proofData.proofState, ProofState.Verified);
-      assert.equal(proof.proofState, ProofState.Verified);
-    });
-
-    // todo: adjust for aries, need to use aries data mocks
-    it.skip('success via message-> received', async () => {
-      const connection = await createConnectionInviterRequested();
-      const proof = await proofCreate();
-      const request = await proof.getProofRequestMessage();
-      const disProof = await DisclosedProof.create({ connection, sourceId: 'name', request });
-      const proofMsg = await disProof.getProofMessage();
-      await proof.updateStateWithMessage(proofMsg);
-      assert.equal(await proof.getState(), StateType.Accepted);
-      const proofData = await proof.getProof(connection);
-      assert.ok(proofData);
-      assert.ok(proofData.proof);
-      assert.equal(proofData.proofState, ProofState.Verified);
-      assert.equal(proof.proofState, ProofState.Verified);
-    });
-
     it('throws: not initialized', async () => {
       const connection = await createConnectionInviterRequested();
       const proof = new Proof(null as any, {} as any);

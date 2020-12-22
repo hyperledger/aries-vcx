@@ -491,14 +491,14 @@ export class Proof extends VCXBaseWithState<IProofData> {
    * assert.equal(proofData.proofState, ProofState.Verified)
    * ```
    */
-  public async getProof(connection: Connection): Promise<IProofResponses> {
+  public async getProof(): Promise<IProofResponses> {
     try {
       const proofRes = await createFFICallbackPromise<{
         proofState: ProofState;
         proofData: string;
       }>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_get_proof(0, this.handle, connection.handle, cb);
+          const rc = rustAPI().vcx_get_proof_msg(0, this.handle, cb);
           if (rc) {
             reject(rc);
           }
