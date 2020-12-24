@@ -19,7 +19,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
       }
     }
 
-    const [error] = await pollFunction(progressToAcceptedState, `Progress CredentialSM to one of states ${JSON.stringify(targetStates)}`, logger, attemptsThreshold, timeoutMs)
+    const [error] = await pollFunction(progressToAcceptedState, `Progress ProofSM to one of states ${JSON.stringify(targetStates)}`, logger, attemptsThreshold, timeoutMs)
     if (error) {
       throw Error(`Couldn't progress credential to Accepted state. ${error}`)
     }

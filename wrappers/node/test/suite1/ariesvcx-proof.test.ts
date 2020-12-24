@@ -111,15 +111,17 @@ describe('Proof:', () => {
   describe('updateState:', () => {
     it(`returns ${StateType.None}: not initialized`, async () => {
       const proof = new Proof(null as any, {} as any);
-      const state1 = await proof.updateState();
+      const connection = await createConnectionInviterRequested();
+      const state1 = await proof.updateStateV2(connection);
       const state2 = await proof.getState();
       assert.equal(state1, state2);
       assert.equal(state2, StateType.None);
     });
 
     it(`returns ${StateType.Initialized}: created`, async () => {
+      const connection = await createConnectionInviterRequested();
       const proof = await proofCreate();
-      await proof.updateState();
+      await proof.updateStateV2(connection);
       assert.equal(await proof.getState(), StateType.Initialized);
     });
   });
