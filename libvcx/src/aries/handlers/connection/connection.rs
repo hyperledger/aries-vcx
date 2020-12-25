@@ -359,12 +359,6 @@ Get messages received from connection counterparty.
         self.agent_info().send_message(message, &did_doc)
     }
 
-    pub fn send_message_to_self_endpoint(message: &A2AMessage, did_doc: &DidDoc) -> VcxResult<()> {
-        trace!("Connection::send_message_to_self_endpoint >>> message: {:?}, did_doc: {:?}", message, did_doc);
-
-        AgentInfo::send_message_anonymously(message, did_doc)
-    }
-
     fn parse_generic_message(message: &str) -> A2AMessage {
         match ::serde_json::from_str::<A2AMessage>(message) {
             Ok(a2a_message) => a2a_message,

@@ -264,10 +264,6 @@ pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     })
 }
 
-pub fn send_message_to_self_endpoint(message: A2AMessage, did_doc: &DidDoc) -> VcxResult<()> {
-    Connection::send_message_to_self_endpoint(&message, did_doc)
-}
-
 pub fn is_v3_connection(connection_handle: u32) -> VcxResult<bool> {
     CONNECTION_MAP.get(connection_handle, |_| {
         Ok(true)
