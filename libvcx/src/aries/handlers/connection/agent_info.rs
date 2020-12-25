@@ -160,16 +160,6 @@ impl AgentInfo {
     }
 
     /**
-    Sends anonymous message to connection counterparty
-     */
-    pub fn send_message_anonymously(message: &A2AMessage, did_dod: &DidDoc) -> VcxResult<()> {
-        trace!("Agent::send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, did_dod);
-        let envelope = EncryptionEnvelope::create(&message, None, &did_dod)?;
-        httpclient::post_message(&envelope.0, &did_dod.get_endpoint())?;
-        Ok(())
-    }
-
-    /**
     Sends message to one's agency signalling resources related to this connection agent can be deleted.
      */
     pub fn delete(&self) -> VcxResult<()> {
