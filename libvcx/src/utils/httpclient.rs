@@ -5,6 +5,7 @@ use reqwest;
 use reqwest::header::CONTENT_TYPE;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::api::VcxStateType::VcxStateExpired;
+use crate::utils::timeout::TimeoutUtils;
 
 pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
     //Setting SSL Certs location. This is needed on android platform. Or openssl will fail to verify the certs
@@ -12,7 +13,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> VcxResult<Vec<u8>> {
         info!("::Android code");
         set_ssl_cert_location();
     }
-    let client = reqwest::ClientBuilder::new().timeout(::utils::timeout::TimeoutUtils::long_timeout()).build()
+    let client = reqwest::ClientBuilder::new().timeout(TimeoutUtils::long_timeout()).build()
         .or(Err(VcxError::from_msg(VcxErrorKind::PostMessageFailed, "Preparing Post failed")))?;
     debug!("Posting encrypted bundle to: \"{}\"", url);
 

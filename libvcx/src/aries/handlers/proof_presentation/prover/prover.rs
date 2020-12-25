@@ -82,19 +82,7 @@ impl Prover {
     }
 
     pub fn get_presentation_request(connection_handle: u32, msg_id: &str) -> VcxResult<PresentationRequest> {
-        trace!("Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}", connection_handle, msg_id);
 
-        let message = connection::get_message_by_id(connection_handle, msg_id.to_string())?;
-
-        let presentation_request: PresentationRequest = match message {
-            A2AMessage::PresentationRequest(presentation_request) => presentation_request,
-            msg => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
-                                              format!("Message of different type was received: {:?}", msg)));
-            }
-        };
-
-        Ok(presentation_request)
     }
 
     pub fn get_presentation_request_messages(connection_handle: u32) -> VcxResult<Vec<A2AMessage>> {

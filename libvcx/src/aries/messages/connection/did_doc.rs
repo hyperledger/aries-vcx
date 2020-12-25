@@ -281,7 +281,7 @@ impl DidDoc {
   Sends authenticated message to connection counterparty
    */
     pub fn send_message(&self, message: &A2AMessage, sender_verkey: &str) -> VcxResult<()> {
-        trace!("DidDoc::send_message >>> message: {:?}, did_doc: {:?}", message, did_dod);
+        trace!("DidDoc::send_message >>> message: {:?}, did_doc: {:?}", message, &self);
         let envelope = EncryptionEnvelope::create(&message, Some(sender_verkey), &self)?;
         httpclient::post_message(&envelope.0, &self.get_endpoint())?;
         Ok(())
@@ -291,7 +291,7 @@ impl DidDoc {
     Sends anonymous message to connection counterparty
      */
     pub fn send_message_anonymously(&self, message: &A2AMessage) -> VcxResult<()> {
-        trace!("DidDoc::send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, did_dod);
+        trace!("DidDoc::send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, &self);
         let envelope = EncryptionEnvelope::create(&message, None, &self)?;
         httpclient::post_message(&envelope.0, &self.get_endpoint())?;
         Ok(())
