@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
 use crate::api::VcxStateType;
-use crate::connection;
-use crate::error::prelude::*;
 use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;
+use crate::aries::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::aries::handlers::proof_presentation::prover::states::initial::InitialState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::error::ProblemReport;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::aries::messages::status::Status;
-use crate::aries::handlers::proof_presentation::prover::states::initial::InitialState;
-use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::aries::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
-use crate::aries::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use crate::aries::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::connection;
+use crate::error::prelude::*;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -142,18 +142,10 @@ impl ProverSM {
             ProverState::PresentationPrepared(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        match state.presentation_request.service.clone() {
-                            None => {
-                                let connection_handle = connection_handle
-                                    .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                                connection::send_message(connection_handle, state.presentation.to_a2a_message())?;
-                                ProverState::PresentationSent((state).into())
-                            }
-                            Some(service) => {
-                                connection::send_message_to_self_endpoint(state.presentation.to_a2a_message(), &service.into())?;
-                                ProverState::Finished(state.into())
-                            }
-                        }
+                        let connection_handle = connection_handle
+                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
+                        connection::send_message(connection_handle, state.presentation.to_a2a_message())?;
+                        ProverState::PresentationSent((state).into())
                     }
                     ProverMessages::RejectPresentationRequest((reason)) => {
                         let connection_handle = connection_handle
@@ -175,17 +167,9 @@ impl ProverSM {
             ProverState::PresentationPreparationFailed(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        match state.presentation_request.service.clone() {
-                            None => {
-                                let connection_handle = connection_handle
-                                    .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                                connection::send_message(connection_handle, state.problem_report.to_a2a_message())?;
-                            }
-                            Some(service) => {
-                                connection::send_message_to_self_endpoint(state.problem_report.to_a2a_message(), &service.into())?;
-                            }
-                        }
-
+                        let connection_handle = connection_handle
+                        .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent")) ?;
+                        connection::send_message(connection_handle, state.problem_report.to_a2a_message()) ?;
                         ProverState::Finished((state).into())
                     }
                     _ => {
@@ -220,11 +204,7 @@ impl ProverSM {
             .set_comment(reason.to_string())
             .set_thread_id(thread_id);
 
-        match presentation_request.service.clone() {
-            None => connection::send_message(connection_handle, problem_report.to_a2a_message())?,
-            Some(service) => connection::send_message_to_self_endpoint(problem_report.to_a2a_message(), &service.into())?
-        }
-
+        connection::send_message(connection_handle, problem_report.to_a2a_message())?;
         Ok(())
     }
 
@@ -233,10 +213,7 @@ impl ProverSM {
             .set_presentation_preview(preview)
             .set_thread_id(thread_id);
 
-        match presentation_request.service.clone() {
-            None => connection::send_message(connection_handle, proposal.to_a2a_message())?,
-            Some(service) => connection::send_message_to_self_endpoint(proposal.to_a2a_message(), &service.into())?
-        }
+        connection::send_message(connection_handle, proposal.to_a2a_message())?;
 
         Ok(())
     }
@@ -299,13 +276,13 @@ impl ProverSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::utils::devsetup::SetupMocks;
     use crate::aries::handlers::connection::tests::mock_connection;
     use crate::aries::messages::proof_presentation::presentation::tests::_presentation;
     use crate::aries::messages::proof_presentation::presentation_proposal::tests::{_presentation_preview, _presentation_proposal};
     use crate::aries::messages::proof_presentation::presentation_request::tests::{_presentation_request, _presentation_request_with_service};
     use crate::aries::messages::proof_presentation::test::{_ack, _problem_report};
     use crate::aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -372,9 +349,10 @@ pub mod test {
     }
 
     mod step {
-        use super::*;
         use crate::utils::constants::CREDS_FROM_PROOF_REQ;
         use crate::utils::mockdata::mock_settings::MockBuilder;
+
+        use super::*;
 
         #[test]
         #[cfg(feature = "general_test")]
