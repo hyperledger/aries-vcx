@@ -11,7 +11,7 @@ use crate::connection::create_agent_keys;
 use crate::error::prelude::*;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::settings;
-use crate::agency_client::httpclient;
+use crate::utils::httpclient;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentInfo {
@@ -147,16 +147,6 @@ impl AgentInfo {
 
     fn decrypt_decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
         EncryptionEnvelope::anon_unpack(message.payload()?)
-    }
-
-    /**
-    Sends authenticated message to connection counterparty
-     */
-    pub fn send_message(&self, message: &A2AMessage, did_dod: &DidDoc) -> VcxResult<()> {
-        trace!("Agent::send_message >>> message: {:?}, did_doc: {:?}", message, did_dod);
-        let envelope = EncryptionEnvelope::create(&message, Some(&self.pw_vk), &did_dod)?;
-        httpclient::post_message(&envelope.0, &did_dod.get_endpoint())?;
-        Ok(())
     }
 
     /**
