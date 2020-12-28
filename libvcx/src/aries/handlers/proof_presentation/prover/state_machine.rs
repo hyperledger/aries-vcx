@@ -90,7 +90,10 @@ impl ProverSM {
         None
     }
 
-    pub fn step(self, message: ProverMessages, connection_handle: Option<u32>) -> VcxResult<ProverSM> {
+    pub fn step(self,
+                message: ProverMessages,
+                send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>,
+    ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
 
         let ProverSM { source_id, state, thread_id } = self;
@@ -123,15 +126,11 @@ impl ProverSM {
                         }
                     }
                     ProverMessages::RejectPresentationRequest((reason)) => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        Self::_handle_reject_presentation_request(connection_handle, &reason, &state.presentation_request, &thread_id)?;
+                        Self::_handle_reject_presentation_request(send_message.unwrap(), &reason, &state.presentation_request, &thread_id)?;
                         ProverState::Finished(state.into())
                     }
                     ProverMessages::ProposePresentation((preview)) => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        Self::_handle_presentation_proposal(connection_handle, preview, &state.presentation_request, &thread_id)?;
+                        Self::_handle_presentation_proposal(send_message.unwrap(), preview, &state.presentation_request, &thread_id)?;
                         ProverState::Finished(state.into())
                     }
                     _ => {
@@ -142,21 +141,16 @@ impl ProverSM {
             ProverState::PresentationPrepared(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        connection::send_message(connection_handle, state.presentation.to_a2a_message())?;
+                        let send_message = send_message.unwrap();
+                        send_message(&state.presentation.to_a2a_message())?;
                         ProverState::PresentationSent((state).into())
                     }
                     ProverMessages::RejectPresentationRequest((reason)) => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        Self::_handle_reject_presentation_request(connection_handle, &reason, &state.presentation_request, &thread_id)?;
+                        Self::_handle_reject_presentation_request(send_message.unwrap(), &reason, &state.presentation_request, &thread_id)?;
                         ProverState::Finished(state.into())
                     }
                     ProverMessages::ProposePresentation((preview)) => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        Self::_handle_presentation_proposal(connection_handle, preview, &state.presentation_request, &thread_id)?;
+                        Self::_handle_presentation_proposal(send_message.unwrap(), preview, &state.presentation_request, &thread_id)?;
                         ProverState::Finished(state.into())
                     }
                     _ => {
@@ -167,9 +161,8 @@ impl ProverSM {
             ProverState::PresentationPreparationFailed(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        let connection_handle = connection_handle
-                            .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"))?;
-                        connection::send_message(connection_handle, state.problem_report.to_a2a_message())?;
+                        let send_message = send_message.unwrap();
+                        send_message(&state.problem_report.to_a2a_message())?;
                         ProverState::Finished((state).into())
                     }
                     _ => {
@@ -199,23 +192,30 @@ impl ProverSM {
         Ok(ProverSM { source_id, state, thread_id })
     }
 
-    fn _handle_reject_presentation_request(connection_handle: u32, reason: &str, presentation_request: &PresentationRequest, thread_id: &str) -> VcxResult<()> {
+    fn _handle_reject_presentation_request(
+        send_message: &impl Fn(&A2AMessage) -> VcxResult<()>,
+        reason: &str,
+        presentation_request: &PresentationRequest,
+        thread_id: &str,
+    ) -> VcxResult<()> {
         let problem_report = ProblemReport::create()
             .set_comment(reason.to_string())
             .set_thread_id(thread_id);
 
-        connection::send_message(connection_handle, problem_report.to_a2a_message())?;
-        Ok(())
+        send_message(&problem_report.to_a2a_message())
     }
 
-    fn _handle_presentation_proposal(connection_handle: u32, preview: PresentationPreview, presentation_request: &PresentationRequest, thread_id: &str) -> VcxResult<()> {
+    fn _handle_presentation_proposal(
+        send_message: &impl Fn(&A2AMessage) -> VcxResult<()>,
+        preview: PresentationPreview,
+        presentation_request: &PresentationRequest,
+        thread_id: &str,
+    ) -> VcxResult<()> {
         let proposal = PresentationProposal::create()
             .set_presentation_preview(preview)
             .set_thread_id(thread_id);
 
-        connection::send_message(connection_handle, proposal.to_a2a_message())?;
-
-        Ok(())
+        send_message(&proposal.to_a2a_message())
     }
 
     pub fn source_id(&self) -> String { self.source_id.clone() }
@@ -292,22 +292,22 @@ pub mod test {
 
     impl ProverSM {
         fn to_presentation_prepared_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).unwrap();
+            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&Box<dyn Fn(&A2AMessage) -> VcxResult<()>>>).unwrap();
             self
         }
 
         fn to_presentation_sent_state(mut self) -> ProverSM {
-            let connection_handle = Some(mock_connection());
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).unwrap();
-            self = self.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
+            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            self = self.step(ProverMessages::SendPresentation, send_message).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> ProverSM {
-            let connection_handle = Some(mock_connection());
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).unwrap();
-            self = self.step(ProverMessages::SendPresentation, connection_handle).unwrap();
-            self = self.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
+            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&Box<dyn Fn(&A2AMessage) -> VcxResult<()>>>).unwrap();
+            self = self.step(ProverMessages::SendPresentation, send_message).unwrap();
+            self = self.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             self
         }
     }
@@ -368,9 +368,9 @@ pub mod test {
         fn test_prover_handle_prepare_presentation_message_from_initiated_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_connection = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_connection).unwrap();
 
             assert_match!(ProverState::PresentationPrepared(_), prover_sm.state);
         }
@@ -382,9 +382,9 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
-            let connection_handle = Some(mock_connection());
+            let send_connection = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), send_connection).unwrap();
 
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
         }
@@ -394,9 +394,9 @@ pub mod test {
         fn test_prover_handle_reject_presentation_request_message_from_initiated_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_connection = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject request"))), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject request"))), send_connection).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
@@ -406,9 +406,9 @@ pub mod test {
         fn test_prover_handle_propose_presentation_message_from_initiated_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_connection = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), send_connection).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
@@ -418,13 +418,13 @@ pub mod test {
         fn test_prover_handle_other_messages_from_initiated_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
             assert_match!(ProverState::Initiated(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             assert_match!(ProverState::Initiated(_), prover_sm.state);
         }
 
@@ -433,11 +433,11 @@ pub mod test {
         fn test_prover_handle_send_presentation_message_from_presentation_prepared_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
 
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
 
             assert_match!(ProverState::PresentationSent(_), prover_sm.state);
         }
@@ -447,13 +447,13 @@ pub mod test {
         fn test_prover_handle_other_messages_from_presentation_prepared_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
             assert_match!(ProverState::PresentationPrepared(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             assert_match!(ProverState::PresentationPrepared(_), prover_sm.state);
         }
 
@@ -462,10 +462,10 @@ pub mod test {
         fn test_prover_handle_reject_presentation_request_message_from_presentation_prepared_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
 
-            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject request"))), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject request"))), send_message).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
@@ -475,9 +475,9 @@ pub mod test {
         fn test_prover_handle_propose_presentation_message_from_presentation_prepared_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm().to_presentation_prepared_state();
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), send_message).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
@@ -489,12 +489,12 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), send_message).unwrap();
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
             assert_match!(ProverState::Finished(_), prover_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), prover_sm.presentation_status());
         }
@@ -506,14 +506,14 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), send_message).unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             assert_match!(ProverState::PresentationPreparationFailed(_), prover_sm.state);
         }
 
@@ -522,11 +522,11 @@ pub mod test {
         fn test_prover_handle_ack_message_from_presentation_sent_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
             assert_eq!(Status::Success.code(), prover_sm.presentation_status());
@@ -537,9 +537,9 @@ pub mod test {
         fn test_prover_handle_reject_presentation_request_message_from_presentation_sent_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let prover_sm = _prover_sm().to_presentation_sent_state();
-            let err = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject"))), connection_handle).unwrap_err();
+            let err = prover_sm.step(ProverMessages::RejectPresentationRequest((String::from("reject"))), send_message).unwrap_err();
             assert_eq!(VcxErrorKind::ActionNotSupported, err.kind());
         }
 
@@ -548,11 +548,11 @@ pub mod test {
         fn test_prover_handle_presentation_reject_message_from_presentation_sent_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
             assert_eq!(Status::Failed(ProblemReport::create()).code(), prover_sm.presentation_status());
@@ -563,15 +563,15 @@ pub mod test {
         fn test_prover_handle_other_messages_from_presentation_sent_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
             assert_match!(ProverState::PresentationSent(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
             assert_match!(ProverState::PresentationSent(_), prover_sm.state);
         }
 
@@ -580,16 +580,16 @@ pub mod test {
         fn test_prover_handle_messages_from_finished_state() {
             let _setup = SetupMocks::init();
 
-            let connection_handle = Some(mock_connection());
+            let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, connection_handle).unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::SendPresentation, send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             assert_match!(ProverState::Finished(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }
     }

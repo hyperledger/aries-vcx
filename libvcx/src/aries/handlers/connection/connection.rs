@@ -350,13 +350,18 @@ Get messages received from connection counterparty.
     Sends authenticated message to connection counterparty
      */
     pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
-        trace!("Connection::send_message >>> message: {:?}", message);
+        let send_message = self.send_message_closure()?;
+        send_message(message)
+    }
 
+    pub fn send_message_closure(&self) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
-
-        warn!("Connection resolved did_doc = {:?}", did_doc);
-        did_doc.send_message(message, &self.agent_info().pw_vk)
+        let sender_vk = self.agent_info().pw_vk.clone();
+        return Ok(move |a2a_message: &A2AMessage| {
+            warn!("Connection resolved did_doc = {:?}", did_doc);
+            did_doc.send_message(a2a_message, &sender_vk)
+        })
     }
 
     fn parse_generic_message(message: &str) -> A2AMessage {
