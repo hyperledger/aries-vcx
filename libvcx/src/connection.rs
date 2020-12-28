@@ -264,6 +264,12 @@ pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     })
 }
 
+pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
+    CONNECTION_MAP.get(handle, |connection| {
+        return connection.send_message_closure()
+    })
+}
+
 pub fn is_v3_connection(connection_handle: u32) -> VcxResult<bool> {
     CONNECTION_MAP.get(connection_handle, |_| {
         Ok(true)
