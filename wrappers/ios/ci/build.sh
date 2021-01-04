@@ -46,36 +46,6 @@ setup() {
         exit 1
     fi
 
-
-    # github actions issue is causing "brew update" to fail
-    # provided temporary workaround:
-    # https://github.com/actions/virtual-environments/issues/1811#issuecomment-708480190
-    brew uninstall openssl@1.0.2t
-    brew uninstall python@2.7.17
-    brew untap local/openssl
-    brew untap local/python2
-    brew cask install xquartz
-    brew update
-    brew upgrade
-    brew install ace boost cmake eigen gsl ipopt jpeg libedit opencv pkg-config qt5 sqlite swig tinyxml
-
-#    echo "Update Homebrew"
-#    brew doctor || 1
-
-#    tries=0
-#    threshold=5
-
-#    while ! brew update;
-#    do
-#      tries=$(( $tries + 1 ))
-#      echo echo "Brew update attempt ${tries}/${threshold} failed.";
-#      if [ "$tries" -eq "${threshold}" ]; then
-#          echo "Failed to update brew after ${threshold} attempts. Terminating."
-#          exit 1
-#      fi;
-#      sleep 5;
-#    done
-
     echo "Install required native libraries and utilities"
     which pkg-config &>/dev/null || brew install pkg-config
     # Libsodium version<1.0.15 is required
@@ -90,6 +60,23 @@ setup() {
     brew list libzip &>/dev/null || brew install libzip
 
     mkdir -p $OUTPUT_DIR
+
+    # Figure out which OPENSSL we have available
+    export OPENSSL_BASE_DIR=$(brew --cellar openssl)
+    for f in $(ls -t "$OPENSSL_BASE_DIR"); do
+      local ABSOLUTE_FILE_PATH="${OPENSSL_BASE_DIR}/${f}"
+      if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -d "$ABSOLUTE_FILE_PATH/lib" ]; then
+        export OPENSSL_VERSION=$f
+        export OPENSSL_DIR=$ABSOLUTE_FILE_PATH # Used later by cyclone
+        break
+      fi
+    done
+    if [ -z "$OPENSSL_VERSION" ]; then
+      echo >&2 "Error: Failed to find an OpenSSL installation in $OPENSSL_BASE_DIR"
+      exit 1
+    else
+      echo "Found OpenSSL version $OPENSSL_VERSION"
+    fi
 }
 
 # NOTE: Each built archive must be a fat file, i.e support all required architectures

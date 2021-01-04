@@ -1,11 +1,11 @@
-import * as ffi from 'ffi-napi'
-import { VCXInternalError } from '../errors'
-import { rustAPI } from '../rustlib'
-import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { ISerializedData } from './common'
-import { Connection } from './connection'
-import { VCXBaseWithState } from './vcx-base-with-state'
-import { PaymentManager } from './vcx-payment-txn'
+import * as ffi from 'ffi-napi';
+import { VCXInternalError } from '../errors';
+import { rustAPI } from '../rustlib';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { ISerializedData } from './common';
+import { Connection } from './connection';
+import { VCXBaseWithState } from './vcx-base-with-state';
+import { PaymentManager } from './vcx-payment-txn';
 
 /**
  *    The object of the VCX API representing an Issuer side in the credential issuance process.
@@ -55,28 +55,28 @@ import { PaymentManager } from './vcx-payment-txn'
  */
 export interface IIssuerCredentialCreateData {
   // Enterprise's personal identification for the user.
-  sourceId: string,
+  sourceId: string;
   // Handle of the correspondent credential definition object
-  credDefHandle: number,
+  credDefHandle: number;
   // Data attributes offered to person in the credential ('{"state":"UT"}')
   attr: {
-    [ index: string ]: string
-  },
+    [index: string]: string;
+  };
   // Name of the credential - ex. Drivers Licence
-  credentialName: string,
+  credentialName: string;
   // price of credential
-  price: string,
+  price: string;
 }
 
 export interface IIssuerCredentialVCXAttributes {
-  [ index: string ]: string
+  [index: string]: string;
 }
 
 export interface IIssuerCredentialParams {
-  credDefHandle: number,
-  credentialName: string,
-  attr: IIssuerCredentialVCXAttributes,
-  price: string
+  credDefHandle: number;
+  credentialName: string;
+  attr: IIssuerCredentialVCXAttributes;
+  price: string;
 }
 
 /**
@@ -84,13 +84,13 @@ export interface IIssuerCredentialParams {
  * This interface is expected as the type for deserialize's parameter and serialize's return value
  */
 export interface IIssuerCredentialData {
-  issuer_sm: object,
-  source_id: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  issuer_sm: Record<string, any>;
+  source_id: string;
 }
 
-// tslint:disable max-classes-per-file
 export class IssuerCredentialPaymentManager extends PaymentManager {
-  protected _getPaymentTxnFn = rustAPI().vcx_issuer_credential_get_payment_txn
+  protected _getPaymentTxnFn = rustAPI().vcx_issuer_credential_get_payment_txn;
 }
 
 /**
@@ -106,28 +106,39 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * ```
    * @returns {Promise<IssuerCredential>} An Issuer credential Object
    */
-  public static async create ({ attr, sourceId, credDefHandle,
-                         credentialName, price }: IIssuerCredentialCreateData): Promise<IssuerCredential> {
+  public static async create({
+    attr,
+    sourceId,
+    credDefHandle,
+    credentialName,
+    price,
+  }: IIssuerCredentialCreateData): Promise<IssuerCredential> {
     try {
-      const attrsVCX: IIssuerCredentialVCXAttributes = attr
-      const credential = new IssuerCredential(sourceId, { credDefHandle, credentialName, attr: attrsVCX, price })
-      const attrsStringified = attrsVCX ? JSON.stringify(attrsVCX) : attrsVCX
-      const commandHandle = 0
-      const issuerDid = null
-      await credential._create((cb) => rustAPI().vcx_issuer_create_credential(
-        commandHandle,
-        sourceId,
+      const attrsVCX: IIssuerCredentialVCXAttributes = attr;
+      const credential = new IssuerCredential(sourceId, {
         credDefHandle,
-        issuerDid,
-        attrsStringified,
         credentialName,
+        attr: attrsVCX,
         price,
-        cb
-        )
-      )
-      return credential
+      });
+      const attrsStringified = attrsVCX ? JSON.stringify(attrsVCX) : attrsVCX;
+      const commandHandle = 0;
+      const issuerDid = null;
+      await credential._create((cb) =>
+        rustAPI().vcx_issuer_create_credential(
+          commandHandle,
+          sourceId,
+          credDefHandle,
+          issuerDid,
+          attrsStringified,
+          credentialName,
+          price,
+          cb,
+        ),
+      );
+      return credential;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -142,45 +153,54 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * issuerCredential2 = await IssuerCredential.deserialize(data1)
    * ```
    */
-  public static async deserialize (credentialData: ISerializedData<IIssuerCredentialData>): Promise<IssuerCredential> {
+  public static async deserialize(
+    credentialData: ISerializedData<IIssuerCredentialData>,
+  ): Promise<IssuerCredential> {
     try {
       const params: IIssuerCredentialParams = (() => {
         switch (credentialData.version) {
           case '2.0':
-            return { attr: {}, credDefHandle: -1, credentialName: '', price: '0' }
+            return { attr: {}, credDefHandle: -1, credentialName: '', price: '0' };
           default:
-            throw Error(`Unsupported version provided in serialized credential data: ${JSON.stringify(credentialData.version)}`)
+            throw Error(
+              `Unsupported version provided in serialized credential data: ${JSON.stringify(
+                credentialData.version,
+              )}`,
+            );
         }
-      })()
+      })();
       return await super._deserialize<IssuerCredential, IIssuerCredentialParams>(
         IssuerCredential,
         credentialData,
-        params
-      )
+        params,
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  public paymentManager!: IssuerCredentialPaymentManager
-  protected _releaseFn = rustAPI().vcx_issuer_credential_release
-  protected _updateStFn = rustAPI().vcx_issuer_credential_update_state
-  protected _updateStFnV2 = rustAPI().vcx_v2_issuer_credential_update_state
-  protected _updateStWithMessageFn = rustAPI(). vcx_issuer_credential_update_state_with_message
-  protected _getStFn = rustAPI().vcx_issuer_credential_get_state
-  protected _serializeFn = rustAPI().vcx_issuer_credential_serialize
-  protected _deserializeFn = rustAPI().vcx_issuer_credential_deserialize
-  private _credDefHandle: number
-  private _credentialName: string
-  private _attr: IIssuerCredentialVCXAttributes
-  private _price: string
+  public paymentManager!: IssuerCredentialPaymentManager;
+  protected _releaseFn = rustAPI().vcx_issuer_credential_release;
+  protected _updateStFn = rustAPI().vcx_issuer_credential_update_state;
+  protected _updateStFnV2 = rustAPI().vcx_v2_issuer_credential_update_state;
+  protected _updateStWithMessageFn = rustAPI().vcx_issuer_credential_update_state_with_message;
+  protected _getStFn = rustAPI().vcx_issuer_credential_get_state;
+  protected _serializeFn = rustAPI().vcx_issuer_credential_serialize;
+  protected _deserializeFn = rustAPI().vcx_issuer_credential_deserialize;
+  private _credDefHandle: number;
+  private _credentialName: string;
+  private _attr: IIssuerCredentialVCXAttributes;
+  private _price: string;
 
-  constructor (sourceId: string, { credDefHandle, credentialName, attr, price }: IIssuerCredentialParams) {
-    super(sourceId)
-    this._credDefHandle = credDefHandle
-    this._credentialName = credentialName
-    this._attr = attr
-    this._price = price
+  constructor(
+    sourceId: string,
+    { credDefHandle, credentialName, attr, price }: IIssuerCredentialParams,
+  ) {
+    super(sourceId);
+    this._credDefHandle = credDefHandle;
+    this._credentialName = credentialName;
+    this._attr = attr;
+    this._price = price;
   }
 
   /**
@@ -197,28 +217,31 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * await issuerCredential.sendOffer(connection)
    * ```
    */
-  public async sendOffer (connection: Connection): Promise<void> {
+  public async sendOffer(connection: Connection): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_issuer_send_credential_offer(0, this.handle, connection.handle, cb)
-            if (rc) {
-              reject(rc)
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_issuer_send_credential_offer(
+            0,
+            this.handle,
+            connection.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
             }
-          },
-          (resolve, reject) => ffi.Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (xcommandHandle: number, err: number) => {
-              if (err) {
-                reject(err)
-                return
-              }
-              resolve()
-            })
-        )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -232,32 +255,34 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * ```
    *
    */
-  public async getCredentialOfferMsg (): Promise<string> {
+  public async getCredentialOfferMsg(): Promise<string> {
     try {
       return await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_issuer_get_credential_offer_msg(0, this.handle, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => ffi.Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_issuer_get_credential_offer_msg(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xHandle: number, err: number, message: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
               if (!message) {
-                reject(`Credential ${this.sourceId} returned empty string`)
-                return
+                reject(`Credential ${this.sourceId} returned empty string`);
+                return;
               }
-              resolve(message)
-            })
-        )
+              resolve(message);
+            },
+          ),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -275,28 +300,26 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * ```
    *
    */
-  public async sendCredential (connection: Connection): Promise<void> {
+  public async sendCredential(connection: Connection): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_send_credential(0, this.handle, connection.handle, cb)
+          const rc = rustAPI().vcx_issuer_send_credential(0, this.handle, connection.handle, cb);
           if (rc) {
-            reject(rc)
+            reject(rc);
           }
         },
-        (resolve, reject) => ffi.Callback(
-          'void',
-          ['uint32', 'uint32'],
-          (xcommandHandle: number, err: number) => {
+        (resolve, reject) =>
+          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
             if (err) {
-              reject(err)
-              return
+              reject(err);
+              return;
             }
-            resolve()
-          })
-      )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -314,32 +337,34 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * ```
    *
    */
-  public async getCredentialMsg (myPwDid: string): Promise<string> {
+  public async getCredentialMsg(myPwDid: string): Promise<string> {
     try {
       return await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_issuer_get_credential_msg(0, this.handle, myPwDid, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => ffi.Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_issuer_get_credential_msg(0, this.handle, myPwDid, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xHandle: number, err: number, message: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
               if (!message) {
-                reject(`Credential ${this.sourceId} returned empty string`)
-                return
+                reject(`Credential ${this.sourceId} returned empty string`);
+                return;
               }
-              resolve(message)
-            })
-        )
+              resolve(message);
+            },
+          ),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -358,100 +383,98 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * ```
    *
    */
-  public async revokeCredential (): Promise<void> {
+  public async revokeCredential(): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_revoke_credential(0, this.handle, cb)
+          const rc = rustAPI().vcx_issuer_revoke_credential(0, this.handle, cb);
           if (rc) {
-            reject(rc)
+            reject(rc);
           }
         },
-        (resolve, reject) => ffi.Callback(
-          'void',
-          ['uint32', 'uint32'],
-          (xcommandHandle: number, err: number) => {
+        (resolve, reject) =>
+          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
             if (err) {
-              reject(err)
-              return
+              reject(err);
+              return;
             }
-            resolve()
-          })
-      )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  public async revokeCredentialLocal (): Promise<void> {
+  public async revokeCredentialLocal(): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_revoke_credential_local(0, this.handle, cb)
+          const rc = rustAPI().vcx_issuer_revoke_credential_local(0, this.handle, cb);
           if (rc) {
-            reject(rc)
+            reject(rc);
           }
         },
-        (resolve, reject) => ffi.Callback(
-          'void',
-          ['uint32', 'uint32'],
-          (xcommandHandle: number, err: number) => {
+        (resolve, reject) =>
+          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
             if (err) {
-              reject(err)
-              return
+              reject(err);
+              return;
             }
-            resolve()
-          })
-      )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  public async getRevRegId (): Promise<string> {
+  public async getRevRegId(): Promise<string> {
     try {
       const revRegId = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_credential_get_rev_reg_id(0, this.handle, cb)
+          const rc = rustAPI().vcx_issuer_credential_get_rev_reg_id(0, this.handle, cb);
           if (rc) {
-            reject(rc)
+            reject(rc);
           }
         },
-        (resolve, reject) => ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (handle: number, err: number, _revRegId: string) => {
-            if (err) {
-              reject(err)
-              return
-            }
-            resolve(_revRegId)
-          })
-      )
-      return revRegId
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, _revRegId: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(_revRegId);
+            },
+          ),
+      );
+      return revRegId;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  get credDefHandle () {
-    return this._credDefHandle
+  get credDefHandle(): number {
+    return this._credDefHandle;
   }
 
-  get attr () {
-    return this._attr
+  get attr(): IIssuerCredentialVCXAttributes {
+    return this._attr;
   }
 
-  get credentialName () {
-    return this._credentialName
+  get credentialName(): string {
+    return this._credentialName;
   }
 
-  get price () {
-    return this._price
+  get price(): string {
+    return this._price;
   }
 
-  protected _setHandle (handle: number) {
-    super._setHandle(handle)
-    this.paymentManager = new IssuerCredentialPaymentManager({ handle })
+  protected _setHandle(handle: number): void {
+    super._setHandle(handle);
+    this.paymentManager = new IssuerCredentialPaymentManager({ handle });
   }
 }

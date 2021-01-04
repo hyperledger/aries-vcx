@@ -365,6 +365,7 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.15.0", note = "Use vcx_v2_issuer_credential_update_state_with_message instead.")]
 pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: CommandHandle,
                                                               credential_handle: u32,
                                                               message: *const c_char,
@@ -391,6 +392,70 @@ pub extern fn vcx_issuer_credential_update_state_with_message(command_handle: Co
             }
             Err(x) => {
                 warn!("vcx_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                      command_handle, credential_handle, x, 0, source_id);
+                cb(command_handle, x.into(), 0);
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
+/// Update the state of the credential based on the given message.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
+///
+/// connection_handle: Connection handle of connection associated with this credential exchange interaction.
+///
+/// message: message to process for state changes
+///
+/// cb: Callback that provides most current state of the credential and error status of request
+///     States:
+///         1 - Initialized
+///         2 - Offer Sent
+///         3 - Request Received
+///         4 - Issued
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle: CommandHandle,
+                                                              credential_handle: u32,
+                                                              connection_handle: u32,
+                                                              message: *const c_char,
+                                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_v2_issuer_credential_update_state_with_message >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_v2_issuer_credential_update_state_with_message(command_handle: {}, credential_handle: {}, message: {}) source_id: {}",
+           command_handle, credential_handle, message, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
+    }
+
+    spawn(move || {
+        match issuer_credential::update_state(credential_handle, Some(&message), Some(connection_handle)) {
+            Ok(x) => {
+                trace!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, x, source_id);
+                cb(command_handle, error::SUCCESS.code_num, x);
+            }
+            Err(x) => {
+                warn!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }

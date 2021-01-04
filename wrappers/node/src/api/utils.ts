@@ -1,4 +1,4 @@
-import { Callback } from 'ffi-napi'
+import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors'
 import { initRustAPI, rustAPI } from '../rustlib'
@@ -7,7 +7,6 @@ import { IInitVCXOptions } from './common'
 
 export async function provisionCloudAgent (configAgent: object, options: IInitVCXOptions = {}): Promise<string> {
   try {
-    initRustAPI(options.libVCXPath)
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_provision_cloud_agent(0, JSON.stringify(configAgent), cb)
@@ -31,7 +30,13 @@ export async function provisionCloudAgent (configAgent: object, options: IInitVC
   }
 }
 
-export async function provisionAgent (configAgent: string, options: IInitVCXOptions = {}): Promise<string> {
+export interface PtrBuffer extends Buffer {
+  // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
+  // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
+  deref: () => PtrBuffer;
+}
+
+export async function provisionAgent(configAgent: string): Promise<string> {
   /**
    * Provision an agent in the agency, populate configuration and wallet for this agent.
    *
@@ -49,232 +54,244 @@ export async function provisionAgent (configAgent: string, options: IInitVCXOpti
    * vcxConfig = await provisionAgent(JSON.stringify(enterprise_config))
    */
   try {
-    initRustAPI(options.libVCXPath)
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_agent_provision_async(0, configAgent, cb)
+        const rc = rustAPI().vcx_agent_provision_async(0, configAgent, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32','string'],
-        (xhandle: number, err: number, config: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(config)
-        })
-    )
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (xhandle: number, err: number, config: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(config);
+          },
+        ),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
-export function getVersion (): string {
-  return rustAPI().vcx_version()
+export function getVersion(): string {
+  return rustAPI().vcx_version();
 }
 
-export async function getLedgerFees (): Promise<string> {
+export async function getLedgerFees(): Promise<string> {
   /**
    * Get ledger fees from the sovrin network
    */
   try {
     const ledgerFees = await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_ledger_get_fees(0, cb)
+        const rc = rustAPI().vcx_ledger_get_fees(0, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32','string'],
-        (xhandle: number, err: number, fees: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(fees)
-        })
-    )
-    return ledgerFees
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (xhandle: number, err: number, fees: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(fees);
+          },
+        ),
+    );
+    return ledgerFees;
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
-export async function getLedgerAuthorAgreement (): Promise<string> {
+export async function getLedgerAuthorAgreement(): Promise<string> {
   /**
    * Retrieve author agreement set on the sovrin network
    */
   try {
     const agreement = await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_get_ledger_author_agreement(0, cb)
+        const rc = rustAPI().vcx_get_ledger_author_agreement(0, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32','string'],
-        (xhandle: number, err: number, agreement: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(agreement)
-        })
-    )
-    return agreement
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (xhandle: number, err: number, agreement: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(agreement);
+          },
+        ),
+    );
+    return agreement;
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
-export function setActiveTxnAuthorAgreementMeta (text: string | null | undefined,
-                                                 version: string | null | undefined,
-                                                 hash: string | null | undefined,
-                                                 acc_mech_type: string,
-                                                 time_of_acceptance: number) {
+export function setActiveTxnAuthorAgreementMeta(
+  text: string | null | undefined,
+  version: string | null | undefined,
+  hash: string | null | undefined,
+  acc_mech_type: string,
+  time_of_acceptance: number,
+): number {
   /**
    * Set some accepted agreement as active.
    * As result of successful call of this function appropriate metadata will be appended to each write request.
    */
-  return rustAPI().vcx_set_active_txn_author_agreement_meta(text, version, hash, acc_mech_type, time_of_acceptance)
+  return rustAPI().vcx_set_active_txn_author_agreement_meta(
+    text,
+    version,
+    hash,
+    acc_mech_type,
+    time_of_acceptance,
+  );
 }
 
-export function shutdownVcx (deleteWallet: boolean): number {
-  return rustAPI().vcx_shutdown(deleteWallet)
+export function shutdownVcx(deleteWallet: boolean): number {
+  return rustAPI().vcx_shutdown(deleteWallet);
 }
 
 export interface IUpdateWebhookUrl {
-  webhookUrl: string,
+  webhookUrl: string;
 }
 
-export async function vcxUpdateWebhookUrl ({ webhookUrl }: IUpdateWebhookUrl): Promise<void> {
+export async function vcxUpdateWebhookUrl({ webhookUrl }: IUpdateWebhookUrl): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_update_webhook_url(0, webhookUrl, cb)
+        const rc = rustAPI().vcx_update_webhook_url(0, webhookUrl, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
           if (err) {
-            reject(err)
-            return
+            reject(err);
+            return;
           }
-          resolve()
-        })
-    )
+          resolve();
+        }),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
 export interface IDownloadMessagesConfigs {
-  status: string,
-  uids: string,
-  pairwiseDids: string
+  status: string;
+  uids: string;
+  pairwiseDids: string;
 }
 
-export async function downloadMessages
-({ status, uids, pairwiseDids }: IDownloadMessagesConfigs): Promise<string> {
+export async function downloadMessages({
+  status,
+  uids,
+  pairwiseDids,
+}: IDownloadMessagesConfigs): Promise<string> {
   /**
    *  Retrieve messages from the agency
    */
   try {
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_messages_download(0, status, uids, pairwiseDids, cb)
+        const rc = rustAPI().vcx_messages_download(0, status, uids, pairwiseDids, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32','string'],
-        (xhandle: number, err: number, messages: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(messages)
-        })
-    )
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (xhandle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(messages);
+          },
+        ),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
 export interface IUpdateMessagesConfigs {
-  msgJson: string
+  msgJson: string;
 }
 
-export async function updateMessages ({ msgJson }: IUpdateMessagesConfigs): Promise<number> {
+export async function updateMessages({ msgJson }: IUpdateMessagesConfigs): Promise<number> {
   /**
    * Update the status of messages from the specified connection
    */
   try {
     return await createFFICallbackPromise<number>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_messages_update_status(0, 'MS-106', msgJson, cb)
+        const rc = rustAPI().vcx_messages_update_status(0, 'MS-106', msgJson, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
           if (err) {
-            reject(err)
-            return
+            reject(err);
+            return;
           }
-          resolve(err)
-        })
-    )
+          resolve(err);
+        }),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }
 
-export function setPoolHandle (handle: number): void {
-  rustAPI().vcx_pool_set_handle(handle)
+export function setPoolHandle(handle: number): void {
+  rustAPI().vcx_pool_set_handle(handle);
 }
 
-export async function endorseTransaction (transaction: string): Promise<void> {
+export async function endorseTransaction(transaction: string): Promise<void> {
   /**
    * Endorse transaction to the ledger preserving an original author
    */
   try {
     return await createFFICallbackPromise<void>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_endorse_transaction(0, transaction, cb)
+        const rc = rustAPI().vcx_endorse_transaction(0, transaction, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
           if (err) {
-            reject(err)
-            return
+            reject(err);
+            return;
           }
-          resolve()
-        })
-    )
+          resolve();
+        }),
+    );
   } catch (err) {
-    throw new VCXInternalError(err)
+    throw new VCXInternalError(err);
   }
 }

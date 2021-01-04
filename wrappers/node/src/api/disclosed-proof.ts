@@ -1,11 +1,11 @@
-import { Callback } from 'ffi-napi'
+import { Callback } from 'ffi-napi';
 
-import { VCXInternalError } from '../errors'
-import { rustAPI } from '../rustlib'
-import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { ISerializedData } from './common'
-import { Connection } from './connection'
-import { VCXBaseWithState } from './vcx-base-with-state'
+import { VCXInternalError } from '../errors';
+import { rustAPI } from '../rustlib';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { ISerializedData } from './common';
+import { Connection } from './connection';
+import { VCXBaseWithState } from './vcx-base-with-state';
 
 /**
  *    The API represents an Prover side in the credential presentation process.
@@ -48,10 +48,11 @@ import { VCXBaseWithState } from './vcx-base-with-state'
  */
 
 export interface IDisclosedProofData {
-  source_id: string,
+  source_id: string;
 }
 
-export type IDisclosedProofRequest = object
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type IDisclosedProofRequest = Record<string, any>;
 
 /**
  * @description Interface that represents the parameters for `DisclosedProof.create` function.
@@ -59,11 +60,11 @@ export type IDisclosedProofRequest = object
  */
 export interface IDisclosedProofCreateData {
   // We're going to need it in the future
-  connection: Connection,
+  connection: Connection;
   // Institution's identification for the proof, should be unique.
-  sourceId: string,
+  sourceId: string;
   // Proof request received via "getRequests"
-  request: string
+  request: string;
 }
 
 /**
@@ -72,11 +73,11 @@ export interface IDisclosedProofCreateData {
  */
 export interface IDisclosedProofCreateWithMsgIdData {
   // Connection to query for proof request
-  connection: Connection,
+  connection: Connection;
   // Id of the message that contains the proof request
-  msgId: string,
+  msgId: string;
   // Institution's personal identification for the proof, should be unique.
-  sourceId: string
+  sourceId: string;
 }
 
 /**
@@ -86,16 +87,16 @@ export interface IDisclosedProofCreateWithMsgIdData {
  */
 export interface IRetrievedCreds {
   attrs: {
-    [ index: string ]: ICredData[]
-  },
-  predicates: any
+    [index: string]: ICredData[];
+  };
+  predicates: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export interface ICredData {
   cred_info: {
-    [ index: string ]: any
-  },
-  interval: any
+    [index: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+  interval: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
@@ -105,11 +106,11 @@ export interface ICredData {
  */
 export interface IGenerateProofData {
   selectedCreds: {
-    [index: string]: ICredData
-  },
+    [index: string]: ICredData;
+  };
   selfAttestedAttrs: {
-    [index: string]: string
-  }
+    [index: string]: string;
+  };
 }
 
 /**
@@ -118,11 +119,11 @@ export interface IGenerateProofData {
  */
 export interface IDeclinePresentationRequestData {
   // Connection to decline presentation request
-  connection: Connection,
+  connection: Connection;
   // Human-readable string that explain the reason of decline
-  reason?: string,
+  reason?: string;
   // The proposed format of presentation request
-  proposal?: any
+  proposal?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
@@ -164,19 +165,18 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * disclosedProof = await DisclosedProof.create({ connection, request: disclosedProofRequest, sourceId: sourceId })
    * ```
    */
-  public static async create ({ sourceId, request }: IDisclosedProofCreateData): Promise<DisclosedProof> {
-    const newObj = new DisclosedProof(sourceId)
+  public static async create({
+    sourceId,
+    request,
+  }: IDisclosedProofCreateData): Promise<DisclosedProof> {
+    const newObj = new DisclosedProof(sourceId);
     try {
-      await newObj._create((cb) => rustAPI().vcx_disclosed_proof_create_with_request(
-        0,
-        sourceId,
-        request,
-        cb
-        )
-      )
-      return newObj
+      await newObj._create((cb) =>
+        rustAPI().vcx_disclosed_proof_create_with_request(0, sourceId, request, cb),
+      );
+      return newObj;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -190,33 +190,43 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * disclosedProof = await DisclosedProof.createWithMsgId(connection, 'testDisclousedProofMsgId', 'sourceId')
    * ```
    */
-  public static async createWithMsgId ({ connection, sourceId, msgId }: IDisclosedProofCreateWithMsgIdData):
-  Promise<DisclosedProof> {
+  public static async createWithMsgId({
+    connection,
+    sourceId,
+    msgId,
+  }: IDisclosedProofCreateWithMsgIdData): Promise<DisclosedProof> {
     try {
       return await createFFICallbackPromise<DisclosedProof>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_create_with_msgid(0, sourceId, connection.handle, msgId, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_create_with_msgid(
+            0,
+            sourceId,
+            connection.handle,
+            msgId,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
             'void',
             ['uint32', 'uint32', 'uint32', 'string'],
             (xHandle: number, err: number, handle: number, proofReq: string) => {
-
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
-              const newObj = new DisclosedProof(sourceId)
-              newObj._setHandle(handle)
-              newObj._proofReq = proofReq
-              resolve(newObj)
-            })
-      )
+              const newObj = new DisclosedProof(sourceId);
+              newObj._setHandle(handle);
+              newObj._proofReq = proofReq;
+              resolve(newObj);
+            },
+          ),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
   /**
@@ -231,12 +241,14 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * data = await disclosedProof.serialize()
    * ```
    */
-  public static async deserialize (data: ISerializedData<IDisclosedProofData>) {
+  public static async deserialize(
+    data: ISerializedData<IDisclosedProofData>,
+  ): Promise<DisclosedProof> {
     try {
-      const newObj = await super._deserialize<DisclosedProof, {}>(DisclosedProof, data)
-      return newObj
+      const newObj = await super._deserialize<DisclosedProof>(DisclosedProof, data);
+      return newObj;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -252,37 +264,39 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * requests = disclosedProof.getRequests(connection)
    * ```
    */
-  public static async getRequests (connection: Connection): Promise<IDisclosedProofRequest[]> {
+  public static async getRequests(connection: Connection): Promise<IDisclosedProofRequest[]> {
     const requestsStr = await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_disclosed_proof_get_requests(0, connection.handle, cb)
+        const rc = rustAPI().vcx_disclosed_proof_get_requests(0, connection.handle, cb);
         if (rc) {
-          reject(rc)
+          reject(rc);
         }
       },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32', 'uint32', 'string'],
-        (handle: number, err: number, messages: string) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve(messages)
-        })
-    )
-    const requests = JSON.parse(requestsStr)
-    return requests
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (handle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(messages);
+          },
+        ),
+    );
+    const requests = JSON.parse(requestsStr);
+    return requests;
   }
 
-  protected _releaseFn = rustAPI().vcx_disclosed_proof_release
-  protected _updateStFn = rustAPI().vcx_disclosed_proof_update_state
-  protected _updateStFnV2 = rustAPI().vcx_v2_disclosed_proof_update_state
-  protected _updateStWithMessageFn = rustAPI().vcx_disclosed_proof_update_state_with_message
-  protected _getStFn = rustAPI().vcx_disclosed_proof_get_state
-  protected _serializeFn = rustAPI().vcx_disclosed_proof_serialize
-  protected _deserializeFn = rustAPI().vcx_disclosed_proof_deserialize
-  private _proofReq: string = ''
+  protected _releaseFn = rustAPI().vcx_disclosed_proof_release;
+  protected _updateStFn = rustAPI().vcx_disclosed_proof_update_state;
+  protected _updateStFnV2 = rustAPI().vcx_v2_disclosed_proof_update_state;
+  protected _updateStWithMessageFn = rustAPI().vcx_disclosed_proof_update_state_with_message;
+  protected _getStFn = rustAPI().vcx_disclosed_proof_get_state;
+  protected _serializeFn = rustAPI().vcx_disclosed_proof_serialize;
+  protected _deserializeFn = rustAPI().vcx_disclosed_proof_deserialize;
+  private _proofReq = '';
 
   /**
    * Get credentials from wallet matching to the proof request associated with proof object
@@ -295,56 +309,60 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * creds = await disclosedProof.getCredentials()
    * ```
    */
-  public async getCredentials (): Promise<IRetrievedCreds> {
+  public async getCredentials(): Promise<IRetrievedCreds> {
     try {
       const credsStr = await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_retrieve_credentials(0, this.handle, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_retrieve_credentials(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xcommandHandle: number, err: number, credsRet: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
-              resolve(credsRet)
-            })
-        )
-      const creds: IRetrievedCreds = JSON.parse(credsStr)
-      return creds
+              resolve(credsRet);
+            },
+          ),
+      );
+      const creds: IRetrievedCreds = JSON.parse(credsStr);
+      return creds;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  public async getProofRequestAttachment (): Promise<string> {
+  public async getProofRequestAttachment(): Promise<string> {
     try {
       const attrs = await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_get_proof_request_attachment(0, this.handle, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_get_proof_request_attachment(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xcommandHandle: number, err: number, _attrs: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
-              resolve(_attrs)
-            })
-        )
-      return attrs
+              resolve(_attrs);
+            },
+          ),
+      );
+      return attrs;
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -365,29 +383,27 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * await disclosedProof.sendProof(connection)
    * ```
    */
-  public async sendProof (connection?: Connection): Promise<void> {
+  public async sendProof(connection?: Connection): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
-          (resolve, reject, cb) => {
-            const connectionHandle = connection ? connection.handle : 0
-            const rc = rustAPI().vcx_disclosed_proof_send_proof(0, this.handle, connectionHandle, cb)
-            if (rc) {
-              reject(rc)
+        (resolve, reject, cb) => {
+          const connectionHandle = connection ? connection.handle : 0;
+          const rc = rustAPI().vcx_disclosed_proof_send_proof(0, this.handle, connectionHandle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
             }
-          },
-          (resolve, reject) => Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (xcommandHandle: number, err: number) => {
-              if (err) {
-                reject(err)
-                return
-              }
-              resolve()
-            })
-        )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -402,28 +418,31 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * await disclosedProof.rejectProof(connection)
    * ```
    */
-  public async rejectProof (connection: Connection): Promise<void> {
+  public async rejectProof(connection: Connection): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_reject_proof(0, this.handle, connection.handle, cb)
-            if (rc) {
-              reject(rc)
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_reject_proof(
+            0,
+            this.handle,
+            connection.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
             }
-          },
-          (resolve, reject) => Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (xcommandHandle: number, err: number) => {
-              if (err) {
-                reject(err)
-                return
-              }
-              resolve()
-            })
-        )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -442,32 +461,34 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * await disclosedProof.getProofMessage(connection)
    * ```
    */
-  public async getProofMessage (): Promise<string> {
+  public async getProofMessage(): Promise<string> {
     try {
       return await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_get_proof_msg(0, this.handle, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_get_proof_msg(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xHandle: number, err: number, message: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
               if (!message) {
-                reject(`proof ${this.sourceId} returned empty string`)
-                return
+                reject(`proof ${this.sourceId} returned empty string`);
+                return;
               }
-              resolve(message)
-            })
-        )
+              resolve(message);
+            },
+          ),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -480,32 +501,34 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * await disclosedProof.getRejectMessage(connection)
    * ```
    */
-  public async getRejectMessage (): Promise<string> {
+  public async getRejectMessage(): Promise<string> {
     try {
       return await createFFICallbackPromise<string>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_get_reject_msg(0, this.handle, cb)
-            if (rc) {
-              reject(rc)
-            }
-          },
-          (resolve, reject) => Callback(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_get_reject_msg(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
             'void',
             ['uint32', 'uint32', 'string'],
             (xHandle: number, err: number, message: string) => {
               if (err) {
-                reject(err)
-                return
+                reject(err);
+                return;
               }
               if (!message) {
-                reject(`proof ${this.sourceId} returned empty string`)
-                return
+                reject(`proof ${this.sourceId} returned empty string`);
+                return;
               }
-              resolve(message)
-            })
-        )
+              resolve(message);
+            },
+          ),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -526,34 +549,35 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    *  })
    * ```
    */
-  public async generateProof ({ selectedCreds, selfAttestedAttrs }: IGenerateProofData): Promise<void> {
+  public async generateProof({
+    selectedCreds,
+    selfAttestedAttrs,
+  }: IGenerateProofData): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_generate_proof(
-              0,
-              this.handle,
-              JSON.stringify(selectedCreds),
-              JSON.stringify(selfAttestedAttrs),
-              cb
-            )
-            if (rc) {
-              reject(rc)
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_generate_proof(
+            0,
+            this.handle,
+            JSON.stringify(selectedCreds),
+            JSON.stringify(selfAttestedAttrs),
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
             }
-          },
-          (resolve, reject) => Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (xcommandHandle: number, err: number) => {
-              if (err) {
-                reject(err)
-                return
-              }
-              resolve()
-            })
-        )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
@@ -574,39 +598,41 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData> {
    * await disclosedProof.declinePresentationRequest({connection, reason: 'some reason', proposal: null})
    * ```
    */
-  public async declinePresentationRequest ({ connection, reason, proposal }: IDeclinePresentationRequestData): Promise<void> {
+  public async declinePresentationRequest({
+    connection,
+    reason,
+    proposal,
+  }: IDeclinePresentationRequestData): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
-          (resolve, reject, cb) => {
-            const rc = rustAPI().vcx_disclosed_proof_decline_presentation_request(
-              0,
-              this.handle,
-              connection.handle,
-              reason,
-              proposal ? JSON.stringify(proposal) : null,
-              cb
-            )
-            if (rc) {
-              reject(rc)
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_decline_presentation_request(
+            0,
+            this.handle,
+            connection.handle,
+            reason,
+            proposal ? JSON.stringify(proposal) : null,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
             }
-          },
-          (resolve, reject) => Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (xcommandHandle: number, err: number) => {
-              if (err) {
-                reject(err)
-                return
-              }
-              resolve()
-            })
-        )
+            resolve();
+          }),
+      );
     } catch (err) {
-      throw new VCXInternalError(err)
+      throw new VCXInternalError(err);
     }
   }
 
-  get proofRequest (): string {
-    return this._proofReq
+  get proofRequest(): string {
+    return this._proofReq;
   }
 }

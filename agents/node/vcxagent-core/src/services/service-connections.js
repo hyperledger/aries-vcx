@@ -181,6 +181,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     verifySignature,
     sendMessage,
     getMessages,
+
     getMessagesV2,
     updateMessagesStatus,
     updateAllReceivedMessages,
