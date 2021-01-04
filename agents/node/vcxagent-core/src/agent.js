@@ -12,7 +12,7 @@ const {
   createAgencyClientForMainWallet,
   initIssuerConfig,
   openMainWallet,
-  openPoolDirectly,
+  openMainPool,
   vcxUpdateWebhookUrl,
   shutdownVcx
 } = require('@hyperledger/node-vcx-wrapper')
@@ -43,7 +43,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     logger.silly('Creating cloud agency config')
     await createAgencyClientForMainWallet(agentProvision.agencyConfig)
     logger.silly('Opening pool')
-    await openPoolDirectly({ genesis_path: genesisPath })
+    await openMainPool({ genesis_path: genesisPath })
   }
 
   async function agentShutdownVcx () {

@@ -90,7 +90,6 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     error::SUCCESS.code_num
 }
 
-
 /// Stores institution did, verkey and name in memory.
 ///
 /// #Params
@@ -133,7 +132,6 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
     });
     error::SUCCESS.code_num
 }
-
 
 /// Initializes VCX with config settings
 ///
@@ -187,21 +185,21 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_open_pool_directly(command_handle: CommandHandle, pool_config: *const c_char,  cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_open_pool_directly >>>");
+pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char,  cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
     if is_pool_open() {
-        error!("vcx_open_pool_directly :: Pool connection is already open.");
+        error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
     spawn(move || {
         match open_pool_directly(&pool_config) {
             Ok(()) => {
-                info!("vcx_open_pool_directly_cb :: Vcx Pool Init Successful");
+                info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(e) => {
-                error!("vcx_open_pool_directly_cb :: Vcx Pool Init Error {}.", e);
+                error!("vcx_open_main_pool_cb :: Vcx Pool Init Error {}.", e);
                 cb(command_handle, e.into());
                 return Ok(());
             }
@@ -220,7 +218,7 @@ pub extern fn vcx_open_pool_directly(command_handle: CommandHandle, pool_config:
 ///
 /// #Returns
 /// Error code as a u32
-#[deprecated(since = "0.14.0", note = "Use vcx_open_pool_directly instead.")]
+#[deprecated(since = "0.14.0", note = "Use vcx_open_main_pool instead.")]
 #[no_mangle]
 pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_pool >>>");

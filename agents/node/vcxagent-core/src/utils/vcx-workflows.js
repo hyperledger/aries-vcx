@@ -57,8 +57,8 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
 
   const walletConfig = {
     wallet_name: agentName,
-    wallet_key: '123',
-    wallet_key_derivation: 'ARGON2I_INT'
+    wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
+    wallet_key_derivation: 'RAW'
   }
 
   if (usePostgresWallet) {
@@ -81,14 +81,14 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   logger.debug(`Creating wallet with config: ${JSON.stringify(walletConfig, null, 2)}`)
   await createWallet(walletConfig)
   logger.debug(`Opening wallet with config: ${JSON.stringify(walletConfig, null, 2)}`)
-  const wh = await openMainWallet(walletConfig)
+  await openMainWallet(walletConfig)
   logger.debug(`Configuring issuer's wallet with seed: ${seed}`)
   const issuerConfig = JSON.parse(await configureIssuerWallet(seed))
   issuerConfig.institution_name = agentName
   logger.debug(`Provisioning agent with config: ${JSON.stringify(agencyConfig, null, 2)}`)
   agencyConfig = JSON.parse(await provisionCloudAgent(agencyConfig))
   logger.debug(`Provisined agent with config: ${JSON.stringify(agencyConfig, null, 2)}`)
-  await closeMainWallet(wh) // TODO: Get rid of wh
+  await closeMainWallet()
 
   return { agencyConfig, issuerConfig, walletConfig }
 }

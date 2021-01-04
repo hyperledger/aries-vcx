@@ -129,9 +129,9 @@ export async function configureIssuerWallet (seed: string): Promise<string> {
   }
 }
 
-export async function openMainWallet (config: object): Promise<number> {
+export async function openMainWallet (config: object): Promise<void> {
   try {
-    const handle = await createFFICallbackPromise<number>(
+    await createFFICallbackPromise<number>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_open_main_wallet(0, JSON.stringify(config), cb)
         if (rc) {
@@ -140,33 +140,32 @@ export async function openMainWallet (config: object): Promise<number> {
       },
       (resolve, reject) => Callback(
         'void',
-        ['uint32','uint32','uint32'],
-        (xhandle: number, err: number, _handle: number) => {
+        ['uint32','uint32'],
+        (xhandle: number, err: number) => {
           if (err) {
             reject(err)
             return
           }
-          resolve(_handle)
+          resolve()
         })
     )
-    return handle
   } catch (err) {
     throw new VCXInternalError(err)
   }
 }
 
-export async function closeMainWallet (handle: number): Promise<void> {
+export async function closeMainWallet (): Promise<void> {
   try {
     await createFFICallbackPromise<number>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_close_main_wallet(0, handle, cb)
+        const rc = rustAPI().vcx_close_main_wallet(0, cb)
         if (rc) {
           reject(rc)
         }
       },
       (resolve, reject) => Callback(
         'void',
-        ['uint32','uint32','uint32'],
+        ['uint32','uint32'],
         (xhandle: number, err: number) => {
           if (err) {
             reject(err)

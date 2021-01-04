@@ -55,9 +55,14 @@ pub fn init_issuer_config(config: &str) -> VcxResult<()> {
     settings::set_config_value(settings::CONFIG_INSTITUTION_NAME, &config.institution_name);
     if let Some(institution_did) = config.institution_did {
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
+    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_DID).is_none() {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution DID not passed when initializing issuer config and is not already set"))
     }
+        
     if let Some(institution_verkey) = config.institution_verkey {
         settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
+    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_VERKEY).is_none() {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution verkey passed when initializing issuer config and is not already set"))
     }
     Ok(())
 }

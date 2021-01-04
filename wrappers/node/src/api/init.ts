@@ -62,11 +62,11 @@ export async function initIssuerConfig (config: object): Promise<void> {
   }
 }
 
-export async function openPoolDirectly (config: object): Promise<void> {
+export async function openMainPool (config: object): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
             (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_open_pool_directly(0, JSON.stringify(config), cb)
+              const rc = rustAPI().vcx_open_main_pool(0, JSON.stringify(config), cb)
               if (rc) {
                 reject(rc)
               }

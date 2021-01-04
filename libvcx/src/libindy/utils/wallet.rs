@@ -142,20 +142,12 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
     open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)
 }
 
-pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
+pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<()> {
     let config: WalletConfig = serde_json::from_str(wallet_config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
-    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())
-}
-
-pub fn close_wallet_directly(wallet_handle: WalletHandle) -> VcxResult<()> {
-    wallet::close_wallet(wallet_handle)
-        .wait()?;
-
-    reset_wallet_handle();
+    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())?;
     Ok(())
 }
-
 
 pub fn close_main_wallet() -> VcxResult<()> {
     trace!("close_main_wallet >>>");
