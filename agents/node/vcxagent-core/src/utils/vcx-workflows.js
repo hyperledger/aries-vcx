@@ -117,7 +117,7 @@ async function provisionAgentInAgencyLegacy (agentName, genesisPath, agencyUrl, 
   }
   if (usePostgresWallet) {
     logger.info('Will use PostreSQL wallet. Initializing plugin.')
-    await loadPostgresPlugin(provisionConfig)
+    await loadPostgresPlugin()
     provisionConfig.wallet_type = 'postgres_storage'
     provisionConfig.storage_config = '{"url":"localhost:5432"}'
     provisionConfig.storage_credentials = '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'

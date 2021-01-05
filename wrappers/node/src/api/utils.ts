@@ -1,7 +1,7 @@
 import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors'
-import { initRustAPI, rustAPI } from '../rustlib'
+import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import { IInitVCXOptions } from './common'
 
