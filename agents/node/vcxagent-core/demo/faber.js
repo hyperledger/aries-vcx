@@ -85,12 +85,12 @@ async function runFaber (options) {
     await vcxProof.requestProof(connectionToAlice)
 
     logger.info('#21 Poll agency and wait for alice to provide proof')
-    let proofProtocolState = await vcxProof.updateState()
+    let proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
     logger.debug(`vcxProof = ${JSON.stringify(vcxProof)}`)
     logger.debug(`proofState = ${proofProtocolState}`)
     while (proofProtocolState !== StateType.Accepted) { // even if revoked credential was used, state should in final state be StateType.Accepted
       await sleepPromise(2000)
-      proofProtocolState = await vcxProof.updateState()
+      proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
       logger.info(`proofState=${proofProtocolState}`)
       if (proofProtocolState === StateType.None) {
         logger.error(`Faber proof protocol state is ${StateType.None} which an error has ocurred.`)

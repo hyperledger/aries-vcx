@@ -12,12 +12,11 @@ use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
-    pub connection_handle: u32,
     pub presentation_request: PresentationRequest,
 }
 
 impl PresentationRequestSentState {
-    pub fn verify_presentation(&self, presentation: &Presentation) -> VcxResult<()> {
+    pub fn verify_presentation(&self, presentation: &Presentation, connection_handle: u32) -> VcxResult<()> {
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                                &self.presentation_request.request_presentations_attach.content()?)?;
 
@@ -27,7 +26,7 @@ impl PresentationRequestSentState {
 
         if presentation.please_ack.is_some() {
             let ack = PresentationAck::create().set_thread_id(&self.presentation_request.id.0);
-            connection::send_message(self.connection_handle, A2AMessage::PresentationAck(ack))?;
+            connection::send_message(connection_handle, A2AMessage::PresentationAck(ack))?;
         }
 
         Ok(())
@@ -39,7 +38,6 @@ impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for Fi
     fn from((state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus)) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
-            connection_handle: state.connection_handle,
             presentation_request: state.presentation_request,
             presentation: Some(presentation),
             status: Status::Success,
@@ -52,7 +50,6 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
     fn from((state, problem_report): (PresentationRequestSentState, ProblemReport)) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
-            connection_handle: state.connection_handle,
             presentation_request: state.presentation_request,
             presentation: None,
             status: Status::Failed(problem_report),

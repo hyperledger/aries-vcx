@@ -3,12 +3,13 @@ import '../module-resolver-helper';
 import { assert } from 'chai';
 import { validatePaymentTxn } from 'helpers/asserts';
 import {
+  connectionCreateInviterNull,
   createConnectionInviterRequested,
   credentialCreateWithMsgId,
   credentialCreateWithOffer,
   dataCredentialCreateWithMsgId,
   dataCredentialCreateWithOffer,
-} from 'helpers/entities';
+} from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import {
   Credential,
@@ -89,14 +90,6 @@ describe('Credential:', () => {
   });
 
   describe('updateState:', () => {
-    it(`returns ${StateType.None}: not initialized`, async () => {
-      const credential = new Credential(null as any);
-      const state1 = await credential.updateState();
-      const state2 = await credential.getState();
-      assert.equal(state1, state2);
-      assert.equal(state2, StateType.None);
-    });
-
     it(`returns status requestReceived`, async () => {
       const connection = await createConnectionInviterRequested();
       const data = await dataCredentialCreateWithOffer();
@@ -120,27 +113,6 @@ describe('Credential:', () => {
       const credential = await credentialCreateWithMsgId(data);
       await credential.sendRequest({ connection: data.connection, payment: 0 });
       assert.equal(await credential.getState(), StateType.OfferSent);
-    });
-
-    // todo : restore for aries
-    it.skip('success: get request message', async () => {
-      const data = await dataCredentialCreateWithOffer();
-      const credential = await credentialCreateWithOffer(data);
-      const pwDid = await data.connection.getPwDid();
-      const msg = await credential.getRequestMessage({ myPwDid: pwDid, payment: 0 });
-      assert(msg.length > 0);
-    });
-
-    // todo : restore for aries
-    it.skip('success: issued', async () => {
-      const data = await dataCredentialCreateWithOffer();
-      const credential = await credentialCreateWithOffer(data);
-      await credential.sendRequest({ connection: data.connection, payment: 0 });
-      assert.equal(await credential.getState(), StateType.OfferSent);
-      VCXMock.setVcxMock(VCXMockMessage.CredentialResponse);
-      VCXMock.setVcxMock(VCXMockMessage.UpdateIssuerCredential);
-      await credential.updateState();
-      assert.equal(await credential.getState(), StateType.Accepted);
     });
   });
 
@@ -201,30 +173,6 @@ describe('Credential:', () => {
       const credential = await credentialCreateWithOffer();
       const paymentInfo = await credential.getPaymentInfo();
       assert.ok(paymentInfo);
-    });
-  });
-
-  // todo: ?restore for aries?
-  describe('paymentManager:', () => {
-    it.skip('exists', async () => {
-      const credential = await credentialCreateWithOffer();
-      assert.instanceOf(credential.paymentManager, CredentialPaymentManager);
-      assert.equal(credential.paymentManager.handle, credential.handle);
-    });
-
-    describe('getPaymentTxn:', () => {
-      it.skip('success', async () => {
-        const data = await dataCredentialCreateWithOffer();
-        const credential = await credentialCreateWithOffer(data);
-        await credential.sendRequest({ connection: data.connection, payment: 0 });
-        assert.equal(await credential.getState(), StateType.OfferSent);
-        VCXMock.setVcxMock(VCXMockMessage.CredentialResponse);
-        VCXMock.setVcxMock(VCXMockMessage.UpdateIssuerCredential);
-        await credential.updateState();
-        assert.equal(await credential.getState(), StateType.Accepted);
-        const paymentTxn = await credential.paymentManager.getPaymentTxn();
-        validatePaymentTxn(paymentTxn);
-      });
     });
   });
 

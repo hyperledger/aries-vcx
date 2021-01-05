@@ -4,7 +4,6 @@ use crate::aries::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {
-    pub connection_handle: u32,
     pub revocation_info_v1: Option<RevocationInfoV1>,
     pub thread_id: String,
 }

@@ -10,13 +10,12 @@ pub struct PresentationPreparationFailedState {
     pub problem_report: ProblemReport,
 }
 
-impl From<(PresentationPreparationFailedState, u32)> for FinishedState {
-    fn from((state, connection_handle): (PresentationPreparationFailedState, u32)) -> Self {
+impl From<(PresentationPreparationFailedState)> for FinishedState {
+    fn from((state): (PresentationPreparationFailedState)) -> Self {
         trace!("transit state from PresentationPreparationFailedState to FinishedState");
         FinishedState {
             presentation_request: state.presentation_request,
             presentation: Presentation::create(),
-            connection_handle,
             status: Status::Failed(state.problem_report),
         }
     }

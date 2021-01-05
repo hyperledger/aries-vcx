@@ -240,17 +240,17 @@ pub mod test {
                                                                                  credential_data,
                                                                                  0).unwrap();
             issuer_credential::send_credential_offer(self.credential_handle, self.connection_handle, None).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
         }
 
         pub fn send_credential(&self) {
             self.activate();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(3, issuer_credential::get_state(self.credential_handle).unwrap());
 
             issuer_credential::send_credential(self.credential_handle, self.connection_handle).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
         }
@@ -261,7 +261,7 @@ pub mod test {
             assert_eq!(1, proof::get_state(self.presentation_handle).unwrap());
 
             proof::send_proof_request(self.presentation_handle, self.connection_handle).unwrap();
-            proof::update_state(self.presentation_handle, None, None).unwrap();
+            proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
 
             assert_eq!(2, proof::get_state(self.presentation_handle).unwrap());
         }
@@ -274,7 +274,7 @@ pub mod test {
         pub fn update_proof_state(&self, expected_state: u32, expected_status: u32) {
             self.activate();
 
-            proof::update_state(self.presentation_handle, None, None).unwrap();
+            proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
             assert_eq!(expected_state, proof::get_state(self.presentation_handle).unwrap());
             assert_eq!(expected_status, proof::get_proof_state(self.presentation_handle).unwrap());
         }
@@ -376,7 +376,7 @@ pub mod test {
 
         pub fn accept_credential(&self) {
             self.activate();
-            credential::update_state(self.credential_handle, None, None).unwrap();
+            credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(4, credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
         }
@@ -451,7 +451,7 @@ pub mod test {
 
         pub fn ensure_presentation_verified(&self) {
             self.activate();
-            disclosed_proof::update_state(self.presentation_handle, None, None).unwrap();
+            disclosed_proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
             assert_eq!(aries::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
         }
     }

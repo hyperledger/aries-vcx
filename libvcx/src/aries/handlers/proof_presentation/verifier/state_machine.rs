@@ -78,7 +78,7 @@ impl VerifierSM {
         None
     }
 
-    pub fn step(self, message: VerifierMessages) -> VcxResult<VerifierSM> {
+    pub fn step(self, message: VerifierMessages, connection_handle: u32) -> VcxResult<VerifierSM> {
         trace!("VerifierSM::step >>> message: {:?}", message);
 
         let VerifierSM { source_id, state } = self;
@@ -86,7 +86,7 @@ impl VerifierSM {
         let state = match state {
             VerifierState::Initiated(state) => {
                 match message {
-                    VerifierMessages::SendPresentationRequest(connection_handle) => {
+                    VerifierMessages::SendPresentationRequest => {
                         let my_did = get_pw_did(connection_handle)?;
                         let remote_did = get_their_pw_verkey(connection_handle)?;
 
@@ -103,7 +103,7 @@ impl VerifierSM {
                                 .set_request_presentations_attach(&presentation_request)?;
 
                         connection::send_message(connection_handle, presentation_request.to_a2a_message())?;
-                        VerifierState::PresentationRequestSent((state, presentation_request, connection_handle).into())
+                        VerifierState::PresentationRequestSent((state, presentation_request).into())
                     }
                     _ => {
                         VerifierState::Initiated(state)
@@ -113,7 +113,7 @@ impl VerifierSM {
             VerifierState::PresentationRequestSent(state) => {
                 match message {
                     VerifierMessages::VerifyPresentation(presentation) => {
-                        match state.verify_presentation(&presentation) {
+                        match state.verify_presentation(&presentation, connection_handle) {
                             Ok(()) => {
                                 VerifierState::Finished((state, presentation, RevocationStatus::NonRevoked).into())
                             }
@@ -123,7 +123,7 @@ impl VerifierSM {
                                         .set_comment(err.to_string())
                                         .set_thread_id(&state.presentation_request.id.0);
 
-                                connection::send_message(state.connection_handle, problem_report.to_a2a_message())?;
+                                connection::send_message(connection_handle, problem_report.to_a2a_message())?;
                                 match err.kind() {
                                     VcxErrorKind::InvalidProof => {
                                         VerifierState::Finished((state, presentation, RevocationStatus::Revoked).into())
@@ -142,7 +142,7 @@ impl VerifierSM {
                                 .set_comment(String::from("PresentationProposal is not supported"))
                                 .set_thread_id(&state.presentation_request.id.0);
 
-                        connection::send_message(state.connection_handle, problem_report.to_a2a_message())?;
+                        connection::send_message(connection_handle, problem_report.to_a2a_message())?;
                         VerifierState::Finished((state, problem_report).into())
                     }
                     _ => {
@@ -202,22 +202,6 @@ impl VerifierSM {
         }
     }
 
-    pub fn connection_handle(&self) -> VcxResult<u32> {
-        match self.state {
-            VerifierState::Initiated(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Connection handle isn't set")),
-            VerifierState::PresentationRequestSent(ref state) => Ok(state.connection_handle),
-            VerifierState::Finished(ref state) => Ok(state.connection_handle),
-        }
-    }
-
-    pub fn set_connection_handle(&mut self, connection_handle: u32) {
-        match self.state {
-            VerifierState::Initiated(_) => {},
-            VerifierState::PresentationRequestSent(ref mut state) => { state.connection_handle = connection_handle; },
-            VerifierState::Finished(ref mut state) => { state.connection_handle = connection_handle; },
-        }
-    }
-
     pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
         match self.state {
             VerifierState::Initiated(ref state) => {
@@ -258,13 +242,14 @@ pub mod test {
 
     impl VerifierSM {
         fn to_presentation_request_sent_state(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
+            self = self.step(VerifierMessages::SendPresentationRequest, mock_connection()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            self = self.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
+            let connection_handle = mock_connection();
+            self = self.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), connection_handle).unwrap();
             self
         }
     }
@@ -302,8 +287,9 @@ pub mod test {
         fn test_prover_handle_send_presentation_request_message_from_initiated_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
 
             assert_match!(VerifierState::PresentationRequestSent(_), verifier_sm.state);
         }
@@ -313,12 +299,13 @@ pub mod test {
         fn test_prover_handle_other_messages_from_initiated_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
             assert_match!(VerifierState::Initiated(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), connection_handle).unwrap();
             assert_match!(VerifierState::Initiated(_), verifier_sm.state);
         }
 
@@ -329,9 +316,10 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), connection_handle).unwrap();
 
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
@@ -344,9 +332,10 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), connection_handle).unwrap();
 
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
             assert_eq!(VcxStateType::VcxStateAccepted as u32, verifier_sm.state());
@@ -370,9 +359,10 @@ pub mod test {
         fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), connection_handle).unwrap();
 
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
@@ -383,9 +373,10 @@ pub mod test {
         fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
 
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
@@ -396,10 +387,11 @@ pub mod test {
         fn test_prover_handle_other_messages_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
             assert_match!(VerifierState::PresentationRequestSent(_), verifier_sm.state);
         }
 
@@ -408,14 +400,15 @@ pub mod test {
         fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupMocks::init();
 
+            let connection_handle = mock_connection();
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(mock_connection())).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest, connection_handle).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), connection_handle).unwrap();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), connection_handle).unwrap();
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal())).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), connection_handle).unwrap();
             assert_match!(VerifierState::Finished(_), verifier_sm.state);
         }
     }

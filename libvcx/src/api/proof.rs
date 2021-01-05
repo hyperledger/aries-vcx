@@ -153,6 +153,16 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+
+#[no_mangle]
+#[deprecated(since = "0.12.0", note = "Use vcx_v2_proof_update_state instead.")]
+pub extern fn vcx_proof_update_state(_command_handle: CommandHandle,
+                                     _proof_handle: u32,
+                                     _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+    info!("vcx_proof_update_state >>>");
+    error::SUCCESS.code_num
+}
+
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the object and updates the state attribute.
 ///
@@ -160,6 +170,8 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
 /// command_handle: command handle to map callback to user context.
 ///
 /// proof_handle: Proof handle that was provided during creation. Used to access proof object
+///
+/// connection_handle: Connection handle of the proof interaction is associated with.
 ///
 /// cb: Callback that provides most current state of the proof and error status of request
 ///     States:
@@ -170,43 +182,6 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
 ///
 /// #Returns
 /// Error code as a u32
-#[no_mangle]
-#[deprecated(since = "0.12.0", note = "Use vcx_v2_proof_update_state instead.")]
-pub extern fn vcx_proof_update_state(command_handle: CommandHandle,
-                                     proof_handle: u32,
-                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_proof_update_state >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_proof_update_state(command_handle: {}, proof_handle: {}) source_id: {}",
-           command_handle, proof_handle, source_id);
-
-    if !proof::is_valid_handle(proof_handle) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
-    spawn(move || {
-        match proof::update_state(proof_handle, None, None) {
-            Ok(x) => {
-                trace!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, proof_handle, x, source_id);
-                cb(command_handle, error::SUCCESS.code_num, x);
-            }
-            Err(x) => {
-                error!("vcx_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                       command_handle, x, proof_handle, 0, source_id);
-                cb(command_handle, x.into(), 0);
-            }
-        }
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
 #[no_mangle]
 pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
                                         proof_handle: u32,
@@ -229,7 +204,7 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        match proof::update_state(proof_handle, None, Some(connection_handle)) {
+        match proof::update_state(proof_handle, None, connection_handle) {
             Ok(x) => {
                 trace!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);
@@ -248,60 +223,13 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Update the state of the proof based on the given message.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// proof_handle: Proof handle that was provided during creation. Used to access proof object
-///
-/// message: message to process for state changes
-///
-/// cb: Callback that provides most current state of the proof and error status of request
-///     States:
-///         1 - Initialized
-///         2 - Request Sent
-///         3 - Proof Received
-///         4 - Accepted
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 #[deprecated(since = "0.15.0", note = "Use vcx_v2_proof_update_state_with_message instead.")]
-pub extern fn vcx_proof_update_state_with_message(command_handle: CommandHandle,
-                                                  proof_handle: u32,
-                                                  message: *const c_char,
-                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+pub extern fn vcx_proof_update_state_with_message(_command_handle: CommandHandle,
+                                                  _proof_handle: u32,
+                                                  _message: *const c_char,
+                                                  _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_proof_update_state_with_message >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
-
-    let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
-    trace!("vcx_proof_update_state_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
-           command_handle, proof_handle, source_id);
-
-    if !proof::is_valid_handle(proof_handle) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
-    spawn(move || {
-        match proof::update_state(proof_handle, Some(&message), None) {
-            Ok(x) => {
-                trace!("vcx_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, proof_handle, x, source_id);
-                cb(command_handle, error::SUCCESS.code_num, x);
-            }
-            Err(x) => {
-                warn!("vcx_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
-                      command_handle, x, proof_handle, 0, source_id);
-                cb(command_handle, x.into(), 0);
-            }
-        }
-
-        Ok(())
-    });
-
     error::SUCCESS.code_num
 }
 
@@ -349,7 +277,7 @@ pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHand
     }
 
     spawn(move || {
-        match proof::update_state(proof_handle, Some(&message), Some(connection_handle)) {
+        match proof::update_state(proof_handle, Some(&message), connection_handle) {
             Ok(x) => {
                 trace!("vcx_v2_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, proof_handle, x, source_id);
@@ -692,7 +620,6 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-
 #[allow(unused_variables)]
 pub extern fn vcx_proof_accepted(proof_handle: u32, response_data: *const c_char) -> u32 {
     info!("vcx_proof_accepted >>>");
@@ -807,11 +734,13 @@ mod tests {
     fn test_proof_update_state() {
         let _setup = SetupMocks::init();
 
+        let connection_handle = build_test_connection_inviter_requested();
         let proof_handle = create_proof_util().unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_proof_update_state(cb.command_handle,
+        assert_eq!(vcx_v2_proof_update_state(cb.command_handle,
                                           proof_handle,
+                                          connection_handle,
                                           Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -842,8 +771,9 @@ mod tests {
         assert_eq!(proof::get_state(proof_handle).unwrap(), VcxStateType::VcxStateOfferSent as u32);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_proof_update_state_with_message(cb.command_handle,
+        assert_eq!(vcx_v2_proof_update_state_with_message(cb.command_handle,
                                                        proof_handle,
+                                                       connection_handle,
                                                        CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
                                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
