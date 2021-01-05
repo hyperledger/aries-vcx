@@ -692,7 +692,7 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper legacy integration test
+      - name: Run wrapper demo 
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
@@ -700,7 +700,15 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo)'
 
-      - name: Run wrapper legacy integration revocation test
+      - name: Run wrapper demo with revocation
+        run: |
+          set -x
+          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+                              bash -c '(
+                                cd $HOME/wrappers/node && npm install && npm run compile && \
+                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
+
+      - name: Run wrapper demo with legacy initialization
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \

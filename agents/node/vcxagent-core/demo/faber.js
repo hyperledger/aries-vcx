@@ -31,9 +31,14 @@ async function runFaber (options) {
       agencyUrl: 'http://localhost:8080',
       seed: '000000000000000000000000Trustee1',
       usePostgresWallet: false,
-      logger
+      logger,
+      legacyProvision: options.legacy
     })
-    await vcxAgent.agentInitVcx()
+    if (options.legacy) {
+      await vcxAgent.agentInitVcxLegacy()
+    } else {
+      await vcxAgent.agentInitVcx()
+    }
     await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
     if (process.env.ACCEPT_TAA) {
@@ -165,6 +170,12 @@ const optionDefinitions = [
     name: 'expose-invitation-port',
     type: Number,
     description: 'If specified, invitation will be exposed on this port via HTTP'
+  },
+  {
+    name: 'legacy',
+    type: Boolean,
+    description: 'Use legacy initialization.',
+    defaultValue: false
   }
 ]
 
