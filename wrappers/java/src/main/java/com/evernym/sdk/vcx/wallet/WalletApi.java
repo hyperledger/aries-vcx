@@ -18,6 +18,84 @@ public class WalletApi extends VcxJava.API {
     private WalletApi() {
     }
 
+    private static Callback vcxCreateWalletCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int commandHandle, int err, int walletHandle) {
+            logger.debug("vcxOpenMainWalletCB() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], walletHandle = [" + walletHandle + "]");
+            CompletableFuture<Integer> future = (CompletableFuture<Integer>) removeFuture(commandHandle);
+            if (!checkCallback(future, err)) return;
+            Integer result = commandHandle;
+            future.complete(commandHandle);
+        }
+    };
+
+    public static CompletableFuture<Integer> createWallet(
+            String walletConfig
+    ) throws VcxException {
+        ParamGuard.notNull(walletConfig, "walletConfig");
+
+        logger.debug("createWallet() called with: walletConfig = [ *** ]");
+
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_create_wallet(commandHandle, walletConfig, vcxCreateWalletCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    private static Callback vcxOpenMainWalletCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int commandHandle, int err, int walletHandle) {
+            logger.debug("vcxOpenMainWalletCB() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], walletHandle = [" + walletHandle + "]");
+            CompletableFuture<Integer> future = (CompletableFuture<Integer>) removeFuture(commandHandle);
+            if (!checkCallback(future, err)) return;
+            Integer result = commandHandle;
+            future.complete(commandHandle);
+        }
+    };
+
+    public static CompletableFuture<Integer> openMainWallet(
+            String walletConfig
+    ) throws VcxException {
+        ParamGuard.notNull(walletConfig, "walletConfig");
+
+        logger.debug("openMainWallet() called with: walletConfig = [ *** ]");
+
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_open_main_wallet(commandHandle, walletConfig, vcxExportWalletCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    private static Callback vcxCloseMainWalletCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int commandHandle, int err) {
+            logger.debug("vcxCloseMainWalletCB() called with: commandHandle = [" + commandHandle + "], err = [" + err + "]");
+            CompletableFuture<Integer> future = (CompletableFuture<Integer>) removeFuture(commandHandle);
+            if (!checkCallback(future, err)) return;
+            Integer result = commandHandle;
+            future.complete(commandHandle);
+        }
+    };
+
+    public static CompletableFuture<Integer> closeMainWallet() throws VcxException {
+
+        logger.debug("closeMainWallet() called");
+
+        CompletableFuture<Integer> future = new CompletableFuture<>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_close_main_wallet(commandHandle, vcxExportWalletCB);
+        checkResult(result);
+
+        return future;
+    }
+
     private static Callback vcxExportWalletCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int commandHandle, int err, int exportHandle) {

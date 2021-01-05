@@ -308,7 +308,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
-
 @implementation ConnectMeVcx
 
 - (vcx_error_t) vcxInitCore:(NSString *)config
