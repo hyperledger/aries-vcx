@@ -262,7 +262,7 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
 ///
 /// #Returns
 /// Error code as a u32
-#[deprecated(since = "0.14.0", note = "Use vcx_open_wallet_directly instead.")]
+#[deprecated(since = "0.15.0", note = "Use vcx_open_main_wallet instead.")]
 #[no_mangle]
 pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_wallet >>>");

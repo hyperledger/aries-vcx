@@ -123,7 +123,7 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
                                         wallet_config: *const c_char,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
     info!("vcx_open_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -135,12 +135,12 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
         match wallet::open_wallet_directly(&wallet_config) {
             Err(e) => {
                 error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into());
+                cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
             }
-            Ok(_) => {
-                trace!("vcx_open_main_wallet_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
-                cb(command_handle, 0);
+            Ok(wh) => {
+                trace!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
+                       command_handle, error::SUCCESS.message, wh.0);
+                cb(command_handle, 0, wh.0);
             }
         }
     });

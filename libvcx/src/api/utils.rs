@@ -74,7 +74,7 @@ pub extern fn vcx_provision_agent(config: *const c_char) -> *mut c_char {
 /// #Returns
 /// Configuration (wallet also populated), on error returns NULL
 #[no_mangle]
-#[deprecated(since = "0.14.0", note = "Use a combination of vcx_create_wallet, vcx_open_wallet_directly, vcx_configure_issuer_wallet, 
+#[deprecated(since = "0.15.0", note = "Use a combination of vcx_create_wallet, vcx_open_main_wallet, vcx_configure_issuer_wallet, 
 vcx_provision_cloud_agent, and vcx_close_main_wallet instead.")]
 pub extern fn vcx_agent_provision_async(command_handle: CommandHandle,
                                         config: *const c_char,
