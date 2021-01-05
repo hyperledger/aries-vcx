@@ -61,7 +61,7 @@ RUN mkdir /home/indy/aries-vcx
 # VOLUME ["/home/indy/aries-vcx"]
 
 # Set env vars
-ARG LIBINDY_VER=1.15.0
+ARG LIBINDY_VER="7349f56"
 ARG LIBVCX_VER=0.8.0
 ENV ANDROID_BUILD_FOLDER=/tmp/android_build
 ENV ANDROID_SDK=${ANDROID_BUILD_FOLDER}/sdk
