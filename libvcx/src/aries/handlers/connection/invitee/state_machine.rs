@@ -216,7 +216,8 @@ impl SmConnectionInvitee {
                             .set_keys(agent_info.recipient_keys(), agent_info.routing_keys()?);
 
                         trace!("invitation {:?}", state.invitation);
-                        agent_info.send_message(&request.to_a2a_message(), &DidDoc::from(state.invitation.clone()))?;
+                        let ddo = DidDoc::from(state.invitation.clone());
+                        ddo.send_message(&request.to_a2a_message(), &agent_info.pw_vk)?;
                         InviteeState::Requested((state, request).into())
                     }
                     DidExchangeMessages::ProblemReportReceived(problem_report) => {
@@ -239,7 +240,7 @@ impl SmConnectionInvitee {
                                     .set_problem_code(ProblemCode::ResponseProcessingError)
                                     .set_explain(err.to_string())
                                     .set_thread_id(&state.request.id.0);
-                                agent_info.send_message(&problem_report.to_a2a_message(), &state.did_doc).ok();
+                                state.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
                                 InviteeState::Null((state, problem_report).into())
                             }
                         }

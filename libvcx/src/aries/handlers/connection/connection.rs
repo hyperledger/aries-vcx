@@ -356,13 +356,7 @@ Get messages received from connection counterparty.
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
 
         warn!("Connection resolved did_doc = {:?}", did_doc);
-        self.agent_info().send_message(message, &did_doc)
-    }
-
-    pub fn send_message_to_self_endpoint(message: &A2AMessage, did_doc: &DidDoc) -> VcxResult<()> {
-        trace!("Connection::send_message_to_self_endpoint >>> message: {:?}, did_doc: {:?}", message, did_doc);
-
-        AgentInfo::send_message_anonymously(message, did_doc)
+        did_doc.send_message(message, &self.agent_info().pw_vk)
     }
 
     fn parse_generic_message(message: &str) -> A2AMessage {
