@@ -261,7 +261,7 @@ impl SmConnectionInviter {
                                     .set_explain(err.to_string())
                                     .set_thread_id(&request.id.0);
 
-                                request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                                agent_info.send_message(&problem_report.to_a2a_message(), &request.connection.did_doc).ok(); // IS is possible?
                                 InviterState::Null((state, problem_report).into())
                             }
                         }
@@ -292,7 +292,7 @@ impl SmConnectionInviter {
                                 .request_response()
                                 .set_comment(comment);
 
-                        state.did_doc.send_message(&ping.to_a2a_message(), &agent_info.pw_vk).ok();
+                        agent_info.send_message(&ping.to_a2a_message(), &state.did_doc).ok();
                         InviterState::Responded(state)
                     }
                     DidExchangeMessages::PingResponseReceived(ping_response) => {

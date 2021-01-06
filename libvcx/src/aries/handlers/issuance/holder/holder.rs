@@ -77,4 +77,31 @@ impl Holder {
         self.holder_sm = self.holder_sm.clone().handle_message(message, connection_handle)?;
         Ok(())
     }
+
+    pub fn get_credential_offer_message(connection_handle: u32, msg_id: &str) -> VcxResult<A2AMessage> {
+        match connection::get_message_by_id(connection_handle, msg_id.to_string()) {
+            Ok(message) => match message {
+                A2AMessage::CredentialOffer(_) => Ok(message),
+                msg => {
+                    return Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
+                                                  format!("Message of different type was received: {:?}", msg)));
+                }
+            }
+            Err(err) => Err(err)
+        }
+    }
+
+    pub fn get_credential_offer_messages(conn_handle: u32) -> VcxResult<Vec<A2AMessage>> {
+        let messages = connection::get_messages(conn_handle)?;
+        let msgs: Vec<A2AMessage> = messages
+            .into_iter()
+            .filter_map(|(_, a2a_message)| {
+                match a2a_message {
+                    A2AMessage::CredentialOffer(_) => Some(a2a_message),
+                    _ => None
+                }
+            })
+            .collect();
+        Ok(msgs)
+    }
 }

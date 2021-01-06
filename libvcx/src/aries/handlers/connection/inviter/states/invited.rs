@@ -48,8 +48,7 @@ impl InvitedState {
             .set_thread_id(&request.id.0)
             .encode(&prev_agent_info.pw_vk)?;
 
-
-        request.connection.did_doc.send_message(&signed_response.to_a2a_message(), &new_agent_info.pw_vk)?;
+        new_agent_info.send_message(&signed_response.to_a2a_message(), &request.connection.did_doc)?;
 
         Ok((signed_response, new_agent_info))
     }

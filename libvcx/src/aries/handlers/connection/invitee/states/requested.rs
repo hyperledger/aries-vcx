@@ -53,7 +53,7 @@ impl RequestedState {
                 .to_a2a_message()
         };
 
-        response.connection.did_doc.send_message(&message, &agent_info.pw_vk)?;
+        agent_info.send_message(&message, &response.connection.did_doc)?;
 
         Ok(response)
     }

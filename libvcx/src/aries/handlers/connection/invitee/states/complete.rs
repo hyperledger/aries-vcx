@@ -59,7 +59,7 @@ impl CompleteState {
                 .request_response()
                 .set_comment(comment);
 
-        self.did_doc.send_message(&ping.to_a2a_message(), &agent_info.pw_vk).ok();
+        agent_info.send_message(&ping.to_a2a_message(), &self.did_doc).ok();
         Ok(())
     }
 
@@ -72,7 +72,8 @@ impl CompleteState {
             Query::create()
                 .set_query(query)
                 .set_comment(comment);
-        self.did_doc.send_message(&query_.to_a2a_message(), &agent_info.pw_vk)
+
+        agent_info.send_message(&query_.to_a2a_message(), &self.did_doc)
     }
 
     fn handle_discovery_query(&self, query: Query, agent_info: &AgentInfo) -> VcxResult<()> {
@@ -82,6 +83,6 @@ impl CompleteState {
             .set_protocols(protocols)
             .set_thread_id(query.id.0.clone());
 
-        self.did_doc.send_message(&disclose.to_a2a_message(), &agent_info.pw_vk)
+        agent_info.send_message(&disclose.to_a2a_message(), &self.did_doc)
     }
 }

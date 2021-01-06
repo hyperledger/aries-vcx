@@ -13,7 +13,6 @@ use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use crate::utils::error;
 use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use crate::utils::object_cache::ObjectCache;
-use crate::aries::messages::a2a::A2AMessage;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -199,19 +198,7 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
     }
 
-    let presentation_request =  {
-        trace!("Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}", connection_handle, msg_id);
-
-        let message = connection::get_message_by_id(connection_handle, msg_id.to_string())?;
-
-        match message {
-            A2AMessage::PresentationRequest(presentation_request) => presentation_request,
-            msg => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
-                                              format!("Message of different type was received: {:?}", msg)));
-            }
-        }
-    };
+    let presentation_request = Prover::get_presentation_request(connection_handle, msg_id)?;
     serde_json::to_string_pretty(&presentation_request)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)))
 }

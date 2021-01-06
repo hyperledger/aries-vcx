@@ -199,16 +199,7 @@ fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<S
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match connection::get_message_by_id(connection_handle, msg_id.to_string()) {
-        Ok(message) => match message {
-            A2AMessage::CredentialOffer(_) => Ok(message),
-            msg => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
-                                              format!("Message of different type was received: {:?}", msg)));
-            }
-        }
-        Err(err) => Err(err)
-    }?;
+    let credential_offer = Holder::get_credential_offer_message(connection_handle, msg_id)?;
 
     return serde_json::to_string(&credential_offer).
         map_err(|err| {
@@ -222,15 +213,7 @@ pub fn get_credential_offer_messages(connection_handle: u32) -> VcxResult<String
     AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
     AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
 
-    let credential_offers: Vec<A2AMessage> = connection::get_messages(connection_handle)?
-        .into_iter()
-        .filter_map(|(_, a2a_message)| {
-            match a2a_message {
-                A2AMessage::CredentialOffer(_) => Some(a2a_message),
-                _ => None
-            }
-        })
-        .collect();
+    let credential_offers = Holder::get_credential_offer_messages(connection_handle)?;
 
     Ok(json!(credential_offers).to_string())
 }
