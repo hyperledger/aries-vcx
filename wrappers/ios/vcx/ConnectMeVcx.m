@@ -44,6 +44,22 @@ void VcxWrapperCommonHandleCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
+void VcxWrapperCommonSignedHandleCallback(vcx_command_handle_t xcommand_handle,
+                                    vcx_error_t err,
+                                    vcx_i32_t handle) {
+    id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
+    [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
+
+    void (^completion)(NSError *, VcxHandle) = (void (^)(NSError *, VcxHandle)) block;
+
+    if (completion) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSError *error = [NSError errorFromVcxError:err];
+            completion(error, (VcxHandle) handle);
+        });
+    }
+}
+
 void VcxWrapperCommonNumberCallback(vcx_command_handle_t xcommand_handle,
                                     vcx_error_t err,
                                     vcx_command_handle_t handle) {
@@ -316,6 +332,13 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     return vcx_init_core(config_char);
 }
 
+- (vcx_error_t) vcxInitThreadpool:(NSString *)config
+{
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+    return vcx_init_threadpool(config_char);
+}
+
+
 - (void) vcxOpenWallet:(void (^)(NSError *error)) completion
 {
     vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
@@ -329,6 +352,58 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
             completion([NSError errorFromVcxError: ret]);
         });
     }
+}
+
+- (void) createWallet: (NSString *) config
+            completion: (void (^)(NSError *error)) completion
+{
+   vcx_error_t ret;
+
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+   const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+   ret = vcx_create_wallet(handle, config_char, VcxWrapperCommonCallback);
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret]);
+       });
+   }
+}
+
+- (void) openMainWallet: (NSString *) config
+            completion: (void (^)(NSError *error)) completion
+{
+   vcx_error_t ret;
+
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+   const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+   ret = vcx_open_main_wallet(handle, config_char, VcxWrapperCommonSignedHandleCallback);
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret]);
+       });
+   }
+}
+
+- (void) closeMainWallet:(void (^)(NSError *error)) completion
+{
+   vcx_error_t ret;
+
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+   ret = vcx_close_main_wallet(handle, VcxWrapperCommonCallback);
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret]);
+       });
+   }
 }
 
 - (void) vcxOpenPool:(void (^)(NSError *error)) completion
@@ -346,6 +421,24 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
+- (void) vcxOpenMainPool: (NSString *) config
+            completion: (void (^)(NSError *error)) completion
+{
+   vcx_error_t ret;
+
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+   const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+   ret = vcx_open_main_pool(handle, config_char, VcxWrapperCommonCallback);
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret]);
+       });
+   }
+}
+
 - (void)agentProvisionAsync:(NSString *)config
                completion:(void (^)(NSError *error, NSString *config))completion
 {
@@ -358,6 +451,40 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
 
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"ERROR: agentProvision: calling completion");
+            completion([NSError errorFromVcxError: ret], false);
+        });
+    }
+}
+
+- (void)vcxProvisionCloudAgent:(NSString *)config
+               completion:(void (^)(NSError *error, NSString *config))completion
+{
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    vcx_error_t ret = vcx_provision_cloud_agent(handle, config_char, VcxWrapperCommonStringCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: agentProvision: calling completion");
+            completion([NSError errorFromVcxError: ret], false);
+        });
+    }
+}
+
+- (void)vcxCreateAgencyClientForMainWallet:(NSString *)config
+               completion:(void (^)(NSError *error, NSString *config))completion
+{
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    vcx_error_t ret = vcx_create_agency_client_for_main_wallet(handle, config_char, VcxWrapperCommonCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"ERROR: vcxCreateAgencyClientForMainWallet: calling completion");
             completion([NSError errorFromVcxError: ret], false);
         });
     }
