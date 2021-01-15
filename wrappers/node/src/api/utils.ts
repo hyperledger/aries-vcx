@@ -1,9 +1,34 @@
 import { Callback } from 'ffi-napi';
 
-import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
-// import { resolve } from 'url';
+import { VCXInternalError } from '../errors'
+import { rustAPI } from '../rustlib'
+import { createFFICallbackPromise } from '../utils/ffi-helpers'
+import { IInitVCXOptions } from './common'
+
+export async function provisionCloudAgent (configAgent: object, options: IInitVCXOptions = {}): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_provision_cloud_agent(0, JSON.stringify(configAgent), cb)
+        if (rc) {
+          reject(rc)
+        }
+      },
+      (resolve, reject) => Callback(
+        'void',
+        ['uint32','uint32','string'],
+        (xhandle: number, err: number, config: string) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          resolve(config)
+        })
+    )
+  } catch (err) {
+    throw new VCXInternalError(err)
+  }
+}
 
 export interface PtrBuffer extends Buffer {
   // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/

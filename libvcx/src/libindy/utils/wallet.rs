@@ -148,15 +148,6 @@ pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
     open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())
 }
 
-pub fn close_wallet_directly(wallet_handle: WalletHandle) -> VcxResult<()> {
-    wallet::close_wallet(wallet_handle)
-        .wait()?;
-
-    reset_wallet_handle();
-    Ok(())
-}
-
-
 pub fn close_main_wallet() -> VcxResult<()> {
     trace!("close_main_wallet >>>");
     if settings::indy_mocks_enabled() {

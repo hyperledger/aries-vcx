@@ -63,13 +63,13 @@ pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provisi
 fn setup() {
     settings::clear_config();
     set_testing_defaults();
-    threadpool::init();
+    threadpool::init(None);
     init_test_logging();
 }
 
 fn setup_empty() {
     settings::clear_config();
-    threadpool::init();
+    threadpool::init(None);
     init_test_logging();
 }
 

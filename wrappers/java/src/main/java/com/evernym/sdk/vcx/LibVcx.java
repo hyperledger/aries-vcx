@@ -18,6 +18,12 @@ public abstract class LibVcx {
      */
     public interface API extends Library {
 
+        public int vcx_init_threadpool(String config);
+
+        public int vcx_create_agency_client_for_main_wallet(int command_handle, String config, Callback cb);
+        public int vcx_open_main_pool(int command_handle, String config, Callback cb);
+        public int vcx_provision_cloud_agent(int command_handle, String config, Callback cb);
+
         public int vcx_init_core(String config);
         public int vcx_open_pool(int command_handle, Callback cb);
         public int vcx_open_wallet(int command_handle, Callback cb);
@@ -549,6 +555,12 @@ public abstract class LibVcx {
          *
          * Used for exporting and importing and managing the wallet.
          */
+
+        public int vcx_create_wallet(int command_handle, String wallet_config, Callback cb);
+
+        public int vcx_open_main_wallet(int command_handle, String wallet_config, Callback cb);
+
+        public int vcx_close_main_wallet(int command_handle, Callback cb);
 
         /** Export the wallet as an encrypted file */
         public int vcx_wallet_export(int command_handle, String path, String backup_key, Callback cb);

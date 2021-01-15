@@ -58,6 +58,13 @@ export type rust_listener_handle = rust_object_handle;
 export type rust_connection_handle = rust_object_handle;
 
 export interface IFFIEntryPoint {
+  vcx_open_main_pool: (commandId: number, config: string, cb: any) => number,
+
+  vcx_create_agency_client_for_main_wallet: (commandId: number, config: string, cb: any) => number,
+  vcx_provision_cloud_agent: (commandId: number, config: string, cb: any) => number,
+  vcx_init_threadpool: (config: string) => number,
+  vcx_init_issuer_config: (commandId: number, config: string, cb: any) => number,
+
   vcx_open_pool: (commandId: number, cb: ICbRef) => number;
   vcx_open_wallet: (commandId: number, cb: ICbRef) => number;
   vcx_init_core: (config: string) => number;
@@ -96,6 +103,11 @@ export interface IFFIEntryPoint {
   ) => number;
 
   // wallet
+  vcx_create_wallet: (commandId: number, config: string, cb: ICbRef) => number,
+  vcx_configure_issuer_wallet: (commandId: number, seed: string, cb: ICbRef) => number,
+  vcx_open_main_wallet: (commandId: number, config: string, cb: ICbRef) => number,
+  vcx_close_main_wallet: (commandId: number, cb: ICbRef) => number,
+
   vcx_wallet_get_token_info: (
     commandId: number,
     payment: number | undefined | null,
@@ -584,8 +596,19 @@ export interface IFFIEntryPoint {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_init_core: [FFI_ERROR_CODE, [FFI_CONFIG_PATH]],
+  vcx_init_threadpool: [FFI_ERROR_CODE, [FFI_STRING_DATA]],
+  vcx_init_issuer_config: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_create_agency_client_for_main_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_provision_cloud_agent: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+
   vcx_open_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_open_main_pool: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+
+  vcx_create_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_open_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_open_main_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_close_main_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_configure_issuer_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_shutdown: [FFI_ERROR_CODE, [FFI_BOOL]],
   vcx_error_c_message: [FFI_STRING, [FFI_ERROR_CODE]],
   vcx_version: [FFI_STRING, []],

@@ -4,8 +4,7 @@ extern crate url;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::{RwLockWriteGuard, RwLockReadGuard};
-use std::sync::RwLock;
+use std::sync::{RwLockWriteGuard, RwLockReadGuard, RwLock};
 
 use indy_sys::INVALID_WALLET_HANDLE;
 use serde_json::Value;
@@ -262,19 +261,6 @@ pub fn get_wallet_name() -> VcxResult<String> {
         .map_err(|_| VcxError::from(VcxErrorKind::MissingWalletKey))
 }
 
-pub fn get_threadpool_size() -> usize {
-    let size = match get_config_value(CONFIG_THREADPOOL_SIZE) {
-        Ok(x) => x.parse::<usize>().unwrap_or(DEFAULT_THREADPOOL_SIZE),
-        Err(_) => DEFAULT_THREADPOOL_SIZE,
-    };
-
-    if size > MAX_THREADPOOL_SIZE {
-        MAX_THREADPOOL_SIZE
-    } else {
-        size
-    }
-}
-
 pub fn get_protocol_version() -> usize {
     let protocol_version = match get_config_value(CONFIG_PROTOCOL_VERSION) {
         Ok(ver) => ver.parse::<usize>().unwrap_or_else(|err| {
@@ -342,7 +328,6 @@ pub fn clear_config() {
     let mut agency_client = AGENCY_CLIENT.write().unwrap();
     config.clear();
     *agency_client = AgencyClient::default();
-
 }
 
 #[cfg(test)]

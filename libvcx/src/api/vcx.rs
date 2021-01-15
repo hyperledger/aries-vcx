@@ -6,7 +6,7 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{init_core, open_as_main_wallet, open_pool};
+use crate::init::{init_core, open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, init_agency_client, open_pool_directly};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
@@ -15,17 +15,133 @@ use crate::utils::error;
 use crate::utils::threadpool::spawn;
 use crate::utils::version_constants;
 
-/// Initializes VCX with config settings
+
+/// Initializes threadpool.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
-/// config: The agent provision configuration. You can produce this by provisioning agent using function vcx_provision_agent
+/// threadpool_config: Config of the threadpool
+/// {
+///    num_threads (optional) - number of threads in the threadpool (default: 8)
+/// }
 ///
-/// cb: Callback that provides error status of initialization
+/// cb: Callback that provides error status
 ///
 /// #Returns
 /// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_init_threadpool(config: *const c_char) -> u32 {
+    info!("vcx_init_threadpool >>>");
+
+    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+
+    match init_threadpool(&config) {
+        Ok(_) => error::SUCCESS.code_num,
+        Err(_) => error::UNKNOWN_ERROR.code_num
+    }
+}
+
+/// Creates an instance of agency client used to communicate with the agency. Must be called after
+/// wallet was created and opened.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// agency_config: Config of the agency client
+/// {
+///    agency_url - URL of the agency 
+///    agency_did - DID of the agency
+///    agency_pwdid - pairwise DID of the agency created for the connection
+///    agency_vk - verkey  of the agency created for the connection
+///    agent_pwdid - pairwise DID of this client's agent in the agency
+///    agent_vk - verkey of this client's agent in the agency
+///    my_pwdid - pairwise DID of this client used to communicate with it's agent in the agency
+///    my_vk - verkey of this client used to communicate with it's agent in the agency
+/// }
+///
+/// cb: Callback that provides error status
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_create_agency_client_for_main_wallet >>>");
+
+    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
+
+    spawn(move || {
+        match init_agency_client(&config) {
+            Ok(()) => {
+                info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
+                cb(command_handle, error::SUCCESS.code_num)
+            }
+            Err(e) => {
+                error!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}", command_handle, e);
+                cb(command_handle, e.into());
+                return Ok(());
+            }
+        }
+        Ok(())
+    });
+    error::SUCCESS.code_num
+}
+
+/// Stores institution did, verkey and name in memory.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// issuer_config: Issuer configuration
+/// {
+///     "institution_name" - Name of the issueing / verifying institution
+///     "institution_did" (optional) - Institution did obtained on vcx_configure_issuer_wallet
+///     `institution_verkey` (optional) - Institution verkey obtained on vcx_configure_issuer_wallet
+///                         If NULL, then value set on vcx_configure_issuer_wallet will be used.
+/// }
+///
+/// cb: Callback that provides error status
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_init_issuer_config >>>");
+
+    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_init_issuer_config >>> config: {}", config);
+
+    spawn(move || {
+        match init_issuer_config(&config) {
+            Ok(()) => {
+                info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
+                cb(command_handle, error::SUCCESS.code_num)
+            }
+            Err(e) => {
+                error!("vcx_init_issuer_config_cb >>> command_handle: {}, error {}", command_handle, e);
+                cb(command_handle, e.into());
+                return Ok(());
+            }
+        }
+        Ok(())
+    });
+    error::SUCCESS.code_num
+}
+
+/// Initializes VCX with config settings
+///
+/// #Params
+///
+/// config: The agent provision configuration. You can produce this by provisioning agent using function vcx_provision_agent
+///
+/// #Returns
+/// Error code as a u32
+#[deprecated(since = "0.14.0", note = "Use vcx_init_threadpool, vcx_init_logger, vcx_init_issuer_config instead.")]
 #[no_mangle]
 pub extern fn vcx_init_core(config: *const c_char) -> u32 {
     info!("vcx_init_core >>>");
@@ -37,6 +153,62 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
     }
 }
 
+/// Opens pool based on vcx configuration passed as a parameter
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// pool_config: Pool configuration
+/// {
+///     "genesis_path" - Path to the genesis file
+///     "pool_name" (optional) - Name of the pool ledger configuration.
+///     `pool_config` (optional) - Runtime pool configuration json as a string.
+///                         if NULL, then default config will be used.
+/// }
+/// where pool config structure is as follows
+/// {
+///     "timeout": int (optional), timeout for network request (in sec).
+///     "extended_timeout": int (optional), extended timeout for network request (in sec).
+///     "preordered_nodes": array<string> -  (optional), names of nodes which will have a priority during request sending:
+///         ["name_of_1st_prior_node",  "name_of_2nd_prior_node", .... ]
+///         This can be useful if a user prefers querying specific nodes.
+///         Assume that `Node1` and `Node2` nodes reply faster.
+///         If you pass them Libindy always sends a read request to these nodes first and only then (if not enough) to others.
+///         Note: Nodes not specified will be placed randomly.
+///     "number_read_nodes": int (optional) - the number of nodes to send read requests (2 by default)
+///         By default Libindy sends a read requests to 2 nodes in the pool.
+///         If response isn't received or `state proof` is invalid Libindy sends the request again but to 2 (`number_read_nodes`) * 2 = 4 nodes and so far until completion.
+/// }
+///
+/// cb: Callback that provides error status
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char,  cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+    info!("vcx_open_main_pool >>>");
+    check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
+    if is_pool_open() {
+        error!("vcx_open_main_pool :: Pool connection is already open.");
+        return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
+    }
+    spawn(move || {
+        match open_pool_directly(&pool_config) {
+            Ok(()) => {
+                info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
+                cb(command_handle, error::SUCCESS.code_num)
+            }
+            Err(e) => {
+                error!("vcx_open_main_pool_cb :: Vcx Pool Init Error {}.", e);
+                cb(command_handle, e.into());
+                return Ok(());
+            }
+        }
+        Ok(())
+    });
+    error::SUCCESS.code_num
+}
+
 /// Opens pool based on vcx configuration previously set via vcx_init_core
 ///
 /// #Params
@@ -46,6 +218,7 @@ pub extern fn vcx_init_core(config: *const c_char) -> u32 {
 ///
 /// #Returns
 /// Error code as a u32
+#[deprecated(since = "0.14.0", note = "Use vcx_open_main_pool instead.")]
 #[no_mangle]
 pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_pool >>>");
@@ -89,6 +262,7 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
 ///
 /// #Returns
 /// Error code as a u32
+#[deprecated(since = "0.15.0", note = "Use vcx_open_main_wallet instead.")]
 #[no_mangle]
 pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_wallet >>>");

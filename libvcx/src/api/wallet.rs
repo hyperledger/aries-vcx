@@ -109,14 +109,14 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Opens wallet chosen using provided config and returns its wallet handle.
+/// Opens wallet chosen using provided config.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// wallet_config: wallet configuration
 ///
-/// cb: Callback that provides wallet handle or error status
+/// cb: Callback that provides wallet handle as u32 (wrappers require unsigned integer) or error status
 ///
 /// #Returns
 /// Error code as a u32
@@ -148,27 +148,24 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Closes wallet chosen using provided wallet handle.
+/// Closes the main wallet.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
-///
-/// wallet_handle: wallet handle
 ///
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
-                                        wallet_handle: i32,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     info!("vcx_close_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_close_main_wallet(command_handle: {}, wallet_handle: {})", command_handle, wallet_handle);
+    trace!("vcx_close_main_wallet(command_handle: {})", command_handle);
 
     thread::spawn(move || {
-        match wallet::close_wallet_directly(indy::WalletHandle(wallet_handle)) {
+        match wallet::close_main_wallet() {
             Err(e) => {
                 error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());

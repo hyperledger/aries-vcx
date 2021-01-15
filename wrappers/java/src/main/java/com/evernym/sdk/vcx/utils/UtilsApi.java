@@ -36,7 +36,6 @@ public class UtilsApi extends VcxJava.API {
         String result = LibVcx.api.vcx_provision_agent(config);
 
         return result;
-
     }
 
     public static CompletableFuture<String> vcxAgentProvisionAsync(String conf) throws VcxException {
@@ -45,6 +44,18 @@ public class UtilsApi extends VcxJava.API {
         int commandHandle = addFuture(future);
 
         int result = LibVcx.api.vcx_agent_provision_async(
+                commandHandle, conf,
+                provAsyncCB);
+        checkResult(result);
+        return future;
+    }
+
+    public static CompletableFuture<String> vcxProvisionCloudAgent(String conf) throws VcxException {
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        logger.debug("vcxProvisionCloudAgent() called with: conf = [****]");
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_provision_cloud_agent(
                 commandHandle, conf,
                 provAsyncCB);
         checkResult(result);

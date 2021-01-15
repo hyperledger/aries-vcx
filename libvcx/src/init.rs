@@ -4,22 +4,79 @@ use indy::ErrorCode;
 use indy_sys::WalletHandle;
 
 use crate::{settings, utils};
-use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
+use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ThreadpoolConfig {
+    num_threads: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PoolConfig {
+    genesis_path: String,
+    pool_name: Option<String>,
+    pool_config: Option<String>,
+}
+
+pub fn init_threadpool(config: &str) -> VcxResult<()> {
+    let config: ThreadpoolConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
+    utils::threadpool::init(config.num_threads.as_deref());
+    Ok(())
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct IssuerConfig {
+    institution_name: String,
+    institution_did: Option<String>,
+    institution_verkey: Option<String>,
+}
 
 pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::threadpool::init();
+    utils::threadpool::init(None);
     Ok(())
 }
 
-pub fn init_agency_client(config: &str, ) -> VcxResult<()> {
+pub fn init_agency_client(config: &str) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client_mut()?.process_config_string(config, true)?;
+    settings::get_agency_client_mut()?.process_config_string(config, false)?;
     Ok(())
+}
+
+pub fn init_issuer_config(config: &str) -> VcxResult<()> {
+    let config: IssuerConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                          format!("Failed to deserialize issuer config {:?}, err: {:?}", config, err)))?;
+    settings::set_config_value(settings::CONFIG_INSTITUTION_NAME, &config.institution_name);
+    if let Some(institution_did) = config.institution_did {
+        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
+    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_DID).is_none() {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution DID not passed when initializing issuer config and is not already set"))
+    }
+        
+    if let Some(institution_verkey) = config.institution_verkey {
+        settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
+    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_VERKEY).is_none() {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution verkey passed when initializing issuer config and is not already set"))
+    }
+    Ok(())
+}
+
+pub fn open_pool_directly(config: &str) -> VcxResult<()> {
+    trace!("open_pool_directly >>> config: {}", config);
+
+    let config: PoolConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                          format!("Failed to deserialize pool config {:?}, err: {:?}", config, err)))?;
+
+    let pool_name = config.pool_name.unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+
+    open_pool(&pool_name, &config.genesis_path, config.pool_config.as_deref())
 }
 
 pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
@@ -64,6 +121,7 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
                 }
             })?;
 
+    init_agency_client(&settings::settings_as_string())?;
     set_wallet_handle(handle);
 
     Ok(handle)
