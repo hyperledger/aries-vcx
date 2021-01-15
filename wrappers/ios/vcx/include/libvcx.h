@@ -36,6 +36,7 @@ typedef unsigned int vcx_u32_t;
 typedef SInt32 VcxHandle;
 typedef const uint8_t vcx_data_t;
 typedef unsigned long long vcx_u64_t;
+typedef int vcx_i32_t;
 
 typedef struct
 {
@@ -62,11 +63,18 @@ vcx_error_t vcx_agent_update_info(vcx_command_handle_t handle, const char *json,
 //pub extern fn vcx_agent_update_info(command_handle : u32, json: *const c_char, cb: Option<extern fn(xcommand_handle: u32, err: u32, config: *const c_char)>) -> u32
 
 vcx_error_t vcx_init_core(const char *config);
+vcx_error_t vcx_init_threadpool(const char *config);
 vcx_error_t vcx_open_pool(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
+vcx_error_t vcx_open_main_pool(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_open_wallet(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
+vcx_error_t vcx_create_wallet(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
+vcx_error_t vcx_open_main_wallet(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, VcxHandle handle, vcx_error_t err));
+vcx_error_t vcx_close_main_wallet(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_update_webhook_url(vcx_command_handle_t handle, const char *notification_webhook_url, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 
 vcx_error_t vcx_create_agent(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *xconfig));
+vcx_error_t vcx_create_agency_client_for_main_wallet(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+vcx_error_t vcx_provision_cloud_agent(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t xhandle, const char *xconfig, vcx_error_t err));
 vcx_error_t vcx_update_agent_info(vcx_command_handle_t handle, const char *info, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
 
 const char *vcx_error_c_message(int);

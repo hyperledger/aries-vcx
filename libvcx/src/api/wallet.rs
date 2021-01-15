@@ -109,7 +109,7 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Opens wallet chosen using provided config and returns its wallet handle.
+/// Opens wallet chosen using provided config.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
@@ -148,7 +148,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Closes wallet chosen using provided wallet handle.
+/// Closes the main wallet.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.

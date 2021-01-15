@@ -17,6 +17,10 @@ extern void VcxWrapperCommonHandleCallback(vcx_command_handle_t xcommand_handle,
                                            vcx_error_t err,
                                            vcx_command_handle_t pool_handle);
 
+extern void VcxWrapperCommonSignedHandleCallback(vcx_command_handle_t xcommand_handle,
+                                           vcx_error_t err,
+                                           vcx_i32_t handle);
+
 extern void VcxWrapperCommonStringCallback(vcx_command_handle_t xcommand_handle,
                                            vcx_error_t err,
                                            const char *const arg1);
@@ -76,13 +80,27 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 @interface ConnectMeVcx : NSObject
 
 - (vcx_error_t) vcxInitCore:(NSString *)config;
+- (vcx_error_t) vcxInitThreadpool:(NSString *)config;
 - (void) vcxOpenWallet:(void (^)(NSError *error)) completion;
+- (void) createWallet:(NSString *)config
+                 completion:(void (^)(NSError *error))completion;
+- (void) openMainWallet:(NSString *)config
+                 completion:(void (^)(NSError *error, NSInteger handle))completion;
+- (void) closeMainWallet:(void (^)(NSError *error)) completion;
 - (void) vcxOpenPool:(void (^)(NSError *error)) completion;
+- (void) vcxOpenMainPool:(NSString *)config
+                 completion:(void (^)(NSError *error))completion;
 - (void) updateWebhookUrl:(NSString *) notification_webhook_url
            withCompletion:(void (^)(NSError *error))completion;
 
 - (void)agentProvisionAsync:(NSString *)config
                  completion:(void (^)(NSError *error, NSString *config))completion;
+
+- (void) vcxProvisionCloudAgent:(NSString *)config
+                 completion:(void (^)(NSError *error, NSString *config))completion;
+
+- (void) vcxCreateAgencyClientForMainWallet:(NSString *)config
+                 completion:(void (^)(NSError *error))completion;
 
 - (NSString *)errorCMessage:(NSInteger) errorCode;
 

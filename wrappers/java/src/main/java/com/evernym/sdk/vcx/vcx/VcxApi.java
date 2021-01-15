@@ -14,9 +14,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class VcxApi extends VcxJava.API {
     private static final Logger logger = LoggerFactory.getLogger("VcxApi");
-    private VcxApi() {
-    }
-
+    private VcxApi() {}
 
     private static Callback cmdHandleErrCodeCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
@@ -36,6 +34,13 @@ public class VcxApi extends VcxJava.API {
         checkResult(result);
     }
 
+    public static void vcxInitThreadpool(String configJson) throws VcxException {
+        ParamGuard.notNullOrWhiteSpace(configJson, "configJson");
+        logger.debug("vcxInitThreadpool() called with: configJson = [" + configJson + "]");
+        int result = LibVcx.api.vcx_init_threadpool(configJson);
+        checkResult(result);
+    }
+
     public static CompletableFuture<Integer> vcxOpenPool() throws VcxException {
         logger.debug("vcxOpenPool()");
         CompletableFuture<Integer> future = new CompletableFuture<Integer>();
@@ -43,6 +48,34 @@ public class VcxApi extends VcxJava.API {
 
         int result = LibVcx.api.vcx_open_pool(
                 commandHandle,
+                cmdHandleErrCodeCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    public static CompletableFuture<Integer> vcxOpenMainPool(String poolConfig) throws VcxException {
+        logger.debug("vcxOpenMainPool() called with: poolConfig = [" + poolConfig + "]");
+        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_open_main_pool(
+                commandHandle,
+                poolConfig,
+                cmdHandleErrCodeCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    public static CompletableFuture<Integer> vcxCreateAgencyClientForMainWallet(String config) throws VcxException {
+        logger.debug("vcxCreateAgencyClientForMainWallet() called with: config = [" + config + "]");
+        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_create_agency_client_for_main_wallet(
+                commandHandle,
+                config,
                 cmdHandleErrCodeCB);
         checkResult(result);
 
@@ -94,5 +127,4 @@ public class VcxApi extends VcxJava.API {
         return LibVcx.api.vcx_error_c_message(errorCode);
 
     }
-
 }
