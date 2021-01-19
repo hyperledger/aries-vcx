@@ -45,7 +45,7 @@
     "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js"
   },
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "ffi-napi": "^2.4.7",
     "fs-extra": "^4.0.2",
     "lodash": "^4.17.11",
