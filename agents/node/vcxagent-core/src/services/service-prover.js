@@ -37,7 +37,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
 
     const [error, proofRequests] = await pollFunction(findSomeRequests, 'Get credential offer', logger, attemptsThreshold, timeoutMs)
     if (error) {
-      throw Error(`Couldn't get credential offers. ${error}`)
+      throw Error(`Couldn't find any proof request. ${error}`)
     }
     return proofRequests
   }

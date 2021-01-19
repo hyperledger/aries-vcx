@@ -77,7 +77,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
     const [error, offers] = await pollFunction(progressToAcceptedState, `Progress IssuerCredentialSM to state ${credentialStateTarget}`, logger, attemptsThreshold, timeoutMs)
     if (error) {
-      throw Error(`Couldn't get credential offers. ${error}`)
+      throw Error(`Couldn't find suitable message to progress issuerCredential to state ${credentialStateTarget}. ${error}`)
     }
     return offers
   }
