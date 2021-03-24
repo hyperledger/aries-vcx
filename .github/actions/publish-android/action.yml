@@ -20,6 +20,7 @@ runs:
     - name: Build, run android wrapper tests, and publish artifacts
       run: |
         set -x
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         # docker run --name test-android-wrapper -v $PWD:/home/indy/aries-vcx:rw ${{ inputs.docker-img.name }} \
         docker run --name publish-android-wrapper \
             -e ABIS="${{ inputs.abis }}" \
