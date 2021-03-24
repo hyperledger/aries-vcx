@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 export BLACK=`tput setaf 0`
 export RED=`tput setaf 1`
 export GREEN=`tput setaf 2`

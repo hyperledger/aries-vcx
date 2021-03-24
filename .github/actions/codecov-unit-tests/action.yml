@@ -17,6 +17,7 @@ runs:
     - name: Run quick unit tests and generate coverage
       run: |
         set -x
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         docker run --name libvcx-codecov-unit --network host \
           -e RUST_TEST_THREADS=1 \
           -e TEST_POOL_IP=127.0.0.1 \
