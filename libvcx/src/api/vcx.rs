@@ -302,6 +302,8 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
                                       wallet_type.as_ref().map(String::as_str),
                                       storage_config.as_ref().map(String::as_str),
                                       storage_creds.as_ref().map(String::as_str),
+                                      None,
+                                      None
             ) {
                 Ok(_) => {
                     info!("vcx_open_wallet :: Success");

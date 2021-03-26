@@ -14,7 +14,21 @@ struct WalletConfig {
     wallet_key_derivation: String,
     wallet_type: Option<String>,
     storage_config: Option<String>,
-    storage_credentials: Option<String>
+    storage_credentials: Option<String>,
+    rekey: Option<String>,
+    rekey_derivation_method: Option<String>
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct WalletCredentials {
+    key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rekey: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    storage_credentials: Option<String>,
+    key_derivation_method: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rekey_derivation_method: Option<String>
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -103,17 +117,23 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
     config.to_string()
 }
 
-pub fn build_wallet_credentials(key: &str, storage_creds: Option<&str>, key_derivation: &str) -> String {
-    let mut credentials = json!({"key": key, "key_derivation_method": key_derivation});
-    if let Some(storage_credentials) = storage_creds { credentials["storage_credentials"] = serde_json::from_str(&storage_credentials).unwrap(); }
-    credentials.to_string()
+pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, key_derivation_method: &str, rekey: Option<&str>, rekey_derivation_method: Option<&str>) -> VcxResult<String> {
+    serde_json::to_string(&WalletCredentials {
+        key: String::from(key),
+        rekey: rekey.map(|s| s.into()),
+        storage_credentials: storage_credentials.map(|s| s.into()),
+        key_derivation_method: String::from(key_derivation_method),
+        rekey_derivation_method: rekey_derivation_method.map(|s| s.into())
+    }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
 }
 
 pub fn create_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<()> {
     trace!("creating wallet: {}", wallet_name);
 
     let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);
+    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, None, None)?;
+
+    trace!("Credentials: {:?}", credentials);
 
     match wallet::create_wallet(&config, &credentials)
         .wait() {
@@ -139,13 +159,13 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
         return Ok(set_wallet_handle(WalletHandle(1)));
     }
     create_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)?;
-    open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds)
+    open_as_main_wallet(wallet_name, wallet_key, key_derivation, wallet_type, storage_config, storage_creds, None, None)
 }
 
 pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
     let config: WalletConfig = serde_json::from_str(wallet_config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
-    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref())
+    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref(), config.rekey.as_deref(), config.rekey_derivation_method.as_deref())
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
@@ -167,7 +187,7 @@ pub fn delete_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, 
     trace!("delete_wallet >>> wallet_name: {}", wallet_name);
 
     let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);
+    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, None, None)?;
 
     wallet::delete_wallet(&config, &credentials)
         .wait()
@@ -325,7 +345,7 @@ pub fn import(config: &str) -> VcxResult<()> {
     let new_wallet_kdf = restore_config.wallet_key_derivation.unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
     let new_wallet_config = build_wallet_config(&new_wallet_name, None, None);
-    let new_wallet_credentials = build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf);
+    let new_wallet_credentials = build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf, None, None)?;
     let import_config = json!({
         "key": restore_config.backup_key,
         "path": restore_config.exported_wallet_path
@@ -405,10 +425,10 @@ pub mod tests {
         create_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).unwrap();
 
         // Open fails without Wallet Key Derivation set
-        assert_eq!(open_as_main_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
+        assert_eq!(open_as_main_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
         // Open works when set
-        assert!(open_as_main_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).is_ok());
+        assert!(open_as_main_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None, None, None).is_ok());
 
 
         settings::clear_config();
@@ -419,6 +439,57 @@ pub mod tests {
 
         // Delete works
         delete_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_wallet_key_rotation() {
+        let _setup = SetupDefaults::init();
+
+        let wallet_name = &format!("test_wallet_rotation_{}", uuid::Uuid::new_v4());
+
+        let wallet_key1 = "3CywYxovdJHg5NEiaVq1uLD4hmkBWKs9jnSF2PTfUApe";
+        let _handle = create_and_open_as_main_wallet(wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None).unwrap();
+
+        let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
+
+        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
+        settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
+
+        let options = json!({
+            "retrieveType": true,
+            "retrieveValue": true,
+            "retrieveTags": false
+        }).to_string();
+        let (record_type, id, value) = _record();
+        let expected_retrieved_record = format!(r#"{{"type":"{}","id":"{}","value":"{}","tags":null}}"#, record_type, id, value);
+
+        add_record(record_type, id, value, None).unwrap();
+        let retrieved_record = get_record(record_type, id, &options).unwrap();
+        assert_eq!(retrieved_record, expected_retrieved_record);
+        close_main_wallet().unwrap();
+
+        open_as_main_wallet(&wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None, None, None).unwrap();
+        let retrieved_record = get_record(record_type, id, &options).unwrap();
+        assert_eq!(retrieved_record, expected_retrieved_record);
+        close_main_wallet().unwrap();
+
+        let wallet_key2 = "NGKRM9afPYprbWCv43cTyu62hjHJ1QtkE8ogmsndiS5e";
+        open_as_main_wallet(&wallet_name, wallet_key1,"ARGON2I_MOD", None, None, None, Some(wallet_key2), None).unwrap();
+        let retrieved_record = get_record(record_type, id, &options).unwrap();
+        assert_eq!(retrieved_record, expected_retrieved_record);
+        close_main_wallet().unwrap();
+
+        let rc = open_as_main_wallet(&wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None, None, None);
+        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
+
+        open_as_main_wallet(&wallet_name, wallet_key2, "ARGON2I_MOD", None, None, None, None, None);
+        let retrieved_record = get_record(record_type, id, &options).unwrap();
+        assert_eq!(retrieved_record, expected_retrieved_record);
+        delete_record(record_type, id).unwrap();
+        close_main_wallet().unwrap();
+
+        settings::clear_config();
     }
 
     #[test]
@@ -446,7 +517,7 @@ pub mod tests {
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
         }).to_string();
         import(&import_config).unwrap();
-        open_as_main_wallet(&wallet_name, "new key", settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        open_as_main_wallet(&wallet_name, "new key", settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
 
         // If wallet was successfully imported, there will be an error trying to add this duplicate record
         assert_eq!(add_record(xtype, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
@@ -480,7 +551,7 @@ pub mod tests {
 
         settings::process_config_string(&import_config, false).unwrap();
 
-        open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
 
         // If wallet was successfully imported, there will be an error trying to add this duplicate record
         assert_eq!(add_record(type_, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
