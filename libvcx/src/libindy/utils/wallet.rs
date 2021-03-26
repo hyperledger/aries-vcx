@@ -449,7 +449,7 @@ pub mod tests {
         let wallet_name = &format!("test_wallet_rotation_{}", uuid::Uuid::new_v4());
 
         let wallet_key1 = "3CywYxovdJHg5NEiaVq1uLD4hmkBWKs9jnSF2PTfUApe";
-        let _handle = create_and_open_as_main_wallet(wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None).unwrap();
+        let _handle = create_and_open_as_main_wallet(wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None).unwrap();
 
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
@@ -469,21 +469,21 @@ pub mod tests {
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
-        open_as_main_wallet(&wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None, None, None).unwrap();
+        open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, None, None).unwrap();
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
         let wallet_key2 = "NGKRM9afPYprbWCv43cTyu62hjHJ1QtkE8ogmsndiS5e";
-        open_as_main_wallet(&wallet_name, wallet_key1,"ARGON2I_MOD", None, None, None, Some(wallet_key2), None).unwrap();
+        open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, Some(wallet_key2), Some(settings::WALLET_KDF_ARGON2I_INT)).unwrap();
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
-        let rc = open_as_main_wallet(&wallet_name, wallet_key1, "ARGON2I_MOD", None, None, None, None, None);
+        let rc = open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, None, None);
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
-        open_as_main_wallet(&wallet_name, wallet_key2, "ARGON2I_MOD", None, None, None, None, None);
+        open_as_main_wallet(&wallet_name, wallet_key2, settings::WALLET_KDF_ARGON2I_INT, None, None, None, None, None);
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         delete_record(record_type, id).unwrap();
