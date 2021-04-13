@@ -12,9 +12,8 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
   const selectedCreds = { attrs: {} }
   logger.debug(`Resolved credentials for proof = ${JSON.stringify(resolvedCreds, null, 2)}`)
 
-  let unresolvedRequirements = []
-  for (const attrName of Object.keys(resolvedCreds.attrs)) {
-    const attrCredInfo = resolvedCreds.attrs[attrName]
+  const unresolvedRequirements = []
+  for (const [attrName, attrCredInfo] of Object.entries(resolvedCreds.attrs)) {
     if (Array.isArray(attrCredInfo) === false) {
       throw Error('Unexpected data, expected attrCredInfo to be an array.')
     }
@@ -34,7 +33,7 @@ module.exports.holderSelectCredentialsForProof = async function holderSelectCred
   if (selectedCreds) {
     logger.debug(`Selected credentials:\n${JSON.stringify(selectedCreds, null, 2)}`)
   }
-  return {selectedCreds, unresolvedRequirements}
+  return { selectedCreds, unresolvedRequirements }
 }
 
 module.exports.extractProofRequestAttachement = function extractProofRequestAttachement (proofRequest) {

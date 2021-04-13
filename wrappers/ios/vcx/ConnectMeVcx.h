@@ -188,6 +188,15 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)credentialGetAttachment:(VcxHandle)credentialHandle
                  completion:(void (^)(NSError *error, NSString *attach))completion;
 
+- (void)credentialGetTailsLocation:(VcxHandle)credentialHandle
+                 completion:(void (^)(NSError *error, NSString *tailsLocation))completion;
+
+- (void)credentialGetTailsHash:(VcxHandle)credentialHandle
+                 completion:(void (^)(NSError *error, NSString *tailsHash))completion;
+
+- (void)credentialGetRevRegId:(VcxHandle)credentialHandle
+                 completion:(void (^)(NSError *error, NSString *revRegId))completion;
+
 - (void)credentialSerialize:(NSInteger)credentialHandle
                  completion:(void (^)(NSError *error, NSString *state))completion;
 
