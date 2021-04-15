@@ -73,6 +73,7 @@ export interface IRevocationDetails {
   supportRevocation?: boolean;
   tailsFile?: string;
   tailsUrl?: string;
+  tailsBaseUrl?: string;
 }
 
 export enum CredentialDefState {
@@ -120,6 +121,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       support_revocation: revocationDetails.supportRevocation,
       tails_file: revocationDetails.tailsFile,
       tails_url: revocationDetails.tailsUrl,
+      tails_base_url: revocationDetails.tailsBaseUrl,
     };
 
     try {
@@ -472,6 +474,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       max_creds: revocationDetails.maxCreds,
       tails_file: revocationDetails.tailsFile,
       tails_url: revocationDetails.tailsUrl,
+      tails_base_url: revocationDetails.tailsBaseUrl,
     };
     try {
       const dataStr = await createFFICallbackPromise<string>(
