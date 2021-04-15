@@ -337,6 +337,78 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    private static Callback credentialGetTailsLocationCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, String tailsLocation) {
+            logger.debug("credentialGetTailsLocationCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], tailsLocation = [" + tailsLocation + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(tailsLocation);
+        }
+    };
+
+    public static CompletableFuture<String> credentialGetTailsLocation(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("credentialGetTailsLocation() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_get_tails_location(commandHandle, credentialHandle, credentialGetTailsLocationCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    private static Callback credentialGetTailsHashCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, String tailsHash) {
+            logger.debug("credentialGetTailsHashCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], tailsHash = [" + tailsHash + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(tailsHash);
+        }
+    };
+
+    public static CompletableFuture<String> credentialGetTailsHash(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("credentialGetTailsHash() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_get_tails_hash(commandHandle, credentialHandle, credentialGetTailsHashCB);
+        checkResult(result);
+
+        return future;
+    }
+
+    private static Callback credentialGetRevRegIdCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, String revRegId) {
+            logger.debug("credentialGetRevRegIdCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], revRegId = [" + revRegId + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(revRegId);
+        }
+    };
+
+    public static CompletableFuture<String> credentialGetRevRegId(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("credentialGetRevRegId() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_get_rev_reg_id(commandHandle, credentialHandle, credentialGetRevRegIdCB);
+        checkResult(result);
+
+        return future;
+    }
+
     public static int credentialRelease(int credentialHandle) throws VcxException {
         ParamGuard.notNull(credentialHandle, "credentialHandle");
         logger.debug("credentialRelease() called with: credentialHandle = [" + credentialHandle + "]");
