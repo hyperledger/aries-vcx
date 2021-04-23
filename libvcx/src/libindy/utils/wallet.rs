@@ -14,7 +14,7 @@ struct WalletConfig {
     wallet_key_derivation: String,
     wallet_type: Option<String>,
     storage_config: Option<String>,
-    storage_credentials: Option<String>,
+    storage_credentials: Option<serde_json::Value>,
     rekey: Option<String>,
     rekey_derivation_method: Option<String>
 }
@@ -25,7 +25,7 @@ struct WalletCredentials {
     #[serde(skip_serializing_if = "Option::is_none")]
     rekey: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    storage_credentials: Option<String>,
+    storage_credentials: Option<serde_json::Value>,
     key_derivation_method: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     rekey_derivation_method: Option<String>
@@ -83,7 +83,7 @@ pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
         &config.wallet_key_derivation,
         config.wallet_type.as_ref().map(String::as_str),
         config.storage_config.as_ref().map(String::as_str),
-        config.storage_credentials.as_ref().map(String::as_str),
+        config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(),
     )?;
     trace!("Wallet with handle {:?} and config {:?} created", wh, config);
 
@@ -121,7 +121,7 @@ pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, ke
     serde_json::to_string(&WalletCredentials {
         key: String::from(key),
         rekey: rekey.map(|s| s.into()),
-        storage_credentials: storage_credentials.map(|s| s.into()),
+        storage_credentials: storage_credentials.map(|s| serde_json::from_str(s).unwrap()),
         key_derivation_method: String::from(key_derivation_method),
         rekey_derivation_method: rekey_derivation_method.map(|s| s.into())
     }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
@@ -165,7 +165,7 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
 pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
     let config: WalletConfig = serde_json::from_str(wallet_config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
-    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_deref(), config.rekey.as_deref(), config.rekey_derivation_method.as_deref())
+    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), config.rekey.as_deref(), config.rekey_derivation_method.as_deref())
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
