@@ -171,7 +171,7 @@ impl CredentialDef {
     fn get_state(&self) -> u32 { self.state as u32 }
 
     fn rotate_rev_reg(&mut self, revocation_details: &str) -> VcxResult<RevocationRegistry> {
-        debug!("rotate_rev_reg >>>");
+        debug!("rotate_rev_reg >>> revocation_details: {}", revocation_details);
         let revocation_details = _parse_revocation_details(revocation_details)?;
         let (tails_url, tails_file, max_creds, issuer_did) = (
             revocation_details.tails_url.ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "tails_url not found in revocation details"))?,

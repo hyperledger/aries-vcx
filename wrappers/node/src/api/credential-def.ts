@@ -178,6 +178,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
         support_revocation: revocationDetails.supportRevocation,
         tails_file: revocationDetails.tailsFile,
         tails_url: revocationDetails.tailsUrl,
+        tails_base_url: revocationDetails.tailsBaseUrl,
       };
       const credDefForEndorser = await createFFICallbackPromise<{
         credDefTxn: string;

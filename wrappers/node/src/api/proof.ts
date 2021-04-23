@@ -265,7 +265,7 @@ export class Proof extends VCXBaseWithState<IProofData> {
           commandHandle,
           proof.sourceId,
           JSON.stringify(createDataRest.attrs),
-          JSON.stringify(createDataRest.preds),
+          JSON.stringify(createDataRest.preds || []),
           JSON.stringify(createDataRest.revocationInterval),
           createDataRest.name,
           cb,
