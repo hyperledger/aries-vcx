@@ -123,7 +123,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       tails_url: revocationDetails.tailsUrl,
       tails_base_url: revocationDetails.tailsBaseUrl,
     };
-
     try {
       await credentialDef._create((cb) =>
         rustAPI().vcx_credentialdef_create(
@@ -477,6 +476,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       tails_url: revocationDetails.tailsUrl,
       tails_base_url: revocationDetails.tailsBaseUrl,
     };
+    console.log("IN WRAPPER: ", revocationDetails)
     try {
       const dataStr = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
