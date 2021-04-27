@@ -29,8 +29,16 @@ use crate::utils::threadpool::spawn;
 ///     TODO: Currently supports ISSUANCE BY DEFAULT, support for ISSUANCE ON DEMAND will be added as part of ticket: IS-1074
 ///     support_revocation: true|false - Optional, by default its false
 ///     tails_file: path to tails file - Optional if support_revocation is false
+///     tails_url: URL where the holder can download the tails file - Optional if support_revocation is false
+///     tails_base_url: incomplete URL where the holder can download the tails file - Optional if support_revocation is false
 ///     max_creds: size of tails file - Optional if support_revocation is false
-/// # Examples config ->  "{}" | "{"support_revocation":false}" | "{"support_revocation":true, "tails_file": "/tmp/tailsfile.txt", "max_creds": 1}"
+/// If tails_location is specified, the exact value is written to the ledger and obtainable via vcx_credential_get_tails_location.
+/// If tails_base_location in specified, the value written to the ledger and obtainable via vcx_credential_get_tails_location is "{tails_base_location}/{tails_hash}".
+/// It is not allowed to specify both tails_location and tails_base_location.
+/// # Examples config -> "{}" 
+///    | "{"support_revocation":false}" 
+///    | "{"support_revocation":true, "tails_file": "/tmp/tailsfile.txt", "max_creds": 1, "tails_url": "https://dummy.faber.org/DvVhi9j4a3RYdZoQxBerhUUHnyBf8k4j8a5Zp2vgLHpW"}"
+///    | "{"support_revocation":true, "tails_file": "/tmp/tailsfile.txt", "max_creds": 1, "tails_base_url": "https://dummy.faber.org"}"
 /// cb: Callback that provides CredentialDef handle and error status of request.
 ///
 /// payment_handle: future use (currently uses any address in wallet)
