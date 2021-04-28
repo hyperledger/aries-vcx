@@ -383,7 +383,7 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
                                             credential_handle: u32,
-                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, hash: *const c_char)>) -> u32 {
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {
     info!("vcx_credential_get_rev_reg_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -398,15 +398,50 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
     spawn(move || {
         match credential::get_rev_reg_id(credential_handle) {
             Ok(s) => {
-                trace!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                trace!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, rev_reg_id: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
                 let rev_reg_id = CStringUtils::string_to_cstring(s);
                 cb(command_handle, error::SUCCESS.code_num, rev_reg_id.as_ptr());
             }
             Err(e) => {
-                error!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
+                error!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, rev_reg_id: {}) source_id: {}",
                        command_handle, e, "".to_string(), source_id);
                 cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
+                                            credential_handle: u32,
+                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, revokable: bool)>) -> u32 {
+    info!("vcx_credential_is_revokable >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
+    }
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_is_revokable(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    spawn(move || {
+        match credential::is_revokable(credential_handle) {
+            Ok(revokable) => {
+                trace!("vcx_credential_is_revokable_cb(commmand_handle: {}, rc: {}, revokable: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, revokable, source_id);
+                cb(command_handle, error::SUCCESS.code_num, revokable);
+            }
+            Err(e) => {
+                error!("vcx_credential_is_revokable_cb(commmand_handle: {}, rc: {}) source_id: {}",
+                       command_handle, e, source_id);
+                cb(command_handle, e.into(), false);
             }
         };
 

@@ -160,6 +160,12 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn is_revokable(handle: u32) -> VcxResult<bool> {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
+        credential.is_revokable()
+    })
+}
+
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_source_id()
