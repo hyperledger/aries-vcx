@@ -197,6 +197,9 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)credentialGetRevRegId:(VcxHandle)credentialHandle
                  completion:(void (^)(NSError *error, NSString *revRegId))completion;
 
+- (void)credentialIsRevokable:(VcxHandle)credentialHandle
+                 completion:(void (^)(NSError *error, vcx_bool_t revokable))completion;
+
 - (void)credentialSerialize:(NSInteger)credentialHandle
                  completion:(void (^)(NSError *error, NSString *state))completion;
 
