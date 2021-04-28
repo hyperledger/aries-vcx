@@ -194,20 +194,24 @@ mod tests {
     }
 
     fn send_credential(issuer_handle: u32, issuer_to_consumer: u32, consumer_to_issuer: u32, credential_handle: u32, consumer_handle: Option<u32>, revokable: bool) {
-        info!("send_credential >>> switching to institution");
         set_institution(None);
         info!("send_credential >>> getting offers");
+        assert_eq!(issuer_credential::is_revokable(issuer_handle).unwrap(), revokable);
         issuer_credential::update_state(issuer_handle, None, issuer_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(issuer_handle).unwrap());
-        info!("sending credential");
+        assert_eq!(issuer_credential::is_revokable(issuer_handle).unwrap(), revokable);
+
+        info!("send_credential >>> sending credential");
         issuer_credential::send_credential(issuer_handle, issuer_to_consumer).unwrap();
         thread::sleep(Duration::from_millis(2000));
-        // AS CONSUMER STORE CREDENTIAL
-        utils::devsetup::set_consumer(consumer_handle);
+        
+        set_consumer(consumer_handle);
+        info!("send_credential >>> storing credential");
+        assert_eq!(credential::is_revokable(credential_handle).unwrap(), revokable);
         credential::update_state(credential_handle, None, consumer_to_issuer).unwrap();
-        thread::sleep(Duration::from_millis(2000));
-        info!("storing credential");
         assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(credential_handle).unwrap());
+        assert_eq!(credential::is_revokable(credential_handle).unwrap(), revokable);
+
         if revokable {
             thread::sleep(Duration::from_millis(2000));
             assert_eq!(credential::get_tails_location(credential_handle).unwrap(), TEST_TAILS_URL.to_string());
@@ -660,7 +664,6 @@ mod tests {
         }
         return credentials_mapped;
     }
-
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]

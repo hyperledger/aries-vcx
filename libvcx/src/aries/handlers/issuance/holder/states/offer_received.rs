@@ -59,7 +59,7 @@ impl OfferReceivedState {
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Failed to obtain credential definition from ledger or cache: {}", err)))?;
         let parsed_cred_def: serde_json::Value = serde_json::from_str(&cred_def_json)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed deserialize credential definition json {}\nError: {}", cred_def_json, err)))?;
-        Ok(parsed_cred_def["data"]["revocation"].is_null())
+        Ok(!parsed_cred_def["data"]["revocation"].is_null())
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {

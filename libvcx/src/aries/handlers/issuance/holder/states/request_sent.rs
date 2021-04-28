@@ -39,6 +39,6 @@ impl RequestSentState {
     pub fn is_revokable(&self) -> VcxResult<bool> {
         let parsed_cred_def: serde_json::Value = serde_json::from_str(&self.cred_def_json)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed deserialize credential definition json {}\nError: {}", self.cred_def_json, err)))?;
-        Ok(parsed_cred_def["data"]["revocation"].is_null())
+        Ok(!parsed_cred_def["data"]["revocation"].is_null())
     }
 }
