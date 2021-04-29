@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, Mutex};
 
 use rand::Rng;
 
@@ -9,7 +9,7 @@ use crate::error::prelude::*;
 
 pub struct ObjectCache<T> {
     pub cache_name: String,
-    pub store: RwLock<HashMap<u32, RwLock<T>>>,
+    pub store: RwLock<HashMap<u32, Mutex<T>>>,
 }
 
 impl<T> ObjectCache<T> {
@@ -20,7 +20,7 @@ impl<T> ObjectCache<T> {
         }
     }
 
-    fn _lock_store_read(&self) -> VcxResult<RwLockReadGuard<HashMap<u32, RwLock<T>>>> {
+    fn _lock_store_read(&self) -> VcxResult<RwLockReadGuard<HashMap<u32, Mutex<T>>>> {
         match self.store.read() {
             Ok(g) => Ok(g),
             Err(e) => {
@@ -30,7 +30,7 @@ impl<T> ObjectCache<T> {
         }
     }
 
-    fn _lock_store_write(&self) -> VcxResult<RwLockWriteGuard<HashMap<u32, RwLock<T>>>> {
+    fn _lock_store_write(&self) -> VcxResult<RwLockWriteGuard<HashMap<u32, Mutex<T>>>> {
         match self.store.write() {
             Ok(g) => Ok(g),
             Err(e) => {
@@ -52,7 +52,7 @@ impl<T> ObjectCache<T> {
         where F: Fn(&T) -> VcxResult<R> {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
-            Some(m) => match m.read() {
+            Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref()),
                 Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
             },
@@ -64,7 +64,7 @@ impl<T> ObjectCache<T> {
         where F: Fn(&mut T) -> VcxResult<R> {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
-            Some(m) => match m.write() {
+            Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut()),
                 Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
             },
@@ -83,7 +83,7 @@ impl<T> ObjectCache<T> {
             new_handle = rand::thread_rng().gen::<u32>();
         }
 
-        match store.insert(new_handle, RwLock::new(obj)) {
+        match store.insert(new_handle, Mutex::new(obj)) {
             Some(_) => Ok(new_handle),
             None => Ok(new_handle)
         }
@@ -92,7 +92,7 @@ impl<T> ObjectCache<T> {
     pub fn insert(&self, handle: u32, obj: T) -> VcxResult<()> {
         let mut store = self._lock_store_write()?;
 
-        match store.insert(handle, RwLock::new(obj)) {
+        match store.insert(handle, Mutex::new(obj)) {
             _ => Ok(()),
         }
     }
