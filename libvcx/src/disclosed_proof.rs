@@ -74,25 +74,25 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
-
         if !proof.has_transitions() {
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.state());
         }
+        let send_message = connection::send_message_closure(connection_handle)?;
 
         if let Some(message_) = message {
-            return proof.update_state_with_message(message_, connection_handle);
+            let a2a_message: A2AMessage = serde_json::from_str(message_)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
+            trace!("disclosed_proof::update_state >>> updating using message {:?}", a2a_message);
+            proof.handle_message(a2a_message.into(), Some(&send_message))?;
+        } else {
+            let messages = connection::get_messages(connection_handle)?;
+            trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
+            if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+                proof.handle_message(message.into(), Some(&send_message))?;
+                connection::update_message_status(connection_handle, uid)?;
+            };
         }
-
-        let messages = connection::get_messages(connection_handle)?;
-        trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
-
-        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            let send_message = connection::send_message_closure(connection_handle)?;
-            proof.handle_message(message.into(), Some(&send_message))?;
-            connection::update_message_status(connection_handle, uid)?;
-        };
-
         Ok(proof.state())
     })
 }
