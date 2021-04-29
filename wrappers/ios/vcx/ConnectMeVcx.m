@@ -995,7 +995,7 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
-   ret = vcx_credential_revokable(handle, credentialHandle, VcxWrapperCommonBoolCallback);
+   ret = vcx_credential_is_revokable(handle, credentialHandle, VcxWrapperCommonBoolCallback);
 
    if( ret != 0 )
    {
