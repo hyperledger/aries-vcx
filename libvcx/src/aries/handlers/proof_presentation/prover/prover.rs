@@ -67,17 +67,6 @@ impl Prover {
         self.prover_sm.find_message_to_handle(messages)
     }
 
-    pub fn update_state_with_message(&mut self, message: &str, connection_handle: u32) -> VcxResult<u32> {
-        trace!("Prover::update_state_with_message >>> message: {:?}", message);
-
-        let a2a_message: A2AMessage = serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
-
-        let send_message = connection::send_message_closure(connection_handle)?;
-        self.handle_message(a2a_message.into(), Some(&send_message))?;
-
-        Ok(self.state())
-    }
 
     pub fn handle_message(&mut self, message: ProverMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
