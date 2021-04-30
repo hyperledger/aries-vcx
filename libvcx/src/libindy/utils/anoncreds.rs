@@ -355,8 +355,14 @@ fn libindy_build_get_revoc_reg_request(submitter_did: &str, rev_reg_id: &str, ti
         .map_err(VcxError::from)
 }
 
-fn libindy_parse_get_revoc_reg_response(get_rev_reg_resp: &str) -> VcxResult<(String, String, u64)> {
-    ledger::parse_get_revoc_reg_response(get_rev_reg_resp)
+fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxResult<(String, String, u64)> {
+    ledger::parse_get_revoc_reg_response(get_cred_def_resp)
+        .wait()
+        .map_err(VcxError::from)
+}
+
+fn libindy_parse_get_cred_def_response(get_rev_reg_resp: &str) -> VcxResult<(String, String)> {
+    ledger::parse_get_cred_def_response(get_rev_reg_resp)
         .wait()
         .map_err(VcxError::from)
 }
@@ -558,6 +564,20 @@ pub fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, Strin
     libindy_build_get_revoc_reg_request(&submitter_did, rev_reg_id, timestamp)
         .and_then(|req| libindy_submit_request(&req))
         .and_then(|response| libindy_parse_get_revoc_reg_response(&response))
+}
+
+pub fn get_cred_def(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
+    libindy_build_get_cred_def_request(issuer_did, &cred_def_id)
+        .and_then(|req| libindy_submit_request(&req))
+        .and_then(|response| libindy_parse_get_cred_def_response(&response))
+}
+
+pub fn is_cred_def_on_ledger(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
+    match get_cred_def(issuer_did, cred_def_id) {
+        Ok(_) => Ok(true),
+        Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(false),
+        Err(err) => Err(VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Failed to check presence of credential definition id {} on the ledger\nError: {}", cred_def_id, err)))
+    }
 }
 
 pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<(Option<PaymentTxn>, String)> {
@@ -1037,6 +1057,28 @@ pub mod tests {
 
         let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).unwrap();
         assert_eq!(id, rev_reg_id);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_get_cred_def() {
+        let _setup = SetupLibraryWalletPool::init();
+
+        let attrs = r#"["address1","address2","city","state","zip"]"#;
+        let (_, _, cred_def_id, cred_def_json, _, _) =
+            libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
+
+        let (id, cred_def) = get_cred_def(None, &cred_def_id).unwrap();
+        assert_eq!(id, cred_def_id);
+        assert_eq!(serde_json::from_str::<serde_json::Value>(&cred_def).unwrap(), serde_json::from_str::<serde_json::Value>(&cred_def_json).unwrap());
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_is_cred_def_on_ledger() {
+        let _setup = SetupLibraryWalletPool::init();
+
+        assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").unwrap(), false);
     }
 
     #[cfg(feature = "pool_tests")]

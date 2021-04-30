@@ -383,6 +383,12 @@ pub fn libindy_get_schema(submitter_did: &str, schema_id: &str) -> VcxResult<Str
         .map_err(VcxError::from)
 }
 
+pub fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cred_def_id: &str) -> VcxResult<String> {
+    ledger::build_get_cred_def_request(submitter_did, cred_def_id)
+        .wait()
+        .map_err(VcxError::from)
+}
+
 pub fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
     let pool_handle = get_pool_handle()?;
     let wallet_handle = get_wallet_handle();
