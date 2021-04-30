@@ -81,10 +81,6 @@ export enum CredentialDefState {
   Published = 1,
 }
 
-export class CredentialDefPaymentManager extends PaymentManager {
-  protected _getPaymentTxnFn = rustAPI().vcx_credentialdef_get_payment_txn;
-}
-
 /**
  * @class Class representing a credential Definition
  */
@@ -137,103 +133,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           cb,
         ),
       );
-      return credentialDef;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Create a new CredentialDef object that will be published by Endorser later.
-   *
-   * Note that CredentialDef can't be used for credential issuing until it will be published on the ledger.
-   *
-   * Example:
-   * ```
-   * data = {
-   *   name: 'testCredentialDefName',
-   *   endorser: 'V4SGRU86Z58d6TV7PBUe6f',
-   *   revocation: false,
-   *   schemaId: 'testCredentialDefSchemaId',
-   *   sourceId: 'testCredentialDefSourceId'
-   * }
-   * credentialDef = await CredentialDef.prepareForEndorser(data)
-   * ```
-   */
-  public static async prepareForEndorser({
-    name,
-    endorser,
-    revocationDetails,
-    schemaId,
-    sourceId,
-  }: ICredentialDefPrepareForEndorserData): Promise<CredentialDef> {
-    // Todo: need to add params for tag and config
-    try {
-      const tailsFile = revocationDetails.tailsFile;
-      const credentialDef = new CredentialDef(sourceId, { name, schemaId, tailsFile });
-      const issuerDid = null;
-      const revocation = {
-        max_creds: revocationDetails.maxCreds,
-        support_revocation: revocationDetails.supportRevocation,
-        tails_file: revocationDetails.tailsFile,
-        tails_url: revocationDetails.tailsUrl,
-        tails_base_url: revocationDetails.tailsBaseUrl,
-      };
-      const credDefForEndorser = await createFFICallbackPromise<{
-        credDefTxn: string;
-        revocRegDefTxn: string;
-        revocRegEntryTxn: string;
-        handle: number;
-      }>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_prepare_for_endorser(
-            0,
-            sourceId,
-            name,
-            schemaId,
-            issuerDid,
-            'tag1',
-            JSON.stringify(revocation),
-            endorser,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32', 'string', 'string', 'string'],
-            (
-              handle: number,
-              err: number,
-              _handle: number,
-              _credDefTxn: string,
-              _revocRegDefTxn: string,
-              _revocRegEntryTxn: string,
-            ) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!_credDefTxn) {
-                reject('no credential definition transaction');
-                return;
-              }
-              resolve({
-                credDefTxn: _credDefTxn,
-                handle: _handle,
-                revocRegDefTxn: _revocRegDefTxn,
-                revocRegEntryTxn: _revocRegEntryTxn,
-              });
-            },
-          ),
-      );
-      credentialDef._setHandle(credDefForEndorser.handle);
-      credentialDef._credDefTransaction = credDefForEndorser.credDefTxn;
-      credentialDef._revocRegDefTransaction = credDefForEndorser.revocRegDefTxn;
-      credentialDef._revocRegEntryTransaction = credDefForEndorser.revocRegEntryTxn;
       return credentialDef;
     } catch (err) {
       throw new VCXInternalError(err);
