@@ -1,3 +1,4 @@
+use crate::error::prelude::*;
 use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::aries::messages::issuance::credential::Credential;
 use crate::aries::messages::error::ProblemReport;
@@ -30,5 +31,13 @@ impl From<(RequestSentState, ProblemReport)> for FinishedHolderState {
             status: Status::Failed(problem_report),
             rev_reg_def_json: None,
         }
+    }
+}
+
+impl RequestSentState {
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        let parsed_cred_def: serde_json::Value = serde_json::from_str(&self.cred_def_json)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed deserialize credential definition json {}\nError: {}", self.cred_def_json, err)))?;
+        Ok(!parsed_cred_def["value"]["revocation"].is_null())
     }
 }

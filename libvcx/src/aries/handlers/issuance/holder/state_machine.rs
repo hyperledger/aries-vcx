@@ -221,6 +221,14 @@ impl HolderSM {
         }
     }
 
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        match self.state {
+            HolderState::OfferReceived(ref state) => state.is_revokable(),
+            HolderState::RequestSent(ref state) => state.is_revokable(),
+            HolderState::Finished(ref state) => state.is_revokable()
+        }
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
@@ -234,8 +242,8 @@ impl HolderSM {
     }
 }
 
-fn _parse_cred_def_from_cred_offer(cred_offer: &str) -> VcxResult<String> {
-    trace!("Holder::_parse_cred_def_from_cred_offer >>> cred_offer: {:?}", cred_offer);
+pub fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> {
+    trace!("Holder::parse_cred_def_id_from_cred_offer >>> cred_offer: {:?}", cred_offer);
 
     let parsed_offer: serde_json::Value = serde_json::from_str(cred_offer)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Credential Offer Json: {:?}", err)))?;
@@ -298,8 +306,10 @@ fn _make_credential_request(conn_handle: u32, offer: &CredentialOffer) -> VcxRes
 
     let my_did = connection::get_pw_did(conn_handle)?;
     let cred_offer = offer.offers_attach.content()?;
-    let cred_def_id = _parse_cred_def_from_cred_offer(&cred_offer)?;
+    trace!("Parsed cred offer attachment: {}", cred_offer);
+    let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) = create_credential_request(&cred_def_id, &my_did, &cred_offer)?;
+    trace!("Created cred def json: {}", cred_def_json);
     Ok((CredentialRequest::create().set_requests_attach(req)?, req_meta, cred_def_json))
 }
 
@@ -646,6 +656,19 @@ mod test {
             assert_eq!(Err(VcxErrorKind::NotReady), _holder_sm().to_request_sent_state().get_rev_reg_id().map_err(|e| e.kind()));
 
             assert_eq!(constants::REV_REG_ID, _holder_sm().to_finished_state().get_rev_reg_id().unwrap());
+        }
+    }
+
+    mod is_revokable {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_is_revokable() {
+            let _setup = SetupMocks::init();
+            assert_eq!(true, _holder_sm().is_revokable().unwrap());
+            assert_eq!(true, _holder_sm().to_request_sent_state().is_revokable().unwrap());
+            assert_eq!(true, _holder_sm().to_finished_state().is_revokable().unwrap());
         }
     }
 }

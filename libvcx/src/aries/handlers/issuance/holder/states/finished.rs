@@ -75,4 +75,8 @@ impl FinishedHolderState {
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("The field 'id' not found on rev_reg_def_json: {:?}", rev_reg_def_json)))?;
         Ok(rev_reg_def_id.to_string())
     }
+
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        Ok(self.rev_reg_def_json.is_some())
+    }
 }

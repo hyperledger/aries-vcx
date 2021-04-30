@@ -54,6 +54,10 @@ impl Issuer {
         self.issuer_sm.get_rev_reg_id()
     }
 
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        self.issuer_sm.is_revokable()
+    }
+
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.issuer_sm.credential_status())
     }

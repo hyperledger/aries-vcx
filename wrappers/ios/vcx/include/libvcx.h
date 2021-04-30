@@ -363,6 +363,8 @@ vcx_error_t vcx_credential_get_tails_hash(vcx_command_handle_t handle, vcx_crede
 
 vcx_error_t vcx_credential_get_rev_reg_id(vcx_command_handle_t handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err, const char *revRegId));
 
+vcx_error_t vcx_credential_is_revokable(vcx_command_handle_t handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err, vcx_bool_t revokable));
+
 /** Updates the state of the credential from the agency. */
 vcx_error_t vcx_credential_update_state(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 

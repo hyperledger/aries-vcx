@@ -65,6 +65,10 @@ impl Holder {
         self.holder_sm.get_rev_reg_id()
     }
 
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        self.holder_sm.is_revokable()
+    }
+
     pub fn delete_credential(&self) -> VcxResult<()> {
         self.holder_sm.delete_credential()
     }

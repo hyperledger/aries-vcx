@@ -113,6 +113,16 @@ impl IssuerSM {
         rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
     }
 
+    pub fn is_revokable(&self) -> VcxResult<bool> {
+        match &self.state {
+            IssuerState::Initial(state) => Ok(state.rev_reg_id.is_some()),
+            IssuerState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
+            IssuerState::RequestReceived(state) => Ok(state.rev_reg_id.is_some()),
+            IssuerState::CredentialSent(state) => Ok(state.revocation_info_v1.is_some()),
+            IssuerState::Finished(state) => Ok(state.revocation_info_v1.is_some())
+        }
+    }
+
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Issuer::find_message_to_handle >>> messages: {:?}", messages);
 
@@ -718,6 +728,21 @@ pub mod test {
             assert_eq!(_rev_reg_id(), _issuer_sm().to_offer_sent_state().get_rev_reg_id().unwrap());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().get_rev_reg_id().unwrap());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().get_rev_reg_id().unwrap());
+        }
+    }
+
+    mod is_revokable {
+        use super::*;
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_get_rev_reg_id() {
+            let _setup = SetupMocks::init();
+
+            assert_eq!(true, _issuer_sm().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm().to_offer_sent_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm().to_request_received_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm().to_finished_state().is_revokable().unwrap());
         }
     }
 }

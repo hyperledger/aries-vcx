@@ -409,6 +409,30 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    private static Callback credentialIsRevokableCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int command_handle, int err, boolean revokable) {
+            logger.debug("credentialIsRevokableCB() called with: command_handle = [" + command_handle + "], err = [" + err + "], revokable = [" + revokable + "]");
+            CompletableFuture<Boolean> future = (CompletableFuture<Boolean>) removeFuture(command_handle);
+            if (!checkCallback(future, err)) return;
+            future.complete(revokable);
+        }
+    };
+
+    public static CompletableFuture<Boolean> credentialIsRevokable(
+            int credentialHandle
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        logger.debug("credentialIsRevokable() called with: credentialHandle = [" + credentialHandle + "]");
+        CompletableFuture<Boolean> future = new CompletableFuture<Boolean>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_credential_is_revokable(commandHandle, credentialHandle, credentialIsRevokableCB);
+        checkResult(result);
+
+        return future;
+    }
+
     public static int credentialRelease(int credentialHandle) throws VcxException {
         ParamGuard.notNull(credentialHandle, "credentialHandle");
         logger.debug("credentialRelease() called with: credentialHandle = [" + credentialHandle + "]");

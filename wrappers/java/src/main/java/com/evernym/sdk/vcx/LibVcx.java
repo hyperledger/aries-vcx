@@ -541,6 +541,8 @@ public abstract class LibVcx {
 
         public int vcx_credential_get_rev_reg_id(int command_handle, int credential_handle, Callback cb);
 
+        public int vcx_credential_is_revokable(int command_handle, int credential_handle, Callback cb);
+
         /** Populates status with the current State of this credential. */
         public int vcx_credential_serialize(int command_handle, int credential_handle, Callback cb);
 

@@ -990,6 +990,23 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
    }
 }
 
+- (void)credentialIsRevokable:(VcxHandle)credentialHandle
+                   completion:(void (^)(NSError *error, vcx_bool_t revokable))completion{
+   vcx_error_t ret;
+   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+   ret = vcx_credential_is_revokable(handle, credentialHandle, VcxWrapperCommonBoolCallback);
+
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret],nil);
+       });
+   }
+}
+
 - (void)generateProof:(NSString *)proofRequestId
        requestedAttrs:(NSString *)requestedAttrs
   requestedPredicates:(NSString *)requestedPredicates
