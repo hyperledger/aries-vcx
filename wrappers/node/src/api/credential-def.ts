@@ -4,7 +4,6 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData } from './common';
 import { VCXBase } from './vcx-base';
-import { PaymentManager } from './vcx-payment-txn';
 
 /**
  * @interface Interface that represents the parameters for `CredentialDef.create` function.
@@ -24,27 +23,6 @@ export interface ICredentialDefCreateData {
   schemaId: string;
   revocationDetails: IRevocationDetails;
   paymentHandle: number;
-}
-
-/**
- * @interface Interface that represents the parameters for `CredentialDef.prepareForEndorser` function.
- * @description
- * SourceId: Enterprise's personal identification for the user.
- * name: Name of credential definition
- * schemaId: The schema id given during the creation of the schema
- * revocation: type-specific configuration of credential definition revocation
- *     TODO: Currently supports ISSUANCE BY DEFAULT, support for ISSUANCE ON DEMAND will be added as part of ticket: IS-1074
- *     support_revocation: true|false - Optional, by default its false
- *     tails_file: path to tails file - Optional if support_revocation is false
- *     max_creds: size of tails file - Optional if support_revocation is false
- * endorser: DID of the Endorser that will submit the transaction.
- */
-export interface ICredentialDefPrepareForEndorserData {
-  sourceId: string;
-  name: string;
-  schemaId: string;
-  revocationDetails: IRevocationDetails;
-  endorser: string;
 }
 
 export interface ICredentialDefData {
@@ -170,7 +148,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     return super._deserialize(CredentialDef, credentialDef, credentialDefParams);
   }
 
-  public paymentManager!: CredentialDefPaymentManager;
   protected _releaseFn = rustAPI().vcx_credentialdef_release;
   protected _serializeFn = rustAPI().vcx_credentialdef_serialize;
   protected _deserializeFn = rustAPI().vcx_credentialdef_deserialize;
@@ -451,7 +428,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
 
   protected _setHandle(handle: number): void {
     super._setHandle(handle);
-    this.paymentManager = new CredentialDefPaymentManager({ handle });
   }
 
   get credentialDefTransaction(): string | null {

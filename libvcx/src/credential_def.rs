@@ -139,11 +139,6 @@ impl CredentialDef {
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
-    fn get_cred_def_payment_txn(&self) -> VcxResult<PaymentTxn> {
-        self.cred_def_payment_txn.clone()
-            .ok_or(VcxError::from(VcxErrorKind::NoPaymentInformation))
-    }
-
     fn get_rev_reg_def_payment_txn(&self) -> Option<PaymentTxn> {
         match &self.rev_reg {
             Some(rev_reg) => rev_reg.rev_reg_def_payment_txn.clone(),
@@ -394,12 +389,6 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn get_cred_def_payment_txn(handle: u32) -> VcxResult<PaymentTxn> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        c.get_cred_def_payment_txn()
-    })
-}
-
 pub fn get_cred_def_id(handle: u32) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get(handle, |c| {
         Ok(c.get_cred_def_id().clone())
@@ -576,9 +565,6 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let (_, handle) = create_cred_def_real(false);
-
-        let payment = &get_cred_def_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -689,9 +675,6 @@ pub mod tests {
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
-
-        let payment = &get_cred_def_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -704,9 +687,6 @@ pub mod tests {
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
-
-        // No Payment performed
-        let _payment = get_cred_def_payment_txn(handle).unwrap_err();
     }
 
     #[cfg(feature = "pool_tests")]
