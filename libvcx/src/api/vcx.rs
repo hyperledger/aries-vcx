@@ -73,7 +73,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
-    spawn(move || {
+    execute(move || {
         match init_agency_client(&config) {
             Ok(()) => {
                 info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
@@ -116,7 +116,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 
     trace!("vcx_init_issuer_config >>> config: {}", config);
 
-    spawn(move || {
+    execute(move || {
         match init_issuer_config(&config) {
             Ok(()) => {
                 info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
@@ -192,7 +192,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
-    spawn(move || {
+    execute(move || {
         match open_pool_directly(&pool_config) {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");

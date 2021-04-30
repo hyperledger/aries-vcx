@@ -6,9 +6,8 @@ use indy::WalletHandle;
 use rand::Rng;
 use serde_json::Value;
 
-use crate::agency_client::mocking::AgencyMockDecrypted;
-
 use crate::{api, init, libindy, settings, utils};
+use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
@@ -20,6 +19,7 @@ use crate::utils::file::write_file;
 use crate::utils::logger::LibvcxDefaultLogger;
 use crate::utils::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
+use crate::utils::runtime::ThreadpoolConfig;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -37,7 +37,7 @@ pub struct SetupWallet {
 } // creates wallet with random name, configures wallet settings
 
 pub struct SetupPoolConfig {
-    skip_cleanup: bool
+    skip_cleanup: bool,
 }
 
 pub struct SetupLibraryWallet {
@@ -64,12 +64,12 @@ fn setup() {
     init_test_logging();
     settings::clear_config();
     set_testing_defaults();
-    runtime::init_runtime();
+    runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
 }
 
 fn setup_empty() {
     settings::clear_config();
-    runtime::init_runtime();
+    runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
     init_test_logging();
 }
 
@@ -538,7 +538,7 @@ pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_con
         institution_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
         merge(&mut final_config, &institution_config);
     }
-    
+
     final_config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
 
     final_config.to_string()

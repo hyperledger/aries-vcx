@@ -7,11 +7,7 @@ use crate::{settings, utils};
 use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct ThreadpoolConfig {
-    num_threads: Option<String>,
-}
+use crate::utils::runtime::ThreadpoolConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct PoolConfig {
@@ -23,7 +19,7 @@ struct PoolConfig {
 pub fn init_threadpool(config: &str) -> VcxResult<()> {
     let config: ThreadpoolConfig = serde_json::from_str(config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
-    utils::threadpool::init(config.num_threads.as_deref());
+    utils::runtime::init_runtime(config);
     Ok(())
 }
 
@@ -38,7 +34,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::runtime::init_runtime();
+    utils::runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
     Ok(())
 }
 

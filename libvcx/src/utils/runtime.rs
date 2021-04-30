@@ -20,13 +20,17 @@ static TP_INIT: Once = Once::new();
 
 pub static mut TP_HANDLE: u32 = 0;
 
-pub fn init_runtime() {
-    info!("init_runtime >>>");
-    let size = settings::get_threadpool_size();
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ThreadpoolConfig {
+    pub num_threads: Option<usize>,
+}
 
-    if size == 0 {
-        warn!("threadpool_size was set to 0; every FFI call will executed on a new thread!");
+pub fn init_runtime(config: ThreadpoolConfig) {
+    if config.num_threads == Some(0) {
+        warn!("init_runtime >> threadpool_size was set to 0; every FFI call will executed on a new thread!");
     } else {
+        let num_threads = config.num_threads.unwrap_or(4);
+        warn!("init_runtime >> threadpool is using {} threads.", num_threads);
         TP_INIT.call_once(|| {
             let rt = tokio::runtime::Builder::new_multi_thread()
                 .thread_name_fn(|| {
@@ -35,11 +39,12 @@ pub fn init_runtime() {
                     format!("tokio-worker-vcxffi-{}", id)
                 })
                 .on_thread_start(|| debug!("Starting tokio runtime worker thread for vcx ffi."))
+                .worker_threads(num_threads)
                 .build()
                 .unwrap();
 
             THREADPOOL.lock().unwrap().insert(1, rt);
-            warn!("Tokio runtime with threaded scheduler has been created.");
+            info!("Tokio runtime with threaded scheduler has been created.");
 
             unsafe { TP_HANDLE = 1; }
         });
@@ -50,12 +55,10 @@ pub fn execute<F>(closure: F)
     where
         F: FnOnce() -> Result<(), ()> + Send + 'static {
     trace!("Closure is going to be executed.");
-    let handle;
-    unsafe { handle = TP_HANDLE; }
-    if settings::get_threadpool_size() == 0 || handle == 0 {
-        thread::spawn(closure);
-    } else {
+    if TP_INIT.is_completed() {
         execute_on_tokio(future::lazy(|_| closure()));
+    } else {
+        thread::spawn(closure);
     }
 }
 
