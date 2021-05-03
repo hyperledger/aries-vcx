@@ -314,7 +314,7 @@ pub mod test {
 
     impl ProverSM {
         fn to_presentation_prepared_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&Box<dyn Fn(&A2AMessage) -> VcxResult<()>>>).unwrap();
+            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&fn(&A2AMessage) -> _>).unwrap();
             self
         }
 
@@ -327,7 +327,7 @@ pub mod test {
 
         fn to_finished_state(mut self) -> ProverSM {
             let send_message = Some(&|a2a_message: &A2AMessage| VcxResult::Ok(()));
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&Box<dyn Fn(&A2AMessage) -> VcxResult<()>>>).unwrap();
+            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None::<&fn(&A2AMessage) -> _>).unwrap();
             self = self.step(ProverMessages::SendPresentation, send_message).unwrap();
             self = self.step(ProverMessages::PresentationAckReceived(_ack()), send_message).unwrap();
             self
