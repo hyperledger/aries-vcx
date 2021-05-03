@@ -12,7 +12,7 @@ use crate::libindy::utils::anoncreds;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Prover {
-    prover_sm: ProverSM
+    prover_sm: ProverSM,
 }
 
 impl Prover {
@@ -37,9 +37,8 @@ impl Prover {
     }
 
     pub fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {
-        let closure = move |a2a_message: &A2AMessage| { panic!("This should not be called") };
         trace!("Prover::generate_presentation >>> credentials: {}, self_attested_attrs: {:?}", credentials, self_attested_attrs);
-        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)), Some(&closure))
+        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)), None::<&fn(&A2AMessage) -> _>)
     }
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
@@ -86,8 +85,10 @@ impl Prover {
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }
 
-    pub fn step<T>(&mut self, message: ProverMessages, send_message: Option<&T>)
-        -> VcxResult<()> where T: Fn(&A2AMessage) -> VcxResult<()>
+    pub fn step(&mut self,
+                message: ProverMessages,
+                send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
+                -> VcxResult<()>
     {
         self.prover_sm = self.prover_sm.clone().step(message, send_message)?;
         Ok(())

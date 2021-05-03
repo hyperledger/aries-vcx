@@ -359,7 +359,6 @@ Get messages received from connection counterparty.
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
         let sender_vk = self.agent_info().pw_vk.clone();
         return Ok(move |a2a_message: &A2AMessage| {
-            warn!("Connection resolved did_doc = {:?}", did_doc);
             did_doc.send_message(a2a_message, &sender_vk)
         })
     }

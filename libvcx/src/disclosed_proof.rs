@@ -80,11 +80,11 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
         }
         let send_message = connection::send_message_closure(connection_handle)?;
 
-        if let Some(message_) = message {
-            let a2a_message: A2AMessage = serde_json::from_str(message_)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
-            trace!("disclosed_proof::update_state >>> updating using message {:?}", a2a_message);
-            proof.handle_message(a2a_message.into(), Some(&send_message))?;
+        if let Some(message) = message {
+            let message: A2AMessage = serde_json::from_str(message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Can not updated state with message: Message deserialization failed: {:?}", err)))?;
+            trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
+            proof.handle_message(message.into(), Some(&send_message))?;
         } else {
             let messages = connection::get_messages(connection_handle)?;
             trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
