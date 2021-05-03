@@ -87,20 +87,9 @@ impl VerifierSM {
             VerifierState::Initiated(state) => {
                 match message {
                     VerifierMessages::SendPresentationRequest => {
-                        let my_did = get_pw_did(connection_handle)?;
-                        let remote_did = get_their_pw_verkey(connection_handle)?;
-
-                        let presentation_request: PresentationRequestData =
-                            state.presentation_request_data.clone()
-                                .set_format_version_for_did(&my_did, &remote_did)?;
-
-                        let title = format!("{} wants you to share {}",
-                                            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME)?, presentation_request.name);
-
                         let presentation_request =
                             PresentationRequest::create()
-                                .set_comment(title)
-                                .set_request_presentations_attach(&presentation_request)?;
+                                .set_request_presentations_attach(&state.presentation_request_data)?;
 
                         connection::send_message(connection_handle, presentation_request.to_a2a_message())?;
                         VerifierState::PresentationRequestSent((state, presentation_request).into())
