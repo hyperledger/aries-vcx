@@ -125,13 +125,21 @@ impl ProverSM {
                             }
                         }
                     }
-                    ProverMessages::RejectPresentationRequest((reason)) => {
-                        Self::_handle_reject_presentation_request(send_message.unwrap(), &reason, &state.presentation_request, &thread_id)?;
-                        ProverState::Finished(state.into())
+                    ProverMessages::RejectPresentationRequest(reason) => {
+                        if let Some(send_message) = send_message {
+                            Self::_handle_reject_presentation_request(send_message, &reason, &state.presentation_request, &thread_id)?;
+                            ProverState::Finished(state.into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
-                    ProverMessages::ProposePresentation((preview)) => {
-                        Self::_handle_presentation_proposal(send_message.unwrap(), preview, &state.presentation_request, &thread_id)?;
-                        ProverState::Finished(state.into())
+                    ProverMessages::ProposePresentation(preview) => {
+                        if let Some(send_message) = send_message {
+                            Self::_handle_presentation_proposal(send_message, preview, &state.presentation_request, &thread_id)?;
+                            ProverState::Finished(state.into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
                     _ => {
                         ProverState::Initiated(state)
@@ -141,17 +149,28 @@ impl ProverSM {
             ProverState::PresentationPrepared(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        let send_message = send_message.unwrap();
-                        send_message(&state.presentation.to_a2a_message())?;
-                        ProverState::PresentationSent((state).into())
+                        if let Some(send_message) = send_message {
+                            send_message(&state.presentation.to_a2a_message())?;
+                            ProverState::PresentationSent((state).into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
-                    ProverMessages::RejectPresentationRequest((reason)) => {
-                        Self::_handle_reject_presentation_request(send_message.unwrap(), &reason, &state.presentation_request, &thread_id)?;
-                        ProverState::Finished(state.into())
+                    ProverMessages::RejectPresentationRequest(reason) => {
+                        if let Some(send_message) = send_message {
+                            Self::_handle_reject_presentation_request(send_message, &reason, &state.presentation_request, &thread_id)?;
+                            ProverState::Finished(state.into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
-                    ProverMessages::ProposePresentation((preview)) => {
-                        Self::_handle_presentation_proposal(send_message.unwrap(), preview, &state.presentation_request, &thread_id)?;
-                        ProverState::Finished(state.into())
+                    ProverMessages::ProposePresentation(preview) => {
+                        if let Some(send_message) = send_message {
+                            Self::_handle_presentation_proposal(send_message, preview, &state.presentation_request, &thread_id)?;
+                            ProverState::Finished(state.into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
                     _ => {
                         ProverState::PresentationPrepared(state)
@@ -161,9 +180,12 @@ impl ProverSM {
             ProverState::PresentationPreparationFailed(state) => {
                 match message {
                     ProverMessages::SendPresentation => {
-                        let send_message = send_message.unwrap();
-                        send_message(&state.problem_report.to_a2a_message())?;
-                        ProverState::Finished((state).into())
+                        if let Some(send_message) = send_message {
+                            send_message(&state.problem_report.to_a2a_message())?;
+                            ProverState::Finished((state).into())
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
+                        }
                     }
                     _ => {
                         ProverState::PresentationPreparationFailed(state)
