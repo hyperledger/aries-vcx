@@ -23,8 +23,8 @@ impl PresentationRequest {
         self
     }
 
-    pub fn set_comment(mut self, comment: String) -> Self {
-        self.comment = Some(comment);
+    pub fn set_comment(mut self, comment: Option<String>) -> Self {
+        self.comment = comment;
         self
     }
 
@@ -63,8 +63,8 @@ pub mod tests {
         attachment
     }
 
-    fn _comment() -> String {
-        String::from("comment")
+    pub fn _comment() -> Option<String> {
+        Some(String::from("comment"))
     }
 
     pub fn thread_id() -> String {
@@ -78,7 +78,7 @@ pub mod tests {
     pub fn _presentation_request() -> PresentationRequest {
         PresentationRequest {
             id: MessageId::id(),
-            comment: Some(_comment()),
+            comment: _comment(),
             request_presentations_attach: _attachment(),
         }
     }

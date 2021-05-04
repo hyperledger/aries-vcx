@@ -3,9 +3,11 @@ use crate::aries::messages::error::ProblemReport;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::PresentationProposal;
 
+type Comment = Option<String>;
+
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum VerifierMessages {
-    SendPresentationRequest,
+    SendPresentationRequest(Comment),
     VerifyPresentation(Presentation),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),

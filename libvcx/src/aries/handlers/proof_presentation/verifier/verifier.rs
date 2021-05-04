@@ -50,9 +50,9 @@ impl Verifier {
         self.step(message, send_message)
     }
 
-    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
         trace!("Verifier::send_presentation_request >>>");
-        self.step(VerifierMessages::SendPresentationRequest, Some(&send_message))
+        self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
     }
 
     pub fn generate_presentation_request_msg(&self) -> VcxResult<String> {

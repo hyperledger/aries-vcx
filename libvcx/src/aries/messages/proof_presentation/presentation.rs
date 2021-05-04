@@ -50,8 +50,8 @@ pub mod tests {
         json!({"presentation": {}})
     }
 
-    fn _comment() -> String {
-        String::from("comment")
+    pub fn _comment() -> Option<String> {
+        Some(String::from("comment"))
     }
 
     pub fn _presentation() -> Presentation {
@@ -60,7 +60,7 @@ pub mod tests {
 
         Presentation {
             id: MessageId::id(),
-            comment: Some(_comment()),
+            comment: _comment(),
             presentations_attach: attachment,
             thread: thread(),
             please_ack: Some(PleaseAck {}),

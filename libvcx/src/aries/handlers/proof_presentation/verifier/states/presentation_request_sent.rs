@@ -26,7 +26,9 @@ impl PresentationRequestSentState {
 
         if presentation.please_ack.is_some() {
             let ack = PresentationAck::create().set_thread_id(&self.presentation_request.id.0);
-            send_message.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback"))?(&A2AMessage::PresentationAck(ack))?;
+            send_message.ok_or(
+                VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+            )?(&A2AMessage::PresentationAck(ack))?;
         }
 
         Ok(())
