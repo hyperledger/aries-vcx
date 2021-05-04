@@ -16,7 +16,7 @@ pub struct PresentationRequestSentState {
 }
 
 impl PresentationRequestSentState {
-    pub fn verify_presentation(&self, presentation: &Presentation, connection_handle: u32) -> VcxResult<()> {
+    pub fn verify_presentation(&self, presentation: &Presentation, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                                &self.presentation_request.request_presentations_attach.content()?)?;
 
@@ -26,7 +26,7 @@ impl PresentationRequestSentState {
 
         if presentation.please_ack.is_some() {
             let ack = PresentationAck::create().set_thread_id(&self.presentation_request.id.0);
-            connection::send_message(connection_handle, A2AMessage::PresentationAck(ack))?;
+            send_message.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback"))?(&A2AMessage::PresentationAck(ack))?;
         }
 
         Ok(())
