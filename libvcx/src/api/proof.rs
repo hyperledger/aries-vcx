@@ -498,11 +498,8 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    // TODO: Add as a parameter
-    let comment = format!("Somebody wants you to share a proof");
-
     spawn(move || {
-        let err = match proof::send_proof_request(proof_handle, connection_handle, Some(comment)) {
+        let err = match proof::send_proof_request(proof_handle, connection_handle, None) {
             Ok(x) => {
                 trace!("vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                        command_handle, 0, proof_handle, source_id);

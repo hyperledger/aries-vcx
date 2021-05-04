@@ -105,7 +105,7 @@ pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
 
 pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.send_presentation_request(connection::send_message_closure(connection_handle)?, comment)?;
+        proof.send_presentation_request(connection::send_message_closure(connection_handle)?, comment.clone())?;
         Ok(error::SUCCESS.code_num)
     })
 }

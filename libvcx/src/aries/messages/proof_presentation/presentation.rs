@@ -24,8 +24,8 @@ impl Presentation {
         Presentation::default()
     }
 
-    pub fn set_comment(mut self, comment: String) -> Self {
-        self.comment = Some(comment);
+    pub fn set_comment(mut self, comment: Option<String>) -> Self {
+        self.comment = comment;
         self
     }
 
