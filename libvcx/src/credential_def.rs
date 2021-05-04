@@ -300,11 +300,7 @@ pub fn create_and_publish_credentialdef(source_id: String,
 
     let (rev_def_payment, rev_delta_payment, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
         Ok(Some(ledger_cred_def_json)) => {
-            if serde_json::from_str::<serde_json::Value>(&cred_def_json).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize generated cred def json: {}\nError: {}", cred_def_json, err)))? != 
-                serde_json::from_str::<serde_json::Value>(&ledger_cred_def_json).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize cred def json from ledger: {}\nError: {}", ledger_cred_def_json, err)))? {
-                return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, "Desired credential definition differs from the one on the ledger"))
-            }
-            (None, None, None)
+            return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", cred_def_id, ledger_cred_def_json)))
         }
         Ok(None) => {
             let cred_def_payment_txn = anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;
@@ -695,22 +691,21 @@ pub mod tests {
         let _setup = SetupLibraryWalletPool::init();
 
         let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
-        let handle1 = create_and_publish_credentialdef("1".to_string(),
-                                                        "name".to_string(),
-                                                        did.clone(),
-                                                        schema_id.clone(),
-                                                        "tag_1".to_string(),
-                                                        revocation_details.to_string()).unwrap();
+        create_and_publish_credentialdef("1".to_string(),
+                                         "name".to_string(),
+                                         did.clone(),
+                                         schema_id.clone(),
+                                         "tag_1".to_string(),
+                                         revocation_details.to_string()).unwrap();
 
-        let handle2 = create_and_publish_credentialdef("1".to_string(),
-                                                        "name".to_string(),
-                                                        did.clone(),
-                                                        schema_id.clone(),
-                                                        "tag_1".to_string(),
-                                                        revocation_details.to_string()).unwrap();
+        let err = create_and_publish_credentialdef("1".to_string(),
+                                                   "name".to_string(),
+                                                   did.clone(),
+                                                   schema_id.clone(),
+                                                   "tag_1".to_string(),
+                                                   revocation_details.to_string()).unwrap_err();
 
-        assert_ne!(handle1, handle2);
-        assert_eq!(to_string(handle1).unwrap(), to_string(handle2).unwrap());
+        assert_eq!(err.kind(), VcxErrorKind::CreateCredDef);
     }
 
     #[test]
