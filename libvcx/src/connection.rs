@@ -259,9 +259,8 @@ pub fn get_message_by_id(handle: u32, msg_id: String) -> VcxResult<A2AMessage> {
 
 pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
-    CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.send_message(&message)
-    })
+    let send_message = send_message_closure(handle)?;
+    send_message(&message)
 }
 
 pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
