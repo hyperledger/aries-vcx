@@ -6,7 +6,6 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 
@@ -49,8 +48,7 @@ impl Prover {
 
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        let closure = move |a2a_message: &A2AMessage| { panic!("This should not be called") };
-        self.step(ProverMessages::SetPresentation(presentation), Some(&closure))
+        self.step(ProverMessages::SetPresentation(presentation), None::<&fn(&A2AMessage) -> _>)
     }
 
     pub fn send_presentation(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -98,13 +96,13 @@ impl Prover {
         trace!("Prover::decline_presentation_request >>> reason: {:?}, proposal: {:?}", reason, proposal);
         match (reason, proposal) {
             (Some(reason), None) => {
-                self.step(ProverMessages::RejectPresentationRequest((reason)), Some(send_message))
+                self.step(ProverMessages::RejectPresentationRequest(reason), Some(send_message))
             }
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize Presentation Preview: {:?}", err)))?;
 
-                self.step(ProverMessages::ProposePresentation((presentation_preview)), Some(send_message))
+                self.step(ProverMessages::ProposePresentation(presentation_preview), Some(send_message))
             }
             (None, None) => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Either `reason` or `proposal` parameter must be specified."));
