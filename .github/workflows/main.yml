@@ -452,6 +452,7 @@ jobs:
       - name: Run quick unit tests
         run: |
           set -x
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test aries" && \
@@ -505,7 +506,7 @@ jobs:
       - name: Start services for integration tests
         run: |
           set -x
-          docker images
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
@@ -516,7 +517,6 @@ jobs:
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
                               DISALLOW_V1=true RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
-
 
   test-libvcx-image-agency_pool_tests:
     runs-on: ubuntu-latest
@@ -565,7 +565,7 @@ jobs:
       - name: Start services for integration tests
         run: |
           set -x
-          docker images
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
@@ -601,6 +601,7 @@ jobs:
       - name: Run android tests
         run: |
           rm -rf /tmp/imgcache
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
                               bash -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
 
@@ -631,6 +632,7 @@ jobs:
       - name: Run wrapper tests
         run: |
           set -x
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && \
@@ -687,7 +689,7 @@ jobs:
       - name: Start services for integration tests
         run: |
           set -x
-          docker images
+          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY

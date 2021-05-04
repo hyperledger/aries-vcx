@@ -95,10 +95,10 @@ pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxR
     Ok(())
 }
 
-pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<WalletHandle> {
+pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>, rekey: Option<&str>, rekey_derivation_method: Option<&str>) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> wallet_name: {}", wallet_name);
     let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation);
+    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, rekey, rekey_derivation_method)?;
 
     let handle = indy::wallet::open_wallet(&config, &credentials)
         .wait()

@@ -548,7 +548,7 @@ pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
     let config_val: Value = serde_json::from_str(config).unwrap();
     let wallet_key = config_val["wallet_key"].as_str().unwrap();
 
-    let wallet_handle = init::open_as_main_wallet(wallet_n, wallet_key, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+    let wallet_handle = init::open_as_main_wallet(wallet_n, wallet_key, settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
     let mut config: serde_json::Value = serde_json::from_str(config).unwrap();
     config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
     config.to_string()

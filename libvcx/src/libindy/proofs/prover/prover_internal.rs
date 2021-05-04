@@ -263,7 +263,7 @@ pub mod tests {
 
         let credential_def = build_cred_defs_json_prover(&creds).unwrap();
         assert!(credential_def.len() > 0);
-        assert!(credential_def.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:2471","schemaId":"2471""#));
+        assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
 
     #[test]

@@ -13,12 +13,13 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
   }
 
   async function sendProofRequest (connectionId, proofId) {
+    logger.debug(`Verifier sending proof request proofId=${proofId}, connectionId=${connectionId}`)
     const connection = await loadConnection(connectionId)
     const proof = await loadProof(proofId)
     await proof.requestProof(connection)
     const state = await proof.getState()
     await saveProof(proofId, proof)
-    const proofRequestMessage = proof.getProofRequestMessage()
+    const proofRequestMessage = await proof.getProofRequestMessage()
     return { state, proofRequestMessage }
   }
 
@@ -33,6 +34,12 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
   async function getState (proofId) {
     const proof = await loadProof(proofId)
     return await proof.getState()
+  }
+
+  async function getProofState (proofId) {
+    const proof = await loadProof(proofId)
+    const { proofState } = await proof.getProof()
+    return proofState
   }
 
   async function listIds () {
@@ -59,6 +66,7 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
 
     listIds,
     printInfo,
-    getState
+    getState,
+    getProofState
   }
 }

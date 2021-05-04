@@ -15,7 +15,7 @@ for i in $(ls -t $OPENSSL_PATH); do
     break
 done
 
-INDY_VERSION="v1.15.0"
+INDY_VERSION="v1.16.0"
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts

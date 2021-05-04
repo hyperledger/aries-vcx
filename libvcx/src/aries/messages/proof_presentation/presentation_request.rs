@@ -1,7 +1,6 @@
 use crate::error::prelude::*;
 use crate::aries::messages::a2a::{A2AMessage, MessageId};
 use crate::aries::messages::attachment::{AttachmentId, Attachments};
-use crate::aries::messages::connection::service::Service;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -30,6 +29,7 @@ impl PresentationRequest {
     }
 
     pub fn set_request_presentations_attach(mut self, request_presentations: &PresentationRequestData) -> VcxResult<PresentationRequest> {
+        trace!("set_request_presentations_attach >> {:?}", request_presentations);
         self.request_presentations_attach.add_base64_encoded_json_attachment(AttachmentId::PresentationRequest, json!(request_presentations))?;
         Ok(self)
     }

@@ -146,6 +146,12 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn is_revokable(handle: u32) -> VcxResult<bool> {
+    HANDLE_MAP.get(handle, |credential| {
+        credential.is_revokable()
+    })
+}
+
 pub fn delete_credential(handle: u32) -> VcxResult<u32> {
     let source_id = get_source_id(handle).unwrap_or_default();
     trace!("Credential::delete_credential >>> credential_handle: {}, source_id: {}", handle, source_id);

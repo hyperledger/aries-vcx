@@ -55,7 +55,8 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
   }
 
   async function buildDisclosedProof (disclosedProofId, proofRequest) {
-    const disclosedProof = await DisclosedProof.create({ sourceId: 'proof', request: JSON.stringify(proofRequest) })
+    const request = typeof proofRequest === 'string' ? proofRequest : JSON.stringify(proofRequest)
+    const disclosedProof = await DisclosedProof.create({ sourceId: 'proof', request })
     await saveDisclosedProof(disclosedProofId, disclosedProof)
   }
 

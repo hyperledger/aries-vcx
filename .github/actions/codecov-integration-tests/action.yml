@@ -23,6 +23,7 @@ runs:
     - name: Run integration tests and generate coverage
       run: |
         set -x
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         docker run --rm -d --name indypool --network host ${{ inputs.pool-img-name }}
         docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
         docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}
