@@ -10,8 +10,8 @@ pub struct PresentationPreparationFailedState {
     pub problem_report: ProblemReport,
 }
 
-impl From<(PresentationPreparationFailedState)> for FinishedState {
-    fn from((state): (PresentationPreparationFailedState)) -> Self {
+impl From<PresentationPreparationFailedState> for FinishedState {
+    fn from(state: PresentationPreparationFailedState) -> Self {
         trace!("transit state from PresentationPreparationFailedState to FinishedState");
         FinishedState {
             presentation_request: state.presentation_request,

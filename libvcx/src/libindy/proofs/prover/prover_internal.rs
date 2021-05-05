@@ -202,7 +202,6 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
 
 #[cfg(test)]
 pub mod tests {
-    use crate::libindy;
     use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
     use crate::utils::{

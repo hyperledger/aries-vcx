@@ -346,17 +346,13 @@ Get messages received from connection counterparty.
         self.agent_info().get_message_by_id(msg_id, &expected_sender_vk)
     }
 
-    /**
-    Sends authenticated message to connection counterparty
-     */
-    pub fn send_message(&self, message: &A2AMessage) -> VcxResult<()> {
-        trace!("Connection::send_message >>> message: {:?}", message);
-
+    pub fn send_message_closure(&self) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
-
-        warn!("Connection resolved did_doc = {:?}", did_doc);
-        did_doc.send_message(message, &self.agent_info().pw_vk)
+        let sender_vk = self.agent_info().pw_vk.clone();
+        return Ok(move |a2a_message: &A2AMessage| {
+            did_doc.send_message(a2a_message, &sender_vk)
+        })
     }
 
     fn parse_generic_message(message: &str) -> A2AMessage {
@@ -375,7 +371,8 @@ Get messages received from connection counterparty.
         trace!("Connection::send_generic_message >>> message: {:?}", message);
 
         let message = Connection::parse_generic_message(message);
-        self.send_message(&message).map(|_| String::new())
+        let send_message = self.send_message_closure()?;
+        send_message(&message).map(|_| String::new())
     }
 
     pub fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {

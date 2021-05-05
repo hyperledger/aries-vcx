@@ -2,18 +2,18 @@ use serde_json;
 
 use agency_client::mocking::AgencyMockDecrypted;
 
-use crate::connection;
 use crate::aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
+use crate::aries::messages::a2a::A2AMessage;
+use crate::connection;
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
 use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use crate::utils::error;
 use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 use crate::utils::object_cache::ObjectCache;
-use crate::aries::messages::a2a::A2AMessage;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -74,24 +74,25 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
-
         if !proof.has_transitions() {
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.state());
         }
+        let send_message = connection::send_message_closure(connection_handle)?;
 
-        if let Some(message_) = message {
-            return proof.update_state_with_message(message_, connection_handle);
+        if let Some(message) = message {
+            let message: A2AMessage = serde_json::from_str(message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Can not updated state with message: Message deserialization failed: {:?}", err)))?;
+            trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
+            proof.handle_message(message.into(), Some(&send_message))?;
+        } else {
+            let messages = connection::get_messages(connection_handle)?;
+            trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
+            if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+                proof.handle_message(message.into(), Some(&send_message))?;
+                connection::update_message_status(connection_handle, uid)?;
+            };
         }
-
-        let messages = connection::get_messages(connection_handle)?;
-        trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
-
-        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof.handle_message(message.into(), Some(connection_handle))?;
-            connection::update_message_status(connection_handle, uid)?;
-        };
-
         Ok(proof.state())
     })
 }
@@ -128,7 +129,8 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.send_presentation(connection_handle)?;
+        let send_message = connection::send_message_closure(connection_handle)?;
+        proof.send_presentation(&send_message)?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -144,7 +146,8 @@ pub fn generate_reject_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.decline_presentation_request(connection_handle, Some(String::from("Presentation Request was rejected")), None)?;
+        let send_message = connection::send_message_closure(connection_handle)?;
+        proof.decline_presentation_request(&send_message, Some(String::from("Presentation Request was rejected")), None)?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -160,7 +163,8 @@ pub fn generate_proof(handle: u32, credentials: String, self_attested_attrs: Str
 
 pub fn decline_presentation_request(handle: u32, connection_handle: u32, reason: Option<String>, proposal: Option<String>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.decline_presentation_request(connection_handle, reason.clone(), proposal.clone())?;
+        let send_message = connection::send_message_closure(connection_handle)?;
+        proof.decline_presentation_request(&send_message, reason.clone(), proposal.clone())?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -199,7 +203,7 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
     }
 
-    let presentation_request =  {
+    let presentation_request = {
         trace!("Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}", connection_handle, msg_id);
 
         let message = connection::get_message_by_id(connection_handle, msg_id.to_string())?;
@@ -223,7 +227,17 @@ pub fn get_proof_request_messages(connection_handle: u32) -> VcxResult<String> {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
     }
 
-    let presentation_requests = Prover::get_presentation_request_messages(connection_handle)?;
+    let presentation_requests: Vec<A2AMessage> =
+        connection::get_messages(connection_handle)?
+            .into_iter()
+            .filter_map(|(_, message)| {
+                match message {
+                    A2AMessage::PresentationRequest(_) => Some(message),
+                    _ => None
+                }
+            })
+            .collect();
+
     Ok(json!(presentation_requests).to_string())
 }
 
@@ -244,10 +258,11 @@ mod tests {
     extern crate serde_json;
 
     use serde_json::Value;
+
     use crate::api::VcxStateType;
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-    use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils;
+    use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use crate::utils::mockdata::mockdata_proof;
