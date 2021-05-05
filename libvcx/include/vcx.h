@@ -639,28 +639,6 @@ vcx_error_t vcx_credentialdef_get_cred_def_id(vcx_command_handle_t command_handl
                                            vcx_credential_handle_t cred_def_handle,
                                            void (*cb)(vcx_command_handle_t, vcx_error_t, const char*));
 
-// Retrieve the txn associated with paying for the credential_def
-//
-// #param
-// handle: credential_def handle that was provided during creation.  Used to access credential_def object.
-//
-// #Callback returns
-// PaymentTxn json
-// example: {
-// "amount":25,
-// "inputs":[
-// "pay:null:1_3FvPC7dzFbQKzfG",
-// "pay:null:1_lWVGKc07Pyc40m6"
-// ],
-// "outputs":[
-// {"recipient":"pay:null:FrSVC3IrirScyRh","amount":5,"extra":null},
-// {"recipient":"pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j","amount":25,"extra":null}
-// ]
-// }
-vcx_error_t vcx_credentialdef_get_payment_txn(vcx_command_handle_t command_handle,
-                                           vcx_credential_handle_t handle,
-                                           void (*cb)(vcx_command_handle_t, vcx_error_t, const char*));
-
 // Releases the credentialdef object by de-allocating memory
 //
 // #Params
