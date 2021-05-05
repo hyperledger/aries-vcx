@@ -139,11 +139,6 @@ impl CredentialDef {
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
-    fn get_cred_def_payment_txn(&self) -> VcxResult<PaymentTxn> {
-        self.cred_def_payment_txn.clone()
-            .ok_or(VcxError::from(VcxErrorKind::NoPaymentInformation))
-    }
-
     fn get_rev_reg_def_payment_txn(&self) -> Option<PaymentTxn> {
         match &self.rev_reg {
             Some(rev_reg) => rev_reg.rev_reg_def_payment_txn.clone(),
@@ -282,73 +277,12 @@ fn _create_credentialdef(issuer_did: &str,
     Ok((cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry))
 }
 
-pub fn prepare_credentialdef_for_endorser(source_id: String,
-                                          name: String,
-                                          issuer_did: String,
-                                          schema_id: String,
-                                          tag: String,
-                                          revocation_details: String,
-                                          endorser: String) -> VcxResult<(u32, String, Option<String>, Option<String>)> {
-    trace!("prepare_credentialdef_for_endorser >>> source_id: {}, name: {}, issuer_did: {}, schema_id: {}, revocation_details: {}, endorser: {}",
-           source_id, name, issuer_did, schema_id, revocation_details, endorser);
-
-    let revocation_details: RevocationDetails = _parse_revocation_details(&revocation_details)?;
-
-    // Creates Credential Definition and Revocation Definition in wallet
-    let (cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry) = _create_credentialdef(&issuer_did, &schema_id, &tag, &revocation_details)?;
-
-    // Creates Credential Definition request
-    let cred_def_req = anoncreds::build_cred_def_request(&issuer_did, &cred_def_json)?;
-    let cred_def_req = ledger::set_endorser(&cred_def_req, &endorser)?;
-
-    // Creates Revocation related requests
-    let (rev_reg_def_req, rev_reg_delta_req) = match (&rev_reg_id, &rev_reg_def, &rev_reg_entry) {
-        (Some(ref rev_reg_id), Some(ref rev_reg_def), Some(ref rev_reg_entry)) => {
-            let rev_reg_def_req =
-                anoncreds::build_rev_reg_request(&issuer_did, &rev_reg_def)
-                    .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
-
-            let rev_reg_delta_req = anoncreds::build_rev_reg_delta_request(&issuer_did, &rev_reg_id, &rev_reg_entry)
-                .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
-
-            let rev_reg_delta_req = ledger::set_endorser(&rev_reg_delta_req, &endorser)?;
-            let rev_reg_def_req = ledger::set_endorser(&rev_reg_def_req, &endorser)?;
-
-            (Some(rev_reg_def_req), Some(rev_reg_delta_req))
-        }
-        _ => (None, None)
-    };
-
-    let rev_reg = match (rev_reg_id, rev_reg_def, rev_reg_entry, revocation_details.tails_file, revocation_details.max_creds) {
-        (Some(rev_reg_id), Some(rev_reg_def), Some(rev_reg_entry), Some(tails_file), Some(max_creds)) => {
-            Some(RevocationRegistry {
-                rev_reg_id,
-                rev_reg_def,
-                rev_reg_entry,
-                tails_file,
-                max_creds,
-                tag: 1,
-                rev_reg_def_payment_txn: None,
-                rev_reg_delta_payment_txn: None,
-            })
-        }
-        _ => None
-    };
-
-    let cred_def = CredentialDef {
-        source_id,
-        name,
-        tag,
-        id: cred_def_id,
-        issuer_did: Some(issuer_did),
-        cred_def_payment_txn: None,
-        rev_reg,
-        state: PublicEntityStateType::Built,
-    };
-
-    let handle = CREDENTIALDEF_MAP.add(cred_def).or(Err(VcxError::from(VcxErrorKind::CreateCredDef)))?;
-
-    Ok((handle, cred_def_req, rev_reg_def_req, rev_reg_delta_req))
+fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
+    match anoncreds::get_cred_def(Some(issuer_did), cred_def_id) {
+        Ok((_, cred_def)) => Ok(Some(cred_def)),
+        Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
+        Err(err) => Err(VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Failed to check presence of credential definition id {} on the ledger\nError: {}", cred_def_id, err)))
+    }
 }
 
 pub fn create_and_publish_credentialdef(source_id: String,
@@ -357,29 +291,34 @@ pub fn create_and_publish_credentialdef(source_id: String,
                                         schema_id: String,
                                         tag: String,
                                         revocation_details: String) -> VcxResult<u32> {
-    trace!("create_new_credentialdef >>> source_id: {}, name: {}, issuer_did: {}, schema_id: {}, revocation_details: {}",
+    trace!("create_and_publish_credentialdef >>> source_id: {}, name: {}, issuer_did: {}, schema_id: {}, revocation_details: {}",
            source_id, name, issuer_did, schema_id, revocation_details);
 
     let revocation_details: RevocationDetails = _parse_revocation_details(&revocation_details)?;
 
-    // Creates Credential Definition and Revocation Definition in wallet
     let (cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry) = _create_credentialdef(&issuer_did, &schema_id, &tag, &revocation_details)?;
 
-    // Publish Credential Definition on the ledger
-    let cred_def_payment_txn = anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;
-
-    // Publish Revocation related requests on the ledger
-    let (rev_def_payment, rev_delta_payment) = match (&rev_reg_id, &rev_reg_def, &rev_reg_entry) {
-        (Some(ref rev_reg_id), Some(ref rev_reg_def), Some(ref rev_reg_entry)) => {
-            let rev_def_payment = anoncreds::publish_rev_reg_def(&issuer_did, &rev_reg_def)
-                .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
-
-            let (rev_delta_payment, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
-                .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
-
-            (rev_def_payment, rev_delta_payment)
+    let (rev_def_payment, rev_delta_payment, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
+        Ok(Some(ledger_cred_def_json)) => {
+            return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", cred_def_id, ledger_cred_def_json)))
         }
-        _ => (None, None)
+        Ok(None) => {
+            let cred_def_payment_txn = anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;
+
+            match (&rev_reg_id, &rev_reg_def, &rev_reg_entry) {
+                (Some(ref rev_reg_id), Some(ref rev_reg_def), Some(ref rev_reg_entry)) => {
+                    let rev_def_payment = anoncreds::publish_rev_reg_def(&issuer_did, &rev_reg_def)
+                        .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
+
+                    let (rev_delta_payment, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
+                        .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+
+                    (rev_def_payment, rev_delta_payment, cred_def_payment_txn)
+                }
+                _ => (None, None, None)
+            }
+        }
+        Err(err) => return Err(err)
     };
 
     let rev_reg = match (rev_reg_id, rev_reg_def, rev_reg_entry, revocation_details.tails_file, revocation_details.max_creds) {
@@ -443,12 +382,6 @@ pub fn from_string(data: &str) -> VcxResult<u32> {
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get(handle, |c| {
         Ok(c.get_source_id().clone())
-    })
-}
-
-pub fn get_cred_def_payment_txn(handle: u32) -> VcxResult<PaymentTxn> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        c.get_cred_def_payment_txn()
     })
 }
 
@@ -545,7 +478,6 @@ pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     })
 }
 
-
 #[cfg(test)]
 pub mod tests {
     use std::{
@@ -629,9 +561,6 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let (_, handle) = create_cred_def_real(false);
-
-        let payment = &get_cred_def_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -742,9 +671,6 @@ pub mod tests {
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
-
-        let payment = &get_cred_def_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -757,33 +683,29 @@ pub mod tests {
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
-
-        // No Payment performed
-        let _payment = get_cred_def_payment_txn(handle).unwrap_err();
     }
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_duplicate_credential() {
+    fn test_create_credential_works_twice() {
         let _setup = SetupLibraryWalletPool::init();
 
         let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
+        create_and_publish_credentialdef("1".to_string(),
+                                         "name".to_string(),
+                                         did.clone(),
+                                         schema_id.clone(),
+                                         "tag_1".to_string(),
+                                         revocation_details.to_string()).unwrap();
 
-        let handle_1 = create_and_publish_credentialdef("1".to_string(),
-                                                        "name".to_string(),
-                                                        did.clone(),
-                                                        schema_id.clone(),
-                                                        "tag_1".to_string(),
-                                                        revocation_details.to_string()).unwrap();
+        let err = create_and_publish_credentialdef("1".to_string(),
+                                                   "name".to_string(),
+                                                   did.clone(),
+                                                   schema_id.clone(),
+                                                   "tag_1".to_string(),
+                                                   revocation_details.to_string()).unwrap_err();
 
-        let handle_2 = create_and_publish_credentialdef("1".to_string(),
-                                                        "name".to_string(),
-                                                        did.clone(),
-                                                        schema_id.clone(),
-                                                        "tag_1".to_string(),
-                                                        revocation_details.to_string()).unwrap();
-
-        assert_ne!(handle_1, handle_2);
+        assert_eq!(err.kind(), VcxErrorKind::CreateCredDef);
     }
 
     #[test]
@@ -834,63 +756,5 @@ pub mod tests {
         assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_vcx_endorse_cred_def() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
-
-        let (endorser_did, _) = add_new_did(Some("ENDORSER"));
-
-        let (handle, cred_def_request, rev_reg_def_req, rev_reg_entry_req) = prepare_credentialdef_for_endorser("test_vcx_endorse_cred_def".to_string(), "Test Credential Def".to_string(), did, schema_id, "tag".to_string(), revocation_details.to_string(), endorser_did.clone()).unwrap();
-        assert_eq!(0, get_state(handle).unwrap());
-        assert_eq!(0, update_state(handle).unwrap());
-        assert!(rev_reg_def_req.is_none());
-        assert!(rev_reg_entry_req.is_none());
-
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
-        ledger::endorse_transaction(&cred_def_request).unwrap();
-
-        std::thread::sleep(std::time::Duration::from_millis(1000));
-
-        assert_eq!(1, update_state(handle).unwrap());
-        assert_eq!(1, get_state(handle).unwrap());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_vcx_endorse_cred_def_with_revocation() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(true);
-
-        let (endorser_did, _) = add_new_did(Some("ENDORSER"));
-
-        let (handle, cred_def_request, rev_reg_def_req, rev_reg_entry_req) = prepare_credentialdef_for_endorser("test_vcx_endorse_cred_def".to_string(), "Test Credential Def".to_string(), did, schema_id, "tag".to_string(), revocation_details.to_string(), endorser_did.clone()).unwrap();
-        assert_eq!(0, get_state(handle).unwrap());
-        assert_eq!(0, update_state(handle).unwrap());
-
-        let rev_reg_def_req = rev_reg_def_req.unwrap();
-        let rev_reg_entry_req = rev_reg_entry_req.unwrap();
-
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
-        ledger::endorse_transaction(&cred_def_request).unwrap();
-
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        assert_eq!(0, update_state(handle).unwrap());
-
-        ledger::endorse_transaction(&rev_reg_def_req).unwrap();
-
-        std::thread::sleep(std::time::Duration::from_millis(500));
-        assert_eq!(0, update_state(handle).unwrap());
-
-        ledger::endorse_transaction(&rev_reg_entry_req).unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(500));
-
-        assert_eq!(1, update_state(handle).unwrap());
-        assert_eq!(1, get_state(handle).unwrap());
     }
 }

@@ -1,10 +1,9 @@
 import '../module-resolver-helper';
 
 import { assert } from 'chai';
-import { validatePaymentTxn } from 'helpers/asserts';
-import { credentialDefCreate, credentialDefPrepareForEndorser } from 'helpers/entities';
+import { credentialDefCreate } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
-import { CredentialDef, CredentialDefPaymentManager, CredentialDefState, VCXCode } from 'src';
+import { CredentialDef, CredentialDefState, VCXCode } from 'src';
 
 describe('CredentialDef:', () => {
   before(() => initVcxTestMode());
@@ -63,39 +62,6 @@ describe('CredentialDef:', () => {
       const credentialDef = new CredentialDef(null as any, {} as any);
       const error = await shouldThrow(() => credentialDef.getCredDefId());
       assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_DEF_HANDLE);
-    });
-  });
-
-  describe('paymentManager:', () => {
-    it('exists', async () => {
-      const credentialDef = await credentialDefCreate();
-      assert.instanceOf(credentialDef.paymentManager, CredentialDefPaymentManager);
-      assert.equal(credentialDef.paymentManager.handle, credentialDef.handle);
-    });
-
-    describe('getPaymentTxn:', () => {
-      it('success', async () => {
-        const credentialDef = await credentialDefCreate();
-        const paymentTxn = await credentialDef.paymentManager.getPaymentTxn();
-        validatePaymentTxn(paymentTxn);
-      });
-    });
-  });
-
-  describe('prepareForEndorser:', () => {
-    it('success', async () => {
-      await credentialDefPrepareForEndorser();
-    });
-  });
-
-  describe('updateState:', () => {
-    it(`success`, async () => {
-      const credentialDef = await credentialDefPrepareForEndorser();
-      assert.equal(await credentialDef.getState(), CredentialDefState.Built);
-      const state1 = await credentialDef.updateState();
-      const state2 = await credentialDef.getState();
-      assert.equal(state1, state2);
-      assert.equal(state1, CredentialDefState.Published);
     });
   });
 });

@@ -12,7 +12,6 @@ import {
   ICredentialCreateWithMsgId,
   ICredentialCreateWithOffer,
   ICredentialDefCreateData,
-  ICredentialDefPrepareForEndorserData,
   IDisclosedProofCreateData,
   IDisclosedProofCreateWithMsgIdData,
   IIssuerCredentialCreateData,
@@ -108,18 +107,6 @@ export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
   sourceId: 'testCredentialDefSourceId',
 });
 
-export const dataCredentialDefPrepareForEndorser = (): ICredentialDefPrepareForEndorserData => ({
-  endorser: 'V4SGRU86Z58d6TV7PBUe6f',
-  name: 'testCredentialDefName',
-  revocationDetails: {
-    maxCreds: undefined,
-    supportRevocation: false,
-    tailsFile: undefined,
-  },
-  schemaId: 'testCredentialDefSchemaId',
-  sourceId: 'testCredentialDefSourceId',
-});
-
 export const credentialDefCreate = async (
   data = dataCredentialDefCreate(),
 ): Promise<CredentialDef> => {
@@ -128,18 +115,6 @@ export const credentialDefCreate = async (
   assert.equal(credentialDef.sourceId, data.sourceId);
   assert.equal(credentialDef.schemaId, data.schemaId);
   assert.equal(credentialDef.name, data.name);
-  return credentialDef;
-};
-
-export const credentialDefPrepareForEndorser = async (
-  data = dataCredentialDefPrepareForEndorser(),
-): Promise<CredentialDef> => {
-  const credentialDef = await CredentialDef.prepareForEndorser(data);
-  assert.notEqual(credentialDef.handle, undefined);
-  assert.equal(credentialDef.sourceId, data.sourceId);
-  assert.equal(credentialDef.schemaId, data.schemaId);
-  assert.equal(credentialDef.name, data.name);
-  assert.ok(credentialDef.credentialDefTransaction);
   return credentialDef;
 };
 

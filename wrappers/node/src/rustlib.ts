@@ -531,22 +531,10 @@ export interface IFFIEntryPoint {
     payment: number,
     cb: ICbRef,
   ) => number;
-  vcx_credentialdef_prepare_for_endorser: (
-    commandId: number,
-    sourceId: string,
-    credentialDefName: string,
-    schemaId: string,
-    issuerDid: string | null,
-    tag: string,
-    config: string,
-    endorser: string,
-    cb: ICbRef,
-  ) => number;
   vcx_credentialdef_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_credentialdef_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_release: (handle: number) => number;
   vcx_credentialdef_get_cred_def_id: (commandId: number, handle: number, cb: ICbRef) => string;
-  vcx_credentialdef_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_rotate_rev_reg_def: (
@@ -1103,20 +1091,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_CALLBACK_PTR,
     ],
   ],
-  vcx_credentialdef_prepare_for_endorser: [
-    FFI_ERROR_CODE,
-    [
-      FFI_COMMAND_HANDLE,
-      FFI_SOURCE_ID,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_CALLBACK_PTR,
-    ],
-  ],
   vcx_credentialdef_deserialize: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -1129,10 +1103,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_credentialdef_get_cred_def_id: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CALLBACK_PTR],
-  ],
-  vcx_credentialdef_get_payment_txn: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_credentialdef_update_state: [
     FFI_ERROR_CODE,
