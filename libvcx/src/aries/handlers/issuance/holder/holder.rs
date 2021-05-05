@@ -4,7 +4,6 @@ use crate::aries::handlers::issuance::holder::state_machine::HolderSM;
 use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::issuance::credential_offer::CredentialOffer;
-use crate::connection;
 use crate::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -21,8 +20,8 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn send_request(&mut self, connection_handle: u32) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialRequestSend(), connection_handle)
+    pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -77,8 +76,8 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage, connection_handle: u32) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().handle_message(message, connection_handle)?;
+    pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().handle_message(message, send_message)?;
         Ok(())
     }
 }
