@@ -22,12 +22,12 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn send_credential_offer(&mut self, connection_handle: u32, comment: Option<String>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialInit(comment), connection_handle)
+    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialInit(comment), Some(&send_message))
     }
 
-    pub fn send_credential(&mut self, connection_handle: u32) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialSend(), connection_handle)
+    pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialSend(), Some(&send_message))
     }
 
     pub fn get_state(&self) -> VcxResult<u32> {
@@ -62,8 +62,8 @@ impl Issuer {
         Ok(self.issuer_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage, connection_handle: u32) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().handle_message(message, connection_handle)?;
+    pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message)?;
         Ok(())
     }
 }

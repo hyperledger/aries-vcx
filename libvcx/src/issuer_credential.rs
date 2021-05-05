@@ -34,27 +34,21 @@ pub fn issuer_credential_create(cred_def_handle: u32,
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
         trace!("issuer_credential::update_state >>> ");
-
         if credential.is_terminal_state() { return credential.get_state(); }
+        let send_message = connection::send_message_closure(connection_handle)?;
 
         if let Some(message) = message {
             let message: A2AMessage = serde_json::from_str(&message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-
-            credential.step(message.into(), connection_handle)?;
-            return credential.get_state();
-        }
-
-        let messages = connection::get_messages(connection_handle)?;
-
-        match credential.find_message_to_handle(messages) {
-            Some((uid, msg)) => {
-                credential.step(msg.into(), connection_handle)?;
-                connection::update_message_status(connection_handle, uid)?;
-                credential.get_state()
+            credential.step(message.into(), Some(&send_message))?;
+        } else {
+            let messages = connection::get_messages(connection_handle)?;
+            if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+            credential.step(msg.into(), Some(&send_message))?;
+            connection::update_message_status(connection_handle, uid)?;
             }
-            None => credential.get_state()
         }
+        credential.get_state()
     })
 }
 
@@ -107,7 +101,7 @@ pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)>
 
 pub fn send_credential_offer(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential_offer(connection_handle, comment.clone())?;
+        credential.send_credential_offer(connection::send_message_closure(connection_handle)?, comment.clone())?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
@@ -122,7 +116,7 @@ pub fn generate_credential_msg(handle: u32, _my_pw_did: &str) -> VcxResult<Strin
 
 pub fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential(connection_handle)?;
+        credential.send_credential(connection::send_message_closure(connection_handle)?)?;
         Ok(error::SUCCESS.code_num)
     })
 }
