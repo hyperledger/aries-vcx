@@ -34,7 +34,7 @@ pub fn init_core(config: &str) -> VcxResult<()> {
     info!("init_core >>> config = {}", config);
     settings::process_config_string(&config, true)?;
     settings::log_settings();
-    utils::runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
+    init_threadpool(config)?;
     Ok(())
 }
 

@@ -615,7 +615,7 @@ pub extern fn vcx_issuer_credential_is_revokable(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_is_revokable(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, credential_handle, source_id);
-    spawn(move || {
+    execute(move || {
         match issuer_credential::is_revokable(credential_handle) {
             Ok(revokable) => {
                 trace!("vcx_issuer_credential_is_revokable_cb(command_handle: {}, credential_handle: {}, revokable: {}, rc: {}) source_id: {}",
