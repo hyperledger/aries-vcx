@@ -37,7 +37,7 @@ pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T
         Ok(t) => Ok(t),
         Err(e) => match e {
             RecvTimeoutError::Timeout => {
-                warn!("Timed Out waiting for call back");
+                warn!("Timed out waiting for callback");
                 Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
             }
             RecvTimeoutError::Disconnected => {

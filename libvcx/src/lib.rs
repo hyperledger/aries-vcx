@@ -225,7 +225,7 @@ mod tests {
                                                    requested_preds.to_string(),
                                                    revocation_interval.to_string(),
                                                    String::from(request_name.unwrap_or("name"))).unwrap();
-        proof::send_proof_request(proof_req_handle, connection_handle).unwrap();
+        proof::send_proof_request(proof_req_handle, connection_handle, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         proof_req_handle
     }

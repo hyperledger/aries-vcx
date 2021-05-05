@@ -260,7 +260,7 @@ pub mod test {
             self.presentation_handle = self.create_presentation_request();
             assert_eq!(1, proof::get_state(self.presentation_handle).unwrap());
 
-            proof::send_proof_request(self.presentation_handle, self.connection_handle).unwrap();
+            proof::send_proof_request(self.presentation_handle, self.connection_handle, None).unwrap();
             proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
 
             assert_eq!(2, proof::get_state(self.presentation_handle).unwrap());

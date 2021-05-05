@@ -499,7 +499,7 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
     }
 
     spawn(move || {
-        let err = match proof::send_proof_request(proof_handle, connection_handle) {
+        let err = match proof::send_proof_request(proof_handle, connection_handle, None) {
             Ok(x) => {
                 trace!("vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                        command_handle, 0, proof_handle, source_id);
@@ -712,7 +712,6 @@ mod tests {
                                        Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _ser = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        info!("Serialized proof: {:?}", _ser);
     }
 
     #[test]

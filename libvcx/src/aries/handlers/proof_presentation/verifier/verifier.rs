@@ -45,25 +45,14 @@ impl Verifier {
         self.verifier_sm.presentation_status()
     }
 
-    pub fn update_state_with_message(&mut self, message: &str, connection_handle: u32) -> VcxResult<u32> {
-        trace!("Verifier::update_state_with_message >>> message: {:?}", message);
-
-        let message: A2AMessage = serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state with message: Message deserialization failed: {:?}", err)))?;
-
-        self.handle_message(message.into(), connection_handle)?;
-
-        Ok(self.state())
-    }
-
-    pub fn handle_message(&mut self, message: VerifierMessages, connection_handle: u32) -> VcxResult<()> {
+    pub fn handle_message(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(message, connection_handle)
+        self.step(message, send_message)
     }
 
-    pub fn send_presentation_request(&mut self, connection_handle: u32) -> VcxResult<()> {
-        trace!("Verifier::send_presentation_request >>> connection_handle: {:?}", connection_handle);
-        self.step(VerifierMessages::SendPresentationRequest, connection_handle)
+    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
+        trace!("Verifier::send_presentation_request >>>");
+        self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
     }
 
     pub fn generate_presentation_request_msg(&self) -> VcxResult<String> {
@@ -81,8 +70,10 @@ impl Verifier {
         Ok(json!(proof).to_string())
     }
 
-    pub fn step(&mut self, message: VerifierMessages, connection_handle: u32) -> VcxResult<()> {
-        self.verifier_sm = self.verifier_sm.clone().step(message, connection_handle)?;
+    pub fn step(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
+        -> VcxResult<()> 
+    {
+        self.verifier_sm = self.verifier_sm.clone().step(message, send_message)?;
         Ok(())
     }
 
@@ -92,78 +83,5 @@ impl Verifier {
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         self.verifier_sm.find_message_to_handle(messages)
-    }
-}
-
-#[cfg(test)]
-pub mod tests {
-    use crate::api::VcxStateType;
-    use crate::connection::tests::build_test_connection_inviter_requested;
-    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES, PROOF_REJECT_RESPONSE_STR_V2};
-    use crate::utils::devsetup::*;
-
-    use super::*;
-    use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_PRESENTATION;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_proof_validation_with_predicate() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().
-            set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let connection_handle = build_test_connection_inviter_requested();
-
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        proof.send_presentation_request(connection_handle).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
-
-        proof.update_state_with_message(ARIES_PROOF_PRESENTATION, connection_handle).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateAccepted as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_send_presentation_request() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested();
-
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        proof.send_presentation_request(connection_handle).unwrap();
-
-        assert_eq!(proof.state(), VcxStateType::VcxStateOfferSent as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_update_state_with_reject_message() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = build_test_connection_inviter_requested();
-
-        let mut proof = Verifier::create("1".to_string(),
-                                         REQUESTED_ATTRS.to_owned(),
-                                         REQUESTED_PREDICATES.to_owned(),
-                                         r#"{"support_revocation":false}"#.to_string(),
-                                         "Optional".to_owned()).unwrap();
-
-        proof.send_presentation_request(connection_handle).unwrap();
-
-        proof.update_state_with_message(PROOF_REJECT_RESPONSE_STR_V2, connection_handle).unwrap();
-        assert_eq!(proof.state(), VcxStateType::VcxStateNone as u32);
     }
 }

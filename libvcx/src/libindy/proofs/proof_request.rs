@@ -19,7 +19,6 @@ pub struct ProofRequestData {
     #[serde(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
     pub non_revoked: Option<NonRevokedInterval>,
-    pub ver: Option<ProofRequestVersion>,
 }
 
 impl ProofRequestData {
@@ -80,25 +79,6 @@ impl ProofRequestData {
 
         Ok(self)
     }
-
-    pub fn set_format_version_for_did(mut self, my_did: &str, remote_did: &str) -> VcxResult<ProofRequestData> {
-        if my_did.is_empty() || remote_did.is_empty() {
-            return Err(VcxError::from(VcxErrorKind::InvalidDid));
-        } else if qualifier::is_fully_qualified(&my_did) && qualifier::is_fully_qualified(&remote_did) {
-            self.ver = Some(ProofRequestVersion::V2);
-        } else {
-            let proof_request_json = serde_json::to_string(&self)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize ProofRequestData: {:?}", err)))?;
-
-            let proof_request_json = anoncreds::libindy_to_unqualified(&proof_request_json)?;
-
-            self = serde_json::from_str(&proof_request_json)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize ProofRequestData: {:?}", err)))?;
-
-            self.ver = Some(ProofRequestVersion::V1);
-        }
-        Ok(self)
-    }
 }
 
 impl Default for ProofRequestData {
@@ -109,23 +89,8 @@ impl Default for ProofRequestData {
             data_version: String::from(ProofRequestData::DEFAULT_VERSION),
             requested_attributes: HashMap::new(),
             requested_predicates: HashMap::new(),
-            non_revoked: None,
-            ver: None,
+            non_revoked: None
         }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-pub enum ProofRequestVersion {
-    #[serde(rename = "1.0")]
-    V1,
-    #[serde(rename = "2.0")]
-    V2,
-}
-
-impl Default for ProofRequestVersion {
-    fn default() -> ProofRequestVersion {
-        ProofRequestVersion::V1
     }
 }
 
@@ -148,14 +113,12 @@ mod tests {
             .set_nonce().unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
             .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
-            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap()
-            .set_format_version_for_did("6XFh8yBzrpJQmNyZzgoTqB".into(), "11111111rpJQmNyZzgoTqB".into()).unwrap();
+            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
 
         let serialized_msg = serde_json::to_string(&request).unwrap();
         warn!("serialized_msg={}", serialized_msg);
         // todo: Does it really need to have both "version" and "ver" field?
         assert!(serialized_msg.contains(r#""name":"Test","version":"1.0""#));
-        assert!(serialized_msg.contains(r#""ver":"1.0""#));
         assert!(serialized_msg.contains(r#""non_revoked":{"from":1100000000,"to":1600000000}"#));
         let msg_as_value: Value = serde_json::from_str(&serialized_msg).unwrap();
         assert_eq!(msg_as_value["requested_attributes"]["attribute_0"]["name"], "age");
