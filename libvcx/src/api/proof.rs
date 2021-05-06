@@ -153,16 +153,6 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-
-#[no_mangle]
-#[deprecated(since = "0.12.0", note = "Use vcx_v2_proof_update_state instead.")]
-pub extern fn vcx_proof_update_state(_command_handle: CommandHandle,
-                                     _proof_handle: u32,
-                                     _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_proof_update_state >>>");
-    error::SUCCESS.code_num
-}
-
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the object and updates the state attribute.
 ///
@@ -220,16 +210,6 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
         Ok(())
     });
 
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
-#[deprecated(since = "0.15.0", note = "Use vcx_v2_proof_update_state_with_message instead.")]
-pub extern fn vcx_proof_update_state_with_message(_command_handle: CommandHandle,
-                                                  _proof_handle: u32,
-                                                  _message: *const c_char,
-                                                  _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_proof_update_state_with_message >>>");
     error::SUCCESS.code_num
 }
 

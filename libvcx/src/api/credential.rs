@@ -664,15 +664,6 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-#[no_mangle]
-#[deprecated(since = "0.12.0", note = "Use vcx_v2_credential_update_state instead.")]
-pub extern fn vcx_credential_update_state(_command_handle: CommandHandle,
-                                          _credential_handle: u32,
-                                          _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    error!("vcx_credential_update_state >>> operation not supported");
-    error::ACTION_NOT_SUPPORTED.code_num
-}
-
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the credential object and updates the state attribute.
 /// If it detects a credential it will store the credential in the wallet.
@@ -737,17 +728,6 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
-
-#[no_mangle]
-#[deprecated(since = "0.15.0", note = "Use vcx_v2_credential_update_state_with_message instead.")]
-pub extern fn vcx_credential_update_state_with_message(_command_handle: CommandHandle,
-                                                       _credential_handle: u32,
-                                                       _message: *const c_char,
-                                                       _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_credential_update_state_with_message >>> operation not supported");
-    error::ACTION_NOT_SUPPORTED.code_num
-}
-
 
 /// Update the state of the credential based on the given message.
 ///
