@@ -51,6 +51,10 @@ pub mod tests {
         String::from("comment")
     }
 
+    pub fn _my_pw_did() -> String {
+        String::from("VsKV7grR1BUE29mG2Fm2kX")
+    }
+
     pub fn _credential_request() -> CredentialRequest {
         let mut attachment = Attachments::new();
         attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();

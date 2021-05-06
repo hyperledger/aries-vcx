@@ -12,7 +12,7 @@ pub enum CredentialIssuanceMessage {
     CredentialSend(),
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
-    CredentialRequestSend(),
+    CredentialRequestSend(String),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
     CredentialAck(CredentialAck),
