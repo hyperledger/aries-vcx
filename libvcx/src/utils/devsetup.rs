@@ -60,11 +60,12 @@ pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 age
 
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
-fn setup() {
+
+fn setup(config: ThreadpoolConfig) {
     init_test_logging();
     settings::clear_config();
     set_testing_defaults();
-    runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
+    runtime::init_runtime(config);
 }
 
 fn setup_empty() {
@@ -96,7 +97,7 @@ impl Drop for SetupEmpty {
 impl SetupDefaults {
     pub fn init() {
         debug!("SetupDefaults :: starting");
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         debug!("SetupDefaults :: finished");
     }
 }
@@ -108,11 +109,22 @@ impl Drop for SetupDefaults {
 }
 
 impl SetupMocks {
-    pub fn init() -> SetupMocks {
-        setup();
+
+    fn _init() -> SetupMocks {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::get_agency_client_mut().unwrap().enable_test_mode();
         SetupMocks
+    }
+
+    pub fn init() -> SetupMocks {
+        setup(ThreadpoolConfig { num_threads: Some(4) });
+        SetupMocks::_init()
+
+    }
+
+    pub fn init_without_threadpool() -> SetupMocks {
+        setup(ThreadpoolConfig { num_threads: Some(0) });
+        SetupMocks::_init()
     }
 }
 
@@ -124,7 +136,7 @@ impl Drop for SetupMocks {
 
 impl SetupLibraryWallet {
     pub fn init() -> SetupLibraryWallet {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
@@ -208,7 +220,7 @@ impl Drop for SetupPoolConfig {
 
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::get_agency_client_mut().unwrap().enable_test_mode();
         SetupIndyMocks {}
@@ -223,7 +235,7 @@ impl Drop for SetupIndyMocks {
 
 impl SetupLibraryWalletPool {
     pub fn init() -> SetupLibraryWalletPool {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         setup_indy_env(false);
         SetupLibraryWalletPool
     }
@@ -238,7 +250,7 @@ impl Drop for SetupLibraryWalletPool {
 
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         setup_indy_env(true);
         SetupLibraryWalletPoolZeroFees
     }
@@ -253,7 +265,7 @@ impl Drop for SetupLibraryWalletPoolZeroFees {
 
 impl SetupAgencyMock {
     pub fn init() -> SetupAgencyMock {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
@@ -277,7 +289,7 @@ impl Drop for SetupAgencyMock {
 
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
         setup_agency_env(false);
         debug!("SetupLibraryAgencyV2 init >> completed");
@@ -294,7 +306,7 @@ impl Drop for SetupLibraryAgencyV2 {
 
 impl SetupLibraryAgencyV2ZeroFees {
     pub fn init() -> SetupLibraryAgencyV2ZeroFees {
-        setup();
+        setup(ThreadpoolConfig { num_threads: Some(4) });
         setup_agency_env(true);
         SetupLibraryAgencyV2ZeroFees
     }

@@ -608,6 +608,7 @@ mod tests {
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
+    use crate::api::connection::vcx_connection_create;
 
     fn _vcx_open_pool_c_closure() -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1052,6 +1053,19 @@ mod tests {
         });
         let cstring_config = CString::new(config.to_string()).unwrap().into_raw();
         assert_eq!(vcx_init_core(cstring_config), error::SUCCESS.code_num);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_call_c_callable_api_without_threadpool () {
+        let _setup = SetupMocks::init_without_threadpool();
+
+        let cb = return_types_u32::Return_U32_U32::new().unwrap();
+        let _rc = vcx_connection_create(cb.command_handle,
+                                        CString::new("test_create").unwrap().into_raw(),
+                                        Some(cb.get_callback()));
+
+        assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
     }
 
     #[test]

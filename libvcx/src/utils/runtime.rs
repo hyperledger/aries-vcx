@@ -27,10 +27,10 @@ pub struct ThreadpoolConfig {
 
 pub fn init_runtime(config: ThreadpoolConfig) {
     if config.num_threads == Some(0) {
-        warn!("init_runtime >> threadpool_size was set to 0; every FFI call will executed on a new thread!");
+        warn!("init_runtime >>> threadpool_size was set to 0; every FFI call will executed on a new thread!");
     } else {
         let num_threads = config.num_threads.unwrap_or(4);
-        warn!("init_runtime >> threadpool is using {} threads.", num_threads);
+        warn!("init_runtime >>> threadpool is using {} threads.", num_threads);
         TP_INIT.call_once(|| {
             let rt = tokio::runtime::Builder::new_multi_thread()
                 .thread_name_fn(|| {
@@ -54,7 +54,6 @@ pub fn init_runtime(config: ThreadpoolConfig) {
 pub fn execute<F>(closure: F)
     where
         F: FnOnce() -> Result<(), ()> + Send + 'static {
-    trace!("Closure is going to be executed.");
     if TP_INIT.is_completed() {
         execute_on_tokio(future::lazy(|_| closure()));
     } else {
@@ -70,9 +69,7 @@ fn execute_on_tokio<F>(future: F)
     unsafe { handle = TP_HANDLE; }
     match THREADPOOL.lock().unwrap().get(&handle) {
         Some(rt) => {
-            debug!("Executing a future on tokio runtime");
             rt.spawn(future);
-
         }
         None => panic!("Tokio runtime not found! Forgot to call init_runtime?"),
     }
