@@ -1,4 +1,4 @@
-use futures::Future;
+use indy::future::Future;
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 

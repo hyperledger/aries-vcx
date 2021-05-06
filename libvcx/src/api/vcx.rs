@@ -12,7 +12,7 @@ use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::threadpool::spawn;
+use crate::utils::runtime::execute;
 use crate::utils::version_constants;
 
 
@@ -73,7 +73,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
-    spawn(move || {
+    execute(move || {
         match init_agency_client(&config) {
             Ok(()) => {
                 info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
@@ -116,7 +116,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 
     trace!("vcx_init_issuer_config >>> config: {}", config);
 
-    spawn(move || {
+    execute(move || {
         match init_issuer_config(&config) {
             Ok(()) => {
                 info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
@@ -192,7 +192,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
-    spawn(move || {
+    execute(move || {
         match open_pool_directly(&pool_config) {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
@@ -236,7 +236,7 @@ pub extern fn vcx_open_pool(command_handle: CommandHandle, cb: extern fn(xcomman
     let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
     let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG).ok();
 
-    spawn(move || {
+    execute(move || {
         match open_pool(&pool_name, &path, pool_config.as_ref().map(String::as_str)) {
             Ok(()) => {
                 info!("vcx_open_pool :: Vcx Pool Init Successful");
@@ -290,7 +290,7 @@ pub extern fn vcx_open_wallet(command_handle: CommandHandle, cb: extern fn(xcomm
     let storage_config = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CONFIG).ok();
     let storage_creds = settings::get_config_value(settings::CONFIG_WALLET_STORAGE_CREDS).ok();
 
-    spawn(move || {
+    execute(move || {
         if settings::indy_mocks_enabled() {
             set_wallet_handle(WalletHandle(1));
             info!("vcx_open_wallet :: Mocked Success");
@@ -430,7 +430,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 
     settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
-    spawn(move || {
+    execute(move || {
         match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
@@ -474,7 +474,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     trace!("vcx_get_ledger_author_agreement(command_handle: {})",
            command_handle);
 
-    spawn(move || {
+    execute(move || {
         match ledger::libindy_get_txn_author_agreement() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, author_agreement: {})",
@@ -608,6 +608,7 @@ mod tests {
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
+    use crate::api::connection::vcx_connection_create;
 
     fn _vcx_open_pool_c_closure() -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -1052,6 +1053,19 @@ mod tests {
         });
         let cstring_config = CString::new(config.to_string()).unwrap().into_raw();
         assert_eq!(vcx_init_core(cstring_config), error::SUCCESS.code_num);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_call_c_callable_api_without_threadpool () {
+        let _setup = SetupMocks::init_without_threadpool();
+
+        let cb = return_types_u32::Return_U32_U32::new().unwrap();
+        let _rc = vcx_connection_create(cb.command_handle,
+                                        CString::new("test_create").unwrap().into_raw(),
+                                        Some(cb.get_callback()));
+
+        assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
     }
 
     #[test]

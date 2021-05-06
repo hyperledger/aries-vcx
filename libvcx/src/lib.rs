@@ -17,7 +17,6 @@ extern crate log;
 extern crate openssl;
 extern crate rand;
 extern crate regex;
-extern crate reqwest;
 extern crate rmp_serde;
 extern crate serde;
 #[macro_use]
@@ -30,6 +29,7 @@ extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
+extern crate tokio;
 
 #[macro_use]
 pub mod utils;
