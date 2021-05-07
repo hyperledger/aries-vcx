@@ -238,7 +238,7 @@ export async function downloadMessagesV2({
  * @class Class representing a Connection
  */
 export class Connection extends VCXBaseWithState<IConnectionData> {
-  /**
+    /**
    * Create a connection object, represents a single endpoint and can be used for sending and receiving
    * credentials and proofs
    *
@@ -307,7 +307,6 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
   ): number => {
     throw new Error('_updateStFnV2 cannot be called for a Connection object');
   };
-  protected _updateStWithMessageFn = rustAPI().vcx_connection_update_state_with_message;
   protected _getStFn = rustAPI().vcx_connection_get_state;
   protected _serializeFn = rustAPI().vcx_connection_serialize;
   protected _deserializeFn = rustAPI().vcx_connection_deserialize;
