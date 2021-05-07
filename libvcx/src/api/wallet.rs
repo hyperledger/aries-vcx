@@ -1162,7 +1162,7 @@ pub mod tests {
     use crate::api::return_types_u32;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::build_test_address;
-    use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet};
+    use crate::libindy::utils::wallet::{close_main_wallet, delete_wallet, WalletConfig, create_and_open_as_main_wallet};
     use crate::utils::devsetup::*;
     use crate::utils::timeout::TimeoutUtils;
 
@@ -1548,7 +1548,8 @@ pub mod tests {
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        create_and_open_as_main_wallet(wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        let wallet_config = WalletConfig { wallet_name: wallet_name.into(), wallet_key: settings::DEFAULT_WALLET_KEY.into(), wallet_key_derivation: settings::WALLET_KDF_RAW.into(), wallet_type: None, storage_config: None, storage_credentials: None, rekey: None, rekey_derivation_method: None };
+        create_and_open_as_main_wallet(wallet_config);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();

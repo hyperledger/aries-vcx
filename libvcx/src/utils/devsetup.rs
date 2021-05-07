@@ -10,7 +10,7 @@ use crate::{api, init, libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
+use crate::libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle, WalletConfig, create_and_open_as_main_wallet};
 use crate::libindy::utils::wallet;
 use crate::settings::set_testing_defaults;
 use crate::utils::{get_temp_dir_path, runtime};
@@ -21,6 +21,7 @@ use crate::utils::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
 use crate::utils::runtime::ThreadpoolConfig;
 use crate::init::PoolConfig;
+use crate::error::VcxErrorKind::WalletAccessFailed;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -146,10 +147,20 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.clone(),
+            wallet_key: wallet_key.clone(),
+            wallet_key_derivation: wallet_kdf.to_string(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::get_agency_client_mut().unwrap().disable_test_mode();
-        create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        create_and_open_as_main_wallet(wallet_config).unwrap();
         SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
     }
 }
@@ -292,7 +303,18 @@ impl SetupAgencyMock {
         settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
         settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
         settings::get_agency_client_mut().unwrap().enable_test_mode();
-        create_and_open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.clone(),
+            wallet_key: wallet_key.clone(),
+            wallet_key_derivation: wallet_kdf.to_string(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+        create_and_open_as_main_wallet(wallet_config).unwrap();
 
         SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
     }
@@ -402,7 +424,17 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
     settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, settings::WALLET_KDF_RAW);
-    create_and_open_as_main_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+    let wallet_config = WalletConfig {
+        wallet_name: settings::DEFAULT_WALLET_NAME.into(),
+        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None
+    };
+    create_and_open_as_main_wallet(wallet_config).unwrap();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
@@ -474,7 +506,17 @@ fn assign_trustee_role(institution_handle: Option<u32>) {
     let vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
     settings::clear_config();
 
-    wallet::create_and_open_as_main_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+    let wallet_config = WalletConfig {
+        wallet_name: settings::DEFAULT_WALLET_NAME.into(),
+        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None
+    };
+    wallet::create_and_open_as_main_wallet(wallet_config).unwrap();
     let (trustee_did, _) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
     let req_nym = indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
     libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();

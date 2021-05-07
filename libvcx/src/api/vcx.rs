@@ -579,7 +579,7 @@ mod tests {
             _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
             //Assert config values were set correctly
-            assert_eq!(settings::get_config_value("wallet_name").unwrap(), setup_wallet.wallet_name);
+            assert_eq!(settings::get_config_value("wallet_name").unwrap(), setup_wallet.wallet_config.wallet_name);
 
             //Verify shutdown was successful
             vcx_shutdown(true);
@@ -889,19 +889,9 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_open_wallet() {
         let setup: SetupWallet = SetupWallet::init();
-        let config = WalletConfig {
-            wallet_name: setup.wallet_name.clone(),
-            wallet_key: setup.wallet_key.clone(),
-            wallet_key_derivation: setup.wallet_kdf.clone(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None
-        };
 
         let cb = return_types_u32::Return_U32_I32   ::new().unwrap();
-        let rc = vcx_open_main_wallet(cb.command_handle, CString::new(json!(config).to_string()).unwrap().into_raw(), Some(cb.get_callback()));
+        let rc = vcx_open_main_wallet(cb.command_handle, CString::new(json!(setup.wallet_config).to_string()).unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_custom(3)).unwrap();
 
