@@ -164,20 +164,6 @@ public class ProofApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> proofUpdateState(
-            int proofHandle
-    ) throws VcxException {
-        ParamGuard.notNull(proofHandle, "proofHandle");
-        logger.debug("proofUpdateState() called with: proofHandle = [" + proofHandle + "]");
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_proof_update_state(commandHandle, proofHandle, vcxProofUpdateStateCB);
-        checkResult(result);
-
-        return future;
-    }
-
     public static CompletableFuture<Integer> proofUpdateStateV2(
             int proofHandle,
             int connectionHandle
@@ -188,21 +174,6 @@ public class ProofApi extends VcxJava.API {
         int commandHandle = addFuture(future);
 
         int result = LibVcx.api.vcx_v2_proof_update_state(commandHandle, proofHandle, connectionHandle, vcxProofUpdateStateCB);
-        checkResult(result);
-
-        return future;
-    }
-
-    public static CompletableFuture<Integer> proofUpdateStateWithMessage(
-            int proofHandle,
-            String message
-    ) throws VcxException {
-        ParamGuard.notNull(proofHandle, "proofHandle");
-        logger.debug("proofUpdateStateWithMessage() called with: proofHandle = [" + proofHandle + "]");
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_proof_update_state_with_message(commandHandle, proofHandle, message, vcxProofUpdateStateCB);
         checkResult(result);
 
         return future;

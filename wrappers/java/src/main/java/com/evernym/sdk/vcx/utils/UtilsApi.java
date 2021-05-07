@@ -30,26 +30,6 @@ public class UtilsApi extends VcxJava.API {
         }
     };
 
-    public static String vcxProvisionAgent(String config) {
-        ParamGuard.notNullOrWhiteSpace(config, "config");
-        logger.debug("vcxProvisionAgent() called with: config = [****]");
-        String result = LibVcx.api.vcx_provision_agent(config);
-
-        return result;
-    }
-
-    public static CompletableFuture<String> vcxAgentProvisionAsync(String conf) throws VcxException {
-        CompletableFuture<String> future = new CompletableFuture<String>();
-        logger.debug("vcxAgentProvisionAsync() called with: conf = [****]");
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_agent_provision_async(
-                commandHandle, conf,
-                provAsyncCB);
-        checkResult(result);
-        return future;
-    }
-
     public static CompletableFuture<String> vcxProvisionCloudAgent(String conf) throws VcxException {
         CompletableFuture<String> future = new CompletableFuture<String>();
         logger.debug("vcxProvisionCloudAgent() called with: conf = [****]");
@@ -73,21 +53,6 @@ public class UtilsApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> vcxUpdateAgentInfo(String config) throws VcxException {
-        ParamGuard.notNullOrWhiteSpace(config, "config");
-        logger.debug("vcxUpdateAgentInfo() called with: config = [****]");
-        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_agent_update_info(
-                commandHandle,
-                config,
-                vcxUpdateAgentInfoCB
-        );
-        checkResult(result);
-        return future;
-    }
-
     private static Callback vcxGetMessagesCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int commandHandle, int err, String messages) {
@@ -98,23 +63,6 @@ public class UtilsApi extends VcxJava.API {
             future.complete(result);
         }
     };
-
-    public static CompletableFuture<String> vcxGetMessages(String messageStatus, String uids, String pwdids) throws VcxException {
-        ParamGuard.notNullOrWhiteSpace(messageStatus, "messageStatus");
-        logger.debug("vcxGetMessages() called with: messageStatus = [" + messageStatus + "], uids = [" + uids + "], pwdids = [****]");
-        CompletableFuture<String> future = new CompletableFuture<String>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_messages_download(
-                commandHandle,
-                messageStatus,
-                uids,
-                pwdids,
-                vcxGetMessagesCB
-        );
-        checkResult(result);
-        return future;
-    }
 
     public static CompletableFuture<String> vcxGetAgentMessages(String messageStatus, String uids) throws VcxException {
         ParamGuard.notNullOrWhiteSpace(messageStatus, "messageStatus");

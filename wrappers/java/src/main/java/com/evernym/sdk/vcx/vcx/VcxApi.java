@@ -27,31 +27,11 @@ public class VcxApi extends VcxJava.API {
         }
     };
 
-    public static void vcxInitCore(String configJson) throws VcxException {
-        ParamGuard.notNullOrWhiteSpace(configJson, "configJson");
-        logger.debug("vcxInitCore() called with: configJson = [****]");
-        int result = LibVcx.api.vcx_init_core(configJson);
-        checkResult(result);
-    }
-
     public static void vcxInitThreadpool(String configJson) throws VcxException {
         ParamGuard.notNullOrWhiteSpace(configJson, "configJson");
         logger.debug("vcxInitThreadpool() called with: configJson = [" + configJson + "]");
         int result = LibVcx.api.vcx_init_threadpool(configJson);
         checkResult(result);
-    }
-
-    public static CompletableFuture<Integer> vcxOpenPool() throws VcxException {
-        logger.debug("vcxOpenPool()");
-        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_open_pool(
-                commandHandle,
-                cmdHandleErrCodeCB);
-        checkResult(result);
-
-        return future;
     }
 
     public static CompletableFuture<Integer> vcxOpenMainPool(String poolConfig) throws VcxException {
@@ -76,19 +56,6 @@ public class VcxApi extends VcxJava.API {
         int result = LibVcx.api.vcx_create_agency_client_for_main_wallet(
                 commandHandle,
                 config,
-                cmdHandleErrCodeCB);
-        checkResult(result);
-
-        return future;
-    }
-
-    public static CompletableFuture<Integer> vcxOpenWallet() throws VcxException {
-        logger.debug("vcxOpenWallet()");
-        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_open_wallet(
-                commandHandle,
                 cmdHandleErrCodeCB);
         checkResult(result);
 
