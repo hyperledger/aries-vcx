@@ -181,9 +181,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
 
   public paymentManager!: IssuerCredentialPaymentManager;
   protected _releaseFn = rustAPI().vcx_issuer_credential_release;
-  protected _updateStFn = rustAPI().vcx_issuer_credential_update_state;
   protected _updateStFnV2 = rustAPI().vcx_v2_issuer_credential_update_state;
-  protected _updateStWithMessageFn = rustAPI().vcx_issuer_credential_update_state_with_message;
   protected _getStFn = rustAPI().vcx_issuer_credential_get_state;
   protected _serializeFn = rustAPI().vcx_issuer_credential_serialize;
   protected _deserializeFn = rustAPI().vcx_issuer_credential_deserialize;
