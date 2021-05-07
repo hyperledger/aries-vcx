@@ -64,6 +64,23 @@ public class UtilsApi extends VcxJava.API {
         }
     };
 
+    public static CompletableFuture<String> vcxGetMessages(String messageStatus, String uids, String pwdids) throws VcxException {
+        ParamGuard.notNullOrWhiteSpace(messageStatus, "messageStatus");
+        logger.debug("vcxGetMessages() called with: messageStatus = [" + messageStatus + "], uids = [" + uids + "], pwdids = [****]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_messages_download(
+                commandHandle,
+                messageStatus,
+                uids,
+                pwdids,
+                vcxGetMessagesCB
+        );
+        checkResult(result);
+        return future;
+    }
+
     public static CompletableFuture<String> vcxGetAgentMessages(String messageStatus, String uids) throws VcxException {
         ParamGuard.notNullOrWhiteSpace(messageStatus, "messageStatus");
         logger.debug("vcxGetAgentMessages() called with: messageStatus = [" + messageStatus + "], uids = [" + uids + "]");
