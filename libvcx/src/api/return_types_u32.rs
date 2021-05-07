@@ -112,6 +112,38 @@ impl Return_U32_U32 {
 }
 
 #[allow(non_camel_case_types)]
+pub struct Return_U32_I32 {
+    pub command_handle: CommandHandle,
+    receiver: Receiver<(u32, i32)>,
+}
+
+impl Return_U32_I32 {
+    pub fn new() -> Result<Return_U32_I32, u32> {
+        let (sender, receiver) = channel();
+        let closure: Box<dyn FnMut(u32, i32) + Send> = Box::new(move |err, arg1| {
+            sender.send((err, arg1)).unwrap_or_else(log_error);
+        });
+
+        let command_handle = insert_closure(closure, callback::CALLBACKS_U32_I32.deref());
+
+        Ok(Return_U32_I32 {
+            command_handle,
+            receiver,
+        })
+    }
+
+    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: i32) {
+        callback::call_cb_u32_i32
+    }
+
+    pub fn receive(&self, timeout: Option<Duration>) -> Result<i32, u32> {
+        let (err, arg1) = receive(&self.receiver, timeout)?;
+
+        map_indy_error(arg1, err)
+    }
+}
+
+#[allow(non_camel_case_types)]
 pub struct Return_U32_STR {
     pub command_handle: CommandHandle,
     receiver: Receiver<(u32, Option<String>)>,

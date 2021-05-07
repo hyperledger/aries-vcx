@@ -488,8 +488,7 @@ mod tests {
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
-
-    static CONFIG_V3: &'static str = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":"key"}"#;
+    use crate::utils::provision::AgencyConfig;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -507,37 +506,28 @@ mod tests {
     fn test_provision_agent_async_c_closure() {
         let _setup = SetupMocks::init();
 
-        let result = _vcx_agent_provision_async_c_closure(CONFIG_V3).unwrap();
+        let config = AgencyConfig {
+            agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
+            agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
+            agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),
+            agent_seed: None
+        };
+        let result = _vcx_agent_provision_async_c_closure(&json!(config).to_string()).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_agent_fails() {
+    fn test_create_agent_fails_if_missing_agency_endpoint() {
         let _setup = SetupMocks::init();
 
-        let config = r#"{"agency_url":"https://enym-eagency.pdev.evernym.com","agency_did":"Ab8TvZa3Q19VNkQVzAWVL7","agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf","wallet_name":"test_provision_agent","agent_seed":null,"enterprise_seed":null,"wallet_key":null}"#;
-
-        let err = _vcx_agent_provision_async_c_closure(config).unwrap_err();
-        assert_eq!(err, error::INVALID_CONFIGURATION.code_num);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_create_agent_fails_for_unknown_wallet_type() {
-        let _setup = SetupDefaults::init();
-
         let config = json!({
-            "agency_url":"https://enym-eagency.pdev.evernym.com",
             "agency_did":"Ab8TvZa3Q19VNkQVzAWVL7",
-            "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf",
-            "wallet_name":"test_provision_agent",
-            "wallet_key":"key",
-            "wallet_type":"UNKNOWN_WALLET_TYPE"
+            "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf"
         }).to_string();
 
         let err = _vcx_agent_provision_async_c_closure(&config).unwrap_err();
-        assert_eq!(err, error::INVALID_WALLET_CREATION.code_num);
+        assert_eq!(err, error::INVALID_CONFIGURATION.code_num);
     }
 
     #[test]

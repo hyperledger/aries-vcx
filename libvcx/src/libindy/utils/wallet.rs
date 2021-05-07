@@ -8,15 +8,15 @@ use crate::settings;
 use crate::libindy::utils::{anoncreds, signus};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct WalletConfig {
-    wallet_name: String,
-    wallet_key: String,
-    wallet_key_derivation: String,
-    wallet_type: Option<String>,
-    storage_config: Option<String>,
-    storage_credentials: Option<serde_json::Value>,
-    rekey: Option<String>,
-    rekey_derivation_method: Option<String>
+pub struct WalletConfig {
+    pub wallet_name: String,
+    pub wallet_key: String,
+    pub wallet_key_derivation: String,
+    pub wallet_type: Option<String>,
+    pub storage_config: Option<String>,
+    pub storage_credentials: Option<serde_json::Value>,
+    pub rekey: Option<String>,
+    pub rekey_derivation_method: Option<String>
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -75,7 +75,7 @@ pub fn reset_wallet_handle() {
 
 pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
     let config: WalletConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", config, err)))?;
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", config, err)))?;
 
     let wh = create_and_open_as_main_wallet(
         &config.wallet_name,
@@ -164,7 +164,7 @@ pub fn create_and_open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_d
 
 pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
     let config: WalletConfig = serde_json::from_str(wallet_config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
     open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), config.rekey.as_deref(), config.rekey_derivation_method.as_deref())
 }
 

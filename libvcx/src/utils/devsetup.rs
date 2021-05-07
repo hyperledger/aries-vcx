@@ -10,7 +10,7 @@ use crate::{api, init, libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle};
+use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
 use crate::libindy::utils::wallet;
 use crate::settings::set_testing_defaults;
 use crate::utils::{get_temp_dir_path, runtime};
@@ -20,6 +20,7 @@ use crate::utils::logger::LibvcxDefaultLogger;
 use crate::utils::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
 use crate::utils::runtime::ThreadpoolConfig;
+use crate::init::PoolConfig;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -33,11 +34,13 @@ pub struct SetupWallet {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
+    pub wallet_config: WalletConfig,
     skip_cleanup: bool,
 } // creates wallet with random name, configures wallet settings
 
 pub struct SetupPoolConfig {
     skip_cleanup: bool,
+    pub pool_config: PoolConfig
 }
 
 pub struct SetupLibraryWallet {
@@ -176,7 +179,17 @@ impl SetupWallet {
         create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
         info!("SetupWallet:: init :: Wallet {} created", wallet_name);
 
-        SetupWallet { wallet_name, wallet_key, wallet_kdf, skip_cleanup: false }
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.clone(),
+            wallet_key: wallet_key.clone(),
+            wallet_key_derivation: wallet_kdf.clone(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+        SetupWallet { wallet_name, wallet_kdf, wallet_key, wallet_config, skip_cleanup: false}
     }
 
     pub fn skip_cleanup(mut self) -> SetupWallet {
@@ -198,9 +211,15 @@ impl Drop for SetupWallet {
 impl SetupPoolConfig {
     pub fn init() -> SetupPoolConfig {
         create_test_ledger_config();
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
+        let genesis_path = utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &genesis_path.clone());
+        let pool_config = PoolConfig {
+            genesis_path,
+            pool_name: None,
+            pool_config: None
+        };
 
-        SetupPoolConfig { skip_cleanup: false }
+        SetupPoolConfig { skip_cleanup: false, pool_config }
     }
 
     pub fn skip_cleanup(mut self) -> SetupPoolConfig {

@@ -29,11 +29,11 @@ pub struct Config {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct AgencyConfig {
-    agency_did: String,
-    agency_verkey: String,
-    agency_endpoint: String,
-    agent_seed: Option<String>
+pub struct AgencyConfig {
+    pub agency_did: String,
+    pub agency_verkey: String,
+    pub agency_endpoint: String,
+    pub agent_seed: Option<String>
 }
 
 pub fn parse_config(config: &str) -> VcxResult<Config> {
@@ -182,7 +182,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
 pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
     let agency_config: AgencyConfig = serde_json::from_str(agency_config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration,
                                           format!("Failed to serialize agency config: {:?}, err: {:?}", agency_config,  err)))?;
 
     let (my_did, my_vk) = signus::create_and_store_my_did(agency_config.agent_seed.as_ref().map(String::as_str), None)?;

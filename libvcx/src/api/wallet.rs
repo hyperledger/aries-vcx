@@ -1314,6 +1314,24 @@ pub mod tests {
         assert_eq!(balance - tokens, new_balance);
     }
 
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_wallet() {
+        let _setup = SetupEmpty::init();
+
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let config = json!({
+            "wallet_name": wallet_name,
+            "wallet_key": settings::DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW
+        }).to_string();
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        let err = vcx_create_wallet(cb.command_handle, CString::new(format!("{}", config)).unwrap().into_raw(), Some(cb.get_callback()));
+        assert_eq!(err, error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
+    }
+
     #[test]
     #[cfg(feature = "general_test")]
     fn test_add_record() {
