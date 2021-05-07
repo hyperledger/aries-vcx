@@ -326,32 +326,10 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
 
 @implementation ConnectMeVcx
 
-- (vcx_error_t) vcxInitCore:(NSString *)config
-{
-    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-    return vcx_init_core(config_char);
-}
-
 - (vcx_error_t) vcxInitThreadpool:(NSString *)config
 {
     const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
     return vcx_init_threadpool(config_char);
-}
-
-
-- (void) vcxOpenWallet:(void (^)(NSError *error)) completion
-{
-    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
-    vcx_error_t ret = vcx_open_wallet(handle, VcxWrapperCommonCallback);
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"ERROR: vcxOpenWallet: calling completion");
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
 }
 
 - (void) createWallet: (NSString *) config
@@ -406,21 +384,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
    }
 }
 
-- (void) vcxOpenPool:(void (^)(NSError *error)) completion
-{
-    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion] ;
-    vcx_error_t ret = vcx_open_pool(handle, VcxWrapperCommonCallback);
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"ERROR: vcxOpenPool: calling completion");
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
 - (void) vcxOpenMainPool: (NSString *) config
             completion: (void (^)(NSError *error)) completion
 {
@@ -437,23 +400,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
            completion([NSError errorFromVcxError: ret]);
        });
    }
-}
-
-- (void)agentProvisionAsync:(NSString *)config
-               completion:(void (^)(NSError *error, NSString *config))completion
-{
-    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-    vcx_command_handle_t handle= [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    vcx_error_t ret = vcx_agent_provision_async(handle, config_char, VcxWrapperCommonStringCallback);
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"ERROR: agentProvision: calling completion");
-            completion([NSError errorFromVcxError: ret], false);
-        });
-    }
 }
 
 - (void)vcxProvisionCloudAgent:(NSString *)config
@@ -748,25 +694,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
-- (void)agentUpdateInfo: (NSString *) config
-            completion: (void (^)(NSError *error)) completion
-{
-   vcx_error_t ret;
-
-   vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-   const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
-    ret = vcx_agent_update_info(handle, config_char, VcxWrapperCommonCallback);
-   if( ret != 0 )
-   {
-       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-       dispatch_async(dispatch_get_main_queue(), ^{
-           completion([NSError errorFromVcxError: ret]);
-       });
-   }
-}
-
-
 - (void)getCredential:(NSInteger)credentialHandle
            completion:(void (^)(NSError *error, NSString *credential))completion {
     vcx_error_t ret;
@@ -844,22 +771,6 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     vcx_error_t ret;
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     ret = vcx_credential_get_state(handle, credentialHandle, VcxWrapperCommonNumberCallback);
-
-    if( ret != 0 )
-    {
-       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-       dispatch_async(dispatch_get_main_queue(), ^{
-           completion([NSError errorFromVcxError: ret], 0);
-       });
-    }
-}
-
-- (void)credentialUpdateState:(NSInteger)credentialHandle
-                   completion:(void (^)(NSError *error, NSInteger state))completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    ret = vcx_credential_update_state(handle, credentialHandle, VcxWrapperCommonNumberCallback);
 
     if( ret != 0 )
     {
@@ -1471,20 +1382,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     }
 }
 
-- (void)proofUpdateState:(NSInteger) proofHandle
-                   completion:(void (^)(NSError *error, NSInteger state))completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    ret = vcx_disclosed_proof_update_state(handle, proofHandle, VcxWrapperCommonNumberCallback);
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], 0);
-        });
-    }
-}
-
 - (void)proofUpdateStateV2:(NSInteger) proofHandle
                connectionHandle:(vcx_connection_handle_t)connectionHandle
                completion:(void (^)(NSError *error, NSInteger state))completion {
@@ -1695,27 +1592,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     ret = vcx_wallet_send_tokens(handle, payment_handle, c_tokens, c_recipient, VcxWrapperCommonStringCallback);
 
     if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
-- (void)downloadMessages:(NSString *)messageStatus
-                    uid_s:(NSString *)uid_s
-                  pwdids:(NSString *)pwdids
-              completion:(void (^)(NSError *error, NSString* messages))completion{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    const char * message_status = [messageStatus cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * uids = [uid_s cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * pw_dids = [pwdids cStringUsingEncoding:NSUTF8StringEncoding];
-    ret = vcx_messages_download(handle, message_status, uids, pw_dids, VcxWrapperCommonStringCallback);
-
-    if( ret != 0 )
     {
         [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
 
