@@ -119,9 +119,7 @@ describe('IssuerCredential:', () => {
     it(`returns state offer sent`, async () => {
       const issuerCredential = await issuerCredentialCreate();
       const connection = await createConnectionInviterRequested();
-      issuerCredential.sendOffer(connection);
-      console.log('issuerCredential.handle:');
-      console.log(issuerCredential.handle);
+      await issuerCredential.sendOffer(connection);
       assert.equal(await issuerCredential.getState(), StateType.OfferSent);
     });
   });
