@@ -29,7 +29,7 @@ describe('Connection:', () => {
   });
 
   describe('connect:', () => {
-    it('success: without phone', async () => {
+    it('success', async () => {
       const connection = await connectionCreateInviterNull();
       const inviteDetails = await connection.connect({ data: '{}' });
       assert.notEqual(inviteDetails, '');

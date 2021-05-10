@@ -4,7 +4,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 
-export async function initThreadpool (config: object) {
+export function initThreadpool (config: object) {
   const rc = rustAPI().vcx_init_threadpool(JSON.stringify(config))
   if (rc !== 0) {
     throw new VCXInternalError(rc)
@@ -84,4 +84,8 @@ export async function openMainPool (config: object): Promise<void> {
   } catch (err) {
     throw new VCXInternalError(err)
   }
+}
+
+export function enableMocks(): void {
+    return rustAPI().vcx_enable_mocks();
 }

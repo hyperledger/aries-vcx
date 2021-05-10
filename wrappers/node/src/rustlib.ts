@@ -69,6 +69,7 @@ export interface IFFIEntryPoint {
   vcx_error_c_message: (errorCode: number) => string;
   vcx_mint_tokens: (seed: string | undefined | null, fees: string | undefined | null) => void;
   vcx_version: () => string;
+  vcx_enable_mocks: () => void;
   vcx_v2_messages_download: (
     commandId: number,
     status: string,
@@ -544,6 +545,7 @@ export interface IFFIEntryPoint {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_init_threadpool: [FFI_ERROR_CODE, [FFI_STRING_DATA]],
+  vcx_enable_mocks: [FFI_ERROR_CODE, []],
   vcx_init_issuer_config: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_create_agency_client_for_main_wallet: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_provision_cloud_agent: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],

@@ -3,9 +3,8 @@ import { Callback } from 'ffi-napi';
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { IInitVCXOptions } from './common'
 
-export async function provisionCloudAgent (configAgent: object, options: IInitVCXOptions = {}): Promise<string> {
+export async function provisionCloudAgent (configAgent: object): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {

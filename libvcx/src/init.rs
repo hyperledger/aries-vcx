@@ -30,6 +30,18 @@ struct IssuerConfig {
     institution_verkey: Option<String>,
 }
 
+pub fn enable_vcx_mocks() -> VcxResult<()> {
+    info!("enable_vcx_mocks >>>");
+    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+    Ok(())
+}
+
+pub fn enable_agency_mocks() -> VcxResult<()> {
+    info!("enable_agency_mocks >>>");
+    settings::get_agency_client_mut()?.enable_test_mode();
+    Ok(())
+}
+
 pub fn init_agency_client(config: &str) -> VcxResult<()> {
     info!("init_agency_client >>> config = {}", config);
     settings::get_agency_client_mut()?.process_config_string(config, false)?;

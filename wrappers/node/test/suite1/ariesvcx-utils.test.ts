@@ -3,12 +3,12 @@ import '../module-resolver-helper';
 import { assert } from 'chai';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import {
-  downloadMessages,
+  downloadMessagesV2,
   endorseTransaction,
   getLedgerAuthorAgreement,
   getLedgerFees,
   getVersion,
-  provisionAgent,
+  provisionCloudAgent,
   setActiveTxnAuthorAgreementMeta,
   updateMessages,
   VCXCode,
@@ -29,20 +29,19 @@ describe('utils:', () => {
 
   describe('provisionAgent:', () => {
     it('success', async () => {
-      const provisionConfig = JSON.stringify({
+      const provisionConfig = {
         agency_did: 'Ab8TvZa3Q19VNkQVzAWVL7',
-        agency_url: 'https://vcx.agency.example.org',
+        agency_endpoint: 'https://vcx.agency.example.org',
         agency_verkey: '5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf',
-        wallet_key: '123',
-        wallet_name: 'test_provision_agent',
-      });
-      const res = await provisionAgent(provisionConfig);
+        // agent_seed
+      };
+      const res = await provisionCloudAgent(provisionConfig);
       assert.ok(res);
     });
 
     it('throws: invalid input', async () => {
-      const error = await shouldThrow(() => provisionAgent(''));
-      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
+      const error = await shouldThrow(() => provisionCloudAgent({}));
+      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION);
     });
   });
 
@@ -57,19 +56,6 @@ describe('utils:', () => {
     it('success', async () => {
       const fees = await getLedgerFees();
       assert.ok(fees);
-    });
-  });
-
-  describe('downloadMessages:', () => {
-    it.skip('success', async () => {
-      const messages = await downloadMessages(downloadMessagesData);
-      assert.ok(messages);
-    });
-  });
-
-  describe('updateMessages:', () => {
-    it.skip('success', async () => {
-      await updateMessages(updateMessagesData);
     });
   });
 

@@ -6,7 +6,7 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, init_agency_client, open_pool_directly};
+use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, init_agency_client, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
@@ -14,6 +14,27 @@ use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 use crate::utils::version_constants;
+
+/// Only for Wrapper testing purposes, sets global library settings.
+///
+/// #Params
+///
+/// config: The agent provision configuration
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern fn vcx_enable_mocks() -> u32 {
+    info!("vcx_enable_mocks >>>");
+    match enable_vcx_mocks() {
+        Ok(_) => { },
+        Err(_) => return error::UNKNOWN_ERROR.code_num
+    };
+    return match enable_agency_mocks() {
+        Ok(_) => error::SUCCESS.code_num,
+        Err(_) => error::UNKNOWN_ERROR.code_num
+    }
+}
 
 
 /// Initializes threadpool.
@@ -511,7 +532,7 @@ mod tests {
         info!("_vcx_init_full >>>");
         let rc = vcx_init_threadpool(CString::new(config_threadpool).unwrap().into_raw());
         if rc != error::SUCCESS.code_num {
-            error!("vcx_init_core failed");
+            error!("vcx_init_threadpool failed");
             return Err(rc);
         }
         settings::get_agency_client_mut()?.enable_test_mode();
