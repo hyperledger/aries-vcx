@@ -6,17 +6,29 @@ use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::settings;
 use crate::libindy::utils::{anoncreds, signus};
+use crate::settings::Actors::Issuer;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletConfig {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_key_derivation: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub wallet_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_config: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_credentials: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey_derivation_method: Option<String>
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IssuerConfig {
+    pub institution_did: String,
+    pub institution_verkey: String
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -68,16 +80,14 @@ pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
 
 pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
-pub fn reset_wallet_handle() {
+pub fn reset_wallet_handle() -> VcxResult<()> {
     set_wallet_handle(INVALID_WALLET_HANDLE);
-    settings::get_agency_client_mut().unwrap().reset_wallet_handle();
+    settings::get_agency_client_mut()?.reset_wallet_handle();
+    Ok(())
 }
 
-pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
-    let config: WalletConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", config, err)))?;
-
-    let wh = create_and_open_as_main_wallet(config.clone())?;
+pub fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
+    let wh = create_and_open_as_main_wallet(&config)?;
     trace!("Created wallet with handle {:?}", wh);
 
     // If MS is already in wallet then just continue
@@ -87,18 +97,15 @@ pub fn create_wallet_from_config(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<String> {
-
+pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
-
+    // todo: We sohuld probably not be setting the state here, but leave it up to caller to call "fn init_issuer_config()" subsequently after this function
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
-    // settings::get_agency_client()?.set_my_vk(&my_vk); // TODO: Set on client init
-    let institution_config = json!({
-        "institution_did": institution_did,
-        "institution_verkey": institution_verkey,
-    });
-    Ok(institution_config.to_string())
+    Ok(IssuerConfig {
+        institution_did,
+        institution_verkey
+    })
 }
 
 pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
@@ -120,11 +127,10 @@ pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, ke
     }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
 }
 
-pub fn create_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<()> {
-    trace!("creating wallet: {}", wallet_name);
-
-    let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, None, None)?;
+pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+    trace!("create_wallet >>> {}", &wallet_config.wallet_name);
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
+    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
 
     trace!("Credentials: {:?}", credentials);
 
@@ -134,31 +140,26 @@ pub fn create_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, 
         Err(err) => {
             match err.error_code.clone() {
                 ErrorCode::WalletAlreadyExistsError => {
-                    warn!("wallet \"{}\" already exists. skipping creation", wallet_name);
+                    warn!("wallet \"{}\" already exists. skipping creation", wallet_config.wallet_name);
                     Ok(())
                 }
                 _ => {
-                    warn!("could not create wallet {}: {:?}", wallet_name, err.message);
-                    Err(VcxError::from_msg(VcxErrorKind::WalletCreate, format!("could not create wallet {}: {:?}", wallet_name, err.message)))
+                    warn!("could not create wallet {}: {:?}", wallet_config.wallet_name, err.message);
+                    Err(VcxError::from_msg(VcxErrorKind::WalletCreate, format!("could not create wallet {}: {:?}", wallet_config.wallet_name, err.message)))
                 }
             }
         }
     }
 }
 
-pub fn create_and_open_as_main_wallet(wallet_config: WalletConfig) -> VcxResult<WalletHandle> {
+pub fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     if settings::indy_mocks_enabled() {
         warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
         return Ok(set_wallet_handle(WalletHandle(1)));
     }
-    create_wallet(&wallet_config.wallet_name, &wallet_config.wallet_key, &wallet_config.wallet_key_derivation, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str), wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref())?;
-    open_as_main_wallet(&wallet_config.wallet_name, &wallet_config.wallet_key, &wallet_config.wallet_key_derivation, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str), wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), None, None)
-}
 
-pub fn open_wallet_directly(wallet_config: &str) -> VcxResult<WalletHandle> {
-    let config: WalletConfig = serde_json::from_str(wallet_config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot deserialize WalletConfig {:?}, err: {:?}", wallet_config, err)))?;
-    open_as_main_wallet(&config.wallet_name, &config.wallet_key, &config.wallet_key_derivation, config.wallet_type.as_deref(), config.storage_config.as_deref(), config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), config.rekey.as_deref(), config.rekey_derivation_method.as_deref())
+    create_indy_wallet(&wallet_config)?;
+    open_as_main_wallet(&wallet_config)
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
@@ -172,7 +173,7 @@ pub fn close_main_wallet() -> VcxResult<()> {
     wallet::close_wallet(get_wallet_handle())
         .wait()?;
 
-    reset_wallet_handle();
+    reset_wallet_handle()?;
     Ok(())
 }
 
@@ -358,6 +359,7 @@ pub mod tests {
     use crate::utils::get_temp_dir_path;
 
     use super::*;
+    use crate::api;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -378,7 +380,7 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None
         };
-        let _handle = create_and_open_as_main_wallet(wallet_config).unwrap();
+        let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
 
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
@@ -413,7 +415,7 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None
         };
-        assert_eq!(VcxErrorKind::WalletCreate, create_and_open_as_main_wallet(wallet_config).unwrap_err().kind());
+        assert_eq!(VcxErrorKind::WalletCreate, create_and_open_as_main_wallet(&wallet_config).unwrap_err().kind());
     }
 
     #[test]
@@ -427,13 +429,24 @@ pub mod tests {
         let wallet_kdf = settings::WALLET_KDF_ARGON2I_INT;
         let wallet_wrong_kdf = settings::WALLET_KDF_RAW;
 
-        create_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).unwrap();
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: wallet_key.into(),
+            wallet_key_derivation: settings::WALLET_KDF_ARGON2I_MOD.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None, rekey: None, rekey_derivation_method: None
+        };
 
+        create_indy_wallet(&wallet_config).unwrap();
+
+        let mut wallet_config2 = wallet_config.clone();
+        wallet_config2.wallet_key_derivation = wallet_wrong_kdf.into();
         // Open fails without Wallet Key Derivation set
-        assert_eq!(open_as_main_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
+        assert_eq!(open_as_main_wallet(&wallet_config2).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
         // Open works when set
-        assert!(open_as_main_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None, None, None).is_ok());
+        assert!(open_as_main_wallet(&wallet_config).is_ok());
 
 
         settings::clear_config();
@@ -454,8 +467,15 @@ pub mod tests {
         let wallet_name = &format!("test_wallet_rotation_{}", uuid::Uuid::new_v4());
         let wallet_key1 = "3CywYxovdJHg5NEiaVq1uLD4hmkBWKs9jnSF2PTfUApe";
 
-        let wallet_config = WalletConfig { wallet_name: wallet_name.into(), wallet_key: wallet_key1.into(), wallet_key_derivation: settings::WALLET_KDF_ARGON2I_MOD.into(), wallet_type: None, storage_config: None, storage_credentials: None, rekey: None, rekey_derivation_method: None };
-        let _handle = create_and_open_as_main_wallet(wallet_config).unwrap();
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: wallet_key1.into(),
+            wallet_key_derivation: settings::WALLET_KDF_ARGON2I_MOD.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None, rekey: None, rekey_derivation_method: None
+        };
+        let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
 
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
 
@@ -475,21 +495,27 @@ pub mod tests {
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
-        open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, None, None).unwrap();
+        open_as_main_wallet(&wallet_config).unwrap();
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
         let wallet_key2 = "NGKRM9afPYprbWCv43cTyu62hjHJ1QtkE8ogmsndiS5e";
-        open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, Some(wallet_key2), Some(settings::WALLET_KDF_ARGON2I_INT)).unwrap();
+        let mut wallet_config2 =  wallet_config.clone();
+        wallet_config2.rekey = Some(wallet_key2.into());
+        wallet_config2.rekey = Some(settings::WALLET_KDF_ARGON2I_INT.into());
+        open_as_main_wallet(&wallet_config2).unwrap();
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         close_main_wallet().unwrap();
 
-        let rc = open_as_main_wallet(&wallet_name, wallet_key1, settings::WALLET_KDF_ARGON2I_MOD, None, None, None, None, None);
+        let rc = open_as_main_wallet(&wallet_config);
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
-        open_as_main_wallet(&wallet_name, wallet_key2, settings::WALLET_KDF_ARGON2I_INT, None, None, None, None, None);
+        let mut wallet_config3 =  wallet_config.clone();
+        wallet_config3.wallet_key = wallet_key2.into();
+        wallet_config3.wallet_key_derivation = settings::WALLET_KDF_ARGON2I_INT.into();
+        open_as_main_wallet(&wallet_config3);
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         delete_record(record_type, id).unwrap();
@@ -523,7 +549,17 @@ pub mod tests {
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
         }).to_string();
         import(&import_config).unwrap();
-        open_as_main_wallet(&wallet_name, "new key", settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
+
+        let wallet_config_2 = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: "new key".into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None, rekey: None, rekey_derivation_method: None
+        };
+
+        open_as_main_wallet(&wallet_config_2).unwrap();
 
         // If wallet was successfully imported, there will be an error trying to add this duplicate record
         assert_eq!(add_record(xtype, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
@@ -546,7 +582,7 @@ pub mod tests {
         let (type_, id, value) = _record();
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
+            settings::CONFIG_WALLET_NAME: wallet_name.clone(),
             settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
@@ -557,7 +593,15 @@ pub mod tests {
 
         settings::process_config_string(&import_config, false).unwrap();
 
-        open_as_main_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None, rekey: None, rekey_derivation_method: None
+        };
+        open_as_main_wallet(&wallet_config).unwrap();
 
         // If wallet was successfully imported, there will be an error trying to add this duplicate record
         assert_eq!(add_record(type_, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
@@ -606,7 +650,7 @@ pub mod tests {
         let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name,
+            settings::CONFIG_WALLET_NAME: wallet_name.clone(),
             settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,

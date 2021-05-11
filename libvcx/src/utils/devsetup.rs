@@ -10,7 +10,7 @@ use crate::{api, init, libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_wallet, delete_wallet, reset_wallet_handle, WalletConfig, create_and_open_as_main_wallet};
+use crate::libindy::utils::wallet::{close_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig, create_and_open_as_main_wallet, IssuerConfig, configure_issuer_wallet};
 use crate::libindy::utils::wallet;
 use crate::settings::set_testing_defaults;
 use crate::utils::{get_temp_dir_path, runtime};
@@ -22,6 +22,9 @@ use crate::utils::plugins::init_plugin;
 use crate::utils::runtime::ThreadpoolConfig;
 use crate::init::PoolConfig;
 use crate::error::VcxErrorKind::WalletAccessFailed;
+use crate::utils::provision::AgencyConfig;
+use crate::utils::devsetup_agent::test::{Faber, Alice};
+use crate::error::{VcxResult, VcxError};
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -160,7 +163,7 @@ impl SetupLibraryWallet {
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::get_agency_client_mut().unwrap().disable_test_mode();
-        create_and_open_as_main_wallet(wallet_config).unwrap();
+        create_and_open_as_main_wallet(&wallet_config).unwrap();
         SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
     }
 }
@@ -187,9 +190,6 @@ impl SetupWallet {
         settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
         settings::get_agency_client_mut().unwrap().disable_test_mode();
 
-        create_wallet(&wallet_name, &wallet_key, &wallet_kdf, None, None, None).unwrap();
-        info!("SetupWallet:: init :: Wallet {} created", wallet_name);
-
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: wallet_key.clone(),
@@ -200,6 +200,9 @@ impl SetupWallet {
             rekey: None,
             rekey_derivation_method: None
         };
+        create_indy_wallet(&wallet_config).unwrap();
+        info!("SetupWallet:: init :: Wallet {} created", wallet_name);
+
         SetupWallet { wallet_name, wallet_kdf, wallet_key, wallet_config, skip_cleanup: false}
     }
 
@@ -314,7 +317,7 @@ impl SetupAgencyMock {
             rekey: None,
             rekey_derivation_method: None
         };
-        create_and_open_as_main_wallet(wallet_config).unwrap();
+        create_and_open_as_main_wallet(&wallet_config).unwrap();
 
         SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
     }
@@ -434,7 +437,7 @@ pub fn setup_indy_env(use_zero_fees: bool) {
         rekey: None,
         rekey_derivation_method: None
     };
-    create_and_open_as_main_wallet(wallet_config).unwrap();
+    create_and_open_as_main_wallet(&wallet_config).unwrap();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
@@ -456,73 +459,54 @@ pub fn cleanup_indy_env() {
 }
 
 pub fn cleanup_agency_env() {
-    set_institution(None);
-    let _res = close_main_wallet();
-    delete_wallet(&settings::get_wallet_name().unwrap(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
-
-    set_consumer(None);
-    let _res = close_main_wallet();
-    delete_wallet(&settings::get_wallet_name().unwrap(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
-
     delete_test_pool();
 }
 
-pub fn set_institution(institution_handle: Option<u32>) {
-    settings::clear_config();
-    unsafe {
-        CONFIG_STRING.get(institution_handle.unwrap_or(INSTITUTION_CONFIG), |t| {
-            settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
-            let result = settings::process_config_string(&t, true);
-            warn!("Switching test context to institution. Settings: {:?}", settings::settings_as_string());
-            result
-        }).unwrap();
-    }
-    change_wallet_handle();
+pub fn set_institution(institution_handle: u32) -> VcxResult<()> {
+    CONFIG_STRING.get(institution_handle, |t| {
+        set_new_config(t)
+    })?;
+    Ok(())
 }
 
-pub fn set_consumer(consumer_handle: Option<u32>) {
-    settings::clear_config();
-    info!("Using consumer handle: {:?}", consumer_handle);
+pub fn set_consumer(consumer_handle: u32) -> VcxResult<()> {
+    CONFIG_STRING.get(consumer_handle, |t| {
+        set_new_config(t)
+    })?;
+    Ok(())
+}
+
+pub fn set_institution_default() -> VcxResult<()> {
     unsafe {
-        CONFIG_STRING.get(consumer_handle.unwrap_or(CONSUMER_CONFIG), |t| {
-            warn!("Setting consumer config {}", t);
-            settings::set_config_value(settings::CONFIG_PAYMENT_METHOD, settings::DEFAULT_PAYMENT_METHOD);
-            let result = settings::process_config_string(&t, true);
-            warn!("Switching test context to consumer. Settings: {:?}", settings::settings_as_string());
-            result
-        }).unwrap();
+        CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
+            set_new_config(t)
+        })?;
     }
+    Ok(())
+}
+
+pub fn set_consumer_default() -> VcxResult<()> {
+    unsafe {
+        CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
+            set_new_config(t)
+        })?;
+    }
+    Ok(())
+}
+
+pub fn set_new_config(config: &str) -> VcxResult<()> {
+    settings::clear_config();
+    settings::process_config_string(config, true)?;
     change_wallet_handle();
+    Ok(())
 }
 
 fn change_wallet_handle() {
+    warn!("change_wallet_handle >>> getting wallet_handle");
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
+    warn!("change_wallet_handle >>> going to set wallet_handle={}", wallet_handle);
     wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
-}
-
-fn assign_trustee_role(institution_handle: Option<u32>) {
-    set_institution(institution_handle);
-    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    let vk = settings::get_config_value(settings::CONFIG_INSTITUTION_VERKEY).unwrap();
-    settings::clear_config();
-
-    let wallet_config = WalletConfig {
-        wallet_name: settings::DEFAULT_WALLET_NAME.into(),
-        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
-        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-        wallet_type: None,
-        storage_config: None,
-        storage_credentials: None,
-        rekey: None,
-        rekey_derivation_method: None
-    };
-    wallet::create_and_open_as_main_wallet(wallet_config).unwrap();
-    let (trustee_did, _) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    let req_nym = indy::ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some("TRUSTEE")).wait().unwrap();
-    libindy::utils::ledger::libindy_sign_and_submit_request(&trustee_did, &req_nym).unwrap();
-
-    let _res = close_main_wallet();
-    wallet::delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+    warn!("change_wallet_handle >>> finished setting wallet_handle={}", wallet_handle);
 }
 
 pub fn setup_agency_env(use_zero_fees: bool) {
@@ -531,64 +515,13 @@ pub fn setup_agency_env(use_zero_fees: bool) {
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
-    let enterprise_wallet_name = format!("{}_{}", constants::ENTERPRISE_PREFIX, settings::DEFAULT_WALLET_NAME);
-
-    let seed1 = create_new_seed();
-    let config = json!({
-            "agency_url": AGENCY_ENDPOINT.to_string(),
-            "agency_did": AGENCY_DID.to_string(),
-            "agency_verkey": AGENCY_VERKEY.to_string(),
-            "wallet_name": enterprise_wallet_name,
-            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
-            "wallet_key_derivation": settings::WALLET_KDF_RAW,
-            "enterprise_seed": seed1,
-            "agent_seed": seed1,
-            "name": "institution".to_string(),
-            "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string()
-        });
-
-    debug!("setup_agency_env >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
-
-    api::vcx::vcx_shutdown(false);
-
-    let consumer_wallet_name = format!("{}_{}", constants::CONSUMER_PREFIX, settings::DEFAULT_WALLET_NAME);
-    let seed2 = create_new_seed();
-    let config = json!({
-            "agency_url": C_AGENCY_ENDPOINT.to_string(),
-            "agency_did": C_AGENCY_DID.to_string(),
-            "agency_verkey": C_AGENCY_VERKEY.to_string(),
-            "wallet_name": consumer_wallet_name,
-            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
-            "wallet_key_derivation": settings::WALLET_KDF_RAW.to_string(),
-            "enterprise_seed": seed2,
-            "agent_seed": seed2,
-            "name": "consumer".to_string(),
-            "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string()
-        });
-
-    debug!("setup_agency_env >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
-
-    unsafe {
-        INSTITUTION_CONFIG = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config)).unwrap();
-    }
-    unsafe {
-        CONSUMER_CONFIG = CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap();
-    }
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
-
-    assign_trustee_role(None);
-
-    // as trustees, mint tokens into each wallet
-    set_institution(None);
-    libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
 }
 
-pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_config: Option<&str>, wallet_handle: WalletHandle, institution_name: Option<&str>) -> String {
+pub fn combine_configs(wallet_config: &WalletConfig, agency_config: &AgencyConfig, issuer_config: Option<&IssuerConfig>, wallet_handle: WalletHandle, institution_name: Option<&str>) -> String {
+    let wallet_config = serde_json::to_string(wallet_config).unwrap();
+    let agency_config = serde_json::to_string(agency_config).unwrap();
     fn merge(a: &mut Value, b: &Value) {
         match (a, b) {
             (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
@@ -602,89 +535,20 @@ pub fn combine_configs(wallet_config: &str, agency_config: &str, institution_con
         }
     }
 
-    let mut final_config: Value = serde_json::from_str(wallet_config).unwrap();
-    let agency_config: Value = serde_json::from_str(agency_config).unwrap();
+    let mut final_config: Value = serde_json::from_str(&wallet_config).unwrap();
+    let agency_config: Value = serde_json::from_str(&agency_config).unwrap();
     merge(&mut final_config, &agency_config);
 
-    if let Some(institution_config) = institution_config {
-        let mut institution_config = serde_json::from_str::<serde_json::Value>(institution_config).unwrap();
-        institution_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
-        merge(&mut final_config, &institution_config);
+    if let Some(issuer_config) = issuer_config {
+        let issuer_config = serde_json::to_string(issuer_config).unwrap();
+        let mut issuer_config = serde_json::from_str::<serde_json::Value>(&issuer_config).unwrap();
+        issuer_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
+        merge(&mut final_config, &issuer_config);
     }
 
     final_config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
 
     final_config.to_string()
-}
-
-pub fn config_with_wallet_handle(wallet_n: &str, config: &str) -> String {
-    let config_val: Value = serde_json::from_str(config).unwrap();
-    let wallet_key = config_val["wallet_key"].as_str().unwrap();
-
-    let wallet_handle = init::open_as_main_wallet(wallet_n, wallet_key, settings::WALLET_KDF_RAW, None, None, None, None, None).unwrap();
-    let mut config: serde_json::Value = serde_json::from_str(config).unwrap();
-    config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
-    config.to_string()
-}
-
-pub fn create_consumer_config() -> u32 {
-    settings::clear_config();
-    let consumer_id: u32 = CONFIG_STRING.len().unwrap() as u32;
-    let mut rng = rand::thread_rng();
-    let random_salt = rng.gen::<u32>();
-    let consumer_wallet_name = format!("{}_{}_{}", constants::CONSUMER_PREFIX, consumer_id, random_salt);
-    let seed = create_new_seed();
-    let config = json!({
-            "agency_url": C_AGENCY_ENDPOINT.to_string(),
-            "agency_did": C_AGENCY_DID.to_string(),
-            "agency_verkey": C_AGENCY_VERKEY.to_string(),
-            "wallet_name": consumer_wallet_name,
-            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
-            "wallet_key_derivation": settings::WALLET_KDF_RAW.to_string(),
-            "enterprise_seed": seed,
-            "agent_seed": seed,
-            "name": format!("consumer_{}", consumer_id).to_string(),
-            "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string()
-        });
-
-    debug!("create_consumer_config >> Going to provision consumer using config: {:?}", &config);
-    let consumer_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
-
-    CONFIG_STRING.add(config_with_wallet_handle(&consumer_wallet_name, &consumer_config.to_string())).unwrap()
-}
-
-pub fn create_institution_config() -> u32 {
-    settings::clear_config();
-
-    let enterprise_id: u32 = CONFIG_STRING.len().unwrap() as u32;
-    let mut rng = rand::thread_rng();
-    let random_salt = rng.gen::<u32>();
-    let enterprise_wallet_name = format!("{}_{}_{}", constants::ENTERPRISE_PREFIX, enterprise_id, random_salt);
-
-    let seed = create_new_seed();
-    let config = json!({
-            "agency_url": AGENCY_ENDPOINT.to_string(),
-            "agency_did": AGENCY_DID.to_string(),
-            "agency_verkey": AGENCY_VERKEY.to_string(),
-            "wallet_name": enterprise_wallet_name,
-            "wallet_key": settings::DEFAULT_WALLET_KEY.to_string(),
-            "wallet_key_derivation": settings::WALLET_KDF_RAW,
-            "enterprise_seed": seed,
-            "agent_seed": seed,
-            "name": format!("institution_{}", enterprise_id).to_string(),
-            "logo": "http://www.logo.com".to_string(),
-            "path": constants::GENESIS_PATH.to_string()
-        });
-
-    debug!("create_institution_config >> Going to provision enterprise using config: {:?}", &config);
-    let enterprise_config = utils::provision::connect_register_provision(&config.to_string()).unwrap();
-
-    let handle = CONFIG_STRING.add(config_with_wallet_handle(&enterprise_wallet_name, &enterprise_config.to_string())).unwrap();
-
-    assign_trustee_role(Some(handle));
-
-    handle
 }
 
 pub struct TempFile {
@@ -730,8 +594,10 @@ mod tests {
     #[test]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let institution = Faber::setup();
+        let consumer1 = Alice::setup();
 
-        let (_faber, _alice) = connection::tests::create_connected_connections(None, None);
-        let (_faber, _alice) = connection::tests::create_connected_connections(None, None);
+        let (_faber, _alice) = connection::tests::create_connected_connections(&consumer1, &institution);
+        let (_faber, _alice) = connection::tests::create_connected_connections(&consumer1, &institution);
     }
 }

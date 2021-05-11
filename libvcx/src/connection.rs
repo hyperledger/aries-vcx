@@ -334,6 +334,7 @@ pub mod tests {
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
+    use crate::utils::devsetup_agent::test::{TestAgent, Faber, Alice};
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -358,33 +359,33 @@ pub mod tests {
         handle
     }
 
-    pub fn create_connected_connections(consumer_handle: Option<u32>, institution_handle: Option<u32>) -> (u32, u32) {
+    pub fn create_connected_connections(consumer: &Alice, institution: &Faber) -> (u32, u32) {
         debug!("Institution is going to create connection.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate();
         let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let details = connect(institution_to_consumer).unwrap().unwrap();
         // update_state(institution_to_consumer).unwrap();
 
-        utils::devsetup::set_consumer(consumer_handle);
+        consumer.activate();
         debug!("Consumer is going to accept connection invitation.");
         let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
         connect(consumer_to_institution).unwrap();
         update_state(consumer_to_institution).unwrap();
 
         debug!("Institution is going to process connection request.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
 
         debug!("Consumer is going to complete the connection protocol.");
-        utils::devsetup::set_consumer(consumer_handle);
+        consumer.activate();
         update_state(consumer_to_institution).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
 
         debug!("Institution is going to complete the connection protocol.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
@@ -638,16 +639,19 @@ pub mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
+        let institution = Faber::setup();
+        let consumer1 = Alice::setup();
+
+        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&consumer1, &institution);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
-        utils::devsetup::set_consumer(None);
+        consumer1.activate();
         send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
-        // make sure messages has bee delivered
+        // make sure messages has be delivered
         thread::sleep(Duration::from_millis(1000));
 
         let all_messages = download_messages_noauth(None, None, None).unwrap();
@@ -693,21 +697,21 @@ pub mod tests {
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let consumer1 = create_consumer_config();
-        let consumer2 = create_consumer_config();
-
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(Some(consumer1), None);
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(Some(consumer2), None);
+        let institution = Faber::setup();
+        let consumer1 = Alice::setup();
+        let consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&consumer1, &institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&consumer2, &institution);
 
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
-        utils::devsetup::set_consumer(Some(consumer1));
+        consumer1.activate();
         send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        utils::devsetup::set_consumer(Some(consumer2));
+        consumer2.activate();
         send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
 
-        utils::devsetup::set_institution(None);
+        institution.activate();
         let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
         assert_eq!(all_msgs.len(), 2);
         assert_eq!(all_msgs[0].msgs.len(), 2);
@@ -738,14 +742,16 @@ pub mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
+        let institution = Faber::setup();
+        let consumer1 = Alice::setup();
+        let (alice_to_faber, faber_to_alice) = create_connected_connections(&consumer1, &institution);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();
         send_generic_message(faber_to_alice, "Hello 3").unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        utils::devsetup::set_consumer(None);
+        consumer1.activate();
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);

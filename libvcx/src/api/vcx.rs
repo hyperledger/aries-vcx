@@ -6,14 +6,15 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, init_agency_client, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
+use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
+use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 use crate::utils::version_constants;
+use crate::utils::provision::AgencyConfig;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -94,8 +95,16 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
+    let agency_config = match serde_json::from_str::<AgencyConfig>(&config) {
+        Ok(agency_config) => agency_config,
+        Err(err) => {
+            error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match init_agency_client(&config) {
+        match create_agency_client_for_main_wallet(&agency_config) {
             Ok(()) => {
                 info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
@@ -137,8 +146,16 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 
     trace!("vcx_init_issuer_config >>> config: {}", config);
 
+    let issuer_config = match serde_json::from_str::<IssuerConfig>(&config) {
+        Ok(issuer_config) => issuer_config,
+        Err(err) => {
+            error!("vcx_init_issuer_config >>> invalid configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match init_issuer_config(&config) {
+        match init_issuer_config(&issuer_config) {
             Ok(()) => {
                 info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)

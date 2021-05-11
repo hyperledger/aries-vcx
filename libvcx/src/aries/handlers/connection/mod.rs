@@ -27,10 +27,10 @@ pub mod tests {
         use crate::aries;
         use crate::aries::messages::a2a::A2AMessage;
         use crate::aries::messages::ack::tests::_ack;
-        use crate::aries::test::{Alice, Faber};
         use crate::connection;
 
         use super::*;
+        use crate::utils::devsetup_agent::test::{Faber, Alice};
 
         #[test]
         #[cfg(feature = "aries")]
@@ -53,12 +53,18 @@ pub mod tests {
         #[test]
         #[cfg(feature = "agency_v2")]
         fn test_connection_send_works() {
+            info!("test_connection_send_works >>> ");
             _setup();
+            info!("test_connection_send_works >>> setup finished ");
             let mut faber = Faber::setup();
+            info!("test_connection_send_works >>> faber finished ");
             let mut alice = Alice::setup();
+            info!("test_connection_send_works >>> alice finished ");
 
             let invite = faber.create_invite();
+            info!("test_connection_send_works >>> faber going to create invite ");
             alice.accept_invite(&invite);
+            info!("test_connection_send_works >>> alice going to accept invite");
 
             faber.update_state(3);
             alice.update_state(4);

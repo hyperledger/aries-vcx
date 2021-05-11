@@ -50,13 +50,17 @@ impl AgentInfo {
         trace!("Agent::create_agent >>>");
 
         let method_name = settings::get_config_value(settings::CONFIG_DID_METHOD).ok();
+
+        warn!("create_agent >>> going to create my_did using method {:?}", method_name);
         let (pw_did, pw_vk) = create_and_store_my_did(None, method_name.as_ref().map(String::as_str))?;
 
+        warn!("create_agent >>> created and stored my did");
         /*
             Create User Pairwise Agent in old way.
             Send Messages corresponding to V2 Protocol to avoid code changes on Agency side.
         */
         let (agent_did, agent_vk) = create_agent_keys("", &pw_did, &pw_vk)?;
+        warn!("create_agent >>> created agent keys");
 
         Ok(AgentInfo { pw_did, pw_vk, agent_did, agent_vk })
     }
