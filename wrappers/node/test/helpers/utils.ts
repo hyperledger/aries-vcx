@@ -66,13 +66,13 @@ export async function initVcxTestMode(): Promise<void> {
   const configWallet = generateWalletConfig();
   await vcx.createWallet(configWallet)
   await vcx.openMainWallet(configWallet)
-  // @ts-ignore
-  const { institution_did, institution_verkey } = await vcx.configureIssuerWallet(issuerSeed)
+  const { institution_did, institution_verkey }  = JSON.parse(await vcx.configureIssuerWallet(issuerSeed))
   const issuerConfig = {
     institution_name: 'default',
     institution_did,
     institution_verkey
   }
+  console.warn(`issuerConfig = ${JSON.stringify(issuerConfig)}`)
   await vcx.initIssuerConfig(issuerConfig)
   await vcx.createAgencyClientForMainWallet(configAgency)
   vcx.enableMocks()
