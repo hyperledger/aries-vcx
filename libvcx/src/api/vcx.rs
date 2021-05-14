@@ -127,7 +127,6 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 ///
 /// issuer_config: Issuer configuration
 /// {
-///     "institution_name" - Name of the issueing / verifying institution
 ///     "institution_did" (optional) - Institution did obtained on vcx_configure_issuer_wallet
 ///     `institution_verkey` (optional) - Institution verkey obtained on vcx_configure_issuer_wallet
 ///                         If NULL, then value set on vcx_configure_issuer_wallet will be used.
@@ -580,7 +579,6 @@ mod tests {
                "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
                "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
                "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-               "institution_name" : "evernym enterprise",
                "agency_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "remote_to_sdk_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "genesis_path": get_temp_dir_path("pool1.txn").to_str().unwrap(),
@@ -891,7 +889,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn get_settings() -> String {
         json!({
-            settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
             settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
             settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
         }).to_string()
@@ -980,7 +977,6 @@ mod tests {
         let _setup = SetupLibraryWalletPool::init();
 
         let config = json!({
-            "institution_name": "faber",
             "institution_did": "44x8p4HubxzUK1dwxcc5FU",
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();

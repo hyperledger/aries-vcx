@@ -24,7 +24,6 @@ pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
 // functionally not used
-pub static CONFIG_INSTITUTION_NAME: &str = "institution_name";
 pub static CONFIG_WEBHOOK_URL: &str = "webhook_url";
 pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
 pub static CONFIG_GENESIS_PATH: &str = "genesis_path";
@@ -118,7 +117,6 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_WALLET_NAME.to_string(), DEFAULT_WALLET_NAME.to_string());
     settings.insert(CONFIG_WALLET_TYPE.to_string(), DEFAULT_DEFAULT.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_INSTITUTION_NAME.to_string(), DEFAULT_DEFAULT.to_string());
     settings.insert(CONFIG_WEBHOOK_URL.to_string(), DEFAULT_URL.to_string());
     settings.insert(CONFIG_SDK_TO_REMOTE_ROLE.to_string(), DEFAULT_ROLE.to_string());
     settings.insert(CONFIG_WALLET_KEY.to_string(), DEFAULT_WALLET_KEY.to_string());
@@ -227,18 +225,6 @@ pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32
     }
 }
 
-pub fn process_config_file(path: &str) -> VcxResult<u32> {
-    trace!("process_config_file >>> path: {}", path);
-
-    if !Path::new(path).is_file() {
-        error!("Configuration path was invalid");
-        Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Cannot find config file"))
-    } else {
-        let config = read_file(path)?;
-        process_config_string(&config, true)
-    }
-}
-
 pub fn get_config_value(key: &str) -> VcxResult<String> {
     trace!("get_config_value >>> key: {}", key);
 
@@ -337,10 +323,6 @@ pub mod tests {
 
     use super::*;
 
-    fn _institution_name() -> String {
-        "enterprise".to_string()
-    }
-
     fn _pool_config() -> String {
         r#"{"timeout":40}"#.to_string()
     }
@@ -353,7 +335,6 @@ pub mod tests {
             "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
             "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
             "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "institution_name" : _institution_name(),
             "agency_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
             "remote_to_sdk_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
             "genesis_path":"/tmp/pool1.txn",
@@ -369,15 +350,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_bad_path() {
-        let _setup = SetupDefaults::init();
-
-        let path = "garbage.txt";
-        assert_eq!(process_config_file(&path).unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_read_config_file() {
         let _setup = SetupDefaults::init();
 
@@ -389,25 +361,11 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_process_file() {
-        let _setup = SetupDefaults::init();
-
-        let mut config_file: TempFile = TempFile::create("test_init.json");
-        config_file.write(&config_json());
-
-        assert_eq!(process_config_file(&config_file.path).unwrap(), error::SUCCESS.code_num);
-
-        assert_eq!(get_config_value("institution_name").unwrap(), _institution_name());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_process_config_str() {
         let _setup = SetupDefaults::init();
 
         assert_eq!(process_config_string(&config_json(), true).unwrap(), error::SUCCESS.code_num);
 
-        assert_eq!(get_config_value("institution_name").unwrap(), _institution_name());
         assert_eq!(get_config_value("pool_config").unwrap(), _pool_config());
     }
 
@@ -497,7 +455,6 @@ pub mod tests {
             "pool_name" : "pool1",
             "config_name":"config1",
             "wallet_name":"test_clear_config",
-            "institution_name" : "evernym enterprise",
             "genesis_path":"/tmp/pool1.txn",
             "wallet_key":"key",
         }).to_string();
@@ -507,7 +464,6 @@ pub mod tests {
         assert_eq!(get_config_value("pool_name").unwrap(), "pool1".to_string());
         assert_eq!(get_config_value("config_name").unwrap(), "config1".to_string());
         assert_eq!(get_config_value("wallet_name").unwrap(), "test_clear_config".to_string());
-        assert_eq!(get_config_value("institution_name").unwrap(), "evernym enterprise".to_string());
         assert_eq!(get_config_value("genesis_path").unwrap(), "/tmp/pool1.txn".to_string());
         assert_eq!(get_config_value("wallet_key").unwrap(), "key".to_string());
 
@@ -517,7 +473,6 @@ pub mod tests {
         assert_eq!(get_config_value("pool_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
         assert_eq!(get_config_value("config_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
         assert_eq!(get_config_value("wallet_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("institution_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
         assert_eq!(get_config_value("genesis_path").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
         assert_eq!(get_config_value("wallet_key").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
     }

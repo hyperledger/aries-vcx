@@ -519,7 +519,7 @@ pub fn setup_agency_env(use_zero_fees: bool) {
     open_test_pool();
 }
 
-pub fn combine_configs(wallet_config: &WalletConfig, agency_config: &AgencyConfig, issuer_config: Option<&IssuerConfig>, wallet_handle: WalletHandle, institution_name: Option<&str>) -> String {
+pub fn combine_configs(wallet_config: &WalletConfig, agency_config: &AgencyConfig, issuer_config: Option<&IssuerConfig>, wallet_handle: WalletHandle) -> String {
     let wallet_config = serde_json::to_string(wallet_config).unwrap();
     let agency_config = serde_json::to_string(agency_config).unwrap();
     fn merge(a: &mut Value, b: &Value) {
@@ -542,7 +542,6 @@ pub fn combine_configs(wallet_config: &WalletConfig, agency_config: &AgencyConfi
     if let Some(issuer_config) = issuer_config {
         let issuer_config = serde_json::to_string(issuer_config).unwrap();
         let mut issuer_config = serde_json::from_str::<serde_json::Value>(&issuer_config).unwrap();
-        issuer_config[settings::CONFIG_INSTITUTION_NAME] = json!(institution_name.expect("Specified institution config, but not institution_name").to_string());
         merge(&mut final_config, &issuer_config);
     }
 

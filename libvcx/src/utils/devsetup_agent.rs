@@ -97,7 +97,6 @@ pub mod test {
             settings::clear_config();
             init_test_logging();
             let enterprise_seed = "000000000000000000000000Trustee1";
-            let institution_name = "Acme";
 
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -129,7 +128,7 @@ pub mod test {
             init_issuer_config(&config_issuer); // todo: this line can be removed probably
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
 
-            let config = combine_configs(&config_wallet, &config_agency, Some(&config_issuer), wallet_handle, Some(institution_name));
+            let config = combine_configs(&config_wallet, &config_agency, Some(&config_issuer), wallet_handle);
 
             Faber {
                 config,
@@ -327,7 +326,7 @@ pub mod test {
             let wallet_handle = open_as_main_wallet(&config_wallet).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
 
-            let config = combine_configs(&config_wallet, &config_agency, None, wallet_handle, None);
+            let config = combine_configs(&config_wallet, &config_agency, None, wallet_handle);
 
             Alice {
                 config,
