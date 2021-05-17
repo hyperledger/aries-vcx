@@ -23,7 +23,7 @@ INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
 
 setup() {
     echo "Setup rustup"
-    rustup default 1.45.2
+    rustup default 1.52.1
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
