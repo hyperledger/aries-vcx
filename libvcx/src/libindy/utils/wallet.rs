@@ -368,7 +368,16 @@ pub mod tests {
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        let wallet_config = WalletConfig { wallet_name: wallet_name.into(), wallet_key: settings::DEFAULT_WALLET_KEY.into(), wallet_key_derivation: settings::WALLET_KDF_RAW.into(), wallet_type: None, storage_config: None, storage_credentials: None, rekey: None, rekey_derivation_method: None };
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
         let _handle = create_and_open_as_main_wallet(wallet_config).unwrap();
 
         let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
@@ -394,7 +403,16 @@ pub mod tests {
         let _setup = SetupLibraryWallet::init();
 
         assert_ne!(get_wallet_handle(), INVALID_WALLET_HANDLE);
-        let wallet_config = WalletConfig { wallet_name: "".into(), wallet_key: settings::DEFAULT_WALLET_KEY.into(), wallet_key_derivation: settings::WALLET_KDF_RAW.into(), wallet_type: None, storage_config: None, storage_credentials: None, rekey: None, rekey_derivation_method: None };
+        let wallet_config = WalletConfig {
+            wallet_name: "".into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
         assert_eq!(VcxErrorKind::WalletCreate, create_and_open_as_main_wallet(wallet_config).unwrap_err().kind());
     }
 

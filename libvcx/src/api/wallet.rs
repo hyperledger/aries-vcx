@@ -1548,7 +1548,15 @@ pub mod tests {
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        let wallet_config = WalletConfig { wallet_name: wallet_name.into(), wallet_key: settings::DEFAULT_WALLET_KEY.into(), wallet_key_derivation: settings::WALLET_KDF_RAW.into(), wallet_type: None, storage_config: None, storage_credentials: None, rekey: None, rekey_derivation_method: None };
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None, storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
         create_and_open_as_main_wallet(wallet_config);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();

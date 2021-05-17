@@ -911,7 +911,7 @@ mod tests {
     fn test_open_wallet() {
         let setup: SetupWallet = SetupWallet::init();
 
-        let cb = return_types_u32::Return_U32_I32   ::new().unwrap();
+        let cb = return_types_u32::Return_U32_I32::new().unwrap();
         let rc = vcx_open_main_wallet(cb.command_handle, CString::new(json!(setup.wallet_config).to_string()).unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_custom(3)).unwrap();
