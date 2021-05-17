@@ -456,7 +456,7 @@ pub mod tests {
         assert_eq!(delete_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
         // Delete works
-        delete_wallet(wallet_name, wallet_key, wallet_kdf, None, None, None).unwrap()
+        delete_wallet(&wallet_config.wallet_name, &wallet_config.wallet_key, &wallet_config.wallet_key_derivation, None, None, None).unwrap()
     }
 
     #[test]
@@ -503,7 +503,7 @@ pub mod tests {
         let wallet_key2 = "NGKRM9afPYprbWCv43cTyu62hjHJ1QtkE8ogmsndiS5e";
         let mut wallet_config2 =  wallet_config.clone();
         wallet_config2.rekey = Some(wallet_key2.into());
-        wallet_config2.rekey = Some(settings::WALLET_KDF_ARGON2I_INT.into());
+        wallet_config2.rekey_derivation_method = Some(settings::WALLET_KDF_ARGON2I_INT.into());
         open_as_main_wallet(&wallet_config2).unwrap();
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
@@ -515,7 +515,8 @@ pub mod tests {
         let mut wallet_config3 =  wallet_config.clone();
         wallet_config3.wallet_key = wallet_key2.into();
         wallet_config3.wallet_key_derivation = settings::WALLET_KDF_ARGON2I_INT.into();
-        open_as_main_wallet(&wallet_config3);
+        open_as_main_wallet(&wallet_config3).unwrap();
+
         let retrieved_record = get_record(record_type, id, &options).unwrap();
         assert_eq!(retrieved_record, expected_retrieved_record);
         delete_record(record_type, id).unwrap();
