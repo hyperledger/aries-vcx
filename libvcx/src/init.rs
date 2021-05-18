@@ -49,27 +49,16 @@ pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn open_pool_directly(config: &str) -> VcxResult<()> {
-    trace!("open_pool_directly >>> config: {}", config);
+pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
+    let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, config.genesis_path, config.pool_config);
 
-    let config: PoolConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration,
-                                          format!("Failed to deserialize pool config {:?}, err: {:?}", config, err)))?;
-
-    let pool_name = config.pool_name.unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-
-    open_pool(&pool_name, &config.genesis_path, config.pool_config.as_deref())
-}
-
-pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
-    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
-
-    create_pool_ledger_config(&pool_name, &path)
+    create_pool_ledger_config(&pool_name, &config.genesis_path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
     debug!("open_pool ::: Pool Config Created Successfully");
 
-    open_pool_ledger(&pool_name, pool_config)
+    open_pool_ledger(&pool_name, config.pool_config.as_deref())
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
 
     info!("open_pool ::: Pool Opened Successfully");

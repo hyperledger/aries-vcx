@@ -51,7 +51,7 @@ impl LibindyMock {
 pub mod tests {
     use indy::future::Future;
 
-    use crate::init::open_pool;
+    use crate::init::open_main_pool;
     use crate::settings;
     use crate::utils::devsetup::*;
 
@@ -109,13 +109,9 @@ pub mod tests {
     fn test_init_pool_and_wallet() {
         let _setup_defaults = SetupDefaults::init();
         let setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolConfig::init();
+        let setup_pool = SetupPoolConfig::init();
 
-        let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap();
-        let path = settings::get_config_value(settings::CONFIG_GENESIS_PATH).unwrap();
-        let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG);
-
-        open_pool(&pool_name, &path, pool_config.ok().as_ref().map(String::as_str)).unwrap();
+        open_main_pool(&setup_pool.pool_config).unwrap();
         wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).unwrap();
     }
 }

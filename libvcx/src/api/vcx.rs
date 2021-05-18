@@ -6,7 +6,7 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
+use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
@@ -209,8 +209,17 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
+
+    let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
+        Ok(pool_config) => pool_config,
+        Err(err) => {
+            error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match open_pool_directly(&pool_config) {
+        match open_main_pool(&pool_config) {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)

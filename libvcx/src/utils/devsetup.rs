@@ -210,7 +210,6 @@ impl SetupPoolConfig {
     pub fn init() -> SetupPoolConfig {
         create_test_ledger_config();
         let genesis_path = utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &genesis_path.clone());
         let pool_config = PoolConfig {
             genesis_path,
             pool_name: None,
