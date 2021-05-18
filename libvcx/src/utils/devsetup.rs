@@ -35,9 +35,6 @@ pub struct SetupMocks; // set default settings and enable test mode
 pub struct SetupIndyMocks; // set default settings and enable indy mode
 
 pub struct SetupWallet {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub wallet_kdf: String,
     pub wallet_config: WalletConfig,
     skip_cleanup: bool,
 } // creates wallet with random name, configures wallet settings
@@ -48,9 +45,6 @@ pub struct SetupPoolConfig {
 }
 
 pub struct SetupLibraryWallet {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub wallet_kdf: String,
     pub wallet_config: WalletConfig
 } // set default settings and init indy wallet
 
@@ -63,9 +57,6 @@ pub struct SetupLibraryWalletPoolZeroFees {
 }  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
-    pub wallet_name: String,
-    pub wallet_key: String,
-    pub wallet_kdf: String,
     pub wallet_config: WalletConfig
 } // set default settings and enable mock agency mode
 
@@ -153,9 +144,6 @@ impl SetupLibraryWallet {
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
-        settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: wallet_key.clone(),
@@ -170,7 +158,7 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::get_agency_client_mut().unwrap().disable_test_mode();
         create_and_open_as_main_wallet(&wallet_config).unwrap();
-        SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf, wallet_config }
+        SetupLibraryWallet { wallet_config }
     }
 }
 
@@ -186,20 +174,11 @@ impl SetupWallet {
     pub fn init() -> SetupWallet {
         init_test_logging();
         let wallet_name: String = format!("Test_SetupWallet_{}", uuid::Uuid::new_v4().to_string());
-        let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
-        let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
-        settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
-
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-        settings::set_config_value(settings::CONFIG_WALLET_BACKUP_KEY, settings::DEFAULT_WALLET_BACKUP_KEY);
         settings::get_agency_client_mut().unwrap().disable_test_mode();
-
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
-            wallet_key: wallet_key.clone(),
-            wallet_key_derivation: wallet_kdf.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
             wallet_type: None,
             storage_config: None,
             storage_credentials: None,
@@ -208,7 +187,7 @@ impl SetupWallet {
         };
         create_indy_wallet(&wallet_config).unwrap();
 
-        SetupWallet { wallet_name, wallet_kdf, wallet_key, wallet_config, skip_cleanup: false}
+        SetupWallet { wallet_config, skip_cleanup: false }
     }
 
     pub fn skip_cleanup(mut self) -> SetupWallet {
@@ -305,17 +284,12 @@ impl SetupAgencyMock {
     pub fn init() -> SetupAgencyMock {
         setup(ThreadpoolConfig { num_threads: Some(4) });
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
-        let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
-        let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
-        settings::set_config_value(settings::CONFIG_WALLET_NAME, &wallet_name);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY, &wallet_key);
-        settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, &wallet_kdf);
         settings::get_agency_client_mut().unwrap().enable_test_mode();
 
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
-            wallet_key: wallet_key.clone(),
-            wallet_key_derivation: wallet_kdf.to_string(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
             wallet_type: None,
             storage_config: None,
             storage_credentials: None,
@@ -324,7 +298,7 @@ impl SetupAgencyMock {
         };
         create_and_open_as_main_wallet(&wallet_config).unwrap();
 
-        SetupAgencyMock { wallet_name, wallet_key, wallet_kdf, wallet_config }
+        SetupAgencyMock { wallet_config }
     }
 }
 
@@ -427,7 +401,6 @@ pub fn setup_indy_env(use_zero_fees: bool) -> WalletConfig {
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
-    settings::set_config_value(settings::CONFIG_WALLET_KEY_DERIVATION, settings::WALLET_KDF_RAW);
     let wallet_config = WalletConfig {
         wallet_name: settings::DEFAULT_WALLET_NAME.into(),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -462,11 +435,6 @@ pub fn cleanup_indy_env(wallet_config: &WalletConfig) {
 
 pub fn cleanup_agency_env() {
     delete_test_pool();
-}
-
-fn change_wallet_handle() {
-    let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
-    wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
 }
 
 pub fn setup_agency_env(use_zero_fees: bool) {

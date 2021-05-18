@@ -34,15 +34,10 @@ pub static CONFIG_WALLET_BACKUP_KEY: &str = "backup_key";
 pub static CONFIG_WALLET_KEY: &str = "wallet_key";
 pub static CONFIG_WALLET_NAME: &'static str = "wallet_name";
 pub static CONFIG_WALLET_TYPE: &'static str = "wallet_type";
-pub static CONFIG_WALLET_STORAGE_CONFIG: &'static str = "storage_config";
-pub static CONFIG_WALLET_STORAGE_CREDS: &'static str = "storage_credentials";
-pub static CONFIG_WALLET_HANDLE: &'static str = "wallet_handle";
-pub static CONFIG_THREADPOOL_SIZE: &'static str = "threadpool_size";
 pub static CONFIG_WALLET_KEY_DERIVATION: &'static str = "wallet_key_derivation";
 pub static CONFIG_PROTOCOL_VERSION: &'static str = "protocol_version";
 pub static CONFIG_PAYMENT_METHOD: &'static str = "payment_method";
 pub static CONFIG_TXN_AUTHOR_AGREEMENT: &'static str = "author_agreement";
-pub static CONFIG_USE_LATEST_PROTOCOLS: &'static str = "use_latest_protocols";
 pub static CONFIG_POOL_CONFIG: &'static str = "pool_config";
 pub static CONFIG_DID_METHOD: &str = "did_method";
 // proprietary or aries
@@ -52,19 +47,13 @@ pub static DEFAULT_PROTOCOL_VERSION: usize = 2;
 pub static MAX_SUPPORTED_PROTOCOL_VERSION: usize = 2;
 pub static UNINITIALIZED_WALLET_KEY: &str = "<KEY_IS_NOT_SET>";
 pub static DEFAULT_GENESIS_PATH: &str = "genesis.txn";
-pub static DEFAULT_EXPORTED_WALLET_PATH: &str = "wallet.txn";
 pub static DEFAULT_WALLET_NAME: &str = "LIBVCX_SDK_WALLET";
 pub static DEFAULT_POOL_NAME: &str = "pool1";
 pub static DEFAULT_LINK_SECRET_ALIAS: &str = "main";
-pub static DEFAULT_DEFAULT: &str = "default";
-pub static DEFAULT_URL: &str = "http://127.0.0.1:8080";
 pub static DEFAULT_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-pub static DEFAULT_VERKEY: &str = "FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB";
 pub static DEFAULT_ROLE: &str = "0";
-pub static DEFAULT_ENABLE_TEST_MODE: &str = "false";
 pub static DEFAULT_WALLET_BACKUP_KEY: &str = "backup_wallet_key";
 pub static DEFAULT_WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
-pub static DEFAULT_THREADPOOL_SIZE: usize = 8;
 pub static MASK_VALUE: &str = "********";
 pub static WALLET_KDF_RAW: &str = "RAW";
 pub static WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
@@ -75,10 +64,7 @@ pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.so";
 #[cfg(target_os = "macos")]
 pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
 pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
-pub static DEFAULT_USE_LATEST_PROTOCOLS: &str = "false";
 pub static DEFAULT_PAYMENT_METHOD: &str = "null";
-pub static MAX_THREADPOOL_SIZE: usize = 128;
-pub static MOCK_DEFAULT_INDY_PROOF_VALIDATION: &str = "true";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
@@ -114,21 +100,10 @@ pub fn set_testing_defaults() -> u32 {
     let mut settings = SETTINGS.write().unwrap();
 
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
-    settings.insert(CONFIG_WALLET_NAME.to_string(), DEFAULT_WALLET_NAME.to_string());
-    settings.insert(CONFIG_WALLET_TYPE.to_string(), DEFAULT_DEFAULT.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_WEBHOOK_URL.to_string(), DEFAULT_URL.to_string());
-    settings.insert(CONFIG_SDK_TO_REMOTE_ROLE.to_string(), DEFAULT_ROLE.to_string());
-    settings.insert(CONFIG_WALLET_KEY.to_string(), DEFAULT_WALLET_KEY.to_string());
-    settings.insert(CONFIG_WALLET_KEY_DERIVATION.to_string(), WALLET_KDF_RAW.to_string());
     settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
-    settings.insert(CONFIG_EXPORTED_WALLET_PATH.to_string(),
-                    get_temp_dir_path(DEFAULT_EXPORTED_WALLET_PATH).to_str().unwrap_or("").to_string());
-    settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
-    settings.insert(CONFIG_THREADPOOL_SIZE.to_string(), DEFAULT_THREADPOOL_SIZE.to_string());
     settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
-    settings.insert(CONFIG_USE_LATEST_PROTOCOLS.to_string(), DEFAULT_USE_LATEST_PROTOCOLS.to_string());
 
     get_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
@@ -142,8 +117,6 @@ pub fn indy_mocks_enabled() -> bool {
         Some(value) => value == "true" || value == "indy"
     }
 }
-
-pub fn enable_mock_generate_indy_proof() {}
 
 pub fn get_config_value(key: &str) -> VcxResult<String> {
     trace!("get_config_value >>> key: {}", key);
@@ -161,11 +134,6 @@ pub fn set_config_value(key: &str, value: &str) {
     SETTINGS
         .write().unwrap()
         .insert(key.to_string(), value.to_string());
-}
-
-pub fn get_wallet_name() -> VcxResult<String> {
-    get_config_value(CONFIG_WALLET_NAME)
-        .map_err(|_| VcxError::from(VcxErrorKind::MissingWalletKey))
 }
 
 pub fn get_protocol_version() -> usize {
