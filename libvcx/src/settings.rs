@@ -134,56 +134,6 @@ pub fn set_testing_defaults() -> u32 {
     error::SUCCESS.code_num
 }
 
-pub fn validate_config(config: &HashMap<String, String>) -> VcxResult<u32> {
-    trace!("validate_config >>> config: {:?}", config);
-
-    //Mandatory parameters
-    if crate::libindy::utils::wallet::get_wallet_handle() == INVALID_WALLET_HANDLE && config.get(CONFIG_WALLET_KEY).is_none() {
-        return Err(VcxError::from(VcxErrorKind::MissingWalletKey));
-    }
-
-    // If values are provided, validate they're in the correct format
-    validate_optional_config_val(config.get(CONFIG_INSTITUTION_DID), VcxErrorKind::InvalidDid, validation::validate_did)?;
-    validate_optional_config_val(config.get(CONFIG_INSTITUTION_VERKEY), VcxErrorKind::InvalidVerkey, validation::validate_verkey)?;
-    validate_optional_config_val(config.get(CONFIG_WEBHOOK_URL), VcxErrorKind::InvalidUrl, Url::parse)?;
-    validate_optional_config_val(config.get(CONFIG_ACTORS), VcxErrorKind::InvalidOption, validation::validate_actors)?;
-
-    get_agency_client()?.validate()?;
-    Ok(error::SUCCESS.code_num)
-}
-
-fn validate_mandatory_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind, closure: F) -> VcxResult<u32>
-    where F: Fn(&str) -> Result<S, E> {
-    closure(val.as_ref().ok_or(VcxError::from(err))?)
-        .or(Err(VcxError::from(err)))?;
-
-    Ok(error::SUCCESS.code_num)
-}
-
-fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: VcxErrorKind, closure: F) -> VcxResult<u32>
-    where F: Fn(&str) -> Result<S, E> {
-    if val.is_none() { return Ok(error::SUCCESS.code_num); }
-
-    closure(val.as_ref().ok_or(VcxError::from(VcxErrorKind::InvalidConfiguration))?)
-        .or(Err(VcxError::from(err)))?;
-
-    Ok(error::SUCCESS.code_num)
-}
-
-pub fn validate_payment_method() -> VcxResult<u32> {
-    validate_mandatory_config_val(get_config_value(CONFIG_PAYMENT_METHOD).ok().as_ref(),
-                                  VcxErrorKind::MissingPaymentMethod, validation::validate_payment_method)
-}
-
-pub fn settings_as_string() -> String {
-    SETTINGS.read().unwrap().to_string()
-}
-
-pub fn log_settings() {
-    let settings = SETTINGS.read().unwrap();
-    trace!("loaded settings: {:?}", settings.to_string());
-}
-
 pub fn indy_mocks_enabled() -> bool {
     let config = SETTINGS.read().unwrap();
 
@@ -194,36 +144,6 @@ pub fn indy_mocks_enabled() -> bool {
 }
 
 pub fn enable_mock_generate_indy_proof() {}
-
-pub fn process_config_string(config: &str, do_validation: bool) -> VcxResult<u32> {
-    trace!("process_config_string >>> config {}", config);
-
-    let configuration: Value = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
-
-    if let Value::Object(ref map) = configuration {
-        for (key, value) in map {
-            match value {
-                Value::String(value_) => set_config_value(key, &value_),
-                Value::Array(value_) => set_config_value(key, &json!(value_).to_string()),
-                Value::Object(value_) => set_config_value(key, &json!(value_).to_string()),
-                Value::Bool(value_) => set_config_value(key, &json!(value_).to_string()),
-                _ => return Err(VcxError::from(VcxErrorKind::InvalidJson)),
-            }
-        }
-    }
-
-    // TODO: This won't be necessary - move to open wallet for now?
-    get_agency_client_mut()?.process_config_string(config, false)?; // False due to failing tests
-
-    if do_validation {
-        let setting = SETTINGS.read()
-            .or(Err(VcxError::from(VcxErrorKind::InvalidConfiguration)))?;
-        validate_config(&setting.borrow())
-    } else {
-        Ok(error::SUCCESS.code_num)
-    }
-}
 
 pub fn get_config_value(key: &str) -> VcxResult<String> {
     trace!("get_config_value >>> key: {}", key);
@@ -265,22 +185,6 @@ pub fn get_protocol_version() -> usize {
         MAX_SUPPORTED_PROTOCOL_VERSION
     } else {
         protocol_version
-    }
-}
-
-pub fn get_opt_config_value(key: &str) -> Option<String> {
-    trace!("get_opt_config_value >>> key: {}", key);
-    match SETTINGS.read() {
-        Ok(x) => x,
-        Err(_) => return None
-    }
-        .get(key)
-        .map(|v| v.to_string())
-}
-
-pub fn set_opt_config_value(key: &str, value: &Option<String>) {
-    if let Some(v) = value {
-        set_config_value(key, v.as_str())
     }
 }
 
@@ -359,77 +263,12 @@ pub mod tests {
         assert_eq!(read_file(&config_file.path).unwrap(), config_json());
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_process_config_str() {
-        let _setup = SetupDefaults::init();
-
-        assert_eq!(process_config_string(&config_json(), true).unwrap(), error::SUCCESS.code_num);
-
-        assert_eq!(get_config_value("pool_config").unwrap(), _pool_config());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_validate_config() {
-        let _setup = SetupDefaults::init();
-
-        let config: HashMap<String, String> = serde_json::from_str(&config_json()).unwrap();
-        assert_eq!(validate_config(&config).unwrap(), error::SUCCESS.code_num);
-    }
-
     fn _mandatory_config() -> HashMap<String, String> {
         let mut config: HashMap<String, String> = HashMap::new();
         config.insert(CONFIG_WALLET_KEY.to_string(), "password".to_string());
         config
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_validate_config_failures() {
-        let _setup = SetupDefaults::init();
-
-        let invalid = "invalid";
-
-        let config = HashMap::new();
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::MissingWalletKey);
-
-        let mut config = _mandatory_config();
-        config.insert(CONFIG_INSTITUTION_DID.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidDid);
-
-        let mut config = _mandatory_config();
-        config.insert(CONFIG_INSTITUTION_VERKEY.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidVerkey);
-
-        let mut config = _mandatory_config();
-        config.insert(CONFIG_WEBHOOK_URL.to_string(), invalid.to_string());
-        assert_eq!(validate_config(&config).unwrap_err().kind(), VcxErrorKind::InvalidUrl);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_validate_optional_config_val() {
-        let _setup = SetupDefaults::init();
-
-        let closure = Url::parse;
-        let mut config: HashMap<String, String> = HashMap::new();
-        config.insert("valid".to_string(), DEFAULT_URL.to_string());
-        config.insert("invalid".to_string(), "invalid_url".to_string());
-
-        //Success
-        assert_eq!(validate_optional_config_val(config.get("valid"), VcxErrorKind::InvalidUrl, closure).unwrap(),
-                   error::SUCCESS.code_num);
-
-        // Success with No config
-        assert_eq!(validate_optional_config_val(config.get("unknown"), VcxErrorKind::InvalidUrl, closure).unwrap(),
-                   error::SUCCESS.code_num);
-
-        // Fail with failed fn call
-        assert_eq!(validate_optional_config_val(config.get("invalid"),
-                                                VcxErrorKind::InvalidUrl,
-                                                closure).unwrap_err().kind(), VcxErrorKind::InvalidUrl);
-    }
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -444,44 +283,5 @@ pub mod tests {
 
         set_config_value(&key, &value1);
         assert_eq!(get_config_value(&key).unwrap(), value1);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_clear_config() {
-        let _setup = SetupDefaults::init();
-
-        let content = json!({
-            "foo" : "fooval",
-            "bar":"baz",
-        }).to_string();
-
-        assert_eq!(process_config_string(&content, false).unwrap(), error::SUCCESS.code_num);
-
-        assert_eq!(get_config_value("foo").unwrap(), "fooval".to_string());
-        assert_eq!(get_config_value("bar").unwrap(), "baz".to_string());
-
-        clear_config();
-
-        // Fails after config is cleared
-        assert_eq!(get_config_value("foo").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("bar").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_process_config_str_for_actors() {
-        let _setup = SetupDefaults::init();
-
-        let mut config = base_config();
-        config["actors"] = json!(["invitee", "holder"]);
-
-        process_config_string(&config.to_string(), true).unwrap();
-
-        assert_eq!(vec![Actors::Invitee, Actors::Holder], get_actors());
-
-        // passed invalid actor
-        config["actors"] = json!(["wrong"]);
-        assert_eq!(process_config_string(&config.to_string(), true).unwrap_err().kind(), VcxErrorKind::InvalidOption);
     }
 }
