@@ -452,29 +452,20 @@ pub mod tests {
         let _setup = SetupDefaults::init();
 
         let content = json!({
-            "pool_name" : "pool1",
-            "config_name":"config1",
-            "wallet_name":"test_clear_config",
-            "genesis_path":"/tmp/pool1.txn",
-            "wallet_key":"key",
+            "foo" : "fooval",
+            "bar":"baz",
         }).to_string();
 
         assert_eq!(process_config_string(&content, false).unwrap(), error::SUCCESS.code_num);
 
-        assert_eq!(get_config_value("pool_name").unwrap(), "pool1".to_string());
-        assert_eq!(get_config_value("config_name").unwrap(), "config1".to_string());
-        assert_eq!(get_config_value("wallet_name").unwrap(), "test_clear_config".to_string());
-        assert_eq!(get_config_value("genesis_path").unwrap(), "/tmp/pool1.txn".to_string());
-        assert_eq!(get_config_value("wallet_key").unwrap(), "key".to_string());
+        assert_eq!(get_config_value("foo").unwrap(), "fooval".to_string());
+        assert_eq!(get_config_value("bar").unwrap(), "baz".to_string());
 
         clear_config();
 
         // Fails after config is cleared
-        assert_eq!(get_config_value("pool_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("config_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("wallet_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("genesis_path").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
-        assert_eq!(get_config_value("wallet_key").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
+        assert_eq!(get_config_value("foo").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
+        assert_eq!(get_config_value("bar").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
     }
 
     #[test]
