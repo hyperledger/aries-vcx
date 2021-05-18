@@ -58,15 +58,8 @@ typedef struct
  * Initialize the SDK
  */
 
-vcx_error_t vcx_agent_provision_async(vcx_command_handle_t handle, const char *json, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err, const char *config));
-vcx_error_t vcx_agent_update_info(vcx_command_handle_t handle, const char *json, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
-//pub extern fn vcx_agent_update_info(command_handle : u32, json: *const c_char, cb: Option<extern fn(xcommand_handle: u32, err: u32, config: *const c_char)>) -> u32
-
-vcx_error_t vcx_init_core(const char *config);
 vcx_error_t vcx_init_threadpool(const char *config);
-vcx_error_t vcx_open_pool(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_open_main_pool(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
-vcx_error_t vcx_open_wallet(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_create_wallet(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
 vcx_error_t vcx_open_main_wallet(vcx_command_handle_t handle, const char *config, void (*cb)(vcx_command_handle_t command_handle, VcxHandle handle, vcx_error_t err));
 vcx_error_t vcx_close_main_wallet(vcx_command_handle_t handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err));
@@ -215,9 +208,6 @@ vcx_error_t vcx_connection_verify_signature(vcx_command_handle_t command_handle,
 /** Asynchronously sends the credential offer to the connection. */
 //vcx_error_t vcx_issuer_send_credential_offer(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err));
 
-/** Updates the state of the credential from the agency. */
-//vcx_error_t vcx_issuer_credential_update_state(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
-
 /** Retrieves the state of the issuer_credential. */
 //vcx_error_t vcx_issuer_credential_get_state(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 
@@ -305,9 +295,6 @@ vcx_error_t vcx_connection_redirect(vcx_command_handle_t command_handle, vcx_con
 /** Get redirect details. */
 vcx_error_t vcx_connection_get_redirect_details(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *details));
 
-/** Populates status with the current state of this disclosed_proof request. */
-vcx_error_t vcx_disclosed_proof_update_state(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
-
 vcx_error_t vcx_v2_disclosed_proof_update_state(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 
 /** Check for any proof requests from the connection. */
@@ -364,9 +351,6 @@ vcx_error_t vcx_credential_get_tails_hash(vcx_command_handle_t handle, vcx_crede
 vcx_error_t vcx_credential_get_rev_reg_id(vcx_command_handle_t handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err, const char *revRegId));
 
 vcx_error_t vcx_credential_is_revokable(vcx_command_handle_t handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t command_handle, vcx_error_t err, vcx_bool_t revokable));
-
-/** Updates the state of the credential from the agency. */
-vcx_error_t vcx_credential_update_state(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 
 vcx_error_t vcx_v2_credential_update_state(vcx_command_handle_t command_handle, vcx_credential_handle_t credential_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 
@@ -445,9 +429,6 @@ vcx_error_t vcx_shutdown(vcx_bool_t deleteWallet);
 
 /** Get Messages (Connections) of given status */
 vcx_error_t vcx_messages_download( vcx_command_handle_t command_handle, const char *message_status, const char *uids, const char *pw_dids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
-
-/** Get Messages (Cloud Agent) of given status */
-vcx_error_t vcx_download_agent_messages( vcx_command_handle_t command_handle, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
 
 /** Update Message status */
 vcx_error_t vcx_messages_update_status( vcx_command_handle_t command_handle, const char *message_status, const char *msg_json, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));

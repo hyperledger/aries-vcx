@@ -30,13 +30,6 @@ const spawnFaber = () => {
         '--revocation'
       ]
     )
-  } else if (process.env.LEGACY === 'true') {
-    return spawn('node',
-      [path.resolve(__dirname, './faber.js'),
-        '--expose-invitation-port', 8181,
-        '--legacy'
-      ]
-    )
   } else {
     return spawn('node',
       [path.resolve(__dirname, './faber.js'),
@@ -47,20 +40,11 @@ const spawnFaber = () => {
 }
 
 const spawnAlice = () => {
-  if (process.env.LEGACY === 'true') {
-    return spawn('node',
-      [path.resolve(__dirname, './alice.js'),
-        '--autofetch-invitation-url', 'http://localhost:8181',
-        '--legacy'
-      ]
-    )
-  } else {
-    return spawn('node',
-      [path.resolve(__dirname, './alice.js'),
-        '--autofetch-invitation-url', 'http://localhost:8181'
-      ]
-    )
-  }
+  return spawn('node',
+    [path.resolve(__dirname, './alice.js'),
+      '--autofetch-invitation-url', 'http://localhost:8181'
+    ]
+  )
 }
 
 run(spawnFaber)

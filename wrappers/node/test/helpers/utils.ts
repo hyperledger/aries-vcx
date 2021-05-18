@@ -4,37 +4,55 @@ import * as vcx from 'src';
 import * as uuid from 'uuid';
 import '../module-resolver-helper';
 
-const testConfig = {
-  agency_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
-  remote_to_sdk_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
-  link_secret_alias: 'main',
-  protocol_version: '2',
-  exported_wallet_path: '/var/folders/libvcx_nodetest/sample.wallet',
-  threadpool_size: '8',
+const oldConfig = {
+  // link_secret_alias: 'main',
+};
+
+const configThreadpool = {
+  threadpool_size: '4',
+}
+
+const configWalletSample = {
   use_latest_protocols: 'false',
   enable_test_mode: 'true',
-  backup_key: 'backup_wallet_key',
+  payment_method: 'null',
+  wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
+  wallet_key_derivation: 'RAW',
   wallet_type: 'default',
   wallet_name: 'LIBVCX_SDK_WALLET',
-  payment_method: 'null',
+  backup_key: 'backup_wallet_key',
+  exported_wallet_path: '/var/folders/libvcx_nodetest/sample.wallet',
+}
+
+const configPool = {
   pool_name: 'pool1',
-  institution_name: 'default',
+  protocol_version: '2',
+}
+
+const configAgency = {
+  agency_endpoint: 'http://127.0.0.1:8080',
   agency_did: '2hoqvcwupRTUNkXn6ArYzs',
-  institution_did: '2hoqvcwupRTUNkXn6ArYzs',
+  agency_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
+  remote_to_sdk_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
   sdk_to_remote_did: '2hoqvcwupRTUNkXn6ArYzs',
   remote_to_sdk_did: '2hoqvcwupRTUNkXn6ArYzs',
   sdk_to_remote_verkey: 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB',
-  wallet_key: '********',
-  wallet_key_derivation: 'RAW',
-  agency_endpoint: 'http://127.0.0.1:8080',
-};
+}
 
-function generateTestConfig() {
-  const sampleConfig = { ...testConfig };
-  const configId = uuid.v4();
-  sampleConfig.wallet_name = `testnodejs_${configId}`;
-  sampleConfig.exported_wallet_path = `/var/folders/libvcx_nodetest/wallet_${configId}.wallet`;
-  return sampleConfig;
+const issuerConfig = {
+
+  institution_did: '2hoqvcwupRTUNkXn6ArYzs',
+}
+
+const issuerSeed = "000000000000000000000000Trustee1"
+
+function generateWalletConfig() {
+  const walletId = uuid.v4();
+  return {
+    ...configWalletSample,
+    wallet_name: `testnodejs_${walletId}`,
+    exported_wallet_path: `/var/folders/libvcx_nodetest/wallet_${walletId}.wallet`
+  };
 }
 
 export async function initVcxTestMode(): Promise<void> {
@@ -43,9 +61,21 @@ export async function initVcxTestMode(): Promise<void> {
     initRustAPI();
   }
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error';
-  await vcx.defaultLogger(rustLogPattern);
-  const useTestConfig = generateTestConfig();
-  await vcx.initVcxCore(JSON.stringify(useTestConfig));
+  vcx.defaultLogger(rustLogPattern);
+  vcx.initThreadpool(configThreadpool)
+  const configWallet = generateWalletConfig();
+  await vcx.createWallet(configWallet)
+  await vcx.openMainWallet(configWallet)
+  // @ts-ignore
+  const { institution_did, institution_verkey } = await vcx.configureIssuerWallet(issuerSeed)
+  const issuerConfig = {
+    institution_name: 'default',
+    institution_did,
+    institution_verkey
+  }
+  await vcx.initIssuerConfig(issuerConfig)
+  await vcx.createAgencyClientForMainWallet(configAgency)
+  vcx.enableMocks()
 }
 
 export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> =>

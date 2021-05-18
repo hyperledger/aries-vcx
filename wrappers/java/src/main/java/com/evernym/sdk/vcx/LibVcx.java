@@ -24,9 +24,6 @@ public abstract class LibVcx {
         public int vcx_open_main_pool(int command_handle, String config, Callback cb);
         public int vcx_provision_cloud_agent(int command_handle, String config, Callback cb);
 
-        public int vcx_init_core(String config);
-        public int vcx_open_pool(int command_handle, Callback cb);
-        public int vcx_open_wallet(int command_handle, Callback cb);
         public int vcx_update_webhook_url(int command_handle, String notification_webhook_url, Callback cb);
 
         public String vcx_error_c_message(int error_code);
@@ -273,13 +270,7 @@ public abstract class LibVcx {
         /** Get the credential offer message that can be sent to the specified connection */
         public int vcx_issuer_get_credential_offer_msg(int command_handle, int credential_handle, Callback cb);
 
-        /** Updates the state of the credential from the agency. */
-        public int vcx_issuer_credential_update_state(int command_handle, int credential_handle, Callback cb);
-
         public int vcx_v2_issuer_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
-
-        /** Updates the state of the credential from the given message. */
-        public int vcx_issuer_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);
 
         /** Retrieves the state of the issuer_credential. */
         public int vcx_issuer_credential_get_state(int command_handle, int credential_handle, Callback cb);
@@ -348,17 +339,7 @@ public abstract class LibVcx {
          */
         public int vcx_proof_accepted(int proof_handle, String response_data);
 
-        /**
-         * Populates status with the current State of this proof request.
-         */
-        public int vcx_proof_update_state(int command_handle, int proof_handle, Callback cb);
-
         public int vcx_v2_proof_update_state(int command_handle, int proof_handle, int connection_handle, Callback cb);
-
-        /**
-         * Updates the state of the proof from the given message.
-         */
-        public int vcx_proof_update_state_with_message(int command_handle, int proof_handle, String message, Callback cb);
 
         /**
          * Retrieves the State of the proof.
@@ -416,11 +397,6 @@ public abstract class LibVcx {
          */
         public int vcx_disclosed_proof_get_reject_msg(int command_handle, int proof_handle, Callback cb);
 
-        /**
-         * Populates status with the current State of this disclosed_proof request.
-         */
-        public int vcx_disclosed_proof_update_state(int command_handle, int proof_handle, Callback cb);
-
         public int vcx_v2_disclosed_proof_update_state(int command_handle, int proof_handle, int connection_handle, Callback cb);
 
         /**
@@ -474,17 +450,6 @@ public abstract class LibVcx {
          */
         public int vcx_disclosed_proof_decline_presentation_request(int command_handle, int proof_handle, int connection_handle, String reason, String proposal, Callback cb);
 
-
-        /**
-         * UtilsApi object
-         *
-         */
-        public String vcx_provision_agent(String json);
-
-        public int vcx_agent_provision_async(int command_handle, String json,Callback cb);
-
-        public int vcx_agent_update_info(int command_handle,String json,Callback cb);
-
         public int vcx_ledger_get_fees(int command_handle, Callback cb);
 
         public int vcx_get_ledger_author_agreement(int command_handle, Callback cb);
@@ -519,13 +484,7 @@ public abstract class LibVcx {
         /** Check for any credential offers from the connection. */
         public int vcx_credential_get_offers(int command_handle, int connection_handle, Callback cb);
 
-        /** Updates the State of the credential from the agency. */
-        public int vcx_credential_update_state(int command_handle, int credential_handle, Callback cb);
-
         public int vcx_v2_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
-
-        /** Updates the state of the credential from the given message. */
-        public int vcx_credential_update_state_with_message(int command_handle, int credential_handle, String message, Callback cb);
 
         /** Retrieves the State of the credential - including storing the credential if it has been sent. */
         public int vcx_credential_get_state(int command_handle, int credential_handle, Callback cb);
@@ -640,9 +599,6 @@ public abstract class LibVcx {
 
         /** Get messages for given uids or pairwise did from agency endpoint */
         public int vcx_messages_download(int command_handle, String messageStatus, String uids, String pwdids, Callback cb);
-
-        /** Get messages for given uids from Cloud Agent */
-        public int vcx_download_agent_messages(int command_handle, String messageStatus, String uids, Callback cb);
 
         /** Update message status for a object of uids */
         public int vcx_messages_update_status(int command_handle, String messageStatus, String msgJson, Callback cb);

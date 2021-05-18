@@ -6,58 +6,13 @@ import { Connection } from './connection';
 import { VCXBase } from './vcx-base';
 
 export abstract class VCXBaseWithState<SerializedData> extends VCXBase<SerializedData> {
-  protected abstract _updateStFn: (commandHandle: number, handle: number, cb: ICbRef) => number;
   protected abstract _updateStFnV2: (
     commandHandle: number,
     handle: number,
     connHandle: number,
     cb: ICbRef,
   ) => number;
-  protected abstract _updateStWithMessageFn: (
-    commandHandle: number,
-    handle: number,
-    message: string,
-    cb: ICbRef,
-  ) => number;
   protected abstract _getStFn: (commandHandle: number, handle: number, cb: ICbRef) => number;
-
-  /**
-   *
-   * Communicates with the agent service for polling and setting the state of the entity.
-   *
-   * Example:
-   * ```
-   * await object.updateState()
-   * ```
-   * @returns {Promise<void>}
-   */
-  public async updateState(): Promise<number> {
-    try {
-      const commandHandle = 0;
-      const state = await createFFICallbackPromise<number>(
-        (resolve, reject, cb) => {
-          const rc = this._updateStFn(commandHandle, this.handle, cb);
-          if (rc) {
-            resolve(StateType.None);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, _state: StateType) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(_state);
-            },
-          ),
-      );
-      return state;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
 
   public async updateStateV2(connection: Connection): Promise<number> {
     try {
@@ -65,44 +20,6 @@ export abstract class VCXBaseWithState<SerializedData> extends VCXBase<Serialize
       const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = this._updateStFnV2(commandHandle, this.handle, connection.handle, cb);
-          if (rc) {
-            resolve(StateType.None);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, _state: StateType) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(_state);
-            },
-          ),
-      );
-      return state;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   *
-   * Communicates with the agent service for polling and setting the state of the entity.
-   *
-   * Example:
-   * ```
-   * await object.updateState()
-   * ```
-   * @returns {Promise<void>}
-   */
-  public async updateStateWithMessage(message: string): Promise<number> {
-    try {
-      const commandHandle = 0;
-      const state = await createFFICallbackPromise<number>(
-        (resolve, reject, cb) => {
-          const rc = this._updateStWithMessageFn(commandHandle, this.handle, message, cb);
           if (rc) {
             resolve(StateType.None);
           }

@@ -238,7 +238,7 @@ export async function downloadMessagesV2({
  * @class Class representing a Connection
  */
 export class Connection extends VCXBaseWithState<IConnectionData> {
-  /**
+    /**
    * Create a connection object, represents a single endpoint and can be used for sending and receiving
    * credentials and proofs
    *
@@ -307,7 +307,6 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
   ): number => {
     throw new Error('_updateStFnV2 cannot be called for a Connection object');
   };
-  protected _updateStWithMessageFn = rustAPI().vcx_connection_update_state_with_message;
   protected _getStFn = rustAPI().vcx_connection_get_state;
   protected _serializeFn = rustAPI().vcx_connection_serialize;
   protected _deserializeFn = rustAPI().vcx_connection_deserialize;
@@ -355,6 +354,44 @@ export class Connection extends VCXBaseWithState<IConnectionData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  /**
+   *
+   * Communicates with the agent service for polling and setting the state of the entity.
+   *
+   * Example:
+   * ```
+   * await object.updateState()
+   * ```
+   * @returns {Promise<void>}
+   */
+  public async updateState(): Promise<number> {
+      try {
+          const commandHandle = 0;
+          const state = await createFFICallbackPromise<number>(
+              (resolve, reject, cb) => {
+                  const rc = this._updateStFn(commandHandle, this.handle, cb);
+                  if (rc) {
+                      resolve(StateType.None);
+                  }
+              },
+              (resolve, reject) =>
+                  ffi.Callback(
+                      'void',
+                      ['uint32', 'uint32', 'uint32'],
+                      (handle: number, err: number, _state: StateType) => {
+                          if (err) {
+                              reject(err);
+                          }
+                          resolve(_state);
+                      },
+                  ),
+          );
+          return state;
+      } catch (err) {
+          throw new VCXInternalError(err);
+      }
   }
 
   /**

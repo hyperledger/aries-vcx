@@ -10,6 +10,7 @@ use crate::libindy::utils::callback::{build_buf, build_string, get_cb};
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();
     pub static ref CALLBACKS_U32_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32, u32) + Send>>> = Default::default();
+    pub static ref CALLBACKS_U32_I32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32, i32) + Send>>> = Default::default();
     pub static ref CALLBACKS_U32_STR: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32, Option<String>) + Send>>> = Default::default();
     pub static ref CALLBACKS_U32_U32_STR: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32, u32, Option<String>) + Send>>> = Default::default();
     pub static ref CALLBACKS_U32_STR_STR: Mutex<HashMap <CommandHandle, Box<dyn FnMut(u32, Option<String>, Option<String>) + Send>>> = Default::default();
@@ -38,6 +39,13 @@ pub extern "C" fn call_cb_u32_u32_str(command_handle: CommandHandle, arg1: u32, 
     let str1 = build_string(arg3);
     if let Some(mut cb_fn) = cb {
         cb_fn(arg1, arg2, str1)
+    }
+}
+
+pub extern "C" fn call_cb_u32_i32(command_handle: CommandHandle, arg1: u32, arg2: i32) {
+    let cb = get_cb(command_handle, CALLBACKS_U32_I32.deref());
+    if let Some(mut cb_fn) = cb {
+        cb_fn(arg1, arg2)
     }
 }
 

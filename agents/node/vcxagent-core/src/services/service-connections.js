@@ -1,4 +1,4 @@
-const { getMessagesForPwDid, getMessagesForConnection } = require('../utils/messages')
+const { getMessagesForConnection } = require('../utils/messages')
 const {
   updateMessages,
   Connection,
@@ -111,8 +111,8 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
   }
 
   async function getMessages (connectionId, filterStatuses = [], filterUids = []) {
-    const pwDid = await getConnectionPwDid(connectionId)
-    return getMessagesForPwDid(pwDid, filterStatuses, filterUids)
+    const connection = await loadConnection(connectionId)
+    return getMessagesForConnection([connection], filterStatuses, filterUids)
   }
 
   async function getState (connectionId) {

@@ -3,9 +3,8 @@ import { Callback } from 'ffi-napi';
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
-import { IInitVCXOptions } from './common'
 
-export async function provisionCloudAgent (configAgent: object, options: IInitVCXOptions = {}): Promise<string> {
+export async function provisionCloudAgent (configAgent: object): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
@@ -34,49 +33,6 @@ export interface PtrBuffer extends Buffer {
   // Buffer.deref typing provided by @types/ref-napi is wrong, so we overwrite the typing/
   // An issue is currently dealing with fixing it https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44004#issuecomment-744497037
   deref: () => PtrBuffer;
-}
-
-export async function provisionAgent(configAgent: string): Promise<string> {
-  /**
-   * Provision an agent in the agency, populate configuration and wallet for this agent.
-   *
-   * Example:
-   * ```
-   * enterpriseConfig = {
-   *     'agency_url': 'https://enym-eagency.pdev.evernym.com',
-   *     'agency_did': 'YRuVCckY6vfZfX9kcQZe3u',
-   *     'agency_verkey': "J8Yct6FwmarXjrE2khZesUXRVVSVczSoa9sFaGe6AD2v",
-   *     'wallet_name': 'LIBVCX_SDK_WALLET',
-   *     'agent_seed': '00000000000000000000000001234561',
-   *     'enterprise_seed': '000000000000000000000000Trustee1',
-   *     'wallet_key': '1234'
-   *  }
-   * vcxConfig = await provisionAgent(JSON.stringify(enterprise_config))
-   */
-  try {
-    return await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_agent_provision_async(0, configAgent, cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (xhandle: number, err: number, config: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(config);
-          },
-        ),
-    );
-  } catch (err) {
-    throw new VCXInternalError(err);
-  }
 }
 
 export function getVersion(): string {
@@ -190,46 +146,6 @@ export async function vcxUpdateWebhookUrl({ webhookUrl }: IUpdateWebhookUrl): Pr
           }
           resolve();
         }),
-    );
-  } catch (err) {
-    throw new VCXInternalError(err);
-  }
-}
-
-export interface IDownloadMessagesConfigs {
-  status: string;
-  uids: string;
-  pairwiseDids: string;
-}
-
-export async function downloadMessages({
-  status,
-  uids,
-  pairwiseDids,
-}: IDownloadMessagesConfigs): Promise<string> {
-  /**
-   *  Retrieve messages from the agency
-   */
-  try {
-    return await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_messages_download(0, status, uids, pairwiseDids, cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (xhandle: number, err: number, messages: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(messages);
-          },
-        ),
     );
   } catch (err) {
     throw new VCXInternalError(err);

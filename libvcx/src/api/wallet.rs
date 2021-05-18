@@ -1162,7 +1162,7 @@ pub mod tests {
     use crate::api::return_types_u32;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::build_test_address;
-    use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet};
+    use crate::libindy::utils::wallet::{close_main_wallet, delete_wallet, WalletConfig, create_and_open_as_main_wallet};
     use crate::utils::devsetup::*;
     use crate::utils::timeout::TimeoutUtils;
 
@@ -1312,6 +1312,24 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         let new_balance = libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
         assert_eq!(balance - tokens, new_balance);
+    }
+
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_wallet() {
+        let _setup = SetupEmpty::init();
+
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let config = json!({
+            "wallet_name": wallet_name,
+            "wallet_key": settings::DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW
+        }).to_string();
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        let err = vcx_create_wallet(cb.command_handle, CString::new(format!("{}", config)).unwrap().into_raw(), Some(cb.get_callback()));
+        assert_eq!(err, error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
     }
 
     #[test]
@@ -1530,7 +1548,16 @@ pub mod tests {
 
         let export_file = TempFile::prepare_path(wallet_name);
 
-        create_and_open_as_main_wallet(wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None, storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+        create_and_open_as_main_wallet(wallet_config);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();

@@ -220,20 +220,6 @@ public class CredentialApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> credentialUpdateState(
-            int credentialHandle
-    ) throws VcxException {
-        ParamGuard.notNull(credentialHandle, "credentialHandle");
-        logger.debug("credentialUpdateState() called with: credentialHandle = [" + credentialHandle + "]");
-        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_credential_update_state(commandHandle, credentialHandle, vcxCredentialUpdateStateCB);
-        checkResult(result);
-
-        return future;
-    }
-
     public static CompletableFuture<Integer> credentialUpdateStateV2(
             int credentialHandle,
             int connectionHandle
@@ -244,21 +230,6 @@ public class CredentialApi extends VcxJava.API {
         int commandHandle = addFuture(future);
 
         int result = LibVcx.api.vcx_v2_credential_update_state(commandHandle, credentialHandle, connectionHandle, vcxCredentialUpdateStateCB);
-        checkResult(result);
-
-        return future;
-    }
-
-    public static CompletableFuture<Integer> credentialUpdateStateWithMessage(
-            int credentialHandle,
-            String message
-    ) throws VcxException {
-        ParamGuard.notNull(credentialHandle, "credentialHandle");
-        logger.debug("credentialUpdateState() called with: credentialHandle = [" + credentialHandle + "]");
-        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_credential_update_state_with_message(commandHandle, credentialHandle, message, vcxCredentialUpdateStateCB);
         checkResult(result);
 
         return future;

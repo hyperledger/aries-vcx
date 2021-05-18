@@ -6,6 +6,7 @@ use agency_client::agent_utils;
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, signus, wallet};
 use crate::settings;
+use crate::libindy::utils::wallet::WalletConfig;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -29,11 +30,11 @@ pub struct Config {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct AgencyConfig {
-    agency_did: String,
-    agency_verkey: String,
-    agency_endpoint: String,
-    agent_seed: Option<String>
+pub struct AgencyConfig {
+    pub agency_did: String,
+    pub agency_verkey: String,
+    pub agency_endpoint: String,
+    pub agent_seed: Option<String>
 }
 
 pub fn parse_config(config: &str) -> VcxResult<Config> {
@@ -73,14 +74,17 @@ pub fn set_config_values(my_config: &Config) {
 pub fn configure_wallet(my_config: &Config) -> VcxResult<(String, String, String, WalletHandle)> {
     let wallet_name = get_or_default(&my_config.wallet_name, settings::DEFAULT_WALLET_NAME);
 
-    let wh = wallet::create_and_open_as_main_wallet(
-        &wallet_name,
-        &my_config.wallet_key,
-        &my_config.wallet_key_derivation.as_deref().unwrap_or(settings::WALLET_KDF_DEFAULT.into()),
-        my_config.wallet_type.as_ref().map(String::as_str),
-        my_config.storage_config.as_ref().map(String::as_str),
-        my_config.storage_credentials.as_ref().map(String::as_str),
-    )?;
+    let wallet_config = WalletConfig {
+        wallet_name: wallet_name.clone(),
+        wallet_key: my_config.wallet_key.clone(),
+        wallet_key_derivation: my_config.wallet_key_derivation.clone().unwrap_or(settings::WALLET_KDF_DEFAULT.into()),
+        wallet_type: my_config.wallet_type.clone(),
+        storage_config: my_config.storage_config.clone(),
+        storage_credentials: my_config.storage_credentials.as_ref().map(|val| json!(val)),
+        rekey: None,
+        rekey_derivation_method: None
+    };
+    let wh = wallet::create_and_open_as_main_wallet(wallet_config)?;
     wallet::set_wallet_handle(wh);
     trace!("initialized wallet");
 
@@ -182,7 +186,7 @@ pub fn connect_register_provision(config: &str) -> VcxResult<String> {
 
 pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
     let agency_config: AgencyConfig = serde_json::from_str(agency_config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration,
                                           format!("Failed to serialize agency config: {:?}, err: {:?}", agency_config,  err)))?;
 
     let (my_did, my_vk) = signus::create_and_store_my_did(agency_config.agent_seed.as_ref().map(String::as_str), None)?;

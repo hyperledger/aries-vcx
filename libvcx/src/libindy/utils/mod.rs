@@ -116,6 +116,6 @@ pub mod tests {
         let pool_config = settings::get_config_value(settings::CONFIG_POOL_CONFIG);
 
         open_pool(&pool_name, &path, pool_config.ok().as_ref().map(String::as_str)).unwrap();
-        wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_name, &setup_wallet.wallet_key, &setup_wallet.wallet_kdf, None, None, None).unwrap();
+        wallet::create_and_open_as_main_wallet(setup_wallet.wallet_config.clone()).unwrap();
     }
 }

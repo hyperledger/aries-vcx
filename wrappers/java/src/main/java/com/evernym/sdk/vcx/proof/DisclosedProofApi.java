@@ -85,19 +85,6 @@ public class DisclosedProofApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> proofUpdateState(
-            int proofHandle
-    ) throws VcxException {
-        logger.debug("proofUpdateState() called with: proofHandle = [" + proofHandle + "]");
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_disclosed_proof_update_state(commandHandle, proofHandle, vcxProofUpdateStateCB);
-        checkResult(result);
-
-        return future;
-    }
-
     public static CompletableFuture<Integer> proofUpdateStateV2(
             int proofHandle,
             int connectionHandle

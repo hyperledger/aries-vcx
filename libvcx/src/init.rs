@@ -10,10 +10,10 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 use crate::utils::runtime::ThreadpoolConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct PoolConfig {
-    genesis_path: String,
-    pool_name: Option<String>,
-    pool_config: Option<String>,
+pub struct PoolConfig {
+    pub genesis_path: String,
+    pub pool_name: Option<String>,
+    pub pool_config: Option<String>,
 }
 
 pub fn init_threadpool(config: &str) -> VcxResult<()> {
@@ -30,11 +30,15 @@ struct IssuerConfig {
     institution_verkey: Option<String>,
 }
 
-pub fn init_core(config: &str) -> VcxResult<()> {
-    info!("init_core >>> config = {}", config);
-    settings::process_config_string(&config, true)?;
-    settings::log_settings();
-    init_threadpool(config)?;
+pub fn enable_vcx_mocks() -> VcxResult<()> {
+    info!("enable_vcx_mocks >>>");
+    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
+    Ok(())
+}
+
+pub fn enable_agency_mocks() -> VcxResult<()> {
+    info!("enable_agency_mocks >>>");
+    settings::get_agency_client_mut()?.enable_test_mode();
     Ok(())
 }
 
@@ -67,7 +71,7 @@ pub fn open_pool_directly(config: &str) -> VcxResult<()> {
     trace!("open_pool_directly >>> config: {}", config);
 
     let config: PoolConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration,
                                           format!("Failed to deserialize pool config {:?}, err: {:?}", config, err)))?;
 
     let pool_name = config.pool_name.unwrap_or(settings::DEFAULT_POOL_NAME.to_string());

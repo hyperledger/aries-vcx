@@ -6,7 +6,7 @@ const { createServiceProver } = require('./services/service-prover')
 const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
-const { provisionAgentInAgency, provisionAgentInAgencyLegacy } = require('./utils/vcx-workflows')
+const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   initThreadpool,
   createAgencyClientForMainWallet,
@@ -15,23 +15,18 @@ const {
   openMainPool,
   vcxUpdateWebhookUrl,
   shutdownVcx,
-  initVcxCore,
-  openVcxPool,
-  openVcxWallet
 } = require('@hyperledger/node-vcx-wrapper')
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady } = require('./common')
 
-async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger, legacyProvision }) {
+async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger }) {
   genesisPath = genesisPath || `${__dirname}/../resources/docker.txn`
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
 
   const storageService = await createStorageService(agentName)
   if (!await storageService.agentProvisionExists()) {
-    const agentProvision = legacyProvision
-      ? await provisionAgentInAgencyLegacy(agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger)
-      : await provisionAgentInAgency(agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger)
+    const agentProvision = await provisionAgentInAgency(agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger)
     await storageService.saveAgentProvision(agentProvision)
   }
   const agentProvision = await storageService.loadAgentProvision()
@@ -49,17 +44,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     await createAgencyClientForMainWallet(agentProvision.agencyConfig)
     logger.silly('Opening pool')
     await openMainPool({ genesis_path: genesisPath })
-  }
-
-  async function agentInitVcxLegacy () {
-    logger.info(`Initializing ${agentName} vcx session.`)
-    logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    await initVcxCore(JSON.stringify(agentProvision))
-    logger.silly('Opening pool')
-    await openVcxPool()
-    logger.silly('Opening wallet')
-    await openVcxWallet()
-    logger.silly('LibVCX fully initialized')
   }
 
   async function agentShutdownVcx () {
@@ -136,7 +120,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
   return {
     // vcx controls
     agentInitVcx,
-    agentInitVcxLegacy,
     agentShutdownVcx,
     getInstitutionDid,
     updateWebhookUrl,
