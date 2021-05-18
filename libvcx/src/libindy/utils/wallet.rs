@@ -329,15 +329,11 @@ pub fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
-pub fn import(config: &str) -> VcxResult<()> {
-    trace!("import >>> config {}", config);
-
-    settings::process_config_string(config, false)?;
-
-    let restore_config = RestoreWalletConfigs::from_str(config)?;
-    let new_wallet_name = restore_config.wallet_name;
-    let new_wallet_key = restore_config.wallet_key;
-    let new_wallet_kdf = restore_config.wallet_key_derivation.unwrap_or(settings::WALLET_KDF_DEFAULT.into());
+pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
+    trace!("import >>> wallet={} exported_wallet_path={}", restore_config.wallet_name, restore_config.exported_wallet_path);
+    let new_wallet_name = restore_config.wallet_name.clone();
+    let new_wallet_key = restore_config.wallet_key.clone();
+    let new_wallet_kdf = restore_config.wallet_key_derivation.clone().unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
     let new_wallet_config = build_wallet_config(&new_wallet_name, None, None);
     let new_wallet_credentials = build_wallet_credentials(&new_wallet_key, None, &new_wallet_kdf, None, None)?;
@@ -543,13 +539,14 @@ pub mod tests {
 
         api::vcx::vcx_shutdown(true);
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
-            settings::CONFIG_WALLET_KEY: "new key",
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: "new key".into(),
+            exported_wallet_path: export_path.to_string(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
+
         import(&import_config).unwrap();
 
         let wallet_config_2 = WalletConfig {
@@ -583,17 +580,14 @@ pub mod tests {
 
         let (type_, id, value) = _record();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.clone(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-        }).to_string();
-
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.to_string(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         import(&import_config).unwrap();
-
-        settings::process_config_string(&import_config, false).unwrap();
 
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
@@ -614,51 +608,18 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_import_fails_with_missing_configs() {
-        let _setup = SetupEmpty::init();
-
-        // Invalid json
-        let res = import("").unwrap_err();
-        assert_eq!(res.kind(), VcxErrorKind::InvalidJson);
-        let mut config = json!({});
-
-        // Missing wallet_key
-        let res = import(&config.to_string()).unwrap_err();
-        assert_eq!(res.kind(), VcxErrorKind::InvalidJson);
-        config[settings::CONFIG_WALLET_KEY] = serde_json::to_value("wallet_key1").unwrap();
-
-        // Missing wallet name
-        let res = import(&config.to_string()).unwrap_err();
-        assert_eq!(res.kind(), VcxErrorKind::InvalidJson);
-        config[settings::CONFIG_WALLET_NAME] = serde_json::to_value("wallet_name1").unwrap();
-
-        // Missing exported_wallet_path
-        let res = import(&config.to_string()).unwrap_err();
-        assert_eq!(res.kind(), VcxErrorKind::InvalidJson);
-        config[settings::CONFIG_EXPORTED_WALLET_PATH] = serde_json::to_value(
-            get_temp_dir_path(settings::DEFAULT_EXPORTED_WALLET_PATH).to_str().unwrap()
-        ).unwrap();
-
-        // Missing backup_key
-        let res = import(&config.to_string()).unwrap_err();
-        assert_eq!(res.kind(), VcxErrorKind::InvalidJson);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_import_wallet_fails_with_existing_wallet() {
         let _setup = SetupDefaults::init();
 
         let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.clone(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-        }).to_string();
-
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.to_string(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         let res = import(&import_config).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::DuplicationWallet);
 
@@ -670,14 +631,13 @@ pub mod tests {
     fn test_import_wallet_fails_with_invalid_path() {
         let _setup = SetupDefaults::init();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: settings::DEFAULT_WALLET_NAME,
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: "DIFFERENT_PATH",
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-        }).to_string();
-
+        let import_config = RestoreWalletConfigs {
+            wallet_name: settings::DEFAULT_WALLET_NAME.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: "DIFFERENT_PATH".to_string(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         let res = import(&import_config).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::IOError);
     }
@@ -692,13 +652,13 @@ pub mod tests {
         delete_wallet(&wallet_config).unwrap();
 
         let wallet_name_new = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name_new,
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: "bad_backup_key",
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.to_string(),
+            backup_key: "bad_backup_key".into(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         let res = import(&import_config).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::LibindyInvalidStructure);
     }

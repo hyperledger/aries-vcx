@@ -515,7 +515,7 @@ mod tests {
     use crate::libindy::utils::pool::tests::create_tmp_genesis_txn_file;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, WalletConfig};
+    use crate::libindy::utils::wallet::{import, WalletConfig, RestoreWalletConfigs};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::wallet::get_wallet_handle;
     use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
@@ -646,13 +646,13 @@ mod tests {
 
         wallet::delete_wallet(&wallet_config).unwrap();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: &wallet_config.wallet_name,
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         import(&import_config).unwrap();
 
         let content = json!({
@@ -688,13 +688,13 @@ mod tests {
             rekey_derivation_method: None
         };
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_config2.wallet_name,
-            settings::CONFIG_WALLET_KEY: wallet_config2.wallet_key,
-            settings::CONFIG_WALLET_KEY_DERIVATION: wallet_config2.wallet_key_derivation,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_config2.wallet_name.clone(),
+            wallet_key: wallet_config2.wallet_key.clone(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(wallet_config2.wallet_key_derivation.clone())
+        };
         import(&import_config).unwrap();
 
         let content = json!({
@@ -720,12 +720,13 @@ mod tests {
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&serde_json::to_string(&wallet_config).unwrap()).unwrap();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: None
+        };
         assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
 
         vcx_shutdown(true);

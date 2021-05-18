@@ -27,10 +27,6 @@ pub struct AgencyConfig {
     pub sdk_to_remote_verkey: String,
 }
 
-pub fn get_or_default(config: &Option<String>, default: &str) -> String {
-    config.to_owned().unwrap_or(default.to_string())
-}
-
 pub fn provision_cloud_agent(provision_agent_config: &ProvisionAgentConfig) -> VcxResult<AgencyConfig> {
     let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None)?;
 

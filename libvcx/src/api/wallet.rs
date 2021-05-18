@@ -7,7 +7,7 @@ use libc::c_char;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use crate::libindy::utils::wallet;
-use crate::libindy::utils::wallet::{export_main_wallet, import, WalletConfig};
+use crate::libindy::utils::wallet::{export_main_wallet, import, WalletConfig, RestoreWalletConfigs};
 use crate::utils;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
@@ -1106,6 +1106,14 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
 
     trace!("vcx_wallet_import(command_handle: {}, config: ****)",
            command_handle);
+
+    let config = match serde_json::from_str::<RestoreWalletConfigs>(&config) {
+        Ok(config) => config,
+        Err(err) => {
+            error!("vcx_wallet_import >>> invalid import configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
 
     thread::spawn(move || {
         trace!("vcx_wallet_import(command_handle: {}, config: ****)", command_handle);

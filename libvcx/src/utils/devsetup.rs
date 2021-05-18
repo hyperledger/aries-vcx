@@ -464,13 +464,6 @@ pub fn cleanup_agency_env() {
     delete_test_pool();
 }
 
-pub fn set_new_config(config: &str) -> VcxResult<()> {
-    settings::clear_config();
-    settings::process_config_string(config, true)?;
-    change_wallet_handle();
-    Ok(())
-}
-
 fn change_wallet_handle() {
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
     wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
