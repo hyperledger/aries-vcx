@@ -282,7 +282,7 @@ pub mod test {
         pub fn teardown(&self) {
             self.activate();
             close_main_wallet().unwrap();
-            delete_wallet(&self.config_wallet.wallet_name, &self.config_wallet.wallet_key, &self.config_wallet.wallet_key_derivation, None, None, None).unwrap();
+            delete_wallet(&self.config_wallet).unwrap();
         }
     }
 
@@ -461,7 +461,7 @@ pub mod test {
         fn drop(&mut self) {
             self.activate();
             close_main_wallet().unwrap();
-            delete_wallet(&self.config_wallet.wallet_name, &self.config_wallet.wallet_key, &self.config_wallet.wallet_key_derivation, None, None, None).unwrap();
+            delete_wallet(&self.config_wallet).unwrap();
         }
     }
 
@@ -469,7 +469,7 @@ pub mod test {
         fn drop(&mut self) {
             self.activate();
             close_main_wallet().unwrap();
-            delete_wallet(&self.config_wallet.wallet_name, &self.config_wallet.wallet_key, &self.config_wallet.wallet_key_derivation, None, None, None).unwrap();
+            delete_wallet(&self.config_wallet).unwrap();
         }
     }
 }

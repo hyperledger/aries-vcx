@@ -1571,7 +1571,8 @@ pub mod tests {
             wallet_name: wallet_name.into(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-            wallet_type: None, storage_config: None,
+            wallet_type: None,
+            storage_config: None,
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None
@@ -1589,7 +1590,7 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
         close_main_wallet().unwrap();
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name,
@@ -1605,6 +1606,6 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
     }
 }

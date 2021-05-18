@@ -9,7 +9,7 @@ use crate::error::prelude::*;
 use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig};
+use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
@@ -275,11 +275,24 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
             .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
+        let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
             .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
         let _res = close_main_wallet();
-        match wallet::delete_wallet(&wallet_name, &wallet_key, &key_derivation, wallet_type.as_deref(), None, None) {
+
+
+        let wallet_config = WalletConfig {
+            wallet_name,
+            wallet_key,
+            wallet_key_derivation,
+            wallet_type,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+
+        match wallet::delete_wallet(&wallet_config) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -629,12 +642,12 @@ mod tests {
     fn test_open_wallet_of_imported_wallet_succeeds() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: &wallet_name,
+            settings::CONFIG_WALLET_NAME: &wallet_config.wallet_name,
             settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
             settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
@@ -659,14 +672,26 @@ mod tests {
     fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
+
+        let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
+        let wallet_config2 = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
+            settings::CONFIG_WALLET_NAME: wallet_config2.wallet_name,
+            settings::CONFIG_WALLET_KEY: wallet_config2.wallet_key,
+            settings::CONFIG_WALLET_KEY_DERIVATION: wallet_config2.wallet_key_derivation,
             settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
             settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
         }).to_string();
@@ -682,7 +707,7 @@ mod tests {
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(wallet_name.as_str(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config2).unwrap();
     }
 
     #[test]
@@ -690,16 +715,10 @@ mod tests {
     fn test_import_of_opened_wallet_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
-
-        let wallet_config = json!({
-            "wallet_name": wallet_name.as_str(),
-            "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::WALLET_KDF_RAW
-        }).to_string();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
-        _vcx_open_main_wallet_c_closure(&wallet_config).unwrap();
+        _vcx_open_main_wallet_c_closure(&serde_json::to_string(&wallet_config).unwrap()).unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.as_str(),

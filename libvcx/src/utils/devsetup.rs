@@ -51,16 +51,22 @@ pub struct SetupLibraryWallet {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
+    pub wallet_config: WalletConfig
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPool; // set default settings, init indy wallet, init pool, set default fees
+pub struct SetupLibraryWalletPool {
+    pub wallet_config: WalletConfig
+} // set default settings, init indy wallet, init pool, set default fees
 
-pub struct SetupLibraryWalletPoolZeroFees;  // set default settings, init indy wallet, init pool, set zero fees
+pub struct SetupLibraryWalletPoolZeroFees {
+    pub wallet_config: WalletConfig
+}  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
+    pub wallet_config: WalletConfig
 } // set default settings and enable mock agency mode
 
 pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0
@@ -164,14 +170,14 @@ impl SetupLibraryWallet {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::get_agency_client_mut().unwrap().disable_test_mode();
         create_and_open_as_main_wallet(&wallet_config).unwrap();
-        SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf }
+        SetupLibraryWallet { wallet_name, wallet_key, wallet_kdf, wallet_config }
     }
 }
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
         let _res = close_main_wallet();
-        delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
+        delete_wallet(&self.wallet_config).unwrap();
         tear_down()
     }
 }
@@ -215,7 +221,7 @@ impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
             let _res = close_main_wallet();
-            delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
+            delete_wallet(&self.wallet_config).unwrap();
             reset_wallet_handle();
         }
     }
@@ -268,14 +274,14 @@ impl Drop for SetupIndyMocks {
 impl SetupLibraryWalletPool {
     pub fn init() -> SetupLibraryWalletPool {
         setup(ThreadpoolConfig { num_threads: Some(4) });
-        setup_indy_env(false);
-        SetupLibraryWalletPool
+        let wallet_config = setup_indy_env(false);
+        SetupLibraryWalletPool { wallet_config }
     }
 }
 
 impl Drop for SetupLibraryWalletPool {
     fn drop(&mut self) {
-        cleanup_indy_env();
+        cleanup_indy_env(&self.wallet_config);
         tear_down()
     }
 }
@@ -283,14 +289,14 @@ impl Drop for SetupLibraryWalletPool {
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
         setup(ThreadpoolConfig { num_threads: Some(4) });
-        setup_indy_env(true);
-        SetupLibraryWalletPoolZeroFees
+        let wallet_config = setup_indy_env(true);
+        SetupLibraryWalletPoolZeroFees { wallet_config }
     }
 }
 
 impl Drop for SetupLibraryWalletPoolZeroFees {
     fn drop(&mut self) {
-        cleanup_indy_env();
+        cleanup_indy_env(&self.wallet_config);
         tear_down()
     }
 }
@@ -318,14 +324,14 @@ impl SetupAgencyMock {
         };
         create_and_open_as_main_wallet(&wallet_config).unwrap();
 
-        SetupAgencyMock { wallet_name, wallet_key, wallet_kdf }
+        SetupAgencyMock { wallet_name, wallet_key, wallet_kdf, wallet_config }
     }
 }
 
 impl Drop for SetupAgencyMock {
     fn drop(&mut self) {
         let _res = close_main_wallet();
-        delete_wallet(&self.wallet_name, &self.wallet_key, &self.wallet_kdf, None, None, None).unwrap();
+        delete_wallet(&self.wallet_config).unwrap();
         tear_down()
     }
 }
@@ -419,7 +425,7 @@ pub fn setup_libnullpay_nofees() {
     libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
-pub fn setup_indy_env(use_zero_fees: bool) {
+pub fn setup_indy_env(use_zero_fees: bool) -> WalletConfig {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
@@ -448,12 +454,13 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
+    wallet_config
 }
 
-pub fn cleanup_indy_env() {
+pub fn cleanup_indy_env(wallet_config: &WalletConfig) {
     let _res = close_main_wallet();
-    delete_wallet(settings::DEFAULT_WALLET_NAME, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None)
-        .unwrap_or_else(|_| error!("Error deleting wallet {}", settings::DEFAULT_WALLET_NAME));
+    delete_wallet(&wallet_config)
+        .unwrap_or_else(|_| error!("Error deleting wallet {}", wallet_config.wallet_name));
     delete_test_pool();
 }
 

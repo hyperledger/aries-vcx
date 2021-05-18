@@ -178,11 +178,11 @@ pub fn close_main_wallet() -> VcxResult<()> {
     Ok(())
 }
 
-pub fn delete_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>) -> VcxResult<()> {
-    trace!("delete_wallet >>> wallet_name: {}", wallet_name);
+pub fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+    trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
 
-    let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, None, None)?;
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
+    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
 
     wallet::delete_wallet(&config, &credentials)
         .wait()
@@ -190,11 +190,11 @@ pub fn delete_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, 
             match err.error_code.clone() {
                 ErrorCode::WalletAccessFailed => {
                     err.to_vcx(VcxErrorKind::WalletAccessFailed,
-                               format!("Can not open wallet \"{}\". Invalid key has been provided.", wallet_name))
+                               format!("Can not open wallet \"{}\". Invalid key has been provided.", &wallet_config.wallet_name))
                 }
                 ErrorCode::WalletNotFoundError => {
                     err.to_vcx(VcxErrorKind::WalletNotFound,
-                               format!("Wallet \"{}\" not found or unavailable", wallet_name))
+                               format!("Wallet \"{}\" not found or unavailable", &wallet_config.wallet_name))
                 }
                 error_code => {
                     err.to_vcx(VcxErrorKind::LibndyError(error_code as u32), "Indy error occurred")
@@ -366,7 +366,7 @@ pub mod tests {
         ("type1", "id1", "value1")
     }
 
-    pub fn create_main_wallet_and_its_backup() -> (TempFile, String) {
+    pub fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
 
         let export_file = TempFile::prepare_path(wallet_name);
@@ -397,7 +397,7 @@ pub mod tests {
 
         close_main_wallet().unwrap();
 
-        (export_file, wallet_name.to_string())
+        (export_file, wallet_name.to_string(), wallet_config)
     }
 
     #[test]
@@ -454,10 +454,10 @@ pub mod tests {
         close_main_wallet().unwrap();
 
         // Delete fails
-        assert_eq!(delete_wallet(wallet_name, wallet_key, wallet_wrong_kdf, None, None, None).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
+        assert_eq!(delete_wallet(&wallet_config2).unwrap_err().kind(), VcxErrorKind::WalletAccessFailed);
 
         // Delete works
-        delete_wallet(&wallet_config.wallet_name, &wallet_config.wallet_key, &wallet_config.wallet_key_derivation, None, None, None).unwrap()
+        delete_wallet(&wallet_config).unwrap()
     }
 
     #[test]
@@ -532,10 +532,10 @@ pub mod tests {
     fn test_wallet_import_export_with_different_wallet_key() {
         let _setup = SetupDefaults::init();
 
-        let (export_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         close_main_wallet();
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
 
         let xtype = "type1";
         let id = "id1";
@@ -567,7 +567,7 @@ pub mod tests {
         assert_eq!(add_record(xtype, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
 
         close_main_wallet();
-        delete_wallet(&wallet_name, "new key", settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config_2).unwrap();
     }
 
     #[test]
@@ -575,9 +575,9 @@ pub mod tests {
     fn test_wallet_import_export() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
 
         settings::clear_config();
 
@@ -609,7 +609,7 @@ pub mod tests {
         assert_eq!(add_record(type_, id, value, None).unwrap_err().kind(), VcxErrorKind::DuplicationWalletRecord);
 
         close_main_wallet().unwrap();
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
     }
 
     #[test]
@@ -649,7 +649,7 @@ pub mod tests {
     fn test_import_wallet_fails_with_existing_wallet() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_name.clone(),
@@ -662,7 +662,7 @@ pub mod tests {
         let res = import(&import_config).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::DuplicationWallet);
 
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
     }
 
     #[test]
@@ -687,9 +687,9 @@ pub mod tests {
     fn test_import_wallet_fails_with_invalid_backup_key() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
 
         let wallet_name_new = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
         let import_config = json!({
