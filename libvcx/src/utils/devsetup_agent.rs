@@ -125,7 +125,7 @@ pub mod test {
             create_wallet(&config_wallet).unwrap();
             let wallet_handle = open_as_main_wallet(&config_wallet).unwrap();
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
-            init_issuer_config(&config_issuer); // todo: this line can be removed probably
+            init_issuer_config(&config_issuer);
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
 
             let config = combine_configs(&config_wallet, &config_agency, Some(&config_issuer), wallet_handle);
@@ -147,9 +147,6 @@ pub mod test {
         pub fn activate(&self) {
             info!("faber activate >>> going to clear config");
             settings::clear_config();
-            // todo: Would be nicer to load library state bit more explicitly than just "blindly" loading dumped state
-            // init_issuer_config(&self.config_issuer);
-            // create_agency_client_for_main_wallet(&self.config_agency);
             info!("faber activate >>> going to process config string: {}", &self.config);
             let res = settings::process_config_string(&self.config, false);
             warn!("process config res = {:?}", res);

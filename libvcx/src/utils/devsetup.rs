@@ -201,7 +201,6 @@ impl SetupWallet {
             rekey_derivation_method: None
         };
         create_indy_wallet(&wallet_config).unwrap();
-        info!("SetupWallet:: init :: Wallet {} created", wallet_name);
 
         SetupWallet { wallet_name, wallet_kdf, wallet_key, wallet_config, skip_cleanup: false}
     }
@@ -502,11 +501,8 @@ pub fn set_new_config(config: &str) -> VcxResult<()> {
 }
 
 fn change_wallet_handle() {
-    warn!("change_wallet_handle >>> getting wallet_handle");
     let wallet_handle = settings::get_config_value(settings::CONFIG_WALLET_HANDLE).unwrap();
-    warn!("change_wallet_handle >>> going to set wallet_handle={}", wallet_handle);
     wallet::set_wallet_handle(WalletHandle(wallet_handle.parse::<i32>().unwrap()));
-    warn!("change_wallet_handle >>> finished setting wallet_handle={}", wallet_handle);
 }
 
 pub fn setup_agency_env(use_zero_fees: bool) {

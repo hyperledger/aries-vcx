@@ -103,7 +103,6 @@ pub fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHand
                 }
             })?;
 
-    // create_agency_client_for_main_wallet(&settings::settings_as_string())?;
     set_wallet_handle(handle);
 
     Ok(handle)

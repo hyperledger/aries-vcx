@@ -72,7 +72,6 @@ export async function initVcxTestMode(): Promise<void> {
     institution_did,
     institution_verkey
   }
-  console.warn(`issuerConfig = ${JSON.stringify(issuerConfig)}`)
   await vcx.initIssuerConfig(issuerConfig)
   await vcx.createAgencyClientForMainWallet(configAgency)
   vcx.enableMocks()

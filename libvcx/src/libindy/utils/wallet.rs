@@ -117,6 +117,7 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
     config.to_string()
 }
 
+//todo: refactor args.
 pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, key_derivation_method: &str, rekey: Option<&str>, rekey_derivation_method: Option<&str>) -> VcxResult<String> {
     serde_json::to_string(&WalletCredentials {
         key: String::from(key),

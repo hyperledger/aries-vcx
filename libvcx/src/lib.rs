@@ -53,7 +53,6 @@ mod libindy;
 #[allow(unused_imports)]
 #[allow(dead_code)]
 #[cfg(test)]
-#[cfg(feature = "testthis")]
 mod tests {
     use std::thread;
     use std::time::Duration;
@@ -905,7 +904,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "testthis")]
     fn test_two_creds_two_rev_reg_id_revoke_second() {
         let _setup = SetupLibraryAgencyV2::init();
         let issuer = Faber::setup();
