@@ -64,15 +64,14 @@ pub mod test {
     }
 
     pub trait TestAgent {
-        fn activate(&self);
+        fn activate(&mut self);
     }
 
     pub struct Faber {
+        pub is_active: bool,
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyConfig,
         pub config_issuer: IssuerConfig,
-        pub wallet_handle: WalletHandle,
-        pub config: String,
         pub connection_handle: u32,
         pub schema_handle: u32,
         pub cred_def_handle: u32,
@@ -81,14 +80,30 @@ pub mod test {
     }
 
     impl TestAgent for Faber {
-        fn activate(&self) {
-            utils::devsetup::set_new_config(&self.config);
+        fn activate(&mut self) {
+            close_main_wallet();
+            settings::clear_config();
+
+            info!("activate >>> Faber opening main wallet");
+            open_as_main_wallet(&self.config_wallet).unwrap();
+            info!("activate >>> Faber initing issuer config");
+            init_issuer_config(&self.config_issuer).unwrap();
+            info!("activate >>> Faber initing agency client");
+            create_agency_client_for_main_wallet(&self.config_agency).unwrap();
+            info!("activate >>> Faber done");
         }
     }
 
     impl TestAgent for Alice {
-        fn activate(&self) {
-            utils::devsetup::set_new_config(&self.config);
+        fn activate(&mut self) {
+            close_main_wallet();
+            settings::clear_config();
+
+            info!("activate >>> Alice opening main wallet");
+            open_as_main_wallet(&self.config_wallet).unwrap();
+            info!("activate >>> Alice initing agency client");
+            create_agency_client_for_main_wallet(&self.config_agency).unwrap();
+            info!("activate >>> Alice done");
         }
     }
 
@@ -123,36 +138,25 @@ pub mod test {
             };
 
             create_wallet(&config_wallet).unwrap();
-            let wallet_handle = open_as_main_wallet(&config_wallet).unwrap();
+            open_as_main_wallet(&config_wallet).unwrap();
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
-            init_issuer_config(&config_issuer);
+            init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
-
-            let config = combine_configs(&config_wallet, &config_agency, Some(&config_issuer), wallet_handle);
+            close_main_wallet().unwrap();
 
             Faber {
-                config,
+                is_active: false,
                 config_wallet,
                 config_agency,
                 config_issuer,
                 schema_handle: 0,
                 cred_def_handle: 0,
                 connection_handle: 0,
-                wallet_handle: get_wallet_handle(),
                 credential_handle: 0,
                 presentation_handle: 0,
             }
         }
 
-        pub fn activate(&self) {
-            info!("faber activate >>> going to clear config");
-            settings::clear_config();
-            info!("faber activate >>> going to process config string: {}", &self.config);
-            let res = settings::process_config_string(&self.config, false);
-            warn!("process config res = {:?}", res);
-            info!("faber activate >>> going to set wallet handle");
-            set_wallet_handle(self.wallet_handle);
-        }
 
         pub fn create_schema(&mut self) {
             self.activate();
@@ -200,23 +204,23 @@ pub mod test {
             connection::get_invite_details(self.connection_handle).unwrap()
         }
 
-        pub fn update_state(&self, expected_state: u32) {
+        pub fn update_state(&mut self, expected_state: u32) {
             self.activate();
             connection::update_state(self.connection_handle).unwrap();
             assert_eq!(expected_state, connection::get_state(self.connection_handle));
         }
 
-        pub fn ping(&self) {
+        pub fn ping(&mut self) {
             self.activate();
             connection::send_ping(self.connection_handle, None).unwrap();
         }
 
-        pub fn discovery_features(&self) {
+        pub fn discovery_features(&mut self) {
             self.activate();
             connection::send_discovery_features(self.connection_handle, None, None).unwrap();
         }
 
-        pub fn connection_info(&self) -> serde_json::Value {
+        pub fn connection_info(&mut self) -> serde_json::Value {
             self.activate();
             let details = connection::get_connection_info(self.connection_handle).unwrap();
             serde_json::from_str(&details).unwrap()
@@ -244,7 +248,7 @@ pub mod test {
             assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
         }
 
-        pub fn send_credential(&self) {
+        pub fn send_credential(&mut self) {
             self.activate();
             issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(3, issuer_credential::get_state(self.credential_handle).unwrap());
@@ -266,12 +270,12 @@ pub mod test {
             assert_eq!(2, proof::get_state(self.presentation_handle).unwrap());
         }
 
-        pub fn verify_presentation(&self) {
+        pub fn verify_presentation(&mut self) {
             self.activate();
             self.update_proof_state(4, aries::messages::status::Status::Success.code())
         }
 
-        pub fn update_proof_state(&self, expected_state: u32, expected_status: u32) {
+        pub fn update_proof_state(&mut self, expected_state: u32, expected_status: u32) {
             self.activate();
 
             proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
@@ -279,7 +283,7 @@ pub mod test {
             assert_eq!(expected_status, proof::get_proof_state(self.presentation_handle).unwrap());
         }
 
-        pub fn teardown(&self) {
+        pub fn teardown(&mut self) {
             self.activate();
             close_main_wallet().unwrap();
             delete_wallet(&self.config_wallet).unwrap();
@@ -287,10 +291,9 @@ pub mod test {
     }
 
     pub struct Alice {
+        pub is_active: bool,
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyConfig,
-        pub wallet_handle: WalletHandle,
-        pub config: String,
         pub connection_handle: u32,
         pub credential_handle: u32,
         pub presentation_handle: u32,
@@ -320,26 +323,18 @@ pub mod test {
             };
 
             create_wallet(&config_wallet).unwrap();
-            let wallet_handle = open_as_main_wallet(&config_wallet).unwrap();
+            open_as_main_wallet(&config_wallet).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
-
-            let config = combine_configs(&config_wallet, &config_agency, None, wallet_handle);
+            close_main_wallet().unwrap();
 
             Alice {
-                config,
+                is_active: false,
                 config_wallet,
                 config_agency,
-                wallet_handle: get_wallet_handle(),
                 connection_handle: 0,
                 credential_handle: 0,
                 presentation_handle: 0,
             }
-        }
-
-        pub fn activate(&self) {
-            settings::clear_config();
-            settings::process_config_string(&self.config, false).unwrap();
-            set_wallet_handle(self.wallet_handle);
         }
 
         pub fn accept_invite(&mut self, invite: &str) {
@@ -350,13 +345,13 @@ pub mod test {
             assert_eq!(3, connection::get_state(self.connection_handle));
         }
 
-        pub fn update_state(&self, expected_state: u32) {
+        pub fn update_state(&mut self, expected_state: u32) {
             self.activate();
             connection::update_state(self.connection_handle).unwrap();
             assert_eq!(expected_state, connection::get_state(self.connection_handle));
         }
 
-        pub fn download_message(&self, message_type: PayloadKinds) -> VcxAgencyMessage {
+        pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxAgencyMessage {
             self.activate();
             let did = connection::get_pw_did(self.connection_handle).unwrap();
             download_message(did, message_type) // tood: need to pass PayloadKind
@@ -375,14 +370,14 @@ pub mod test {
             assert_eq!(2, credential::get_state(self.credential_handle).unwrap());
         }
 
-        pub fn accept_credential(&self) {
+        pub fn accept_credential(&mut self) {
             self.activate();
             credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
             assert_eq!(4, credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
         }
 
-        pub fn get_proof_request_messages(&self) -> String {
+        pub fn get_proof_request_messages(&mut self) -> String {
             self.activate();
             let presentation_requests = disclosed_proof::get_proof_request_messages(self.connection_handle).unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
@@ -390,7 +385,7 @@ pub mod test {
             presentation_request_json
         }
 
-        pub fn get_credentials_for_presentation(&self) -> serde_json::Value {
+        pub fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
             let credentials = disclosed_proof::retrieve_credentials(self.presentation_handle).unwrap();
             let credentials: std::collections::HashMap<String, serde_json::Value> = serde_json::from_str(&credentials).unwrap();
 
@@ -450,7 +445,7 @@ pub mod test {
             disclosed_proof::decline_presentation_request(self.presentation_handle, self.connection_handle, None, Some(proposal_data.to_string())).unwrap();
         }
 
-        pub fn ensure_presentation_verified(&self) {
+        pub fn ensure_presentation_verified(&mut self) {
             self.activate();
             disclosed_proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
             assert_eq!(aries::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());

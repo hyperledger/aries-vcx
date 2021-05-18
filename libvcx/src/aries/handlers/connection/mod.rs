@@ -30,7 +30,7 @@ pub mod tests {
         use crate::connection;
 
         use super::*;
-        use crate::utils::devsetup_agent::test::{Faber, Alice};
+        use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
 
         #[test]
         #[cfg(feature = "aries")]

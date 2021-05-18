@@ -378,13 +378,9 @@ macro_rules! assert_match {
     );
 }
 
-// TODO: We could have an array of configs
-static mut INSTITUTION_CONFIG: u32 = 0;
-static mut CONSUMER_CONFIG: u32 = 0;
-// static mut CONFIGS: Vec<u32> = Vec::new(); // Vector of handles
 
 lazy_static! {
-    static ref CONFIG_STRING: ObjectCache<String> = ObjectCache::<String>::new("devsetup-config-cache");
+    static ref ACTIVE_TESTAGENT: ObjectCache<String> = ObjectCache::<String>::new("devsetup-testagent");
 }
 
 /* dummy */
@@ -468,38 +464,6 @@ pub fn cleanup_agency_env() {
     delete_test_pool();
 }
 
-pub fn set_institution(institution_handle: u32) -> VcxResult<()> {
-    CONFIG_STRING.get(institution_handle, |t| {
-        set_new_config(t)
-    })?;
-    Ok(())
-}
-
-pub fn set_consumer(consumer_handle: u32) -> VcxResult<()> {
-    CONFIG_STRING.get(consumer_handle, |t| {
-        set_new_config(t)
-    })?;
-    Ok(())
-}
-
-pub fn set_institution_default() -> VcxResult<()> {
-    unsafe {
-        CONFIG_STRING.get(INSTITUTION_CONFIG, |t| {
-            set_new_config(t)
-        })?;
-    }
-    Ok(())
-}
-
-pub fn set_consumer_default() -> VcxResult<()> {
-    unsafe {
-        CONFIG_STRING.get(CONSUMER_CONFIG, |t| {
-            set_new_config(t)
-        })?;
-    }
-    Ok(())
-}
-
 pub fn set_new_config(config: &str) -> VcxResult<()> {
     settings::clear_config();
     settings::process_config_string(config, true)?;
@@ -520,37 +484,6 @@ pub fn setup_agency_env(use_zero_fees: bool) {
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
-}
-
-pub fn combine_configs(wallet_config: &WalletConfig, agency_config: &AgencyConfig, issuer_config: Option<&IssuerConfig>, wallet_handle: WalletHandle) -> String {
-    let wallet_config = serde_json::to_string(wallet_config).unwrap();
-    let agency_config = serde_json::to_string(agency_config).unwrap();
-    fn merge(a: &mut Value, b: &Value) {
-        match (a, b) {
-            (&mut Value::Object(ref mut a), &Value::Object(ref b)) => {
-                for (k, v) in b {
-                    merge(a.entry(k.clone()).or_insert(serde_json::Value::Null), v);
-                }
-            }
-            (a, b) => {
-                *a = b.clone();
-            }
-        }
-    }
-
-    let mut final_config: Value = serde_json::from_str(&wallet_config).unwrap();
-    let agency_config: Value = serde_json::from_str(&agency_config).unwrap();
-    merge(&mut final_config, &agency_config);
-
-    if let Some(issuer_config) = issuer_config {
-        let issuer_config = serde_json::to_string(issuer_config).unwrap();
-        let mut issuer_config = serde_json::from_str::<serde_json::Value>(&issuer_config).unwrap();
-        merge(&mut final_config, &issuer_config);
-    }
-
-    final_config[settings::CONFIG_WALLET_HANDLE] = json!(wallet_handle.0.to_string());
-
-    final_config.to_string()
 }
 
 pub struct TempFile {
@@ -596,10 +529,10 @@ mod tests {
     #[test]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
-        let institution = Faber::setup();
-        let consumer1 = Alice::setup();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
 
-        let (_faber, _alice) = connection::tests::create_connected_connections(&consumer1, &institution);
-        let (_faber, _alice) = connection::tests::create_connected_connections(&consumer1, &institution);
+        let (_faber, _alice) = connection::tests::create_connected_connections(&mut consumer1, &mut institution);
+        let (_faber, _alice) = connection::tests::create_connected_connections(&mut consumer1, &mut institution);
     }
 }

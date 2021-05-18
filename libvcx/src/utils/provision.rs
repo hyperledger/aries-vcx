@@ -135,15 +135,10 @@ mod tests {
         let _setup = SetupMocks::init();
         let consumer = Alice::setup();
 
-        let m: Value = serde_json::from_str(&consumer.config).unwrap();
-        assert_eq!(m["agency_did"].as_str().unwrap(), "VsKV7grR1BUE29mG2Fm2kX");
-        assert_eq!(m["agency_endpoint"].as_str().unwrap(), "http://localhost:8080");
-        assert_eq!(m["agency_verkey"].as_str().unwrap(), "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR");
-        assert!(m["remote_to_sdk_did"].is_string());
-        assert!(m["remote_to_sdk_verkey"].is_string());
-        assert!(m["wallet_handle"].is_string());
-        assert_eq!(m["wallet_key"].as_str().unwrap(), "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY");
-        assert_eq!(m["wallet_key_derivation"].as_str().unwrap(), "RAW");
-        assert!(m["wallet_name"].is_string());
+        assert_eq!(consumer.config_agency.agency_did, "VsKV7grR1BUE29mG2Fm2kX");
+        assert_eq!(consumer.config_agency.agency_endpoint, "http://localhost:8080");
+        assert_eq!(consumer.config_agency.agency_verkey, "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR");
+        assert_eq!(consumer.config_wallet.wallet_key, "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY");
+        assert_eq!(consumer.config_wallet.wallet_key_derivation,  "RAW");
     }
 }

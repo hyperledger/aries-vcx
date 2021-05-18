@@ -334,7 +334,7 @@ pub mod tests {
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
-    use crate::utils::devsetup_agent::test::{TestAgent, Faber, Alice};
+    use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -359,7 +359,7 @@ pub mod tests {
         handle
     }
 
-    pub fn create_connected_connections(consumer: &Alice, institution: &Faber) -> (u32, u32) {
+    pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
         debug!("Institution is going to create connection.");
         institution.activate();
         let institution_to_consumer = create_connection("consumer").unwrap();
@@ -639,10 +639,10 @@ pub mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let institution = Faber::setup();
-        let consumer1 = Alice::setup();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
 
-        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&consumer1, &institution);
+        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&mut consumer1, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
@@ -697,11 +697,11 @@ pub mod tests {
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let institution = Faber::setup();
-        let consumer1 = Alice::setup();
-        let consumer2 = Alice::setup();
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&consumer1, &institution);
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&consumer2, &institution);
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let mut consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
 
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
@@ -742,9 +742,9 @@ pub mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let institution = Faber::setup();
-        let consumer1 = Alice::setup();
-        let (alice_to_faber, faber_to_alice) = create_connected_connections(&consumer1, &institution);
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();
