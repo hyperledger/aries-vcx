@@ -1,17 +1,11 @@
 use std::fs;
 use std::sync::Once;
 
-use indy::future::Future;
-use indy::WalletHandle;
-use rand::Rng;
-use serde_json::Value;
-
-use crate::{api, init, libindy, settings, utils};
+use crate::{libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig, create_and_open_as_main_wallet, IssuerConfig, configure_issuer_wallet};
-use crate::libindy::utils::wallet;
+use crate::libindy::utils::wallet::{close_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig, create_and_open_as_main_wallet};
 use crate::settings::set_testing_defaults;
 use crate::utils::{get_temp_dir_path, runtime};
 use crate::utils::constants;
@@ -21,10 +15,7 @@ use crate::utils::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
 use crate::utils::runtime::ThreadpoolConfig;
 use crate::init::PoolConfig;
-use crate::error::VcxErrorKind::WalletAccessFailed;
-use crate::utils::provision::AgencyConfig;
 use crate::utils::devsetup_agent::test::{Faber, Alice};
-use crate::error::{VcxResult, VcxError};
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -80,7 +71,7 @@ fn setup_empty() {
 
 fn tear_down() {
     settings::clear_config();
-    reset_wallet_handle();
+    reset_wallet_handle().unwrap();
     reset_pool_handle();
     settings::get_agency_client_mut().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
@@ -164,7 +155,7 @@ impl SetupLibraryWallet {
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
-        let _res = close_main_wallet();
+        let _res = close_main_wallet().unwrap();
         delete_wallet(&self.wallet_config).unwrap();
         tear_down()
     }
@@ -199,9 +190,9 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            let _res = close_main_wallet();
+            let _res = close_main_wallet().unwrap();
             delete_wallet(&self.wallet_config).unwrap();
-            reset_wallet_handle();
+            reset_wallet_handle().unwrap();
         }
     }
 }
@@ -303,7 +294,7 @@ impl SetupAgencyMock {
 
 impl Drop for SetupAgencyMock {
     fn drop(&mut self) {
-        let _res = close_main_wallet();
+        let _res = close_main_wallet().unwrap();
         delete_wallet(&self.wallet_config).unwrap();
         tear_down()
     }
@@ -313,7 +304,7 @@ impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
         setup(ThreadpoolConfig { num_threads: Some(4) });
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
-        setup_agency_env(false);
+        setup_agency_env();
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
     }
@@ -329,7 +320,7 @@ impl Drop for SetupLibraryAgencyV2 {
 impl SetupLibraryAgencyV2ZeroFees {
     pub fn init() -> SetupLibraryAgencyV2ZeroFees {
         setup(ThreadpoolConfig { num_threads: Some(4) });
-        setup_agency_env(true);
+        setup_agency_env();
         SetupLibraryAgencyV2ZeroFees
     }
 }
@@ -426,7 +417,7 @@ pub fn setup_indy_env(use_zero_fees: bool) -> WalletConfig {
 }
 
 pub fn cleanup_indy_env(wallet_config: &WalletConfig) {
-    let _res = close_main_wallet();
+    let _res = close_main_wallet().unwrap();
     delete_wallet(&wallet_config)
         .unwrap_or_else(|_| error!("Error deleting wallet {}", wallet_config.wallet_name));
     delete_test_pool();
@@ -436,7 +427,7 @@ pub fn cleanup_agency_env() {
     delete_test_pool();
 }
 
-pub fn setup_agency_env(use_zero_fees: bool) {
+pub fn setup_agency_env() {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
 

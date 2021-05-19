@@ -55,7 +55,7 @@ mod tests {
     use std::env;
 
     use crate::api::vcx::vcx_shutdown;
-    use crate::utils::devsetup::{SetupDefaults, SetupMocks};
+    use crate::utils::devsetup::{SetupMocks};
 
     use super::*;
     use crate::settings::WALLET_KDF_RAW;

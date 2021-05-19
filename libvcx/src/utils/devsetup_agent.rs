@@ -3,18 +3,15 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 
 #[cfg(test)]
 pub mod test {
-    use indy_sys::WalletHandle;
-
     use agency_client::payload::PayloadKinds;
 
-    use crate::{aries, connection, credential, credential_def, disclosed_proof, issuer_credential, libindy, proof, schema, settings, utils};
+    use crate::{aries, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema, settings};
     use crate::aries::messages::a2a::A2AMessage;
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
-    use crate::utils::plugins::init_plugin;
     use crate::utils::provision::{provision_cloud_agent, ProvisionAgentConfig, AgencyConfig};
-    use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet, PoolConfig};
+    use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::constants;
 
     #[derive(Debug)]
@@ -81,7 +78,7 @@ pub mod test {
 
     impl TestAgent for Faber {
         fn activate(&mut self) {
-            close_main_wallet();
+            close_main_wallet().unwrap();
             settings::clear_config();
 
             info!("activate >>> Faber opening main wallet");
@@ -96,7 +93,7 @@ pub mod test {
 
     impl TestAgent for Alice {
         fn activate(&mut self) {
-            close_main_wallet();
+            close_main_wallet().unwrap();
             settings::clear_config();
 
             info!("activate >>> Alice opening main wallet");
@@ -129,12 +126,6 @@ pub mod test {
                 agency_verkey: AGENCY_VERKEY.to_string(),
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None
-            };
-
-            let config_pool = PoolConfig {
-                genesis_path: constants::GENESIS_PATH.to_string(),
-                pool_name: Some(constants::POOL.to_string()),
-                pool_config: None
             };
 
             create_wallet(&config_wallet).unwrap();

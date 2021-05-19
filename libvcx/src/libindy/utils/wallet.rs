@@ -352,7 +352,7 @@ pub mod tests {
     use agency_client::agency_settings;
 
     use crate::libindy::utils::signus::create_and_store_my_did;
-    use crate::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
+    use crate::utils::devsetup::{SetupDefaults, SetupLibraryWallet, TempFile};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
