@@ -648,11 +648,11 @@ mod tests {
             _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
             //Assert config values were set correctly
-            assert_eq!(settings::get_config_value("wallet_name").unwrap(), setup_wallet.wallet_config.wallet_name);
+            assert_ne!(get_wallet_handle(), INVALID_WALLET_HANDLE);
 
             //Verify shutdown was successful
             vcx_shutdown(true);
-            assert_eq!(settings::get_config_value("wallet_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
+            assert_eq!(get_wallet_handle(), INVALID_WALLET_HANDLE);
         }
     }
 
