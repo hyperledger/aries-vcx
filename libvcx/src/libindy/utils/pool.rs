@@ -130,6 +130,11 @@ pub mod tests {
         create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
     }
 
+    pub fn delete_named_test_pool(pool_name: &str) {
+        close().ok();
+        delete(pool_name).unwrap();
+    }
+
     pub fn delete_test_pool() {
         close().ok();
         delete(POOL).unwrap();

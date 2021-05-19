@@ -190,7 +190,7 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            let _res = close_main_wallet().unwrap();
+            let _res = close_main_wallet().unwrap_or_else(|e| { error!("Error closing wallet {:?}", e); panic!("Panicked closing wallet") } );
             delete_wallet(&self.wallet_config).unwrap();
             reset_wallet_handle().unwrap();
         }

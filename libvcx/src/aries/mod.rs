@@ -84,7 +84,6 @@ pub mod test {
         alice.ensure_presentation_verified();
     }
 
-
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_handle_connection_related_messages() {

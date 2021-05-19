@@ -519,7 +519,7 @@ mod tests {
     use crate::api::return_types_u32;
     use crate::api::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
-    use crate::libindy::utils::pool::tests::create_tmp_genesis_txn_file;
+    use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
     use crate::libindy::utils::wallet::{import, WalletConfig, RestoreWalletConfigs};
@@ -610,18 +610,31 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_open_pool_fails_if_genesis_file_is_invalid() {
-        let _setup = SetupWallet::init();
+        let _setup = SetupDefaults::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
         // Write invalid genesis.txn
         let _genesis_transactions = TempFile::create_with_data(utils::constants::GENESIS_PATH, "{}");
-        let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: None, pool_config: None };
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &_genesis_transactions.path);
+
+        let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
-
         assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
-        assert_eq!(get_wallet_handle(), INVALID_WALLET_HANDLE);
 
-        delete_test_pool();
+        delete_named_test_pool(&pool_name);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_open_pool_fails_if_genesis_path_is_invalid() {
+        let _setup = SetupDefaults::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
+
+        let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: Some(pool_name.clone()), pool_config: None };
+        let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
+        assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1013,14 +1026,5 @@ mod tests {
         connection::connect(connection_handle).unwrap();
 
         settings::set_testing_defaults();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_open_pool_fails_if_genesis_path_is_invalid() {
-        let _setup = SetupWallet::init();
-        let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: None, pool_config: None };
-        let rc = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(rc, error::INVALID_GENESIS_TXN_PATH.code_num);
     }
 }

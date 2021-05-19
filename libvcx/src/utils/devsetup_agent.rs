@@ -78,7 +78,8 @@ pub mod test {
 
     impl TestAgent for Faber {
         fn activate(&mut self) {
-            close_main_wallet().unwrap();
+            close_main_wallet()
+                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Faber opening main wallet");
@@ -93,7 +94,8 @@ pub mod test {
 
     impl TestAgent for Alice {
         fn activate(&mut self) {
-            close_main_wallet().unwrap();
+            close_main_wallet()
+                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Alice opening main wallet");
@@ -107,9 +109,7 @@ pub mod test {
     impl Faber {
         pub fn setup() -> Faber {
             settings::clear_config();
-            init_test_logging();
             let enterprise_seed = "000000000000000000000000Trustee1";
-
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -120,21 +120,18 @@ pub mod test {
                 rekey: None,
                 rekey_derivation_method: None
             };
-
             let config_provision_agent = ProvisionAgentConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None
             };
-
             create_wallet(&config_wallet).unwrap();
             open_as_main_wallet(&config_wallet).unwrap();
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
             close_main_wallet().unwrap();
-
             Faber {
                 is_active: false,
                 config_wallet,
@@ -293,7 +290,6 @@ pub mod test {
     impl Alice {
         pub fn setup() -> Alice {
             settings::clear_config();
-            init_test_logging();
 
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),

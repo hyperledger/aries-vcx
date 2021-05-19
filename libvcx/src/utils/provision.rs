@@ -49,29 +49,3 @@ pub fn provision_cloud_agent(provision_agent_config: &ProvisionAgentConfig) -> V
         sdk_to_remote_verkey: my_vk,
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use std::env;
-
-    use crate::api::vcx::vcx_shutdown;
-    use crate::utils::devsetup::{SetupMocks};
-
-    use super::*;
-    use crate::settings::WALLET_KDF_RAW;
-    use crate::utils::devsetup_agent::test::Alice;
-    use serde_json::Value;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_connect_register_provision() {
-        let _setup = SetupMocks::init();
-        let consumer = Alice::setup();
-
-        assert_eq!(consumer.config_agency.agency_did, "VsKV7grR1BUE29mG2Fm2kX");
-        assert_eq!(consumer.config_agency.agency_endpoint, "http://localhost:8080");
-        assert_eq!(consumer.config_agency.agency_verkey, "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR");
-        assert_eq!(consumer.config_wallet.wallet_key, "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY");
-        assert_eq!(consumer.config_wallet.wallet_key_derivation,  "RAW");
-    }
-}
