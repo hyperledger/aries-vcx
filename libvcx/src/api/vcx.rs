@@ -354,8 +354,6 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
-    settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
-
     execute(move || {
         match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
@@ -815,15 +813,11 @@ mod tests {
     fn test_vcx_update_institution_webhook() {
         let _setup = SetupDefaults::init();
 
-        let webhook_url = "http://www.evernym.com";
-        assert_ne!(webhook_url, &settings::get_config_value(settings::CONFIG_WEBHOOK_URL).unwrap());
-
+        let webhook_url = "https://example.com";
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(error::SUCCESS.code_num, vcx_update_webhook_url(cb.command_handle,
                                                                    CString::new(webhook_url.to_string()).unwrap().into_raw(),
                                                                    Some(cb.get_callback())));
-
-        assert_eq!(webhook_url, &settings::get_config_value(settings::CONFIG_WEBHOOK_URL).unwrap());
     }
 
     #[test]

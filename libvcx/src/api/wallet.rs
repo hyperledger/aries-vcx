@@ -1588,7 +1588,6 @@ pub mod tests {
         create_and_open_as_main_wallet(&wallet_config);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
-        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_wallet_export(cb.command_handle,
@@ -1601,8 +1600,8 @@ pub mod tests {
         delete_wallet(&wallet_config).unwrap();
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name,
-            settings::CONFIG_WALLET_KEY: wallet_key,
+            settings::CONFIG_WALLET_NAME: wallet_config.wallet_name.clone(),
+            settings::CONFIG_WALLET_KEY: wallet_config.wallet_key.clone(),
             settings::CONFIG_EXPORTED_WALLET_PATH: export_file.path,
             settings::CONFIG_WALLET_BACKUP_KEY: backup_key,
             settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
