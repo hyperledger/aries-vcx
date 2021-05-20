@@ -668,7 +668,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_ledger_fees_real() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let fees = get_ledger_fees().unwrap();
         assert!(fees.contains(r#""101":2"#));
@@ -768,7 +768,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_pay_for_txn_real() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let create_schema_req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
@@ -874,7 +874,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_submit_fees_with_insufficient_tokens_on_ledger() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
@@ -893,7 +893,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_pay_for_txn_with_empty_outputs_success() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);

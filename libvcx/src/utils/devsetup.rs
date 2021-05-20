@@ -39,10 +39,6 @@ pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPool {
-    pub faber: Faber
-} // set default settings, init indy wallet, init pool, set default fees
-
 pub struct SetupLibraryWalletPoolZeroFees {
     pub faber: Faber
 }  // set default settings, init indy wallet, init pool, set zero fees
@@ -236,21 +232,6 @@ impl SetupIndyMocks {
 
 impl Drop for SetupIndyMocks {
     fn drop(&mut self) {
-        tear_down()
-    }
-}
-
-impl SetupLibraryWalletPool {
-    pub fn init() -> SetupLibraryWalletPool {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
-        let faber = setup_indy_env(false);
-        SetupLibraryWalletPool { faber }
-    }
-}
-
-impl Drop for SetupLibraryWalletPool {
-    fn drop(&mut self) {
-        cleanup_indy_env();
         tear_down()
     }
 }

@@ -868,7 +868,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_prover_verify_proof() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (schemas, cred_defs, proof_req, proof) = create_proof();
 
