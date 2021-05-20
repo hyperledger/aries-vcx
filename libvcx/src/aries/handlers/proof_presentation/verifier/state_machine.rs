@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use crate::api::VcxStateType;
-use crate::connection::{get_pw_did, get_their_pw_verkey};
-use crate::{connection};
 use crate::error::prelude::*;
 use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::aries::messages::a2a::A2AMessage;
@@ -219,7 +217,6 @@ impl VerifierSM {
 #[cfg(test)]
 pub mod test {
     use crate::utils::devsetup::SetupMocks;
-    use crate::aries::handlers::connection::tests::mock_connection;
     use crate::aries::messages::proof_presentation::presentation::tests::{_presentation, _comment};
     use crate::aries::messages::proof_presentation::presentation_proposal::tests::_presentation_proposal;
     use crate::aries::messages::proof_presentation::presentation_request::tests::_presentation_request;

@@ -12,7 +12,6 @@ use crate::aries::messages::issuance::credential_ack::CredentialAck;
 use crate::aries::messages::issuance::credential_offer::CredentialOffer;
 use crate::aries::messages::issuance::credential_request::CredentialRequest;
 use crate::aries::messages::status::Status;
-use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 
