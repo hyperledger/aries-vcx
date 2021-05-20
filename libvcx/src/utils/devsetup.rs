@@ -15,7 +15,7 @@ use crate::utils::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
 use crate::utils::runtime::ThreadpoolConfig;
 use crate::init::PoolConfig;
-use crate::utils::devsetup_agent::test::{Faber, Alice};
+use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -40,11 +40,11 @@ pub struct SetupLibraryWallet {
 } // set default settings and init indy wallet
 
 pub struct SetupLibraryWalletPool {
-    pub wallet_config: WalletConfig
+    pub faber: Faber
 } // set default settings, init indy wallet, init pool, set default fees
 
 pub struct SetupLibraryWalletPoolZeroFees {
-    pub wallet_config: WalletConfig
+    pub faber: Faber
 }  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
@@ -243,14 +243,14 @@ impl Drop for SetupIndyMocks {
 impl SetupLibraryWalletPool {
     pub fn init() -> SetupLibraryWalletPool {
         setup(ThreadpoolConfig { num_threads: Some(4) });
-        let wallet_config = setup_indy_env(false);
-        SetupLibraryWalletPool { wallet_config }
+        let faber = setup_indy_env(false);
+        SetupLibraryWalletPool { faber }
     }
 }
 
 impl Drop for SetupLibraryWalletPool {
     fn drop(&mut self) {
-        cleanup_indy_env(&self.wallet_config);
+        cleanup_indy_env();
         tear_down()
     }
 }
@@ -258,14 +258,14 @@ impl Drop for SetupLibraryWalletPool {
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
         setup(ThreadpoolConfig { num_threads: Some(4) });
-        let wallet_config = setup_indy_env(true);
-        SetupLibraryWalletPoolZeroFees { wallet_config }
+        let faber= setup_indy_env(true);
+        SetupLibraryWalletPoolZeroFees { faber }
     }
 }
 
 impl Drop for SetupLibraryWalletPoolZeroFees {
     fn drop(&mut self) {
-        cleanup_indy_env(&self.wallet_config);
+        cleanup_indy_env();
         tear_down()
     }
 }
@@ -385,41 +385,23 @@ pub fn setup_libnullpay_nofees() {
     libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
-pub fn setup_indy_env(use_zero_fees: bool) -> WalletConfig {
+pub fn setup_indy_env(use_zero_fees: bool) -> Faber {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
-    let wallet_config = WalletConfig {
-        wallet_name: settings::DEFAULT_WALLET_NAME.into(),
-        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
-        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-        wallet_type: None,
-        storage_config: None,
-        storage_credentials: None,
-        rekey: None,
-        rekey_derivation_method: None
-    };
-    create_and_open_as_main_wallet(&wallet_config).unwrap();
+    let mut faber = Faber::setup();
+    faber.activate();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
-
-    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
-    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
-    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
-
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
-    wallet_config
+    faber
 }
 
-pub fn cleanup_indy_env(wallet_config: &WalletConfig) {
-    let _res = close_main_wallet().unwrap();
-    delete_wallet(&wallet_config)
-        .unwrap_or_else(|_| error!("Error deleting wallet {}", wallet_config.wallet_name));
+pub fn cleanup_indy_env() {
     delete_test_pool();
 }
 

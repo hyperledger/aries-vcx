@@ -742,7 +742,6 @@ pub mod tests {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
             = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -762,7 +761,6 @@ pub mod tests {
            }),
            "requested_predicates": json!({}),
         }).to_string();
-
         let requested_credentials_json = json!({
               "self_attested_attributes":{
                  "self_attest_3": "my_self_attested_val"
@@ -869,7 +867,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_prover_verify_proof() {
+    fn test_prover_verify_proof_a() {
         let _setup = SetupLibraryWalletPool::init();
 
         let (schemas, cred_defs, proof_req, proof) = create_proof();

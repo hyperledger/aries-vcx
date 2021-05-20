@@ -361,31 +361,31 @@ pub mod tests {
 
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
         debug!("Institution is going to create connection.");
-        institution.activate();
+        institution.activate().unwrap();
         let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let details = connect(institution_to_consumer).unwrap().unwrap();
         // update_state(institution_to_consumer).unwrap();
 
-        consumer.activate();
+        consumer.activate().unwrap();
         debug!("Consumer is going to accept connection invitation.");
         let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
         connect(consumer_to_institution).unwrap();
         update_state(consumer_to_institution).unwrap();
 
         debug!("Institution is going to process connection request.");
-        institution.activate();
+        institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
 
         debug!("Consumer is going to complete the connection protocol.");
-        consumer.activate();
+        consumer.activate().unwrap();
         update_state(consumer_to_institution).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
 
         debug!("Institution is going to complete the connection protocol.");
-        institution.activate();
+        institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
@@ -648,7 +648,7 @@ pub mod tests {
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
-        consumer1.activate();
+        consumer1.activate().unwrap();
         send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
         // make sure messages has be delivered
@@ -706,12 +706,12 @@ pub mod tests {
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
-        consumer1.activate();
+        consumer1.activate().unwrap();
         send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        consumer2.activate();
+        consumer2.activate().unwrap();
         send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
 
-        institution.activate();
+        institution.activate().unwrap();
         let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
         assert_eq!(all_msgs.len(), 2);
         assert_eq!(all_msgs[0].msgs.len(), 2);
@@ -751,7 +751,7 @@ pub mod tests {
         send_generic_message(faber_to_alice, "Hello 3").unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        consumer1.activate();
+        consumer1.activate().unwrap();
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);

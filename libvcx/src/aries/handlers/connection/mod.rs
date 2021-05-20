@@ -69,13 +69,13 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Send Message works");
             {
-                faber.activate();
+                faber.activate().unwrap();
                 connection::send_message(faber.connection_handle, message.to_a2a_message()).unwrap();
             }
 
             {
                 info!("test_connection_send_works:: Test if Get Messages works");
-                alice.activate();
+                alice.activate().unwrap();
 
                 let messages = connection::get_messages(alice.connection_handle).unwrap();
                 assert_eq!(1, messages.len());
@@ -93,7 +93,7 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Get Message by id works");
             {
-                alice.activate();
+                alice.activate().unwrap();
 
                 let message = connection::get_message_by_id(alice.connection_handle, uid.clone()).unwrap();
 
@@ -105,7 +105,7 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Update Message Status works");
             {
-                alice.activate();
+                alice.activate().unwrap();
 
                 connection::update_message_status(alice.connection_handle, uid).unwrap();
                 let messages = connection::get_messages(alice.connection_handle).unwrap();
@@ -114,12 +114,12 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test if Send Basic Message works");
             {
-                faber.activate();
+                faber.activate().unwrap();
 
                 let basic_message = r#"Hi there"#;
                 connection::send_generic_message(faber.connection_handle, basic_message).unwrap();
 
-                alice.activate();
+                alice.activate().unwrap();
 
                 let messages = connection::get_messages(alice.connection_handle).unwrap();
                 assert_eq!(1, messages.len());
@@ -140,10 +140,10 @@ pub mod tests {
 
                 let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
 
-                faber.activate();
+                faber.activate().unwrap();
                 connection::send_message(faber.connection_handle, credential_offer.to_a2a_message()).unwrap();
 
-                alice.activate();
+                alice.activate().unwrap();
 
                 let messages: Vec<MessageByConnection> = download_messages_noauth(None, Some(vec!["MS-103".to_string()]), None).unwrap();
                 let message: Message = messages[0].msgs[0].clone();
@@ -155,7 +155,7 @@ pub mod tests {
 
             info!("test_connection_send_works:: Test Helpers");
             {
-                faber.activate();
+                faber.activate().unwrap();
 
                 connection::get_pw_did(faber.connection_handle).unwrap();
                 connection::get_pw_verkey(faber.connection_handle).unwrap();
