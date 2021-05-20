@@ -665,16 +665,6 @@ pub mod tests {
         assert!(fees.contains(r#""1":0"#));
     }
 
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_get_ledger_fees_real() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let fees = get_ledger_fees().unwrap();
-        assert!(fees.contains(r#""101":2"#));
-        assert!(fees.contains(r#""1":0"#));
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_address_balance() {
@@ -754,51 +744,6 @@ pub mod tests {
         assert_eq!(get_action_price(unknown_action, None).unwrap(), 0);
     }
 
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_pay_for_txn() {
-        let _setup = SetupMocks::init();
-
-        // Schema
-        let create_schema_req = utils::constants::SCHEMA_CREATE_JSON.to_string();
-        let (_payment, response) = pay_for_txn(&create_schema_req, utils::constants::CREATE_SCHEMA_ACTION).unwrap();
-        assert_eq!(response, SUBMIT_SCHEMA_RESPONSE.to_string());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_pay_for_txn_real() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let create_schema_req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
-        let start_wallet = get_wallet_token_info().unwrap();
-
-        let (payment, _response) = pay_for_txn(&create_schema_req, utils::constants::CREATE_SCHEMA_ACTION).unwrap();
-
-        let end_wallet = get_wallet_token_info().unwrap();
-
-        let payment = payment.unwrap();
-        assert_eq!(payment.amount, 2);
-        assert_eq!(payment.outputs.len(), 1);
-        assert_eq!(start_wallet.balance - 2, end_wallet.balance);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_pay_for_txn_fails_with_insufficient_tokens_in_wallet() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        mint_tokens_and_set_fees(Some(0), Some(0), Some(r#"{"101":50000000001}"#.to_string()), None).unwrap();
-
-        let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let create_schema_req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
-
-        let rc = pay_for_txn(&create_schema_req, utils::constants::CREATE_SCHEMA_ACTION);
-
-        assert!(rc.is_err());
-    }
-
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_build_payment_request() {
@@ -825,93 +770,6 @@ pub mod tests {
         assert_eq!(get_my_balance(), 5);
     }
 
-    // this test if failing to to both changes in error codes being produced
-    // by master libindy and how wallets are deleted.
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    #[ignore]
-    fn test_build_payment_request_bogus_payment_method() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let payment_address = "pay:bogus:123";
-        let result_from_paying = pay_a_payee(0, payment_address);
-
-        assert!(result_from_paying.is_err());
-        assert_eq!(result_from_paying.err().unwrap().kind(), VcxErrorKind::LibndyError(100)); // TODO: FIXME
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[ignore] // FIXME: there are no auth rules for XFER transaction on the ledger.
-    #[test]
-    fn test_fees_transferring_tokens() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let payment_address = build_test_address("2ZrAm5Jc3sP4NAXMQbaWzDxEa12xxJW3VgWjbbPtMPQCoznJyS");
-        let payment_address = payment_address.as_str();
-
-        let initial_wallet_balance = 100000000000;
-        let transfer_fee = 5;
-        let ledger_fees = json!({"10001": transfer_fee}).to_string();
-        mint_tokens_and_set_fees(None, None, Some(ledger_fees), None).unwrap();
-        assert_eq!(get_my_balance(), initial_wallet_balance);
-        assert_eq!(get_action_price(CREATE_TRANSFER_ACTION, None).unwrap(), transfer_fee);
-
-        // Transfer everything besides 50. Remaining balance will be 50 - ledger fees
-        let balance_after_transfer = 50;
-        let price = get_my_balance() - balance_after_transfer;
-        let result_from_paying = pay_a_payee(price, payment_address);
-        assert!(result_from_paying.is_ok());
-        assert_eq!(get_my_balance(), balance_after_transfer - transfer_fee);
-
-        // Has tokens but not enough for ledger fee
-        let not_enough_for_ledger_fee = transfer_fee - 1;
-        let price = get_my_balance() - not_enough_for_ledger_fee;
-        assert!(price > 0);
-        let result_from_paying = pay_a_payee(price, payment_address);
-        assert_eq!(result_from_paying.err().unwrap().kind(), VcxErrorKind::InsufficientTokenAmount);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_submit_fees_with_insufficient_tokens_on_ledger() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
-        let (remainder, inputs, refund_address) = inputs(2).unwrap();
-        let output = outputs(remainder, &refund_address, None, None).unwrap();
-        let start_wallet = get_wallet_token_info().unwrap();
-
-        _submit_fees_request(&req, &inputs, &output).unwrap();
-
-        let end_wallet = get_wallet_token_info().unwrap();
-        assert_eq!(start_wallet.balance - 2, end_wallet.balance);
-
-        let _rc = _submit_fees_request(&req, &inputs, &output);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_pay_for_txn_with_empty_outputs_success() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, schema_json) = libindy::utils::anoncreds::tests::create_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let req = libindy::utils::anoncreds::tests::create_schema_req(&schema_json);
-
-        let cost = get_action_price(utils::constants::CREATE_SCHEMA_ACTION, None).unwrap();
-        let start_wallet = get_wallet_token_info().unwrap();
-        let remaining_balance = start_wallet.balance - cost;
-        let (remainder, inputs, refund_address) = inputs(cost).unwrap();
-        assert_eq!(remainder, remaining_balance);
-
-        let output = outputs(remainder, &refund_address, None, None).unwrap();
-
-        let _rc = _submit_fees_request(&req, &inputs, &output).unwrap();
-        let end_wallet = get_wallet_token_info().unwrap();
-
-        assert_eq!(end_wallet.balance, remaining_balance);
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_wallet_info_to_string() {
@@ -925,27 +783,6 @@ pub mod tests {
         assert_eq!(wallet_info.to_string(), r#"{"balance":12345,"balance_str":"12345","addresses":[]}"#.to_string());
     }
 
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_custom_mint_tokens() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        //50000000000 comes from setup_ledger_env
-        token_setup(Some(4), Some(1430000), false);
-
-        let start_wallet = get_wallet_token_info().unwrap();
-        assert_eq!(start_wallet.balance, 50005720000);
-    }
-
-    #[ignore] // Test only works when fees are null
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_empty_fees() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let _fees = get_ledger_fees().unwrap();
-        libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-    }
 
     #[cfg(feature = "pool_tests")]
     #[test]

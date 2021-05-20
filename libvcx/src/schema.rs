@@ -343,21 +343,6 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_schema_with_pool() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let handle = create_schema_real();
-
-        let _source_id = get_source_id(handle).unwrap();
-        let _schema_id = get_schema_id(handle).unwrap();
-        let _schema_json = to_string(handle).unwrap();
-
-        let payment = &get_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
     fn test_create_schema_no_fees_with_pool() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 

@@ -1123,7 +1123,6 @@ pub mod tests {
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();
 
-        assert!(payment.is_some());
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
     }
 }

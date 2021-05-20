@@ -639,7 +639,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_revocable_cred_def_with_payments() {
+    fn test_create_revocable_cred_def() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
@@ -655,8 +655,6 @@ pub mod tests {
 
         assert!(get_rev_reg_def(handle).unwrap().is_some());
         assert!(get_rev_reg_id(handle).ok().is_some());
-        assert!(get_rev_reg_def_payment_txn(handle).unwrap().is_some());
-        assert!(get_rev_reg_delta_payment_txn(handle).unwrap().is_some());
         let cred_id = get_cred_def_id(handle).unwrap();
         libindy::utils::anoncreds::get_cred_def_json(&cred_id).unwrap();
     }
