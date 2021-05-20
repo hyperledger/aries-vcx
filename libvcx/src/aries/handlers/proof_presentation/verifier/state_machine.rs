@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::api::VcxStateType;
 use crate::connection::{get_pw_did, get_their_pw_verkey};
-use crate::{connection, settings};
+use crate::{connection};
 use crate::error::prelude::*;
 use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::aries::messages::a2a::A2AMessage;
