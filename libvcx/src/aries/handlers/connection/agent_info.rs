@@ -48,8 +48,8 @@ impl AgentInfo {
     // TODO: There should be a way to set a specific agent_client for AgentInfo
     pub fn create_agent(&self) -> VcxResult<AgentInfo> {
         trace!("Agent::create_agent >>>");
-        let method_name = settings::get_config_value(settings::CONFIG_DID_METHOD).ok();
-        let (pw_did, pw_vk) = create_and_store_my_did(None, method_name.as_ref().map(String::as_str))?;
+        // todo: we should support passing did method_name as parameter
+        let (pw_did, pw_vk) = create_and_store_my_did(None, None)?;
 
         /*
             Create User Pairwise Agent in old way.
