@@ -44,7 +44,7 @@ RUN apk add --no-cache \
         python2 \
         zeromq-dev
 
-ARG RUST_VER="1.45.2"
+ARG RUST_VER="1.52.1"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
 USER node
