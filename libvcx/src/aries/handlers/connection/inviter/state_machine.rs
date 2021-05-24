@@ -128,7 +128,6 @@ impl SmConnectionInviter {
         }?;
         trace!("SmConnectionInviter::step >>> new state = {:?}", &new_state);
         Ok(SmConnectionInviter { source_id, agent_info, state: new_state })
-
     }
 
     pub fn their_did_doc(&self) -> Option<DidDoc> {
