@@ -87,15 +87,48 @@ impl SmConnectionInviter {
     }
 
     pub fn step(self, message: DidExchangeMessages) -> VcxResult<SmConnectionInviter> {
-        trace!("SmConnectionInviter::step >>> message: {:?}", message);
         let SmConnectionInviter { source_id, agent_info, state } = self;
-
-        trace!("SmConnectionInviter::step :: current state = {:?}", &state);
-        let (new_state, agent_info) =
-            SmConnectionInviter::inviter_step(state, message, &source_id, agent_info)?;
-
-        trace!("SmConnectionInviter::step :: new state = {:?}", &new_state);
+        trace!("SmConnectionInviter::step >>> message: {:?}, current state: {:?}", message, state);
+        let (new_state, agent_info) = match message {
+            DidExchangeMessages::Connect() => {
+                SmConnectionInviter::transition_connect(state, &source_id, agent_info)
+            }
+            DidExchangeMessages::ExchangeRequestReceived(request) => {
+                SmConnectionInviter::transition_receive_connection_request(state, request, agent_info)
+            }
+            DidExchangeMessages::AckReceived(ack) => {
+                SmConnectionInviter::transition_receive_ack(state, agent_info, ack)
+            }
+            DidExchangeMessages::PingReceived(ping) => {
+                SmConnectionInviter::transition_receive_ping(state, ping, agent_info)
+            }
+            DidExchangeMessages::ProblemReportReceived(problem_report) => {
+                SmConnectionInviter::transition_receive_problem_report(state, agent_info, problem_report)
+            }
+            DidExchangeMessages::SendPing(comment) => {
+                SmConnectionInviter::transition_send_ping(state, comment, agent_info)
+            }
+            DidExchangeMessages::PingResponseReceived(ping_response) => {
+                SmConnectionInviter::transition_ping_response_received(state, ping_response, agent_info)
+            }
+            DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
+                SmConnectionInviter::transition_discover_features_received(state, agent_info, query_, comment)
+            }
+            DidExchangeMessages::QueryReceived(query) => {
+                SmConnectionInviter::transition_discovery_query_received(state, agent_info, query)
+            }
+            DidExchangeMessages::DiscloseReceived(disclose) => {
+                SmConnectionInviter::transition_disclose_received(state, agent_info, disclose)
+            }
+            DidExchangeMessages::InvitationReceived(_) => unimplemented!("Not valid for inviter"),
+            DidExchangeMessages::ExchangeResponseReceived(_) => unimplemented!("Not valid for inviter"),
+            DidExchangeMessages::Unknown => {
+                Ok((state.clone(), agent_info))
+            }
+        }?;
+        trace!("SmConnectionInviter::step >>> new state = {:?}", &new_state);
         Ok(SmConnectionInviter { source_id, agent_info, state: new_state })
+
     }
 
     pub fn their_did_doc(&self) -> Option<DidDoc> {
@@ -391,46 +424,6 @@ impl SmConnectionInviter {
             }
         };
         Ok((new_state, agent_info))
-    }
-
-    pub fn inviter_step(inviter_state: InviterState, message: DidExchangeMessages, source_id: &str, mut agent_info: AgentInfo) -> VcxResult<(InviterState, AgentInfo)> {
-        match message {
-            DidExchangeMessages::Connect() => {
-                SmConnectionInviter::transition_connect(inviter_state, source_id, agent_info)
-            }
-            DidExchangeMessages::ExchangeRequestReceived(request) => {
-                SmConnectionInviter::transition_receive_connection_request(inviter_state, request, agent_info)
-            }
-            DidExchangeMessages::AckReceived(ack) => {
-                SmConnectionInviter::transition_receive_ack(inviter_state, agent_info, ack)
-            }
-            DidExchangeMessages::PingReceived(ping) => {
-                SmConnectionInviter::transition_receive_ping(inviter_state, ping, agent_info)
-            }
-            DidExchangeMessages::ProblemReportReceived(problem_report) => {
-                SmConnectionInviter::transition_receive_problem_report(inviter_state, agent_info, problem_report)
-            }
-            DidExchangeMessages::SendPing(comment) => {
-                SmConnectionInviter::transition_send_ping(inviter_state, comment, agent_info)
-            }
-            DidExchangeMessages::PingResponseReceived(ping_response) => {
-                SmConnectionInviter::transition_ping_response_received(inviter_state, ping_response, agent_info)
-            }
-            DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
-                SmConnectionInviter::transition_discover_features_received(inviter_state, agent_info, query_, comment)
-            }
-            DidExchangeMessages::QueryReceived(query) => {
-                SmConnectionInviter::transition_discovery_query_received(inviter_state, agent_info, query)
-            }
-            DidExchangeMessages::DiscloseReceived(disclose) => {
-                SmConnectionInviter::transition_disclose_received(inviter_state, agent_info, disclose)
-            }
-            DidExchangeMessages::InvitationReceived(_) => unimplemented!("Not valid for inviter"),
-            DidExchangeMessages::ExchangeResponseReceived(_) => unimplemented!("Not valid for inviter"),
-            DidExchangeMessages::Unknown => {
-                Ok((inviter_state.clone(), agent_info))
-            }
-        }
     }
 }
 
