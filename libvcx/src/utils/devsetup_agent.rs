@@ -10,7 +10,7 @@ pub mod test {
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
-    use crate::utils::provision::{provision_cloud_agent, ProvisionAgentConfig, AgencyConfig};
+    use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyConfig};
     use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::constants;
 
@@ -125,7 +125,7 @@ pub mod test {
                 rekey: None,
                 rekey_derivation_method: None
             };
-            let config_provision_agent = ProvisionAgentConfig {
+            let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
@@ -307,7 +307,7 @@ pub mod test {
                 rekey_derivation_method: None
             };
 
-            let config_provision_agent = ProvisionAgentConfig {
+            let config_provision_agent = AgentProvisionConfig {
                 agency_did: C_AGENCY_DID.to_string(),
                 agency_verkey: C_AGENCY_VERKEY.to_string(),
                 agency_endpoint: C_AGENCY_ENDPOINT.to_string(),

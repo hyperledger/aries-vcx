@@ -15,7 +15,7 @@ use crate::utils::constants::*;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
-use crate::utils::provision::ProvisionAgentConfig;
+use crate::utils::provision::AgentProvisionConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -64,7 +64,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
 
     trace!("vcx_provision_cloud_agent(command_handle: {}, agency_config: {})", command_handle, agency_config);
 
-    let agency_config = match serde_json::from_str::<ProvisionAgentConfig>(&agency_config) {
+    let agency_config = match serde_json::from_str::<AgentProvisionConfig>(&agency_config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
             error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
@@ -552,7 +552,7 @@ mod tests {
     use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
-    use crate::utils::provision::ProvisionAgentConfig;
+    use crate::utils::provision::AgentProvisionConfig;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -570,7 +570,7 @@ mod tests {
     fn test_provision_agent_async_c_closure() {
         let _setup = SetupMocks::init();
 
-        let config = ProvisionAgentConfig {
+        let config = AgentProvisionConfig {
             agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
             agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
             agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),

@@ -9,7 +9,7 @@ use crate::settings;
 use crate::libindy::utils::wallet::{WalletConfig, IssuerConfig, configure_issuer_wallet};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProvisionAgentConfig {
+pub struct AgentProvisionConfig {
     pub agency_did: String,
     pub agency_verkey: String,
     pub agency_endpoint: String,
@@ -27,7 +27,7 @@ pub struct AgencyConfig {
     pub sdk_to_remote_verkey: String,
 }
 
-pub fn provision_cloud_agent(provision_agent_config: &ProvisionAgentConfig) -> VcxResult<AgencyConfig> {
+pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyConfig> {
     let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None)?;
 
     settings::get_agency_client_mut().unwrap().set_agency_did(&provision_agent_config.agency_did);
