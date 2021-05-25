@@ -8,7 +8,7 @@ use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle, WalletConfig, IssuerConfig};
 use crate::utils::runtime::ThreadpoolConfig;
-use crate::utils::provision::AgencyConfig;
+use crate::utils::provision::AgencyClientConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PoolConfig {
@@ -36,7 +36,7 @@ pub fn enable_agency_mocks() -> VcxResult<()> {
     Ok(())
 }
 
-pub fn create_agency_client_for_main_wallet(config: &AgencyConfig) -> VcxResult<()> {
+pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
     let config = serde_json::to_string(config).unwrap(); // todo: remove unwrap
     info!("init_agency_client >>> config = {}", config);
     settings::get_agency_client_mut()?.process_config_string(&config, false)?;

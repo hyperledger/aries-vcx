@@ -17,7 +17,7 @@ pub struct AgentProvisionConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AgencyConfig {
+pub struct AgencyClientConfig {
     pub agency_did: String,
     pub agency_endpoint: String,
     pub agency_verkey: String,
@@ -27,7 +27,7 @@ pub struct AgencyConfig {
     pub sdk_to_remote_verkey: String,
 }
 
-pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyConfig> {
+pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyClientConfig> {
     let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None)?;
 
     settings::get_agency_client_mut().unwrap().set_agency_did(&provision_agent_config.agency_did);
@@ -39,7 +39,7 @@ pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> V
 
     let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &provision_agent_config.agency_did)?;
 
-    Ok(AgencyConfig {
+    Ok(AgencyClientConfig {
         agency_did: provision_agent_config.agency_did.clone(),
         agency_endpoint: provision_agent_config.agency_endpoint.clone(),
         agency_verkey: provision_agent_config.agency_verkey.clone(),

@@ -14,7 +14,7 @@ use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 use crate::utils::version_constants;
-use crate::utils::provision::AgencyConfig;
+use crate::utils::provision::AgencyClientConfig;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -95,7 +95,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
-    let agency_config = match serde_json::from_str::<AgencyConfig>(&config) {
+    let agency_config = match serde_json::from_str::<AgencyClientConfig>(&config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
             error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);

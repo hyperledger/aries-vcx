@@ -10,7 +10,7 @@ pub mod test {
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
-    use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyConfig};
+    use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
     use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::constants;
 
@@ -67,7 +67,7 @@ pub mod test {
     pub struct Faber {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
-        pub config_agency: AgencyConfig,
+        pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
         pub connection_handle: u32,
         pub schema_handle: u32,
@@ -286,7 +286,7 @@ pub mod test {
     pub struct Alice {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
-        pub config_agency: AgencyConfig,
+        pub config_agency: AgencyClientConfig,
         pub connection_handle: u32,
         pub credential_handle: u32,
         pub presentation_handle: u32,
