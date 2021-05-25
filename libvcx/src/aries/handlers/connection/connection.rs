@@ -4,7 +4,6 @@ use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -224,7 +223,15 @@ impl Connection {
      */
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
-        self.step(DidExchangeMessages::InvitationReceived(invitation))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(_sm_inviter) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_receive_invitation(invitation)?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -262,7 +269,15 @@ impl Connection {
      */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
-        self.step(DidExchangeMessages::Connect())
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_connect()?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_connect()?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -275,18 +290,11 @@ impl Connection {
             return Ok(());
         }
 
-        self.handle_message(message.clone().into())?;
+        self.update_with_message(message.clone())?;
 
         Ok(())
     }
 
-    /**
-    Perform state machine transition using supplied message.
-     */
-    pub fn handle_message(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
-        trace!("Connection: handle_message >>> {:?}", message);
-        self.step(message)
-    }
 
     /**
     Updates status of a message (received from connection counterparty) in agency.
@@ -378,7 +386,16 @@ Get messages received from connection counterparty.
 
     pub fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_ping >>> comment: {:?}", comment);
-        self.handle_message(DidExchangeMessages::SendPing(comment))
+        // self.handle_message(DidExchangeMessages::DiscoverFeatures((query, comment)))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_send_ping(comment)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_send_ping(comment)?)
+            }
+        };
+        Ok(())
     }
 
     pub fn delete(&self) -> VcxResult<()> {
@@ -386,93 +403,76 @@ Get messages received from connection counterparty.
         self.agent_info().delete()
     }
 
-    fn _step_inviter(&mut self, sm_inviter: SmConnectionInviter, message: DidExchangeMessages) -> VcxResult<SmConnection> {
+    fn _step_inviter(&mut self, sm_inviter: SmConnectionInviter, message: A2AMessage) -> VcxResult<SmConnection> {
         let sm_inviter = match message {
-            DidExchangeMessages::Connect() => {
-                sm_inviter.transition_connect()
-            }
-            DidExchangeMessages::ExchangeRequestReceived(request) => {
+            A2AMessage::ConnectionRequest(request) => {
                 sm_inviter.transition_receive_connection_request(request)
             }
-            DidExchangeMessages::AckReceived(ack) => {
+            A2AMessage::Ack(ack) => {
                 sm_inviter.transition_receive_ack(ack)
             }
-            DidExchangeMessages::PingReceived(ping) => {
+            A2AMessage::Ping(ping) => {
                 sm_inviter.transition_receive_ping(ping)
             }
-            DidExchangeMessages::ProblemReportReceived(problem_report) => {
+            A2AMessage::ConnectionProblemReport(problem_report) => {
                 sm_inviter.transition_receive_problem_report(problem_report)
             }
-            DidExchangeMessages::SendPing(comment) => {
-                sm_inviter.transition_send_ping(comment)
-            }
-            DidExchangeMessages::PingResponseReceived(ping_response) => {
+            A2AMessage::PingResponse(ping_response) => {
                 sm_inviter.transition_ping_response_received(ping_response)
             }
-            DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
-                sm_inviter.transition_discover_features_received(query_, comment)
-            }
-            DidExchangeMessages::QueryReceived(query) => {
+            // A2AMessage::Disclose((query_, comment)) => {
+            //     sm_inviter.transition_discover_features_received(query_, comment) // todo
+            // }
+            A2AMessage::Query(query) => {
                 sm_inviter.transition_discovery_query_received(query)
             }
-            DidExchangeMessages::DiscloseReceived(disclose) => {
+            A2AMessage::Disclose(disclose) => {
                 sm_inviter.transition_disclose_received(disclose)
             }
-            DidExchangeMessages::InvitationReceived(_) => unimplemented!("Not valid for inviter"),
-            DidExchangeMessages::ExchangeResponseReceived(_) => unimplemented!("Not valid for inviter"),
-            DidExchangeMessages::Unknown => {
+            _ => {
                 Ok(sm_inviter)
             }
         }?;
         Ok(SmConnection::Inviter(sm_inviter))
     }
 
-    fn _step_invitee(&mut self, sm_invitee: SmConnectionInvitee, message: DidExchangeMessages) -> VcxResult<SmConnection> {
+    fn _step_invitee(&mut self, sm_invitee: SmConnectionInvitee, message: A2AMessage) -> VcxResult<SmConnection> {
         let sm_invitee = match message {
-            DidExchangeMessages::Connect() => {
-                sm_invitee.transition_connect()
-            }
-            DidExchangeMessages::InvitationReceived(invitation) => {
+            A2AMessage::ConnectionInvitation(invitation) => {
                 sm_invitee.transition_receive_invitation(invitation)
             },
-            DidExchangeMessages::ExchangeRequestReceived(_) => {
-                unimplemented!("Not valid for invitee")
-            }
-            DidExchangeMessages::AckReceived(ack) => {
-                sm_invitee.transition_receive_ack(ack)
-            }
-            DidExchangeMessages::PingReceived(ping) => {
-                sm_invitee.transition_receive_ping(ping)
-            }
-            DidExchangeMessages::ProblemReportReceived(problem_report) => {
-                sm_invitee.transition_receive_problem_report(problem_report)
-            }
-            DidExchangeMessages::SendPing(comment) => {
-                sm_invitee.transition_send_ping(comment)
-            }
-            DidExchangeMessages::PingResponseReceived(ping_response) => {
-                sm_invitee.transition_ping_response_received(ping_response)
-            }
-            DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
-                sm_invitee.transition_discover_features_received(query_, comment)
-            }
-            DidExchangeMessages::QueryReceived(query) => {
-                sm_invitee.transition_discovery_query_received(query)
-            }
-            DidExchangeMessages::DiscloseReceived(disclose) => {
-                sm_invitee.transition_disclose_received(disclose)
-            }
-            DidExchangeMessages::ExchangeResponseReceived(response) => {
+            A2AMessage::ConnectionResponse(response) => {
                 sm_invitee.transition_receive_connection_response(response)
             }
-            DidExchangeMessages::Unknown => {
+            A2AMessage::Ack(ack) => {
+                sm_invitee.transition_receive_ack(ack)
+            }
+            A2AMessage::Ping(ping) => {
+                sm_invitee.transition_receive_ping(ping)
+            }
+            A2AMessage::ConnectionProblemReport(problem_report) => {
+                sm_invitee.transition_receive_problem_report(problem_report)
+            }
+            A2AMessage::PingResponse(ping_response) => {
+                sm_invitee.transition_ping_response_received(ping_response)
+            }
+            // DidExchangeMessages::DiscoverFeatures((query_, comment)) => { // todo
+            //     sm_invitee.transition_discover_features_received(query_, comment)
+            // }
+            A2AMessage::Query(query) => {
+                sm_invitee.transition_discovery_query_received(query)
+            }
+            A2AMessage::Disclose(disclose) => {
+                sm_invitee.transition_disclose_received(disclose)
+            }
+            _ => {
                 Ok(sm_invitee)
             }
         }?;
         Ok(SmConnection::Invitee(sm_invitee))
     }
 
-    fn step(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
+    pub fn update_with_message(&mut self, message: A2AMessage) -> VcxResult<()>{
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 self._step_inviter(sm_inviter.clone(), message)?
@@ -486,7 +486,15 @@ Get messages received from connection counterparty.
 
     pub fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
-        self.handle_message(DidExchangeMessages::DiscoverFeatures((query, comment)))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_discover_features_received(query, comment)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_discover_features_received(query, comment)?)
+            }
+        };
+        Ok(())
     }
 
     pub fn get_connection_info(&self) -> VcxResult<String> {
