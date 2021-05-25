@@ -143,7 +143,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
     let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
         Ok(wallet_config) => wallet_config,
         Err(err) => {
-            error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
+            error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num
         }
     };

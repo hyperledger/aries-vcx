@@ -213,7 +213,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
     let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
         Ok(pool_config) => pool_config,
         Err(err) => {
-            error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
+            error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num
         }
     };

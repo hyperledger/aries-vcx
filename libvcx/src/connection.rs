@@ -753,15 +753,15 @@ pub mod tests {
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
-        let mut consumer1 = Alice::setup();
+        let mut consumer = Alice::setup();
 
-        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&mut consumer1, &mut institution);
+        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
-        consumer1.activate().unwrap();
+        consumer.activate().unwrap();
         send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
         // make sure messages has be delivered

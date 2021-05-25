@@ -77,9 +77,6 @@ pub mod test {
     }
 
     impl TestAgent for Faber {
-        // propagte error up so we can handle it gracefully in
-        /// impl Drop for Faber
-        // so that we don't double panic, in case we are dropping due to a panick in the test
         fn activate(&mut self) -> VcxResult<()> {
             close_main_wallet()
                 .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
@@ -346,7 +343,7 @@ pub mod test {
         pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxAgencyMessage {
             self.activate().unwrap();
             let did = connection::get_pw_did(self.connection_handle).unwrap();
-            download_message(did, message_type) // tood: need to pass PayloadKind
+            download_message(did, message_type)
         }
 
         pub fn accept_offer(&mut self) {
@@ -454,9 +451,9 @@ pub mod test {
 
     impl Drop for Alice {
         fn drop(&mut self) {
-            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Faber's wallet while dropping"));
+            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
+            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
+            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Alice's wallet while dropping"));
         }
     }
 }

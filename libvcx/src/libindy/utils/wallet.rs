@@ -99,9 +99,6 @@ pub fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
 
 pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
-    // todo: We sohuld probably not be setting the state here, but leave it up to caller to call "fn init_issuer_config()" subsequently after this function
-    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
-    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
     Ok(IssuerConfig {
         institution_did,
         institution_verkey
