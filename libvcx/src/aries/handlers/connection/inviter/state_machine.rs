@@ -85,7 +85,7 @@ impl SmConnectionInviter {
     pub fn state_object(&self) -> &InviterState {
         &self.state
     }
-   
+
     pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             InviterState::Null(_) => None,
@@ -226,9 +226,9 @@ impl SmConnectionInviter {
 
                 let invite: Invitation = Invitation::create()
                     .set_label(source_id.to_string())
-                    .set_service_endpoint(agent_info.agency_endpoint()?)
-                    .set_recipient_keys(agent_info.recipient_keys())
-                    .set_routing_keys(agent_info.routing_keys()?);
+                    .set_service_endpoint(new_agent_info.agency_endpoint()?)
+                    .set_recipient_keys(new_agent_info.recipient_keys())
+                    .set_routing_keys(new_agent_info.routing_keys()?);
 
                 let new_state = InviterState::Invited((state, invite).into());
                 (new_state, new_agent_info)
@@ -532,7 +532,7 @@ pub mod test {
 
             #[test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_other_messages_from_invited_state() {
+            fn test_did_exchange_handle_other_message_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = inviter_sm().to_inviter_invited_state();
