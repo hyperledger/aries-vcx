@@ -200,6 +200,9 @@ pub fn provision_cloud_agent(agency_config: &str) -> VcxResult<String> {
 
     let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &agency_config.agency_did)?;
 
+    settings::get_agency_client_mut().unwrap().set_agent_pwdid(&agent_did);
+    settings::get_agency_client_mut().unwrap().set_agent_vk(&agent_vk);
+
     let agency_config = json!({
         "agency_did": agency_config.agency_did,
         "agency_endpoint": agency_config.agency_endpoint,

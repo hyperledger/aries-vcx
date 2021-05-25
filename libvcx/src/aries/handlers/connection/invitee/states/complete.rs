@@ -2,6 +2,10 @@ use crate::error::VcxResult;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
 use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::messages::connection::request::Request;
+use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
+use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
+use crate::aries::messages::connection::response::Response;
 use crate::aries::handlers::connection::util::handle_ping;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -19,6 +23,20 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
     fn from((state, protocols): (CompleteState, Vec<ProtocolDescriptor>)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from CompleteState to CompleteState");
         CompleteState { did_doc: state.did_doc, protocols: Some(protocols) }
+    }
+}
+
+impl From<RequestedState> for CompleteState {
+    fn from(state: RequestedState) -> CompleteState {
+        trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
+        CompleteState { did_doc: state.did_doc, protocols: None }
+    }
+}
+
+impl From<RespondedState> for CompleteState {
+    fn from(state: RespondedState) -> CompleteState {
+        trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
+        CompleteState { did_doc: state.did_doc, protocols: None }
     }
 }
 

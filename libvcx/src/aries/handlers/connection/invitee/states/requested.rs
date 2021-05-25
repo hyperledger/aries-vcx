@@ -1,6 +1,7 @@
 use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::states::complete::CompleteState;
+use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -15,7 +16,6 @@ pub struct RequestedState {
     pub did_doc: DidDoc,
 }
 
-
 impl From<(RequestedState, ProblemReport)> for NullState {
     fn from((_state, _error): (RequestedState, ProblemReport)) -> NullState {
         trace!("ConnectionInvitee: transit state from RequestedState to NullState");
@@ -23,12 +23,13 @@ impl From<(RequestedState, ProblemReport)> for NullState {
     }
 }
 
-impl From<(RequestedState, Response)> for CompleteState {
-    fn from((_state, response): (RequestedState, Response)) -> CompleteState {
-        trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
-        CompleteState { did_doc: response.connection.did_doc, protocols: None }
+impl From<(RequestedState, SignedResponse)> for RespondedState {
+    fn from((state, response): (RequestedState, SignedResponse)) -> RespondedState {
+        trace!("ConnectionInvitee: transit state from RequestedState to RespondedState");
+        RespondedState { response, did_doc: state.did_doc, request: state.request }
     }
 }
+
 
 impl RequestedState {
     pub fn handle_connection_response(&self, response: SignedResponse, agent_info: &AgentInfo) -> VcxResult<Response> {

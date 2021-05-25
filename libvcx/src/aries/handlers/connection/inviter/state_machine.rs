@@ -5,6 +5,9 @@ use crate::aries::handlers::connection::inviter::states::complete::CompleteState
 use crate::aries::handlers::connection::inviter::states::invited::InvitedState;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
 use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
+use crate::aries::handlers::connection::inviter::states::requested::RequestedState;
+use crate::aries::messages::connection::request::Request;
+use crate::aries::messages::connection::response::{Response, SignedResponse};
 use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -21,12 +24,14 @@ pub struct SmConnectionInviter {
     source_id: String,
     agent_info: AgentInfo,
     state: InviterState,
+    autohop: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum InviterState {
     Null(NullState),
     Invited(InvitedState),
+    Requested(RequestedState),
     Responded(RespondedState),
     Completed(CompleteState),
 }
@@ -34,8 +39,9 @@ pub enum InviterState {
 impl InviterState {
     pub fn code(&self) -> u32 {
         match self {
-            InviterState::Null(_) => VcxStateType::VcxStateInitialized as u32,
-            InviterState::Invited(_) => VcxStateType::VcxStateOfferSent as u32,
+            InviterState::Null(_) => VcxStateType::VcxStateNone as u32,
+            InviterState::Invited(_) => VcxStateType::VcxStateInitialized as u32,
+            InviterState::Requested(_) => VcxStateType::VcxStateOfferSent as u32,
             InviterState::Responded(_) => VcxStateType::VcxStateRequestReceived as u32,
             InviterState::Completed(_) => VcxStateType::VcxStateAccepted as u32,
         }
@@ -48,6 +54,7 @@ impl SmConnectionInviter {
             source_id: source_id.to_string(),
             state: InviterState::Null(NullState {}),
             agent_info: AgentInfo::default(),
+            autohop: false
         }
     }
 
@@ -63,6 +70,7 @@ impl SmConnectionInviter {
             source_id,
             agent_info,
             state,
+            autohop: false
         }
     }
 
@@ -84,20 +92,21 @@ impl SmConnectionInviter {
 
     pub fn step(self, message: DidExchangeMessages) -> VcxResult<SmConnectionInviter> {
         trace!("SmConnectionInviter::step >>> message: {:?}", message);
-        let SmConnectionInviter { source_id, agent_info, state } = self;
+        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
 
         trace!("SmConnectionInviter::step :: current state = {:?}", &state);
         let (new_state, agent_info) =
-            SmConnectionInviter::inviter_step(state, message, &source_id, agent_info)?;
+            SmConnectionInviter::inviter_step(&source_id, agent_info, state, autohop, message)?;
 
         trace!("SmConnectionInviter::step :: new state = {:?}", &new_state);
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state })
+        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
     }
 
     pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             InviterState::Null(_) => None,
             InviterState::Invited(ref _state) => None,
+            InviterState::Requested(ref state) => Some(state.did_doc.clone()),
             InviterState::Responded(ref state) => Some(state.did_doc.clone()),
             InviterState::Completed(ref state) => Some(state.did_doc.clone()),
         }
@@ -117,6 +126,13 @@ impl SmConnectionInviter {
             }
         }
         None
+    }
+
+    pub fn needs_message(&self) -> bool {
+        match self.state {
+            InviterState::Requested(_) => false,
+            _ => true
+        }
     }
 
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
@@ -226,7 +242,30 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn inviter_step(inviter_state: InviterState, message: DidExchangeMessages, source_id: &str, mut agent_info: AgentInfo) -> VcxResult<(InviterState, AgentInfo)> {
+    fn _send_response(request: &Request, agent_info: &AgentInfo) -> VcxResult<(SignedResponse, AgentInfo)> {
+        request.connection.did_doc.validate()?;
+
+        let prev_agent_info = agent_info.clone();
+
+        let new_agent_info: AgentInfo = agent_info.create_agent()?;
+
+        let response = Response::create()
+            .set_did(new_agent_info.pw_did.to_string())
+            .set_service_endpoint(new_agent_info.agency_endpoint()?)
+            .set_keys(new_agent_info.recipient_keys(), new_agent_info.routing_keys()?)
+            .ask_for_ack();
+
+        let signed_response = response.clone()
+            .set_thread_id(&request.id.0)
+            .encode(&prev_agent_info.pw_vk)?;
+
+
+        request.connection.did_doc.send_message(&signed_response.to_a2a_message(), &new_agent_info.pw_vk)?;
+
+        Ok((signed_response, new_agent_info))
+    }
+
+    pub fn inviter_step(source_id: &str, mut agent_info: AgentInfo, inviter_state: InviterState, autohop: bool, message: DidExchangeMessages) -> VcxResult<(InviterState, AgentInfo)> {
         let new_state = match inviter_state {
             InviterState::Null(state) => {
                 match message {
@@ -249,21 +288,26 @@ impl SmConnectionInviter {
             InviterState::Invited(state) => {
                 match message {
                     DidExchangeMessages::ExchangeRequestReceived(request) => {
-                        match state.handle_connection_request(&request, &agent_info) {
-                            Ok((response, new_agent_info)) => {
-                                let prev_agent_info = agent_info.clone();
-                                agent_info = new_agent_info;
-                                InviterState::Responded((state, request, response, prev_agent_info).into())
-                            }
-                            Err(err) => {
-                                let problem_report = ProblemReport::create()
-                                    .set_problem_code(ProblemCode::RequestProcessingError)
-                                    .set_explain(err.to_string())
-                                    .set_thread_id(&request.id.0);
+                        match autohop {
+                            true => {
+                                match Self::_send_response(&request, &agent_info) {
+                                    Ok((response, new_agent_info)) => {
+                                        let prev_agent_info = agent_info.clone();
+                                        agent_info = new_agent_info;
+                                        InviterState::Responded((state, request, response, prev_agent_info).into())
+                                    }
+                                    Err(err) => {
+                                        let problem_report = ProblemReport::create()
+                                            .set_problem_code(ProblemCode::RequestProcessingError)
+                                            .set_explain(err.to_string())
+                                            .set_thread_id(&request.id.0);
 
-                                request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
-                                InviterState::Null((state, problem_report).into())
+                                        request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                                        InviterState::Null((state, problem_report).into())
+                                    }
+                                }
                             }
+                            false => InviterState::Requested(request.into())
                         }
                     }
                     DidExchangeMessages::ProblemReportReceived(problem_report) => {
@@ -271,6 +315,24 @@ impl SmConnectionInviter {
                     }
                     _ => {
                         InviterState::Invited(state)
+                    }
+                }
+            }
+            InviterState::Requested(state) => {
+                match Self::_send_response(&state.request, &agent_info) {
+                    Ok((response, new_agent_info)) => {
+                        let prev_agent_info = agent_info.clone();
+                        agent_info = new_agent_info;
+                        InviterState::Responded((state, response, prev_agent_info).into())
+                    }
+                    Err(err) => {
+                        let problem_report = ProblemReport::create()
+                            .set_problem_code(ProblemCode::RequestProcessingError)
+                            .set_explain(err.to_string())
+                            .set_thread_id(&state.request.id.0);
+
+                        state.request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                        InviterState::Null((state, problem_report).into())
                     }
                 }
             }

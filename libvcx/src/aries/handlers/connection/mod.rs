@@ -1,8 +1,8 @@
 pub mod agent_info;
 pub mod connection;
 pub mod messages;
-mod invitee;
-mod inviter;
+pub mod invitee;
+pub mod inviter;
 mod util;
 
 #[cfg(test)]

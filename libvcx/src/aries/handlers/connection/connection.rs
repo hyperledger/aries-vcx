@@ -256,6 +256,63 @@ impl Connection {
         }
     }
 
+    pub fn needs_message(&self) -> bool {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.needs_message()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.needs_message()
+            }
+        }
+    }
+
+    fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
+        let expected_sender_vk = match remote_vk {
+            Ok(vk) => vk,
+            Err(_) => return Ok(None)
+        };
+        if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+            let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+            return Ok(Some((messages, bootstrap_agent_info.clone())));
+        }
+        Ok(None)
+    }
+
+
+    pub fn update_state(&mut self) -> VcxResult<()> {
+        if self.is_in_null_state() {
+            warn!("Connection::update_state :: update state on connection in null state is ignored");
+            return Ok(());
+        }
+        
+        if !self.needs_message() {
+            debug!("Connection::update_state :: updating without message");
+            self.step(DidExchangeMessages::Unknown)?;
+        }
+
+        // connection protocol itself handles message authentication where it makes sense
+        let messages = self.get_messages_noauth()?;
+        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
+
+        if let Some((uid, message)) = self.find_message_to_handle(messages) {
+            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
+            self.update_state_with_message(&message)?;
+            self.agent_info().clone().update_message_status(uid)?;
+        } else if let SmConnectionState::Inviter(_) = self.state_object() {
+            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
+            if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), self.bootstrap_agent_info())? {
+                if let Some((uid, message)) = self.find_message_to_handle(messages) {
+                    trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
+                    self.update_state_with_message(&message)?;
+                    bootstrap_agent_info.update_message_status(uid)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     /**
     If called on Inviter, creates initial connection agent and generates invitation
     If called on Invitee, creates connection agent and send connection request using info from connection invitation
