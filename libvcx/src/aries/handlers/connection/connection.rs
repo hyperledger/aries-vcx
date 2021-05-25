@@ -389,7 +389,46 @@ Get messages received from connection counterparty.
     fn step(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(message)?)
+                let sm_inviter= sm_inviter.clone();
+                let sm_inviter = match message {
+                    DidExchangeMessages::Connect() => {
+                        sm_inviter.transition_connect()
+                    }
+                    DidExchangeMessages::ExchangeRequestReceived(request) => {
+                        sm_inviter.transition_receive_connection_request(request)
+                    }
+                    DidExchangeMessages::AckReceived(ack) => {
+                        sm_inviter.transition_receive_ack(ack)
+                    }
+                    DidExchangeMessages::PingReceived(ping) => {
+                        sm_inviter.transition_receive_ping(ping)
+                    }
+                    DidExchangeMessages::ProblemReportReceived(problem_report) => {
+                        sm_inviter.transition_receive_problem_report(problem_report)
+                    }
+                    DidExchangeMessages::SendPing(comment) => {
+                        sm_inviter.transition_send_ping(comment)
+                    }
+                    DidExchangeMessages::PingResponseReceived(ping_response) => {
+                        sm_inviter.transition_ping_response_received(ping_response)
+                    }
+                    DidExchangeMessages::DiscoverFeatures((query_, comment)) => {
+                        sm_inviter.transition_discover_features_received(query_, comment)
+                    }
+                    DidExchangeMessages::QueryReceived(query) => {
+                        sm_inviter.transition_discovery_query_received(query)
+                    }
+                    DidExchangeMessages::DiscloseReceived(disclose) => {
+                        sm_inviter.transition_disclose_received(disclose)
+                    }
+                    DidExchangeMessages::InvitationReceived(_) => unimplemented!("Not valid for inviter"),
+                    DidExchangeMessages::ExchangeResponseReceived(_) => unimplemented!("Not valid for inviter"),
+                    DidExchangeMessages::Unknown => {
+                        Ok(sm_inviter)
+                    }
+                }?;
+
+                SmConnection::Inviter(sm_inviter)
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().step(message)?)
