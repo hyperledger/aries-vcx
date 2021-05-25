@@ -1,7 +1,6 @@
 use crate::error::VcxResult;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::inviter::state_machine::InviterState;
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::handlers::connection::util::handle_ping;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;

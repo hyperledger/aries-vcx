@@ -1,6 +1,5 @@
 pub mod agent_info;
 pub mod connection;
-pub mod messages;
 mod invitee;
 mod inviter;
 mod util;

@@ -7,7 +7,6 @@ use crate::aries::handlers::connection::invitee::states::complete::CompleteState
 use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
