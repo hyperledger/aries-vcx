@@ -98,7 +98,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     let agency_config = match serde_json::from_str::<AgencyConfig>(&config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
-            error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration; err: {:?}", err);
+            error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num
         }
     };
@@ -120,7 +120,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     error::SUCCESS.code_num
 }
 
-/// Stores institution did, verkey and name in memory.
+/// Stores institution did and verkey in memory.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
@@ -148,7 +148,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
     let issuer_config = match serde_json::from_str::<IssuerConfig>(&config) {
         Ok(issuer_config) => issuer_config,
         Err(err) => {
-            error!("vcx_init_issuer_config >>> invalid configuration; err: {:?}", err);
+            error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num
         }
     };
@@ -697,7 +697,7 @@ mod tests {
         wallet::delete_wallet(&wallet_config).unwrap();
 
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
-        let wallet_config2 = WalletConfig {
+        let wallet_config = WalletConfig {
             wallet_name: wallet_name.into(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
@@ -709,11 +709,11 @@ mod tests {
         };
 
         let import_config = RestoreWalletConfigs {
-            wallet_name: wallet_config2.wallet_name.clone(),
-            wallet_key: wallet_config2.wallet_key.clone(),
+            wallet_name: wallet_config.wallet_name.clone(),
+            wallet_key: wallet_config.wallet_key.clone(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: Some(wallet_config2.wallet_key_derivation.clone())
+            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone())
         };
         import(&import_config).unwrap();
 
@@ -727,7 +727,7 @@ mod tests {
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(&wallet_config2).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
     }
 
     #[test]
