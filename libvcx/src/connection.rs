@@ -93,14 +93,14 @@ fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(source_id);
+    let connection = Connection::create(source_id, true);
     return store_connection(connection);
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = Connection::create_with_invite(source_id, invitation)?;
+        let connection = Connection::create_with_invite(source_id, invitation, true)?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
@@ -211,7 +211,7 @@ impl Into<(SmConnectionState, AgentInfo, String)> for Connection {
 
 impl From<(SmConnectionState, AgentInfo, String)> for Connection {
     fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> Connection {
-        Connection::from_parts(source_id, agent_info, state)
+        Connection::from_parts(source_id, agent_info, state, true)
     }
 }
 

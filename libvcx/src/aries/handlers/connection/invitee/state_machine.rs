@@ -58,8 +58,8 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn new(source_id: &str) -> Self {
-        SmConnectionInvitee::_build_invitee(source_id, true)
+    pub fn new(source_id: &str, autohop: bool) -> Self {
+        SmConnectionInvitee::_build_invitee(source_id, autohop)
     }
 
     pub fn is_in_null_state(&self) -> bool {
@@ -69,12 +69,12 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn from(source_id: String, agent_info: AgentInfo, state: InviteeState) -> Self {
+    pub fn from(source_id: String, agent_info: AgentInfo, state: InviteeState, autohop: bool) -> Self {
         SmConnectionInvitee {
             source_id,
             agent_info,
             state,
-            autohop: true
+            autohop
         }
     }
 
@@ -334,7 +334,7 @@ pub mod test {
         use super::*;
 
         pub fn invitee_sm() -> SmConnectionInvitee {
-            SmConnectionInvitee::new(&source_id())
+            SmConnectionInvitee::new(&source_id(), true)
         }
 
         impl SmConnectionInvitee {

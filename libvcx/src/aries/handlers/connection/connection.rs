@@ -55,21 +55,21 @@ impl Connection {
     /**
     Create Inviter connection state machine
      */
-    pub fn create(source_id: &str) -> Connection {
+    pub fn create(source_id: &str, autohop: bool) -> Connection {
         trace!("Connection::create >>> source_id: {}", source_id);
 
         Connection {
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id))
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, autohop))
         }
     }
 
-    pub fn from_parts(source_id: String, agent_info: AgentInfo, state: SmConnectionState) -> Connection {
+    pub fn from_parts(source_id: String, agent_info: AgentInfo, state: SmConnectionState, autohop: bool) -> Connection {
         match state {
             SmConnectionState::Inviter(state) => {
-                Connection { connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, agent_info, state)) }
+                Connection { connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, agent_info, state, autohop)) }
             }
             SmConnectionState::Invitee(state) => {
-                Connection { connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, agent_info, state)) }
+                Connection { connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, agent_info, state, autohop)) }
             }
         }
     }
@@ -77,11 +77,11 @@ impl Connection {
     /**
     Create Invitee connection state machine
      */
-    pub fn create_with_invite(source_id: &str, invitation: Invitation) -> VcxResult<Connection> {
+    pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
 
         let mut connection = Connection {
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id))
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, autohop))
         };
 
         connection.process_invite(invitation)?;
@@ -291,7 +291,6 @@ impl Connection {
             self.step(DidExchangeMessages::Unknown)?;
         }
 
-        // connection protocol itself handles message authentication where it makes sense
         let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 

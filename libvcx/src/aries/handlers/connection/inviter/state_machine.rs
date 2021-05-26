@@ -49,12 +49,12 @@ impl InviterState {
 }
 
 impl SmConnectionInviter {
-    pub fn _build_inviter(source_id: &str) -> Self {
+    pub fn _build_inviter(source_id: &str, autohop: bool) -> Self {
         SmConnectionInviter {
             source_id: source_id.to_string(),
             state: InviterState::Null(NullState {}),
             agent_info: AgentInfo::default(),
-            autohop: true
+            autohop
         }
     }
 
@@ -65,12 +65,19 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn from(source_id: String, agent_info: AgentInfo, state: InviterState) -> Self {
+    pub fn needs_message(&self) -> bool {
+        match self.state {
+            InviterState::Requested(_) => false,
+            _ => true
+        }
+    }
+
+    pub fn from(source_id: String, agent_info: AgentInfo, state: InviterState, autohop: bool) -> Self {
         SmConnectionInviter {
             source_id,
             agent_info,
             state,
-            autohop: true
+            autohop
         }
     }
 
@@ -128,13 +135,6 @@ impl SmConnectionInviter {
         None
     }
 
-    pub fn needs_message(&self) -> bool {
-        match self.state {
-            InviterState::Requested(_) => false,
-            _ => true
-        }
-    }
-
     pub fn get_protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
     }
@@ -165,8 +165,8 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn new(source_id: &str) -> Self {
-        SmConnectionInviter::_build_inviter(source_id)
+    pub fn new(source_id: &str, autohop: bool) -> Self {
+        SmConnectionInviter::_build_inviter(source_id, autohop)
     }
 
     pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
@@ -393,7 +393,7 @@ pub mod test {
         use super::*;
 
         pub fn inviter_sm() -> SmConnectionInviter {
-            SmConnectionInviter::new(&source_id())
+            SmConnectionInviter::new(&source_id(), true)
         }
 
         impl SmConnectionInviter {
