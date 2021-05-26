@@ -209,7 +209,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    fn _send_ack(did_doc: &DidDoc, request: &Request, response: &SignedResponse, agent_info: &AgentInfo) -> VcxResult<()> {
+    fn _send_ack(did_doc: &DidDoc, request: &Request, response: &SignedResponse, agent_info: &AgentInfo) -> VcxResult<Response> {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
 
@@ -223,7 +223,8 @@ impl SmConnectionInvitee {
             .set_thread_id(&response.thread.thid.clone().unwrap_or_default())
             .to_a2a_message();
 
-        response.connection.did_doc.send_message(&message, &agent_info.pw_vk)
+        response.connection.did_doc.send_message(&message, &agent_info.pw_vk)?;
+        Ok(response)
     }
 
     pub fn invitee_step(source_id: &str, mut agent_info: AgentInfo, invitee_state: InviteeState, autohop: bool, message: DidExchangeMessages) -> VcxResult<(InviteeState, AgentInfo)> {
@@ -266,7 +267,7 @@ impl SmConnectionInvitee {
                         match autohop {
                             true => {
                                 match Self::_send_ack(&state.did_doc, &state.request, &response, &agent_info) {
-                                    Ok(response) => InviteeState::Completed(state.into()),
+                                    Ok(response) => InviteeState::Completed((state, response).into()),
                                     Err(err) => {
                                         let problem_report = ProblemReport::create()
                                             .set_problem_code(ProblemCode::ResponseProcessingError)
@@ -290,7 +291,7 @@ impl SmConnectionInvitee {
             }
             InviteeState::Responded(state) => {
                 match Self::_send_ack(&state.did_doc, &state.request, &state.response, &agent_info) {
-                    Ok(response) => InviteeState::Completed(state.into()),
+                    Ok(response) => InviteeState::Completed((state, response).into()),
                     Err(err) => {
                         let problem_report = ProblemReport::create()
                             .set_problem_code(ProblemCode::ResponseProcessingError)

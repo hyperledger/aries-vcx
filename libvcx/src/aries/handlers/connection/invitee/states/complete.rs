@@ -26,17 +26,17 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
     }
 }
 
-impl From<RequestedState> for CompleteState {
-    fn from(state: RequestedState) -> CompleteState {
+impl From<(RequestedState, Response)> for CompleteState {
+    fn from((_state, response): (RequestedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
-        CompleteState { did_doc: state.did_doc, protocols: None }
+        CompleteState { did_doc: response.connection.did_doc, protocols: None }
     }
 }
 
-impl From<RespondedState> for CompleteState {
-    fn from(state: RespondedState) -> CompleteState {
+impl From<(RespondedState, Response)> for CompleteState {
+    fn from((_state, response): (RespondedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.did_doc, protocols: None }
+        CompleteState { did_doc: response.connection.did_doc, protocols: None }
     }
 }
 
