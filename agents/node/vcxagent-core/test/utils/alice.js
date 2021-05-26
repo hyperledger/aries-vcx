@@ -26,7 +26,7 @@ module.exports.createAlice = async function createAlice () {
 
     await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitation(connectionId, invite)
     const connection = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
-    expect(await connection.getState()).toBe(StateType.RequestReceived)
+    expect(await connection.getState()).toBe(StateType.OfferSent)
 
     await vcxAgent.agentShutdownVcx()
   }

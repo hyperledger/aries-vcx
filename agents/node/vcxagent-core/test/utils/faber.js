@@ -30,7 +30,7 @@ module.exports.createFaber = async function createFaber () {
     const invite = await vcxAgent.serviceConnections.inviterConnectionCreate(connectionId, undefined)
     logger.info(`Faber generated invite:\n${invite}`)
     const connection = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
-    expect(await connection.getState()).toBe(StateType.OfferSent)
+    expect(await connection.getState()).toBe(StateType.Initialized)
 
     await vcxAgent.agentShutdownVcx()
 
