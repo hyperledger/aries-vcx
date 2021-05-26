@@ -54,7 +54,7 @@ impl SmConnectionInviter {
             source_id: source_id.to_string(),
             state: InviterState::Null(NullState {}),
             agent_info: AgentInfo::default(),
-            autohop: false
+            autohop: true
         }
     }
 
@@ -70,7 +70,7 @@ impl SmConnectionInviter {
             source_id,
             agent_info,
             state,
-            autohop: false
+            autohop: true
         }
     }
 
@@ -817,8 +817,8 @@ pub mod test {
             fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(VcxStateType::VcxStateInitialized as u32, inviter_sm().state());
-                assert_eq!(VcxStateType::VcxStateOfferSent as u32, inviter_sm().to_inviter_invited_state().state());
+                assert_eq!(VcxStateType::VcxStateNone as u32, inviter_sm().state());
+                assert_eq!(VcxStateType::VcxStateInitialized as u32, inviter_sm().to_inviter_invited_state().state());
                 assert_eq!(VcxStateType::VcxStateRequestReceived as u32, inviter_sm().to_inviter_responded_state().state());
                 assert_eq!(VcxStateType::VcxStateAccepted as u32, inviter_sm().to_inviter_completed_state().state());
             }

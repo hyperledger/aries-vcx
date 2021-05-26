@@ -22,3 +22,5 @@ pub const AGENCY_CONFIGS_UPDATED: &str = r#"
 {
 	"@type": "did:sov:123456789abcdefghi1234;spec/configs/1.0/CONFIGS_UPDATED"
 }"#;
+pub const DID: &str = "FhrSrYtQcw3p9xwf7NYemf";
+pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";

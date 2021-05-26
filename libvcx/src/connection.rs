@@ -374,7 +374,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_connection("test_create_connection").unwrap();
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
 
         connect(handle).unwrap();
@@ -405,14 +405,14 @@ pub mod tests {
 
         let handle = create_connection("test_create_drop_create").unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
         let did1 = get_pw_did(handle).unwrap();
 
         release(handle).unwrap();
 
         let handle2 = create_connection("test_create_drop_create").unwrap();
 
-        assert_eq!(get_state(handle2), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle2), VcxStateType::VcxStateNone as u32);
         let did2 = get_pw_did(handle2).unwrap();
 
         assert_ne!(handle, handle2);
@@ -542,7 +542,7 @@ pub mod tests {
 
         let handle = create_connection("test_serialize_deserialize").unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
         connect(handle).unwrap();
         connect(handle).unwrap();

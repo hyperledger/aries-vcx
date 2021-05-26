@@ -59,7 +59,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn new(source_id: &str) -> Self {
-        SmConnectionInvitee::_build_invitee(source_id, false)
+        SmConnectionInvitee::_build_invitee(source_id, true)
     }
 
     pub fn is_in_null_state(&self) -> bool {
@@ -705,9 +705,9 @@ pub mod test {
             fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().state());
-                assert_eq!(VcxStateType::VcxStateOfferSent as u32, invitee_sm().to_invitee_invited_state().state());
-                assert_eq!(VcxStateType::VcxStateRequestReceived as u32, invitee_sm().to_invitee_requested_state().state());
+                assert_eq!(VcxStateType::VcxStateNone as u32, invitee_sm().state());
+                assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().to_invitee_invited_state().state());
+                assert_eq!(VcxStateType::VcxStateOfferSent as u32, invitee_sm().to_invitee_requested_state().state());
             }
         }
     }
