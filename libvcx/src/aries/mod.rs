@@ -163,7 +163,7 @@ pub mod test {
 
         // Alice creates Credential object with message id
         {
-            let message = alice.download_message(PayloadKinds::CredOffer);
+            let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
             let (credential_handle, _credential_offer) = credential::credential_create_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
             alice.credential_handle = credential_handle;
 
@@ -179,7 +179,7 @@ pub mod test {
 
         // Alice creates Presentation object with message id
         {
-            let message = alice.download_message(PayloadKinds::ProofRequest);
+            let message = alice.download_message(PayloadKinds::ProofRequest).unwrap();
             let (presentation_handle, _presentation_request) = disclosed_proof::create_proof_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
             alice.presentation_handle = presentation_handle;
 
@@ -229,7 +229,7 @@ pub mod test {
 
         // Alice creates Credential object with Offer
         {
-            let message = alice.download_message(PayloadKinds::CredOffer);
+            let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
 
             alice.credential_handle = credential::credential_create_with_offer("test", &message.decrypted_msg).unwrap();
 
@@ -247,7 +247,7 @@ pub mod test {
 
         // Alice creates Presentation object with Proof Request
         {
-            let agency_msg = alice.download_message(PayloadKinds::ProofRequest);
+            let agency_msg = alice.download_message(PayloadKinds::ProofRequest).unwrap();
 
             alice.presentation_handle = disclosed_proof::create_proof("test", &agency_msg.decrypted_msg).unwrap();
 

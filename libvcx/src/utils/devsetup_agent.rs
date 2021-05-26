@@ -21,7 +21,7 @@ pub mod test {
     }
 
     fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
-        debug!("determine_message_type >>> a2a_message={:?}", a2a_message);
+        debug!("determine_message_type >>> a2a_message: {:?}", a2a_message);
         match a2a_message.clone() {
             A2AMessage::PresentationRequest(_) => PayloadKinds::ProofRequest,
             A2AMessage::CredentialOffer(_) => PayloadKinds::CredOffer,
@@ -42,7 +42,7 @@ pub mod test {
         Ok(determine_message_type(a2a_message))
     }
 
-    fn download_message(did: String, filter_msg_type: PayloadKinds) -> VcxAgencyMessage {
+    fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
         let mut messages = agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
@@ -51,13 +51,13 @@ pub mod test {
             let decrypted_msg = &message.decrypted_msg.unwrap();
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
-                return VcxAgencyMessage {
+                return Some(VcxAgencyMessage {
                     uid: message.uid,
                     decrypted_msg: decrypted_msg.clone(),
-                };
+                });
             }
         }
-        panic!("Message not found")
+        None
     }
 
     pub trait TestAgent {
@@ -84,9 +84,9 @@ pub mod test {
 
             info!("activate >>> Faber opening main wallet");
             open_as_main_wallet(&self.config_wallet)?;
-            info!("activate >>> Faber initing issuer config");
+            info!("activate >>> Faber initiating issuer config");
             init_issuer_config(&self.config_issuer)?;
-            info!("activate >>> Faber initing agency client");
+            info!("activate >>> Faber initiating agency client");
             create_agency_client_for_main_wallet(&self.config_agency)?;
             info!("activate >>> Faber done");
             Ok(())
@@ -101,7 +101,7 @@ pub mod test {
 
             info!("activate >>> Alice opening main wallet");
             open_as_main_wallet(&self.config_wallet)?;
-            info!("activate >>> Alice initing agency client");
+            info!("activate >>> Alice initiating agency client");
             create_agency_client_for_main_wallet(&self.config_agency)?;
             info!("activate >>> Alice done");
             Ok(())
@@ -340,10 +340,11 @@ pub mod test {
             assert_eq!(expected_state, connection::get_state(self.connection_handle));
         }
 
-        pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxAgencyMessage {
-            self.activate().unwrap();
-            let did = connection::get_pw_did(self.connection_handle).unwrap();
+        pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
+            self.activate()?;
+            let did = connection::get_pw_did(self.connection_handle)?;
             download_message(did, message_type)
+                .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }
 
         pub fn accept_offer(&mut self) {
