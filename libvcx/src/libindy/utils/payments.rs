@@ -202,7 +202,7 @@ pub fn get_wallet_token_info() -> VcxResult<WalletInfo> {
     trace!("get_wallet_token_info >>>");
 
     let addresses = list_addresses()?;
-    let method = settings::get_config_value(settings::CONFIG_PAYMENT_METHOD)?;
+    let method = settings::get_payment_method();
 
     let mut wallet_info = Vec::new();
     let mut balance = 0;
@@ -251,7 +251,6 @@ pub fn pay_for_txn(req: &str, txn_action: (&str, &str, &str, Option<&str>, Optio
         let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":1,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
         return Ok((Some(PaymentTxn::from_parts(inputs, outputs, 1, false)), SUBMIT_SCHEMA_RESPONSE.to_string()));
     }
-
     let txn_price = get_action_price(txn_action, None)?;
     if txn_price == 0 {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
@@ -260,9 +259,7 @@ pub fn pay_for_txn(req: &str, txn_action: (&str, &str, &str, Option<&str>, Optio
     } else {
         let (refund, inputs, refund_address) = inputs(txn_price)?;
         let output = outputs(refund, &refund_address, None, None)?;
-
         let (_fee_response, txn_response) = _submit_fees_request(req, &inputs, &output)?;
-
         let payment = PaymentTxn::from_parts(inputs, output, txn_price, false);
         Ok((Some(payment), txn_response))
     }

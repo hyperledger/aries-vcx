@@ -1,4 +1,3 @@
-use crate::connection;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
 use crate::aries::handlers::proof_presentation::verifier::state_machine::RevocationStatus;

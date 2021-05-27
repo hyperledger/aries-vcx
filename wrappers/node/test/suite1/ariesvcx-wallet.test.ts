@@ -104,22 +104,22 @@ describe('Wallet:', () => {
 
       config = '{"wallet_key":"","exported_wallet_path":"","backup_key":""}';
       error = await shouldThrow(async () => Wallet.import(config));
-      assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
+      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION);
       shutdownVcx(false);
 
       config = '{"wallet_name":"","exported_wallet_path":"","backup_key":""}';
       error = await shouldThrow(async () => Wallet.import(config));
-      assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
+      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION);
       shutdownVcx(false);
 
       config = '{"wallet_name":"","wallet_key":"","backup_key":""}';
       error = await shouldThrow(async () => Wallet.import(config));
-      assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
+      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION);
       shutdownVcx(false);
 
       config = '{"wallet_name":"","wallet_key":"","exported_wallet_path":""}';
       error = await shouldThrow(async () => Wallet.import(config));
-      assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
+      assert.equal(error.vcxCode, VCXCode.INVALID_CONFIGURATION);
     });
   });
 

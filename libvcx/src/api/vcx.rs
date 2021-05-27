@@ -6,14 +6,15 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_pool, init_threadpool, init_issuer_config, init_agency_client, open_pool_directly, enable_vcx_mocks, enable_agency_mocks};
+use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle};
+use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 use crate::utils::version_constants;
+use crate::utils::provision::AgencyClientConfig;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -94,8 +95,16 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
+    let agency_config = match serde_json::from_str::<AgencyClientConfig>(&config) {
+        Ok(agency_config) => agency_config,
+        Err(err) => {
+            error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match init_agency_client(&config) {
+        match create_agency_client_for_main_wallet(&agency_config) {
             Ok(()) => {
                 info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
@@ -111,14 +120,13 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     error::SUCCESS.code_num
 }
 
-/// Stores institution did, verkey and name in memory.
+/// Stores institution did and verkey in memory.
 ///
 /// #Params
 /// command_handle: command handle to map callback to user context.
 ///
 /// issuer_config: Issuer configuration
 /// {
-///     "institution_name" - Name of the issueing / verifying institution
 ///     "institution_did" (optional) - Institution did obtained on vcx_configure_issuer_wallet
 ///     `institution_verkey` (optional) - Institution verkey obtained on vcx_configure_issuer_wallet
 ///                         If NULL, then value set on vcx_configure_issuer_wallet will be used.
@@ -137,8 +145,16 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 
     trace!("vcx_init_issuer_config >>> config: {}", config);
 
+    let issuer_config = match serde_json::from_str::<IssuerConfig>(&config) {
+        Ok(issuer_config) => issuer_config,
+        Err(err) => {
+            error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match init_issuer_config(&config) {
+        match init_issuer_config(&issuer_config) {
             Ok(()) => {
                 info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
@@ -193,8 +209,17 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
+
+    let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
+        Ok(pool_config) => pool_config,
+        Err(err) => {
+            error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     execute(move || {
-        match open_pool_directly(&pool_config) {
+        match open_main_pool(&pool_config) {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
@@ -259,11 +284,24 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
         let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
             .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-        let key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
+        let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
             .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
         let _res = close_main_wallet();
-        match wallet::delete_wallet(&wallet_name, &wallet_key, &key_derivation, wallet_type.as_deref(), None, None) {
+
+
+        let wallet_config = WalletConfig {
+            wallet_name,
+            wallet_key,
+            wallet_key_derivation,
+            wallet_type,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+
+        match wallet::delete_wallet(&wallet_config) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -315,8 +353,6 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
-
-    settings::set_config_value(settings::CONFIG_WEBHOOK_URL, &notification_webhook_url);
 
     execute(move || {
         match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
@@ -483,10 +519,10 @@ mod tests {
     use crate::api::return_types_u32;
     use crate::api::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
-    use crate::libindy::utils::pool::tests::create_tmp_genesis_txn_file;
+    use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, WalletConfig};
+    use crate::libindy::utils::wallet::{import, WalletConfig, RestoreWalletConfigs};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::wallet::get_wallet_handle;
     use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
@@ -563,7 +599,6 @@ mod tests {
                "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
                "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
                "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-               "institution_name" : "evernym enterprise",
                "agency_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "remote_to_sdk_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
                "genesis_path": get_temp_dir_path("pool1.txn").to_str().unwrap(),
@@ -575,18 +610,31 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_open_pool_fails_if_genesis_file_is_invalid() {
-        let _setup = SetupWallet::init();
+        let _setup = SetupDefaults::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
         // Write invalid genesis.txn
         let _genesis_transactions = TempFile::create_with_data(utils::constants::GENESIS_PATH, "{}");
-        let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: None, pool_config: None };
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &_genesis_transactions.path);
+
+        let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
-
         assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
-        assert_eq!(get_wallet_handle(), INVALID_WALLET_HANDLE);
 
-        delete_test_pool();
+        delete_named_test_pool(&pool_name);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_open_pool_fails_if_genesis_path_is_invalid() {
+        let _setup = SetupDefaults::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
+
+        let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: Some(pool_name.clone()), pool_config: None };
+        let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
+        assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -600,11 +648,11 @@ mod tests {
             _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
             //Assert config values were set correctly
-            assert_eq!(settings::get_config_value("wallet_name").unwrap(), setup_wallet.wallet_config.wallet_name);
+            assert_ne!(get_wallet_handle(), INVALID_WALLET_HANDLE);
 
             //Verify shutdown was successful
             vcx_shutdown(true);
-            assert_eq!(settings::get_config_value("wallet_name").unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
+            assert_eq!(get_wallet_handle(), INVALID_WALLET_HANDLE);
         }
     }
 
@@ -614,17 +662,17 @@ mod tests {
     fn test_open_wallet_of_imported_wallet_succeeds() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: &wallet_name,
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.clone(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+        };
         import(&import_config).unwrap();
 
         let content = json!({
@@ -644,17 +692,29 @@ mod tests {
     fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
-        wallet::delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-        }).to_string();
+        let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_config.wallet_name.clone(),
+            wallet_key: wallet_config.wallet_key.clone(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone())
+        };
         import(&import_config).unwrap();
 
         let content = json!({
@@ -667,7 +727,7 @@ mod tests {
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(wallet_name.as_str(), settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        wallet::delete_wallet(&wallet_config).unwrap();
     }
 
     #[test]
@@ -675,23 +735,18 @@ mod tests {
     fn test_import_of_opened_wallet_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name) = create_main_wallet_and_its_backup();
-
-        let wallet_config = json!({
-            "wallet_name": wallet_name.as_str(),
-            "wallet_key": settings::DEFAULT_WALLET_KEY,
-            "wallet_key_derivation": settings::WALLET_KDF_RAW
-        }).to_string();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
-        _vcx_open_main_wallet_c_closure(&wallet_config).unwrap();
+        _vcx_open_main_wallet_c_closure(&serde_json::to_string(&wallet_config).unwrap()).unwrap();
 
-        let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name.as_str(),
-            settings::CONFIG_WALLET_KEY: settings::DEFAULT_WALLET_KEY,
-            settings::CONFIG_EXPORTED_WALLET_PATH: export_wallet_path.path,
-            settings::CONFIG_WALLET_BACKUP_KEY: settings::DEFAULT_WALLET_BACKUP_KEY,
-        }).to_string();
+        let import_config = RestoreWalletConfigs {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            exported_wallet_path: export_wallet_path.path.clone(),
+            backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
+            wallet_key_derivation: None
+        };
         assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
 
         vcx_shutdown(true);
@@ -771,15 +826,11 @@ mod tests {
     fn test_vcx_update_institution_webhook() {
         let _setup = SetupDefaults::init();
 
-        let webhook_url = "http://www.evernym.com";
-        assert_ne!(webhook_url, &settings::get_config_value(settings::CONFIG_WEBHOOK_URL).unwrap());
-
+        let webhook_url = "https://example.com";
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(error::SUCCESS.code_num, vcx_update_webhook_url(cb.command_handle,
                                                                    CString::new(webhook_url.to_string()).unwrap().into_raw(),
                                                                    Some(cb.get_callback())));
-
-        assert_eq!(webhook_url, &settings::get_config_value(settings::CONFIG_WEBHOOK_URL).unwrap());
     }
 
     #[test]
@@ -874,7 +925,6 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn get_settings() -> String {
         json!({
-            settings::CONFIG_INSTITUTION_NAME:            settings::get_config_value(settings::CONFIG_INSTITUTION_NAME).unwrap(),
             settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
             settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
         }).to_string()
@@ -963,7 +1013,6 @@ mod tests {
         let _setup = SetupLibraryWalletPool::init();
 
         let config = json!({
-            "institution_name": "faber",
             "institution_did": "44x8p4HubxzUK1dwxcc5FU",
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
@@ -977,14 +1026,5 @@ mod tests {
         connection::connect(connection_handle).unwrap();
 
         settings::set_testing_defaults();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_open_pool_fails_if_genesis_path_is_invalid() {
-        let _setup = SetupWallet::init();
-        let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: None, pool_config: None };
-        let rc = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(rc, error::INVALID_GENESIS_TXN_PATH.code_num);
     }
 }
