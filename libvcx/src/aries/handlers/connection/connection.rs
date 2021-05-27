@@ -4,7 +4,6 @@ use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -224,7 +223,15 @@ impl Connection {
      */
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
-        self.step(DidExchangeMessages::InvitationReceived(invitation))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(_sm_inviter) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_receive_invitation(invitation)?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -279,17 +286,32 @@ impl Connection {
         Ok(None)
     }
 
-
     pub fn update_state(&mut self) -> VcxResult<()> {
         if self.is_in_null_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
         
-        if !self.needs_message() {
-            debug!("Connection::update_state :: updating without message");
-            self.step(DidExchangeMessages::Unknown)?;
-        }
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                match sm_inviter.clone().step_messageless()? {
+                    Some(sm_inviter) => {
+                        self.connection_sm = SmConnection::Inviter(sm_inviter);
+                        return Ok(());
+                    }
+                    None => {}
+                }
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                match sm_invitee.clone().step_messageless()? {
+                    Some(sm_invitee) => {
+                        self.connection_sm = SmConnection::Invitee(sm_invitee);
+                        return Ok(());
+                    }
+                    _ => {}
+                }
+            }
+        };
 
         let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
@@ -318,7 +340,15 @@ impl Connection {
      */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
-        self.step(DidExchangeMessages::Connect())
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_connect()?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_connect()?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -331,18 +361,11 @@ impl Connection {
             return Ok(());
         }
 
-        self.handle_message(message.clone().into())?;
+        self.update_with_message(message.clone())?;
 
         Ok(())
     }
 
-    /**
-    Perform state machine transition using supplied message.
-     */
-    pub fn handle_message(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
-        trace!("Connection: handle_message >>> {:?}", message);
-        self.step(message)
-    }
 
     /**
     Updates status of a message (received from connection counterparty) in agency.
@@ -434,7 +457,15 @@ Get messages received from connection counterparty.
 
     pub fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_ping >>> comment: {:?}", comment);
-        self.handle_message(DidExchangeMessages::SendPing(comment))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_send_ping(comment)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_send_ping(comment)?)
+            }
+        };
+        Ok(())
     }
 
     pub fn delete(&self) -> VcxResult<()> {
@@ -442,7 +473,7 @@ Get messages received from connection counterparty.
         self.agent_info().delete()
     }
 
-    fn step(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
+    pub fn update_with_message(&mut self, message: A2AMessage) -> VcxResult<()>{
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 SmConnection::Inviter(sm_inviter.clone().step(message)?)
@@ -456,7 +487,15 @@ Get messages received from connection counterparty.
 
     pub fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
-        self.handle_message(DidExchangeMessages::DiscoverFeatures((query, comment)))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().transition_discover_features_received(query, comment)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().transition_discover_features_received(query, comment)?)
+            }
+        };
+        Ok(())
     }
 
     pub fn get_connection_info(&self) -> VcxResult<String> {

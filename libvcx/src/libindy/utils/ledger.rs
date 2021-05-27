@@ -136,9 +136,9 @@ pub mod auth_rule {
     use super::*;
 
     /**
-        Structure for parsing GET_AUTH_RULE response
-         # parameters
-            result - the payload containing data relevant to the GET_AUTH_RULE transaction
+    Structure for parsing GET_AUTH_RULE response
+    # parameters
+    result - the payload containing data relevant to the GET_AUTH_RULE transaction
     */
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
