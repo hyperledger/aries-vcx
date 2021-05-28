@@ -228,7 +228,7 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().transition_receive_invitation(invitation)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
             }
         };
         Ok(())
@@ -350,10 +350,10 @@ impl Connection {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().transition_connect()?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connect()?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().transition_connect()?)
+                SmConnection::Invitee(sm_invitee.clone().handle_connect()?)
             }
         };
         Ok(())
@@ -451,10 +451,10 @@ Get messages received from connection counterparty.
         trace!("Connection::send_ping >>> comment: {:?}", comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().transition_send_ping(comment)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_send_ping(comment)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().transition_send_ping(comment)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_send_ping(comment)?)
             }
         };
         Ok(())
@@ -469,10 +469,10 @@ Get messages received from connection counterparty.
         trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().transition_discover_features_received(query, comment)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_discover_features(query, comment)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().transition_discover_features_received(query, comment)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_discover_features(query, comment)?)
             }
         };
         Ok(())
