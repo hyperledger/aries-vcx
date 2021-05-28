@@ -129,6 +129,13 @@ impl SmConnectionInviter {
         }
     }
 
+    pub fn needs_message(&self) -> bool {
+        match self.state {
+            InviterState::Requested(_) => false,
+            _ => true
+        }
+    }
+
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id.clone())

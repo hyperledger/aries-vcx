@@ -263,6 +263,17 @@ impl Connection {
         }
     }
 
+    pub fn needs_message(&self) -> bool {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.needs_message()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.needs_message()
+            }
+        }
+    }
+
     fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
         let expected_sender_vk = match remote_vk {
             Ok(vk) => vk,

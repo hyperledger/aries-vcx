@@ -96,6 +96,13 @@ impl SmConnectionInvitee {
         &self.state
     }
 
+    pub fn needs_message(&self) -> bool {
+        match self.state {
+            InviteeState::Responded(_) => false,
+            _ => true
+        }
+    }
+
     pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             InviteeState::Null(_) => None,
