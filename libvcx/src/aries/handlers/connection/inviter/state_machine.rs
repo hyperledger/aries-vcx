@@ -67,13 +67,6 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn needs_message(&self) -> bool {
-        match self.state {
-            InviterState::Requested(_) => false,
-            _ => true
-        }
-    }
-
     pub fn from(source_id: String, agent_info: AgentInfo, state: InviterState, autohop: bool) -> Self {
         SmConnectionInviter {
             source_id,
@@ -254,60 +247,59 @@ impl SmConnectionInviter {
         Ok((signed_response, new_agent_info))
     }
 
-    pub fn step_messageless(self) -> VcxResult<Option<Self>> {
-        let Self { source_id, agent_info, state, autohop } = self;
-        let (state, agent_info) = match state {
-            InviterState::Requested(state) => {
-                match Self::_send_response(&state.request, &agent_info) {
-                    Ok((response, new_agent_info)) => {
-                        (InviterState::Responded((state, response, agent_info.clone()).into()), new_agent_info)
-                    }
-                    Err(err) => {
-                        let problem_report = ProblemReport::create()
-                            .set_problem_code(ProblemCode::RequestProcessingError)
-                            .set_explain(err.to_string())
-                            .set_thread_id(&state.request.id.0);
- 
-                        state.request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
-                        (InviterState::Null((state, problem_report).into()), agent_info)
-                    }
+    pub fn step(self, message: Option<A2AMessage>) -> VcxResult<Self> {
+        match message {
+            Some(message) => match message {
+                A2AMessage::ConnectionRequest(request) => {
+                    self.transition_receive_connection_request(request)
+                }
+                A2AMessage::Ack(ack) => {
+                    self.transition_receive_ack(ack)
+                }
+                A2AMessage::Ping(ping) => {
+                    self.transition_receive_ping(ping)
+                }
+                A2AMessage::ConnectionProblemReport(problem_report) => {
+                    self.transition_receive_problem_report(problem_report)
+                }
+                A2AMessage::PingResponse(ping_response) => {
+                    self.transition_ping_response_received(ping_response)
+                }
+                // A2AMessage::Disclose((query_, comment)) => {
+                //     self.transition_discover_features_received(query_, comment) // todo
+                // }
+                A2AMessage::Query(query) => {
+                    self.transition_discovery_query_received(query)
+                }
+                A2AMessage::Disclose(disclose) => {
+                    self.transition_disclose_received(disclose)
+                }
+                _ => {
+                    Ok(self)
                 }
             }
-            _ => {
-                return Ok(None)
-            }
-        };
-        Ok(Some(Self { source_id, agent_info, state, autohop }))
-    }
-
-    pub fn step(self, message: A2AMessage) -> VcxResult<Self> {
-        match message {
-            A2AMessage::ConnectionRequest(request) => {
-                self.transition_receive_connection_request(request)
-            }
-            A2AMessage::Ack(ack) => {
-                self.transition_receive_ack(ack)
-            }
-            A2AMessage::Ping(ping) => {
-                self.transition_receive_ping(ping)
-            }
-            A2AMessage::ConnectionProblemReport(problem_report) => {
-                self.transition_receive_problem_report(problem_report)
-            }
-            A2AMessage::PingResponse(ping_response) => {
-                self.transition_ping_response_received(ping_response)
-            }
-            // A2AMessage::Disclose((query_, comment)) => {
-            //     self.transition_discover_features_received(query_, comment) // todo
-            // }
-            A2AMessage::Query(query) => {
-                self.transition_discovery_query_received(query)
-            }
-            A2AMessage::Disclose(disclose) => {
-                self.transition_disclose_received(disclose)
-            }
-            _ => {
-                Ok(self)
+            None => {
+                let Self { source_id, agent_info, state, autohop } = self;
+                let (state, agent_info) = match state {
+                    InviterState::Requested(state) => {
+                        match Self::_send_response(&state.request, &agent_info) {
+                            Ok((response, new_agent_info)) => {
+                                (InviterState::Responded((state, response, agent_info.clone()).into()), new_agent_info)
+                            }
+                            Err(err) => {
+                                let problem_report = ProblemReport::create()
+                                    .set_problem_code(ProblemCode::RequestProcessingError)
+                                    .set_explain(err.to_string())
+                                    .set_thread_id(&state.request.id.0);
+         
+                                state.request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                                (InviterState::Null((state, problem_report).into()), agent_info)
+                            }
+                        }
+                    }
+                    _ => (state.clone(), agent_info.clone())
+                };
+                Ok(SmConnectionInviter { source_id, agent_info, state, autohop })
             }
         }
     }
