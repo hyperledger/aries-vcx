@@ -637,6 +637,7 @@ jobs:
                               bash -c '(
                                 cd $HOME/wrappers/node && \
                                 npm install && \
+                                npm run tscversion && \
                                 npm run compile && \
                                 npm run test)'
 

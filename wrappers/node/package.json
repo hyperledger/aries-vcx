@@ -67,6 +67,7 @@
     "typescript": "^3.0.0"
   },
   "scripts": {
+    "tscversion": "tsc --version",
     "compile": "./node_modules/.bin/tsc -p ./tsconfig.json",
     "clean": "rm -rf dist node_modules",
     "lint": "eslint '*/**/*.{js,ts,tsx}'",
