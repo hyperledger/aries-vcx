@@ -116,7 +116,7 @@ impl Prover {
 
 #[cfg(test)]
 mod tests {
-    use crate::{libindy, settings, utils};
+    use crate::{libindy, utils};
     use crate::aries::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use crate::utils::constants::TEST_TAILS_FILE;
     use crate::utils::devsetup::*;
@@ -172,10 +172,10 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupLibraryWalletPoolZeroFees::init();
 
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let did = setup.faber.config_issuer.institution_did.clone();
         let mut req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -229,9 +229,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_generate_proof() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let did = setup.faber.config_issuer.institution_did.clone();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
@@ -316,9 +316,9 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_generate_proof_with_predicates() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let did = setup.faber.config_issuer.institution_did.clone();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({

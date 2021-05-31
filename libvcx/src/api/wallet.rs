@@ -7,11 +7,13 @@ use libc::c_char;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use crate::libindy::utils::wallet;
-use crate::libindy::utils::wallet::{export_main_wallet, import};
+use crate::libindy::utils::wallet::{export_main_wallet, import, WalletConfig, RestoreWalletConfigs};
 use crate::utils;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
+use serde_json::Error;
+use crate::init::open_as_main_wallet;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -36,8 +38,8 @@ use crate::utils::runtime::execute;
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_create_wallet(command_handle: CommandHandle,
-                                        wallet_config: *const c_char,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+                                wallet_config: *const c_char,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     info!("vcx_create_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -46,8 +48,16 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     trace!("vcx_create_wallet(command_handle: {}, wallet_config: {})",
            command_handle, wallet_config);
 
+    let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
+        Ok(wallet_config) => wallet_config,
+        Err(err) => {
+            error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     thread::spawn(move || {
-        match wallet::create_wallet_from_config(&wallet_config) {
+        match wallet::create_wallet(&wallet_config) {
             Err(e) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());
@@ -98,6 +108,7 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
                 cb(command_handle, e.into(), null());
             }
             Ok(conf) => {
+                let conf = serde_json::to_string(&conf).unwrap();
                 trace!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
                        command_handle, error::SUCCESS.message, conf);
                 let conf = CStringUtils::string_to_cstring(conf.to_string());
@@ -129,10 +140,18 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
 
+    let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
+        Ok(wallet_config) => wallet_config,
+        Err(err) => {
+            error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     trace!("vcx_open_main_wallet(command_handle: {})", command_handle);
 
     thread::spawn(move || {
-        match wallet::open_wallet_directly(&wallet_config) {
+        match open_as_main_wallet(&wallet_config) {
             Err(e) => {
                 error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
@@ -1088,6 +1107,14 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
     trace!("vcx_wallet_import(command_handle: {}, config: ****)",
            command_handle);
 
+    let config = match serde_json::from_str::<RestoreWalletConfigs>(&config) {
+        Ok(config) => config,
+        Err(err) => {
+            error!("vcx_wallet_import >>> invalid import configuration; err: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num
+        }
+    };
+
     thread::spawn(move || {
         trace!("vcx_wallet_import(command_handle: {}, config: ****)", command_handle);
         match import(&config) {
@@ -1552,15 +1579,15 @@ pub mod tests {
             wallet_name: wallet_name.into(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-            wallet_type: None, storage_config: None,
+            wallet_type: None,
+            storage_config: None,
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None
         };
-        create_and_open_as_main_wallet(wallet_config);
+        create_and_open_as_main_wallet(&wallet_config);
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
-        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY).unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_wallet_export(cb.command_handle,
@@ -1570,11 +1597,11 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
         close_main_wallet().unwrap();
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
 
         let import_config = json!({
-            settings::CONFIG_WALLET_NAME: wallet_name,
-            settings::CONFIG_WALLET_KEY: wallet_key,
+            settings::CONFIG_WALLET_NAME: wallet_config.wallet_name.clone(),
+            settings::CONFIG_WALLET_KEY: wallet_config.wallet_key.clone(),
             settings::CONFIG_EXPORTED_WALLET_PATH: export_file.path,
             settings::CONFIG_WALLET_BACKUP_KEY: backup_key,
             settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
@@ -1586,6 +1613,6 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        delete_wallet(&wallet_name, settings::DEFAULT_WALLET_KEY, settings::WALLET_KDF_RAW, None, None, None).unwrap();
+        delete_wallet(&wallet_config).unwrap();
     }
 }

@@ -18,7 +18,6 @@ use crate::aries::messages::mime_type::MimeType;
 use crate::aries::messages::status::Status;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::api::VcxStateType;
-use crate::connection::send_message;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerState {

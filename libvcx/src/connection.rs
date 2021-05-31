@@ -303,13 +303,127 @@ pub mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::{connection, utils, settings};
+    use crate::{connection, utils, settings, aries};
     use crate::api::VcxStateType;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
+    use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
+    use crate::aries::messages::ack::tests::_ack;
+
+    #[test]
+    #[cfg(feature = "agency_v2")]
+    fn test_connection_send_works() {
+        let _setup = SetupEmpty::init();
+        let mut faber = Faber::setup();
+        let mut alice = Alice::setup();
+
+        let invite = faber.create_invite();
+        alice.accept_invite(&invite);
+
+        faber.update_state(3);
+        alice.update_state(4);
+        faber.update_state(4);
+
+        let uid: String;
+        let message = _ack();
+
+        info!("test_connection_send_works:: Test if Send Message works");
+        {
+            faber.activate().unwrap();
+            connection::send_message(faber.connection_handle, message.to_a2a_message()).unwrap();
+        }
+
+        {
+            info!("test_connection_send_works:: Test if Get Messages works");
+            alice.activate().unwrap();
+
+            let messages = connection::get_messages(alice.connection_handle).unwrap();
+            assert_eq!(1, messages.len());
+
+            uid = messages.keys().next().unwrap().clone();
+            let received_message = messages.values().next().unwrap().clone();
+
+            match received_message {
+                A2AMessage::Ack(received_message) => assert_eq!(message, received_message.clone()),
+                _ => assert!(false)
+            }
+        }
+
+        info!("test_connection_send_works:: Test if Get Message by id works");
+        {
+            alice.activate().unwrap();
+
+            let message = connection::get_message_by_id(alice.connection_handle, uid.clone()).unwrap();
+
+            match message {
+                A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
+                _ => assert!(false)
+            }
+        }
+
+        info!("test_connection_send_works:: Test if Update Message Status works");
+        {
+            alice.activate().unwrap();
+
+            connection::update_message_status(alice.connection_handle, uid).unwrap();
+            let messages = connection::get_messages(alice.connection_handle).unwrap();
+            assert_eq!(0, messages.len());
+        }
+
+        info!("test_connection_send_works:: Test if Send Basic Message works");
+        {
+            faber.activate().unwrap();
+
+            let basic_message = r#"Hi there"#;
+            connection::send_generic_message(faber.connection_handle, basic_message).unwrap();
+
+            alice.activate().unwrap();
+
+            let messages = connection::get_messages(alice.connection_handle).unwrap();
+            assert_eq!(1, messages.len());
+
+            let uid = messages.keys().next().unwrap().clone();
+            let message = messages.values().next().unwrap().clone();
+
+            match message {
+                A2AMessage::BasicMessage(message) => assert_eq!(basic_message, message.content),
+                _ => assert!(false)
+            }
+            connection::update_message_status(alice.connection_handle, uid).unwrap();
+        }
+
+        info!("test_connection_send_works:: Test if Download Messages");
+        {
+            use agency_client::get_message::{MessageByConnection, Message};
+
+            let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
+
+            faber.activate().unwrap();
+            connection::send_message(faber.connection_handle, credential_offer.to_a2a_message()).unwrap();
+
+            alice.activate().unwrap();
+
+            let messages = connection::download_messages(vec![alice.connection_handle], Some(vec![MessageStatusCode::Received]), None).unwrap();
+            let message: Message = messages[0].msgs[0].clone();
+            let decrypted_msg = message.decrypted_msg.unwrap();
+            let _payload: aries::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+
+            connection::update_message_status(alice.connection_handle, message.uid).unwrap();
+        }
+
+        info!("test_connection_send_works:: Test Helpers");
+        {
+            faber.activate().unwrap();
+
+            connection::get_pw_did(faber.connection_handle).unwrap();
+            connection::get_pw_verkey(faber.connection_handle).unwrap();
+            connection::get_their_pw_verkey(faber.connection_handle).unwrap();
+            connection::get_source_id(faber.connection_handle).unwrap();
+        }
+    }
 
     pub fn build_test_connection_inviter_null() -> u32 {
         let handle = create_connection("faber_to_alice").unwrap();
@@ -334,33 +448,33 @@ pub mod tests {
         handle
     }
 
-    pub fn create_connected_connections(consumer_handle: Option<u32>, institution_handle: Option<u32>) -> (u32, u32) {
+    pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
         debug!("Institution is going to create connection.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate().unwrap();
         let institution_to_consumer = create_connection("consumer").unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let details = connect(institution_to_consumer).unwrap().unwrap();
         // update_state(institution_to_consumer).unwrap();
 
-        utils::devsetup::set_consumer(consumer_handle);
+        consumer.activate().unwrap();
         debug!("Consumer is going to accept connection invitation.");
         let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
         connect(consumer_to_institution).unwrap();
         update_state(consumer_to_institution).unwrap();
 
         debug!("Institution is going to process connection request.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
 
         debug!("Consumer is going to complete the connection protocol.");
-        utils::devsetup::set_consumer(consumer_handle);
+        consumer.activate().unwrap();
         update_state(consumer_to_institution).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
 
         debug!("Institution is going to complete the connection protocol.");
-        utils::devsetup::set_institution(institution_handle);
+        institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         update_state(institution_to_consumer).unwrap();
         assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
@@ -614,16 +728,19 @@ pub mod tests {
     #[test]
     fn test_send_and_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello Alice").unwrap();
         send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
 
         // AS CONSUMER GET MESSAGES
-        utils::devsetup::set_consumer(None);
+        consumer.activate().unwrap();
         send_generic_message(alice_to_faber, "Hello Faber").unwrap();
 
-        // make sure messages has bee delivered
+        // make sure messages has be delivered
         thread::sleep(Duration::from_millis(1000));
 
         let all_messages = download_messages_noauth(None, None, None).unwrap();
@@ -669,21 +786,21 @@ pub mod tests {
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let consumer1 = create_consumer_config();
-        let consumer2 = create_consumer_config();
-
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(Some(consumer1), None);
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(Some(consumer2), None);
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let mut consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
 
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
-        utils::devsetup::set_consumer(Some(consumer1));
+        consumer1.activate().unwrap();
         send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        utils::devsetup::set_consumer(Some(consumer2));
+        consumer2.activate().unwrap();
         send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
 
-        utils::devsetup::set_institution(None);
+        institution.activate().unwrap();
         let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
         assert_eq!(all_msgs.len(), 2);
         assert_eq!(all_msgs[0].msgs.len(), 2);
@@ -714,14 +831,16 @@ pub mod tests {
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
-        let (_alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(None, None);
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();
         send_generic_message(faber_to_alice, "Hello 3").unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        utils::devsetup::set_consumer(None);
+        consumer1.activate().unwrap();
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
         assert_eq!(received.len(), 1);

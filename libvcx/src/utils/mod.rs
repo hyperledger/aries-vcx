@@ -60,6 +60,7 @@ pub mod plugins;
 pub mod logger;
 pub mod object_cache;
 pub mod validation;
+pub mod devsetup_agent;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();

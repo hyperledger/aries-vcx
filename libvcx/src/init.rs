@@ -6,8 +6,9 @@ use indy::future::Future;
 use crate::{settings, utils};
 use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
-use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle};
+use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle, WalletConfig, IssuerConfig};
 use crate::utils::runtime::ThreadpoolConfig;
+use crate::utils::provision::AgencyClientConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PoolConfig {
@@ -23,13 +24,6 @@ pub fn init_threadpool(config: &str) -> VcxResult<()> {
     Ok(())
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct IssuerConfig {
-    institution_name: String,
-    institution_did: Option<String>,
-    institution_verkey: Option<String>,
-}
-
 pub fn enable_vcx_mocks() -> VcxResult<()> {
     info!("enable_vcx_mocks >>>");
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
@@ -42,52 +36,29 @@ pub fn enable_agency_mocks() -> VcxResult<()> {
     Ok(())
 }
 
-pub fn init_agency_client(config: &str) -> VcxResult<()> {
+pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
+    let config = serde_json::to_string(config).unwrap(); // todo: remove unwrap
     info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client_mut()?.process_config_string(config, false)?;
+    settings::get_agency_client_mut()?.process_config_string(&config, false)?;
     Ok(())
 }
 
-pub fn init_issuer_config(config: &str) -> VcxResult<()> {
-    let config: IssuerConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                          format!("Failed to deserialize issuer config {:?}, err: {:?}", config, err)))?;
-    settings::set_config_value(settings::CONFIG_INSTITUTION_NAME, &config.institution_name);
-    if let Some(institution_did) = config.institution_did {
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &institution_did);
-    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_DID).is_none() {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution DID not passed when initializing issuer config and is not already set"))
-    }
-
-    if let Some(institution_verkey) = config.institution_verkey {
-        settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &institution_verkey);
-    } else if settings::get_opt_config_value(settings::CONFIG_INSTITUTION_VERKEY).is_none() {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, "Institution verkey passed when initializing issuer config and is not already set"))
-    }
+pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
+    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &config.institution_did);
+    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &config.institution_verkey);
     Ok(())
 }
 
-pub fn open_pool_directly(config: &str) -> VcxResult<()> {
-    trace!("open_pool_directly >>> config: {}", config);
+pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
+    let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, config.genesis_path, config.pool_config);
 
-    let config: PoolConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration,
-                                          format!("Failed to deserialize pool config {:?}, err: {:?}", config, err)))?;
-
-    let pool_name = config.pool_name.unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-
-    open_pool(&pool_name, &config.genesis_path, config.pool_config.as_deref())
-}
-
-pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxResult<()> {
-    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, path, pool_config);
-
-    create_pool_ledger_config(&pool_name, &path)
+    create_pool_ledger_config(&pool_name, &config.genesis_path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
     debug!("open_pool ::: Pool Config Created Successfully");
 
-    open_pool_ledger(&pool_name, pool_config)
+    open_pool_ledger(&pool_name, config.pool_config.as_deref())
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
 
     info!("open_pool ::: Pool Opened Successfully");
@@ -95,10 +66,10 @@ pub fn open_pool(pool_name: &str, path: &str, pool_config: Option<&str>) -> VcxR
     Ok(())
 }
 
-pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: &str, wallet_type: Option<&str>, storage_config: Option<&str>, storage_creds: Option<&str>, rekey: Option<&str>, rekey_derivation_method: Option<&str>) -> VcxResult<WalletHandle> {
-    trace!("open_as_main_wallet >>> wallet_name: {}", wallet_name);
-    let config = build_wallet_config(wallet_name, wallet_type, storage_config);
-    let credentials = build_wallet_credentials(wallet_key, storage_creds, key_derivation, rekey, rekey_derivation_method)?;
+pub fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+    trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
+    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
 
     let handle = indy::wallet::open_wallet(&config, &credentials)
         .wait()
@@ -106,22 +77,21 @@ pub fn open_as_main_wallet(wallet_name: &str, wallet_key: &str, key_derivation: 
             match err.error_code.clone() {
                 ErrorCode::WalletAlreadyOpenedError => {
                     err.to_vcx(VcxErrorKind::WalletAlreadyOpen,
-                               format!("Wallet \"{}\" already opened.", wallet_name))
+                               format!("Wallet \"{}\" already opened.", wallet_config.wallet_name))
                 }
                 ErrorCode::WalletAccessFailed => {
                     err.to_vcx(VcxErrorKind::WalletAccessFailed,
-                               format!("Can not open wallet \"{}\". Invalid key has been provided.", wallet_name))
+                               format!("Can not open wallet \"{}\". Invalid key has been provided.", wallet_config.wallet_name))
                 }
                 ErrorCode::WalletNotFoundError => {
                     err.to_vcx(VcxErrorKind::WalletNotFound,
-                               format!("Wallet \"{}\" not found or unavailable", wallet_name))
+                               format!("Wallet \"{}\" not found or unavailable", wallet_config.wallet_name))
                 }
                 error_code => {
                     err.to_vcx(VcxErrorKind::LibndyError(error_code as u32), "Indy error occurred")
                 }
             })?;
 
-    init_agency_client(&settings::settings_as_string())?;
     set_wallet_handle(handle);
 
     Ok(handle)
