@@ -52,7 +52,7 @@ impl InviterState {
 
 impl SmConnectionInviter {
     pub fn _build_inviter(source_id: &str, autohop: bool) -> Self {
-        SmConnectionInviter {
+        Self {
             source_id: source_id.to_string(),
             state: InviterState::Null(NullState {}),
             agent_info: AgentInfo::default(),
@@ -68,7 +68,7 @@ impl SmConnectionInviter {
     }
 
     pub fn from(source_id: String, agent_info: AgentInfo, state: InviterState, autohop: bool) -> Self {
-        SmConnectionInviter {
+        Self {
             source_id,
             agent_info,
             state,
@@ -156,7 +156,7 @@ impl SmConnectionInviter {
     }
 
     pub fn new(source_id: &str, autohop: bool) -> Self {
-        SmConnectionInviter::_build_inviter(source_id, autohop)
+        Self::_build_inviter(source_id, autohop)
     }
 
     pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
@@ -306,7 +306,7 @@ impl SmConnectionInviter {
                     }
                     _ => (state.clone(), agent_info.clone())
                 };
-                Ok(SmConnectionInviter { source_id, agent_info, state, autohop })
+                Ok(Self { source_id, agent_info, state, autohop })
             }
         }
     }
@@ -383,8 +383,8 @@ impl SmConnectionInviter {
         Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Responded(state) => {
                 let ping =
@@ -403,11 +403,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_ping_response(self, ping_response: PingResponse)  -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_ping_response(self, ping_response: PingResponse)  -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Responded(state) => {
                 InviterState::Completed((state, ping_response).into())
@@ -416,11 +416,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Completed(state) => {
                 state.handle_discover_features(query_, comment, &agent_info)?;
@@ -430,11 +430,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_discovery_query(self, query: Query) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Completed(state) => {
                 state.handle_discovery_query(query, &agent_info)?;
@@ -444,11 +444,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Completed(state) => {
                 InviterState::Completed((state.clone(), disclose.protocols).into())
@@ -457,11 +457,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Responded(state) => {
                 InviterState::Null((state, problem_report).into())
@@ -473,11 +473,11 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 
-    pub fn handle_ack(self, ack: Ack) -> VcxResult<SmConnectionInviter>  {
-        let SmConnectionInviter { source_id, agent_info, state, autohop } = self;
+    pub fn handle_ack(self, ack: Ack) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Responded(state) => {
                 InviterState::Completed((state, ack).into())
@@ -486,7 +486,7 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(SmConnectionInviter { source_id, agent_info, state: new_state, autohop })
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
     }
 }
 
