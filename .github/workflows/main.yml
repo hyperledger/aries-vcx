@@ -516,7 +516,7 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                              DISALLOW_V1=true RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
 
   test-libvcx-image-agency_pool_tests:
     runs-on: ubuntu-latest
@@ -575,7 +575,9 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                              DISALLOW_V1=true RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
+                              cargo --version && \
+                              rustc --version && \
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
 
   test-android-build:
     runs-on: ubuntu-16.04
