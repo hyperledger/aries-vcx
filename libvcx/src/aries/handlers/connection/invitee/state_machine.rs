@@ -456,23 +456,23 @@ pub mod test {
 
         use super::*;
 
-        pub fn invitee_sm() -> Self {
-            Self::new(&source_id(), true)
+        pub fn invitee_sm() -> SmConnectionInvitee {
+            SmConnectionInvitee::new(&source_id(), true)
         }
 
         impl SmConnectionInvitee {
-            pub fn to_invitee_invited_state(mut self) -> Self {
+            pub fn to_invitee_invited_state(mut self) -> SmConnectionInvitee {
                 self = self.handle_invitation(_invitation()).unwrap();
                 self
             }
 
-            pub fn to_invitee_requested_state(mut self) -> Self {
+            pub fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
                 self = self.handle_invitation(_invitation()).unwrap();
                 self = self.handle_connect().unwrap();
                 self
             }
 
-            pub fn to_invitee_completed_state(mut self) -> Self {
+            pub fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 let invitation = Invitation::default().set_recipient_keys(vec![key.clone()]);
 

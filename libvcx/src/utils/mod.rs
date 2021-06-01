@@ -53,7 +53,6 @@ pub mod mockdata;
 pub mod provision;
 pub mod random;
 
-#[cfg(test)]
 pub mod plugins;
 
 #[macro_use]
