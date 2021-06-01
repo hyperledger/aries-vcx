@@ -162,6 +162,7 @@ pub fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResul
         };
 
     agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, &agency_pw_vk);
+    agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, &agency_pw_did);
 
     trace!("connect <<< agency_pw_did: {}, agency_pw_vk: {}", agency_pw_did, agency_pw_vk);
     Ok((agency_pw_did, agency_pw_vk))
