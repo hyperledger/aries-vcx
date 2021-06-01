@@ -321,8 +321,7 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
         let (key, value) = item;
         new_offer = new_offer.add_credential_preview_data(
             key,
-            value.as_str()
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Problem adding credential preview data {}:{:?}", key, value.as_str())))?,
+            &value.to_string(),
             MimeType::Plain,
         )?;
     }

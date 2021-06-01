@@ -1,8 +1,9 @@
 use serde_json;
 
-use crate::aries::handlers::issuance::issuer::issuer::Issuer;
+use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
 use crate::aries::messages::a2a::A2AMessage;
 use crate::connection;
+use crate::credential_def;
 use crate::error::prelude::*;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
@@ -26,8 +27,12 @@ pub fn issuer_credential_create(cred_def_handle: u32,
                                 price: u64) -> VcxResult<u32> {
     trace!("issuer_credential_create >>> cred_def_handle: {}, source_id: {}, issuer_did: {}, credential_name: {}, credential_data: {}, price: {}",
            cred_def_handle, source_id, issuer_did, credential_name, secret!(&credential_data), price);
-
-    let issuer = Issuer::create(cred_def_handle, &credential_data, &source_id)?;
+    let issuer_config = IssuerConfig {
+        cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+        rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
+        tails_file: credential_def::get_tails_file(cred_def_handle)?
+    };
+    let issuer = Issuer::create(&issuer_config, &credential_data, &source_id)?;
     ISSUER_CREDENTIAL_MAP.add(issuer)
 }
 
