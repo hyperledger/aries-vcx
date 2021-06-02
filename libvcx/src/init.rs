@@ -68,8 +68,8 @@ pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
 
 pub fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
-    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
-    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_deref(), wallet_config.storage_config.as_deref());
+    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
 
     let handle = indy::wallet::open_wallet(&config, &credentials)
         .wait()

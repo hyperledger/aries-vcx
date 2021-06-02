@@ -18,7 +18,7 @@ pub struct WalletConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storage_config: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub storage_credentials: Option<serde_json::Value>,
+    pub storage_credentials: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -114,21 +114,30 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
     config.to_string()
 }
 
-//todo: refactor args.
+
 pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, key_derivation_method: &str, rekey: Option<&str>, rekey_derivation_method: Option<&str>) -> VcxResult<String> {
     serde_json::to_string(&WalletCredentials {
-        key: String::from(key),
+        key: key.into(),
         rekey: rekey.map(|s| s.into()),
-        storage_credentials: storage_credentials.map(|s| serde_json::from_str(s).unwrap()),
-        key_derivation_method: String::from(key_derivation_method),
+        storage_credentials: storage_credentials.map(|val| serde_json::from_str(val).unwrap()),
+        key_derivation_method: key_derivation_method.into(),
         rekey_derivation_method: rekey_derivation_method.map(|s| s.into())
     }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
 }
 
 pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("create_wallet >>> {}", &wallet_config.wallet_name);
-    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
-    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
+    let config = build_wallet_config(
+        &wallet_config.wallet_name,
+        wallet_config.wallet_type.as_deref(),
+        wallet_config.storage_config.as_deref());
+    let credentials = build_wallet_credentials(
+        &wallet_config.wallet_key,
+        wallet_config.storage_credentials.as_deref(),
+        &wallet_config.wallet_key_derivation,
+        None,
+        None
+    )?;
 
     trace!("Credentials: {:?}", credentials);
 
@@ -178,8 +187,8 @@ pub fn close_main_wallet() -> VcxResult<()> {
 pub fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
 
-    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_ref().map(String::as_str));
-    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_ref().map(|s| s.to_string()).as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_deref());
+    let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
 
     wallet::delete_wallet(&config, &credentials)
         .wait()
