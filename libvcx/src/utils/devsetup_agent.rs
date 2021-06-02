@@ -189,7 +189,7 @@ pub mod test {
             self.connection_handle = connection::create_connection("alice").unwrap();
             connection::connect(self.connection_handle).unwrap();
             connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(2, connection::get_state(self.connection_handle));
+            assert_eq!(1, connection::get_state(self.connection_handle));
 
             connection::get_invite_details(self.connection_handle).unwrap()
         }
@@ -331,7 +331,7 @@ pub mod test {
             self.connection_handle = connection::create_connection_with_invite("faber", invite).unwrap();
             connection::connect(self.connection_handle).unwrap();
             connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(3, connection::get_state(self.connection_handle));
+            assert_eq!(2, connection::get_state(self.connection_handle));
         }
 
         pub fn update_state(&mut self, expected_state: u32) {

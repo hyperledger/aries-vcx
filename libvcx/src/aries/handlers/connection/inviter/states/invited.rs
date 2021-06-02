@@ -2,6 +2,7 @@ use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
 use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
+use crate::aries::handlers::connection::inviter::states::requested::RequestedState;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::connection::problem_report::ProblemReport;
 use crate::aries::messages::connection::request::Request;
@@ -23,6 +24,14 @@ impl From<(InvitedState, Request, SignedResponse, AgentInfo)> for RespondedState
     fn from((_state, request, response, prev_agent_info): (InvitedState, Request, SignedResponse, AgentInfo)) -> RespondedState {
         trace!("ConnectionInviter: transit state from InvitedState to RespondedState");
         RespondedState { response, did_doc: request.connection.did_doc, prev_agent_info }
+    }
+}
+
+impl From<Request> for RequestedState {
+    fn from(request: Request) -> RequestedState {
+        trace!("ConnectionInviter: transit state from InvitedState to RequestedState");
+        let did_doc = request.clone().connection.did_doc;
+        RequestedState { request, did_doc }
     }
 }
 

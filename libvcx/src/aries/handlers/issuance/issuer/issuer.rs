@@ -11,14 +11,18 @@ pub struct Issuer {
     issuer_sm: IssuerSM
 }
 
-impl Issuer {
-    pub fn create(cred_def_handle: u32, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::issuer_create_credential >>> cred_def_handle: {:?}, credential_data: {:?}, source_id: {:?}", cred_def_handle, credential_data, source_id);
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct IssuerConfig {
+    pub cred_def_id: String,
+    pub rev_reg_id: Option<String>,
+    pub tails_file: Option<String>
+}
 
-        let cred_def_id = credential_def::get_cred_def_id(cred_def_handle)?;
-        let rev_reg_id = credential_def::get_rev_reg_id(cred_def_handle).ok();
-        let tails_file = credential_def::get_tails_file(cred_def_handle)?;
-        let issuer_sm = IssuerSM::new(&cred_def_id, credential_data, rev_reg_id, tails_file, source_id);
+impl Issuer {
+    pub fn create(issuer_config: &IssuerConfig, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::issuer_create_credential >>> issuer_config: {:?}, credential_data: {:?}, source_id: {:?}", issuer_config, credential_data, source_id);
+
+        let issuer_sm = IssuerSM::new(&issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone(), source_id);
         Ok(Issuer { issuer_sm })
     }
 

@@ -93,14 +93,14 @@ fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(source_id);
+    let connection = Connection::create(source_id, true);
     return store_connection(connection);
 }
 
 pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = Connection::create_with_invite(source_id, invitation)?;
+        let connection = Connection::create_with_invite(source_id, invitation, true)?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
@@ -140,34 +140,10 @@ Tries to update state of connection state machine in 3 steps:
  */
 pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        trace!("Connection::update_state >>>");
-
-        if connection.is_in_null_state() {
-            warn!("Connection::update_state :: update state on connection in null state is ignored");
-            return Ok(error::SUCCESS.code_num);
+        match connection.update_state() {
+            Ok(_) => Ok(error::SUCCESS.code_num),
+            Err(err) => Err(err)
         }
-
-        // connection protocol itself handles message authentication where it makes sense
-        let messages = connection.get_messages_noauth()?;
-        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
-
-        if let Some((uid, message)) = connection.find_message_to_handle(messages) {
-            trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-            connection.update_state_with_message(&message)?;
-            connection.agent_info().clone().update_message_status(uid)?;
-        } else if let SmConnectionState::Inviter(_) = connection.state_object() {
-            trace!("Connection::update_state >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
-            if let Some((messages, bootstrap_agent_info)) = get_bootstrap_agent_messages(connection.remote_vk(), connection.bootstrap_agent_info())? {
-                if let Some((uid, message)) = connection.find_message_to_handle(messages) {
-                    trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                    connection.update_state_with_message(&message)?;
-                    bootstrap_agent_info.update_message_status(uid)?;
-                }
-            }
-        }
-
-        trace!("Connection::update_state >>> done");
-        Ok(error::SUCCESS.code_num)
     })
 }
 
@@ -235,7 +211,7 @@ impl Into<(SmConnectionState, AgentInfo, String)> for Connection {
 
 impl From<(SmConnectionState, AgentInfo, String)> for Connection {
     fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> Connection {
-        Connection::from_parts(source_id, agent_info, state)
+        Connection::from_parts(source_id, agent_info, state, true)
     }
 }
 
@@ -512,7 +488,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_connection("test_create_connection").unwrap();
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
 
         connect(handle).unwrap();
@@ -543,14 +519,14 @@ pub mod tests {
 
         let handle = create_connection("test_create_drop_create").unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
         let did1 = get_pw_did(handle).unwrap();
 
         release(handle).unwrap();
 
         let handle2 = create_connection("test_create_drop_create").unwrap();
 
-        assert_eq!(get_state(handle2), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle2), VcxStateType::VcxStateNone as u32);
         let did2 = get_pw_did(handle2).unwrap();
 
         assert_ne!(handle, handle2);
@@ -680,7 +656,7 @@ pub mod tests {
 
         let handle = create_connection("test_serialize_deserialize").unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateInitialized as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
         connect(handle).unwrap();
         connect(handle).unwrap();

@@ -7,20 +7,26 @@ use crate::aries::handlers::connection::invitee::states::complete::CompleteState
 use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
+use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::aries::messages::connection::request::Request;
-use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::aries::messages::ack::Ack;
+use crate::aries::messages::connection::response::{Response, SignedResponse};
+use crate::aries::messages::discovery::disclose::{ProtocolDescriptor, Disclose};
+use crate::aries::messages::discovery::query::Query;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
+use crate::aries::messages::trust_ping::ping::Ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
     source_id: String,
     agent_info: AgentInfo,
     state: InviteeState,
+    autohop: bool
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,31 +34,34 @@ pub enum InviteeState {
     Null(NullState),
     Invited(InvitedState),
     Requested(RequestedState),
+    Responded(RespondedState),
     Completed(CompleteState),
 }
 
 impl InviteeState {
     pub fn code(&self) -> u32 {
         match self {
-            InviteeState::Null(_) => VcxStateType::VcxStateInitialized as u32,
-            InviteeState::Invited(_) => VcxStateType::VcxStateOfferSent as u32,
-            InviteeState::Requested(_) => VcxStateType::VcxStateRequestReceived as u32,
+            InviteeState::Null(_) => VcxStateType::VcxStateNone as u32,
+            InviteeState::Invited(_) => VcxStateType::VcxStateInitialized as u32,
+            InviteeState::Requested(_) => VcxStateType::VcxStateOfferSent as u32,
+            InviteeState::Responded(_) => VcxStateType::VcxStateRequestReceived as u32,
             InviteeState::Completed(_) => VcxStateType::VcxStateAccepted as u32,
         }
     }
 }
 
 impl SmConnectionInvitee {
-    pub fn _build_invitee(source_id: &str) -> Self {
+    pub fn _build_invitee(source_id: &str, autohop: bool) -> Self {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             state: InviteeState::Null(NullState {}),
             agent_info: AgentInfo::default(),
+            autohop
         }
     }
 
-    pub fn new(source_id: &str) -> Self {
-        SmConnectionInvitee::_build_invitee(source_id)
+    pub fn new(source_id: &str, autohop: bool) -> Self {
+        SmConnectionInvitee::_build_invitee(source_id, autohop)
     }
 
     pub fn is_in_null_state(&self) -> bool {
@@ -62,11 +71,12 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn from(source_id: String, agent_info: AgentInfo, state: InviteeState) -> Self {
+    pub fn from(source_id: String, agent_info: AgentInfo, state: InviteeState, autohop: bool) -> Self {
         SmConnectionInvitee {
             source_id,
             agent_info,
             state,
+            autohop
         }
     }
 
@@ -86,14 +96,11 @@ impl SmConnectionInvitee {
         &self.state
     }
 
-    pub fn step(self, message: DidExchangeMessages) -> VcxResult<SmConnectionInvitee> {
-        trace!("SmConnectionInvitee::step >>> message: {:?}", message);
-        let SmConnectionInvitee { source_id, agent_info, state } = self;
-
-        let (new_state, agent_info) =
-            SmConnectionInvitee::invitee_step(state, message, &source_id, agent_info)?;
-
-        Ok(SmConnectionInvitee { source_id, agent_info, state: new_state })
+    pub fn needs_message(&self) -> bool {
+        match self.state {
+            InviteeState::Responded(_) => false,
+            _ => true
+        }
     }
 
     pub fn their_did_doc(&self) -> Option<DidDoc> {
@@ -101,6 +108,7 @@ impl SmConnectionInvitee {
             InviteeState::Null(_) => None,
             InviteeState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
             InviteeState::Requested(ref state) => Some(state.did_doc.clone()),
+            InviteeState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
@@ -193,48 +201,64 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn invitee_step(invitee_state: InviteeState, message: DidExchangeMessages, source_id: &str, mut agent_info: AgentInfo) -> VcxResult<(InviteeState, AgentInfo)> {
-        let new_state = match invitee_state {
-            InviteeState::Null(state) => {
-                match message {
-                    DidExchangeMessages::InvitationReceived(invitation) => {
-                        InviteeState::Invited((state, invitation).into())
-                    }
-                    _ => {
-                        InviteeState::Null(state)
-                    }
-                }
-            }
-            InviteeState::Invited(state) => {
-                match message {
-                    DidExchangeMessages::Connect() => {
-                        agent_info = agent_info.create_agent()?;
-                        let request = Request::create()
-                            .set_label(source_id.to_string())
-                            .set_did(agent_info.pw_did.to_string())
-                            .set_service_endpoint(agent_info.agency_endpoint()?)
-                            .set_keys(agent_info.recipient_keys(), agent_info.routing_keys()?);
+    fn _send_ack(did_doc: &DidDoc, request: &Request, response: &SignedResponse, agent_info: &AgentInfo) -> VcxResult<Response> {
+        let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
 
-                        trace!("invitation {:?}", state.invitation);
-                        let ddo = DidDoc::from(state.invitation.clone());
-                        ddo.send_message(&request.to_a2a_message(), &agent_info.pw_vk)?;
-                        InviteeState::Requested((state, request).into())
-                    }
-                    DidExchangeMessages::ProblemReportReceived(problem_report) => {
-                        InviteeState::Null((state, problem_report).into())
-                    }
-                    _ => {
-                        InviteeState::Invited(state)
-                    }
+        let response = response.clone().decode(&remote_vk)?;
+
+        if !response.from_thread(&request.id.0) {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
+        }
+
+        let message = Ack::create()
+            .set_thread_id(&response.thread.thid.clone().unwrap_or_default())
+            .to_a2a_message();
+
+        response.connection.did_doc.send_message(&message, &agent_info.pw_vk)?;
+        Ok(response)
+    }
+
+    pub fn step(self, message: Option<A2AMessage>) -> VcxResult<Self> {
+        match message {
+            Some(message) => match message {
+                A2AMessage::ConnectionInvitation(invitation) => {
+                    self.handle_invitation(invitation)
+                }
+                A2AMessage::ConnectionResponse(response) => {
+                    self.handle_connection_response(response)
+                }
+                A2AMessage::Ack(ack) => {
+                    self.handle_ack(ack)
+                }
+                A2AMessage::Ping(ping) => {
+                    self.handle_ping(ping)
+                }
+                A2AMessage::ConnectionProblemReport(problem_report) => {
+                    self.handle_problem_report(problem_report)
+                }
+                A2AMessage::PingResponse(ping_response) => {
+                    self.handle_ping_response(ping_response)
+                }
+                // A2AMessage::DiscoverFeatures((query_, comment)) => { // todo
+                //     self.handle_discover_features(query_, comment)
+                // }
+                A2AMessage::Query(query) => {
+                    self.handle_discovery_query(query)
+                }
+                A2AMessage::Disclose(disclose) => {
+                    self.handle_disclose(disclose)
+                }
+                _ => {
+                    Ok(self)
                 }
             }
-            InviteeState::Requested(state) => {
-                match message {
-                    DidExchangeMessages::ExchangeResponseReceived(response) => {
-                        match state.handle_connection_response(response, &agent_info) {
-                            Ok(response) => {
-                                InviteeState::Completed((state, response).into())
-                            }
+            None => {
+                let Self { source_id, agent_info, state, autohop } = self;
+                let state = match state {
+                    InviteeState::Responded(state) => {
+                        match Self::_send_ack(&state.did_doc, &state.request, &state.response, &agent_info) {
+                            Ok(response) => InviteeState::Completed((state, response).into()),
                             Err(err) => {
                                 let problem_report = ProblemReport::create()
                                     .set_problem_code(ProblemCode::ResponseProcessingError)
@@ -245,22 +269,170 @@ impl SmConnectionInvitee {
                             }
                         }
                     }
-                    DidExchangeMessages::ProblemReportReceived(problem_report) => {
-                        InviteeState::Null((state, problem_report).into())
-                    }
-                    _ => {
-                        InviteeState::Requested(state)
-                    }
-                }
+                    _ => state.clone()
+                };
+                Ok(Self { source_id, agent_info, state, autohop })
             }
-            InviteeState::Completed(state) => {
-                state.handle_message(message, &agent_info)?
+        }
+    }
+
+    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let agent_info = agent_info.create_agent()?;
+        let new_state = match state {
+            InviteeState::Null(state) => {
+                InviteeState::Invited((state, invitation).into())
+            }
+            _ => {
+                state.clone()
             }
         };
-        Ok((new_state, agent_info))
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_connect(self) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Invited(state) => {
+                let request = Request::create()
+                    .set_label(source_id.to_string())
+                    .set_did(agent_info.pw_did.to_string())
+                    .set_service_endpoint(agent_info.agency_endpoint()?)
+                    .set_keys(agent_info.recipient_keys(), agent_info.routing_keys()?);
+
+                let ddo = DidDoc::from(state.invitation.clone());
+                ddo.send_message(&request.to_a2a_message(), &agent_info.pw_vk)?;
+                let new_state = InviteeState::Requested((state, request).into());
+                new_state
+            },
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Requested(state) => {
+                match autohop {
+                    true => {
+                        match Self::_send_ack(&state.did_doc, &state.request, &response, &agent_info) {
+                            Ok(response) => InviteeState::Completed((state, response).into()),
+                            Err(err) => {
+                                let problem_report = ProblemReport::create()
+                                    .set_problem_code(ProblemCode::ResponseProcessingError)
+                                    .set_explain(err.to_string())
+                                    .set_thread_id(&state.request.id.0);
+                                state.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                                InviteeState::Null((state, problem_report).into())
+                            }
+                        }
+                    }
+                    false => InviteeState::Responded((state, response).into())
+                }
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_ping(self, ping: Ping) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Completed(state) => {
+                state.handle_ping(&ping, &agent_info)?;
+                InviteeState::Completed(state)
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Completed(state) => {
+                state.handle_send_ping(comment, &agent_info)?;
+                InviteeState::Completed(state)
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self>  {
+        Ok(self)
+    }
+
+    pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Completed(state) => {
+                state.handle_discover_features(query_, comment, &agent_info)?;
+                InviteeState::Completed(state)
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Completed(state) => {
+                state.handle_discovery_query(query, &agent_info)?;
+                InviteeState::Completed(state)
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Completed(state) => {
+                InviteeState::Completed((state.clone(), disclose.protocols).into())
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self>  {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let new_state = match state {
+            InviteeState::Requested(state) => {
+                InviteeState::Null((state, problem_report).into())
+            }
+            InviteeState::Invited(state) => {
+                InviteeState::Null((state, problem_report).into())
+            }
+            _ => {
+                state.clone()
+            }
+        };
+        Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self>  {
+        Ok(self)
     }
 }
-
 
 #[cfg(test)]
 pub mod test {
@@ -285,18 +457,18 @@ pub mod test {
         use super::*;
 
         pub fn invitee_sm() -> SmConnectionInvitee {
-            SmConnectionInvitee::new(&source_id())
+            SmConnectionInvitee::new(&source_id(), true)
         }
 
         impl SmConnectionInvitee {
             pub fn to_invitee_invited_state(mut self) -> SmConnectionInvitee {
-                self = self.step(DidExchangeMessages::InvitationReceived(_invitation())).unwrap();
+                self = self.handle_invitation(_invitation()).unwrap();
                 self
             }
 
             pub fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
-                self = self.step(DidExchangeMessages::InvitationReceived(_invitation())).unwrap();
-                self = self.step(DidExchangeMessages::Connect()).unwrap();
+                self = self.handle_invitation(_invitation()).unwrap();
+                self = self.handle_connect().unwrap();
                 self
             }
 
@@ -304,10 +476,10 @@ pub mod test {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 let invitation = Invitation::default().set_recipient_keys(vec![key.clone()]);
 
-                self = self.step(DidExchangeMessages::InvitationReceived(invitation)).unwrap();
-                self = self.step(DidExchangeMessages::Connect()).unwrap();
-                self = self.step(DidExchangeMessages::ExchangeResponseReceived(_response(&key))).unwrap();
-                self = self.step(DidExchangeMessages::AckReceived(_ack())).unwrap();
+                self = self.handle_invitation(invitation).unwrap();
+                self = self.handle_connect().unwrap();
+                self = self.handle_connection_response(_response(&key)).unwrap();
+                self = self.handle_ack(_ack()).unwrap();
                 self
             }
         }
@@ -356,7 +528,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::InvitationReceived(_invitation())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_invitation(_invitation()).unwrap();
 
                 assert_match!(InviteeState::Invited(_), did_exchange_sm.state);
             }
@@ -368,10 +540,10 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::Connect()).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connect().unwrap();
                 assert_match!(InviteeState::Null(_), did_exchange_sm.state);
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::AckReceived(_ack())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeState::Null(_), did_exchange_sm.state);
             }
 
@@ -382,7 +554,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::Connect()).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connect().unwrap();
 
                 assert_match!(InviteeState::Requested(_), did_exchange_sm.state);
             }
@@ -394,24 +566,9 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ProblemReportReceived(_problem_report())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
                 assert_match!(InviteeState::Null(_), did_exchange_sm.state);
-            }
-
-            // Todo: seems like I have mixed up inviter and invitee tests????
-            #[test]
-            #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_other_messages_from_invited_state() {
-                let _setup = SetupIndyMocks::init();
-
-                let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
-
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::AckReceived(_ack())).unwrap();
-                assert_match!(InviteeState::Invited(_), did_exchange_sm.state);
-
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ExchangeRequestReceived(_request())).unwrap();
-                assert_match!(InviteeState::Invited(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -423,9 +580,24 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ExchangeResponseReceived(_response(key))).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(&key)).unwrap();
 
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
+            }
+
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn test_did_exchange_handle_other_messages_from_invited_state() {
+                let _setup = SetupIndyMocks::init();
+
+                let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
+
+                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
+                assert_match!(InviteeState::Invited(_), did_exchange_sm.state);
+
+                did_exchange_sm = did_exchange_sm.handle_discovery_query(_query()).unwrap();
+                assert_match!(InviteeState::Invited(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -438,7 +610,7 @@ pub mod test {
                 let mut signed_response = _signed_response();
                 signed_response.connection_sig.signature = String::from("other");
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ExchangeResponseReceived(signed_response)).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connection_response(signed_response).unwrap();
 
                 assert_match!(InviteeState::Null(_), did_exchange_sm.state);
             }
@@ -450,7 +622,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ProblemReportReceived(_problem_report())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
                 assert_match!(InviteeState::Null(_), did_exchange_sm.state);
             }
@@ -462,10 +634,10 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().to_invitee_requested_state();
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::AckReceived(_ack())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeState::Requested(_), did_exchange_sm.state);
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::PingReceived(_ping())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ping(_ping()).unwrap();
                 assert_match!(InviteeState::Requested(_), did_exchange_sm.state);
             }
 
@@ -477,40 +649,40 @@ pub mod test {
                 let mut did_exchange_sm = invitee_sm().to_invitee_completed_state();
 
                 // Send Ping
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::SendPing(None)).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_send_ping(None).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Ping
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::PingReceived(_ping())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ping(_ping()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Ping Response
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::PingResponseReceived(_ping_response())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ping_response(_ping_response()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Discovery Features
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::DiscoverFeatures((None, None))).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_discover_features(None, None).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Query
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::QueryReceived(_query())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_discovery_query(_query()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Disclose
                 assert!(did_exchange_sm.get_remote_protocols().is_none());
 
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::DiscloseReceived(_disclose())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_disclose(_disclose()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 assert!(did_exchange_sm.get_remote_protocols().is_some());
 
                 // ignore
                 // Ack
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::AckReceived(_ack())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
 
                 // Problem Report
-                did_exchange_sm = did_exchange_sm.step(DidExchangeMessages::ProblemReportReceived(_problem_report())).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
                 assert_match!(InviteeState::Completed(_), did_exchange_sm.state);
             }
         }
@@ -657,9 +829,9 @@ pub mod test {
             fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().state());
-                assert_eq!(VcxStateType::VcxStateOfferSent as u32, invitee_sm().to_invitee_invited_state().state());
-                assert_eq!(VcxStateType::VcxStateRequestReceived as u32, invitee_sm().to_invitee_requested_state().state());
+                assert_eq!(VcxStateType::VcxStateNone as u32, invitee_sm().state());
+                assert_eq!(VcxStateType::VcxStateInitialized as u32, invitee_sm().to_invitee_invited_state().state());
+                assert_eq!(VcxStateType::VcxStateOfferSent as u32, invitee_sm().to_invitee_requested_state().state());
             }
         }
     }

@@ -1,6 +1,5 @@
 pub mod agent_info;
 pub mod connection;
-pub mod messages;
 mod invitee;
 mod inviter;
 mod util;
@@ -9,7 +8,7 @@ mod util;
 pub mod tests {
     use crate::aries::messages::connection::invite::tests::_invitation_json;
     use crate::connection::tests::build_test_connection_inviter_requested;
-    use crate::utils::devsetup::SetupEmpty;
+    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
 
     pub fn mock_connection() -> u32 {
         build_test_connection_inviter_requested()
@@ -38,16 +37,16 @@ pub mod tests {
             _setup();
             let connection_handle = connection::create_connection(_source_id()).unwrap();
             assert!(connection::is_valid_handle(connection_handle));
-            assert_eq!(1, connection::get_state(connection_handle));
+            assert_eq!(0, connection::get_state(connection_handle));
         }
 
         #[test]
         #[cfg(feature = "aries")]
         fn test_create_connection_with_invite_works() {
-            _setup();
+            let _setup = SetupMocks::init();
             let connection_handle = connection::create_connection_with_invite(_source_id(), &_invitation_json()).unwrap();
             assert!(connection::is_valid_handle(connection_handle));
-            assert_eq!(2, connection::get_state(connection_handle));
+            assert_eq!(1, connection::get_state(connection_handle));
         }
 
         #[test]
@@ -55,7 +54,7 @@ pub mod tests {
         fn test_get_connection_state_works() {
             _setup();
             let connection_handle = connection::create_connection(_source_id()).unwrap();
-            assert_eq!(1, connection::get_state(connection_handle));
+            assert_eq!(0, connection::get_state(connection_handle));
         }
 
         #[test]

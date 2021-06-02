@@ -5,18 +5,12 @@ pub mod utils;
 
 #[cfg(test)]
 pub mod test {
-    use indy_sys::WalletHandle;
-
     use agency_client::payload::PayloadKinds;
 
-    use crate::{aries, connection, credential, credential_def, disclosed_proof, issuer_credential, libindy, proof, schema, settings};
-    use crate::aries::messages::a2a::A2AMessage;
-    use crate::error::{VcxError, VcxErrorKind, VcxResult};
+    use crate::{connection, credential, disclosed_proof, libindy, settings};
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
     use crate::utils::plugins::init_plugin;
-    use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
-    use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::devsetup_agent::test::{Faber, Alice};
 
     pub fn source_id() -> String {

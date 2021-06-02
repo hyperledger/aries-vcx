@@ -4,7 +4,6 @@ use crate::error::prelude::*;
 use crate::aries::handlers::connection::agent_info::AgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
-use crate::aries::handlers::connection::messages::DidExchangeMessages;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -55,21 +54,21 @@ impl Connection {
     /**
     Create Inviter connection state machine
      */
-    pub fn create(source_id: &str) -> Connection {
+    pub fn create(source_id: &str, autohop: bool) -> Connection {
         trace!("Connection::create >>> source_id: {}", source_id);
 
         Connection {
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id))
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, autohop))
         }
     }
 
-    pub fn from_parts(source_id: String, agent_info: AgentInfo, state: SmConnectionState) -> Connection {
+    pub fn from_parts(source_id: String, agent_info: AgentInfo, state: SmConnectionState, autohop: bool) -> Connection {
         match state {
             SmConnectionState::Inviter(state) => {
-                Connection { connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, agent_info, state)) }
+                Connection { connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, agent_info, state, autohop)) }
             }
             SmConnectionState::Invitee(state) => {
-                Connection { connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, agent_info, state)) }
+                Connection { connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, agent_info, state, autohop)) }
             }
         }
     }
@@ -77,11 +76,11 @@ impl Connection {
     /**
     Create Invitee connection state machine
      */
-    pub fn create_with_invite(source_id: &str, invitation: Invitation) -> VcxResult<Connection> {
+    pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
 
         let mut connection = Connection {
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id))
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, autohop))
         };
 
         connection.process_invite(invitation)?;
@@ -224,7 +223,15 @@ impl Connection {
      */
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
-        self.step(DidExchangeMessages::InvitationReceived(invitation))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(_sm_inviter) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -256,13 +263,72 @@ impl Connection {
         }
     }
 
-    /**
-    If called on Inviter, creates initial connection agent and generates invitation
-    If called on Invitee, creates connection agent and send connection request using info from connection invitation
-     */
-    pub fn connect(&mut self) -> VcxResult<()> {
-        trace!("Connection::connect >>> source_id: {}", self.source_id());
-        self.step(DidExchangeMessages::Connect())
+    pub fn needs_message(&self) -> bool {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.needs_message()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.needs_message()
+            }
+        }
+    }
+
+    fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
+        let expected_sender_vk = match remote_vk {
+            Ok(vk) => vk,
+            Err(_) => return Ok(None)
+        };
+        if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+            trace!("Connection::_get_bootstrap_agent_messages >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
+            let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+            return Ok(Some((messages, bootstrap_agent_info.clone())));
+        }
+        Ok(None)
+    }
+
+    fn _update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().step(message)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().step(message)?)
+            }
+        };
+
+        Ok(())
+    }
+
+    pub fn update_state(&mut self) -> VcxResult<()> {
+        if self.is_in_null_state() {
+            warn!("Connection::update_state :: update state on connection in null state is ignored");
+            return Ok(());
+        }
+        
+        let messages = self.get_messages_noauth()?;
+        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
+        
+        match self.find_message_to_handle(messages) {
+            Some((uid, message)) => {
+                trace!("Connection::update_state >>> handling message uid: {:?}", uid);
+                self._update_state(Some(message))?;
+                self.agent_info().clone().update_message_status(uid)?;
+            }
+            None => {
+                if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), self.bootstrap_agent_info())? {
+                    if let Some((uid, message)) = self.find_message_to_handle(messages) {
+                        trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
+                        self._update_state(Some(message))?;
+                        bootstrap_agent_info.update_message_status(uid)?;
+                    }
+                } else {
+                    trace!("Connection::update_state >>> trying to update state without message");
+                    self._update_state(None)?;
+                }
+            }
+        }
+        Ok(())
     }
 
     /**
@@ -275,17 +341,33 @@ impl Connection {
             return Ok(());
         }
 
-        self.handle_message(message.clone().into())?;
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().step(Some(message.clone()))?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().step(Some(message.clone()))?)
+            }
+        };
 
         Ok(())
     }
 
     /**
-    Perform state machine transition using supplied message.
+    If called on Inviter, creates initial connection agent and generates invitation
+    If called on Invitee, creates connection agent and send connection request using info from connection invitation
      */
-    pub fn handle_message(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
-        trace!("Connection: handle_message >>> {:?}", message);
-        self.step(message)
+    pub fn connect(&mut self) -> VcxResult<()> {
+        trace!("Connection::connect >>> source_id: {}", self.source_id());
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().handle_connect()?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_connect()?)
+            }
+        };
+        Ok(())
     }
 
     /**
@@ -378,7 +460,15 @@ Get messages received from connection counterparty.
 
     pub fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_ping >>> comment: {:?}", comment);
-        self.handle_message(DidExchangeMessages::SendPing(comment))
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().handle_send_ping(comment)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_send_ping(comment)?)
+            }
+        };
+        Ok(())
     }
 
     pub fn delete(&self) -> VcxResult<()> {
@@ -386,21 +476,17 @@ Get messages received from connection counterparty.
         self.agent_info().delete()
     }
 
-    fn step(&mut self, message: DidExchangeMessages) -> VcxResult<()> {
+    pub fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
+        trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(message)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_discover_features(query, comment)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().step(message)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_discover_features(query, comment)?)
             }
         };
         Ok(())
-    }
-
-    pub fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
-        trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
-        self.handle_message(DidExchangeMessages::DiscoverFeatures((query, comment)))
     }
 
     pub fn get_connection_info(&self) -> VcxResult<String> {

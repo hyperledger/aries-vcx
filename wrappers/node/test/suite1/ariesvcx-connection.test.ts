@@ -141,7 +141,7 @@ describe('Connection:', () => {
     it(`returns ${StateType.Initialized}: not connected`, async () => {
       const connection = await connectionCreateInviterNull({ id: 'alice' });
       await connection.updateState();
-      assert.equal(await connection.getState(), StateType.Initialized);
+      assert.equal(await connection.getState(), StateType.None);
     });
 
     // todo : restore for aries
