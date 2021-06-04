@@ -45,7 +45,7 @@ impl InvitedState {
         let prev_agent_info = agent_info.clone();
 
         // provision a new keys
-        let new_agent_info: AgentInfo = agent_info.create_agent()?;
+        let new_agent_info: AgentInfo = AgentInfo::create_agent()?;
 
         let response = Response::create()
             .set_did(new_agent_info.pw_did.to_string())

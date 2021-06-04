@@ -221,7 +221,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self>  {
         let Self { source_id, agent_info, state, autohop } = self;
-        let agent_info = agent_info.create_agent()?;
+        let agent_info = AgentInfo::create_agent()?;
         let new_state = match state {
             InviteeState::Null(state) => {
                 InviteeState::Invited((state, invitation).into())

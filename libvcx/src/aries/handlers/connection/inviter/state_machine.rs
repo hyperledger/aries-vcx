@@ -237,7 +237,7 @@ impl SmConnectionInviter {
 
         let prev_agent_info = agent_info.clone();
 
-        let new_agent_info: AgentInfo = agent_info.create_agent()?;
+        let new_agent_info: AgentInfo = AgentInfo::create_agent()?;
 
         let response = Response::create()
             .set_did(new_agent_info.pw_did.to_string())
@@ -259,7 +259,7 @@ impl SmConnectionInviter {
         let Self { source_id, agent_info, state, autohop } = self;
         let (new_state, new_agent_info) = match state {
             InviterState::Null(state) => {
-                let new_agent_info = agent_info.create_agent()?;
+                let new_agent_info = AgentInfo::create_agent()?;
 
                 let invite: Invitation = Invitation::create()
                     .set_label(source_id.to_string())

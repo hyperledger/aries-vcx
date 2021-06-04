@@ -46,7 +46,7 @@ impl AgentInfo {
     Create connection agent in one's agency
      */
     // TODO: There should be a way to set a specific agent_client for AgentInfo
-    pub fn create_agent(&self) -> VcxResult<AgentInfo> {
+    pub fn create_agent() -> VcxResult<AgentInfo> {
         trace!("Agent::create_agent >>>");
         // todo: we should support passing did method_name as parameter
         let (pw_did, pw_vk) = create_and_store_my_did(None, None)?;
