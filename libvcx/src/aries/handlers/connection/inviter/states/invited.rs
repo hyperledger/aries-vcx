@@ -36,13 +36,12 @@ impl From<Request> for RequestedState {
 }
 
 impl InvitedState {
-    pub fn handle_connection_request(&self, request: &Request,
-                                     agent_info: &AgentInfo) -> VcxResult<(SignedResponse, AgentInfo)> {
-        trace!("ConnectionInviter:handle_connection_request >>> request: {:?}, agent_info: {:?}", request, agent_info);
+    pub fn handle_connection_request(&self,
+                                     request: &Request,
+                                     pw_vk: &str) -> VcxResult<(SignedResponse, AgentInfo)> {
+        trace!("ConnectionInviter:handle_connection_request >>> request: {:?}", request);
 
         request.connection.did_doc.validate()?;
-
-        let prev_agent_info = agent_info.clone();
 
         // provision a new keys
         let new_agent_info: AgentInfo = AgentInfo::create_agent()?;
@@ -55,10 +54,10 @@ impl InvitedState {
 
         let signed_response = response.clone()
             .set_thread_id(&request.id.0)
-            .encode(&prev_agent_info.pw_vk)?;
+            .encode(pw_vk)?;
 
 
-        request.connection.did_doc.send_message(&signed_response.to_a2a_message(), &new_agent_info.pw_vk)?;
+        request.connection.did_doc.send_message(&signed_response.to_a2a_message(), &pw_vk)?;
 
         Ok((signed_response, new_agent_info))
     }

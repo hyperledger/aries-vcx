@@ -287,7 +287,7 @@ impl SmConnectionInvitee {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviteeState::Completed(state) => {
-                state.handle_ping(&ping, &agent_info)?;
+                state.handle_ping(&ping, &agent_info.pw_vk)?;
                 InviteeState::Completed(state)
             }
             _ => {
@@ -301,7 +301,7 @@ impl SmConnectionInvitee {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviteeState::Completed(state) => {
-                state.handle_send_ping(comment, &agent_info)?;
+                state.handle_send_ping(comment, &agent_info.pw_vk)?;
                 InviteeState::Completed(state)
             }
             _ => {
@@ -319,7 +319,7 @@ impl SmConnectionInvitee {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviteeState::Completed(state) => {
-                state.handle_discover_features(query_, comment, &agent_info)?;
+                state.handle_discover_features(query_, comment, &agent_info.pw_vk)?;
                 InviteeState::Completed(state)
             }
             _ => {
@@ -333,7 +333,7 @@ impl SmConnectionInvitee {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviteeState::Completed(state) => {
-                state.handle_discovery_query(query, &agent_info)?;
+                state.handle_discovery_query(query, &agent_info.pw_vk)?;
                 InviteeState::Completed(state)
             }
             _ => {

@@ -29,33 +29,3 @@ impl From<(RequestedState, SignedResponse)> for RespondedState {
         RespondedState { response, did_doc: state.did_doc, request: state.request }
     }
 }
-
-
-impl RequestedState {
-    pub fn handle_connection_response(&self, response: SignedResponse, agent_info: &AgentInfo) -> VcxResult<Response> {
-        trace!("ConnectionInvitee:handle_connection_response >>> response: {:?}, agent_info: {:?}", response, agent_info);
-
-        let remote_vk: String = self.did_doc.recipient_keys().get(0).cloned()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
-
-        let response: Response = response.decode(&remote_vk)?;
-
-        if !response.from_thread(&self.request.id.0) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
-        }
-
-        let message = if response.please_ack.is_some() {
-            Ack::create()
-                .set_thread_id(&response.thread.thid.clone().unwrap_or_default())
-                .to_a2a_message()
-        } else {
-            Ping::create()
-                .set_thread_id(response.thread.thid.clone().unwrap_or_default())
-                .to_a2a_message()
-        };
-
-        response.connection.did_doc.send_message(&message, &agent_info.pw_vk)?;
-
-        Ok(response)
-    }
-}

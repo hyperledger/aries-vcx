@@ -47,7 +47,7 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 }
 
 impl RespondedState {
-    pub fn handle_ping(&self, ping: &Ping, agent_info: &AgentInfo) -> VcxResult<()> {
-        handle_ping(ping, agent_info, &self.did_doc)
+    pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
+        handle_ping(ping, pw_vk, &self.did_doc)
     }
 }

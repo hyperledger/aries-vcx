@@ -311,11 +311,11 @@ impl SmConnectionInviter {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Responded(state) => {
-                state.handle_ping(&ping, &agent_info)?;
+                state.handle_ping(&ping, &agent_info.pw_vk)?;
                 InviterState::Completed((state, ping).into())
             }
             InviterState::Completed(state) => {
-                state.handle_ping(&ping, &agent_info)?;
+                state.handle_ping(&ping, &agent_info.pw_vk)?;
                 InviterState::Completed(state)
             }
             _ => {
@@ -338,7 +338,7 @@ impl SmConnectionInviter {
                 InviterState::Responded(state)
             }
             InviterState::Completed(state) => {
-                state.handle_send_ping(comment, &agent_info)?;
+                state.handle_send_ping(comment, &agent_info.pw_vk)?;
                 InviterState::Completed(state)
             }
             _ => {
@@ -365,7 +365,7 @@ impl SmConnectionInviter {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Completed(state) => {
-                state.handle_discover_features(query_, comment, &agent_info)?;
+                state.handle_discover_features(query_, comment, &agent_info.pw_vk)?;
                 InviterState::Completed(state)
             }
             _ => {
@@ -379,7 +379,7 @@ impl SmConnectionInviter {
         let Self { source_id, agent_info, state, autohop } = self;
         let new_state = match state {
             InviterState::Completed(state) => {
-                state.handle_discovery_query(query, &agent_info)?;
+                state.handle_discovery_query(query, &agent_info.pw_vk)?;
                 InviterState::Completed(state)
             }
             _ => {

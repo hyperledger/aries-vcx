@@ -23,36 +23,36 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
 
 impl CompleteState {
 
-    pub fn handle_send_ping(&self, comment: Option<String>, agent_info: &AgentInfo) -> VcxResult<()> {
+    pub fn handle_send_ping(&self, comment: Option<String>, pw_vk: &str) -> VcxResult<()> {
         let ping =
             Ping::create()
                 .request_response()
                 .set_comment(comment);
 
-        self.did_doc.send_message(&ping.to_a2a_message(), &agent_info.pw_vk).ok();
+        self.did_doc.send_message(&ping.to_a2a_message(), pw_vk).ok();
         Ok(())
     }
 
-    pub fn handle_ping(&self, ping: &Ping, agent_info: &AgentInfo) -> VcxResult<()> {
-        handle_ping(ping, agent_info, &self.did_doc)
+    pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
+        handle_ping(ping, pw_vk, &self.did_doc)
     }
 
-    pub fn handle_discover_features(&self, query: Option<String>, comment: Option<String>, agent_info: &AgentInfo) -> VcxResult<()> {
+    pub fn handle_discover_features(&self, query: Option<String>, comment: Option<String>, pw_vk: &str) -> VcxResult<()> {
         let query_ =
             Query::create()
                 .set_query(query)
                 .set_comment(comment);
 
-        self.did_doc.send_message(&query_.to_a2a_message(), &agent_info.pw_vk)
+        self.did_doc.send_message(&query_.to_a2a_message(), pw_vk)
     }
 
-    pub fn handle_discovery_query(&self, query: Query, agent_info: &AgentInfo) -> VcxResult<()> {
+    pub fn handle_discovery_query(&self, query: Query, pw_vk: &str) -> VcxResult<()> {
         let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_ref().map(String::as_str));
 
         let disclose = Disclose::create()
             .set_protocols(protocols)
             .set_thread_id(query.id.0.clone());
 
-        self.did_doc.send_message(&disclose.to_a2a_message(), &agent_info.pw_vk)
+        self.did_doc.send_message(&disclose.to_a2a_message(), pw_vk)
     }
 }
