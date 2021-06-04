@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use serde_json;
 
 use agency_client;
-use agency_client::{MessageStatusCode, SerializableObjectWithState};
+use agency_client::{MessageStatusCode};
 use agency_client::get_message::{Message, MessageByConnection};
 
-use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
@@ -14,29 +14,12 @@ use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
+use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
+use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
+use crate::utils::serialization::SerializableObjectWithState;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
-}
-
-pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
-    debug!("creating pairwise keys on agent for connection {}", source_id);
-    trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
-
-    let (agent_did, agent_verkey) = agency_client::create_keys()
-        .for_did(pw_did)?
-        .for_verkey(pw_verkey)?
-        .send_secure()
-        .map_err(|err| err.extend("Cannot create pairwise keys"))?;
-
-    trace!("create_agent_keys <<< agent_did: {}, agent_verkey: {}", agent_did, agent_verkey);
-    Ok((agent_did, agent_verkey))
-}
-
-pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| {
-        connection.remote_vk()
-    })
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -44,14 +27,26 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn get_agent_did(handle: u32) -> VcxResult<String> {
+     CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.cloud_agent_info().agent_did.to_string())
+    })
+}
+
+pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.agent_info().agent_did.to_string())
+        Ok(connection.cloud_agent_info().agent_vk.clone())
     })
 }
 
 pub fn get_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.agent_info().pw_did.to_string())
+        Ok(connection.pairwise_info().pw_did.to_string())
+    })
+}
+
+pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection.pairwise_info().pw_vk.clone())
     })
 }
 
@@ -61,15 +56,9 @@ pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.agent_info().agent_vk.clone())
-    })
-}
-
-pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.agent_info().pw_vk.clone())
+        connection.remote_vk()
     })
 }
 
@@ -120,17 +109,17 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
     })
 }
 
-fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
-    let expected_sender_vk = match remote_vk {
-        Ok(vk) => vk,
-        Err(_) => return Ok(None)
-    };
-    if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-        let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-        return Ok(Some((messages, bootstrap_agent_info.clone())));
-    }
-    Ok(None)
-}
+// fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
+//     let expected_sender_vk = match remote_vk {
+//         Ok(vk) => vk,
+//         Err(_) => return Ok(None)
+//     };
+//     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+//         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+//         return Ok(Some((messages, bootstrap_agent_info.clone())));
+//     }
+//     Ok(None)
+// }
 
 /**
 Tries to update state of connection state machine in 3 steps:
@@ -167,7 +156,13 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        let (state, data, source_id) = connection.to_owned().into();
+        let (state, pairwise_info, cloud_agent_info, source_id) = connection.to_owned().into();
+        let data = LegacyAgentInfo {
+            pw_did: pairwise_info.pw_did,
+            pw_vk: pairwise_info.pw_vk,
+            agent_did: cloud_agent_info.agent_did,
+            agent_vk: cloud_agent_info.agent_vk
+        };
         let object = SerializableObjectWithState::V1 { data, state, source_id };
 
         serde_json::to_string(&object)
@@ -176,15 +171,30 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
+    let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
 
     let handle = match object {
         SerializableObjectWithState::V1 { data, state, source_id } => {
-            CONNECTION_MAP.add((state, data, source_id).into())?
+            let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
+            let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
+            let cconnection: Connection = (state, pairwise_info, cloud_agent_info, source_id).into();
+            CONNECTION_MAP.add(cconnection)?
         }
     };
     Ok(handle)
+}
+
+impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
+    fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String) {
+        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id())
+    }
+}
+
+impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
+    fn from((state, pairwise_info, cloud_agent_info, source_id): (SmConnectionState, PairwiseInfo, CloudAgentInfo, String)) -> Connection {
+        Connection::from_parts(source_id, pairwise_info, cloud_agent_info, state)
+    }
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
@@ -203,17 +213,6 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
-impl Into<(SmConnectionState, AgentInfo, String)> for Connection {
-    fn into(self) -> (SmConnectionState, AgentInfo, String) {
-        (self.state_object(), self.agent_info().to_owned(), self.source_id())
-    }
-}
-
-impl From<(SmConnectionState, AgentInfo, String)> for Connection {
-    fn from((state, agent_info, source_id): (SmConnectionState, AgentInfo, String)) -> Connection {
-        Connection::from_parts(source_id, agent_info, state, true)
-    }
-}
 
 pub fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
@@ -277,12 +276,12 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
             conn_handle, |connection| {
                 let expected_sender_vk = connection.remote_vk()?;
                 let msgs = connection
-                    .agent_info()
-                    .download_encrypted_messages(uids.clone(), status_codes.clone())?
+                    .cloud_agent_info()
+                    .download_encrypted_messages(uids.clone(), status_codes.clone(), connection.pairwise_info())?
                     .iter()
                     .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
                     .collect::<VcxResult<Vec<Message>>>()?;
-                Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
+                Ok(MessageByConnection { pairwise_did: connection.pairwise_info().pw_did.clone(), msgs })
             },
         )?;
         res.push(msg_by_conn);

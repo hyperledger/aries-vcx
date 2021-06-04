@@ -1,5 +1,5 @@
 use crate::error::VcxResult;
-use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;

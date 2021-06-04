@@ -1,7 +1,5 @@
 use serde_json;
 
-use agency_client::ObjectWithVersion;
-
 use crate::api::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, ledger};
@@ -9,6 +7,7 @@ use crate::libindy::utils::cache::update_rev_reg_ids_cache;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::object_cache::ObjectCache;
+use crate::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");

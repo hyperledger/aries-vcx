@@ -1,5 +1,5 @@
 use crate::error::VcxResult;
-use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
 use crate::aries::messages::connection::response::Response;
