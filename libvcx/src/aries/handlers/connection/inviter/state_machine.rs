@@ -232,10 +232,8 @@ impl SmConnectionInviter {
         }
     }
 
-    fn _send_response(request: &Request, agent_info: &AgentInfo) -> VcxResult<(SignedResponse, AgentInfo)> {
+    fn _send_response(request: &Request, pw_vk: &str) -> VcxResult<(SignedResponse, AgentInfo)> {
         request.connection.did_doc.validate()?;
-
-        let prev_agent_info = agent_info.clone();
 
         let new_agent_info: AgentInfo = AgentInfo::create_agent()?;
 
@@ -247,7 +245,7 @@ impl SmConnectionInviter {
 
         let signed_response = response.clone()
             .set_thread_id(&request.id.0)
-            .encode(&prev_agent_info.pw_vk)?;
+            .encode(pw_vk)?;
 
         request.connection.did_doc.send_message(&signed_response.to_a2a_message(), &new_agent_info.pw_vk)?;
 
@@ -284,7 +282,7 @@ impl SmConnectionInviter {
              InviterState::Invited(state) => {
                  match autohop {
                      true => {
-                         match Self::_send_response(&request, &agent_info) {
+                         match Self::_send_response(&request, &agent_info.pw_vk) {
                              Ok((response, new_agent_info)) => {
                                  (InviterState::Responded((state, request, response, agent_info.clone()).into()), new_agent_info)
                              }
@@ -424,7 +422,7 @@ impl SmConnectionInviter {
         let Self { source_id, agent_info, state, autohop } = self;
         let (state, agent_info) = match state {
             InviterState::Requested(state) => {
-                match Self::_send_response(&state.request, &agent_info) {
+                match Self::_send_response(&state.request, &agent_info.pw_vk) {
                     Ok((response, new_agent_info)) => {
                         (InviterState::Responded((state, response, agent_info.clone()).into()), new_agent_info)
                     }
