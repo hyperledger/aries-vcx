@@ -290,13 +290,12 @@ impl Connection {
     fn _update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(message)?)
+                Self::_step_inviter(sm_inviter.clone(), message)?
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().step(message)?)
+                Self::_step_invitee(sm_invitee.clone(), message)?
             }
         };
-
         Ok(())
     }
 
@@ -340,17 +339,87 @@ impl Connection {
             warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
             return Ok(());
         }
-
-        self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(Some(message.clone()))?)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().step(Some(message.clone()))?)
-            }
-        };
-
+        self._update_state(Some(message.clone()));
         Ok(())
+    }
+
+    fn _step_inviter(sm_inviter: SmConnectionInviter, message: Option<A2AMessage>) -> VcxResult<SmConnection> {
+        let sm_inviter = match message {
+            Some(message) => match message {
+                A2AMessage::ConnectionRequest(request) => {
+                    sm_inviter.handle_connection_request(request)
+                }
+                A2AMessage::Ack(ack) => {
+                    sm_inviter.handle_ack(ack)
+                }
+                A2AMessage::Ping(ping) => {
+                    sm_inviter.handle_ping(ping)
+                }
+                A2AMessage::ConnectionProblemReport(problem_report) => {
+                    sm_inviter.handle_problem_report(problem_report)
+                }
+                A2AMessage::PingResponse(ping_response) => {
+                    sm_inviter.handle_ping_response(ping_response)
+                }
+                // A2AMessage::Disclose((query_, comment)) => {
+                //     self.handle_discover_features(query_, comment) // todo
+                // }
+                A2AMessage::Query(query) => {
+                    sm_inviter.handle_discovery_query(query)
+                }
+                A2AMessage::Disclose(disclose) => {
+                    sm_inviter.handle_disclose(disclose)
+                }
+                _ => {
+                    Ok(sm_inviter)
+                }
+            }
+            None => {
+                sm_inviter.handle_autohop_response()
+            }
+        }?;
+        Ok(SmConnection::Inviter(sm_inviter))
+    }
+
+    fn _step_invitee(sm_invitee: SmConnectionInvitee, message: Option<A2AMessage>) -> VcxResult<SmConnection> {
+        let sm_invitee = match message {
+            Some(message) => match message {
+                A2AMessage::ConnectionInvitation(invitation) => {
+                    sm_invitee.handle_invitation(invitation)
+                }
+                A2AMessage::ConnectionResponse(response) => {
+                    sm_invitee.handle_connection_response(response)
+                }
+                A2AMessage::Ack(ack) => {
+                    sm_invitee.handle_ack(ack)
+                }
+                A2AMessage::Ping(ping) => {
+                    sm_invitee.handle_ping(ping)
+                }
+                A2AMessage::ConnectionProblemReport(problem_report) => {
+                    sm_invitee.handle_problem_report(problem_report)
+                }
+                A2AMessage::PingResponse(ping_response) => {
+                    sm_invitee.handle_ping_response(ping_response)
+                }
+                // A2AMessage::DiscoverFeatures((query_, comment)) => { // todo
+                //     sm_invitee.handle_discover_features(query_, comment)
+                // }
+                A2AMessage::Query(query) => {
+                    sm_invitee.handle_discovery_query(query)
+                }
+                A2AMessage::Disclose(disclose) => {
+                    sm_invitee.handle_disclose(disclose)
+                }
+                _ => {
+                    Ok(sm_invitee)
+                }
+            }
+            None => {
+                sm_invitee.handle_autohop_ack()
+            }
+        }?;
+        Ok(SmConnection::Invitee(sm_invitee))
     }
 
     /**

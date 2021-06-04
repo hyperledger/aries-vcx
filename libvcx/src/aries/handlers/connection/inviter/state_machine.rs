@@ -254,62 +254,6 @@ impl SmConnectionInviter {
         Ok((signed_response, new_agent_info))
     }
 
-    pub fn step(self, message: Option<A2AMessage>) -> VcxResult<Self> {
-        match message {
-            Some(message) => match message {
-                A2AMessage::ConnectionRequest(request) => {
-                    self.handle_connection_request(request)
-                }
-                A2AMessage::Ack(ack) => {
-                    self.handle_ack(ack)
-                }
-                A2AMessage::Ping(ping) => {
-                    self.handle_ping(ping)
-                }
-                A2AMessage::ConnectionProblemReport(problem_report) => {
-                    self.handle_problem_report(problem_report)
-                }
-                A2AMessage::PingResponse(ping_response) => {
-                    self.handle_ping_response(ping_response)
-                }
-                // A2AMessage::Disclose((query_, comment)) => {
-                //     self.handle_discover_features(query_, comment) // todo
-                // }
-                A2AMessage::Query(query) => {
-                    self.handle_discovery_query(query)
-                }
-                A2AMessage::Disclose(disclose) => {
-                    self.handle_disclose(disclose)
-                }
-                _ => {
-                    Ok(self)
-                }
-            }
-            None => {
-                let Self { source_id, agent_info, state, autohop } = self;
-                let (state, agent_info) = match state {
-                    InviterState::Requested(state) => {
-                        match Self::_send_response(&state.request, &agent_info) {
-                            Ok((response, new_agent_info)) => {
-                                (InviterState::Responded((state, response, agent_info.clone()).into()), new_agent_info)
-                            }
-                            Err(err) => {
-                                let problem_report = ProblemReport::create()
-                                    .set_problem_code(ProblemCode::RequestProcessingError)
-                                    .set_explain(err.to_string())
-                                    .set_thread_id(&state.request.id.0);
-         
-                                state.request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
-                                (InviterState::Null((state, problem_report).into()), agent_info)
-                            }
-                        }
-                    }
-                    _ => (state.clone(), agent_info.clone())
-                };
-                Ok(Self { source_id, agent_info, state, autohop })
-            }
-        }
-    }
 
     pub fn handle_connect(self) -> VcxResult<Self>  {
         let Self { source_id, agent_info, state, autohop } = self;
@@ -474,6 +418,30 @@ impl SmConnectionInviter {
             }
         };
         Ok(Self { source_id, agent_info, state: new_state, autohop })
+    }
+
+    pub fn handle_autohop_response(self) -> VcxResult<Self> {
+        let Self { source_id, agent_info, state, autohop } = self;
+        let (state, agent_info) = match state {
+            InviterState::Requested(state) => {
+                match Self::_send_response(&state.request, &agent_info) {
+                    Ok((response, new_agent_info)) => {
+                        (InviterState::Responded((state, response, agent_info.clone()).into()), new_agent_info)
+                    }
+                    Err(err) => {
+                        let problem_report = ProblemReport::create()
+                            .set_problem_code(ProblemCode::RequestProcessingError)
+                            .set_explain(err.to_string())
+                            .set_thread_id(&state.request.id.0);
+
+                        state.request.connection.did_doc.send_message(&problem_report.to_a2a_message(), &agent_info.pw_vk).ok();
+                        (InviterState::Null((state, problem_report).into()), agent_info)
+                    }
+                }
+            }
+            _ => (state.clone(), agent_info.clone())
+        };
+        Ok(Self { source_id, agent_info, state, autohop })
     }
 
     pub fn handle_ack(self, ack: Ack) -> VcxResult<Self>  {
