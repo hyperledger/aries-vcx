@@ -158,10 +158,10 @@ pub mod test {
         // Alice creates Credential object with message id
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
-            let (credential_handle, _credential_offer) = credential::credential_create_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
+            let (credential_handle, _credential_offer) = credential::credential_create_with_msgid("test", alice.connection, &message.uid).unwrap();
             alice.credential_handle = credential_handle;
 
-            credential::send_credential_request(alice.credential_handle, alice.connection_handle).unwrap();
+            credential::send_credential_request(alice.credential_handle, alice.connection).unwrap();
             assert_eq!(2, credential::get_state(alice.credential_handle).unwrap());
         }
 
@@ -174,7 +174,7 @@ pub mod test {
         // Alice creates Presentation object with message id
         {
             let message = alice.download_message(PayloadKinds::ProofRequest).unwrap();
-            let (presentation_handle, _presentation_request) = disclosed_proof::create_proof_with_msgid("test", alice.connection_handle, &message.uid).unwrap();
+            let (presentation_handle, _presentation_request) = disclosed_proof::create_proof_with_msgid("test", alice.connection, &message.uid).unwrap();
             alice.presentation_handle = presentation_handle;
 
             let credentials = alice.get_credentials_for_presentation();
@@ -182,7 +182,7 @@ pub mod test {
             disclosed_proof::generate_proof(alice.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
             assert_eq!(3, disclosed_proof::get_state(alice.presentation_handle).unwrap());
 
-            disclosed_proof::send_proof(alice.presentation_handle, alice.connection_handle).unwrap();
+            disclosed_proof::send_proof(alice.presentation_handle, alice.connection).unwrap();
             assert_eq!(2, disclosed_proof::get_state(alice.presentation_handle).unwrap());
         }
 
@@ -227,9 +227,9 @@ pub mod test {
 
             alice.credential_handle = credential::credential_create_with_offer("test", &message.decrypted_msg).unwrap();
 
-            connection::update_message_status(alice.connection_handle, message.uid).unwrap();
+            connection::update_message_status(alice.connection, message.uid).unwrap();
 
-            credential::send_credential_request(alice.credential_handle, alice.connection_handle).unwrap();
+            credential::send_credential_request(alice.credential_handle, alice.connection).unwrap();
             assert_eq!(2, credential::get_state(alice.credential_handle).unwrap());
         }
 
@@ -245,14 +245,14 @@ pub mod test {
 
             alice.presentation_handle = disclosed_proof::create_proof("test", &agency_msg.decrypted_msg).unwrap();
 
-            connection::update_message_status(alice.connection_handle, agency_msg.uid).unwrap();
+            connection::update_message_status(alice.connection, agency_msg.uid).unwrap();
 
             let credentials = alice.get_credentials_for_presentation();
 
             disclosed_proof::generate_proof(alice.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
             assert_eq!(3, disclosed_proof::get_state(alice.presentation_handle).unwrap());
 
-            disclosed_proof::send_proof(alice.presentation_handle, alice.connection_handle).unwrap();
+            disclosed_proof::send_proof(alice.presentation_handle, alice.connection).unwrap();
             assert_eq!(2, disclosed_proof::get_state(alice.presentation_handle).unwrap());
         }
 

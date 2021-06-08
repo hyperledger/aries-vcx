@@ -13,6 +13,7 @@ pub mod test {
     use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
     use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::constants;
+    use crate::aries::handlers::connection::connection::Connection;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -69,7 +70,7 @@ pub mod test {
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
-        pub connection_handle: u32,
+        pub connection: Connection,
         pub schema_handle: u32,
         pub cred_def_handle: u32,
         pub credential_handle: u32,
@@ -141,7 +142,7 @@ pub mod test {
                 config_issuer,
                 schema_handle: 0,
                 cred_def_handle: 0,
-                connection_handle: 0,
+                connection: Connection::create("alice", true),
                 credential_handle: 0,
                 presentation_handle: 0,
             }
@@ -186,33 +187,32 @@ pub mod test {
 
         pub fn create_invite(&mut self) -> String {
             self.activate().unwrap();
-            self.connection_handle = connection::create_connection("alice").unwrap();
-            connection::connect(self.connection_handle).unwrap();
-            connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(1, connection::get_state(self.connection_handle));
+            self.connection.connect().unwrap();
+            self.connection.update_state().unwrap();
+            assert_eq!(1, self.connection.state());
 
-            connection::get_invite_details(self.connection_handle).unwrap()
+            json!(self.connection.get_invite_details().unwrap()).to_string()
         }
 
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
-            connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(expected_state, connection::get_state(self.connection_handle));
+            self.connection.update_state().unwrap();
+            assert_eq!(expected_state, self.connection.state());
         }
 
         pub fn ping(&mut self) {
             self.activate().unwrap();
-            connection::send_ping(self.connection_handle, None).unwrap();
+            self.connection.send_ping(None).unwrap();
         }
 
         pub fn discovery_features(&mut self) {
             self.activate().unwrap();
-            connection::send_discovery_features(self.connection_handle, None, None).unwrap();
+            self.connection.send_discovery_features(None, None).unwrap();
         }
 
         pub fn connection_info(&mut self) -> serde_json::Value {
             self.activate().unwrap();
-            let details = connection::get_connection_info(self.connection_handle).unwrap();
+            let details = self.connection.get_connection_info().unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
@@ -233,18 +233,20 @@ pub mod test {
                                                                                  String::from("cred"),
                                                                                  credential_data,
                                                                                  0).unwrap();
-            issuer_credential::send_credential_offer(self.credential_handle, self.connection_handle, None).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            issuer_credential::send_credential_offer(self.credential_handle, connection_by_handle, None).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
         }
 
         pub fn send_credential(&mut self) {
             self.activate().unwrap();
-            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(3, issuer_credential::get_state(self.credential_handle).unwrap());
 
-            issuer_credential::send_credential(self.credential_handle, self.connection_handle).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
+            issuer_credential::send_credential(self.credential_handle, connection_by_handle).unwrap();
+            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
         }
@@ -254,8 +256,9 @@ pub mod test {
             self.presentation_handle = self.create_presentation_request();
             assert_eq!(1, proof::get_state(self.presentation_handle).unwrap());
 
-            proof::send_proof_request(self.presentation_handle, self.connection_handle, None).unwrap();
-            proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            proof::send_proof_request(self.presentation_handle, connection_by_handle, None).unwrap();
+            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
 
             assert_eq!(2, proof::get_state(self.presentation_handle).unwrap());
         }
@@ -268,7 +271,8 @@ pub mod test {
         pub fn update_proof_state(&mut self, expected_state: u32, expected_status: u32) {
             self.activate().unwrap();
 
-            proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
             assert_eq!(expected_state, proof::get_state(self.presentation_handle).unwrap());
             assert_eq!(expected_status, proof::get_proof_state(self.presentation_handle).unwrap());
         }
@@ -284,7 +288,7 @@ pub mod test {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
-        pub connection_handle: u32,
+        pub connection: Connection,
         pub credential_handle: u32,
         pub presentation_handle: u32,
     }
@@ -320,7 +324,7 @@ pub mod test {
                 is_active: false,
                 config_wallet,
                 config_agency,
-                connection_handle: 0,
+                connection: Connection::create("tmp_empoty", true),
                 credential_handle: 0,
                 presentation_handle: 0,
             }
@@ -328,48 +332,51 @@ pub mod test {
 
         pub fn accept_invite(&mut self, invite: &str) {
             self.activate().unwrap();
-            self.connection_handle = connection::create_connection_with_invite("faber", invite).unwrap();
-            connection::connect(self.connection_handle).unwrap();
-            connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(2, connection::get_state(self.connection_handle));
+            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).unwrap();
+            self.connection.connect().unwrap();
+            self.connection.update_state().unwrap();
+            assert_eq!(2, self.connection.state());
         }
 
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
-            connection::update_state(self.connection_handle).unwrap();
-            assert_eq!(expected_state, connection::get_state(self.connection_handle));
+            self.connection.update_state().unwrap();
+            assert_eq!(expected_state, self.connection.state());
         }
 
         pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate()?;
-            let did = connection::get_pw_did(self.connection_handle)?;
+            let did = self.connection.agent_info().pw_did.to_string();
             download_message(did, message_type)
                 .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }
 
         pub fn accept_offer(&mut self) {
             self.activate().unwrap();
-            let offers = credential::get_credential_offer_messages(self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            let offers = credential::get_credential_offer_messages(connection_by_handle).unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
             let offer_json = serde_json::to_string(&offer).unwrap();
 
             self.credential_handle = credential::credential_create_with_offer("degree", &offer_json).unwrap();
             assert_eq!(3, credential::get_state(self.credential_handle).unwrap());
 
-            credential::send_credential_request(self.credential_handle, self.connection_handle).unwrap();
+            credential::send_credential_request(self.credential_handle, connection_by_handle).unwrap();
             assert_eq!(2, credential::get_state(self.credential_handle).unwrap());
         }
 
         pub fn accept_credential(&mut self) {
             self.activate().unwrap();
-            credential::update_state(self.credential_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(4, credential::get_state(self.credential_handle).unwrap());
             assert_eq!(aries::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
         }
 
         pub fn get_proof_request_messages(&mut self) -> String {
             self.activate().unwrap();
-            let presentation_requests = disclosed_proof::get_proof_request_messages(self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            let presentation_requests = disclosed_proof::get_proof_request_messages(connection_by_handle).unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
             presentation_request_json
@@ -401,7 +408,8 @@ pub mod test {
             disclosed_proof::generate_proof(self.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
             assert_eq!(3, disclosed_proof::get_state(self.presentation_handle).unwrap());
 
-            disclosed_proof::send_proof(self.presentation_handle, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            disclosed_proof::send_proof(self.presentation_handle, connection_by_handle).unwrap();
             assert_eq!(2, disclosed_proof::get_state(self.presentation_handle).unwrap());
         }
 
@@ -409,8 +417,9 @@ pub mod test {
             self.activate().unwrap();
             let presentation_request_json = self.get_proof_request_messages();
 
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
             self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
-            disclosed_proof::decline_presentation_request(self.presentation_handle, self.connection_handle, Some(String::from("reason")), None).unwrap();
+            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, Some(String::from("reason")), None).unwrap();
         }
 
         pub fn propose_presentation(&mut self) {
@@ -432,12 +441,14 @@ pub mod test {
                     }
                 ]
             });
-            disclosed_proof::decline_presentation_request(self.presentation_handle, self.connection_handle, None, Some(proposal_data.to_string())).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, None, Some(proposal_data.to_string())).unwrap();
         }
 
         pub fn ensure_presentation_verified(&mut self) {
             self.activate().unwrap();
-            disclosed_proof::update_state(self.presentation_handle, None, self.connection_handle).unwrap();
+            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
+            disclosed_proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
             assert_eq!(aries::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
         }
     }

@@ -769,4 +769,119 @@ pub mod tests {
         let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();
         assert_eq!(empty.len(), 0);
     }
+
+    #[test]
+    #[cfg(feature = "agency_v2")]
+    fn test_connection_send_works() {
+        let _setup = SetupEmpty::init();
+        let mut faber = Faber::setup();
+        let mut alice = Alice::setup();
+
+        let invite = faber.create_invite();
+        alice.accept_invite(&invite);
+
+        faber.update_state(3);
+        alice.update_state(4);
+        faber.update_state(4);
+
+        let uid: String;
+        let message = _ack();
+
+        info!("test_connection_send_works:: Test if Send Message works");
+        {
+            faber.activate().unwrap();
+            faber.connection.send_message_closure()?(&message.to_a2a_message()).unwrap();
+            // connection::send_message(faber.connection, ).unwrap();
+        }
+
+        {
+            info!("test_connection_send_works:: Test if Get Messages works");
+            alice.activate().unwrap();
+
+            let messages = alice.connection.get_messages().unwrap();
+            // let messages = connection::get_messages(alice.connection).unwrap();
+            assert_eq!(1, messages.len());
+
+            uid = messages.keys().next().unwrap().clone();
+            let received_message = messages.values().next().unwrap().clone();
+
+            match received_message {
+                A2AMessage::Ack(received_message) => assert_eq!(message, received_message.clone()),
+                _ => assert!(false)
+            }
+        }
+
+        info!("test_connection_send_works:: Test if Get Message by id works");
+        {
+            alice.activate().unwrap();
+
+            let message = connection::get_message_by_id(alice.connection, uid.clone()).unwrap();
+
+            match message {
+                A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
+                _ => assert!(false)
+            }
+        }
+
+        info!("test_connection_send_works:: Test if Update Message Status works");
+        {
+            alice.activate().unwrap();
+
+            connection::update_message_status(alice.connection, uid).unwrap();
+            let messages = connection::get_messages(alice.connection).unwrap();
+            assert_eq!(0, messages.len());
+        }
+
+        info!("test_connection_send_works:: Test if Send Basic Message works");
+        {
+            faber.activate().unwrap();
+
+            let basic_message = r#"Hi there"#;
+            connection::send_generic_message(faber.connection, basic_message).unwrap();
+
+            alice.activate().unwrap();
+
+            let messages = connection::get_messages(alice.connection).unwrap();
+            assert_eq!(1, messages.len());
+
+            let uid = messages.keys().next().unwrap().clone();
+            let message = messages.values().next().unwrap().clone();
+
+            match message {
+                A2AMessage::BasicMessage(message) => assert_eq!(basic_message, message.content),
+                _ => assert!(false)
+            }
+            connection::update_message_status(alice.connection, uid).unwrap();
+        }
+
+        info!("test_connection_send_works:: Test if Download Messages");
+        {
+            use agency_client::get_message::{MessageByConnection, Message};
+
+            let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
+
+            faber.activate().unwrap();
+            connection::send_message(faber.connection, credential_offer.to_a2a_message()).unwrap();
+
+            alice.activate().unwrap();
+
+            let messages = connection::download_messages(vec![alice.connection], Some(vec![MessageStatusCode::Received]), None).unwrap();
+            let message: Message = messages[0].msgs[0].clone();
+            let decrypted_msg = message.decrypted_msg.unwrap();
+            let _payload: aries::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+
+            connection::update_message_status(alice.connection, message.uid).unwrap();
+        }
+
+        info!("test_connection_send_works:: Test Helpers");
+        {
+            faber.activate().unwrap();
+
+            connection::get_pw_did(faber.connection).unwrap();
+            connection::get_pw_verkey(faber.connection).unwrap();
+            connection::get_their_pw_verkey(faber.connection).unwrap();
+            connection::get_source_id(faber.connection).unwrap();
+        }
+    }
+
 }
