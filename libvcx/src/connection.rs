@@ -149,7 +149,9 @@ pub fn delete_connection(handle: u32) -> VcxResult<u32> {
 pub fn connect(handle: u32) -> VcxResult<Option<String>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.connect()?;
-        Ok(connection.get_invite_details())
+        let invitation = connection.get_invite_details()
+            .map(|invitation| json!(invitation.to_a2a_message()).to_string());
+        Ok(invitation)
     })
 }
 
@@ -207,8 +209,9 @@ pub fn release_all() {
 
 pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        return connection.get_invite_details()
-            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported));
+        connection.get_invite_details()
+            .map(|invitation| json!(invitation.to_a2a_message()).to_string())
+            .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
@@ -499,37 +502,10 @@ pub mod tests {
         handle
     }
 
-    pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
-        debug!("Institution is going to create connection.");
-        institution.activate().unwrap();
-        let institution_to_consumer = create_connection("consumer").unwrap();
-        let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let details = connect(institution_to_consumer).unwrap().unwrap();
-        // update_state(institution_to_consumer).unwrap();
-
-        consumer.activate().unwrap();
-        debug!("Consumer is going to accept connection invitation.");
-        let consumer_to_institution = create_connection_with_invite("institution", &details).unwrap();
-        connect(consumer_to_institution).unwrap();
-        update_state(consumer_to_institution).unwrap();
-
-        debug!("Institution is going to process connection request.");
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        update_state(institution_to_consumer).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(institution_to_consumer));
-
-        debug!("Consumer is going to complete the connection protocol.");
-        consumer.activate().unwrap();
-        update_state(consumer_to_institution).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(consumer_to_institution));
-
-        debug!("Institution is going to complete the connection protocol.");
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        update_state(institution_to_consumer).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, get_state(institution_to_consumer));
-
+    pub fn create_and_store_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(consumer, institution);
+        let consumer_to_institution = store_connection(consumer_to_institution).unwrap();
+        let institution_to_consumer = store_connection(institution_to_consumer).unwrap();
         (consumer_to_institution, institution_to_consumer)
     }
 
@@ -778,71 +754,13 @@ pub mod tests {
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
-    fn test_send_and_download_messages() {
-        let _setup = SetupLibraryAgencyV2::init();
-        let mut institution = Faber::setup();
-        let mut consumer = Alice::setup();
-
-        let (alice_to_faber, faber_to_alice) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
-
-        send_generic_message(faber_to_alice, "Hello Alice").unwrap();
-        send_generic_message(faber_to_alice, "How are you Alice?").unwrap();
-
-        // AS CONSUMER GET MESSAGES
-        consumer.activate().unwrap();
-        send_generic_message(alice_to_faber, "Hello Faber").unwrap();
-
-        // make sure messages has be delivered
-        thread::sleep(Duration::from_millis(1000));
-
-        let all_messages = download_messages_noauth(None, None, None).unwrap();
-        assert_eq!(all_messages.len(), 1);
-        assert_eq!(all_messages[0].msgs.len(), 3);
-        assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
-        assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
-
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
-        assert!(received[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
-        assert!(received[0].msgs[1].decrypted_msg.is_some());
-
-        // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
-        let reviewed = download_messages_noauth(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        assert_eq!(reviewed.len(), 1);
-        assert_eq!(reviewed[0].msgs.len(), 1);
-        assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
-
-        let rejected = download_messages_noauth(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
-        assert_eq!(rejected.len(), 1);
-        assert_eq!(rejected[0].msgs.len(), 0);
-
-        let specific = download_messages_noauth(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(specific.len(), 1);
-        assert_eq!(specific[0].msgs.len(), 1);
-        let msg = specific[0].msgs[0].decrypted_msg.clone().unwrap();
-        let msg_aries_value: Value = serde_json::from_str(&msg).unwrap();
-        assert!(msg_aries_value.is_object());
-        assert!(msg_aries_value["@id"].is_string());
-        assert!(msg_aries_value["@type"].is_string());
-        assert!(msg_aries_value["content"].is_string());
-
-        let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
-        let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).unwrap();
-        assert_eq!(empty.len(), 0);
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
+        let (consumer1_to_institution, institution_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
 
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
         let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
@@ -885,7 +803,7 @@ pub mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
-        let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
+        let (alice_to_faber, faber_to_alice) = create_and_store_connected_connections(&mut consumer1, &mut institution);
 
         send_generic_message(faber_to_alice, "Hello 1").unwrap();
         send_generic_message(faber_to_alice, "Hello 2").unwrap();
