@@ -157,32 +157,13 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        let (state, pairwise_info, cloud_agent_info, source_id) = connection.to_owned().into();
-        let data = LegacyAgentInfo {
-            pw_did: pairwise_info.pw_did,
-            pw_vk: pairwise_info.pw_vk,
-            agent_did: cloud_agent_info.agent_did,
-            agent_vk: cloud_agent_info.agent_vk
-        };
-        let object = SerializableObjectWithState::V1 { data, state, source_id };
-
-        serde_json::to_string(&object)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
+        connection.to_string()
     })
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
-
-    let handle = match object {
-        SerializableObjectWithState::V1 { data, state, source_id } => {
-            let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
-            let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
-            let cconnection: Connection = (state, pairwise_info, cloud_agent_info, source_id).into();
-            CONNECTION_MAP.add(cconnection)?
-        }
-    };
+    let connection = Connection::from_string(connection_data)?;
+    let handle = CONNECTION_MAP.add(connection)?;
     Ok(handle)
 }
 
@@ -488,79 +469,6 @@ pub mod tests {
         assert!(details.contains("\"serviceEndpoint\":"));
 
         assert_eq!(get_invite_details(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_deserialize_connection_inviter_completed() {
-        let _setup = SetupMocks::init();
-
-        let handle = from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
-        let _second_string = to_string(handle).unwrap();
-
-        assert_eq!(get_pw_did(handle).unwrap(), "2ZHFFhzA2XtTD6hJqzL7ux");
-        assert_eq!(get_pw_verkey(handle).unwrap(), "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
-        assert_eq!(get_agent_did(handle).unwrap(), "EZrZyu4bfydm4ByNm56kPP");
-        assert_eq!(get_agent_verkey(handle).unwrap(), "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
-        assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
-        assert!(release(handle).is_ok());
-    }
-
-    fn test_deserialize_and_serialize(sm_serialized: &str) {
-        let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
-        let handle_conn = from_string(sm_serialized).unwrap();
-        let reserialized = to_string(handle_conn).unwrap();
-        let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
-
-        assert_eq!(original_object, reserialized_object);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_deserialize_and_serialize_should_produce_the_same_object() {
-        let _setup = SetupMocks::init();
-
-        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
-        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
-
-        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
-        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_serialize_deserialize() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_connection("test_serialize_deserialize").unwrap();
-
-        let first_string = to_string(handle).unwrap();
-        info!("{:?}", first_string);
-        assert!(release(handle).is_ok());
-        let handle = from_string(&first_string).unwrap();
-        let second_string = to_string(handle).unwrap();
-
-        assert_eq!(first_string, second_string);
-
-        assert!(release(handle).is_ok());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_deserialize_existing() {
-        let _setup = SetupMocks::init();
-
-        let handle = create_connection("test_serialize_deserialize").unwrap();
-
-        let _pw_did = get_pw_did(handle).unwrap();
-        let first_string = to_string(handle).unwrap();
-
-        let handle = from_string(&first_string).unwrap();
-
-        let _pw_did = get_pw_did(handle).unwrap();
-        let second_string = to_string(handle).unwrap();
-
-        assert_eq!(first_string, second_string);
     }
 
     #[test]

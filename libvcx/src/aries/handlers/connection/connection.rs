@@ -11,7 +11,7 @@ use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
 use agency_client::get_message::{Message, MessageByConnection};
-use agency_client::{MessageStatusCode};
+use agency_client::{MessageStatusCode, SerializableObjectWithState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -664,6 +664,25 @@ Get messages received from connection counterparty.
             .collect::<VcxResult<Vec<Message>>>()?;
         Ok(msgs)
     }
+
+    pub fn to_string(&self) -> VcxResult<String> {
+        let (state, data, source_id) = self.to_owned().into();
+        let object = SerializableObjectWithState::V1 { data, state, source_id };
+
+        serde_json::to_string(&object)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
+    }
+
+    pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
+        let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
+        match object {
+            SerializableObjectWithState::V1 { data, state, source_id } => {
+                let connection: Connection = (state, data, source_id).into();
+                Ok(connection)
+            }
+        }
+    }
 }
 
 
@@ -688,6 +707,55 @@ pub mod tests {
     use super::*;
     use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
     use crate::aries::messages::ack::tests::_ack;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_connection_inviter_completed() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
+        let _second_string = connection.to_string().unwrap();
+
+        assert_eq!(connection.agent_info().pw_did, "2ZHFFhzA2XtTD6hJqzL7ux");
+        assert_eq!(connection.agent_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
+        assert_eq!(connection.agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
+        assert_eq!(connection.agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
+        assert_eq!(connection.state(), VcxStateType::VcxStateAccepted as u32);
+    }
+
+    fn test_deserialize_and_serialize(sm_serialized: &str) {
+        let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
+        let connection = Connection::from_string(sm_serialized).unwrap();
+        let reserialized = connection.to_string().unwrap();
+        let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
+
+        assert_eq!(original_object, reserialized_object);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        let _setup = SetupMocks::init();
+
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialize_deserialize() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::create("test_serialize_deserialize", true);
+        let first_string = connection.to_string().unwrap();
+
+        let connection2 = Connection::from_string(&first_string).unwrap();
+        let second_string = connection2.to_string().unwrap();
+
+        assert_eq!(first_string, second_string);
+    }
 
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
