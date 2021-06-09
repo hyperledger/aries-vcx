@@ -1021,15 +1021,14 @@ pub mod tests {
         let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
         update_agency_messages("MS-106", &message).unwrap();
 
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
+        let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(received.len(), 2);
 
-        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         let reviewed_count_after = reviewed.len();
         assert_eq!(reviewed_count_after, reviewed_count_before + 1);
 
-        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
-        assert_eq!(specific_review[0].msgs[0].uid, uid);
+        let specific_review = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Reviewed]), Some(vec![uid.clone()])).unwrap();
+        assert_eq!(specific_review[0].uid, uid);
     }
 }
