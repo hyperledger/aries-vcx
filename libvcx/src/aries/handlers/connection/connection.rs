@@ -10,6 +10,8 @@ use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
+use agency_client::get_message::{Message, MessageByConnection};
+use agency_client::{MessageStatusCode};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -652,6 +654,16 @@ Get messages received from connection counterparty.
 
         return Ok(connection_info_json);
     }
+
+    pub fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
+        let expected_sender_vk = self.remote_vk()?;
+        let msgs = self.agent_info()
+            .download_encrypted_messages(uids, status_codes)?
+            .iter()
+            .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
+            .collect::<VcxResult<Vec<Message>>>()?;
+        Ok(msgs)
+    }
 }
 
 
@@ -872,26 +884,12 @@ pub mod tests {
 
             alice.activate().unwrap();
 
-            // let messages = connection::download_messages(vec![alice.connection], Some(vec![MessageStatusCode::Received]), None).unwrap();
-            // todo: restore this piece
-            // let messages = alice.connection.get_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
-            // let message: Message = messages[0].msgs[0].clone();
-            // let decrypted_msg = message.decrypted_msg.unwrap();
-            // let _payload: aries::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
-            //
-            // connection::update_message_status(alice.connection, message.uid).unwrap();
+            let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
+            let message: Message = msgs[0].clone();
+            let decrypted_msg = message.decrypted_msg.unwrap();
+            let _payload: aries::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+
+            alice.connection.update_message_status(message.uid.clone()).unwrap()
         }
-
-        // todo: restore this piece
-        // info!("test_connection_send_works:: Test Helpers");
-        // {
-        //     faber.activate().unwrap();
-        //
-        //     connection::get_pw_did(faber.connection).unwrap();
-        //     connection::get_pw_verkey(faber.connection).unwrap();
-        //     connection::get_their_pw_verkey(faber.connection).unwrap();
-        //     connection::get_source_id(faber.connection).unwrap();
-        // }
     }
-
 }

@@ -276,14 +276,8 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
     for conn_handle in conn_handles {
         let msg_by_conn = CONNECTION_MAP.get(
             conn_handle, |connection| {
-                let expected_sender_vk = connection.remote_vk()?;
-                let msgs = connection
-                    .cloud_agent_info()
-                    .download_encrypted_messages(uids.clone(), status_codes.clone(), connection.pairwise_info())?
-                    .iter()
-                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
-                    .collect::<VcxResult<Vec<Message>>>()?;
-                Ok(MessageByConnection { pairwise_did: connection.pairwise_info().pw_did.clone(), msgs })
+                let msgs = connection.download_messages(status_codes.clone(), uids.clone())?;
+                Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
             },
         )?;
         res.push(msg_by_conn);
