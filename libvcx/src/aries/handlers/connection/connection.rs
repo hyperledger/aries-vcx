@@ -925,4 +925,43 @@ pub mod tests {
         let consumer1_reviewed_msgs = institution_to_consumer1.download_messages(Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
     }
+
+    #[cfg(feature = "agency_v2")]
+    #[test]
+    fn test_update_agency_messages() {
+        let _setup = SetupEmpty::init();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
+
+        faber_to_alice.send_generic_message("Hello 1").unwrap();
+        faber_to_alice.send_generic_message("Hello 2").unwrap();
+        faber_to_alice.send_generic_message("Hello 3").unwrap();
+
+        thread::sleep(Duration::from_millis(1000));
+        consumer1.activate().unwrap();
+
+        let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(received.len(), 3);
+        let uid = received[0].uid.clone();
+
+        let reviewed = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
+        let reviewed_count_before = reviewed.len();
+
+        // update status
+        let pairwise_did = alice_to_faber.agent_info().pw_did.clone();
+        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
+        update_agency_messages("MS-106", &message).unwrap();
+
+        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+
+        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        let reviewed_count_after = reviewed.len();
+        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
+
+        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
+        assert_eq!(specific_review[0].msgs[0].uid, uid);
+    }
 }

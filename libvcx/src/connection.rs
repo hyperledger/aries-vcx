@@ -273,15 +273,19 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
 pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
     trace!("download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}", conn_handles, status_codes, uids);
     let mut res = Vec::new();
+    let mut connections = Vec::new();
     for conn_handle in conn_handles {
-        let msg_by_conn = CONNECTION_MAP.get(
+        let connection = CONNECTION_MAP.get(
             conn_handle, |connection| {
-                let msgs = connection.download_messages(status_codes.clone(), uids.clone())?;
-                Ok(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs })
+                Ok(connection.clone())
             },
         )?;
-        res.push(msg_by_conn);
+        connections.push(connection)
     };
+    for connection in connections {
+        let msgs = connection.download_messages(status_codes.clone(), uids.clone())?;
+        res.push(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs });
+    }
     trace!("download_messages <<< res: {:?}", res);
     Ok(res)
 }
@@ -634,43 +638,33 @@ pub mod tests {
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
 
-    #[cfg(feature = "agency_pool_tests")]
+    #[cfg(feature = "agency_v2")]
     #[test]
-    fn test_update_agency_messages() {
-        let _setup = SetupLibraryAgencyV2::init();
+    fn test_download_messages_from_multiple_connections() {
+        let _setup = SetupEmpty::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
-        let (alice_to_faber, faber_to_alice) = create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let mut consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
 
-        send_generic_message(faber_to_alice, "Hello 1").unwrap();
-        send_generic_message(faber_to_alice, "Hello 2").unwrap();
-        send_generic_message(faber_to_alice, "Hello 3").unwrap();
+        let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
+        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
-        thread::sleep(Duration::from_millis(1000));
         consumer1.activate().unwrap();
+        send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
+        consumer2.activate().unwrap();
+        send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
 
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 3);
-        let pairwise_did = received[0].pairwise_did.clone();
-        let uid = received[0].msgs[0].uid.clone();
+        institution.activate().unwrap();
+        let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
+        assert_eq!(all_msgs.len(), 2);
+        assert_eq!(all_msgs[0].msgs.len(), 2);
+        assert_eq!(all_msgs[1].msgs.len(), 2);
 
-        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        let reviewed_count_before = reviewed[0].msgs.len();
-
-        // update status
-        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
-        update_agency_messages("MS-106", &message).unwrap();
-
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
-
-        let reviewed = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        let reviewed_count_after = reviewed[0].msgs.len();
-        assert_eq!(reviewed_count_after, reviewed_count_before + 1);
-
-        let specific_review = download_messages_noauth(Some(vec![pairwise_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), Some(vec![uid.clone()])).unwrap();
-        assert_eq!(specific_review[0].msgs[0].uid, uid);
+        let consumer1_msgs = download_messages([institution_to_consumer1].to_vec(), None, None).unwrap();
+        assert_eq!(consumer1_msgs.len(), 1);
+        assert_eq!(consumer1_msgs[0].msgs.len(), 2);
+        assert_eq!(consumer1_msgs[0].pairwise_did, consumer1_pwdid);
     }
 }
