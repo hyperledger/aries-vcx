@@ -636,51 +636,6 @@ pub mod tests {
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
-    fn test_download_messages() {
-        let _setup = SetupLibraryAgencyV2::init();
-        let mut institution = Faber::setup();
-        let mut consumer1 = Alice::setup();
-        let mut consumer2 = Alice::setup();
-        let (consumer1_to_institution, institution_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut institution);
-        let (consumer2_to_institution, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
-
-        let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
-        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
-
-        consumer1.activate().unwrap();
-        send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        consumer2.activate().unwrap();
-        send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
-
-        institution.activate().unwrap();
-        let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
-        assert_eq!(all_msgs.len(), 2);
-        assert_eq!(all_msgs[0].msgs.len(), 2);
-        assert_eq!(all_msgs[1].msgs.len(), 2);
-
-        let consumer1_msgs = download_messages([institution_to_consumer1].to_vec(), None, None).unwrap();
-        assert_eq!(consumer1_msgs.len(), 1);
-        assert_eq!(consumer1_msgs[0].msgs.len(), 2);
-        assert_eq!(consumer1_msgs[0].pairwise_did, consumer1_pwdid);
-
-        let consumer2_msgs = download_messages([institution_to_consumer2].to_vec(), None, None).unwrap();
-        assert_eq!(consumer2_msgs.len(), 1);
-        assert_eq!(consumer2_msgs[0].msgs.len(), 2);
-        assert_eq!(consumer2_msgs[0].pairwise_did, consumer2_pwdid);
-
-        let consumer1_received_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Received]), None).unwrap();
-        assert_eq!(consumer1_received_msgs.len(), 1);
-        assert_eq!(consumer1_received_msgs[0].msgs.len(), 1);
-        assert!(consumer1_received_msgs[0].msgs[0].decrypted_msg.is_some());
-
-        let consumer1_reviewed_msgs = download_messages([institution_to_consumer1].to_vec(), Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
-        assert_eq!(consumer1_reviewed_msgs.len(), 1);
-        assert_eq!(consumer1_reviewed_msgs[0].msgs.len(), 1);
-        assert!(consumer1_reviewed_msgs[0].msgs[0].decrypted_msg.is_some());
-    }
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();

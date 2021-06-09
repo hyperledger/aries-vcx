@@ -892,4 +892,37 @@ pub mod tests {
             alice.connection.update_message_status(message.uid.clone()).unwrap()
         }
     }
+
+    #[cfg(feature = "agency_v2")]
+    #[test]
+    fn test_download_messages() {
+        let _setup = SetupEmpty::init();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let mut consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
+
+        let consumer1_pwdid = consumer1_to_institution.remote_did().unwrap();
+        let consumer2_pwdid = consumer2_to_institution.remote_did().unwrap();
+
+        consumer1.activate().unwrap();
+        consumer1_to_institution.send_generic_message("Hello Institution from consumer1").unwrap();
+        consumer2.activate().unwrap();
+        consumer2_to_institution.send_generic_message("Hello Institution from consumer2").unwrap();
+
+        institution.activate().unwrap();
+
+        let consumer1_msgs = institution_to_consumer1.download_messages(None, None).unwrap();
+        assert_eq!(consumer1_msgs.len(), 2);
+
+        let consumer2_msgs = institution_to_consumer2.download_messages(None, None).unwrap();
+        assert_eq!(consumer2_msgs.len(), 2);
+
+        let consumer1_received_msgs = institution_to_consumer1.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(consumer1_received_msgs.len(), 1);
+
+        let consumer1_reviewed_msgs = institution_to_consumer1.download_messages(Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
+        assert_eq!(consumer1_reviewed_msgs.len(), 1);
+    }
 }
