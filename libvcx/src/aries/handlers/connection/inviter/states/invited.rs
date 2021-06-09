@@ -25,7 +25,7 @@ impl From<(InvitedState, Request, SignedResponse)> for RequestedState {
         trace!("ConnectionInviter: transit state from InvitedState to RespondedState");
         RequestedState {
             signed_response,
-            their_ddo: request.connection.did_doc,
+            did_doc: request.connection.did_doc,
             thread_id: request.id.0
         }
     }

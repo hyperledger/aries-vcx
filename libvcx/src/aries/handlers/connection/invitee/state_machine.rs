@@ -214,7 +214,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Null(state) => {
                 InviteeState::Invited((state, invitation).into())
             }
@@ -222,12 +222,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Invited(state) => {
                 let recipient_keys = vec!(pairwise_info.pw_vk.clone());
                 let request = Request::create()
@@ -245,12 +245,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Requested(state) => {
                 InviteeState::Responded((state, response).into())
             }
@@ -258,12 +258,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Completed(state) => {
                 state.handle_ping(&ping, &pairwise_info.pw_vk)?;
                 InviteeState::Completed(state)
@@ -272,12 +272,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Completed(state) => {
                 state.handle_send_ping(comment, &pairwise_info.pw_vk)?;
                 InviteeState::Completed(state)
@@ -286,7 +286,7 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self>  {
@@ -295,7 +295,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Completed(state) => {
                 state.handle_discover_features(query_, comment, &pairwise_info.pw_vk)?;
                 InviteeState::Completed(state)
@@ -304,12 +304,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Completed(state) => {
                 state.handle_discovery_query(query, &pairwise_info.pw_vk)?;
                 InviteeState::Completed(state)
@@ -318,12 +318,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Completed(state) => {
                 InviteeState::Completed((state.clone(), disclose.protocols).into())
             }
@@ -331,13 +331,13 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
 
     pub fn handle_send_ack(self) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Responded(state) => {
                 match Self::_send_ack(&state.did_doc, &state.request, &state.response, &pairwise_info) {
                     Ok(response) => InviteeState::Completed((state, response).into()),
@@ -353,12 +353,12 @@ impl SmConnectionInvitee {
             }
             _ => state.clone()
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self>  {
         let Self { source_id, pairwise_info, state } = self;
-        let new_state = match state {
+        let state = match state {
             InviteeState::Requested(state) => {
                 InviteeState::Null((state, problem_report).into())
             }
@@ -369,7 +369,7 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state: new_state })
+        Ok(Self { source_id, pairwise_info, state })
     }
 
     pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self>  {

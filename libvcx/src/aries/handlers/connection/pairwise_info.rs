@@ -18,9 +18,6 @@ impl Default for PairwiseInfo {
 }
 
 impl PairwiseInfo {
-    /**
-    Create connection agent in one's agency
-     */
     pub fn create() -> VcxResult<PairwiseInfo> {
         let (pw_did, pw_vk) = create_and_store_my_did(None, None)?;
         Ok(PairwiseInfo { pw_did, pw_vk })

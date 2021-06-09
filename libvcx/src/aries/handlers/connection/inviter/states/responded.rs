@@ -13,7 +13,7 @@ use crate::aries::messages::trust_ping::ping_response::PingResponse;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {
     pub signed_response: SignedResponse,
-    pub their_ddo: DidDoc
+    pub did_doc: DidDoc
 }
 
 
@@ -27,26 +27,26 @@ impl From<(RespondedState, ProblemReport)> for NullState {
 impl From<(RespondedState, Ack)> for CompleteState {
     fn from((state, _ack): (RespondedState, Ack)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.their_ddo, protocols: None }
+        CompleteState { did_doc: state.did_doc, protocols: None }
     }
 }
 
 impl From<(RespondedState, Ping)> for CompleteState {
     fn from((state, _ping): (RespondedState, Ping)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.their_ddo, protocols: None }
+        CompleteState { did_doc: state.did_doc, protocols: None }
     }
 }
 
 impl From<(RespondedState, PingResponse)> for CompleteState {
     fn from((state, _ping_response): (RespondedState, PingResponse)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.their_ddo, protocols: None }
+        CompleteState { did_doc: state.did_doc, protocols: None }
     }
 }
 
 impl RespondedState {
     pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
-        handle_ping(ping, pw_vk, &self.their_ddo)
+        handle_ping(ping, pw_vk, &self.did_doc)
     }
 }

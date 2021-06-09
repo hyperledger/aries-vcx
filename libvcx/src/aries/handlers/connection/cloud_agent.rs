@@ -82,10 +82,6 @@ impl CloudAgentInfo {
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
-    // pub fn recipient_keys(&self) -> Vec<String> {
-    //     vec![self.pw_vk.to_string()]
-    // }
-
     pub fn update_message_status(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
         trace!("Agent::update_message_status >>> uid: {:?}", uid);
 
@@ -97,15 +93,6 @@ impl CloudAgentInfo {
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
             .map_err(|err| err.into())
     }
-
-    // todo: Just need to supply the parameter read of connection object, because we pulled down pairwise_info from connection.rs
-    // error[E0061]: this function takes 3 arguments but 2 arguments were supplied
-    // --> libvcx/src/connection.rs:280:22
-    // |
-    // 280 |                     .download_encrypted_messages(uids.clone(), status_codes.clone())?
-    // |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^ ------------  -------------------- supplied 2 arguments
-    // |                      |
-    // |                      expected 3 arguments
 
     pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<Message>> {
         trace!("download_encrypted_messages >>>");

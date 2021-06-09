@@ -404,7 +404,7 @@ impl Connection {
                         }
                     }
                     None => {
-                        if sm_inviter.state() == (VcxStateType::VcxStateOfferSent as u32) {
+                        if let InviterState::Requested(_) = sm_inviter.state_object() {
                             (sm_inviter.handle_send_response()?, None, false)
                         } else {
                             (sm_inviter.clone(), None, false)

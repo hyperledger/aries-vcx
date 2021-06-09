@@ -13,7 +13,7 @@ use crate::aries::messages::trust_ping::ping::Ping;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestedState {
     pub signed_response: SignedResponse,
-    pub their_ddo: DidDoc,
+    pub did_doc: DidDoc,
     pub thread_id: String,
 }
 
@@ -27,6 +27,6 @@ impl From<(RequestedState, ProblemReport)> for NullState {
 impl From<RequestedState> for RespondedState {
     fn from(state: RequestedState) -> RespondedState {
         trace!("ConnectionInviter: transit state from RequestedState to RespondedState");
-        RespondedState { signed_response: state.signed_response, their_ddo: state.their_ddo }
+        RespondedState { signed_response: state.signed_response, did_doc: state.did_doc }
     }
 }

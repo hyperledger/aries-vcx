@@ -325,14 +325,6 @@ pub mod tests {
     fn _source_id() -> &'static str {
         "test connection"
     }
-    //
-    // use crate::aries;
-    // use crate::aries::messages::a2a::A2AMessage;
-    // use crate::aries::messages::ack::tests::_ack;
-    // use crate::connection;
-    //
-    // use super::*;
-    // use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -669,6 +661,7 @@ pub mod tests {
 
         test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
         test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+
         test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
         test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
     }
