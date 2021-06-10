@@ -784,7 +784,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.18.1"
+version = "0.18.2"
 dependencies = [
  "agency_client",
  "android_logger",
