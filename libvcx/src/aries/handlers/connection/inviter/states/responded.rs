@@ -1,4 +1,3 @@
-use crate::error::prelude::*;
 use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
 use crate::aries::handlers::connection::util::handle_ping;
@@ -8,11 +7,12 @@ use crate::aries::messages::connection::problem_report::ProblemReport;
 use crate::aries::messages::connection::response::SignedResponse;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
+use crate::error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {
     pub signed_response: SignedResponse,
-    pub did_doc: DidDoc
+    pub did_doc: DidDoc,
 }
 
 

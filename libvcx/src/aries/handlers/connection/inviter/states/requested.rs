@@ -1,13 +1,8 @@
-use crate::error::prelude::*;
-use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
-use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
-use crate::aries::messages::ack::Ack;
+use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::problem_report::ProblemReport;
-use crate::aries::messages::connection::request::Request;
 use crate::aries::messages::connection::response::SignedResponse;
-use crate::aries::messages::trust_ping::ping::Ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestedState {

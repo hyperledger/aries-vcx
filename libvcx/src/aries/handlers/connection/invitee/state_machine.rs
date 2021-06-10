@@ -1,31 +1,31 @@
 use std::collections::HashMap;
 
 use crate::api::VcxStateType;
-use crate::error::prelude::*;
-use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::invitee::states::complete::CompleteState;
 use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::aries::messages::connection::request::Request;
-use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::response::{Response, SignedResponse};
-use crate::aries::messages::discovery::disclose::{ProtocolDescriptor, Disclose};
+use crate::aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::aries::messages::discovery::query::Query;
-use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::aries::messages::trust_ping::ping::Ping;
+use crate::aries::messages::trust_ping::ping_response::PingResponse;
+use crate::error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
     source_id: String,
     pairwise_info: PairwiseInfo,
-    state: InviteeState
+    state: InviteeState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ impl SmConnectionInvitee {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             state: InviteeState::Null(NullState {}),
-            pairwise_info
+            pairwise_info,
         }
     }
 
@@ -69,7 +69,7 @@ impl SmConnectionInvitee {
         SmConnectionInvitee {
             source_id,
             pairwise_info,
-            state
+            state,
         }
     }
 
@@ -212,7 +212,7 @@ impl SmConnectionInvitee {
         Ok(response)
     }
 
-    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self>  {
+    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Null(state) => {
@@ -225,7 +225,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self>  {
+    pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Invited(state) => {
@@ -240,7 +240,7 @@ impl SmConnectionInvitee {
                 ddo.send_message(&request.to_a2a_message(), &pairwise_info.pw_vk)?;
                 let new_state = InviteeState::Requested((state, request).into());
                 new_state
-            },
+            }
             _ => {
                 state.clone()
             }
@@ -248,7 +248,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self>  {
+    pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Requested(state) => {
@@ -261,7 +261,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_ping(self, ping: Ping) -> VcxResult<Self>  {
+    pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Completed(state) => {
@@ -275,7 +275,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self>  {
+    pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Completed(state) => {
@@ -289,11 +289,11 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self>  {
+    pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self> {
         Ok(self)
     }
 
-    pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self>  {
+    pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Completed(state) => {
@@ -307,7 +307,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self>  {
+    pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Completed(state) => {
@@ -321,7 +321,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self>  {
+    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Completed(state) => {
@@ -335,7 +335,7 @@ impl SmConnectionInvitee {
     }
 
 
-    pub fn handle_send_ack(self) -> VcxResult<Self>  {
+    pub fn handle_send_ack(self) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Responded(state) => {
@@ -356,7 +356,7 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self>  {
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviteeState::Requested(state) => {
@@ -372,14 +372,13 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state })
     }
 
-    pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self>  {
+    pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self> {
         Ok(self)
     }
 }
 
 #[cfg(test)]
 pub mod test {
-    use crate::utils::devsetup::SetupMocks;
     use crate::aries::messages::ack::tests::_ack;
     use crate::aries::messages::connection::invite::tests::_invitation;
     use crate::aries::messages::connection::problem_report::tests::_problem_report;
@@ -390,6 +389,7 @@ pub mod test {
     use crate::aries::messages::trust_ping::ping::tests::_ping;
     use crate::aries::messages::trust_ping::ping_response::tests::_ping_response;
     use crate::aries::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -458,8 +458,9 @@ pub mod test {
         }
 
         mod step {
+            use crate::utils::devsetup::SetupIndyMocks;
+
             use super::*;
-            use crate::utils::devsetup::{SetupIndyMocks};
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -644,8 +645,9 @@ pub mod test {
         }
 
         mod find_message_to_handle {
-            use super::*;
             use crate::utils::devsetup::SetupIndyMocks;
+
+            use super::*;
 
             #[test]
             #[cfg(feature = "general_test")]
@@ -716,7 +718,7 @@ pub mod test {
             #[cfg(feature = "general_test")]
             fn test_find_message_to_handle_from_completed_state() {
                 let _setup = SetupIndyMocks::init();
-                
+
                 let connection = invitee_sm().to_invitee_completed_state();
 
                 // Ping

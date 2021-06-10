@@ -25,7 +25,7 @@ use crate::error::prelude::*;
 pub struct SmConnectionInviter {
     pub source_id: String,
     pub pairwise_info: PairwiseInfo,
-    pub state: InviterState
+    pub state: InviterState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ impl SmConnectionInviter {
         Self {
             source_id: source_id.to_string(),
             state: InviterState::Null(NullState {}),
-            pairwise_info
+            pairwise_info,
         }
     }
 
@@ -69,7 +69,7 @@ impl SmConnectionInviter {
         Self {
             source_id,
             pairwise_info,
-            state
+            state,
         }
     }
 
@@ -245,7 +245,7 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state} = self;
+        let Self { source_id, pairwise_info, state } = self;
         let state = match state {
             InviterState::Null(state) => {
                 let invite: Invitation = Invitation::create()

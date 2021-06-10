@@ -1,11 +1,10 @@
-use crate::error::VcxResult;
-use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 use crate::aries::handlers::connection::util::handle_ping;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::aries::messages::discovery::query::Query;
 use crate::aries::messages::trust_ping::ping::Ping;
+use crate::error::VcxResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {
@@ -21,7 +20,6 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
 }
 
 impl CompleteState {
-
     pub fn handle_send_ping(&self, comment: Option<String>, pw_vk: &str) -> VcxResult<()> {
         let ping =
             Ping::create()

@@ -1,15 +1,13 @@
-use crate::error::prelude::*;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
-use crate::aries::handlers::connection::inviter::states::responded::RespondedState;
 use crate::aries::handlers::connection::inviter::states::requested::RequestedState;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::connection::problem_report::ProblemReport;
 use crate::aries::messages::connection::request::Request;
-use crate::aries::messages::connection::response::{Response, SignedResponse};
+use crate::aries::messages::connection::response::SignedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InvitedState {
-    pub invitation: Invitation
+    pub invitation: Invitation,
 }
 
 impl From<(InvitedState, ProblemReport)> for NullState {
@@ -25,7 +23,7 @@ impl From<(InvitedState, Request, SignedResponse)> for RequestedState {
         RequestedState {
             signed_response,
             did_doc: request.connection.did_doc,
-            thread_id: request.id.0
+            thread_id: request.id.0,
         }
     }
 }

@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use crate::error::prelude::*;
-use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
-use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
+use crate::error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -63,7 +63,7 @@ impl Connection {
         Ok(Connection {
             cloud_agent_info: CloudAgentInfo::default(),
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
-            autohop_enabled: autohop
+            autohop_enabled: autohop,
         })
     }
 
@@ -76,7 +76,7 @@ impl Connection {
         let mut connection = Connection {
             cloud_agent_info: CloudAgentInfo::default(),
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
-            autohop_enabled
+            autohop_enabled,
         };
         connection.process_invite(invitation)?;
         Ok(connection)
@@ -88,14 +88,14 @@ impl Connection {
                 Connection {
                     cloud_agent_info,
                     connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state)),
-                    autohop_enabled
+                    autohop_enabled,
                 }
             }
             SmConnectionState::Invitee(state) => {
                 Connection {
                     cloud_agent_info,
                     connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state)),
-                    autohop_enabled
+                    autohop_enabled,
                 }
             }
         }
@@ -242,7 +242,7 @@ impl Connection {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -326,10 +326,10 @@ impl Connection {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
-        
+
         let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
-        
+
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
                 trace!("Connection::update_state >>> handling message uid: {:?}", uid);
@@ -346,8 +346,8 @@ impl Connection {
                 //         bootstrap_agent_info.update_message_status(uid)?;
                 //     }
                 // } else {
-                    trace!("Connection::update_state >>> trying to update state without message");
-                    self._update_state(None)?;
+                trace!("Connection::update_state >>> trying to update state without message");
+                self._update_state(None)?;
                 // }
             }
         }
@@ -363,7 +363,7 @@ impl Connection {
             warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
             return Ok(());
         }
-        self._update_state(Some(message.clone()));
+        self._update_state(Some(message.clone()))?;
         Ok(())
     }
 
@@ -414,7 +414,7 @@ impl Connection {
                 let connection = Connection {
                     cloud_agent_info: new_cloud_agent_info.unwrap_or(self.cloud_agent_info.clone()),
                     connection_sm: SmConnection::Inviter(sm_inviter),
-                    autohop_enabled: self.autohop_enabled.clone()
+                    autohop_enabled: self.autohop_enabled.clone(),
                 };
 
                 Ok((connection, can_autohop))
@@ -467,7 +467,7 @@ impl Connection {
                 let connection = Connection {
                     connection_sm: SmConnection::Invitee(sm_invitee),
                     cloud_agent_info: self.cloud_agent_info.clone(),
-                    autohop_enabled: self.autohop_enabled.clone()
+                    autohop_enabled: self.autohop_enabled.clone(),
                 };
                 Ok((connection, can_autohop))
             }
@@ -566,7 +566,7 @@ Get messages received from connection counterparty.
         let sender_vk = self.pairwise_info().pw_vk.clone();
         return Ok(move |a2a_message: &A2AMessage| {
             did_doc.send_message(a2a_message, &sender_vk)
-        })
+        });
     }
 
     fn parse_generic_message(message: &str) -> A2AMessage {

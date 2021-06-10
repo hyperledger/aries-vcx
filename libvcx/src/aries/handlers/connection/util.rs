@@ -1,8 +1,7 @@
-use crate::error::VcxResult;
-use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
+use crate::error::VcxResult;
 
 pub fn handle_ping(ping: &Ping, pw_vk: &str, did_doc: &DidDoc) -> VcxResult<()> {
     if ping.response_requested {

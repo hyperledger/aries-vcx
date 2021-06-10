@@ -9,7 +9,6 @@ use agency_client::get_message::{Message, MessageByConnection};
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
 use crate::aries::messages::a2a::A2AMessage;
-use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
 use crate::utils::error;

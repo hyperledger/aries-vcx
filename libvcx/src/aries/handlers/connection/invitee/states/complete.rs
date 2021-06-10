@@ -1,13 +1,13 @@
-use crate::error::VcxResult;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
-use crate::aries::messages::connection::response::Response;
 use crate::aries::handlers::connection::util::handle_ping;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
+use crate::aries::messages::connection::response::Response;
 use crate::aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::aries::messages::discovery::query::Query;
 use crate::aries::messages::trust_ping::ping::Ping;
+use crate::error::VcxResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {

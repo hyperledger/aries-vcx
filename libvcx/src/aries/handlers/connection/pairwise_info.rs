@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use crate::error::VcxResult;
 use crate::libindy::utils::signus::create_and_store_my_did;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PairwiseInfo {
     pub pw_did: String,
-    pub pw_vk: String
+    pub pw_vk: String,
 }
 
 impl Default for PairwiseInfo {
