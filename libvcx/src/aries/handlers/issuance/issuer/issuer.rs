@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::aries::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::aries::messages::a2a::A2AMessage;
-use crate::credential_def;
+use crate::aries::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -69,5 +69,18 @@ impl Issuer {
     pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message)?;
         Ok(())
+    }
+
+    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
+        trace!("Issuer::update_state >>> ");
+        if self.is_terminal_state() { return self.get_state(); }
+        let send_message = connection.send_message_closure()?;
+
+        let messages = connection.get_messages()?;
+        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+            self.step(msg.into(), Some(&send_message))?;
+            connection.update_message_status(uid)?;
+        }
+        self.get_state()
     }
 }

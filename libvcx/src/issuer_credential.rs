@@ -49,8 +49,8 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
         } else {
             let messages = connection::get_messages(connection_handle)?;
             if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(msg.into(), Some(&send_message))?;
-            connection::update_message_status(connection_handle, uid)?;
+                credential.step(msg.into(), Some(&send_message))?;
+                connection::update_message_status(connection_handle, uid)?;
             }
         }
         credential.get_state()

@@ -56,7 +56,7 @@ impl HolderSM {
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
-        trace!("Holder::find_message_to_handle >>> messages: {:?}", messages);
+        trace!("Holder::find_message_to_handle >>> messages: {:?}, state: {:?}", messages, self.state);
 
         for (uid, message) in messages {
             match self.state {
@@ -92,7 +92,7 @@ impl HolderSM {
     }
 
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
-        trace!("Holder::handle_message >>> cim: {:?}", cim);
+        trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
 
         let HolderSM { state, source_id, thread_id } = self;
         let state = match state {

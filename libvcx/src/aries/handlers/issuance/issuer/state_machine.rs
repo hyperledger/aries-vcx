@@ -195,7 +195,7 @@ impl IssuerSM {
     }
 
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
-        trace!("IssuerSM::handle_message >>> cim: {:?}", cim);
+        trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
 
         let IssuerSM { state, source_id } = self;
         let state = match state {
@@ -313,18 +313,32 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     let cred_values: serde_json::Value = serde_json::from_str(credential_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json={} error={:?}", credential_json, err)))?;
 
-    let values_map = cred_values.as_object()
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Credential Preview is not object. credential_json={}", credential_json)))?;
-
     let mut new_offer = cred_offer_msg;
-    for item in values_map.iter() {
-        let (key, value) = item;
-        new_offer = new_offer.add_credential_preview_data(
-            key,
-            &value.to_string(),
-            MimeType::Plain,
-        )?;
-    }
+    match cred_values {
+        serde_json::Value::Array(cred_values) => {
+            for cred_value in cred_values.iter() {
+                let key = cred_value.get("name").unwrap();
+                let value = cred_value.get("value").unwrap();
+                new_offer = new_offer.add_credential_preview_data(
+                    &key.to_string(),
+                    &value.to_string(),
+                    MimeType::Plain,
+                ).unwrap();
+            };
+        }
+        serde_json::Value::Object(values_map) => {
+            for item in values_map.iter() {
+                let (key, value) = item;
+                new_offer = new_offer.add_credential_preview_data(
+                    key,
+                    &value.to_string(),
+                    MimeType::Plain,
+                )?;
+            }
+        }
+        _ => {}
+    };
+
     Ok(new_offer)
 }
 
