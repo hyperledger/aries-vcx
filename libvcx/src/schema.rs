@@ -2,7 +2,6 @@ use std::string::ToString;
 
 use serde_json;
 
-use agency_client::ObjectWithVersion;
 
 use crate::api::PublicEntityStateType;
 use crate::error::prelude::*;
@@ -11,6 +10,7 @@ use crate::libindy::utils::ledger;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::object_cache::ObjectCache;
+use crate::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");

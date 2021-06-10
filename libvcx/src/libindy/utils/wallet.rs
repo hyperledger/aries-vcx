@@ -336,7 +336,7 @@ pub fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
 }
 
 pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
-    trace!("import >>> wallet={} exported_wallet_path={}", restore_config.wallet_name, restore_config.exported_wallet_path);
+    trace!("import >>> wallet: {} exported_wallet_path: {}", restore_config.wallet_name, restore_config.exported_wallet_path);
     let new_wallet_name = restore_config.wallet_name.clone();
     let new_wallet_key = restore_config.wallet_key.clone();
     let new_wallet_kdf = restore_config.wallet_key_derivation.clone().unwrap_or(settings::WALLET_KDF_DEFAULT.into());

@@ -701,35 +701,6 @@ pub trait GeneralMessage {
     fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>>;
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectWithVersion<'a, T> {
-    pub version: &'a str,
-    pub data: T,
-}
-
-impl<'a, 'de, T> ObjectWithVersion<'a, T> where T: ::serde::Serialize + ::serde::de::DeserializeOwned {
-    pub fn new(version: &'a str, data: T) -> ObjectWithVersion<'a, T> {
-        ObjectWithVersion { version, data }
-    }
-
-    pub fn serialize(&self) -> AgencyClientResult<String> {
-        ::serde_json::to_string(self)
-            .to_vcx(AgencyClientErrorKind::InvalidState, "Cannot serialize object")
-    }
-
-    pub fn deserialize(data: &str) -> AgencyClientResult<ObjectWithVersion<T>> where T: ::serde::de::DeserializeOwned {
-        ::serde_json::from_str(data)
-            .to_vcx(AgencyClientErrorKind::InvalidJson, "Cannot deserialize object")
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "version")]
-pub enum SerializableObjectWithState<T, P> {
-    #[serde(rename = "1.0")]
-    V1 { data: T, state: P, source_id: String },
-}
-
 pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }
 
 pub fn delete_connection() -> DeleteConnectionBuilder { DeleteConnectionBuilder::create() }

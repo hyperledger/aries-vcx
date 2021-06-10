@@ -1,18 +1,21 @@
 use std::collections::HashMap;
 
-use crate::error::prelude::*;
-use crate::aries::handlers::connection::agent_info::AgentInfo;
+use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
-    connection_sm: SmConnection
+    connection_sm: SmConnection,
+    cloud_agent_info: CloudAgentInfo,
+    autohop_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,38 +57,48 @@ impl Connection {
     /**
     Create Inviter connection state machine
      */
-    pub fn create(source_id: &str, autohop: bool) -> Connection {
+    pub fn create(source_id: &str, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create >>> source_id: {}", source_id);
-
-        Connection {
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, autohop))
-        }
-    }
-
-    pub fn from_parts(source_id: String, agent_info: AgentInfo, state: SmConnectionState, autohop: bool) -> Connection {
-        match state {
-            SmConnectionState::Inviter(state) => {
-                Connection { connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, agent_info, state, autohop)) }
-            }
-            SmConnectionState::Invitee(state) => {
-                Connection { connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, agent_info, state, autohop)) }
-            }
-        }
+        let pairwise_info = PairwiseInfo::create()?;
+        Ok(Connection {
+            cloud_agent_info: CloudAgentInfo::default(),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
+            autohop_enabled: autohop,
+        })
     }
 
     /**
     Create Invitee connection state machine
      */
-    pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop: bool) -> VcxResult<Connection> {
+    pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
-
+        let pairwise_info = PairwiseInfo::create()?;
         let mut connection = Connection {
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, autohop))
+            cloud_agent_info: CloudAgentInfo::default(),
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
+            autohop_enabled,
         };
-
         connection.process_invite(invitation)?;
-
         Ok(connection)
+    }
+
+    pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Connection {
+        match state {
+            SmConnectionState::Inviter(state) => {
+                Connection {
+                    cloud_agent_info,
+                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state)),
+                    autohop_enabled,
+                }
+            }
+            SmConnectionState::Invitee(state) => {
+                Connection {
+                    cloud_agent_info,
+                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state)),
+                    autohop_enabled,
+                }
+            }
+        }
     }
 
     pub fn source_id(&self) -> String {
@@ -110,25 +123,29 @@ impl Connection {
         }
     }
 
-    pub fn agent_info(&self) -> &AgentInfo {
+    pub fn pairwise_info(&self) -> &PairwiseInfo {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.agent_info()
+                sm_inviter.pairwise_info()
             }
             SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.agent_info()
+                sm_invitee.pairwise_info()
             }
         }
     }
 
-    pub fn bootstrap_agent_info(&self) -> Option<&AgentInfo> {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.prev_agent_info()
-            }
-            SmConnection::Invitee(_sm_invitee) => None
-        }
+    pub fn cloud_agent_info(&self) -> CloudAgentInfo {
+        self.cloud_agent_info.clone()
     }
+
+    // pub fn bootstrap_agent_info(&self) -> Option<&PairwiseInfo> {
+    //     match &self.connection_sm {
+    //         SmConnection::Inviter(sm_inviter) => {
+    //             sm_inviter.prev_agent_info()
+    //         }
+    //         SmConnection::Invitee(_sm_invitee) => None
+    //     }
+    // }
 
     pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
@@ -225,7 +242,7 @@ impl Connection {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"))
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -274,30 +291,34 @@ impl Connection {
         }
     }
 
-    fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&AgentInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, AgentInfo)>> {
-        let expected_sender_vk = match remote_vk {
-            Ok(vk) => vk,
-            Err(_) => return Ok(None)
-        };
-        if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-            trace!("Connection::_get_bootstrap_agent_messages >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
-            let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-            return Ok(Some((messages, bootstrap_agent_info.clone())));
-        }
-        Ok(None)
-    }
+    // fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
+    //     let expected_sender_vk = match remote_vk {
+    //         Ok(vk) => vk,
+    //         Err(_) => return Ok(None)
+    //     };
+    //     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
+    //         trace!("Connection::_get_bootstrap_agent_messages >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
+    //         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
+    //         return Ok(Some((messages, bootstrap_agent_info.clone())));
+    //     }
+    //     Ok(None)
+    // }
 
     fn _update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
-        self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(message)?)
+        let (new_connection_sm, can_autohop) = match &self.connection_sm {
+            SmConnection::Inviter(_) => {
+                self._step_inviter(message)?
             }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().step(message)?)
+            SmConnection::Invitee(_) => {
+                self._step_invitee(message)?
             }
         };
-
-        Ok(())
+        *self = new_connection_sm;
+        if can_autohop && self.autohop_enabled.clone() {
+            self._update_state(None)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn update_state(&mut self) -> VcxResult<()> {
@@ -305,27 +326,29 @@ impl Connection {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
-        
+
         let messages = self.get_messages_noauth()?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
-        
+
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
                 trace!("Connection::update_state >>> handling message uid: {:?}", uid);
                 self._update_state(Some(message))?;
-                self.agent_info().clone().update_message_status(uid)?;
+                self.cloud_agent_info().clone().update_message_status(self.pairwise_info(), uid)?;
             }
             None => {
-                if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), self.bootstrap_agent_info())? {
-                    if let Some((uid, message)) = self.find_message_to_handle(messages) {
-                        trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                        self._update_state(Some(message))?;
-                        bootstrap_agent_info.update_message_status(uid)?;
-                    }
-                } else {
-                    trace!("Connection::update_state >>> trying to update state without message");
-                    self._update_state(None)?;
-                }
+                // Todo: Restore lookup into bootstrap cloud agent
+                // self.bootstrap_agent_info()
+                // if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), )? {
+                //     if let Some((uid, message)) = self.find_message_to_handle(messages) {
+                //         trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
+                //         self._update_state(Some(message))?;
+                //         bootstrap_agent_info.update_message_status(uid)?;
+                //     }
+                // } else {
+                trace!("Connection::update_state >>> trying to update state without message");
+                self._update_state(None)?;
+                // }
             }
         }
         Ok(())
@@ -340,17 +363,119 @@ impl Connection {
             warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
             return Ok(());
         }
-
-        self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().step(Some(message.clone()))?)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().step(Some(message.clone()))?)
-            }
-        };
-
+        self._update_state(Some(message.clone()))?;
         Ok(())
+    }
+
+    fn _step_inviter(&self, message: Option<A2AMessage>) -> VcxResult<(Connection, bool)> {
+        match self.connection_sm.clone() {
+            SmConnection::Inviter(sm_inviter) => {
+                let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
+                    Some(message) => match message {
+                        A2AMessage::ConnectionRequest(request) => {
+                            let new_pairwise_info = PairwiseInfo::create()?;
+                            let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info)?;
+                            let new_routing_keys = new_cloud_agent.routing_keys()?;
+                            let new_service_endpoint = new_cloud_agent.service_endpoint()?;
+                            let sm_connection = sm_inviter.handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint)?;
+                            (sm_connection, Some(new_cloud_agent), true)
+                        }
+                        A2AMessage::Ack(ack) => {
+                            (sm_inviter.handle_ack(ack)?, None, false)
+                        }
+                        A2AMessage::Ping(ping) => {
+                            (sm_inviter.handle_ping(ping)?, None, false)
+                        }
+                        A2AMessage::ConnectionProblemReport(problem_report) => {
+                            (sm_inviter.handle_problem_report(problem_report)?, None, false)
+                        }
+                        A2AMessage::PingResponse(ping_response) => {
+                            (sm_inviter.handle_ping_response(ping_response)?, None, false)
+                        }
+                        A2AMessage::Query(query) => {
+                            (sm_inviter.handle_discovery_query(query)?, None, false)
+                        }
+                        A2AMessage::Disclose(disclose) => {
+                            (sm_inviter.handle_disclose(disclose)?, None, false)
+                        }
+                        _ => {
+                            (sm_inviter.clone(), None, false)
+                        }
+                    }
+                    None => {
+                        if let InviterState::Requested(_) = sm_inviter.state_object() {
+                            (sm_inviter.handle_send_response()?, None, false)
+                        } else {
+                            (sm_inviter.clone(), None, false)
+                        }
+                    }
+                };
+
+                let connection = Connection {
+                    cloud_agent_info: new_cloud_agent_info.unwrap_or(self.cloud_agent_info.clone()),
+                    connection_sm: SmConnection::Inviter(sm_inviter),
+                    autohop_enabled: self.autohop_enabled.clone(),
+                };
+
+                Ok((connection, can_autohop))
+            }
+            SmConnection::Invitee(_) => {
+                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called \
+                _step_inviter on Invitee connection."))
+            }
+        }
+    }
+
+
+    fn _step_invitee(&self, message: Option<A2AMessage>) -> VcxResult<(Connection, bool)> {
+        match self.connection_sm.clone() {
+            SmConnection::Invitee(sm_invitee) => {
+                let (sm_invitee, can_autohop) = match message {
+                    Some(message) => match message {
+                        A2AMessage::ConnectionInvitation(invitation) => {
+                            (sm_invitee.handle_invitation(invitation)?, false)
+                        }
+                        A2AMessage::ConnectionResponse(response) => {
+                            (sm_invitee.handle_connection_response(response)?, true)
+                        }
+                        A2AMessage::Ack(ack) => {
+                            (sm_invitee.handle_ack(ack)?, false)
+                        }
+                        A2AMessage::Ping(ping) => {
+                            (sm_invitee.handle_ping(ping)?, false)
+                        }
+                        A2AMessage::ConnectionProblemReport(problem_report) => {
+                            (sm_invitee.handle_problem_report(problem_report)?, false)
+                        }
+                        A2AMessage::PingResponse(ping_response) => {
+                            (sm_invitee.handle_ping_response(ping_response)?, false)
+                        }
+                        A2AMessage::Query(query) => {
+                            (sm_invitee.handle_discovery_query(query)?, false)
+                        }
+                        A2AMessage::Disclose(disclose) => {
+                            (sm_invitee.handle_disclose(disclose)?, false)
+                        }
+                        _ => {
+                            (sm_invitee.clone(), false)
+                        }
+                    }
+                    None => {
+                        (sm_invitee.handle_send_ack()?, false)
+                    }
+                };
+                let connection = Connection {
+                    connection_sm: SmConnection::Invitee(sm_invitee),
+                    cloud_agent_info: self.cloud_agent_info.clone(),
+                    autohop_enabled: self.autohop_enabled.clone(),
+                };
+                Ok((connection, can_autohop))
+            }
+            SmConnection::Inviter(_) => {
+                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called \
+                _step_invitee on Inviter connection."))
+            }
+        }
     }
 
     /**
@@ -359,12 +484,18 @@ impl Connection {
      */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
+        let pairwise_info = self.pairwise_info();
+        let cloud_agent = CloudAgentInfo::create(&pairwise_info)?;
+        let routing_keys = cloud_agent.routing_keys()?;
+        let agency_endpoint = cloud_agent.service_endpoint()?;
+        self.cloud_agent_info = cloud_agent;
+
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_connect()?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connect(routing_keys, agency_endpoint)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_connect()?)
+                SmConnection::Invitee(sm_invitee.clone().handle_connect(routing_keys, agency_endpoint)?)
             }
         };
         Ok(())
@@ -375,7 +506,7 @@ impl Connection {
      */
     pub fn update_message_status(&self, uid: String) -> VcxResult<()> {
         trace!("Connection::update_message_status >>> uid: {:?}", uid);
-        self.agent_info().update_message_status(uid)
+        self.cloud_agent_info().update_message_status(self.pairwise_info(), uid)
     }
 
     /**
@@ -384,11 +515,11 @@ Get messages received from connection counterparty.
     pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = sm_inviter.agent_info().get_messages_noauth()?;
+                let messages = self.cloud_agent_info().get_messages_noauth(sm_inviter.pairwise_info())?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = sm_invitee.agent_info().get_messages_noauth()?;
+                let messages = self.cloud_agent_info().get_messages_noauth(sm_invitee.pairwise_info())?;
                 Ok(messages)
             }
         }
@@ -401,11 +532,11 @@ Get messages received from connection counterparty.
         let expected_sender_vk = self.get_expected_sender_vk()?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = sm_inviter.agent_info().get_messages(&expected_sender_vk)?;
+                let messages = self.cloud_agent_info().get_messages(&expected_sender_vk, sm_inviter.pairwise_info())?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = sm_invitee.agent_info().get_messages(&expected_sender_vk)?;
+                let messages = self.cloud_agent_info().get_messages(&expected_sender_vk, sm_invitee.pairwise_info())?;
                 Ok(messages)
             }
         }
@@ -423,19 +554,19 @@ Get messages received from connection counterparty.
     Get messages received from connection counterparty by id.
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>> msg_id={}", msg_id);
+        trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk()?;
-        self.agent_info().get_message_by_id(msg_id, &expected_sender_vk)
+        self.cloud_agent_info().get_message_by_id(msg_id, &expected_sender_vk, self.pairwise_info())
     }
 
     pub fn send_message_closure(&self) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
-        let sender_vk = self.agent_info().pw_vk.clone();
+        let sender_vk = self.pairwise_info().pw_vk.clone();
         return Ok(move |a2a_message: &A2AMessage| {
             did_doc.send_message(a2a_message, &sender_vk)
-        })
+        });
     }
 
     fn parse_generic_message(message: &str) -> A2AMessage {
@@ -473,7 +604,7 @@ Get messages received from connection counterparty.
 
     pub fn delete(&self) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
-        self.agent_info().delete()
+        self.cloud_agent_info().destroy(self.pairwise_info())
     }
 
     pub fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
@@ -492,13 +623,15 @@ Get messages received from connection counterparty.
     pub fn get_connection_info(&self) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
-        let agent_info = self.agent_info().clone();
+        let agent_info = self.cloud_agent_info().clone();
+        let pairwise_info = self.pairwise_info();
+        let recipient_keys = vec!(pairwise_info.pw_vk.clone());
 
         let current = SideConnectionInfo {
-            did: agent_info.pw_did.clone(),
-            recipient_keys: agent_info.recipient_keys().clone(),
+            did: pairwise_info.pw_did.clone(),
+            recipient_keys: recipient_keys.clone(),
             routing_keys: agent_info.routing_keys()?,
-            service_endpoint: agent_info.agency_endpoint()?,
+            service_endpoint: agent_info.service_endpoint()?,
             protocols: Some(self.get_protocols()),
         };
 
