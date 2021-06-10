@@ -1010,7 +1010,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let config = json!({
             "institution_did": "44x8p4HubxzUK1dwxcc5FU",
