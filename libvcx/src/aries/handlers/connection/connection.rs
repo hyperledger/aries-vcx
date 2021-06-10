@@ -554,7 +554,7 @@ Get messages received from connection counterparty.
     Get messages received from connection counterparty by id.
      */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>> msg_id={}", msg_id);
+        trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk()?;
         self.cloud_agent_info().get_message_by_id(msg_id, &expected_sender_vk, self.pairwise_info())
     }

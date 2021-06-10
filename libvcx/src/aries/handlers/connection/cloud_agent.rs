@@ -57,7 +57,7 @@ impl CloudAgentInfo {
     }
 
     pub fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
-        trace!("Agent::delete >>>");
+        trace!("CloudAgentInfo::delete >>>");
         send_delete_connection_message(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
             .map_err(|err| err.into())
     }
@@ -91,7 +91,7 @@ impl CloudAgentInfo {
     }
 
     pub fn get_messages(&self, expect_sender_vk: &str, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
-        trace!("CloudAgentInfo::get_messages >>> expect_sender_vk={}", expect_sender_vk);
+        trace!("CloudAgentInfo::get_messages >>> expect_sender_vk: {}", expect_sender_vk);
         let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info)?;
         debug!("CloudAgentInfo::get_messages >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk)?;

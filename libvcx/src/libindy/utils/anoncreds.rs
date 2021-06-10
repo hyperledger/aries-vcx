@@ -146,7 +146,7 @@ fn close_search_handle(search_handle: i32) -> VcxResult<()> {
 }
 
 pub fn libindy_prover_get_credentials_for_proof_req(proof_req: &str) -> VcxResult<String> {
-    trace!("libindy_prover_get_credentials_for_proof_req >>> proof_req={}", proof_req);
+    trace!("libindy_prover_get_credentials_for_proof_req >>> proof_req: {}", proof_req);
     match get_mock_creds_retrieved_for_proof_request() {
         None => {}
         Some(mocked_creds) => {
