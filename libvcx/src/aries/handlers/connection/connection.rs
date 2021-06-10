@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
+use agency_client::get_message::{Message, MessageByConnection};
+use agency_client::MessageStatusCode;
+
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
 use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::basic_message::message::BasicMessage;
@@ -10,8 +14,7 @@ use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
-use agency_client::get_message::{Message, MessageByConnection};
-use agency_client::{MessageStatusCode, SerializableObjectWithState};
+use crate::utils::serialization::SerializableObjectWithState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -657,8 +660,8 @@ Get messages received from connection counterparty.
 
     pub fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
         let expected_sender_vk = self.remote_vk()?;
-        let msgs = self.agent_info()
-            .download_encrypted_messages(uids, status_codes)?
+        let msgs = self.cloud_agent_info()
+            .download_encrypted_messages(uids, status_codes, self.pairwise_info())?
             .iter()
             .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
             .collect::<VcxResult<Vec<Message>>>()?;
@@ -666,7 +669,13 @@ Get messages received from connection counterparty.
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
-        let (state, data, source_id) = self.to_owned().into();
+        let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
+        let data = LegacyAgentInfo {
+            pw_did: pairwise_info.pw_did,
+            pw_vk: pairwise_info.pw_vk,
+            agent_did: cloud_agent_info.agent_did,
+            agent_vk: cloud_agent_info.agent_vk,
+        };
         let object = SerializableObjectWithState::V1 { data, state, source_id };
 
         serde_json::to_string(&object)
@@ -674,12 +683,13 @@ Get messages received from connection counterparty.
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
-        let object: SerializableObjectWithState<AgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
+        let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
         match object {
             SerializableObjectWithState::V1 { data, state, source_id } => {
-                let connection: Connection = (state, data, source_id).into();
-                Ok(connection)
+                let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
+                let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
+                Ok((state, pairwise_info, cloud_agent_info, source_id).into())
             }
         }
     }
@@ -698,15 +708,15 @@ pub mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::{connection, utils, settings, aries};
+    use crate::{aries, connection, settings, utils};
     use crate::api::VcxStateType;
+    use crate::aries::messages::ack::tests::_ack;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
+    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
-    use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
-    use crate::aries::messages::ack::tests::_ack;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -716,10 +726,10 @@ pub mod tests {
         let connection = Connection::from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
         let _second_string = connection.to_string().unwrap();
 
-        assert_eq!(connection.agent_info().pw_did, "2ZHFFhzA2XtTD6hJqzL7ux");
-        assert_eq!(connection.agent_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
-        assert_eq!(connection.agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
-        assert_eq!(connection.agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
+        assert_eq!(connection.pairwise_info().pw_did, "2ZHFFhzA2XtTD6hJqzL7ux");
+        assert_eq!(connection.pairwise_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
+        assert_eq!(connection.cloud_agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
+        assert_eq!(connection.cloud_agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
         assert_eq!(connection.state(), VcxStateType::VcxStateAccepted as u32);
     }
 
@@ -748,7 +758,7 @@ pub mod tests {
     fn test_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create("test_serialize_deserialize", true);
+        let connection = Connection::create("test_serialize_deserialize", true).unwrap();
         let first_string = connection.to_string().unwrap();
 
         let connection2 = Connection::from_string(&first_string).unwrap();
@@ -760,7 +770,7 @@ pub mod tests {
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
         institution.activate().unwrap();
-        let mut institution_to_consumer = Connection::create("consumer", true);
+        let mut institution_to_consumer = Connection::create("consumer", true).unwrap();
         let _my_public_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         institution_to_consumer.connect().unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();

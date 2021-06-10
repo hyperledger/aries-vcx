@@ -265,7 +265,7 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
     };
     for connection in connections {
         let msgs = connection.download_messages(status_codes.clone(), uids.clone())?;
-        res.push(MessageByConnection { pairwise_did: connection.agent_info().clone().pw_did, msgs });
+        res.push(MessageByConnection { pairwise_did: connection.pairwise_info().pw_did.clone(), msgs });
     }
     trace!("download_messages <<< res: {:?}", res);
     Ok(res)
@@ -293,6 +293,7 @@ pub mod tests {
     use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
     use crate::aries::messages::ack::tests::_ack;
     use crate::aries::messages::connection::invite::tests::_invitation_json;
+    use crate::aries::handlers::connection::connection::tests::create_connected_connections;
 
 
     pub fn mock_connection() -> u32 {

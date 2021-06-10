@@ -142,7 +142,7 @@ pub mod test {
                 config_issuer,
                 schema_handle: 0,
                 cred_def_handle: 0,
-                connection: Connection::create("alice", true),
+                connection: Connection::create("alice", true).unwrap(),
                 credential_handle: 0,
                 presentation_handle: 0,
             }
@@ -324,7 +324,7 @@ pub mod test {
                 is_active: false,
                 config_wallet,
                 config_agency,
-                connection: Connection::create("tmp_empoty", true),
+                connection: Connection::create("tmp_empoty", true).unwrap(),
                 credential_handle: 0,
                 presentation_handle: 0,
             }
@@ -346,7 +346,7 @@ pub mod test {
 
         pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate()?;
-            let did = self.connection.agent_info().pw_did.to_string();
+            let did = self.connection.pairwise_info().pw_did.to_string();
             download_message(did, message_type)
                 .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }
