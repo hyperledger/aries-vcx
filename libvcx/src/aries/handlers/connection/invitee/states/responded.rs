@@ -1,5 +1,4 @@
 use crate::error::prelude::*;
-use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::invitee::states::complete::CompleteState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;

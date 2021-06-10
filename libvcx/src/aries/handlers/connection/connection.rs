@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::api::VcxStateType;
 use crate::error::prelude::*;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
@@ -58,14 +57,14 @@ impl Connection {
     /**
     Create Inviter connection state machine
      */
-    pub fn create(source_id: &str, autohop: bool) -> Connection {
+    pub fn create(source_id: &str, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create >>> source_id: {}", source_id);
-        let pairwise_info = PairwiseInfo::create().unwrap(); // todo: remove unwrap
-        Connection {
+        let pairwise_info = PairwiseInfo::create()?;
+        Ok(Connection {
             cloud_agent_info: CloudAgentInfo::default(),
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
             autohop_enabled: autohop
-        }
+        })
     }
 
     /**
@@ -83,20 +82,20 @@ impl Connection {
         Ok(connection)
     }
 
-    pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState) -> Connection {
+    pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Connection {
         match state {
             SmConnectionState::Inviter(state) => {
                 Connection {
                     cloud_agent_info,
                     connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state)),
-                    autohop_enabled: true
+                    autohop_enabled
                 }
             }
             SmConnectionState::Invitee(state) => {
                 Connection {
                     cloud_agent_info,
                     connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state)),
-                    autohop_enabled: true
+                    autohop_enabled
                 }
             }
         }

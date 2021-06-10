@@ -1,5 +1,4 @@
 use crate::error::VcxResult;
-use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 use crate::aries::handlers::connection::util::handle_ping;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;

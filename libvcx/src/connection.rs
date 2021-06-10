@@ -82,7 +82,7 @@ fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(source_id, true);
+    let connection = Connection::create(source_id, true)?;
     return store_connection(connection);
 }
 
@@ -193,7 +193,7 @@ impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connect
 
 impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
     fn from((state, pairwise_info, cloud_agent_info, source_id): (SmConnectionState, PairwiseInfo, CloudAgentInfo, String)) -> Connection {
-        Connection::from_parts(source_id, pairwise_info, cloud_agent_info, state)
+        Connection::from_parts(source_id, pairwise_info, cloud_agent_info, state, true)
     }
 }
 
