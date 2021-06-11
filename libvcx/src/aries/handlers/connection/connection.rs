@@ -668,7 +668,7 @@ Get messages received from connection counterparty.
         Ok(msgs)
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
+    pub fn to_string(&self) -> String {
         let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
@@ -677,14 +677,12 @@ Get messages received from connection counterparty.
             agent_vk: cloud_agent_info.agent_vk,
         };
         let object = SerializableObjectWithState::V1 { data, state, source_id };
-
-        serde_json::to_string(&object)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Connection: {:?}", err)))
+        json!(object).to_string()
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
         let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize Connection: {:?}", err)))?;
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
         match object {
             SerializableObjectWithState::V1 { data, state, source_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
@@ -724,7 +722,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let connection = Connection::from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
-        let _second_string = connection.to_string().unwrap();
+        let _second_string = connection.to_string();
 
         assert_eq!(connection.pairwise_info().pw_did, "2ZHFFhzA2XtTD6hJqzL7ux");
         assert_eq!(connection.pairwise_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
@@ -736,7 +734,7 @@ pub mod tests {
     fn test_deserialize_and_serialize(sm_serialized: &str) {
         let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
         let connection = Connection::from_string(sm_serialized).unwrap();
-        let reserialized = connection.to_string().unwrap();
+        let reserialized = connection.to_string();
         let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
 
         assert_eq!(original_object, reserialized_object);
@@ -759,10 +757,10 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let connection = Connection::create("test_serialize_deserialize", true).unwrap();
-        let first_string = connection.to_string().unwrap();
+        let first_string = connection.to_string();
 
         let connection2 = Connection::from_string(&first_string).unwrap();
-        let second_string = connection2.to_string().unwrap();
+        let second_string = connection2.to_string();
 
         assert_eq!(first_string, second_string);
     }
