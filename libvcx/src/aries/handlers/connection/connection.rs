@@ -679,12 +679,12 @@ Get messages received from connection counterparty.
         let object = SerializableObjectWithState::V1 { data, state, source_id };
 
         serde_json::to_string(&object)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize Connection: {:?}", err)))
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Connection: {:?}", err)))
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
         let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize Connection: {:?}", err)))?;
         match object {
             SerializableObjectWithState::V1 { data, state, source_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
@@ -818,7 +818,6 @@ pub mod tests {
         consumer.activate().unwrap();
         alice_to_faber.send_generic_message("Hello Faber").unwrap();
 
-        // make sure messages has be delivered
         thread::sleep(Duration::from_millis(1000));
 
         let all_messages = download_messages_noauth(None, None, None).unwrap();
@@ -881,7 +880,6 @@ pub mod tests {
         {
             faber.activate().unwrap();
             faber.connection.send_message_closure().unwrap()(&message.to_a2a_message()).unwrap();
-            // connection::send_message(faber.connection, ).unwrap();
         }
 
         {
@@ -889,7 +887,6 @@ pub mod tests {
             alice.activate().unwrap();
 
             let messages = alice.connection.get_messages().unwrap();
-            // let messages = connection::get_messages(alice.connection).unwrap();
             assert_eq!(1, messages.len());
 
             uid = messages.keys().next().unwrap().clone();
@@ -906,7 +903,6 @@ pub mod tests {
             alice.activate().unwrap();
 
             let message = alice.connection.get_message_by_id(&uid.clone()).unwrap();
-            // let message = connection::get_message_by_id(alice.connection, uid.clone()).unwrap();
 
             match message {
                 A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
@@ -918,9 +914,7 @@ pub mod tests {
         {
             alice.activate().unwrap();
 
-            // connection::update_message_status(alice.connection, uid).unwrap();
             alice.connection.update_message_status(uid).unwrap();
-            // let messages = connection::get_messages(alice.connection).unwrap();
             let messages = alice.connection.get_messages().unwrap();
             assert_eq!(0, messages.len());
         }
@@ -930,12 +924,10 @@ pub mod tests {
             faber.activate().unwrap();
 
             let basic_message = r#"Hi there"#;
-            // connection::send_generic_message(faber.connection, basic_message).unwrap();
             faber.connection.send_generic_message(basic_message).unwrap();
 
             alice.activate().unwrap();
 
-            // let messages = connection::get_messages(alice.connection).unwrap();
             let messages = alice.connection.get_messages().unwrap();
             assert_eq!(1, messages.len());
 
@@ -947,7 +939,6 @@ pub mod tests {
                 _ => assert!(false)
             }
             alice.connection.update_message_status(uid).unwrap();
-            // connection::update_message_status(alice.connection, uid).unwrap();
         }
 
         info!("test_connection_send_works:: Test if Download Messages");
@@ -957,7 +948,6 @@ pub mod tests {
             let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
 
             faber.activate().unwrap();
-            // connection::send_message(faber.connection, credential_offer.to_a2a_message()).unwrap();
             faber.connection.send_message_closure().unwrap()(&credential_offer.to_a2a_message()).unwrap();
 
             alice.activate().unwrap();
@@ -1026,7 +1016,6 @@ pub mod tests {
         let reviewed = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Reviewed]), None).unwrap();
         let reviewed_count_before = reviewed.len();
 
-        // update status
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
         let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
         update_agency_messages("MS-106", &message).unwrap();
