@@ -49,10 +49,10 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
 
 # copy cargo caches - this way we don't have to redownload dependencies on subsequent builds
-RUN mkdir -p /home/indy/.cargo/registry/cache
-COPY --from=builder /home/indy/.cargo/registry/cache/ /home/indy/.cargo/registry/cache/
-RUN chown -R node:node /home/indy/.cargo/registry/cache/
+RUN mkdir -p /home/node/.cargo/registry
+COPY --from=builder /home/indy/.cargo/registry /home/node/.cargo/registry
+RUN chown -R node:node /home/node/.cargo/registry
 RUN echo "Cargo registry cache: "
-RUN ls -lah /home/indy/.cargo/registry/cache/
+RUN ls -lah /home/node/.cargo/registry
 
 USER node
