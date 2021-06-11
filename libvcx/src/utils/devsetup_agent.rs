@@ -134,8 +134,7 @@ pub mod test {
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
-            close_main_wallet().unwrap();
-            Faber {
+            let faber = Faber {
                 is_active: false,
                 config_wallet,
                 config_agency,
@@ -145,7 +144,9 @@ pub mod test {
                 connection: Connection::create("alice", true).unwrap(),
                 credential_handle: 0,
                 presentation_handle: 0,
-            }
+            };
+            close_main_wallet().unwrap();
+            faber
         }
 
 
@@ -318,16 +319,16 @@ pub mod test {
             create_wallet(&config_wallet).unwrap();
             open_as_main_wallet(&config_wallet).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
-            close_main_wallet().unwrap();
-
-            Alice {
+            let alice = Alice {
                 is_active: false,
                 config_wallet,
                 config_agency,
                 connection: Connection::create("tmp_empoty", true).unwrap(),
                 credential_handle: 0,
                 presentation_handle: 0,
-            }
+            };
+            close_main_wallet().unwrap();
+            alice
         }
 
         pub fn accept_invite(&mut self, invite: &str) {
