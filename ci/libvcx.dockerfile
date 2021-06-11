@@ -20,10 +20,6 @@ RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
 COPY --from=builder /usr/lib/libindy.so /home/indy/lib*.so /usr/lib/
 
-# copy cargo caches - this way we don't have to redownload dependencies on subsequent builds
-RUN mkdir -p /home/indy/.cargo
-COPY --from=builder /home/indy/.cargo /home/indy/.cargo
-
 WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx
 COPY --chown=node ./agency_client ./agency_client
@@ -50,5 +46,13 @@ RUN apk add --no-cache \
 
 ARG RUST_VER="1.52.1"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
+
+
+# copy cargo caches - this way we don't have to redownload dependencies on subsequent builds
+RUN mkdir -p /home/indy/.cargo/registry/cache
+COPY --from=builder /home/indy/.cargo/registry/cache/ /home/indy/.cargo/registry/cache/
+RUN chown -R node:node /home/indy/.cargo/registry/cache/
+RUN echo "Cargo registry cache: "
+RUN ls -lah /home/indy/.cargo/registry/cache/
 
 USER node
