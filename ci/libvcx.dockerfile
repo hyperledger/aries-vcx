@@ -47,4 +47,12 @@ RUN apk add --no-cache \
 ARG RUST_VER="1.52.1"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
+
+# copy cargo caches - this way we don't have to redownload dependencies on subsequent builds
+RUN mkdir -p /home/node/.cargo/registry
+COPY --from=builder /home/indy/.cargo/registry /home/node/.cargo/registry
+RUN chown -R node:node /home/node/.cargo/registry
+RUN echo "Cargo registry cache: "
+RUN ls -lah /home/node/.cargo/registry
+
 USER node

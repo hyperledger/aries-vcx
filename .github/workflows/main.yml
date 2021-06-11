@@ -864,7 +864,7 @@ jobs:
 
   publish-libvcx:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
       DOCKER_IMG_NAME_LIBVCX: ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}}
