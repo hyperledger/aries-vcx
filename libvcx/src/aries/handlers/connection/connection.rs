@@ -1027,7 +1027,7 @@ pub mod tests {
         let reviewed_count_before = reviewed.len();
 
         // update status
-        let pairwise_did = alice_to_faber.agent_info().pw_did.clone();
+        let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
         let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
         update_agency_messages("MS-106", &message).unwrap();
 
