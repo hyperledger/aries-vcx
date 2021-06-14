@@ -2,8 +2,8 @@ use std::fs;
 use std::sync::Once;
 
 use crate::{libindy, settings, utils};
-use crate::api_c::utils_c::runtime;
-use crate::api_c::utils_c::runtime::ThreadpoolConfig;
+use crate::api_lib::utils_c::runtime;
+use crate::api_lib::utils_c::runtime::ThreadpoolConfig;
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::PoolConfig;
 use crate::libindy::utils::pool::reset_pool_handle;
@@ -436,7 +436,7 @@ impl Drop for TempFile {
 
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
-    use crate::connection;
+    use crate::api_lib::api_handle::connection;
 
     use super::*;
 

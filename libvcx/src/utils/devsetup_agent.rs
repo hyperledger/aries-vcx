@@ -5,17 +5,18 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 pub mod test {
     use agency_client::payload::PayloadKinds;
 
-    use crate::{aries, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema, settings};
-    use crate::aries::messages::a2a::A2AMessage;
-    use crate::error::{VcxError, VcxErrorKind, VcxResult};
-    use crate::libindy::utils::wallet::*;
-    use crate::utils::devsetup::*;
-    use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
-    use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
-    use crate::utils::constants;
+    use crate::{aries, settings};
+    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
     use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
     use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
     use crate::aries::handlers::connection::inviter::state_machine::InviterState;
+    use crate::aries::messages::a2a::A2AMessage;
+    use crate::error::{VcxError, VcxErrorKind, VcxResult};
+    use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
+    use crate::libindy::utils::wallet::*;
+    use crate::utils::constants;
+    use crate::utils::devsetup::*;
+    use crate::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {

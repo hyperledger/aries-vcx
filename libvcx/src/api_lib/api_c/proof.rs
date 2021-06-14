@@ -3,10 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, proof};
-use crate::api_c::utils_c::cstring::CStringUtils;
-use crate::api_c::utils_c::runtime::execute;
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
+use crate::api_lib::api_handle::proof;
 use crate::utils::error;
 
 /*
@@ -613,11 +614,11 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
-    use crate::api_c::{ProofStateType, VcxStateType};
-    use crate::connection::tests::build_test_connection_inviter_requested;
-    use crate::proof;
+    use crate::api_lib::{ProofStateType, VcxStateType};
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::api_handle::proof;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;

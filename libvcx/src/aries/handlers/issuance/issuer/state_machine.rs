@@ -17,7 +17,7 @@ use crate::aries::messages::issuance::credential_request::CredentialRequest;
 use crate::aries::messages::mime_type::MimeType;
 use crate::aries::messages::status::Status;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_c::VcxStateType;
+use crate::api_lib::VcxStateType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerState {

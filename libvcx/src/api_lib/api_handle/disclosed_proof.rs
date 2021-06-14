@@ -7,7 +7,7 @@ use crate::aries::{
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
+use crate::api_lib::api_handle::connection;
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
 use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
@@ -259,7 +259,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::api_c::VcxStateType;
+    use crate::api_lib::VcxStateType;
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use crate::utils;
     use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};

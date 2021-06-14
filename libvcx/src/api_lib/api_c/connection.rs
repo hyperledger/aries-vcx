@@ -3,14 +3,15 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, libindy, utils};
-use crate::api_c::utils_c;
-use crate::api_c::utils_c::cstring::CStringUtils;
-use crate::api_c::utils_c::runtime::execute;
+use crate::api_lib::api_handle::connection::*;
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::utils_c;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection::*;
 use crate::error::prelude::*;
 use crate::utils::error;
+use crate::libindy;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -1210,10 +1211,10 @@ mod tests {
     use serde_json::Value;
 
     use crate::agency_client::mocking::AgencyMockDecrypted;
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
-    use crate::api_c::VcxStateType;
-    use crate::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
+    use crate::api_lib::api_handle::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::VcxStateType;
     use crate::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils::devsetup::*;
     use crate::utils::error;

@@ -5,16 +5,16 @@ use indy_sys::WalletHandle;
 use libc::c_char;
 
 use crate::{libindy, settings, utils};
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_main_pool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
+use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
-use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
 use crate::utils::error;
-use crate::api_c::utils_c::runtime::{execute, init_threadpool};
-use crate::utils::version_constants;
 use crate::utils::provision::AgencyClientConfig;
+use crate::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -268,13 +268,13 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         Err(_) => {}
     };
 
-    crate::schema::release_all();
-    crate::connection::release_all();
-    crate::issuer_credential::release_all();
-    crate::credential_def::release_all();
-    crate::proof::release_all();
-    crate::disclosed_proof::release_all();
-    crate::credential::release_all();
+    crate::api_lib::api_handle::schema::release_all();
+    crate::api_lib::api_handle::connection::release_all();
+    crate::api_lib::api_handle::issuer_credential::release_all();
+    crate::api_lib::api_handle::credential_def::release_all();
+    crate::api_lib::api_handle::proof::release_all();
+    crate::api_lib::api_handle::disclosed_proof::release_all();
+    crate::api_lib::api_handle::credential::release_all();
 
     if delete {
         let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
@@ -515,26 +515,28 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use crate::{api_c, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::wallet::tests::_test_add_and_get_wallet_record;
+    use crate::api_lib;
+    use crate::api_lib::api_c;
+    use crate::api_lib::api_c::connection::vcx_connection_create;
+    use crate::api_lib::api_c::wallet::tests::_test_add_and_get_wallet_record;
+    use crate::api_lib::api_c::wallet::vcx_open_main_wallet;
+    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::init::PoolConfig;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, WalletConfig, RestoreWalletConfigs};
+    use crate::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::wallet::get_wallet_handle;
     use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
     use crate::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use crate::utils::get_temp_dir_path;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
 
     use super::*;
-    use crate::api_c::wallet::vcx_open_main_wallet;
-    use crate::api_c::connection::vcx_connection_create;
-    use crate::init::PoolConfig;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();

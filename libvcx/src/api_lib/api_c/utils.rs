@@ -8,9 +8,9 @@ use serde_json;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 
-use crate::api_c::utils_c::cstring::CStringUtils;
-use crate::api_c::utils_c::runtime::execute;
-use crate::connection;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::api_handle::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments;
 use crate::utils::constants::*;
@@ -546,8 +546,8 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
     use crate::utils::provision::AgentProvisionConfig;

@@ -3,10 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, credential_def, issuer_credential, settings};
-use crate::api_c::utils_c::cstring::CStringUtils;
-use crate::api_c::utils_c::runtime::execute;
+use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
+use crate::settings;
 use crate::utils::error;
 
 /*
@@ -849,9 +850,9 @@ pub mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
-    use crate::api_c::VcxStateType;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::VcxStateType;
     use crate::settings;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;

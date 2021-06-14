@@ -34,17 +34,10 @@ extern crate tokio;
 #[macro_use]
 pub mod utils;
 #[macro_use]
-pub mod api_c;
+pub mod api_lib;
 pub mod settings;
 pub mod init;
-pub mod connection;
-pub mod issuer_credential;
-pub mod proof;
-pub mod schema;
-pub mod credential_def;
 pub mod error;
-pub mod credential;
-pub mod disclosed_proof;
 
 pub mod aries;
 mod filters;
@@ -60,15 +53,15 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::api_c::ProofStateType;
-    use crate::api_c::VcxStateType;
-    use crate::connection;
-    use crate::credential;
-    use crate::credential_def;
-    use crate::disclosed_proof;
+    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::credential;
+    use crate::api_lib::api_handle::credential_def;
+    use crate::api_lib::api_handle::disclosed_proof;
+    use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::api_handle::proof;
+    use crate::api_lib::ProofStateType;
+    use crate::api_lib::VcxStateType;
     use crate::filters;
-    use crate::issuer_credential;
-    use crate::proof;
     use crate::settings;
     use crate::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},

@@ -7,11 +7,12 @@ pub mod utils;
 pub mod test {
     use agency_client::payload::PayloadKinds;
 
-    use crate::{connection, credential, disclosed_proof, libindy, settings};
+    use crate::{libindy, settings};
+    use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
     use crate::libindy::utils::wallet::*;
     use crate::utils::devsetup::*;
+    use crate::utils::devsetup_agent::test::{Alice, Faber};
     use crate::utils::plugins::init_plugin;
-    use crate::utils::devsetup_agent::test::{Faber, Alice};
 
     pub fn source_id() -> String {
         String::from("test source id")

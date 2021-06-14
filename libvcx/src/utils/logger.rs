@@ -11,7 +11,7 @@ use std::io::Write;
 use std::ptr;
 
 use crate::error::prelude::*;
-use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::cstring::CStringUtils;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]

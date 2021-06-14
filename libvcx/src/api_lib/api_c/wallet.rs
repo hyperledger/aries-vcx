@@ -5,9 +5,9 @@ use indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
 use serde_json::Error;
 
-use crate::api_c::utils_c;
-use crate::api_c::utils_c::cstring::CStringUtils;
-use crate::api_c::utils_c::runtime::execute;
+use crate::api_lib::utils_c;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
@@ -1187,8 +1187,8 @@ pub mod tests {
     use std::ptr;
 
     use crate::{libindy, settings};
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::build_test_address;
     use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};

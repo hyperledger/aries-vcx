@@ -3,11 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::error::prelude::*;
 use crate::filters;
 use crate::utils::error;
-use crate::api_c::utils_c::runtime::execute;
+use crate::api_lib::utils_c::runtime::execute;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///
@@ -62,11 +62,11 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api_c::utils_c::timeout::TimeoutUtils;
-    use crate::api_c::filters::vcx_filter_proof_requests_by_name;
-    use crate::api_c::utils_c::return_types_u32;
-    use crate::connection;
-    use crate::disclosed_proof::get_proof_request_messages;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
     use crate::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     #[test]

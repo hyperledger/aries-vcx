@@ -1,6 +1,6 @@
 use serde_json;
 
-use crate::api_c::PublicEntityStateType;
+use crate::api_lib::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, ledger};
 use crate::libindy::utils::cache::update_rev_reg_ids_cache;
@@ -484,7 +484,8 @@ pub mod tests {
         time::Duration,
     };
 
-    use crate::{libindy, schema, settings, utils};
+    use crate::{libindy, settings, utils};
+    use crate::api_lib::api_handle::schema;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::add_new_did;
     use crate::utils::{

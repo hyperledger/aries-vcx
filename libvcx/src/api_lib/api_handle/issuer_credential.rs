@@ -1,9 +1,9 @@
 use serde_json;
 
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::credential_def;
 use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
-use crate::credential_def;
 use crate::error::prelude::*;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
@@ -175,12 +175,13 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use agency_client::mocking::HttpClientMockResponse;
 
-    use crate::{issuer_credential, settings};
-    use crate::api_c::VcxStateType;
-    use crate::connection::tests::build_test_connection_inviter_requested;
-    use crate::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::VcxStateType;
     use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use crate::libindy::utils::LibindyMock;
+    use crate::settings;
     use crate::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
     use crate::utils::devsetup::*;

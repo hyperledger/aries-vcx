@@ -2,7 +2,7 @@ use serde_json;
 
 use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
+use crate::api_lib::api_handle::connection;
 use crate::error::prelude::*;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
@@ -122,11 +122,11 @@ pub mod tests {
 
     use agency_client::mocking::HttpClientMockResponse;
 
-    use crate::proof;
-    use crate::api_c::VcxStateType;
+    use crate::api_lib::api_handle::proof;
+    use crate::api_lib::VcxStateType;
     use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use crate::aries::messages::proof_presentation::presentation::tests::_comment;
-    use crate::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;

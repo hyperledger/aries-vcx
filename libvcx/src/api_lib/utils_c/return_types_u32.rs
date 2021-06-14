@@ -10,7 +10,7 @@ use std::time::Duration;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::api_c::utils_c::timeout::TimeoutUtils;
+use crate::api_lib::utils_c::timeout::TimeoutUtils;
 use crate::libindy::utils::callback::POISON_MSG;
 use crate::libindy::utils::callback_u32 as callback;
 use crate::libindy::utils::error_codes::map_indy_error;
