@@ -87,7 +87,7 @@ impl SmConnectionInvitee {
         &self.source_id
     }
 
-    pub fn state(&self) -> InviteeState {
+    pub fn get_state(&self) -> InviteeState {
         InviteeState::from(self.state.clone())
     }
 
@@ -793,9 +793,9 @@ pub mod test {
             fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(InviteeState::Null, invitee_sm().state());
-                assert_eq!(InviteeState::Invited, invitee_sm().to_invitee_invited_state().state());
-                assert_eq!(InviteeState::Requested, invitee_sm().to_invitee_requested_state().state());
+                assert_eq!(InviteeState::Null, invitee_sm().get_state());
+                assert_eq!(InviteeState::Invited, invitee_sm().to_invitee_invited_state().get_state());
+                assert_eq!(InviteeState::Requested, invitee_sm().to_invitee_requested_state().get_state());
             }
         }
     }

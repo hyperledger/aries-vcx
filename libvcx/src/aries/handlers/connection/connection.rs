@@ -124,13 +124,13 @@ impl Connection {
         }.into()
     }
 
-    pub fn state(&self) -> ConnectionState {
+    pub fn get_state(&self) -> ConnectionState {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                ConnectionState::Inviter(sm_inviter.state())
+                ConnectionState::Inviter(sm_inviter.get_state())
             }
             SmConnection::Invitee(sm_invitee) => {
-                ConnectionState::Invitee(sm_invitee.state())
+                ConnectionState::Invitee(sm_invitee.get_state())
             }
         }
     }
@@ -735,7 +735,7 @@ pub mod tests {
         assert_eq!(connection.pairwise_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
         assert_eq!(connection.cloud_agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
         assert_eq!(connection.cloud_agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
-        assert_eq!(connection.state(), ConnectionState::Inviter(InviterState::Completed));
+        assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Completed));
     }
 
     fn test_deserialize_and_serialize(sm_serialized: &str) {
@@ -791,18 +791,18 @@ pub mod tests {
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.state());
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();
-        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.state());
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.state());
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
         (consumer_to_institution, institution_to_consumer)
     }

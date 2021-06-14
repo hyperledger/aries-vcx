@@ -62,7 +62,7 @@ pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.state().into())
+        Ok(connection.get_state().into())
     }).unwrap_or(0)
 }
 

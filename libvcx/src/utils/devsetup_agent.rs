@@ -192,7 +192,7 @@ pub mod test {
             self.activate().unwrap();
             self.connection.connect().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.state());
+            assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
         }
@@ -200,7 +200,7 @@ pub mod test {
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(expected_state, u32::from(self.connection.state()));
+            assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub fn ping(&mut self) {
@@ -338,13 +338,13 @@ pub mod test {
             self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).unwrap();
             self.connection.connect().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.state());
+            assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(expected_state, u32::from(self.connection.state()));
+            assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
