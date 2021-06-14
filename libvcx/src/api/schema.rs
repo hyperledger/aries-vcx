@@ -8,7 +8,7 @@ use crate::{schema, settings};
 use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///

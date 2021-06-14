@@ -8,7 +8,7 @@ use crate::credential;
 use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /*
     The API represents a Holder side in credential issuance process.

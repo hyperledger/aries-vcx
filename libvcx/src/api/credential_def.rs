@@ -8,7 +8,7 @@ use crate::{credential_def, settings};
 use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///

@@ -12,7 +12,7 @@ use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
 use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 use crate::utils::version_constants;
 use crate::utils::provision::AgencyClientConfig;
 

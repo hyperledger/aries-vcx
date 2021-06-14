@@ -7,7 +7,7 @@ use crate::{connection, proof};
 use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.

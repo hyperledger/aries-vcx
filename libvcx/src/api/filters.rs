@@ -7,7 +7,7 @@ use crate::abi_utils::cstring::CStringUtils;
 use crate::error::prelude::*;
 use crate::filters;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///

@@ -13,7 +13,7 @@ use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay
 use crate::libindy::utils::wallet;
 use crate::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///

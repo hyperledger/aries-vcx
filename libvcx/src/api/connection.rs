@@ -9,7 +9,7 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::connection::*;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::runtime::execute;
+use crate::abi_utils::runtime::execute;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
