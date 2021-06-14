@@ -5,6 +5,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
+use utils_c::cstring::CStringUtils;
+use utils_c::runtime::execute;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 
@@ -12,10 +14,11 @@ use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments;
 use crate::utils::constants::*;
-use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
 use crate::utils::provision::AgentProvisionConfig;
+
+#[macro_use]
+pub mod utils_c;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -546,13 +549,13 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::utils::provision::AgentProvisionConfig;
 
     use super::*;
-    use crate::utils::provision::AgentProvisionConfig;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

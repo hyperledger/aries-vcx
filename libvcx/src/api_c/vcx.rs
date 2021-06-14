@@ -6,13 +6,13 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
+use crate::init::{open_as_main_wallet, open_main_pool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
-use crate::abi_utils::cstring::CStringUtils;
+use crate::api_c::utils_c::cstring::CStringUtils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::runtime::{execute, init_threadpool};
 use crate::utils::version_constants;
 use crate::utils::provision::AgencyClientConfig;
 
@@ -516,7 +516,7 @@ mod tests {
     use std::ptr;
 
     use crate::{api_c, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
     use crate::api_c::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
@@ -529,7 +529,7 @@ mod tests {
     use crate::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use crate::utils::get_temp_dir_path;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
 
     use super::*;
     use crate::api_c::wallet::vcx_open_main_wallet;

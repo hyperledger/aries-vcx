@@ -6,9 +6,9 @@ use serde_json;
 
 use crate::{credential_def, settings};
 use crate::error::prelude::*;
-use crate::abi_utils::cstring::CStringUtils;
+use crate::api_c::utils_c::cstring::CStringUtils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::runtime::execute;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -520,10 +520,10 @@ mod tests {
     use std::ffi::CString;
 
     use crate::{api_c, settings, utils};
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
     use crate::utils::constants::SCHEMA_ID;
     use crate::utils::devsetup::*;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
 
     use super::*;
 

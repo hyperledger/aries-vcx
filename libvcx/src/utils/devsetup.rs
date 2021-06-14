@@ -2,8 +2,8 @@ use std::fs;
 use std::sync::Once;
 
 use crate::{libindy, settings, utils};
-use crate::abi_utils::runtime;
-use crate::abi_utils::runtime::ThreadpoolConfig;
+use crate::api_c::utils_c::runtime;
+use crate::api_c::utils_c::runtime::ThreadpoolConfig;
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::PoolConfig;
 use crate::libindy::utils::pool::reset_pool_handle;

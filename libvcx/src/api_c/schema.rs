@@ -6,9 +6,9 @@ use serde_json;
 
 use crate::{schema, settings};
 use crate::error::prelude::*;
-use crate::abi_utils::cstring::CStringUtils;
+use crate::api_c::utils_c::cstring::CStringUtils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::runtime::execute;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -538,13 +538,13 @@ mod tests {
     use rand::Rng;
 
     use crate::{api_c, libindy, settings, utils};
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
     use crate::schema::CreateSchema;
     use crate::schema::tests::prepare_schema_data;
     #[allow(unused_imports)]
     use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use crate::utils::devsetup::*;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
 
     use super::*;
 

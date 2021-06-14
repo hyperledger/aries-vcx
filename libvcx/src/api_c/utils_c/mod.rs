@@ -3,12 +3,13 @@ use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
 use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 
 #[macro_use]
-pub mod ccallback;
+pub(super) mod ccallback;
 #[macro_use]
 pub mod cstring;
-pub mod timeout;
-pub mod runtime;
-pub mod return_types_u32;
+
+pub(super) mod timeout;
+pub(super) mod runtime;
+pub(super) mod return_types_u32;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {

@@ -4,8 +4,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::{connection, disclosed_proof};
-use crate::abi_utils::cstring::CStringUtils;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_c::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::utils::error;
 
@@ -954,8 +954,8 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::abi_utils::return_types_u32;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::return_types_u32;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
     use crate::api_c::VcxStateType;
     use crate::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;

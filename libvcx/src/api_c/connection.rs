@@ -3,9 +3,10 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{abi_utils, connection, libindy, utils};
-use crate::abi_utils::cstring::CStringUtils;
-use crate::abi_utils::runtime::execute;
+use crate::{connection, libindy, utils};
+use crate::api_c::utils_c;
+use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_c::utils_c::runtime::execute;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::connection::*;
 use crate::error::prelude::*;
@@ -848,7 +849,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
 
-                let (signature_raw, signature_len) = abi_utils::cstring::vec_to_pointer(&x);
+                let (signature_raw, signature_len) = utils_c::cstring::vec_to_pointer(&x);
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
             Err(e) => {
@@ -1208,9 +1209,9 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::abi_utils::return_types_u32;
-    use crate::abi_utils::timeout::TimeoutUtils;
     use crate::agency_client::mocking::AgencyMockDecrypted;
+    use crate::api_c::utils_c::return_types_u32;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
     use crate::api_c::VcxStateType;
     use crate::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use crate::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};

@@ -32,12 +32,10 @@ extern crate uuid;
 extern crate tokio;
 
 #[macro_use]
-pub mod abi_utils;
-#[macro_use]
 pub mod utils;
-pub mod settings;
 #[macro_use]
 pub mod api_c;
+pub mod settings;
 pub mod init;
 pub mod connection;
 pub mod issuer_credential;
@@ -77,9 +75,9 @@ mod tests {
         get_temp_dir_path,
     };
     use crate::utils::devsetup::*;
+    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
     use super::*;
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
     #[cfg(feature = "agency_pool_tests")]
     #[cfg(feature = "to_restore")] // message type spec/pairwise/1.0/UPDATE_CONN_STATUS no implemented in nodevcx agency

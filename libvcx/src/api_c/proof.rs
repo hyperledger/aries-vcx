@@ -4,8 +4,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::{connection, proof};
-use crate::abi_utils::cstring::CStringUtils;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_c::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::utils::error;
 
@@ -613,8 +613,8 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use crate::abi_utils::return_types_u32;
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::return_types_u32;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
     use crate::api_c::{ProofStateType, VcxStateType};
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::proof;

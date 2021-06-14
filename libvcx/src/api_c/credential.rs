@@ -6,9 +6,9 @@ use libc::c_char;
 use crate::connection;
 use crate::credential;
 use crate::error::prelude::*;
-use crate::abi_utils::cstring::CStringUtils;
+use crate::api_c::utils_c::cstring::CStringUtils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
+use crate::api_c::utils_c::runtime::execute;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -997,13 +997,13 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
     use crate::api_c::VcxStateType;
     use crate::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
-    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
 
     use super::*;
 

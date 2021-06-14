@@ -5,15 +5,16 @@ use indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
 use serde_json::Error;
 
-use crate::{abi_utils, utils};
-use crate::abi_utils::cstring::CStringUtils;
+use crate::api_c::utils_c;
+use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_c::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use crate::libindy::utils::wallet;
 use crate::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
+use crate::utils;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -333,7 +334,7 @@ pub extern fn vcx_wallet_sign_with_address(command_handle: CommandHandle,
                 trace!("vcx_wallet_sign_with_address_cb(command_handle: {}, rc: {}, signature: {:?})",
                        command_handle, error::SUCCESS.message, signature);
 
-                let (signature_raw, signature_len) = abi_utils::cstring::vec_to_pointer(&signature);
+                let (signature_raw, signature_len) = utils_c::cstring::vec_to_pointer(&signature);
 
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
@@ -1186,12 +1187,12 @@ pub mod tests {
     use std::ptr;
 
     use crate::{libindy, settings};
-    use crate::abi_utils::return_types_u32;
+    use crate::api_c::utils_c::return_types_u32;
+    use crate::api_c::utils_c::timeout::TimeoutUtils;
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::payments::build_test_address;
     use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
     use crate::utils::devsetup::*;
-    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

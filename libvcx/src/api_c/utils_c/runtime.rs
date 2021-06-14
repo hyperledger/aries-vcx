@@ -12,6 +12,7 @@ use futures::future;
 use tokio::runtime::Runtime;
 
 use crate::settings;
+use crate::error::{VcxResult, VcxErrorKind, VcxError};
 
 lazy_static! {
     static ref THREADPOOL: Mutex<HashMap<u32, Runtime>> = Default::default();
@@ -24,6 +25,13 @@ pub static mut TP_HANDLE: u32 = 0;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThreadpoolConfig {
     pub num_threads: Option<usize>,
+}
+
+pub fn init_threadpool(config: &str) -> VcxResult<()> {
+    let config: ThreadpoolConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
+    init_runtime(config);
+    Ok(())
 }
 
 pub fn init_runtime(config: ThreadpoolConfig) {
