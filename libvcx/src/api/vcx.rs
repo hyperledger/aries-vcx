@@ -516,7 +516,7 @@ mod tests {
     use std::ptr;
 
     use crate::{api, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api::return_types_u32;
+    use crate::abi_utils::return_types_u32;
     use crate::api::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};

@@ -538,7 +538,7 @@ mod tests {
     use rand::Rng;
 
     use crate::{api, libindy, settings, utils};
-    use crate::api::return_types_u32;
+    use crate::abi_utils::return_types_u32;
     use crate::schema::CreateSchema;
     use crate::schema::tests::prepare_schema_data;
     #[allow(unused_imports)]

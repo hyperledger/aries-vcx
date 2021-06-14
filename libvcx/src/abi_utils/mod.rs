@@ -8,6 +8,7 @@ pub mod ccallback;
 pub mod cstring;
 pub mod timeout;
 pub mod runtime;
+pub mod return_types_u32;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {

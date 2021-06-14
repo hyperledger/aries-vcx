@@ -546,7 +546,7 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::return_types_u32;
+    use crate::abi_utils::return_types_u32;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
     use crate::abi_utils::timeout::TimeoutUtils;

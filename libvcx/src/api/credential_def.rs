@@ -520,7 +520,7 @@ mod tests {
     use std::ffi::CString;
 
     use crate::{api, settings, utils};
-    use crate::api::return_types_u32;
+    use crate::abi_utils::return_types_u32;
     use crate::utils::constants::SCHEMA_ID;
     use crate::utils::devsetup::*;
     use crate::abi_utils::timeout::TimeoutUtils;

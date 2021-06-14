@@ -4,10 +4,10 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::{connection, proof};
-use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
-use crate::utils::error;
 use crate::abi_utils::runtime::execute;
+use crate::error::prelude::*;
+use crate::utils::error;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.
@@ -613,14 +613,15 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use crate::api::{ProofStateType, return_types_u32, VcxStateType};
+    use crate::abi_utils::return_types_u32;
+    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api::{ProofStateType, VcxStateType};
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::proof;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use crate::utils::mockdata::mockdata_proof;
-    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

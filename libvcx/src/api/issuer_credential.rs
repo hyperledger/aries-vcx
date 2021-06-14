@@ -4,10 +4,10 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::{connection, credential_def, issuer_credential, settings};
-use crate::error::prelude::*;
 use crate::abi_utils::cstring::CStringUtils;
-use crate::utils::error;
 use crate::abi_utils::runtime::execute;
+use crate::error::prelude::*;
+use crate::utils::error;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -849,13 +849,14 @@ pub mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::abi_utils::return_types_u32;
+    use crate::abi_utils::timeout::TimeoutUtils;
+    use crate::api::VcxStateType;
     use crate::settings;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

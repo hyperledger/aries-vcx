@@ -5,11 +5,11 @@ use libc::c_char;
 
 use crate::{abi_utils, connection, libindy, utils};
 use crate::abi_utils::cstring::CStringUtils;
+use crate::abi_utils::runtime::execute;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::connection::*;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::abi_utils::runtime::execute;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -1208,15 +1208,16 @@ mod tests {
 
     use serde_json::Value;
 
+    use crate::abi_utils::return_types_u32;
+    use crate::abi_utils::timeout::TimeoutUtils;
     use crate::agency_client::mocking::AgencyMockDecrypted;
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::api::VcxStateType;
     use crate::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use crate::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use crate::utils::devsetup::*;
     use crate::utils::error;
     use crate::utils::error::SUCCESS;
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
-    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 
