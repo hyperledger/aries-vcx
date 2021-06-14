@@ -4,8 +4,8 @@ use agency_client::get_message::{Message, MessageByConnection};
 use agency_client::MessageStatusCode;
 
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::aries::handlers::connection::invitee::state_machine::{InviteeState, SmConnectionInvitee};
-use crate::aries::handlers::connection::inviter::state_machine::{InviterState, SmConnectionInviter};
+use crate::aries::handlers::connection::invitee::state_machine::{InviteeFullState, SmConnectionInvitee, InviteeState};
+use crate::aries::handlers::connection::inviter::state_machine::{InviterFullState, SmConnectionInviter, InviterState};
 use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
@@ -31,8 +31,8 @@ pub enum SmConnection {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SmConnectionState {
-    Inviter(InviterState),
-    Invitee(InviteeState),
+    Inviter(InviterFullState),
+    Invitee(InviteeFullState),
 }
 
 #[derive(Debug, Serialize)]
@@ -40,6 +40,13 @@ struct ConnectionInfo {
     my: SideConnectionInfo,
     their: Option<SideConnectionInfo>,
 }
+
+#[derive(Debug, PartialEq)]
+pub enum ConnectionState {
+    Inviter(InviterState),
+    Invitee(InviteeState)
+}
+
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -117,13 +124,13 @@ impl Connection {
         }.into()
     }
 
-    pub fn state(&self) -> u32 {
+    pub fn state(&self) -> ConnectionState {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.state()
+                ConnectionState::Inviter(sm_inviter.state())
             }
             SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.state()
+                ConnectionState::Invitee(sm_invitee.state())
             }
         }
     }
@@ -406,7 +413,7 @@ impl Connection {
                         }
                     }
                     None => {
-                        if let InviterState::Requested(_) = sm_inviter.state_object() {
+                        if let InviterFullState::Requested(_) = sm_inviter.state_object() {
                             (sm_inviter.handle_send_response()?, None, false)
                         } else {
                             (sm_inviter.clone(), None, false)
@@ -728,7 +735,7 @@ pub mod tests {
         assert_eq!(connection.pairwise_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
         assert_eq!(connection.cloud_agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
         assert_eq!(connection.cloud_agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
-        assert_eq!(connection.state(), VcxStateType::VcxStateAccepted as u32);
+        assert_eq!(connection.state(), ConnectionState::Inviter(InviterState::Completed));
     }
 
     fn test_deserialize_and_serialize(sm_serialized: &str) {
@@ -784,18 +791,18 @@ pub mod tests {
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, institution_to_consumer.state());
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.state());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, consumer_to_institution.state());
+        assert_eq!(ConnectionState::Invitee(InviteeState::Responded), consumer_to_institution.state());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, institution_to_consumer.state());
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.state());
 
         (consumer_to_institution, institution_to_consumer)
     }
