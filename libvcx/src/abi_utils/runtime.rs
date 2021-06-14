@@ -3,14 +3,15 @@ extern crate futures;
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::FnOnce;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::sync::Once;
 use std::thread;
 
 use futures::future;
 use tokio::runtime::Runtime;
+
 use crate::settings;
-use std::sync::atomic::{Ordering, AtomicUsize};
 
 lazy_static! {
     static ref THREADPOOL: Mutex<HashMap<u32, Runtime>> = Default::default();
