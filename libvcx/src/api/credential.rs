@@ -1003,7 +1003,7 @@ mod tests {
     use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

@@ -544,7 +544,7 @@ mod tests {
     #[allow(unused_imports)]
     use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use crate::utils::devsetup::*;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

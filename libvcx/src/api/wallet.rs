@@ -1191,7 +1191,7 @@ pub mod tests {
     use crate::libindy::utils::payments::build_test_address;
     use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
     use crate::utils::devsetup::*;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

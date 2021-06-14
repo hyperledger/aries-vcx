@@ -523,7 +523,7 @@ mod tests {
     use crate::api::return_types_u32;
     use crate::utils::constants::SCHEMA_ID;
     use crate::utils::devsetup::*;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

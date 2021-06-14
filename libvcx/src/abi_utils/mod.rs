@@ -6,6 +6,7 @@ use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 pub mod ccallback;
 #[macro_use]
 pub mod cstring;
+pub mod timeout;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {

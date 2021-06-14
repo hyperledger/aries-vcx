@@ -855,7 +855,7 @@ pub mod tests {
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

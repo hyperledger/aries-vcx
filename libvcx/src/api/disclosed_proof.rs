@@ -960,7 +960,7 @@ mod tests {
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

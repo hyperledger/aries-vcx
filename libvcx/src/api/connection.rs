@@ -1216,7 +1216,7 @@ mod tests {
     use crate::utils::error;
     use crate::utils::error::SUCCESS;
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

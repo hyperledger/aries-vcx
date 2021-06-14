@@ -620,7 +620,7 @@ mod tests {
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use crate::utils::mockdata::mockdata_proof;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
 

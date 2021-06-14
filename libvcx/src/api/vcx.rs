@@ -529,7 +529,7 @@ mod tests {
     use crate::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use crate::utils::get_temp_dir_path;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
     use crate::api::wallet::vcx_open_main_wallet;

@@ -3,9 +3,9 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
+use crate::abi_utils::cstring::CStringUtils;
 use crate::error::prelude::*;
 use crate::filters;
-use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 
@@ -62,11 +62,12 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
+    use crate::abi_utils::timeout::TimeoutUtils;
     use crate::api::filters::vcx_filter_proof_requests_by_name;
     use crate::api::return_types_u32;
     use crate::connection;
     use crate::disclosed_proof::get_proof_request_messages;
-    use crate::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof, timeout::TimeoutUtils};
+    use crate::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     #[test]
     #[cfg(feature = "general_test")]
