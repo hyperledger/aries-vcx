@@ -998,7 +998,7 @@ mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
 
     use crate::abi_utils::return_types_u32;
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;

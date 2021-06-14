@@ -515,9 +515,9 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use crate::{api, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::{api_c, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
     use crate::abi_utils::return_types_u32;
-    use crate::api::wallet::tests::_test_add_and_get_wallet_record;
+    use crate::api_c::wallet::tests::_test_add_and_get_wallet_record;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
@@ -532,8 +532,8 @@ mod tests {
     use crate::abi_utils::timeout::TimeoutUtils;
 
     use super::*;
-    use crate::api::wallet::vcx_open_main_wallet;
-    use crate::api::connection::vcx_connection_create;
+    use crate::api_c::wallet::vcx_open_main_wallet;
+    use crate::api_c::connection::vcx_connection_create;
     use crate::init::PoolConfig;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
@@ -852,7 +852,7 @@ mod tests {
         let _setup = SetupDefaults::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        api::utils::vcx_provision_cloud_agent(cb.command_handle, ptr::null(), Some(cb.get_callback()));
+        api_c::utils::vcx_provision_cloud_agent(cb.command_handle, ptr::null(), Some(cb.get_callback()));
 
         let mut error_json_p: *const c_char = ptr::null();
         vcx_get_current_error(&mut error_json_p);
@@ -873,7 +873,7 @@ mod tests {
         }
 
         let config = CString::new("{}").unwrap();
-        api::utils::vcx_provision_cloud_agent(0, config.as_ptr(), Some(cb));
+        api_c::utils::vcx_provision_cloud_agent(0, config.as_ptr(), Some(cb));
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
@@ -1017,8 +1017,8 @@ mod tests {
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
 
-        api::wallet::vcx_wallet_set_handle(get_wallet_handle());
-        api::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
+        api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
+        api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
 

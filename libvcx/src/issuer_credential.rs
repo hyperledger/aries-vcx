@@ -176,7 +176,7 @@ pub mod tests {
     use agency_client::mocking::HttpClientMockResponse;
 
     use crate::{issuer_credential, settings};
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::credential_def::tests::create_cred_def_fake;
     use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;

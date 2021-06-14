@@ -956,7 +956,7 @@ mod tests {
 
     use crate::abi_utils::return_types_u32;
     use crate::abi_utils::timeout::TimeoutUtils;
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;

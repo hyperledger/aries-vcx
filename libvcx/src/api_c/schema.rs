@@ -537,7 +537,7 @@ mod tests {
     #[allow(unused_imports)]
     use rand::Rng;
 
-    use crate::{api, libindy, settings, utils};
+    use crate::{api_c, libindy, settings, utils};
     use crate::abi_utils::return_types_u32;
     use crate::schema::CreateSchema;
     use crate::schema::tests::prepare_schema_data;
@@ -737,17 +737,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_c::PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_c::PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_c::PublicEntityStateType::Published as u32)
         }
     }
 }

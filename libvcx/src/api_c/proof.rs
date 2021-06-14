@@ -615,7 +615,7 @@ mod tests {
 
     use crate::abi_utils::return_types_u32;
     use crate::abi_utils::timeout::TimeoutUtils;
-    use crate::api::{ProofStateType, VcxStateType};
+    use crate::api_c::{ProofStateType, VcxStateType};
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::proof;
     use crate::utils::constants::*;

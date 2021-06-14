@@ -362,7 +362,7 @@ pub mod tests {
     use crate::utils::get_temp_dir_path;
 
     use super::*;
-    use crate::api;
+    use crate::api_c;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -543,7 +543,7 @@ pub mod tests {
         let id = "id1";
         let value = "value1";
 
-        api::vcx::vcx_shutdown(true);
+        api_c::vcx::vcx_shutdown(true);
 
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),

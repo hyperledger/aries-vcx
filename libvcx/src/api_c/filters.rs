@@ -63,7 +63,7 @@ mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
 
     use crate::abi_utils::timeout::TimeoutUtils;
-    use crate::api::filters::vcx_filter_proof_requests_by_name;
+    use crate::api_c::filters::vcx_filter_proof_requests_by_name;
     use crate::abi_utils::return_types_u32;
     use crate::connection;
     use crate::disclosed_proof::get_proof_request_messages;

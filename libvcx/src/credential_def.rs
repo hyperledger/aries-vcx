@@ -1,6 +1,6 @@
 use serde_json;
 
-use crate::api::PublicEntityStateType;
+use crate::api_c::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, ledger};
 use crate::libindy::utils::cache::update_rev_reg_ids_cache;

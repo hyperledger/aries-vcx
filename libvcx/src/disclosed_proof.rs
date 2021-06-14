@@ -259,7 +259,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::api::VcxStateType;
+    use crate::api_c::VcxStateType;
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use crate::utils;
     use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};

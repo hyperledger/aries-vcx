@@ -37,7 +37,7 @@ pub mod abi_utils;
 pub mod utils;
 pub mod settings;
 #[macro_use]
-pub mod api;
+pub mod api_c;
 pub mod init;
 pub mod connection;
 pub mod issuer_credential;
@@ -62,8 +62,8 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::api::ProofStateType;
-    use crate::api::VcxStateType;
+    use crate::api_c::ProofStateType;
+    use crate::api_c::VcxStateType;
     use crate::connection;
     use crate::credential;
     use crate::credential_def;
