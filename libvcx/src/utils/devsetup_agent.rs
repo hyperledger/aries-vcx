@@ -338,7 +338,7 @@ pub mod test {
             self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).unwrap();
             self.connection.connect().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(ConnectionState::Invitee(InviteeState::Invited), self.connection.state());
+            assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.state());
         }
 
         pub fn update_state(&mut self, expected_state: u32) {

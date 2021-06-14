@@ -796,7 +796,7 @@ pub mod tests {
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();
-        assert_eq!(ConnectionState::Invitee(InviteeState::Responded), consumer_to_institution.state());
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.state());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().unwrap();
