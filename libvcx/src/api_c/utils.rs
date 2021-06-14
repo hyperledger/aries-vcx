@@ -5,20 +5,17 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use utils_c::cstring::CStringUtils;
-use utils_c::runtime::execute;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 
+use crate::api_c::utils_c::cstring::CStringUtils;
+use crate::api_c::utils_c::runtime::execute;
 use crate::connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments;
 use crate::utils::constants::*;
 use crate::utils::error;
 use crate::utils::provision::AgentProvisionConfig;
-
-#[macro_use]
-pub mod utils_c;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {

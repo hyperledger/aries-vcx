@@ -2,6 +2,7 @@ use std::fmt;
 
 #[macro_use]
 pub mod utils_c;
+
 pub mod vcx;
 pub mod connection;
 pub mod issuer_credential;
@@ -12,6 +13,7 @@ pub mod credential;
 pub mod disclosed_proof;
 pub mod wallet;
 pub mod logger;
+pub mod utils;
 mod filters;
 
 
