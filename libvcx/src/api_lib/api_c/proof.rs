@@ -4,10 +4,10 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::api_lib::api_handle::proof;
 use crate::utils::error;
 
 /*
@@ -236,10 +236,10 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHandle,
-                                                  proof_handle: u32,
-                                                  connection_handle: u32,
-                                                  message: *const c_char,
-                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                     proof_handle: u32,
+                                                     connection_handle: u32,
+                                                     message: *const c_char,
+                                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_proof_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -616,9 +616,9 @@ mod tests {
 
     use crate::api_lib::{ProofStateType, VcxStateType};
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::proof;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::api_lib::api_handle::proof;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
@@ -720,9 +720,9 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_v2_proof_update_state(cb.command_handle,
-                                          proof_handle,
-                                          connection_handle,
-                                          Some(cb.get_callback())),
+                                             proof_handle,
+                                             connection_handle,
+                                             Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, VcxStateType::VcxStateInitialized as u32);
@@ -753,10 +753,10 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_v2_proof_update_state_with_message(cb.command_handle,
-                                                       proof_handle,
-                                                       connection_handle,
-                                                       CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
-                                                       Some(cb.get_callback())),
+                                                          proof_handle,
+                                                          connection_handle,
+                                                          CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION).unwrap().into_raw(),
+                                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -772,8 +772,8 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_get_proof_msg(cb.command_handle,
-                                 proof_handle,
-                                 Some(cb.get_callback())),
+                                     proof_handle,
+                                     Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
@@ -787,8 +787,8 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_get_proof_msg(cb.command_handle,
-                                 proof_handle,
-                                 Some(cb.get_callback())),
+                                     proof_handle,
+                                     Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let (state, _) = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, ProofStateType::ProofInvalid as u32);

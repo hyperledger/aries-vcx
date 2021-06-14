@@ -220,8 +220,8 @@ fn _parse_revocation_details(revocation_details: &str) -> VcxResult<RevocationDe
         .to_vcx(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails")?;
 
     match revoc_details.tails_url.is_some() && revoc_details.tails_base_url.is_some() {
-       true => Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "It is allowed to specify either tails_location or tails_base_location, but not both")),
-       false => Ok(revoc_details)
+        true => Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "It is allowed to specify either tails_location or tails_base_location, but not both")),
+        false => Ok(revoc_details)
     }
 }
 
@@ -299,7 +299,7 @@ pub fn create_and_publish_credentialdef(source_id: String,
 
     let (rev_def_payment, rev_delta_payment, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
         Ok(Some(ledger_cred_def_json)) => {
-            return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", cred_def_id, ledger_cred_def_json)))
+            return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", cred_def_id, ledger_cred_def_json)));
         }
         Ok(None) => {
             let cred_def_payment_txn = anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;

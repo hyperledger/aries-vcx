@@ -28,13 +28,13 @@ use crate::utils::version_constants;
 pub extern fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
     match enable_vcx_mocks() {
-        Ok(_) => { },
+        Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
     return match enable_agency_mocks() {
         Ok(_) => error::SUCCESS.code_num,
         Err(_) => error::UNKNOWN_ERROR.code_num
-    }
+    };
 }
 
 
@@ -99,7 +99,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
         Ok(agency_config) => agency_config,
         Err(err) => {
             error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -149,7 +149,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
         Ok(issuer_config) => issuer_config,
         Err(err) => {
             error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -202,7 +202,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char,  cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
     if is_pool_open() {
@@ -214,7 +214,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         Ok(pool_config) => pool_config,
         Err(err) => {
             error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -298,7 +298,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
 
         match wallet::delete_wallet(&wallet_config) {
@@ -673,7 +673,7 @@ mod tests {
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into()),
         };
         import(&import_config).unwrap();
 
@@ -707,7 +707,7 @@ mod tests {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
 
         let import_config = RestoreWalletConfigs {
@@ -715,7 +715,7 @@ mod tests {
             wallet_key: wallet_config.wallet_key.clone(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone())
+            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone()),
         };
         import(&import_config).unwrap();
 
@@ -747,7 +747,7 @@ mod tests {
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: None
+            wallet_key_derivation: None,
         };
         assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
 
@@ -934,7 +934,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_call_c_callable_api_without_threadpool () {
+    fn test_call_c_callable_api_without_threadpool() {
         let _setup = SetupMocks::init_without_threadpool();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();

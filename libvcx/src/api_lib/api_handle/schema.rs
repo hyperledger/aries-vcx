@@ -2,7 +2,6 @@ use std::string::ToString;
 
 use serde_json;
 
-
 use crate::api_lib::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;

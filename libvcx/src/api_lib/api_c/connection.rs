@@ -10,8 +10,8 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use crate::utils::error;
 use crate::libindy;
+use crate::utils::error;
 
 /*
     Tha API represents a pairwise connection with another identity owner.

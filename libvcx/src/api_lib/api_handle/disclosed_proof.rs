@@ -2,12 +2,12 @@ use serde_json;
 
 use agency_client::mocking::AgencyMockDecrypted;
 
+use crate::api_lib::api_handle::connection;
 use crate::aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use crate::aries::messages::a2a::A2AMessage;
-use crate::api_lib::api_handle::connection;
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
 use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;

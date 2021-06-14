@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use serde_json;
 
 use agency_client;
-use agency_client::MessageStatusCode;
 use agency_client::get_message::MessageByConnection;
+use agency_client::MessageStatusCode;
 
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
@@ -24,7 +24,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn get_agent_did(handle: u32) -> VcxResult<String> {
-     CONNECTION_MAP.get(handle, |connection| {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.cloud_agent_info().agent_did.to_string())
     })
 }
@@ -215,7 +215,7 @@ pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 
 pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
     CONNECTION_MAP.get(handle, |connection| {
-        return connection.send_message_closure()
+        return connection.send_message_closure();
     })
 }
 

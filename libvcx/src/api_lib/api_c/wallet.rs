@@ -53,7 +53,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
         Ok(wallet_config) => wallet_config,
         Err(err) => {
             error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -92,8 +92,8 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
-                                        enterprise_seed: *const c_char,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
+                                          enterprise_seed: *const c_char,
+                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
     info!("vcx_configure_issuer_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -134,8 +134,8 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
-                                        wallet_config: *const c_char,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
+                                   wallet_config: *const c_char,
+                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
     info!("vcx_open_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -145,7 +145,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
         Ok(wallet_config) => wallet_config,
         Err(err) => {
             error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -177,7 +177,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     info!("vcx_close_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -1112,7 +1112,7 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
         Ok(config) => config,
         Err(err) => {
             error!("vcx_wallet_import >>> invalid import configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -1584,7 +1584,7 @@ pub mod tests {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
         create_and_open_as_main_wallet(&wallet_config);
 

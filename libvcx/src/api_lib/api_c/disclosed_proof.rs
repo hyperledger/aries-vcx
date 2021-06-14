@@ -4,9 +4,9 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::disclosed_proof;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
-use crate::api_lib::api_handle::disclosed_proof;
 use crate::error::prelude::*;
 use crate::utils::error;
 
@@ -546,10 +546,10 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: CommandHandle,
-                                                            proof_handle: u32,
-                                                            connection_handle: u32,
-                                                            message: *const c_char,
-                                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                               proof_handle: u32,
+                                                               connection_handle: u32,
+                                                               message: *const c_char,
+                                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_disclosed_proof_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
