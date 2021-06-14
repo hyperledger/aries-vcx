@@ -3,11 +3,11 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, libindy, utils};
+use crate::{abi_utils, connection, libindy, utils};
+use crate::abi_utils::cstring::CStringUtils;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::connection::*;
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 
@@ -848,7 +848,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
 
-                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&x);
+                let (signature_raw, signature_len) = abi_utils::cstring::vec_to_pointer(&x);
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
             Err(e) => {

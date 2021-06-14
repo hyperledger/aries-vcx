@@ -10,7 +10,7 @@ use std::ptr::null;
 use vcx::api::logger::*;
 use vcx::utils::logger::{LOGGER_STATE, LoggerState};
 use indy::wallet;
-use vcx::utils::cstring::CStringUtils;
+use vcx::abi_utils::cstring::CStringUtils;
 use vcx::api::logger::vcx_set_logger;
 
 /// These tests can only be run individually as initing the log crate can happen

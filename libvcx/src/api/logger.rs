@@ -1,7 +1,7 @@
 use libc::c_char;
 
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error::SUCCESS;
 use crate::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
 

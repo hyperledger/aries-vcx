@@ -1,11 +1,6 @@
 use std::env;
 use std::path::PathBuf;
 
-#[macro_use]
-mod ccallback;
-
-#[macro_use]
-pub mod cstring;
 
 #[macro_use]
 pub mod version_constants;

@@ -1,6 +1,11 @@
 use crate::aries::handlers::connection::connection::ConnectionState;
-use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
+use crate::aries::handlers::connection::inviter::state_machine::InviterState;
+
+#[macro_use]
+pub mod ccallback;
+#[macro_use]
+pub mod cstring;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {

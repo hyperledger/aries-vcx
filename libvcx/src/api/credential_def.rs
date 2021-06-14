@@ -6,7 +6,7 @@ use serde_json;
 
 use crate::{credential_def, settings};
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 

@@ -5,7 +5,7 @@ use libc::c_char;
 
 use crate::{connection, credential_def, issuer_credential, settings};
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 

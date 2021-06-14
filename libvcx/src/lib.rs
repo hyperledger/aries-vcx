@@ -32,6 +32,8 @@ extern crate uuid;
 extern crate tokio;
 
 #[macro_use]
+pub mod abi_utils;
+#[macro_use]
 pub mod utils;
 pub mod settings;
 #[macro_use]
@@ -49,7 +51,6 @@ pub mod disclosed_proof;
 pub mod aries;
 mod filters;
 pub mod libindy;
-pub mod abi_utils;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]

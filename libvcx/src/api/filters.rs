@@ -5,7 +5,7 @@ use libc::c_char;
 
 use crate::error::prelude::*;
 use crate::filters;
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 

@@ -10,7 +10,7 @@ use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_iss
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
 use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
 use crate::utils::version_constants;

@@ -10,7 +10,7 @@ use libc::c_char;
 use agency_client;
 
 use crate::utils;
-use crate::utils::cstring::CStringUtils;
+use crate::abi_utils::cstring::CStringUtils;
 use crate::utils::error;
 
 pub mod prelude {
