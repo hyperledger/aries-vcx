@@ -21,7 +21,7 @@ use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::error::prelude::*;
 use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct SmConnectionInvitee {
     source_id: String,
     pairwise_info: PairwiseInfo,

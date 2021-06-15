@@ -15,15 +15,16 @@ use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
+use crate::aries::utils::send_message;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Connection {
     connection_sm: SmConnection,
     cloud_agent_info: CloudAgentInfo,
     autohop_enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
@@ -107,7 +108,7 @@ impl Connection {
             SmConnectionState::Inviter(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state)),
+                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }
