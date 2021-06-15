@@ -66,6 +66,9 @@ pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
 pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
 pub static DEFAULT_PAYMENT_METHOD: &str = "null";
 
+pub static DEFAULT_THREADPOOL_SIZE: usize = 18;
+pub static MAX_THREADPOOL_SIZE: usize = 4;
+
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());

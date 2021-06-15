@@ -29,7 +29,6 @@ extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
-extern crate tokio;
 
 #[macro_use]
 pub mod utils;

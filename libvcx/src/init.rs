@@ -7,7 +7,6 @@ use crate::{settings, utils};
 use crate::error::{VcxErrorExt, VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, set_wallet_handle, WalletConfig, IssuerConfig};
-use crate::utils::runtime::ThreadpoolConfig;
 use crate::utils::provision::AgencyClientConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -17,10 +16,15 @@ pub struct PoolConfig {
     pub pool_config: Option<String>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ThreadpoolConfig {
+    pub num_threads: Option<String>,
+}
+
 pub fn init_threadpool(config: &str) -> VcxResult<()> {
     let config: ThreadpoolConfig = serde_json::from_str(config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
-    utils::runtime::init_runtime(config);
+    utils::runtime::init_runtime(config.num_threads.as_deref());
     Ok(())
 }
 
