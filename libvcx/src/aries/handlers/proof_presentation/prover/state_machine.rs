@@ -17,7 +17,7 @@ use crate::error::prelude::*;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProverSM {
     source_id: String,
     thread_id: String,

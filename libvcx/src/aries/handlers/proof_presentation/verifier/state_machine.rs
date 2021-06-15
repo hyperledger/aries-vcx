@@ -12,7 +12,7 @@ use crate::aries::handlers::proof_presentation::verifier::states::initial::Initi
 use crate::aries::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::aries::handlers::proof_presentation::verifier::states::finished::FinishedState;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerifierSM {
     source_id: String,
     state: VerifierState,

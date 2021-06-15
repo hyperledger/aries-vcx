@@ -6,7 +6,7 @@ use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_request::*;
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Verifier {
     verifier_sm: VerifierSM
 }
