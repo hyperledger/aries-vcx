@@ -16,14 +16,14 @@ use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Connection {
     connection_sm: SmConnection,
     cloud_agent_info: CloudAgentInfo,
     autohop_enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),

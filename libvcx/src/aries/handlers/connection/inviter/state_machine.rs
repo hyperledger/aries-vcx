@@ -21,7 +21,7 @@ use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::error::prelude::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SmConnectionInviter {
     pub source_id: String,
     pub pairwise_info: PairwiseInfo,
