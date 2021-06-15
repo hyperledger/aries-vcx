@@ -13,7 +13,9 @@ pub mod test {
     use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
     use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
     use crate::utils::constants;
-    use crate::aries::handlers::connection::connection::Connection;
+    use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
+    use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
+    use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -190,7 +192,7 @@ pub mod test {
             self.activate().unwrap();
             self.connection.connect().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(1, self.connection.state());
+            assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
         }
@@ -198,7 +200,7 @@ pub mod test {
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(expected_state, self.connection.state());
+            assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub fn ping(&mut self) {
@@ -336,13 +338,13 @@ pub mod test {
             self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).unwrap();
             self.connection.connect().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(2, self.connection.state());
+            assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
             self.connection.update_state().unwrap();
-            assert_eq!(expected_state, self.connection.state());
+            assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {

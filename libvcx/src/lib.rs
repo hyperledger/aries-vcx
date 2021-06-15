@@ -49,6 +49,7 @@ pub mod disclosed_proof;
 pub mod aries;
 mod filters;
 pub mod libindy;
+pub mod abi_utils;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]

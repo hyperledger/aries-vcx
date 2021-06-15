@@ -4,7 +4,7 @@ use serde_json;
 
 use agency_client;
 use agency_client::{MessageStatusCode};
-use agency_client::get_message::{Message, MessageByConnection};
+use agency_client::get_message::MessageByConnection;
 
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
@@ -14,8 +14,6 @@ use crate::error::prelude::*;
 use crate::utils::error;
 use crate::utils::object_cache::ObjectCache;
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
-use crate::utils::serialization::SerializableObjectWithState;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
@@ -64,7 +62,7 @@ pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.state())
+        Ok(connection.get_state().into())
     }).unwrap_or(0)
 }
 
