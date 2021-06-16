@@ -1,15 +1,8 @@
-use crate::error::prelude::*;
-use crate::aries::handlers::connection::agent_info::AgentInfo;
-use crate::aries::handlers::connection::invitee::states::complete::CompleteState;
-use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
-use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::problem_report::ProblemReport;
 use crate::aries::messages::connection::request::Request;
-use crate::aries::messages::connection::response::{Response, SignedResponse};
-use crate::aries::messages::trust_ping::ping::Ping;
-
+use crate::aries::messages::connection::response::SignedResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {

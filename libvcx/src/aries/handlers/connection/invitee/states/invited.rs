@@ -7,7 +7,7 @@ use crate::aries::messages::connection::request::Request;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InvitedState {
-    pub invitation: Invitation
+    pub invitation: Invitation,
 }
 
 impl From<(InvitedState, ProblemReport)> for NullState {

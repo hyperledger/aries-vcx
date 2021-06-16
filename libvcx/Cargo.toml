@@ -1,7 +1,7 @@
 [package]
 
 name = "libvcx"
-version = "0.18.2"
+version = "0.18.3"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
 description = "Absa's fork of HL LibVCX"
@@ -20,7 +20,6 @@ agency = [] # migrate these to v2 agency
 agency_pool_tests = []
 agency_v2 = []
 pool_legacy_agency_tests = [] # migrate the test using this
-aries = []
 general_test = []
 to_restore = []
 # Causes the build to fail on all warnings

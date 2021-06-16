@@ -317,8 +317,8 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
-                let key = cred_value.get("name").ok_or(VcxError::from(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
-                let value = cred_value.get("value").ok_or(VcxError::from(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
+                let key = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
+                let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
                 new_offer = new_offer.add_credential_preview_data(
                     &key.to_string(),
                     &value.to_string(),
