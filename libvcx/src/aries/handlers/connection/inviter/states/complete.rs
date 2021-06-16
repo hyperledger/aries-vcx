@@ -35,8 +35,12 @@ impl CompleteState {
         Ok(())
     }
 
-    pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
-        handle_ping(ping, pw_vk, &self.did_doc)
+    pub fn handle_ping(&self,
+                       ping: &Ping,
+                       pw_vk: &str,
+                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+    ) -> VcxResult<()> {
+        handle_ping(ping, pw_vk, &self.did_doc, send_message)
     }
 
     pub fn handle_discover_features(&self,

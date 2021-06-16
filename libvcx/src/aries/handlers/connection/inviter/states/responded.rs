@@ -8,6 +8,7 @@ use crate::aries::messages::connection::response::SignedResponse;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::error::prelude::*;
+use crate::aries::messages::a2a::A2AMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {
@@ -45,7 +46,12 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 }
 
 impl RespondedState {
-    pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
-        handle_ping(ping, pw_vk, &self.did_doc)
+    pub fn handle_ping(&self,
+                       ping: &Ping,
+                       pw_vk: &str,
+                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+    ) -> VcxResult<()> {
+        handle_ping(ping, pw_vk, &self.did_doc, send_message)
     }
+
 }

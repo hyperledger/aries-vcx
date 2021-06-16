@@ -115,7 +115,7 @@ impl Connection {
             SmConnectionState::Invitee(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state)),
+                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }
@@ -578,7 +578,7 @@ Get messages received from connection counterparty.
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         return Ok(move |a2a_message: &A2AMessage| {
-            did_doc.send_message(a2a_message, &sender_vk)
+            send_message(&sender_vk, &did_doc, a2a_message)
         });
     }
 

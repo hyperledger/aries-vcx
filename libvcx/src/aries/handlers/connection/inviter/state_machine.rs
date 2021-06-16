@@ -316,11 +316,11 @@ impl SmConnectionInviter {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
             InviterFullState::Responded(state) => {
-                state.handle_ping(&ping, &pairwise_info.pw_vk)?;
+                state.handle_ping(&ping, &pairwise_info.pw_vk, send_message)?;
                 InviterFullState::Completed((state, ping).into())
             }
             InviterFullState::Completed(state) => {
-                state.handle_ping(&ping, &pairwise_info.pw_vk)?;
+                state.handle_ping(&ping, &pairwise_info.pw_vk, send_message)?;
                 InviterFullState::Completed(state)
             }
             _ => {
@@ -484,7 +484,6 @@ pub mod test {
         fn _send_message(pv_wk: &str, did_doc: &DidDoc, a2a_message: &A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
-
 
         pub fn inviter_sm() -> SmConnectionInviter {
             let pairwise_info = PairwiseInfo::create().unwrap();
