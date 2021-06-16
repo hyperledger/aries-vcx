@@ -1,7 +1,5 @@
 use serde_json;
 
-use agency_client::ObjectWithVersion;
-
 use crate::api::PublicEntityStateType;
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, ledger};
@@ -9,6 +7,7 @@ use crate::libindy::utils::cache::update_rev_reg_ids_cache;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::object_cache::ObjectCache;
+use crate::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
@@ -639,8 +638,8 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_revocable_cred_def_with_payments() {
-        let _setup = SetupLibraryWalletPool::init();
+    fn test_create_revocable_cred_def() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -655,8 +654,6 @@ pub mod tests {
 
         assert!(get_rev_reg_def(handle).unwrap().is_some());
         assert!(get_rev_reg_id(handle).ok().is_some());
-        assert!(get_rev_reg_def_payment_txn(handle).unwrap().is_some());
-        assert!(get_rev_reg_delta_payment_txn(handle).unwrap().is_some());
         let cred_id = get_cred_def_id(handle).unwrap();
         libindy::utils::anoncreds::get_cred_def_json(&cred_id).unwrap();
     }
@@ -664,7 +661,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_credential_def_real() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, handle) = create_cred_def_real(false);
 
@@ -688,7 +685,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_credential_works_twice() {
-        let _setup = SetupLibraryWalletPool::init();
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
         create_and_publish_credentialdef("1".to_string(),

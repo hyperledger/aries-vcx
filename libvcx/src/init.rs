@@ -51,7 +51,7 @@ pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
 
 pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-    trace!("open_pool >>> pool_name={}, path={}, pool_config={:?}", pool_name, config.genesis_path, config.pool_config);
+    trace!("open_pool >>> pool_name: {}, path: {}, pool_config: {:?}", pool_name, config.genesis_path, config.pool_config);
 
     create_pool_ledger_config(&pool_name, &config.genesis_path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;

@@ -96,7 +96,7 @@ impl EncryptionEnvelope {
     }
 
     pub fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> VcxResult<A2AMessage> {
-        trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk={}", payload.len(), expected_vk);
+        trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk: {}", payload.len(), expected_vk);
 
         let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
@@ -108,7 +108,7 @@ impl EncryptionEnvelope {
             match sender_vk {
                 Some(sender_vk) => {
                     if sender_vk != expected_vk {
-                        error!("auth_unpack  sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
+                        error!("auth_unpack  sender_vk != expected_vk.... sender_vk: {}, expected_vk: {}", sender_vk, expected_vk);
                         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
                                                       format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
                         );

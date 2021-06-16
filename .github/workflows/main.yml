@@ -455,7 +455,7 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test aries" && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
                                 cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test")'
 
@@ -864,7 +864,7 @@ jobs:
 
   publish-libvcx:
     runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
       DOCKER_IMG_NAME_LIBVCX: ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_LIBVCX}}

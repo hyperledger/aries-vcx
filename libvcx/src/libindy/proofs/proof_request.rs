@@ -116,7 +116,7 @@ mod tests {
             .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
 
         let serialized_msg = serde_json::to_string(&request).unwrap();
-        warn!("serialized_msg={}", serialized_msg);
+        warn!("serialized_msg: {}", serialized_msg);
         // todo: Does it really need to have both "version" and "ver" field?
         assert!(serialized_msg.contains(r#""name":"Test","version":"1.0""#));
         assert!(serialized_msg.contains(r#""non_revoked":{"from":1100000000,"to":1600000000}"#));

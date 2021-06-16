@@ -49,6 +49,7 @@ pub mod disclosed_proof;
 pub mod aries;
 mod filters;
 pub mod libindy;
+pub mod abi_utils;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
@@ -360,7 +361,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut institution);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         let time_before_revocation = time::get_time().sec as u64;
@@ -392,7 +393,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut institution);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, issuer_credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         revoke_credential_local(&mut institution, issuer_credential_handle, rev_reg_id.clone());
@@ -422,10 +423,10 @@ mod tests {
         let mut verifier = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
-        let (consumer1_to_verifier, verifier_to_consumer1) = connection::tests::create_connected_connections(&mut consumer1, &mut verifier);
-        let (consumer1_to_issuer, issuer_to_consumer1) = connection::tests::create_connected_connections(&mut consumer1, &mut issuer);
-        let (consumer2_to_verifier, verifier_to_consumer2) = connection::tests::create_connected_connections(&mut consumer2, &mut verifier);
-        let (consumer2_to_issuer, issuer_to_consumer2) = connection::tests::create_connected_connections(&mut consumer2, &mut issuer);
+        let (consumer1_to_verifier, verifier_to_consumer1) = connection::tests::create_and_store_connected_connections(&mut consumer1, &mut verifier);
+        let (consumer1_to_issuer, issuer_to_consumer1) = connection::tests::create_and_store_connected_connections(&mut consumer1, &mut issuer);
+        let (consumer2_to_verifier, verifier_to_consumer2) = connection::tests::create_and_store_connected_connections(&mut consumer2, &mut verifier);
+        let (consumer2_to_issuer, issuer_to_consumer2) = connection::tests::create_and_store_connected_connections(&mut consumer2, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
@@ -458,8 +459,8 @@ mod tests {
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, cred_def_id, _rev_reg_id, _cred_def_handle, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, consumer_to_issuer, issuer_to_consumer);
         issuer.activate().unwrap();
@@ -484,7 +485,7 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut institution);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
         let (address1, address, city, state, zip) = attr_names();
@@ -514,9 +515,9 @@ mod tests {
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
         let mut consumer3 = Alice::setup();
-        let (consumer_to_institution1, institution_to_consumer1) = connection::tests::create_connected_connections(&mut consumer1, &mut institution);
-        let (consumer_to_institution2, institution_to_consumer2) = connection::tests::create_connected_connections(&mut consumer2, &mut institution);
-        let (consumer_to_institution3, institution_to_consumer3) = connection::tests::create_connected_connections(&mut consumer3, &mut institution);
+        let (consumer_to_institution1, institution_to_consumer1) = connection::tests::create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let (consumer_to_institution2, institution_to_consumer2) = connection::tests::create_and_store_connected_connections(&mut consumer2, &mut institution);
+        let (consumer_to_institution3, institution_to_consumer3) = connection::tests::create_and_store_connected_connections(&mut consumer3, &mut institution);
         assert_ne!(institution_to_consumer1, institution_to_consumer2);
         assert_ne!(institution_to_consumer1, institution_to_consumer3);
         assert_ne!(institution_to_consumer2, institution_to_consumer3);
@@ -584,7 +585,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_institution, institution_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut institution);
         let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         thread::sleep(Duration::from_millis(1000));
@@ -677,7 +678,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut institution);
 
         info!("test_real_proof >>>");
         let number_of_attributes = 10;
@@ -740,8 +741,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
@@ -772,8 +773,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
@@ -806,8 +807,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
@@ -840,8 +841,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
@@ -873,8 +874,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
@@ -908,8 +909,8 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did

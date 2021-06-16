@@ -2,7 +2,6 @@ use std::string::ToString;
 
 use serde_json;
 
-use agency_client::ObjectWithVersion;
 
 use crate::api::PublicEntityStateType;
 use crate::error::prelude::*;
@@ -11,6 +10,7 @@ use crate::libindy::utils::ledger;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::object_cache::ObjectCache;
+use crate::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
@@ -339,21 +339,6 @@ pub mod tests {
         let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).unwrap();
 
         check_schema(schema_handle, &schema_attrs, &schema_id, constants::DEFAULT_SCHEMA_ATTRS);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_schema_with_pool() {
-        let _setup = SetupLibraryWalletPool::init();
-
-        let handle = create_schema_real();
-
-        let _source_id = get_source_id(handle).unwrap();
-        let _schema_id = get_schema_id(handle).unwrap();
-        let _schema_json = to_string(handle).unwrap();
-
-        let payment = &get_payment_txn(handle).unwrap();
-        assert!(payment.amount > 0);
     }
 
     #[cfg(feature = "pool_tests")]
