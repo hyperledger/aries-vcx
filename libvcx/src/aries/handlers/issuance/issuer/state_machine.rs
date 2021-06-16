@@ -311,19 +311,19 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     trace!("Issuer::_append_credential_preview >>> cred_offer_msg: {:?}, credential_json: {:?}", cred_offer_msg, credential_json);
 
     let cred_values: serde_json::Value = serde_json::from_str(credential_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json={} error={:?}", credential_json, err)))?;
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json: {}, error: {:?}", credential_json, err)))?;
 
     let mut new_offer = cred_offer_msg;
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
-                let key = cred_value.get("name").unwrap();
-                let value = cred_value.get("value").unwrap();
+                let key = cred_value.get("name").ok_or(VcxError::from(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
+                let value = cred_value.get("value").ok_or(VcxError::from(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
                 new_offer = new_offer.add_credential_preview_data(
                     &key.to_string(),
                     &value.to_string(),
                     MimeType::Plain,
-                ).unwrap();
+                )?;
             };
         }
         serde_json::Value::Object(values_map) => {
