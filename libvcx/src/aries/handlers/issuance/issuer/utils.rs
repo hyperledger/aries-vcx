@@ -52,14 +52,18 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
             match serde_json::from_str::<Vec<serde_json::Value>>(attributes) {
                 Ok(mut attributes) => {
                     for cred_value in attributes.iter_mut() {
-                        let name = cred_value.get("name").unwrap();
-                        let value = cred_value.get("value").unwrap();
+                        let name = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
+                        let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
                         let encoded = encode(&value.to_string())?;
                         let attrib_values = json!({
                             "raw": value,
                             "encoded": encoded
                         });
-                        dictionary.insert(name.as_str().unwrap().to_string(), attrib_values);
+                        let name = name
+                            .as_str()
+                            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Failed to convert attribute name {:?} to string", cred_value)))?
+                            .to_string();
+                        dictionary.insert(name, attrib_values);
                     };
                     serde_json::to_string_pretty(&dictionary)
                         .map_err(|err| {
