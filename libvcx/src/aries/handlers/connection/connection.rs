@@ -72,8 +72,12 @@ impl Connection {
     pub fn create(source_id: &str, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
+        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
+        let routing_keys = cloud_agent_info.routing_keys()?;
+        let agency_endpoint = cloud_agent_info.service_endpoint()?;
+
         Ok(Connection {
-            cloud_agent_info: CloudAgentInfo::default(),
+            cloud_agent_info,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
             autohop_enabled: autohop,
         })
@@ -85,8 +89,12 @@ impl Connection {
     pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
+        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
+        let routing_keys = cloud_agent_info.routing_keys()?;
+        let agency_endpoint = cloud_agent_info.service_endpoint()?;
+
         let mut connection = Connection {
-            cloud_agent_info: CloudAgentInfo::default(),
+            cloud_agent_info,
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
             autohop_enabled,
         };
@@ -494,18 +502,12 @@ impl Connection {
      */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
-        let pairwise_info = self.pairwise_info();
-        let cloud_agent = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent.routing_keys()?;
-        let agency_endpoint = cloud_agent.service_endpoint()?;
-        self.cloud_agent_info = cloud_agent;
-
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_connect(routing_keys, agency_endpoint)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_connect(routing_keys, agency_endpoint)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
             }
         };
         Ok(())
