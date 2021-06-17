@@ -86,7 +86,7 @@ pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |credential| {
         trace!("credential::update_state >>> ");
-        if credential.is_terminal_state() { return Ok(credential.get_status()); }
+        if credential.is_terminal_state() { return Ok(credential.get_state()); }
         let send_message = connection::send_message_closure(connection_handle)?;
 
         if let Some(message) = message {
@@ -100,7 +100,7 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
             connection::update_message_status(connection_handle, uid)?;
             }
         }
-        Ok(credential.get_status())
+        Ok(credential.get_state())
     })
 }
 
@@ -170,7 +170,7 @@ pub fn get_credential_offer(handle: u32) -> VcxResult<String> {
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| {
-        Ok(credential.get_status())
+        Ok(credential.get_state())
     }).map_err(handle_err)
 }
 

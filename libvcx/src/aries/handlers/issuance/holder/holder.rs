@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::aries::handlers::issuance::holder::state_machine::HolderSM;
 use crate::aries::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::aries::messages::a2a::A2AMessage;
+use crate::aries::handlers::connection::connection::Connection;
 use crate::aries::messages::issuance::credential_offer::CredentialOffer;
 use crate::error::prelude::*;
 
@@ -32,7 +33,7 @@ impl Holder {
         self.holder_sm.find_message_to_handle(messages)
     }
 
-    pub fn get_status(&self) -> u32 {
+    pub fn get_state(&self) -> u32 {
         self.holder_sm.state()
     }
 
@@ -79,5 +80,18 @@ impl Holder {
     pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().handle_message(message, send_message)?;
         Ok(())
+    }
+
+    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
+        trace!("Holder::update_state >>> ");
+        if self.is_terminal_state() { return Ok(self.get_state()); }
+        let send_message = connection.send_message_closure()?;
+
+        let messages = connection.get_messages()?;
+        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+            self.step(msg.into(), Some(&send_message))?;
+            connection.update_message_status(uid)?;
+        }
+        Ok(self.get_state())
     }
 }

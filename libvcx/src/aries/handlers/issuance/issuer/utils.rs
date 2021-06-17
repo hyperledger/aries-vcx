@@ -5,53 +5,76 @@ use crate::utils::error;
 use crate::utils::openssl::encode;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
-    let mut attributes: HashMap<String, serde_json::Value> = serde_json::from_str(attributes)
-        .map_err(|err| {
-            warn!("Invalid Json for Attribute data");
-            VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize credential attributes: {}", err))
-        })?;
-
     let mut dictionary = HashMap::new();
+    match serde_json::from_str::<HashMap<String, serde_json::Value>>(attributes) {
+        Ok(mut attributes) => {
+            for (attr, attr_data) in attributes.iter_mut() {
+                let first_attr: &str = match attr_data {
+                    // new style input such as {"address2":"101 Wilson Lane"}
+                    serde_json::Value::String(str_type) => str_type,
 
-    for (attr, attr_data) in attributes.iter_mut() {
-        let first_attr: &str = match attr_data {
-            // old style input such as {"address2":["101 Wilson Lane"]}
-            serde_json::Value::Array(array_type) => {
-                let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
-                    Some(x) => x,
-                    None => {
-                        warn!("Cannot encode attribute: {}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, "Attribute value not found"));
+                    // old style input such as {"address2":["101 Wilson Lane"]}
+                    serde_json::Value::Array(array_type) => {
+                        let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
+                            Some(x) => x,
+                            None => {
+                                warn!("Cannot encode attribute: {}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
+                                return Err(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, "Attribute value not found"));
+                            }
+                        };
+
+                        warn!("Old attribute format detected. See vcx_issuer_create_credential api for additional information.");
+                        attrib_value
+                    }
+
+                    // anything else is an error
+                    _ => {
+                        warn!("Invalid Json for Attribute data");
+                        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Json for Attribute data"));
                     }
                 };
 
-                warn!("Old attribute format detected. See vcx_issuer_create_credential api for additional information.");
-                attrib_value
+                let encoded = encode(&first_attr)?;
+                let attrib_values = json!({
+                    "raw": first_attr,
+                    "encoded": encoded
+                });
+
+                dictionary.insert(attr.to_string(), attrib_values);
+            };
+            serde_json::to_string_pretty(&dictionary)
+                .map_err(|err| {
+                    warn!("Invalid Json for Attribute data");
+                    VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
+                })
+        }
+        Err(err) => { // TODO: Check error type
+            match serde_json::from_str::<Vec<serde_json::Value>>(attributes) {
+                Ok(mut attributes) => {
+                    for cred_value in attributes.iter_mut() {
+                        let name = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
+                        let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
+                        let encoded = encode(&value.to_string())?;
+                        let attrib_values = json!({
+                            "raw": value,
+                            "encoded": encoded
+                        });
+                        let name = name
+                            .as_str()
+                            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Failed to convert attribute name {:?} to string", cred_value)))?
+                            .to_string();
+                        dictionary.insert(name, attrib_values);
+                    };
+                    serde_json::to_string_pretty(&dictionary)
+                        .map_err(|err| {
+                            warn!("Invalid Json for Attribute data");
+                            VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
+                        })
+                }
+                Err(err) => return Err(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Attribute value not found: {:?}", err)))
             }
-
-            // new style input such as {"address2":"101 Wilson Lane"}
-            serde_json::Value::String(str_type) => str_type,
-            // anything else is an error
-            _ => {
-                warn!("Invalid Json for Attribute data");
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Json for Attribute data"));
-            }
-        };
-
-        let encoded = encode(&first_attr)?;
-        let attrib_values = json!({
-            "raw": first_attr,
-            "encoded": encoded
-        });
-
-        dictionary.insert(attr, attrib_values);
+        }
     }
-
-    serde_json::to_string_pretty(&dictionary)
-        .map_err(|err| {
-            warn!("Invalid Json for Attribute data");
-            VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
-        })
 }
 
 

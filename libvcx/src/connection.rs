@@ -118,12 +118,6 @@ pub fn update_state_with_message(handle: u32, message: A2AMessage) -> VcxResult<
 //     Ok(None)
 // }
 
-/**
-Tries to update state of connection state machine in 3 steps:
-  1. find relevant message in agency,
-  2. use it to update connection state and possibly send response over network,
-  3. update state of used message in agency to "Reviewed".
- */
 pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection.update_state() {
