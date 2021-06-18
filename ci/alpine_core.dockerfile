@@ -22,7 +22,7 @@ RUN apk update && apk upgrade && \
         openssl-dev \
         zeromq-dev
 
-ARG RUST_VER="1.45.2"
+ARG RUST_VER="1.53.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
 USER indy
