@@ -759,8 +759,6 @@ pub mod tests {
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
     use crate::{aries, settings, utils};
-    use crate::api_lib::api_handle::connection;
-    use crate::api_lib::VcxStateType;
     use crate::aries::messages::ack::tests::_ack;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
