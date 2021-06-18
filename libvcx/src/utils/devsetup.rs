@@ -325,10 +325,6 @@ macro_rules! assert_match {
 }
 
 
-lazy_static! {
-    static ref ACTIVE_TESTAGENT: ObjectCache<String> = ObjectCache::<String>::new("devsetup-testagent");
-}
-
 /* dummy */
 pub const AGENCY_ENDPOINT: &'static str = "http://localhost:8080";
 pub const AGENCY_DID: &'static str = "VsKV7grR1BUE29mG2Fm2kX";
