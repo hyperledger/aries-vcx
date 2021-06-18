@@ -16,6 +16,11 @@ use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
 use crate::aries::utils::send_message;
+use serde::{Serialize, Serializer, Deserializer, Deserialize};
+use serde::de::{Visitor, Unexpected, Error, MapAccess, SeqAccess, EnumAccess};
+use std::fmt::{Formatter, Write};
+use core::fmt;
+use serde_json::Value;
 
 #[derive(Clone)]
 pub struct Connection {
@@ -679,6 +684,23 @@ Get messages received from connection counterparty.
     }
 
     pub fn to_string(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+
+    pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
+        let conn = serde_json::from_str(connection_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
+        Ok(conn)
+    }
+}
+
+impl Serialize for Connection
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        warn!("Running serialize on Connection");
         let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
@@ -687,13 +709,30 @@ Get messages received from connection counterparty.
             agent_vk: cloud_agent_info.agent_vk,
         };
         let object = SerializableObjectWithState::V1 { data, state, source_id };
-        json!(object).to_string()
+        serializer.serialize_some(&object)
+    }
+}
+
+struct ConnectionVisitor;
+
+impl<'de> Visitor<'de> for ConnectionVisitor {
+    type Value = Connection;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("an integer between -2^31 and 2^31")
     }
 
-    pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
-        let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
-        match object {
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, <A as MapAccess<'de>>::Error> where
+        A: MapAccess<'de>, {
+        let mut map_value = serde_json::Map::new();
+        while let Some(key) = map.next_key()? {
+            let k: String = key;
+            let v: Value = map.next_value()?;
+            map_value.insert(k, v);
+        }
+        let obj = Value::from(map_value);
+        let ver: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_value(obj).unwrap();
+        match ver {
             SerializableObjectWithState::V1 { data, state, source_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
                 let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
@@ -703,6 +742,14 @@ Get messages received from connection counterparty.
     }
 }
 
+impl<'de> Deserialize<'de> for Connection {
+    fn deserialize<D>(deserializer: D) -> Result<Connection, D::Error>
+        where
+            D: Deserializer<'de>,
+    {
+        deserializer.deserialize_map(ConnectionVisitor)
+    }
+}
 
 #[cfg(test)]
 pub mod tests {
@@ -774,6 +821,20 @@ pub mod tests {
 
         assert_eq!(first_string, second_string);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialize_deserialize_serde() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::create("test_serialize_deserialize", true).unwrap();
+        let first_string = serde_json::to_string(&connection).unwrap();
+
+        let connection2: Connection = serde_json::from_str(&first_string).unwrap();
+        let second_string = serde_json::to_string(&connection2).unwrap();
+        assert_eq!(first_string, second_string);
+    }
+
 
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
