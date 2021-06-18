@@ -579,7 +579,7 @@ jobs:
                               bash -c '(cd $HOME/libvcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
                               cd $HOME/aries_vcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests" )'
 
   test-libvcx-pgsql-integration:
     runs-on: ubuntu-20.04

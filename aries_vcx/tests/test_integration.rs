@@ -1843,7 +1843,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_tests")]
     fn test_connection_send_works() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut faber = Faber::setup();
@@ -1944,7 +1944,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_tests")]
     #[test]
     fn test_download_messages() {
         let _setup = SetupLibraryAgencyV2::init();
@@ -1977,7 +1977,7 @@ mod tests {
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_tests")]
     #[test]
     fn test_update_agency_messages() {
         let _setup = SetupLibraryAgencyV2::init();
@@ -2014,7 +2014,7 @@ mod tests {
         assert_eq!(specific_review[0].uid, uid);
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_tests")]
     #[test]
     fn test_download_messages_from_multiple_connections() {
         let _setup = SetupLibraryAgencyV2::init();

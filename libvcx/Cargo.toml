@@ -17,7 +17,6 @@ crate-type = ["staticlib","rlib", "cdylib"]
 pool_tests = []
 general_test = []
 to_restore = []
-fatal_warnings = []
 
 [dependencies]
 env_logger = "0.5.10"
