@@ -6,6 +6,7 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 
@@ -64,7 +65,6 @@ impl Prover {
         self.prover_sm.find_message_to_handle(messages)
     }
 
-
     pub fn handle_message(&mut self, message: ProverMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
         self.step(message, send_message)
@@ -111,6 +111,19 @@ impl Prover {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Only one of `reason` or `proposal` parameters must be specified."));
             }
         }
+    }
+
+    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
+        trace!("Prover::update_state >>> ");
+        if !self.has_transitions() { return Ok(self.state()); }
+        let send_message = connection.send_message_closure()?;
+
+        let messages = connection.get_messages()?;
+        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+            self.step(msg.into(), Some(&send_message))?;
+            connection.update_message_status(uid)?;
+        }
+        Ok(self.state())
     }
 }
 

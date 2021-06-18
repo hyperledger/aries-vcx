@@ -51,7 +51,7 @@ fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
 
 impl CloudAgentInfo {
     pub fn create(pairwise_info: &PairwiseInfo) -> VcxResult<CloudAgentInfo> {
-        trace!("CloudAgentInfo::create >>>");
+        trace!("CloudAgentInfo::create >>> pairwise_info: {:?}", pairwise_info);
         let (agent_did, agent_vk) = create_agent_keys("", &pairwise_info.pw_did, &pairwise_info.pw_vk)?;
         Ok(CloudAgentInfo { agent_did, agent_vk })
     }

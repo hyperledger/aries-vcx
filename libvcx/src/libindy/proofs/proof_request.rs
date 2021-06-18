@@ -39,26 +39,31 @@ impl ProofRequestData {
     }
 
     pub fn set_requested_attributes(mut self, requested_attrs: String) -> VcxResult<ProofRequestData> {
-        let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
-
-        for attribute in requested_attributes.iter() {
-            if attribute.name.is_some() && attribute.names.is_some() {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                              format!("Requested attribute can contain either 'name' or 'names'. Not both.")));
-            };
+        match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
+            Ok(attrs) => self.requested_attributes = attrs,
+            Err(err) => {
+                warn!("Error when setting attributes (this might not be a problem): {:?}", err);
+                let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
+                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
+                for attribute in requested_attributes.iter() {
+                    if attribute.name.is_some() && attribute.names.is_some() {
+                        return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
+                                                      format!("Requested attribute can contain either 'name' or 'names'. Not both.")));
+                    };
+                }
+                self.requested_attributes = requested_attributes
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
+                    .collect();
+            }
         }
-        self.requested_attributes = requested_attributes
-            .into_iter()
-            .enumerate()
-            .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
-            .collect();
         Ok(self)
     }
 
     pub fn set_requested_predicates(mut self, requested_predicates: String) -> VcxResult<ProofRequestData> {
         let requested_predicates: Vec<PredicateInfo> = ::serde_json::from_str(&requested_predicates)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_predicates, err)))?;
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Predicates: {:?}, err: {:?}", requested_predicates, err)))?;
 
         self.requested_predicates = requested_predicates
             .into_iter()

@@ -83,6 +83,9 @@ impl Json {
                         }
                     )
                 )
+            },
+            AttachmentEncoding::Json => {
+                AttachmentData::Json(json)
             }
         };
         Ok(Json {
@@ -93,6 +96,7 @@ impl Json {
 
     pub fn get_data(&self) -> VcxResult<String> {
         let data = self.data.get_bytes()?;
+        trace!("Json::get_data >>> data: {:?}", data);
         from_utf8(data.as_slice())
             .map(|s| s.to_string())
             .map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment".to_string()))
@@ -101,13 +105,16 @@ impl Json {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum AttachmentEncoding {
-    Base64
+    Base64,
+    Json
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AttachmentData {
     #[serde(rename = "base64")]
-    Base64(String)
+    Base64(String),
+    #[serde(rename = "json")]
+    Json(serde_json::Value)
 }
 
 impl AttachmentData {
@@ -115,6 +122,9 @@ impl AttachmentData {
         match self {
             AttachmentData::Base64(s) => {
                 base64::decode(s).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
+            }
+            AttachmentData::Json(json) => {
+                serde_json::to_vec(&json).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
             }
         }
     }
