@@ -6,6 +6,7 @@ use agency_client;
 use agency_client::get_message::MessageByConnection;
 use agency_client::MessageStatusCode;
 
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::aries::handlers::connection::connection::{Connection, SmConnectionState};
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
@@ -13,7 +14,6 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");

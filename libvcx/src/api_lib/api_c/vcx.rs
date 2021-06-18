@@ -6,6 +6,7 @@ use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::error::get_current_error_c_json;
 use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
 use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
@@ -15,7 +16,6 @@ use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, Issuer
 use crate::utils::error;
 use crate::utils::provision::AgencyClientConfig;
 use crate::utils::version_constants;
-use crate::api_lib::utils_c::error::get_current_error_c_json;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -522,6 +522,7 @@ mod tests {
     use crate::api_lib::api_c::wallet::tests::_test_add_and_get_wallet_record;
     use crate::api_lib::api_c::wallet::vcx_open_main_wallet;
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_lib::utils_c::error::reset_current_error;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::init::PoolConfig;
@@ -538,7 +539,6 @@ mod tests {
     use crate::utils::get_temp_dir_path;
 
     use super::*;
-    use crate::api_lib::utils_c::error::reset_current_error;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();

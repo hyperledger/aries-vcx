@@ -3,6 +3,7 @@ use serde_json;
 use agency_client::mocking::AgencyMockDecrypted;
 
 use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::{
     handlers::issuance::holder::holder::Holder,
     messages::a2a::A2AMessage,
@@ -13,7 +14,6 @@ use crate::settings::indy_mocks_enabled;
 use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use crate::utils::error;
 use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
-use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");

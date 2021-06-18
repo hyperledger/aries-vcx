@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, Mutex};
+use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use rand::Rng;
 
