@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use crate::aries::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::aries::handlers::proof_presentation::prover::state_machine::ProverSM;
+use crate::aries::handlers::connection::connection::Connection;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::aries::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 

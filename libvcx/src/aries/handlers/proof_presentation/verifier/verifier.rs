@@ -1,6 +1,7 @@
 use crate::error::prelude::*;
 use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::aries::handlers::proof_presentation::verifier::state_machine::VerifierSM;
+use crate::aries::handlers::connection::connection::Connection;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::proof_presentation::presentation::Presentation;
 use crate::aries::messages::proof_presentation::presentation_request::*;
@@ -89,5 +90,18 @@ impl Verifier {
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         self.verifier_sm.find_message_to_handle(messages)
+    }
+
+    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
+        trace!("Verifier::update_state >>> ");
+        if !self.has_transitions() { return Ok(self.state()); }
+        let send_message = connection.send_message_closure()?;
+
+        let messages = connection.get_messages()?;
+        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+            self.step(msg.into(), Some(&send_message))?;
+            connection.update_message_status(uid)?;
+        }
+        Ok(self.state())
     }
 }
