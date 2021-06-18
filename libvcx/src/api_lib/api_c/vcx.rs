@@ -538,6 +538,7 @@ mod tests {
     use crate::utils::get_temp_dir_path;
 
     use super::*;
+    use crate::api_lib::utils_c::error::reset_current_error;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -841,7 +842,7 @@ mod tests {
     fn get_current_error_works_for_no_error() {
         let _setup = SetupDefaults::init();
 
-        crate::error::reset_current_error();
+        reset_current_error();
 
         let mut error_json_p: *const c_char = ptr::null();
 
