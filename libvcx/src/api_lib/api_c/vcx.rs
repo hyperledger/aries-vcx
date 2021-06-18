@@ -15,6 +15,7 @@ use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, Issuer
 use crate::utils::error;
 use crate::utils::provision::AgencyClientConfig;
 use crate::utils::version_constants;
+use crate::api_lib::utils_c::error::get_current_error_c_json;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
