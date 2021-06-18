@@ -8,7 +8,7 @@ use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::ledger;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use crate::utils::object_cache::ObjectCache;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::utils::serialization::ObjectWithVersion;
 
 lazy_static! {

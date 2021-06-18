@@ -118,7 +118,7 @@ impl<T> ObjectCache<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::object_cache::ObjectCache;
+    use crate::api_lib::api_handle::object_cache::ObjectCache;
     use crate::utils::devsetup::SetupDefaults;
 
     #[test]

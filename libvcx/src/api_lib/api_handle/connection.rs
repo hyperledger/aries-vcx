@@ -13,7 +13,7 @@ use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::object_cache::ObjectCache;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");

@@ -1,7 +1,6 @@
 use std::env;
 use std::path::PathBuf;
 
-
 #[macro_use]
 pub mod version_constants;
 
@@ -50,7 +49,6 @@ pub mod plugins;
 
 #[macro_use]
 pub mod logger;
-pub mod object_cache;
 pub mod validation;
 pub mod devsetup_agent;
 pub mod serialization;

@@ -5,3 +5,4 @@ pub mod disclosed_proof;
 pub mod issuer_credential;
 pub mod proof;
 pub mod schema;
+pub mod object_cache;

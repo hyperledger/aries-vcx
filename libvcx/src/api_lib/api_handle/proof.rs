@@ -5,7 +5,7 @@ use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::object_cache::ObjectCache;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");

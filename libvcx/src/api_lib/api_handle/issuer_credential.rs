@@ -6,7 +6,7 @@ use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
 use crate::aries::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::object_cache::ObjectCache;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");

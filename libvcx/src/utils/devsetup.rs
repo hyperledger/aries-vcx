@@ -15,7 +15,7 @@ use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::logger::LibvcxDefaultLogger;
-use crate::utils::object_cache::ObjectCache;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::utils::plugins::init_plugin;
 
 pub struct SetupEmpty; // clears settings, setups up logging
