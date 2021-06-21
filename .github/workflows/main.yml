@@ -3,9 +3,6 @@ name: CI
 on:
   push:
     branches:
-      - master
-  pull_request:
-    branches:
       - "**"
 
 jobs:
@@ -427,6 +424,21 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
+  publish-crates:
+    runs-on: ubuntu-latest
+    needs: [workflow-setup]
+    env:
+      DOCKER_BUILDKIT: 1
+      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Publish crates
+        run: |
+          set -x
+          ./aries-vcx/publish.sh "$PUBLISH_VERSION"
+
+
   test-libvcx-image-general_test:
     runs-on: ubuntu-latest
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
@@ -697,7 +709,7 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper demo 
+      - name: Run wrapper demo
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
