@@ -42,7 +42,6 @@ impl ProofRequestData {
         match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(err) => {
-                warn!("Error when setting attributes (this might not be a problem): {:?}", err);
                 let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
                 for attribute in requested_attributes.iter() {
