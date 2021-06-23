@@ -731,7 +731,8 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
             map_value.insert(k, v);
         }
         let obj = Value::from(map_value);
-        let ver: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_value(obj).unwrap();
+        let ver: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_value(obj)
+            .map_err(|err| A::Error::custom(err.to_string()))?;
         match ver {
             SerializableObjectWithState::V1 { data, state, source_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
