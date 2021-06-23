@@ -812,7 +812,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "time",
- "tokio 0.3.7",
+ "tokio 1.7.1",
  "toml",
  "url 1.7.2",
  "uuid",
@@ -1810,14 +1810,13 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "0.3.7"
+version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46409491c9375a693ce7032101970a54f8a2010efb77e13f70788f0d84489e39"
+checksum = "5fb2ed024293bb19f7a5dc54fe83bf86532a44c12a2bb8ba40d64a4509395ca2"
 dependencies = [
  "autocfg 1.0.1",
  "num_cpus",
  "pin-project-lite",
- "slab",
 ]
 
 [[package]]
