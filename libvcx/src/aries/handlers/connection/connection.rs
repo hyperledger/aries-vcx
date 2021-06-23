@@ -690,9 +690,8 @@ Get messages received from connection counterparty.
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
-        let conn = serde_json::from_str(connection_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
-        Ok(conn)
+        serde_json::from_str(connection_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))
     }
 }
 
