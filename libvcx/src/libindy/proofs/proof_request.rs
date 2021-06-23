@@ -104,9 +104,22 @@ mod tests {
     use crate::utils;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::SetupDefaults;
+    use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
     use serde_json::Value;
+
+    fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
+        let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
+
+        let attr_info1: AttrInfo = serde_json::from_str(mockdata_proof::ATTR_INFO_1).unwrap();
+        let attr_info2: AttrInfo = serde_json::from_str(mockdata_proof::ATTR_INFO_2).unwrap();
+
+        check_req_attrs.insert("attribute_0".to_string(), attr_info1);
+        check_req_attrs.insert("attribute_1".to_string(), attr_info2);
+
+        check_req_attrs
+    }
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -136,59 +149,24 @@ mod tests {
     fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
-        let attr_info1: AttrInfo = serde_json::from_str(r#"
-        {
-            "name": "age",
-            "restrictions": [
-                {
-                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
-                    "schema_name": "Faber Student Info",
-                    "schema_version": "1.0",
-                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
-                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
-                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
-                },
-                {
-                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
-                    "schema_name": "BYU Student Info",
-                    "schema_version": "1.0",
-                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
-                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
-                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
-                }
-            ]
-        }"#).unwrap();
-        let attr_info2: AttrInfo = serde_json::from_str(r#"{
-            "name": "name",
-            "restrictions": [
-                {
-                    "schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
-                    "schema_name": "Faber Student Info",
-                    "schema_version": "1.0",
-                    "schema_issuer_did": "6XFh8yBzrpJQmNyZzgoTqB",
-                    "issuer_did": "8XFh8yBzrpJQmNyZzgoTqB",
-                    "cred_def_id": "8XFh8yBzrpJQmNyZzgoTqB:3:CL:1766"
-                },
-                {
-                    "schema_id": "5XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11",
-                    "schema_name": "BYU Student Info",
-                    "schema_version": "1.0",
-                    "schema_issuer_did": "5XFh8yBzrpJQmNyZzgoTqB",
-                    "issuer_did": "66Fh8yBzrpJQmNyZzgoTqB",
-                    "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
-                }
-            ]
-        }"#).unwrap();
+        let request = ProofRequestData::create()
+            .set_nonce().unwrap()
+            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap();
+        assert_eq!(request.requested_attributes, _expected_req_attrs());
+    }
 
-        check_req_attrs.insert("attribute_0".to_string(), attr_info1);
-        check_req_attrs.insert("attribute_1".to_string(), attr_info2);
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_requested_attrs_constructed_correctly_preformatted() {
+        let _setup = SetupDefaults::init();
+
+        let expected_req_attrs = _expected_req_attrs();
+        let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
         let request = ProofRequestData::create()
             .set_nonce().unwrap()
-            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
-            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
-        assert_eq!(request.requested_attributes, check_req_attrs);
+            .set_requested_attributes(req_attrs_string).unwrap();
+        assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
     #[test]
