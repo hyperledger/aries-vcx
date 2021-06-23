@@ -793,7 +793,7 @@ pub mod tests {
     fn test_deserialize_and_serialize(sm_serialized: &str) {
         let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
         let connection = Connection::from_string(sm_serialized).unwrap();
-        let reserialized = connection.to_string();
+        let reserialized = connection.to_string().unwrap();
         let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
 
         assert_eq!(original_object, reserialized_object);
@@ -816,10 +816,10 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let connection = Connection::create("test_serialize_deserialize", true).unwrap();
-        let first_string = connection.to_string();
+        let first_string = connection.to_string().unwrap();
 
         let connection2 = Connection::from_string(&first_string).unwrap();
-        let second_string = connection2.to_string();
+        let second_string = connection2.to_string().unwrap();
 
         assert_eq!(first_string, second_string);
     }
