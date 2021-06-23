@@ -1,6 +1,7 @@
 use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
 use crate::aries::handlers::connection::util::handle_ping;
+use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::problem_report::ProblemReport;
@@ -8,7 +9,6 @@ use crate::aries::messages::connection::response::SignedResponse;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::error::prelude::*;
-use crate::aries::messages::a2a::A2AMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {
@@ -49,9 +49,8 @@ impl RespondedState {
     pub fn handle_ping(&self,
                        ping: &Ping,
                        pw_vk: &str,
-                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
         handle_ping(ping, pw_vk, &self.did_doc, send_message)
     }
-
 }

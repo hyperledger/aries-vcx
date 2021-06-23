@@ -5,6 +5,7 @@ use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
+use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -19,7 +20,6 @@ use crate::aries::messages::discovery::query::Query;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::aries::messages::trust_ping::ping_response::PingResponse;
 use crate::error::prelude::*;
-use crate::aries::handlers::connection::inviter::state_machine::InviterState;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -70,7 +70,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        return InviteeState::from(self.state.clone()) == InviteeState::Null
+        return InviteeState::from(self.state.clone()) == InviteeState::Null;
     }
 
     pub fn from(source_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {

@@ -1,6 +1,7 @@
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
 use crate::aries::handlers::connection::util::handle_ping;
+use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::response::Response;
@@ -8,7 +9,6 @@ use crate::aries::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::aries::messages::discovery::query::Query;
 use crate::aries::messages::trust_ping::ping::Ping;
 use crate::error::VcxResult;
-use crate::aries::messages::a2a::A2AMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {
@@ -41,7 +41,7 @@ impl CompleteState {
     pub fn handle_send_ping(&self,
                             comment: Option<String>,
                             pw_vk: &str,
-                            send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+                            send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
         let ping =
             Ping::create()
@@ -55,7 +55,7 @@ impl CompleteState {
     pub fn handle_ping(&self,
                        ping: &Ping,
                        pw_vk: &str,
-                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
         handle_ping(ping, pw_vk, &self.did_doc, send_message)
     }
@@ -64,7 +64,7 @@ impl CompleteState {
                                     query: Option<String>,
                                     comment: Option<String>,
                                     pw_vk: &str,
-                                    send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+                                    send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
         let query_ =
             Query::create()
@@ -76,7 +76,7 @@ impl CompleteState {
     pub fn handle_discovery_query(&self,
                                   query: Query,
                                   pw_vk: &str,
-                                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>
+                                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
         let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_ref().map(String::as_str));
 

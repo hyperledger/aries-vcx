@@ -1,11 +1,17 @@
+use core::fmt;
 use std::collections::HashMap;
+use std::fmt::{Formatter, Write};
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{EnumAccess, Error, MapAccess, SeqAccess, Unexpected, Visitor};
+use serde_json::Value;
 
 use agency_client::get_message::{Message, MessageByConnection};
 use agency_client::MessageStatusCode;
 
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::aries::handlers::connection::invitee::state_machine::{InviteeFullState, SmConnectionInvitee, InviteeState};
-use crate::aries::handlers::connection::inviter::state_machine::{InviterFullState, SmConnectionInviter, InviterState};
+use crate::aries::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
+use crate::aries::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
@@ -13,14 +19,9 @@ use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::aries::utils::send_message;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
-use crate::aries::utils::send_message;
-use serde::{Serialize, Serializer, Deserializer, Deserialize};
-use serde::de::{Visitor, Unexpected, Error, MapAccess, SeqAccess, EnumAccess};
-use std::fmt::{Formatter, Write};
-use core::fmt;
-use serde_json::Value;
 
 #[derive(Clone)]
 pub struct Connection {
@@ -50,7 +51,7 @@ struct ConnectionInfo {
 #[derive(Debug, PartialEq)]
 pub enum ConnectionState {
     Inviter(InviterState),
-    Invitee(InviteeState)
+    Invitee(InviteeState),
 }
 
 
