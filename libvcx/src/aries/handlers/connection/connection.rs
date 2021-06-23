@@ -1,6 +1,6 @@
 use core::fmt;
 use std::collections::HashMap;
-use std::fmt::{Formatter, Write};
+use std::fmt::Formatter;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{EnumAccess, Error, MapAccess, SeqAccess, Unexpected, Visitor};
@@ -684,8 +684,9 @@ Get messages received from connection counterparty.
         Ok(msgs)
     }
 
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(&self).unwrap()
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Connection: {:?}", err)))
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
@@ -701,7 +702,6 @@ impl Serialize for Connection
         where
             S: Serializer,
     {
-        warn!("Running serialize on Connection");
         let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
@@ -720,7 +720,7 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
     type Value = Connection;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("an integer between -2^31 and 2^31")
+        formatter.write_str("serialized Connection object")
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, <A as MapAccess<'de>>::Error> where
@@ -832,8 +832,8 @@ pub mod tests {
         let connection = Connection::create("test_serialize_deserialize", true).unwrap();
         let first_string = serde_json::to_string(&connection).unwrap();
 
-        let connection2: Connection = serde_json::from_str(&first_string).unwrap();
-        let second_string = serde_json::to_string(&connection2).unwrap();
+        let connection: Connection = serde_json::from_str(&first_string).unwrap();
+        let second_string = serde_json::to_string(&connection).unwrap();
         assert_eq!(first_string, second_string);
     }
 
