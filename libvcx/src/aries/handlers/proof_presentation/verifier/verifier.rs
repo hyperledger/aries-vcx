@@ -34,12 +34,6 @@ impl Verifier {
         })
     }
 
-    pub fn from_presentation_request(source_id: &str, name: &str, presentation_request: &PresentationRequest) -> VcxResult<Verifier> {
-        Ok(Verifier {
-            verifier_sm: VerifierSM::new(presentation_request.clone().get_presentation_request_data()?, source_id.to_string())
-        })
-    }
-
     pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }
 
     pub fn state(&self) -> u32 {
