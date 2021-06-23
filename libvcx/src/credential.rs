@@ -291,7 +291,7 @@ pub mod tests {
     use crate::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
     use crate::error::VcxErrorKind;
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use crate::utils::mockdata::mockdata_credex;
 
     use super::*;
@@ -311,6 +311,15 @@ pub mod tests {
         let _setup = SetupDefaults::init();
 
         let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
+        assert!(handle > 0);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_credential_create_with_offer_with_json_attach() {
+        let _setup = SetupDefaults::init();
+
+        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER_JSON_FORMAT).unwrap();
         assert!(handle > 0);
     }
 
@@ -385,6 +394,20 @@ pub mod tests {
         info!("full_credential_test:: going get offered attributes from final state");
         let offer_attrs: String = get_attributes(handle_cred).unwrap();
         info!("full_credential_test:: obtained offered attributes: {}", offer_attrs);
+        let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
+        let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
+        assert_eq!(offer_attrs, offer_attrs_expected);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_attributes_json_attach() {
+        let _setup = SetupMocks::init();
+
+        let handle_cred = credential_create_with_offer("TEST_CREDENTIAL", ARIES_CREDENTIAL_OFFER_JSON_FORMAT).unwrap();
+        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, get_state(handle_cred).unwrap());
+
+        let offer_attrs: String = get_attributes(handle_cred).unwrap();
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
         let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
         assert_eq!(offer_attrs, offer_attrs_expected);
