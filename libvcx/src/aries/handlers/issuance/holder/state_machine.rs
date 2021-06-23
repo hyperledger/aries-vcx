@@ -273,7 +273,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 
 fn _store_credential(credential: &Credential,
                      req_meta: &str, cred_def_json: &str) -> VcxResult<(String, Option<String>)> {
-    trace!("Holder::_store_credential >>>");
+    trace!("Holder::_store_credential >>> credential: {:?}, req_meta: {}, cred_def_json: {}", credential, req_meta, cred_def_json);
 
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
