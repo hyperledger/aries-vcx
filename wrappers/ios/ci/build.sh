@@ -31,20 +31,21 @@ done
 #8fa3c2ce9cb4978e4dc1f9bd57980437578b081a Merge pull request #2372 from baegjae/multi-wallet-md5
 #dbd89cf94a73e7a62611c4150a874c38b810ff8d Merge pull request #2368 from toshirin33/percent_encoding
 #212ab8844de3fffa195bed86276d0fc04e94a442 Merge pull request #2362 from ianco/rc
-#8c669cff434f5d87e7a2e2e192423c67a9df0b33 Merge pull request #2356 from adenishchenko/frozen_ledgers
-#03f5482198311670a63095363ddb032c71fa4eff Merge pull request #2257 from Artemkaaas/bugfix/proof-request-restriction
-#645299886f9282769fdcddbb742135e94a5691ac Merge branch 'master' into bugfix/proof-request-restriction
-#88bbb9646418f269db1c3d29c4bb2b7ea52e1660 (mirgee/master) Merge pull request #2338 from adenishchenko/bucket_metrics
-#506254c2c0afe87ed6834bfaff8f46800e78bcde Merge branch 'master' into bucket_metrics
-#c2a36d369fe7a16a241c5711b5c49b945816d009 Merge pull request #2341 from AxelNennker/sha-version-0.9
-#7349f5684bff5eb84bc370f1c6c8fc7e8c054613 Merge pull request #2318 from adenishchenko/metrics_prometheus
-#b4b330ef326958d593ab42e25679c2dcd655494c (tag: v1.16.0) Merge pull request #2335 from ianco/rc
+#8c669cff434f5d87e7a2e2e192423c67a9df0b33 YES Merge pull request #2356 from adenishchenko/frozen_ledgers
+#03f5482198311670a63095363ddb032c71fa4eff NO Merge pull request #2257 from Artemkaaas/bugfix/proof-request-restriction // todo: try to use this non-vendored, find non-vendored working version
+#645299886f9282769fdcddbb742135e94a5691ac NO Merge branch 'master' into bugfix/proof-request-restriction
+#88bbb9646418f269db1c3d29c4bb2b7ea52e1660 NO (mirgee/master) Merge pull request #2338 from adenishchenko/bucket_metrics
+#506254c2c0afe87ed6834bfaff8f46800e78bcde YES - weird CI code Merge branch 'master' into bucket_metrics
+#c2a36d369fe7a16a241c5711b5c49b945816d009 NO Merge pull request #2341 from AxelNennker/sha-version-0.9
+#7349f5684bff5eb84bc370f1c6c8fc7e8c054613 YES / 1618 Merge pull request #2318 from adenishchenko/metrics_prometheus
+#b4b330ef326958d593ab42e25679c2dcd655494c YES (tag: v1.16.0) Merge pull request #2335 from ianco/rc
 
 
 #INDY_VERSION="efb7215" # release indy-1.16.0-post-59 ##  this is "v1.16.0" + rusql update fix + (number of other commits on master branch)
 #INDY_VERSION="v1.16.0"
 #INDY_VERSION="b4b330ef3" # this is "v1.16.0" tag
-INDY_VERSION="32e30b6ca" # between efb7215, b4b330ef3, indy-sys = "1.15.0-dev-1628" indy = "1.15.0-dev-1628"
+#INDY_VERSION="32e30b6ca" # between efb7215, b4b330ef3, indy-sys = "1.15.0-dev-1628" indy = "1.15.0-dev-1628"
+INDY_VERSION="7349f56" #  "1.15.0-dev-1618"
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
