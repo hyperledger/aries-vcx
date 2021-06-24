@@ -20,7 +20,7 @@ reqwest = "0.9.5"
 regex = "1.1.0"
 rmp-serde = "0.13.7"
 rust-base58 = "0.0.4"
-indy = "1.15.0-dev-1628"
+indy = "1.16.0-post-54"
 futures = "0.1.23"
 url = "1.5.1"
 failure = "0.1.6"
@@ -30,7 +30,7 @@ rand = "0.3"
 android_logger = "0.5"
 
 [package.metadata.deb]
-depends = "libindy (= 1.15.0-dev-1628)"
+depends = "libindy (= 1.16.0-post-54)"
 extended-description = """\
 This is the official SDK for Hyperledger Indy, which provides a\
   distributed-ledger-based foundation for self-sovereign identity.\

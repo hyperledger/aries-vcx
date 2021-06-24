@@ -44,7 +44,8 @@ done
 #INDY_VERSION="efb7215" # release indy-1.16.0-post-59 ##  this is "v1.16.0" + rusql update fix + (number of other commits on master branch)
 #INDY_VERSION="v1.16.0"
 #INDY_VERSION="b4b330ef3" # this is "v1.16.0" tag
-INDY_VERSION="32e30b6ca" # between efb7215, b4b330ef3, indy-sys = "1.15.0-dev-1628" indy = "1.15.0-dev-1628"
+#INDY_VERSION="32e30b6ca" # between efb7215, b4b330ef3, indy-sys = "1.15.0-dev-1628" indy = "1.15.0-dev-1628"
+INDY_VERSION="9fbbb79" # libindy master commit before rusqlfix merge
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
