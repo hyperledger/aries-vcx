@@ -96,5 +96,3 @@ provides = "libvcx (= 0.8.0)"
 name = "libvcx"
 provides = "libvcx (= 0.8.0)"
 
-[target.'cfg(target_os = "ios")'.dependencies]
-openssl = { version = "0.10.29", features = ["vendored"] }
