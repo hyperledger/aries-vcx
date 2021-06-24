@@ -83,6 +83,9 @@ impl Json {
                         }
                     )
                 )
+            },
+            AttachmentEncoding::Json => {
+                AttachmentData::Json(json)
             }
         };
         Ok(Json {
@@ -93,6 +96,7 @@ impl Json {
 
     pub fn get_data(&self) -> VcxResult<String> {
         let data = self.data.get_bytes()?;
+        trace!("Json::get_data >>> data: {:?}", data);
         from_utf8(data.as_slice())
             .map(|s| s.to_string())
             .map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment".to_string()))
@@ -101,13 +105,16 @@ impl Json {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum AttachmentEncoding {
-    Base64
+    Base64,
+    Json
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AttachmentData {
     #[serde(rename = "base64")]
-    Base64(String)
+    Base64(String),
+    #[serde(rename = "json")]
+    Json(serde_json::Value)
 }
 
 impl AttachmentData {
@@ -115,6 +122,9 @@ impl AttachmentData {
         match self {
             AttachmentData::Base64(s) => {
                 base64::decode(s).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
+            }
+            AttachmentData::Json(json) => {
+                serde_json::to_vec(&json).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
             }
         }
     }
@@ -130,7 +140,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_json_attachment_works() {
+    fn test_create_json_attachment_works_base64() {
         let json_attachment: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Base64).unwrap();
         assert_eq!(vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125], json_attachment.data.get_bytes().unwrap());
         assert_eq!(_json().to_string(), json_attachment.get_data().unwrap());
@@ -138,7 +148,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_attachments_works() {
+    fn test_attachments_works_base64() {
         {
             let mut attachments = Attachments::new();
             assert_eq!(0, attachments.0.len());
@@ -153,6 +163,38 @@ pub mod tests {
         {
             let mut attachments = Attachments::new();
             attachments.add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Base64).unwrap();
+            assert_eq!(_json().to_string(), attachments.content().unwrap());
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_json_attachment_works_json() {
+        let json_attachment: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Json).unwrap();
+        let bytes = json_attachment.data.get_bytes().unwrap();
+        println!("{:?}", bytes);
+
+        assert_eq!(vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125], json_attachment.data.get_bytes().unwrap());
+        assert_eq!(_json().to_string(), json_attachment.get_data().unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_attachments_works_json() {
+        {
+            let mut attachments = Attachments::new();
+            assert_eq!(0, attachments.0.len());
+
+            let json: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Json).unwrap();
+            attachments.add(Attachment::JSON(json));
+            assert_eq!(1, attachments.0.len());
+
+            assert_eq!(_json().to_string(), attachments.content().unwrap());
+        }
+
+        {
+            let mut attachments = Attachments::new();
+            attachments.add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Json).unwrap();
             assert_eq!(_json().to_string(), attachments.content().unwrap());
         }
     }

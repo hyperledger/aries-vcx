@@ -72,8 +72,12 @@ impl Connection {
     pub fn create(source_id: &str, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
+        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
+        let routing_keys = cloud_agent_info.routing_keys()?;
+        let agency_endpoint = cloud_agent_info.service_endpoint()?;
+
         Ok(Connection {
-            cloud_agent_info: CloudAgentInfo::default(),
+            cloud_agent_info,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
             autohop_enabled: autohop,
         })
@@ -85,8 +89,12 @@ impl Connection {
     pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
+        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
+        let routing_keys = cloud_agent_info.routing_keys()?;
+        let agency_endpoint = cloud_agent_info.service_endpoint()?;
+
         let mut connection = Connection {
-            cloud_agent_info: CloudAgentInfo::default(),
+            cloud_agent_info,
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
             autohop_enabled,
         };
@@ -494,18 +502,12 @@ impl Connection {
      */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
-        let pairwise_info = self.pairwise_info();
-        let cloud_agent = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent.routing_keys()?;
-        let agency_endpoint = cloud_agent.service_endpoint()?;
-        self.cloud_agent_info = cloud_agent;
-
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_connect(routing_keys, agency_endpoint)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_connect(routing_keys, agency_endpoint)?)
+                SmConnection::Invitee(sm_invitee.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
             }
         };
         Ok(())
@@ -826,33 +828,33 @@ pub mod tests {
         thread::sleep(Duration::from_millis(1000));
 
         let all_messages = download_messages_noauth(None, None, None).unwrap();
-        assert_eq!(all_messages.len(), 1);
-        assert_eq!(all_messages[0].msgs.len(), 3);
-        assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
-        assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
+        assert_eq!(all_messages.len(), 2);
+        assert_eq!(all_messages[1].msgs.len(), 3);
+        assert!(all_messages[1].msgs[0].decrypted_msg.is_some());
+        assert!(all_messages[1].msgs[1].decrypted_msg.is_some());
 
         let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
-        assert!(received[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
-        assert!(received[0].msgs[1].decrypted_msg.is_some());
+        assert_eq!(received.len(), 2);
+        assert_eq!(received[1].msgs.len(), 2);
+        assert!(received[1].msgs[0].decrypted_msg.is_some());
+        assert_eq!(received[1].msgs[0].status_code, MessageStatusCode::Received);
+        assert!(received[1].msgs[1].decrypted_msg.is_some());
 
         // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
         let reviewed = download_messages_noauth(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        assert_eq!(reviewed.len(), 1);
-        assert_eq!(reviewed[0].msgs.len(), 1);
-        assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
+        assert_eq!(reviewed.len(), 2);
+        assert_eq!(reviewed[1].msgs.len(), 1);
+        assert!(reviewed[1].msgs[0].decrypted_msg.is_some());
+        assert_eq!(reviewed[1].msgs[0].status_code, MessageStatusCode::Reviewed);
 
         let rejected = download_messages_noauth(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
-        assert_eq!(rejected.len(), 1);
-        assert_eq!(rejected[0].msgs.len(), 0);
+        assert_eq!(rejected.len(), 2);
+        assert_eq!(rejected[1].msgs.len(), 0);
 
-        let specific = download_messages_noauth(None, None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(specific.len(), 1);
-        assert_eq!(specific[0].msgs.len(), 1);
-        let msg = specific[0].msgs[0].decrypted_msg.clone().unwrap();
+        let specific = download_messages_noauth(None, None, Some(vec![received[1].msgs[0].uid.clone()])).unwrap();
+        assert_eq!(specific.len(), 2);
+        assert_eq!(specific[1].msgs.len(), 1);
+        let msg = specific[1].msgs[0].decrypted_msg.clone().unwrap();
         let msg_aries_value: Value = serde_json::from_str(&msg).unwrap();
         assert!(msg_aries_value.is_object());
         assert!(msg_aries_value["@id"].is_string());
