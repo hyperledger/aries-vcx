@@ -80,12 +80,9 @@ impl Connection {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent_info.routing_keys()?;
-        let agency_endpoint = cloud_agent_info.service_endpoint()?;
-
         Ok(Connection {
             cloud_agent_info,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info, send_message)),
             autohop_enabled: autohop,
         })
     }
@@ -97,12 +94,9 @@ impl Connection {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent_info.routing_keys()?;
-        let agency_endpoint = cloud_agent_info.service_endpoint()?;
-
         let mut connection = Connection {
             cloud_agent_info,
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info, send_message)),
             autohop_enabled,
         };
         connection.process_invite(invitation)?;
