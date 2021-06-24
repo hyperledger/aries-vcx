@@ -15,6 +15,32 @@ for i in $(ls -t $OPENSSL_PATH); do
     break
 done
 
+#efb72154dab94498861c43f9ac5208174e9b702c (HEAD -> master, origin/master, origin/HEAD) Merge pull request #2402 from hyperledger/update/update-rusqlite
+#9fbbb7939440b67e92f2698e868f14c2432cce72 Merge pull request #2397 from ianco/postgres_updates
+#794ad8a599f57e0f8e085e116251b96edbae0e40 Merge pull request #2392 from Nova-Scotia-Digital-Service/master
+#e80e7092e4f3232b3ddf6841cd56619487e79eb0 Merge pull request #2389 from TimoGlastra/update-nodejs-wrapper
+#503e8bc11302c35b8903f6296b372a32c690dd05 Merge branch 'master' into update-nodejs-wrapper
+#8993d0b3f5cfe10c75d5d70d22b49e42ab4ee7c4 Merge pull request #2390 from ianco/rc
+#4e4a7a29480ae4dbe27f6170a64d94ff6b02f4dd Merge branch 'master' into rc
+#cb17e1bf4d534a22bfc9fc9d1e2219c15734e639 Merge branch 'master' into update-nodejs-wrapper
+#1ea73bb92ad5682ab3e1f4422fa68c40d59197ea Merge branch 'master' into rc
+#cc52f08778e279d400ac60f031e761a6536fe3e7 Merge pull request #2354 from mirgee/ga-workflow
+#32e30b6ca307c201c3d16341887af2887c6d9562 Merge pull request #2366 from toshirin33/postgres_plugin_default_db   1628, 32e30b6ca
+#12f1831efa8203b541bdc5d1645670ae48790538 (origin/rc) Merge branch 'master' into rc
+#32c5d087c149878366c50fdb8e161d34657c22fd Merge branch 'master' into postgres_plugin_default_db
+#8fa3c2ce9cb4978e4dc1f9bd57980437578b081a Merge pull request #2372 from baegjae/multi-wallet-md5
+#dbd89cf94a73e7a62611c4150a874c38b810ff8d Merge pull request #2368 from toshirin33/percent_encoding
+#212ab8844de3fffa195bed86276d0fc04e94a442 Merge pull request #2362 from ianco/rc
+#8c669cff434f5d87e7a2e2e192423c67a9df0b33 Merge pull request #2356 from adenishchenko/frozen_ledgers
+#03f5482198311670a63095363ddb032c71fa4eff Merge pull request #2257 from Artemkaaas/bugfix/proof-request-restriction
+#645299886f9282769fdcddbb742135e94a5691ac Merge branch 'master' into bugfix/proof-request-restriction
+#88bbb9646418f269db1c3d29c4bb2b7ea52e1660 (mirgee/master) Merge pull request #2338 from adenishchenko/bucket_metrics
+#506254c2c0afe87ed6834bfaff8f46800e78bcde Merge branch 'master' into bucket_metrics
+#c2a36d369fe7a16a241c5711b5c49b945816d009 Merge pull request #2341 from AxelNennker/sha-version-0.9
+#7349f5684bff5eb84bc370f1c6c8fc7e8c054613 Merge pull request #2318 from adenishchenko/metrics_prometheus
+#b4b330ef326958d593ab42e25679c2dcd655494c (tag: v1.16.0) Merge pull request #2335 from ianco/rc
+
+
 #INDY_VERSION="efb7215" # release indy-1.16.0-post-59 ##  this is "v1.16.0" + rusql update fix + (number of other commits on master branch)
 #INDY_VERSION="b4b330ef3" # this is "v1.16.0" tag
 INDY_VERSION="32e30b6ca" # between efb7215, b4b330ef3, indy-sys = "1.15.0-dev-1628" indy = "1.15.0-dev-1628"
