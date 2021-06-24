@@ -15,8 +15,8 @@ for i in $(ls -t $OPENSSL_PATH); do
     break
 done
 
-#INDY_VERSION="efb7215" # this is "v1.16.0" + rusql update fix + (number of other commits on master branch)
-INDY_VERSION="b4b330ef3" # this is "v1.16.0" tag
+INDY_VERSION="efb7215" # release indy-1.16.0-post-59 ##  this is "v1.16.0" + rusql update fix + (number of other commits on master branch)
+#INDY_VERSION="b4b330ef3" # this is "v1.16.0" tag
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
