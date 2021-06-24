@@ -6,6 +6,7 @@ WORKDIR /home/indy
 COPY --chown=indy  ./ ./
 
 USER indy
+ENV OPENSSL_NO_VENDOR="true"
 RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 
 USER root
