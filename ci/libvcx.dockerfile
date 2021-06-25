@@ -6,7 +6,7 @@ WORKDIR /home/indy
 COPY --chown=indy  ./ ./
 
 USER indy
-ENV OPENSSL_NO_VENDOR="true"
+ENV X86_64_ALPINE_LINUX_MUSL_OPENSSL_NO_VENDOR "true"
 RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 
 USER root
@@ -45,7 +45,7 @@ RUN apk add --no-cache \
         python2 \
         zeromq-dev
 
-ARG RUST_VER="1.45.2"
+ARG RUST_VER="1.53.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
 
