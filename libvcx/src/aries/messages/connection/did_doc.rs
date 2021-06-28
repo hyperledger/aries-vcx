@@ -1,10 +1,8 @@
-use crate::aries::messages::connection::invite::Invitation;
-
-use crate::error::prelude::*;
 use url::Url;
+
+use crate::aries::messages::connection::invite::Invitation;
+use crate::error::prelude::*;
 use crate::utils::validation::validate_verkey;
-use crate::aries::messages::a2a::A2AMessage;
-use crate::aries::utils::encryption_envelope::EncryptionEnvelope;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -275,26 +273,6 @@ impl DidDoc {
         let pars: Vec<&str> = DidDoc::_key_parts(key_reference);
         pars.get(1).or(pars.get(0)).map(|s| s.to_string()).unwrap_or_default()
     }
-
-    /**
-  Sends authenticated message to connection counterparty
-   */
-    pub fn send_message(&self, message: &A2AMessage, sender_verkey: &str) -> VcxResult<()> {
-        trace!("DidDoc::send_message >>> message: {:?}, did_doc: {:?}", message, &self);
-        let envelope = EncryptionEnvelope::create(&message, Some(sender_verkey), &self)?;
-        agency_client::httpclient::post_message(&envelope.0, &self.get_endpoint())?;
-        Ok(())
-    }
-
-    /**
-    Sends anonymous message to connection counterparty
-     */
-    pub fn send_message_anonymously(&self, message: &A2AMessage) -> VcxResult<()> {
-        trace!("DidDoc::send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, &self);
-        let envelope = EncryptionEnvelope::create(&message, None, &self)?;
-        agency_client::httpclient::post_message(&envelope.0, &self.get_endpoint())?;
-        Ok(())
-    }
 }
 
 impl Default for Service {
@@ -335,9 +313,10 @@ impl From<DidDoc> for Invitation {
 
 #[cfg(test)]
 pub mod tests {
-    use super::*;
     use crate::aries::messages::a2a::MessageId;
     use crate::aries::messages::connection::invite::tests::_invitation;
+
+    use super::*;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")

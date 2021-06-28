@@ -149,7 +149,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.to_string())
+        connection.to_string()
     })
 }
 

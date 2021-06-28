@@ -1,6 +1,7 @@
 use crate::aries::handlers::connection::inviter::states::complete::CompleteState;
 use crate::aries::handlers::connection::inviter::states::null::NullState;
 use crate::aries::handlers::connection::util::handle_ping;
+use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::ack::Ack;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::problem_report::ProblemReport;
@@ -45,7 +46,11 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 }
 
 impl RespondedState {
-    pub fn handle_ping(&self, ping: &Ping, pw_vk: &str) -> VcxResult<()> {
-        handle_ping(ping, pw_vk, &self.did_doc)
+    pub fn handle_ping(&self,
+                       ping: &Ping,
+                       pw_vk: &str,
+                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
+    ) -> VcxResult<()> {
+        handle_ping(ping, pw_vk, &self.did_doc, send_message)
     }
 }

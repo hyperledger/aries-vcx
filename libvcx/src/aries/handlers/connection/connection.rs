@@ -1,11 +1,17 @@
+use core::fmt;
 use std::collections::HashMap;
+use std::fmt::Formatter;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{EnumAccess, Error, MapAccess, SeqAccess, Unexpected, Visitor};
+use serde_json::Value;
 
 use agency_client::get_message::{Message, MessageByConnection};
 use agency_client::MessageStatusCode;
 
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::aries::handlers::connection::invitee::state_machine::{InviteeFullState, SmConnectionInvitee, InviteeState};
-use crate::aries::handlers::connection::inviter::state_machine::{InviterFullState, SmConnectionInviter, InviterState};
+use crate::aries::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
+use crate::aries::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::aries::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
@@ -13,17 +19,18 @@ use crate::aries::messages::basic_message::message::BasicMessage;
 use crate::aries::messages::connection::did_doc::DidDoc;
 use crate::aries::messages::connection::invite::Invitation;
 use crate::aries::messages::discovery::disclose::ProtocolDescriptor;
+use crate::aries::utils::send_message;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Connection {
     connection_sm: SmConnection,
     cloud_agent_info: CloudAgentInfo,
     autohop_enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
@@ -44,7 +51,7 @@ struct ConnectionInfo {
 #[derive(Debug, PartialEq)]
 pub enum ConnectionState {
     Inviter(InviterState),
-    Invitee(InviteeState)
+    Invitee(InviteeState),
 }
 
 
@@ -73,12 +80,9 @@ impl Connection {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent_info.routing_keys()?;
-        let agency_endpoint = cloud_agent_info.service_endpoint()?;
-
         Ok(Connection {
             cloud_agent_info,
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info, send_message)),
             autohop_enabled: autohop,
         })
     }
@@ -90,12 +94,9 @@ impl Connection {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info)?;
-        let routing_keys = cloud_agent_info.routing_keys()?;
-        let agency_endpoint = cloud_agent_info.service_endpoint()?;
-
         let mut connection = Connection {
             cloud_agent_info,
-            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
+            connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info, send_message)),
             autohop_enabled,
         };
         connection.process_invite(invitation)?;
@@ -107,14 +108,14 @@ impl Connection {
             SmConnectionState::Inviter(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state)),
+                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }
             SmConnectionState::Invitee(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state)),
+                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }
@@ -577,7 +578,7 @@ Get messages received from connection counterparty.
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         return Ok(move |a2a_message: &A2AMessage| {
-            did_doc.send_message(a2a_message, &sender_vk)
+            send_message(&sender_vk, &did_doc, a2a_message)
         });
     }
 
@@ -677,7 +678,23 @@ Get messages received from connection counterparty.
         Ok(msgs)
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Connection: {:?}", err)))
+    }
+
+    pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
+        serde_json::from_str(connection_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))
+    }
+}
+
+impl Serialize for Connection
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
         let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
@@ -686,13 +703,31 @@ Get messages received from connection counterparty.
             agent_vk: cloud_agent_info.agent_vk,
         };
         let object = SerializableObjectWithState::V1 { data, state, source_id };
-        json!(object).to_string()
+        serializer.serialize_some(&object)
+    }
+}
+
+struct ConnectionVisitor;
+
+impl<'de> Visitor<'de> for ConnectionVisitor {
+    type Value = Connection;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("serialized Connection object")
     }
 
-    pub fn from_string(connection_data: &str) -> VcxResult<Connection> {
-        let object: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_str(connection_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Connection: {:?}", err)))?;
-        match object {
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, <A as MapAccess<'de>>::Error> where
+        A: MapAccess<'de>, {
+        let mut map_value = serde_json::Map::new();
+        while let Some(key) = map.next_key()? {
+            let k: String = key;
+            let v: Value = map.next_value()?;
+            map_value.insert(k, v);
+        }
+        let obj = Value::from(map_value);
+        let ver: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_value(obj)
+            .map_err(|err| A::Error::custom(err.to_string()))?;
+        match ver {
             SerializableObjectWithState::V1 { data, state, source_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
                 let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
@@ -702,6 +737,14 @@ Get messages received from connection counterparty.
     }
 }
 
+impl<'de> Deserialize<'de> for Connection {
+    fn deserialize<D>(deserializer: D) -> Result<Connection, D::Error>
+        where
+            D: Deserializer<'de>,
+    {
+        deserializer.deserialize_map(ConnectionVisitor)
+    }
+}
 
 #[cfg(test)]
 pub mod tests {
@@ -743,7 +786,7 @@ pub mod tests {
     fn test_deserialize_and_serialize(sm_serialized: &str) {
         let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
         let connection = Connection::from_string(sm_serialized).unwrap();
-        let reserialized = connection.to_string();
+        let reserialized = connection.to_string().unwrap();
         let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
 
         assert_eq!(original_object, reserialized_object);
@@ -766,13 +809,27 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let connection = Connection::create("test_serialize_deserialize", true).unwrap();
-        let first_string = connection.to_string();
+        let first_string = connection.to_string().unwrap();
 
         let connection2 = Connection::from_string(&first_string).unwrap();
-        let second_string = connection2.to_string();
+        let second_string = connection2.to_string().unwrap();
 
         assert_eq!(first_string, second_string);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialize_deserialize_serde() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::create("test_serialize_deserialize", true).unwrap();
+        let first_string = serde_json::to_string(&connection).unwrap();
+
+        let connection: Connection = serde_json::from_str(&first_string).unwrap();
+        let second_string = serde_json::to_string(&connection).unwrap();
+        assert_eq!(first_string, second_string);
+    }
+
 
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
