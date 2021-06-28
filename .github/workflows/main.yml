@@ -433,10 +433,12 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
+      - name: Version crates
+        run: |
+          ./ci/version.sh "$PUBLISH_VERSION"
       - name: Publish crates
         run: |
-          set -x
-          ./aries-vcx/publish.sh "$PUBLISH_VERSION"
+          ./ci/publish.sh
 
 #
 #  test-libvcx-image-general_test:
