@@ -15,7 +15,7 @@ for i in $(ls -t $OPENSSL_PATH); do
     break
 done
 
-INDY_VERSION="v1.16.0"
+INDY_VERSION="efb7215" # indy-1.16.0-post-59 - "v1.16.0" + rusql update fix + (number of other commits on master branch)
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
@@ -23,7 +23,7 @@ INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
 
 setup() {
     echo "Setup rustup"
-    rustup default 1.45.2
+    rustup default 1.53.0
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"

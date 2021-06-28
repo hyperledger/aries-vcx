@@ -3,10 +3,9 @@ FROM alpine:3.12 AS builder
 ARG UID=1000
 ARG GID=1000
 
-
 ARG INDYSDK_PATH=/home/indy/indy-sdk
 ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk.git
-ARG INDYSDK_REVISION=v1.16.0
+ARG INDYSDK_REVISION=efb7215
 
 ENV RUST_LOG=warning
 
@@ -22,7 +21,7 @@ RUN apk update && apk upgrade && \
         openssl-dev \
         zeromq-dev
 
-ARG RUST_VER="1.45.2"
+ARG RUST_VER="1.53.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER
 
 USER indy
