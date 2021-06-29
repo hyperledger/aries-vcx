@@ -6,7 +6,6 @@ extern crate indyrs as indy;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-extern crate libc;
 extern crate reqwest;
 extern crate rmp_serde;
 extern crate serde;
