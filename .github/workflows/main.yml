@@ -424,8 +424,9 @@ jobs:
 #        run: |
 #          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
-  publish-crates:
+  publish-crates-nonrelease:
     runs-on: ubuntu-latest
+    if: ${{ needs.workflow-setup.outputs.RELEASE != 'true' && needs.workflow-setup.outputs.PRERELEASE != 'true' }}
     needs: [workflow-setup]
     env:
       DOCKER_BUILDKIT: 1
@@ -440,7 +441,23 @@ jobs:
         run: |
           ./ci/publish.sh
 
-#
+  publish-crates-release:
+    runs-on: ubuntu-latest
+    needs: [workflow-setup, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
+    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+    env:
+      DOCKER_BUILDKIT: 1
+      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Version crates
+        run: |
+          ./ci/version.sh "$PUBLISH_VERSION"
+      - name: Publish crates
+        run: |
+          ./ci/publish.sh
+
 #  test-libvcx-image-general_test:
 #    runs-on: ubuntu-latest
 #    needs: [workflow-setup, build-image-indypool, build-image-libvcx]
