@@ -695,6 +695,7 @@ pub mod tests {
                                          "tag_1".to_string(),
                                          revocation_details.to_string()).unwrap();
 
+        sleep(Duration::from_secs(1));
         let err = create_and_publish_credentialdef("1".to_string(),
                                                    "name".to_string(),
                                                    did.clone(),
