@@ -1,12 +1,12 @@
 use core::fmt;
 use std::collections::HashMap;
-use std::fmt::Formatter;
+
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{EnumAccess, Error, MapAccess, SeqAccess, Unexpected, Visitor};
 use serde_json::Value;
 
-use agency_client::get_message::{Message, MessageByConnection};
+use agency_client::get_message::{Message};
 use agency_client::MessageStatusCode;
 
 use crate::aries::handlers::connection::cloud_agent::CloudAgentInfo;
@@ -755,16 +755,16 @@ pub mod tests {
 
     use agency_client::get_message::download_messages_noauth;
     use agency_client::MessageStatusCode;
-    use agency_client::mocking::AgencyMockDecrypted;
+    
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
     use crate::{aries, connection, settings, utils};
-    use crate::api::VcxStateType;
+    
     use crate::aries::messages::ack::tests::_ack;
-    use crate::utils::constants;
+    
     use crate::utils::devsetup::*;
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use crate::utils::mockdata::mockdata_connection::{CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 
@@ -1007,7 +1007,7 @@ pub mod tests {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            use agency_client::get_message::{MessageByConnection, Message};
+            use agency_client::get_message::{Message};
 
             let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
 
@@ -1035,8 +1035,8 @@ pub mod tests {
         let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
         let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
 
-        let consumer1_pwdid = consumer1_to_institution.remote_did().unwrap();
-        let consumer2_pwdid = consumer2_to_institution.remote_did().unwrap();
+        let _consumer1_pwdid = consumer1_to_institution.remote_did().unwrap();
+        let _consumer2_pwdid = consumer2_to_institution.remote_did().unwrap();
 
         consumer1.activate().unwrap();
         consumer1_to_institution.send_generic_message("Hello Institution from consumer1").unwrap();

@@ -426,7 +426,7 @@ pub mod test {
 
             let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), send_message).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::ProposePresentation(_presentation_preview()), send_message).unwrap();
 
             assert_match!(ProverState::Finished(_), prover_sm.state);
         }

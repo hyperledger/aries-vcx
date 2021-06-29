@@ -2,7 +2,7 @@ use serde_json;
 
 use crate::api::PublicEntityStateType;
 use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, ledger};
+use crate::libindy::utils::{anoncreds};
 use crate::libindy::utils::cache::update_rev_reg_ids_cache;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
@@ -486,7 +486,7 @@ pub mod tests {
 
     use crate::{libindy, schema, settings, utils};
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::payments::add_new_did;
+    
     use crate::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
@@ -559,7 +559,7 @@ pub mod tests {
     fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
-        let (_, handle) = create_cred_def_real(false);
+        let (_, _handle) = create_cred_def_real(false);
     }
 
     #[cfg(feature = "pool_tests")]

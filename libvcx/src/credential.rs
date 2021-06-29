@@ -291,7 +291,7 @@ pub mod tests {
     use crate::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
     use crate::error::VcxErrorKind;
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
     use crate::utils::mockdata::mockdata_credex;
 
     use super::*;

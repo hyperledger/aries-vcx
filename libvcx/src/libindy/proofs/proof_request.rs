@@ -6,7 +6,7 @@ use serde_json;
 use crate::error::prelude::*;
 use crate::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use crate::libindy::utils::anoncreds;
-use crate::utils::qualifier;
+
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ProofRequestData {
@@ -41,7 +41,7 @@ impl ProofRequestData {
     pub fn set_requested_attributes(mut self, requested_attrs: String) -> VcxResult<ProofRequestData> {
         match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
             Ok(attrs) => self.requested_attributes = attrs,
-            Err(err) => {
+            Err(_err) => {
                 let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
                 for attribute in requested_attributes.iter() {

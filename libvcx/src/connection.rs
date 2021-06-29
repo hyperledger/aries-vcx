@@ -265,25 +265,25 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
 
 #[cfg(test)]
 pub mod tests {
-    use std::thread;
-    use std::time::Duration;
+    
+    
 
-    use serde_json::Value;
+    
 
-    use agency_client::get_message::download_messages_noauth;
-    use agency_client::MessageStatusCode;
+    
+    
     use agency_client::mocking::AgencyMockDecrypted;
-    use agency_client::update_message::{UIDsByConn, update_agency_messages};
+    
 
-    use crate::{connection, utils, settings, aries};
+    use crate::{connection};
     use crate::api::VcxStateType;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED};
 
     use super::*;
     use crate::utils::devsetup_agent::test::{Faber, Alice, TestAgent};
-    use crate::aries::messages::ack::tests::_ack;
+    
     use crate::aries::messages::connection::invite::tests::_invitation_json;
     use crate::aries::handlers::connection::connection::tests::create_connected_connections;
 
@@ -550,7 +550,7 @@ pub mod tests {
         let (consumer2_to_institution, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
 
         let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
-        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
+        let _consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
 
         consumer1.activate().unwrap();
         send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();

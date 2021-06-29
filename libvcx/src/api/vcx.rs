@@ -1,15 +1,15 @@
 use std::ffi::CString;
 
-use indy::{CommandHandle, INVALID_WALLET_HANDLE};
-use indy_sys::WalletHandle;
+use indy::{CommandHandle};
+
 use libc::c_char;
 
 use crate::{libindy, settings, utils};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
+use crate::init::{open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
+use crate::libindy::utils::wallet::{close_main_wallet, IssuerConfig, WalletConfig};
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
@@ -692,7 +692,7 @@ mod tests {
     fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, _wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         wallet::delete_wallet(&wallet_config).unwrap();
 
@@ -1012,7 +1012,7 @@ mod tests {
     fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let config = json!({
+        let _config = json!({
             "institution_did": "44x8p4HubxzUK1dwxcc5FU",
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();

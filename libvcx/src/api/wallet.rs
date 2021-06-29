@@ -12,7 +12,7 @@ use crate::utils;
 use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
 use crate::utils::runtime::execute;
-use serde_json::Error;
+
 use crate::init::open_as_main_wallet;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.

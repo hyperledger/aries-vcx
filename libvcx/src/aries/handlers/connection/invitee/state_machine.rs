@@ -5,7 +5,7 @@ use crate::aries::handlers::connection::invitee::states::invited::InvitedState;
 use crate::aries::handlers::connection::invitee::states::null::NullState;
 use crate::aries::handlers::connection::invitee::states::requested::RequestedState;
 use crate::aries::handlers::connection::invitee::states::responded::RespondedState;
-use crate::aries::handlers::connection::inviter::state_machine::InviterState;
+
 use crate::aries::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -412,7 +412,7 @@ pub mod test {
 
         use super::*;
 
-        fn _send_message(pv_wk: &str, did_doc: &DidDoc, a2a_message: &A2AMessage) -> VcxResult<()> {
+        fn _send_message(_pv_wk: &str, _did_doc: &DidDoc, _a2a_message: &A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 

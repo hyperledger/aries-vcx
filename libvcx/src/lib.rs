@@ -329,7 +329,7 @@ mod tests {
 
     fn _verifier_create_proof_and_send_request(institution: &mut Faber, institution_to_consumer:u32, schema_id: &str, cred_def_id: &str, request_name: Option<&str>) -> u32 {
         institution.activate().unwrap();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(institution, institution_to_consumer, &requested_attrs_string, "[]", "{}", request_name)
@@ -370,7 +370,7 @@ mod tests {
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
 
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, Some(time_after_revocation));
         let interval = json!({"from": time_before_revocation - 100, "to": time_after_revocation}).to_string();
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
@@ -533,7 +533,7 @@ mod tests {
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, cred_def_handle, consumer_to_institution2, institution_to_consumer2, None);
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, cred_def_handle, consumer_to_institution3, institution_to_consumer3, None);
+        let _credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, cred_def_handle, consumer_to_institution3, institution_to_consumer3, None);
 
         revoke_credential_local(&mut institution,credential_handle1, rev_reg_id.clone());
         revoke_credential_local(&mut institution,credential_handle2, rev_reg_id.clone());
@@ -597,7 +597,7 @@ mod tests {
 
         let from = time_before_revocation - 100;
         let to = time_before_revocation;
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
         let interval = json!({"from": from, "to": to}).to_string();
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
@@ -697,7 +697,7 @@ mod tests {
         info!("test_real_proof :: sending credential offer");
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let handle_issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, cred_def_handle, issuer_to_consumer, &credential_data, None);
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
@@ -745,7 +745,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -777,7 +777,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -811,7 +811,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -844,12 +844,12 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
         rotate_rev_reg(&mut issuer, cred_def_handle);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
@@ -878,7 +878,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -913,7 +913,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = connection::tests::create_and_store_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
-        let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
+        let _institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();

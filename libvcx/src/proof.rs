@@ -124,7 +124,7 @@ pub mod tests {
 
     use crate::proof;
     use crate::api::VcxStateType;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
+    
     use crate::aries::messages::proof_presentation::presentation::tests::_comment;
     use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;

@@ -217,7 +217,7 @@ pub mod tests {
 
     use rand::Rng;
 
-    use crate::{libindy, settings};
+    use crate::{settings};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]

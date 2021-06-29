@@ -54,7 +54,7 @@ pub type PresentationRequestData = ProofRequestData;
 #[cfg(test)]
 pub mod tests {
     use crate::aries::messages::thread::Thread;
-    use crate::aries::messages::connection::service::tests::_service;
+    
 
     use super::*;
 

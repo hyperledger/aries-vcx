@@ -99,7 +99,7 @@ impl CreateKeyBuilder {
 mod tests {
     use super::*;
     use crate::error::AgencyClientErrorKind;
-    use crate::create_keys;
+    
     use crate::utils::constants;
     use crate::utils::test_utils::SetupMocks;
 
@@ -132,7 +132,7 @@ mod tests {
     fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
 
-        let mut builder = CreateKeyBuilder::create();
+        let builder = CreateKeyBuilder::create();
 
         let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
 

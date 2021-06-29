@@ -114,7 +114,7 @@ mod tests {
     use crate::utils::update_profile::UpdateProfileDataBuilder;
     use crate::mocking::AgencyMockDecrypted;
     use crate::utils::test_utils::SetupMocks;
-    use crate::{update_data, agency_settings};
+    use crate::{update_data};
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -123,7 +123,7 @@ mod tests {
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let name = "name";
-        let url = "https://random.com";
+        let _url = "https://random.com";
         let _msg = update_data()
             .to(to_did).unwrap()
             .name(&name).unwrap()

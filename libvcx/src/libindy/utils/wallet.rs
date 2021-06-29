@@ -6,7 +6,7 @@ use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::settings;
 use crate::libindy::utils::{anoncreds, signus};
-use crate::settings::Actors::Issuer;
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletConfig {
@@ -355,14 +355,14 @@ pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_client::agency_settings;
+    
 
     use crate::libindy::utils::signus::create_and_store_my_did;
     use crate::utils::devsetup::{SetupDefaults, SetupLibraryWallet, TempFile};
-    use crate::utils::get_temp_dir_path;
+    
 
     use super::*;
-    use crate::api;
+    
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -429,7 +429,7 @@ pub mod tests {
         settings::set_testing_defaults();
         let wallet_name = &format!("test_wrong_kdf_{}", uuid::Uuid::new_v4());
         let wallet_key = settings::DEFAULT_WALLET_NAME;
-        let wallet_kdf = settings::WALLET_KDF_ARGON2I_INT;
+        let _wallet_kdf = settings::WALLET_KDF_ARGON2I_INT;
         let wallet_wrong_kdf = settings::WALLET_KDF_RAW;
 
         let wallet_config = WalletConfig {
@@ -657,7 +657,7 @@ pub mod tests {
 
         delete_wallet(&wallet_config).unwrap();
 
-        let wallet_name_new = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
+        let _wallet_name_new = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),

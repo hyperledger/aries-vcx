@@ -3,7 +3,7 @@ use crate::aries::handlers::proof_presentation::verifier::messages::VerifierMess
 use crate::aries::handlers::proof_presentation::verifier::state_machine::VerifierSM;
 use crate::aries::handlers::connection::connection::Connection;
 use crate::aries::messages::a2a::A2AMessage;
-use crate::aries::messages::proof_presentation::presentation::Presentation;
+
 use crate::aries::messages::proof_presentation::presentation_request::*;
 use std::collections::HashMap;
 

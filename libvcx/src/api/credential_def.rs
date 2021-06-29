@@ -2,7 +2,7 @@ use std::ptr;
 
 use indy_sys::CommandHandle;
 use libc::c_char;
-use serde_json;
+
 
 use crate::{credential_def, settings};
 use crate::error::prelude::*;
@@ -519,7 +519,7 @@ mod tests {
 
     use std::ffi::CString;
 
-    use crate::{api, settings, utils};
+    
     use crate::api::return_types_u32;
     use crate::utils::constants::SCHEMA_ID;
     use crate::utils::devsetup::*;

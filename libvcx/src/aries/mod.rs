@@ -8,7 +8,7 @@ pub mod test {
     use agency_client::payload::PayloadKinds;
 
     use crate::{connection, credential, disclosed_proof, libindy, settings};
-    use crate::libindy::utils::wallet::*;
+    
     use crate::utils::devsetup::*;
     use crate::utils::plugins::init_plugin;
     use crate::utils::devsetup_agent::test::{Faber, Alice};

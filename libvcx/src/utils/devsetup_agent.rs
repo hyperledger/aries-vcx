@@ -12,7 +12,7 @@ pub mod test {
     use crate::utils::devsetup::*;
     use crate::utils::provision::{provision_cloud_agent, AgentProvisionConfig, AgencyClientConfig};
     use crate::init::{open_as_main_wallet, init_issuer_config, create_agency_client_for_main_wallet};
-    use crate::utils::constants;
+    
     use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
     use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
     use crate::aries::handlers::connection::inviter::state_machine::InviterState;
@@ -82,7 +82,7 @@ pub mod test {
     impl TestAgent for Faber {
         fn activate(&mut self) -> VcxResult<()> {
             close_main_wallet()
-                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
+                .unwrap_or_else(|_e| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Faber opening main wallet");
@@ -99,7 +99,7 @@ pub mod test {
     impl TestAgent for Alice {
         fn activate(&mut self) -> VcxResult<()> {
             close_main_wallet()
-                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
+                .unwrap_or_else(|_e| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Alice opening main wallet");
@@ -458,17 +458,17 @@ pub mod test {
 
     impl Drop for Faber {
         fn drop(&mut self) {
-            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Faber's wallet while dropping"));
+            self.activate().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping Faber"));
+            close_main_wallet().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping Faber"));
+            delete_wallet(&self.config_wallet).unwrap_or_else(|_e| error!("Failed to delete Faber's wallet while dropping"));
         }
     }
 
     impl Drop for Alice {
         fn drop(&mut self) {
-            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
-            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
-            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Alice's wallet while dropping"));
+            self.activate().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping Alice"));
+            close_main_wallet().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping Alice"));
+            delete_wallet(&self.config_wallet).unwrap_or_else(|_e| error!("Failed to delete Alice's wallet while dropping"));
         }
     }
 }

@@ -1119,7 +1119,7 @@ pub mod tests {
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        let (payment, _revoked_rev_reg_delta) = revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
+        let (_payment, _revoked_rev_reg_delta) = revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();

@@ -248,8 +248,8 @@ pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientRe
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-    use crate::agent_utils::{update_agent_webhook, ComMethodType};
+    
+    use crate::agent_utils::{ComMethodType};
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -9,7 +9,7 @@ use std::thread;
 
 use futures::future;
 use tokio::runtime::Runtime;
-use crate::settings;
+
 use std::sync::atomic::{Ordering, AtomicUsize};
 
 lazy_static! {
