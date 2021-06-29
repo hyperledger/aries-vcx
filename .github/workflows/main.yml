@@ -439,6 +439,7 @@ jobs:
           ./ci/version.sh "$PUBLISH_VERSION"
       - name: Publish crates
         run: |
+          cargo login ${{ secrets.CRATESIO_TOKEN_PATRIK }}
           ./ci/publish.sh
 
   publish-crates-release:
@@ -456,6 +457,7 @@ jobs:
           ./ci/version.sh "$PUBLISH_VERSION"
       - name: Publish crates
         run: |
+          cargo login ${{ secrets.CRATESIO_TOKEN_PATRIK }}
           ./ci/publish.sh
 
 #  test-libvcx-image-general_test:
