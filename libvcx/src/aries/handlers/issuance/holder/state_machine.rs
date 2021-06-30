@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::api::VcxStateType;
+use crate::api_lib::VcxStateType;
 use crate::aries::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::aries::handlers::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::aries::handlers::issuance::holder::states::request_sent::RequestSentState;

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard, Mutex};
+use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use rand::Rng;
 
@@ -118,7 +118,7 @@ impl<T> ObjectCache<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::object_cache::ObjectCache;
+    use crate::api_lib::api_handle::object_cache::ObjectCache;
     use crate::utils::devsetup::SetupDefaults;
 
     #[test]

@@ -4,11 +4,12 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use crate::{credential_def, settings};
+use crate::api_lib::api_handle::credential_def;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::settings;
 use crate::utils::error;
-use crate::utils::runtime::execute;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -519,11 +520,11 @@ mod tests {
 
     use std::ffi::CString;
 
-    use crate::{api, settings, utils};
-    use crate::api::return_types_u32;
+    use crate::{api_lib, settings, utils};
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::utils::constants::SCHEMA_ID;
     use crate::utils::devsetup::*;
-    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -679,17 +680,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32)
         }
     }
 }

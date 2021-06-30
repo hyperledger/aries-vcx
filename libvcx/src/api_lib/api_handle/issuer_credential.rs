@@ -1,12 +1,12 @@
 use serde_json;
 
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::credential_def;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
-use crate::credential_def;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -30,7 +30,7 @@ pub fn issuer_credential_create(cred_def_handle: u32,
     let issuer_config = IssuerConfig {
         cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
-        tails_file: credential_def::get_tails_file(cred_def_handle)?
+        tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
     let issuer = Issuer::create(&issuer_config, &credential_data, &source_id)?;
     ISSUER_CREDENTIAL_MAP.add(issuer)
@@ -175,12 +175,13 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use agency_client::mocking::HttpClientMockResponse;
 
-    use crate::{issuer_credential, settings};
-    use crate::api::VcxStateType;
-    use crate::connection::tests::build_test_connection_inviter_requested;
-    use crate::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::VcxStateType;
     use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use crate::libindy::utils::LibindyMock;
+    use crate::settings;
     use crate::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
     use crate::utils::devsetup::*;

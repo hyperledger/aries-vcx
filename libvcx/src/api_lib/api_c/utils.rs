@@ -8,13 +8,13 @@ use serde_json;
 use agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use agency_client::mocking::AgencyMock;
 
-use crate::connection;
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::libindy::utils::payments;
 use crate::utils::constants::*;
-use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
 use crate::utils::provision::AgentProvisionConfig;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -68,7 +68,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
         Ok(agency_config) => agency_config,
         Err(err) => {
             error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -546,13 +546,13 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::return_types_u32;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
-    use crate::utils::timeout::TimeoutUtils;
+    use crate::utils::provision::AgentProvisionConfig;
 
     use super::*;
-    use crate::utils::provision::AgentProvisionConfig;
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -574,7 +574,7 @@ mod tests {
             agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
             agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
             agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),
-            agent_seed: None
+            agent_seed: None,
         };
         let result = _vcx_agent_provision_async_c_closure(&json!(config).to_string()).unwrap();
         let _config: serde_json::Value = serde_json::from_str(&result.unwrap()).unwrap();

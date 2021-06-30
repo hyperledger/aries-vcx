@@ -3,12 +3,12 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::connection;
-use crate::credential;
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::credential;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -418,8 +418,8 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
-                                            credential_handle: u32,
-                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, revokable: bool)>) -> u32 {
+                                          credential_handle: u32,
+                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, revokable: bool)>) -> u32 {
     info!("vcx_credential_is_revokable >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -746,10 +746,10 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_v2_credential_update_state_with_message(command_handle: CommandHandle,
-                                                       credential_handle: u32,
-                                                       connection_handle: u32,
-                                                       message: *const c_char,
-                                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                          credential_handle: u32,
+                                                          connection_handle: u32,
+                                                          message: *const c_char,
+                                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_credential_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -997,13 +997,13 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::return_types_u32;
-    use crate::api::VcxStateType;
-    use crate::credential::tests::BAD_CREDENTIAL_OFFER;
+    use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::VcxStateType;
     use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
-    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 

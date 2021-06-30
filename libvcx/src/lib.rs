@@ -33,23 +33,15 @@ extern crate tokio;
 
 #[macro_use]
 pub mod utils;
-pub mod settings;
 #[macro_use]
-pub mod api;
+pub mod api_lib;
+pub mod settings;
 pub mod init;
-pub mod connection;
-pub mod issuer_credential;
-pub mod proof;
-pub mod schema;
-pub mod credential_def;
 pub mod error;
-pub mod credential;
-pub mod disclosed_proof;
 
 pub mod aries;
 mod filters;
 pub mod libindy;
-pub mod abi_utils;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
@@ -61,24 +53,24 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::api::ProofStateType;
-    use crate::api::VcxStateType;
-    use crate::connection;
-    use crate::credential;
-    use crate::credential_def;
-    use crate::disclosed_proof;
+    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::credential;
+    use crate::api_lib::api_handle::credential_def;
+    use crate::api_lib::api_handle::disclosed_proof;
+    use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::api_handle::proof;
+    use crate::api_lib::ProofStateType;
+    use crate::api_lib::VcxStateType;
     use crate::filters;
-    use crate::issuer_credential;
-    use crate::proof;
     use crate::settings;
     use crate::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         get_temp_dir_path,
     };
     use crate::utils::devsetup::*;
+    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
     use super::*;
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
     #[cfg(feature = "agency_pool_tests")]
     #[cfg(feature = "to_restore")] // message type spec/pairwise/1.0/UPDATE_CONN_STATUS no implemented in nodevcx agency

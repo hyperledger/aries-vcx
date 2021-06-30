@@ -3,11 +3,12 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, disclosed_proof};
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::disclosed_proof;
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
 use crate::utils::error;
-use crate::utils::runtime::execute;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.
@@ -545,10 +546,10 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: CommandHandle,
-                                                            proof_handle: u32,
-                                                            connection_handle: u32,
-                                                            message: *const c_char,
-                                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                               proof_handle: u32,
+                                                               connection_handle: u32,
+                                                               message: *const c_char,
+                                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_disclosed_proof_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -954,13 +955,14 @@ mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::VcxStateType;
     use crate::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 

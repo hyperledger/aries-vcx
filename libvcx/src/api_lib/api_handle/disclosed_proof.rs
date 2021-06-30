@@ -2,18 +2,18 @@ use serde_json;
 
 use agency_client::mocking::AgencyMockDecrypted;
 
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
 use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use crate::utils::error;
 use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -259,7 +259,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::api::VcxStateType;
+    use crate::api_lib::VcxStateType;
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
     use crate::utils;
     use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};

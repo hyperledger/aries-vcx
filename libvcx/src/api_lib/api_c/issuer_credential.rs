@@ -3,11 +3,12 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::{connection, credential_def, issuer_credential, settings};
+use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::settings;
 use crate::utils::error;
-use crate::utils::runtime::execute;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -333,10 +334,10 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle: CommandHandle,
-                                                              credential_handle: u32,
-                                                              connection_handle: u32,
-                                                              message: *const c_char,
-                                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
+                                                                 credential_handle: u32,
+                                                                 connection_handle: u32,
+                                                                 message: *const c_char,
+                                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
     info!("vcx_v2_issuer_credential_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -582,8 +583,8 @@ pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle
 
 #[no_mangle]
 pub extern fn vcx_issuer_credential_is_revokable(command_handle: CommandHandle,
-                                                   credential_handle: u32,
-                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, revokable: bool)>) -> u32 {
+                                                 credential_handle: u32,
+                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, revokable: bool)>) -> u32 {
     info!("vcx_issuer_credential_is_revokable >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -849,13 +850,14 @@ pub mod tests {
 
     use agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api::{return_types_u32, VcxStateType};
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::VcxStateType;
     use crate::settings;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
     use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
 

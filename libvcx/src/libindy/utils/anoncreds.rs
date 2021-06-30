@@ -1,5 +1,5 @@
-use indy::future::Future;
 use indy::{anoncreds, blob_storage, ledger};
+use indy::future::Future;
 use serde_json;
 use serde_json::{map::Map, Value};
 use time;
@@ -644,7 +644,8 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
-    use crate::{credential_def, libindy, settings};
+    use crate::{libindy, settings};
+    use crate::api_lib::api_handle::credential_def;
     use crate::aries::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::*;
     #[cfg(feature = "pool_tests")]

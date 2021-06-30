@@ -5,16 +5,17 @@ use indy_sys::WalletHandle;
 use libc::c_char;
 
 use crate::{libindy, settings, utils};
+use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils_c::error::get_current_error_c_json;
+use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
-use crate::init::{open_as_main_wallet, open_main_pool, init_threadpool, init_issuer_config, create_agency_client_for_main_wallet, enable_vcx_mocks, enable_agency_mocks, PoolConfig};
+use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
 use crate::libindy::utils::{ledger, pool, wallet};
 use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, set_wallet_handle, IssuerConfig, WalletConfig};
-use crate::utils::cstring::CStringUtils;
+use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
 use crate::utils::error;
-use crate::utils::runtime::execute;
-use crate::utils::version_constants;
 use crate::utils::provision::AgencyClientConfig;
+use crate::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -28,13 +29,13 @@ use crate::utils::provision::AgencyClientConfig;
 pub extern fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
     match enable_vcx_mocks() {
-        Ok(_) => { },
+        Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
     return match enable_agency_mocks() {
         Ok(_) => error::SUCCESS.code_num,
         Err(_) => error::UNKNOWN_ERROR.code_num
-    }
+    };
 }
 
 
@@ -99,7 +100,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
         Ok(agency_config) => agency_config,
         Err(err) => {
             error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -149,7 +150,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
         Ok(issuer_config) => issuer_config,
         Err(err) => {
             error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -202,7 +203,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char,  cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
+pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
     if is_pool_open() {
@@ -214,7 +215,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         Ok(pool_config) => pool_config,
         Err(err) => {
             error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num
+            return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -268,13 +269,13 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         Err(_) => {}
     };
 
-    crate::schema::release_all();
-    crate::connection::release_all();
-    crate::issuer_credential::release_all();
-    crate::credential_def::release_all();
-    crate::proof::release_all();
-    crate::disclosed_proof::release_all();
-    crate::credential::release_all();
+    crate::api_lib::api_handle::schema::release_all();
+    crate::api_lib::api_handle::connection::release_all();
+    crate::api_lib::api_handle::issuer_credential::release_all();
+    crate::api_lib::api_handle::credential_def::release_all();
+    crate::api_lib::api_handle::proof::release_all();
+    crate::api_lib::api_handle::disclosed_proof::release_all();
+    crate::api_lib::api_handle::credential::release_all();
 
     if delete {
         let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
@@ -298,7 +299,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
 
         match wallet::delete_wallet(&wallet_config) {
@@ -515,26 +516,29 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use crate::{api, connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api::return_types_u32;
-    use crate::api::wallet::tests::_test_add_and_get_wallet_record;
+    use crate::api_lib;
+    use crate::api_lib::api_c;
+    use crate::api_lib::api_c::connection::vcx_connection_create;
+    use crate::api_lib::api_c::wallet::tests::_test_add_and_get_wallet_record;
+    use crate::api_lib::api_c::wallet::vcx_open_main_wallet;
+    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_lib::utils_c::error::reset_current_error;
+    use crate::api_lib::utils_c::return_types_u32;
+    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::init::PoolConfig;
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, WalletConfig, RestoreWalletConfigs};
+    use crate::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
     use crate::libindy::utils::wallet::get_wallet_handle;
     use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
     use crate::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
     use crate::utils::get_temp_dir_path;
-    use crate::utils::timeout::TimeoutUtils;
 
     use super::*;
-    use crate::api::wallet::vcx_open_main_wallet;
-    use crate::api::connection::vcx_connection_create;
-    use crate::init::PoolConfig;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -671,7 +675,7 @@ mod tests {
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into())
+            wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into()),
         };
         import(&import_config).unwrap();
 
@@ -705,7 +709,7 @@ mod tests {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
 
         let import_config = RestoreWalletConfigs {
@@ -713,7 +717,7 @@ mod tests {
             wallet_key: wallet_config.wallet_key.clone(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone())
+            wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone()),
         };
         import(&import_config).unwrap();
 
@@ -745,7 +749,7 @@ mod tests {
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
             exported_wallet_path: export_wallet_path.path.clone(),
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
-            wallet_key_derivation: None
+            wallet_key_derivation: None,
         };
         assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
 
@@ -838,7 +842,7 @@ mod tests {
     fn get_current_error_works_for_no_error() {
         let _setup = SetupDefaults::init();
 
-        crate::error::reset_current_error();
+        reset_current_error();
 
         let mut error_json_p: *const c_char = ptr::null();
 
@@ -852,7 +856,7 @@ mod tests {
         let _setup = SetupDefaults::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        api::utils::vcx_provision_cloud_agent(cb.command_handle, ptr::null(), Some(cb.get_callback()));
+        api_c::utils::vcx_provision_cloud_agent(cb.command_handle, ptr::null(), Some(cb.get_callback()));
 
         let mut error_json_p: *const c_char = ptr::null();
         vcx_get_current_error(&mut error_json_p);
@@ -873,7 +877,7 @@ mod tests {
         }
 
         let config = CString::new("{}").unwrap();
-        api::utils::vcx_provision_cloud_agent(0, config.as_ptr(), Some(cb));
+        api_c::utils::vcx_provision_cloud_agent(0, config.as_ptr(), Some(cb));
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
@@ -932,7 +936,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_call_c_callable_api_without_threadpool () {
+    fn test_call_c_callable_api_without_threadpool() {
         let _setup = SetupMocks::init_without_threadpool();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1017,8 +1021,8 @@ mod tests {
             "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
         }).to_string();
 
-        api::wallet::vcx_wallet_set_handle(get_wallet_handle());
-        api::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
+        api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
+        api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
 

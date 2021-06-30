@@ -3,14 +3,16 @@ extern crate futures;
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::FnOnce;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::sync::Once;
 use std::thread;
 
 use futures::future;
 use tokio::runtime::Runtime;
+
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::settings;
-use std::sync::atomic::{Ordering, AtomicUsize};
 
 lazy_static! {
     static ref THREADPOOL: Mutex<HashMap<u32, Runtime>> = Default::default();
@@ -23,6 +25,13 @@ pub static mut TP_HANDLE: u32 = 0;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ThreadpoolConfig {
     pub num_threads: Option<usize>,
+}
+
+pub fn init_threadpool(config: &str) -> VcxResult<()> {
+    let config: ThreadpoolConfig = serde_json::from_str(config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
+    init_runtime(config);
+    Ok(())
 }
 
 pub fn init_runtime(config: ThreadpoolConfig) {

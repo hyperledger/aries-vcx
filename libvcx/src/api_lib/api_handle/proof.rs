@@ -1,11 +1,11 @@
 use serde_json;
 
+use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries::messages::a2a::A2AMessage;
-use crate::connection;
 use crate::error::prelude::*;
 use crate::utils::error;
-use crate::utils::object_cache::ObjectCache;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -122,11 +122,11 @@ pub mod tests {
 
     use agency_client::mocking::HttpClientMockResponse;
 
-    use crate::proof;
-    use crate::api::VcxStateType;
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::proof;
+    use crate::api_lib::VcxStateType;
     use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use crate::aries::messages::proof_presentation::presentation::tests::_comment;
-    use crate::connection::tests::build_test_connection_inviter_requested;
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
@@ -233,7 +233,7 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested();
-        let handle_proof  = create_default_proof();
+        let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateOfferSent as u32);
@@ -254,7 +254,7 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested();
-        let handle_proof  = create_default_proof();
+        let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VcxStateType::VcxStateOfferSent as u32);
