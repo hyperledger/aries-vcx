@@ -928,4 +928,15 @@ mod tests {
         proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_two_enterprise_connections() {
+        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+
+        let (_faber, _alice) = connection::tests::create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let (_faber, _alice) = connection::tests::create_and_store_connected_connections(&mut consumer1, &mut institution);
+    }
 }
