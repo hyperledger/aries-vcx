@@ -60,7 +60,6 @@ mod tests {
     use crate::api_lib::api_handle::issuer_credential;
     use crate::api_lib::api_handle::proof;
     use crate::api_lib::ProofStateType;
-    use crate::api_lib::VcxStateType;
     use crate::filters;
     use crate::settings;
     use crate::utils::{
@@ -69,6 +68,10 @@ mod tests {
     };
     use crate::utils::devsetup::*;
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
+    use crate::aries::handlers::issuance::holder::holder::HolderState;
+    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
+    use crate::aries::handlers::proof_presentation::prover::prover::ProverState;
+    use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;
 
@@ -179,7 +182,7 @@ mod tests {
         let offers = serde_json::to_string(&offers[0]).unwrap();
         info!("send_cred_req :: creating credential from offer");
         let credential = credential::credential_create_with_offer("TEST_CREDENTIAL", &offers).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, credential::get_state(credential).unwrap());
+        assert_eq!(HolderState::OfferReceived as u32, credential::get_state(credential).unwrap());
         info!("send_cred_req :: sending credential request");
         credential::send_credential_request(credential, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
@@ -191,7 +194,7 @@ mod tests {
         info!("send_credential >>> getting offers");
         assert_eq!(issuer_credential::is_revokable(handle_issuer_credential).unwrap(), revokable);
         issuer_credential::update_state(handle_issuer_credential, None, issuer_to_consumer).unwrap();
-        assert_eq!(VcxStateType::VcxStateRequestReceived as u32, issuer_credential::get_state(handle_issuer_credential).unwrap());
+        assert_eq!(IssuerState::RequestReceived as u32, issuer_credential::get_state(handle_issuer_credential).unwrap());
         assert_eq!(issuer_credential::is_revokable(handle_issuer_credential).unwrap(), revokable);
 
         info!("send_credential >>> sending credential");
@@ -202,7 +205,7 @@ mod tests {
         info!("send_credential >>> storing credential");
         assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
         credential::update_state(handle_holder_credential, None, consumer_to_issuer).unwrap();
-        assert_eq!(VcxStateType::VcxStateAccepted as u32, credential::get_state(handle_holder_credential).unwrap());
+        assert_eq!(HolderState::Finished as u32, credential::get_state(handle_holder_credential).unwrap());
         assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
 
         if revokable {
@@ -254,7 +257,7 @@ mod tests {
         disclosed_proof::send_proof(proof_handle, connection_handle).unwrap();
         info!("generate_and_send_proof :: proof sent");
 
-        assert_eq!(VcxStateType::VcxStateOfferSent as u32, disclosed_proof::get_state(proof_handle).unwrap());
+        assert_eq!(ProverState::PresentationSent as u32, disclosed_proof::get_state(proof_handle).unwrap());
         thread::sleep(Duration::from_millis(5000));
     }
 
