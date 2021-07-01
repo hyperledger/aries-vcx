@@ -12,6 +12,14 @@ pub struct Holder {
     holder_sm: HolderSM
 }
 
+#[derive(Debug, PartialEq)]
+pub enum HolderState {
+    OfferReceived,
+    RequestSent,
+    Finished,
+    Failed
+}
+
 impl Holder {
     pub fn create(credential_offer: CredentialOffer, source_id: &str) -> VcxResult<Holder> {
         trace!("Holder::holder_create_credential >>> credential_offer: {:?}, source_id: {:?}", credential_offer, source_id);
@@ -33,8 +41,8 @@ impl Holder {
         self.holder_sm.find_message_to_handle(messages)
     }
 
-    pub fn get_state(&self) -> u32 {
-        self.holder_sm.state()
+    pub fn get_state(&self) -> HolderState {
+        self.holder_sm.get_state()
     }
 
     pub fn get_source_id(&self) -> String {
@@ -84,7 +92,7 @@ impl Holder {
 
     pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
         trace!("Holder::update_state >>> ");
-        if self.is_terminal_state() { return Ok(self.get_state()); }
+        if self.is_terminal_state() { return Ok(self.get_state().into()); }
         let send_message = connection.send_message_closure()?;
 
         let messages = connection.get_messages()?;
@@ -92,6 +100,6 @@ impl Holder {
             self.step(msg.into(), Some(&send_message))?;
             connection.update_message_status(uid)?;
         }
-        Ok(self.get_state())
+        Ok(self.get_state().into())
     }
 }
