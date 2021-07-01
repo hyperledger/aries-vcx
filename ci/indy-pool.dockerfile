@@ -33,7 +33,7 @@ ARG python3_orderedset_ver=2.0
 ARG python3_psutil_ver=5.4.3
 ARG python3_pympler_ver=0.5
 
-RUN apt-get update -y && apt-get install -y \
+RUN apt-get update -y && apt-get install -y --allow-unauthenticated \
         python3-pyzmq=${python3_pyzmq_ver} \
         indy-plenum=${indy_plenum_ver} \
         indy-node=${indy_node_ver} \
