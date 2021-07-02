@@ -35,7 +35,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
       }
     }
 
-    const [error, proofRequests] = await pollFunction(findSomeRequests, 'Get credential offer', logger, attemptsThreshold, timeoutMs)
+    const [error, proofRequests] = await pollFunction(findSomeRequests, 'Get proof request', logger, attemptsThreshold, timeoutMs)
     if (error) {
       throw Error(`Couldn't find any proof request. ${error}`)
     }
@@ -84,7 +84,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
     await sendDisclosedProof(disclosedProofId, connectionId)
     const disclosedProof = await loadDisclosedProof(disclosedProofId)
     const connection = await loadConnection(connectionId)
-    await _progressProofToState(disclosedProof, connection, [StateType.Accepted, StateType.None])
+    await _progressProofToState(disclosedProof, connection, [2, 3])
     const state = await disclosedProof.getState()
     await saveDisclosedProof(disclosedProofId, disclosedProof)
     return state

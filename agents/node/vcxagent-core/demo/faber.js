@@ -88,12 +88,12 @@ async function runFaber (options) {
     let proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
     logger.debug(`vcxProof = ${JSON.stringify(vcxProof)}`)
     logger.debug(`proofState = ${proofProtocolState}`)
-    while (proofProtocolState !== StateType.Accepted) { // even if revoked credential was used, state should in final state be StateType.Accepted
+    while (![2, 3].includes(proofProtocolState)) { // even if revoked credential was used, state should in final state be StateType.Accepted
       await sleepPromise(2000)
       proofProtocolState = await vcxProof.updateStateV2(connectionToAlice)
       logger.info(`proofState=${proofProtocolState}`)
-      if (proofProtocolState === StateType.None) {
-        logger.error(`Faber proof protocol state is ${StateType.None} which an error has ocurred.`)
+      if (proofProtocolState === 3) {
+        logger.error(`Faber proof protocol state is ${3} which an error has ocurred.`)
         logger.error(`Serialized proof state = ${JSON.stringify(await vcxProof.serialize())}`)
         process.exit(-1)
       }

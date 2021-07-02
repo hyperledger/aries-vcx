@@ -11,6 +11,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
   async function _getOffers (connection, filter, attemptsThreshold, timeoutMs) {
     async function findSomeCredOffer () {
       let offers = await Credential.getOffers(connection)
+      logger.info(`Offers: ${offers}`)
       if (filter && filter.schemaIdRegex) {
         offers = filterOffersBySchema(offers, filter.schemaIdRegex)
       }
@@ -49,7 +50,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
   async function waitForCredential (connectionId, holderCredentialId, attemptsThreshold = 10, timeoutMs = 2000) {
     const connection = await loadConnection(connectionId)
     const credential = await loadHolderCredential(holderCredentialId)
-    await _progressCredentialToState(credential, connection, StateType.Accepted, attemptsThreshold, timeoutMs)
+    await _progressCredentialToState(credential, connection, 2, attemptsThreshold, timeoutMs)
     logger.info('Credential has been received.')
     await saveHolderCredential(holderCredentialId, credential)
     return getCredentialData(holderCredentialId)

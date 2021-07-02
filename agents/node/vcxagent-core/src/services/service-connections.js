@@ -50,7 +50,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function _progressConnectionToAcceptedState (connection, attemptsThreshold, timeoutMs) {
     async function progressToAcceptedState () {
-      if (await connection.updateState() !== StateType.Accepted) {
+      if (await connection.updateState() !== 4) {
         return { result: undefined, isFinished: false }
       } else {
         return { result: null, isFinished: true }
