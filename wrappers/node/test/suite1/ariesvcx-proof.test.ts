@@ -115,14 +115,14 @@ describe('Proof:', () => {
       const state1 = await proof.updateStateV2(connection);
       const state2 = await proof.getState();
       assert.equal(state1, state2);
-      assert.equal(state2, StateType.None);
+      assert.equal(state2, 0);
     });
 
     it(`returns ${StateType.Initialized}: created`, async () => {
       const connection = await createConnectionInviterRequested();
       const proof = await proofCreate();
       await proof.updateStateV2(connection);
-      assert.equal(await proof.getState(), StateType.Initialized);
+      assert.equal(await proof.getState(), 0);
     });
   });
 
@@ -131,7 +131,7 @@ describe('Proof:', () => {
       const connection = await createConnectionInviterRequested();
       const proof = await proofCreate();
       await proof.requestProof(connection);
-      assert.equal(await proof.getState(), StateType.OfferSent);
+      assert.equal(await proof.getState(), 1);
     });
 
     it('successfully get request message', async () => {

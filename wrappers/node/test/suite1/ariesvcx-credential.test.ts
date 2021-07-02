@@ -94,9 +94,9 @@ describe('Credential:', () => {
       const connection = await createConnectionInviterRequested();
       const data = await dataCredentialCreateWithOffer();
       const credential = await Credential.create(data);
-      assert.equal(await credential.getState(), StateType.RequestReceived);
+      assert.equal(await credential.getState(), 0);
       credential.sendRequest({ connection, payment: 0 });
-      assert.equal(await credential.getState(), StateType.OfferSent);
+      assert.equal(await credential.getState(), 1);
     });
   });
 
@@ -105,14 +105,14 @@ describe('Credential:', () => {
       const data = await dataCredentialCreateWithOffer();
       const credential = await credentialCreateWithOffer(data);
       await credential.sendRequest({ connection: data.connection, payment: 0 });
-      assert.equal(await credential.getState(), StateType.OfferSent);
+      assert.equal(await credential.getState(), 1);
     });
 
     it('success: with message id', async () => {
       const data = await dataCredentialCreateWithMsgId();
       const credential = await credentialCreateWithMsgId(data);
       await credential.sendRequest({ connection: data.connection, payment: 0 });
-      assert.equal(await credential.getState(), StateType.OfferSent);
+      assert.equal(await credential.getState(), 1);
     });
   });
 

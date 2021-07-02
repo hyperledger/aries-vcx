@@ -66,6 +66,7 @@ export interface IIssuerCredentialCreateData {
   credentialName: string;
   // price of credential
   price: string;
+  issuerDid: string;
 }
 
 export interface IIssuerCredentialVCXAttributes {
@@ -112,6 +113,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
     credDefHandle,
     credentialName,
     price,
+    issuerDid,
   }: IIssuerCredentialCreateData): Promise<IssuerCredential> {
     try {
       const attrsVCX: IIssuerCredentialVCXAttributes = attr;
@@ -123,7 +125,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
       });
       const attrsStringified = attrsVCX ? JSON.stringify(attrsVCX) : attrsVCX;
       const commandHandle = 0;
-      const issuerDid = null;
       await credential._create((cb) =>
         rustAPI().vcx_issuer_create_credential(
           commandHandle,
