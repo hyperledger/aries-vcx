@@ -272,7 +272,7 @@ pub mod tests {
     use crate::aries::messages::connection::invite::tests::_invitation_json;
     use crate::utils::constants;
     use crate::utils::devsetup::*;
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
+    use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
