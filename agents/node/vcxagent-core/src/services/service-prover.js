@@ -2,7 +2,7 @@ const { pollFunction } = require('../common')
 const { holderSelectCredentialsForProof } = require('../utils/proofs')
 const {
   DisclosedProof,
-  StateType
+  ProverStateType
 } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceProver = function createServiceProver ({ logger, loadConnection, saveDisclosedProof, loadDisclosedProof, listDislosedProofIds }) {
@@ -84,7 +84,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
     await sendDisclosedProof(disclosedProofId, connectionId)
     const disclosedProof = await loadDisclosedProof(disclosedProofId)
     const connection = await loadConnection(connectionId)
-    await _progressProofToState(disclosedProof, connection, [2, 3])
+    await _progressProofToState(disclosedProof, connection, [ProverStateType.PresentationPreparationFailed, ProverStateType.PresentationSent])
     const state = await disclosedProof.getState()
     await saveDisclosedProof(disclosedProofId, disclosedProof)
     return state

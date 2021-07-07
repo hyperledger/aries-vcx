@@ -1,5 +1,5 @@
 const {
-  StateType,
+  IssuerStateType,
   IssuerCredential
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
@@ -37,7 +37,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     const issuerCred = await loadIssuerCredential(issuerCredId)
     const connection = await loadConnection(connectionId)
     logger.debug('Going to wait until credential request is received.')
-    await _progressIssuerCredentialToState(issuerCred, connection, 2, 10, 2000)
+    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.RequestReceived, 10, 2000)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
@@ -46,7 +46,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     const connection = await loadConnection(connectionId)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     logger.info('Going to wait until counterparty accepts the credential.')
-    await _progressIssuerCredentialToState(issuerCred, connection, 4, 10, 2000)
+    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.Finished, 10, 2000)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
