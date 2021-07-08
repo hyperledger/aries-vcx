@@ -289,15 +289,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * Sends the credential to the end user.
    *
    * Credential is made up of the data sent during Credential Offer
-   * ```
-   * connection = await connectionCreateConnect()
-   * issuerCredential = await issuerCredentialCreate()
-   * await issuerCredential.sendOffer(connection)
-   * await issuerCredential.updateState()
-   * assert.equal(await issuerCredential.getState(), StateType.RequestReceived)
-   * await issuerCredential.sendCredential(connection)
-   * ```
-   *
    */
   public async sendCredential(connection: Connection): Promise<void> {
     try {
@@ -326,15 +317,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * Gets the credential message for sending to connection.
    *
    * Credential is made up of the data sent during Credential Offer
-   * ```
-   * connection = await connectionCreateConnect()
-   * issuerCredential = await issuerCredentialCreate()
-   * await issuerCredential.sendOffer(connection)
-   * await issuerCredential.updateState()
-   * assert.equal(await issuerCredential.getState(), StateType.RequestReceived)
-   * await issuerCredential.getCredentialMsg()
-   * ```
-   *
    */
   public async getCredentialMsg(myPwDid: string): Promise<string> {
     try {
@@ -371,16 +353,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
    * Revokes credential.
    *
    * Credential is made up of the data sent during Credential Offer
-   * ```
-   * connection = await connectionCreateConnect()
-   * issuerCredential = await issuerCredentialCreate()
-   * await issuerCredential.sendOffer(connection)
-   * await issuerCredential.updateState()
-   * assert.equal(await issuerCredential.getState(), StateType.RequestReceived)
-   * await issuerCredential.sendCredential(connection)
-   * await issuerCredential.revokeCredential()
-   * ```
-   *
    */
   public async revokeCredential(): Promise<void> {
     try {

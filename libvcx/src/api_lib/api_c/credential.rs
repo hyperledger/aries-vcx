@@ -1065,21 +1065,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_send_request() {
-        let _setup = SetupMocks::init();
-
-        let handle = credential::credential_create_with_offer("test_send_request", ARIES_CREDENTIAL_OFFER).unwrap();
-        assert_eq!(credential::get_state(handle).unwrap(), HolderState::OfferReceived as u32);
-
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_credential_send_request(cb.command_handle, handle, connection_handle, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 

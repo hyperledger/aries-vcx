@@ -105,33 +105,12 @@ export enum VCXCode {
   INVALID_REDIRECT_DETAILS = 1104,
   NO_AGENT_INFO = 1106,
 }
-export enum StateType {
-  None = 0,
-  Initialized = 1,
-  OfferSent = 2,
-  RequestReceived = 3,
-  Accepted = 4,
-  Unfulfilled = 5,
-  Expired = 6,
-  Revoked = 7,
-  Redirected = 8,
-  Rejected = 9,
-}
-
-export enum InviterStateType {
+export enum ConnectionStateType {
   Null = 0,
   Invited = 1,
   Requested = 2,
   Responded = 3,
-  Completed = 4
-}
-
-export enum InviteeStateType {
-  Null = 0,
-  Invited = 1,
-  Requested = 2,
-  Responded = 3,
-  Completed = 4
+  Finished = 4,
 }
 
 export enum HolderStateType {

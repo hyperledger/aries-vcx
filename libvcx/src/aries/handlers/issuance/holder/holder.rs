@@ -90,9 +90,9 @@ impl Holder {
         Ok(())
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<u32> {
+    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
         trace!("Holder::update_state >>> ");
-        if self.is_terminal_state() { return Ok(self.get_state().into()); }
+        if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
         let messages = connection.get_messages()?;
@@ -100,6 +100,6 @@ impl Holder {
             self.step(msg.into(), Some(&send_message))?;
             connection.update_message_status(uid)?;
         }
-        Ok(self.get_state().into())
+        Ok(self.get_state())
     }
 }

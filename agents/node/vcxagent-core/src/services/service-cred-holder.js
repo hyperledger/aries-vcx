@@ -2,7 +2,7 @@ const {filterOffersByCredentialName} = require('../utils/credentials')
 const { filterOffersByAttr } = require('../utils/credentials')
 const { filterOffersBySchema } = require('../utils/credentials')
 const {
-  StateType,
+  HolderStateType,
   Credential
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
@@ -50,7 +50,7 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
   async function waitForCredential (connectionId, holderCredentialId, attemptsThreshold = 10, timeoutMs = 2000) {
     const connection = await loadConnection(connectionId)
     const credential = await loadHolderCredential(holderCredentialId)
-    await _progressCredentialToState(credential, connection, 2, attemptsThreshold, timeoutMs)
+    await _progressCredentialToState(credential, connection, HolderStateType.Finished, attemptsThreshold, timeoutMs)
     logger.info('Credential has been received.')
     await saveHolderCredential(holderCredentialId, credential)
     return getCredentialData(holderCredentialId)

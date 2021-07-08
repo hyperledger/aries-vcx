@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const { createVcxAgent } = require('../../src/index')
-const { InviteeStateType, ProverStateType } = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, ProverStateType } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createAlice = async function createAlice () {
   const agentName = `alice-${Math.floor(new Date() / 1000)}`
@@ -26,7 +26,7 @@ module.exports.createAlice = async function createAlice () {
 
     await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitation(connectionId, invite)
     const connection = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
-    expect(await connection.getState()).toBe(InviteeStateType.Requested)
+    expect(await connection.getState()).toBe(ConnectionStateType.Requested)
 
     await vcxAgent.agentShutdownVcx()
   }

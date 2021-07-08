@@ -9,6 +9,3 @@ members = [
 debug = true
 panic = 'unwind'
 incremental = false
- 
-[profile.dev]
-split-debuginfo = "unpacked" 

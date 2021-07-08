@@ -8,7 +8,7 @@ import {
   DisclosedProof,
   Proof,
   ProofState,
-  StateType,
+  VerifierStateType,
   VCXCode,
   VCXMock,
   VCXMockMessage,
@@ -109,20 +109,13 @@ describe('Proof:', () => {
   });
 
   describe('updateState:', () => {
-    it(`returns ${StateType.None}: not initialized`, async () => {
+    it(`returns ${VerifierStateType.Initial}: created`, async () => {
       const proof = new Proof(null as any, {} as any);
       const connection = await createConnectionInviterRequested();
       const state1 = await proof.updateStateV2(connection);
       const state2 = await proof.getState();
       assert.equal(state1, state2);
-      assert.equal(state2, 0);
-    });
-
-    it(`returns ${StateType.Initialized}: created`, async () => {
-      const connection = await createConnectionInviterRequested();
-      const proof = await proofCreate();
-      await proof.updateStateV2(connection);
-      assert.equal(await proof.getState(), 0);
+      assert.equal(state2, VerifierStateType.Initial);
     });
   });
 
@@ -131,7 +124,7 @@ describe('Proof:', () => {
       const connection = await createConnectionInviterRequested();
       const proof = await proofCreate();
       await proof.requestProof(connection);
-      assert.equal(await proof.getState(), 1);
+      assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSent);
     });
 
     it('successfully get request message', async () => {
