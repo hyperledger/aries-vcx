@@ -267,7 +267,8 @@ pub mod tests {
     use crate::{aries, settings, utils};
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::VcxStateType;
-    use crate::aries::handlers::connection::connection::tests::create_connected_connections;
+    use crate::api_lib::api_handle::test::create_connected_connections;
+    use crate::aries::messages::a2a::A2AMessage;
     use crate::aries::messages::ack::tests::_ack;
     use crate::aries::messages::connection::invite::tests::_invitation_json;
     use crate::utils::constants;
