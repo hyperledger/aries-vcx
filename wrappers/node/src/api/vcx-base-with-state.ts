@@ -10,24 +10,24 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
     handle: number,
     connHandle: number,
     cb: ICbRef,
-  ) => StateType | number;
-  protected abstract _getStFn: (commandHandle: number, handle: number, cb: ICbRef) => StateType | number;
+  ) => number;
+  protected abstract _getStFn: (commandHandle: number, handle: number, cb: ICbRef) => number;
 
-  public async updateStateV2(connection: Connection): Promise<StateType | number> {
+  public async updateStateV2(connection: Connection): Promise<StateType> {
     try {
       const commandHandle = 0;
-      const state = await createFFICallbackPromise<StateType | number>(
+      const state = await createFFICallbackPromise<StateType>(
         (resolve, reject, cb) => {
           const rc = this._updateStFnV2(commandHandle, this.handle, connection.handle, cb);
           if (rc) {
-            resolve(0);
+            reject(rc);
           }
         },
         (resolve, reject) =>
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, _state: StateType | number) => {
+            (handle: number, err: number, _state: StateType) => {
               if (err) {
                 reject(err);
               }
@@ -48,23 +48,23 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
    * ```
    * state = await object.getState()
    * ```
-   * @returns {Promise<StateType | number>}
+   * @returns {Promise<StateType>}
    */
-  public async getState(): Promise<StateType | number> {
+  public async getState(): Promise<StateType> {
     try {
       const commandHandle = 0;
-      const stateRes = await createFFICallbackPromise<StateType | number>(
+      const stateRes = await createFFICallbackPromise<StateType>(
         (resolve, reject, cb) => {
           const rc = this._getStFn(commandHandle, this.handle, cb);
           if (rc) {
-            resolve(0);
+            reject(rc);
           }
         },
         (resolve, reject) =>
           ffi.Callback(
             'void',
             ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, state: StateType | number) => {
+            (handle: number, err: number, state: StateType) => {
               if (err) {
                 reject(err);
               }
