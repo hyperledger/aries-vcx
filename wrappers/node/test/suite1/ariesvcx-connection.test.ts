@@ -130,12 +130,15 @@ describe('Connection:', () => {
   });
 
   describe('updateState:', () => {
-    it(`returns ${ConnectionStateType.Null}: not initialized`, async () => {
+    it(`throws error when not initialized`, async () => {
+      let caught_error
       const connection = new (Connection as any)();
-      const state1 = await connection.updateState();
-      const state2 = await connection.getState();
-      assert.equal(state1, state2);
-      assert.equal(state2, ConnectionStateType.Null);
+      try {
+        await connection.updateState();
+      } catch (err) {
+        caught_error = err
+      }
+      assert.isNotNull(caught_error)
     });
 
     it(`returns ${ConnectionStateType.Null}: not connected`, async () => {
