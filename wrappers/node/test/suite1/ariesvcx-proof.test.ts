@@ -109,13 +109,16 @@ describe('Proof:', () => {
   });
 
   describe('updateState:', () => {
-    it(`returns ${VerifierStateType.Initial}: created`, async () => {
+    it(`throws error when not initialized`, async () => {
+      let caught_error;
       const proof = new Proof(null as any, {} as any);
       const connection = await createConnectionInviterRequested();
-      const state1 = await proof.updateStateV2(connection);
-      const state2 = await proof.getState();
-      assert.equal(state1, state2);
-      assert.equal(state2, VerifierStateType.Initial);
+      try {
+        await proof.updateStateV2(connection);
+      } catch (err) {
+        caught_error = err;
+      }
+      assert.isNotNull(caught_error);
     });
   });
 

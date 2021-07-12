@@ -120,13 +120,16 @@ describe('DisclosedProof', () => {
   });
 
   describe('updateState:', () => {
-    it(`returns ${ProverStateType.Initial}: not initialized`, async () => {
+    it('Throws error when not initialized', async () => {
+      let caught_error;
       const disclosedProof = new (DisclosedProof as any)();
       const connection = await createConnectionInviterRequested();
-      const state1 = await disclosedProof.updateStateV2(connection);
-      const state2 = await disclosedProof.getState();
-      assert.equal(state1, state2);
-      assert.equal(state2, ProverStateType.Initial);
+      try {
+        await disclosedProof.updateStateV2(connection);
+      } catch (err) {
+        caught_error = err;
+      }
+      assert.isNotNull(caught_error);
     });
 
     it(`returns ${ProverStateType.Initial}: created`, async () => {
