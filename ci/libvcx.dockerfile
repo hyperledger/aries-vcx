@@ -7,7 +7,11 @@ COPY --chown=indy  ./ ./
 
 USER indy
 ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR "true"
+<<<<<<< HEAD
 RUN cargo build --manifest-path=/home/indy/Cargo.toml
+=======
+RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
+>>>>>>> f3268d0a0... Set default host
 
 USER root
 RUN mv /home/indy/target/debug/libvcx.so .
