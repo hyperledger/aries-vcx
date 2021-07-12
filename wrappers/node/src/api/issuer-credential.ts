@@ -2,7 +2,7 @@ import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { ISerializedData } from './common';
+import { ISerializedData, IssuerStateType } from './common';
 import { Connection } from './connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
 import { PaymentManager } from './vcx-payment-txn';
@@ -97,7 +97,7 @@ export class IssuerCredentialPaymentManager extends PaymentManager {
 /**
  * A Credential created by the issuing party (institution)
  */
-export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData> {
+export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, IssuerStateType> {
   /**
    * Create a Issuer Credential object that provides a credential for an enterprise's user
    * Assumes a credential definition has been already written to the ledger.

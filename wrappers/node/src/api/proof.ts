@@ -2,7 +2,7 @@ import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { ISerializedData } from './common';
+import { ISerializedData, VerifierStateType } from './common';
 import { Connection } from './connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
@@ -166,7 +166,7 @@ export interface IRevocationInterval {
 /**
  * Class representing a Proof
  */
-export class Proof extends VCXBaseWithState<IProofData> {
+export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
   /**
    * Get the state of the proof
    */

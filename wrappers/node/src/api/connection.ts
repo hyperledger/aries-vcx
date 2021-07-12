@@ -3,7 +3,7 @@ import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
-import { ISerializedData } from './common';
+import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
 import { PtrBuffer } from './utils';
 
@@ -105,7 +105,7 @@ export interface IConnectionData {
   endpoint: string;
   uuid: string;
   wallet: string;
-  state: number;
+  state: ConnectionStateType;
 }
 
 /**
@@ -237,7 +237,7 @@ export async function downloadMessagesV2({
 /**
  * @class Class representing a Connection
  */
-export class Connection extends VCXBaseWithState<IConnectionData> {
+export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStateType> {
     /**
    * Create a connection object, represents a single endpoint and can be used for sending and receiving
    * credentials and proofs
