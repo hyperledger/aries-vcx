@@ -3,7 +3,6 @@ use crate::utils::qualifier;
 
 use bs58;
 use messages::msg_types::Role;
-use openssl::bn::BigNum;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
@@ -22,18 +21,6 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
             )),
         }
     }
-}
-
-pub fn validate_nonce(nonce: &str) -> VcxResult<String> {
-    let nonce =
-        BigNum::from_dec_str(nonce).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidNonce, err))?;
-    if nonce.num_bits() > 80 {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidNonce,
-            "Invalid Nonce length",
-        ));
-    }
-    Ok(nonce.to_string())
 }
 
 pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
