@@ -7,10 +7,10 @@ COPY --chown=indy  ./ ./
 
 USER indy
 ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR "true"
-RUN cargo build --manifest-path=/home/indy/Cargo.toml
+RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 
 USER root
-RUN mv /home/indy/target/debug/libvcx.so .
+RUN mv /home/indy/target/release/libvcx.so .
 
 FROM alpine:3.12
 
