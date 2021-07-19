@@ -39,7 +39,6 @@ pub mod settings;
 pub mod init;
 pub mod error;
 
-pub mod aries;
 mod filters;
 pub mod libindy;
 
