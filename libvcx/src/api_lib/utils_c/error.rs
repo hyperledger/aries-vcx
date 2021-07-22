@@ -9,8 +9,8 @@ use libc::c_char;
 
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::error::{VcxError, VcxErrorKind};
-use crate::utils;
-use crate::utils::error;
+use aries::utils;
+use aries::utils::error;
 
 impl From<VcxError> for u32 {
     fn from(code: VcxError) -> u32 {

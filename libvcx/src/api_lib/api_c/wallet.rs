@@ -10,10 +10,10 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
-use crate::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
-use crate::libindy::utils::wallet;
-use crate::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
-use crate::utils::error;
+use aries::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
+use aries::libindy::utils::wallet;
+use aries::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
+use aries::utils::error;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -57,7 +57,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     };
 
     thread::spawn(move || {
-        match wallet::create_wallet(&wallet_config) {
+        match wallet::create_indy_wallet(&wallet_config) {
             Err(e) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());
@@ -1185,13 +1185,14 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use crate::{libindy, settings};
+    use crate::settings;
+    use aries::libindy;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::payments::build_test_address;
-    use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
-    use crate::utils::devsetup::*;
+    use aries::libindy::utils::payments::build_test_address;
+    use aries::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
+    use aries::utils::devsetup::*;
 
     use super::*;
 

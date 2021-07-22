@@ -3,11 +3,11 @@ use serde_json;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::PublicEntityStateType;
 use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, ledger};
-use crate::libindy::utils::cache::update_rev_reg_ids_cache;
-use crate::libindy::utils::payments::PaymentTxn;
-use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use crate::utils::serialization::ObjectWithVersion;
+use aries::libindy::utils::{anoncreds, ledger};
+use aries::libindy::utils::cache::update_rev_reg_ids_cache;
+use aries::libindy::utils::payments::PaymentTxn;
+use aries::utils::constants::DEFAULT_SERIALIZE_VERSION;
+use aries::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
@@ -185,15 +185,15 @@ impl CredentialDef {
                 let tag = format!("tag{}", rev_reg.tag + 1);
                 let (rev_reg_id, rev_reg_def, rev_reg_entry) =
                     anoncreds::generate_rev_reg(&issuer_did, &self.id, &tails_file, *max_creds, tag.as_str())
-                        .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create revocation registry defintion"))?;
+                        .map_err(|err| err.map(aries::error::VcxErrorKind::CreateRevRegDef, "Cannot create revocation registry defintion"))?;
 
                 let new_rev_reg_def = _replace_tails_location(&rev_reg_def, &revocation_details)?;
 
                 let rev_reg_def_payment_txn = anoncreds::publish_rev_reg_def(&issuer_did, &new_rev_reg_def)
-                    .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
+                    .map_err(|err| err.map(aries::error::VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
 
                 let (rev_reg_delta_payment_txn, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
-                    .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+                    .map_err(|err| err.map(aries::error::VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
                 let new_rev_reg = RevocationRegistry {
                     rev_reg_id,
@@ -264,7 +264,7 @@ fn _create_credentialdef(issuer_did: &str,
 
             let (rev_reg_id, rev_reg_def, rev_reg_entry) =
                 anoncreds::generate_rev_reg(&issuer_did, &cred_def_id, &tails_file, max_creds, "tag1")
-                    .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
+                    .map_err(|err| err.map(aries::error::VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
 
             let rev_reg_def = _maybe_set_url(&rev_reg_def, revocation_details)?;
 
@@ -279,7 +279,7 @@ fn _create_credentialdef(issuer_did: &str,
 fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
     match anoncreds::get_cred_def(Some(issuer_did), cred_def_id) {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
-        Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
+        Err(err) if err.kind() == aries::error::VcxErrorKind::LibndyError(309) => Ok(None),
         Err(err) => Err(VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Failed to check presence of credential definition id {} on the ledger\nError: {}", cred_def_id, err)))
     }
 }
@@ -307,10 +307,10 @@ pub fn create_and_publish_credentialdef(source_id: String,
             match (&rev_reg_id, &rev_reg_def, &rev_reg_entry) {
                 (Some(ref rev_reg_id), Some(ref rev_reg_def), Some(ref rev_reg_entry)) => {
                     let rev_def_payment = anoncreds::publish_rev_reg_def(&issuer_did, &rev_reg_def)
-                        .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
+                        .map_err(|err| err.map(aries::error::VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
 
                     let (rev_delta_payment, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
-                        .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+                        .map_err(|err| err.map(aries::error::VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
                     (rev_def_payment, rev_delta_payment, cred_def_payment_txn)
                 }
@@ -455,7 +455,7 @@ pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<St
                 let new_rev_reg = s.rotate_rev_reg(revocation_details)?;
                 match update_rev_reg_ids_cache(&s.id, &new_rev_reg.rev_reg_id) {
                     Ok(()) => s.to_string(),
-                    Err(err) => Err(err)
+                    Err(err) => Err(err.into())
                 }
             }
             // TODO: Better error
@@ -487,12 +487,12 @@ pub mod tests {
     use crate::{libindy, settings, utils};
     use crate::api_lib::api_handle::schema;
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::payments::add_new_did;
-    use crate::utils::{
+    use aries::libindy::utils::payments::add_new_did;
+    use aries::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use crate::utils::devsetup::*;
+    use aries::utils::devsetup::*;
 
     use super::*;
 

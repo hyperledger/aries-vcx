@@ -11,9 +11,9 @@ use crate::aries::{
 };
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
-use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use crate::utils::error;
-use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use aries::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries::utils::error;
+use aries::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -289,9 +289,9 @@ pub mod tests {
     use crate::api_lib::api_handle::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
     use crate::aries::messages::issuance::credential::Credential;
     use crate::error::VcxErrorKind;
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
-    use crate::utils::mockdata::mockdata_credex;
+    use aries::utils::devsetup::*;
+    use aries::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use aries::utils::mockdata::mockdata_credex;
     use crate::aries::handlers::issuance::holder::holder::HolderState;
 
     use super::*;

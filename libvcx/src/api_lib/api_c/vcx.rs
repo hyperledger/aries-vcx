@@ -4,18 +4,19 @@ use indy::{CommandHandle, INVALID_WALLET_HANDLE};
 use indy_sys::WalletHandle;
 use libc::c_char;
 
-use crate::{libindy, settings, utils};
+use crate::settings;
+use aries::{libindy, utils};
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::error::get_current_error_c_json;
 use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
 use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
-use crate::libindy::utils::{ledger, pool, wallet};
-use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
-use crate::utils::error;
-use crate::utils::provision::AgencyClientConfig;
-use crate::utils::version_constants;
+use aries::libindy::utils::{ledger, pool, wallet};
+use aries::libindy::utils::pool::is_pool_open;
+use aries::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
+use aries::utils::error;
+use aries::utils::provision::AgencyClientConfig;
+use aries::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -526,17 +527,17 @@ mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::init::PoolConfig;
-    use crate::libindy::utils::pool::get_pool_handle;
-    use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
+    use aries::libindy::utils::pool::get_pool_handle;
+    use aries::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries::libindy::utils::pool::tests::delete_test_pool;
+    use aries::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::wallet::get_wallet_handle;
-    use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use crate::utils::devsetup::*;
+    use aries::libindy::utils::wallet::get_wallet_handle;
+    use aries::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
+    use aries::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
-    use crate::utils::get_temp_dir_path;
+    use aries::utils::get_temp_dir_path;
 
     use super::*;
 
@@ -923,7 +924,7 @@ mod tests {
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         let agreement = cb.receive(TimeoutUtils::some_short()).unwrap();
-        assert_eq!(crate::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
+        assert_eq!(aries::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
     }
 
     #[cfg(feature = "general_test")]

@@ -8,7 +8,7 @@ use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries::utils::error;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -999,9 +999,9 @@ mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use crate::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
+    use aries::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use aries::utils::devsetup::*;
+    use aries::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
     use crate::aries::handlers::issuance::holder::holder::HolderState;
 
     use super::*;

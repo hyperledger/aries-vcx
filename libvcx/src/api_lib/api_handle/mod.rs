@@ -14,8 +14,8 @@ pub mod test {
 
     use crate::{aries, libindy, settings};
     use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
-    use crate::libindy::utils::wallet::*;
-    use crate::utils::plugins::init_plugin;
+    use aries::libindy::utils::wallet::*;
+    use aries::utils::plugins::init_plugin;
 
     use std::thread;
     use std::time::Duration;
@@ -32,10 +32,10 @@ pub mod test {
     use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
     use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
     use crate::aries::handlers::connection::inviter::state_machine::InviterState;
-    use crate::utils::constants;
-    use crate::utils::devsetup::*;
+    use aries::utils::constants;
+    use aries::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 

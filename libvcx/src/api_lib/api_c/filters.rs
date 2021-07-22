@@ -7,7 +7,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::filters;
-use crate::utils::error;
+use aries::utils::error;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///
@@ -67,7 +67,7 @@ mod tests {
     use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
+    use aries::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     #[test]
     #[cfg(feature = "general_test")]

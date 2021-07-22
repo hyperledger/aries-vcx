@@ -5,7 +5,7 @@ use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries::utils::error;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -126,10 +126,10 @@ pub mod tests {
     use crate::api_lib::api_handle::proof;
     use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
     use crate::aries::messages::proof_presentation::presentation::tests::_comment;
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::mockdata::mockdata_proof;
+    use aries::utils::constants::*;
+    use aries::utils::devsetup::*;
+    use aries::utils::mockdata::mock_settings::MockBuilder;
+    use aries::utils::mockdata::mockdata_proof;
     use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;

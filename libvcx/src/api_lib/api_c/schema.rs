@@ -9,7 +9,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::settings;
-use crate::utils::error;
+use aries::utils::error;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -544,8 +544,8 @@ mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     #[allow(unused_imports)]
-    use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use crate::utils::devsetup::*;
+    use aries::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use aries::utils::devsetup::*;
 
     use super::*;
 

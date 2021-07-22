@@ -8,7 +8,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::settings;
-use crate::utils::error;
+use aries::utils::error;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -520,8 +520,8 @@ mod tests {
     use crate::{api_lib, utils};
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::utils::constants::SCHEMA_ID;
-    use crate::utils::devsetup::*;
+    use aries::utils::constants::SCHEMA_ID;
+    use aries::utils::devsetup::*;
 
     use super::*;
 

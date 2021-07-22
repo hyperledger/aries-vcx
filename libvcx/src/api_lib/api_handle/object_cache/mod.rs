@@ -119,7 +119,7 @@ impl<T> ObjectCache<T> {
 #[cfg(test)]
 mod tests {
     use crate::api_lib::api_handle::object_cache::ObjectCache;
-    use crate::utils::devsetup::SetupDefaults;
+    use aries::utils::devsetup::SetupDefaults;
 
     #[test]
     #[cfg(feature = "general_test")]

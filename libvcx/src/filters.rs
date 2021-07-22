@@ -61,7 +61,7 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 
 #[cfg(test)]
 pub mod tests {
-    use crate::utils::mockdata::mockdata_proof;
+    use aries::utils::mockdata::mockdata_proof;
 
     use super::*;
 

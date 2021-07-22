@@ -12,10 +12,10 @@ pub mod test {
     use crate::aries::messages::a2a::A2AMessage;
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
     use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
-    use crate::libindy::utils::wallet::*;
-    use crate::utils::constants;
-    use crate::utils::devsetup::*;
-    use crate::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+    use aries::libindy::utils::wallet::*;
+    use aries::utils::constants;
+    use aries::utils::devsetup::*;
+    use aries::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -155,7 +155,7 @@ pub mod test {
             self.activate().unwrap();
             let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let data = r#"["name","date","degree", "empty_param"]"#.to_string();
-            let name: String = crate::utils::random::generate_random_schema_name();
+            let name: String = aries::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
             self.schema_handle = schema::create_and_publish_schema("test_schema", did.clone(), name, version, data).unwrap();

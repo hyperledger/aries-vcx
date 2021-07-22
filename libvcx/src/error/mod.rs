@@ -7,8 +7,8 @@ use failure::{Backtrace, Context, Fail};
 
 use agency_client;
 
-use crate::utils;
-use crate::utils::error;
+use aries::utils;
+use aries::utils::error;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -284,7 +284,7 @@ pub fn err_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
 
 impl From<VcxErrorKind> for VcxError {
     fn from(kind: VcxErrorKind) -> VcxError {
-        VcxError::from_msg(kind, crate::utils::error::error_message(&kind.clone().into()))
+        VcxError::from_msg(kind, aries::utils::error::error_message(&kind.clone().into()))
     }
 }
 

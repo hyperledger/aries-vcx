@@ -11,7 +11,7 @@ use crate::aries::handlers::connection::connection::Connection;
 use crate::aries::messages::a2a::A2AMessage;
 use crate::aries::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries::utils::error;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
@@ -271,10 +271,10 @@ pub mod tests {
     use crate::aries::messages::a2a::A2AMessage;
     use crate::aries::messages::ack::tests::_ack;
     use crate::aries::messages::connection::invite::tests::_invitation_json;
-    use crate::utils::constants;
-    use crate::utils::devsetup::*;
+    use aries::utils::constants;
+    use aries::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use crate::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 

@@ -8,7 +8,7 @@ use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries::utils::error;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.
@@ -619,10 +619,10 @@ mod tests {
     use crate::api_lib::api_handle::proof;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::mockdata::mockdata_proof;
+    use aries::utils::constants::*;
+    use aries::utils::devsetup::*;
+    use aries::utils::mockdata::mock_settings::MockBuilder;
+    use aries::utils::mockdata::mockdata_proof;
     use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;

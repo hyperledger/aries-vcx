@@ -2,6 +2,7 @@
 #![crate_name = "vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
+#[macro_use]
 extern crate aries;
 extern crate agency_client;
 extern crate base64;
@@ -33,15 +34,12 @@ extern crate uuid;
 extern crate tokio;
 
 #[macro_use]
-pub mod utils;
-#[macro_use]
 pub mod api_lib;
 pub mod settings;
 pub mod init;
 pub mod error;
 
 mod filters;
-pub mod libindy;
 
 #[allow(unused_imports)]
 #[allow(dead_code)]
@@ -62,11 +60,11 @@ mod tests {
     use crate::api_lib::ProofStateType;
     use crate::filters;
     use crate::settings;
-    use crate::utils::{
+    use aries::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         get_temp_dir_path,
     };
-    use crate::utils::devsetup::*;
+    use aries::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::aries::handlers::issuance::holder::holder::HolderState;
     use crate::aries::handlers::issuance::issuer::issuer::IssuerState;

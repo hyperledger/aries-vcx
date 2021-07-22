@@ -11,9 +11,9 @@ use crate::aries::{
 use crate::aries::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
 use crate::settings::indy_mocks_enabled;
-use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use crate::utils::error;
-use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+use aries::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries::utils::error;
+use aries::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -260,12 +260,12 @@ mod tests {
     use serde_json::Value;
 
     use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-    use crate::utils;
-    use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::mockdata::mockdata_proof;
-    use crate::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
+    use aries::utils;
+    use aries::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
+    use aries::utils::devsetup::*;
+    use aries::utils::mockdata::mock_settings::MockBuilder;
+    use aries::utils::mockdata::mockdata_proof;
+    use aries::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
     use crate::aries::handlers::proof_presentation::prover::prover::ProverState;
 
     use super::*;
