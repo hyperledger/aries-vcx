@@ -65,7 +65,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_credential_status()
+        credential.get_credential_status().map_err(|err| err.into())
     })
 }
 
@@ -129,13 +129,13 @@ pub fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
 pub fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.revoke_credential(true)
+        credential.revoke_credential(true).map_err(|err| err.into())
     })
 }
 
 pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.revoke_credential(false)
+        credential.revoke_credential(false).map_err(|err| err.into())
     })
 }
 
@@ -155,19 +155,19 @@ pub fn get_credential_attributes(handle: u32) -> VcxResult<String> {
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_rev_reg_id()
+        credential.get_rev_reg_id().map_err(|err| err.into())
     })
 }
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.is_revokable()
+        credential.is_revokable().map_err(|err| err.into())
     })
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_source_id()
+        credential.get_source_id().map_err(|err| err.into())
     })
 }
 

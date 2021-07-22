@@ -2,8 +2,6 @@ use std::fs;
 use std::sync::Once;
 
 use crate::{libindy, settings, utils};
-use crate::api_lib::utils_c::runtime;
-use crate::api_lib::utils_c::runtime::ThreadpoolConfig;
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::PoolConfig;
 use crate::libindy::utils::pool::reset_pool_handle;
@@ -11,7 +9,7 @@ use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
 use crate::settings::set_testing_defaults;
 use crate::utils::constants;
-use crate::api_lib::api_handle::devsetup_agent::test::{Faber, TestAgent};
+use crate::api_lib::api_handle::devsetup_agent::test::{Faber};
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::logger::LibvcxDefaultLogger;
@@ -52,7 +50,7 @@ pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 age
 pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
 
 
-fn setup(config: ThreadpoolConfig) {
+fn setup() {
     init_test_logging();
     settings::clear_config();
     set_testing_defaults();
@@ -61,7 +59,7 @@ fn setup(config: ThreadpoolConfig) {
 
 fn setup_empty() {
     settings::clear_config();
-    runtime::init_runtime(ThreadpoolConfig { num_threads: Some(4) });
+    runtime::init_runtime();
     init_test_logging();
 }
 
@@ -88,7 +86,7 @@ impl Drop for SetupEmpty {
 impl SetupDefaults {
     pub fn init() {
         debug!("SetupDefaults :: starting");
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         debug!("SetupDefaults :: finished");
     }
 }
@@ -108,13 +106,13 @@ impl SetupMocks {
     }
 
     pub fn init() -> SetupMocks {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         SetupMocks::_init()
 
     }
 
     pub fn init_without_threadpool() -> SetupMocks {
-        setup(ThreadpoolConfig { num_threads: Some(0) });
+        setup();
         SetupMocks::_init()
     }
 }
@@ -127,7 +125,7 @@ impl Drop for SetupMocks {
 
 impl SetupLibraryWallet {
     pub fn init() -> SetupLibraryWallet {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
@@ -223,7 +221,7 @@ impl Drop for SetupPoolConfig {
 
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::get_agency_client_mut().unwrap().enable_test_mode();
         SetupIndyMocks {}
@@ -238,7 +236,7 @@ impl Drop for SetupIndyMocks {
 
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         let faber = setup_indy_env(true);
         SetupLibraryWalletPoolZeroFees { faber }
     }
@@ -253,7 +251,7 @@ impl Drop for SetupLibraryWalletPoolZeroFees {
 
 impl SetupAgencyMock {
     pub fn init() -> SetupAgencyMock {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
         settings::get_agency_client_mut().unwrap().enable_test_mode();
 
@@ -283,7 +281,7 @@ impl Drop for SetupAgencyMock {
 
 impl SetupLibraryAgencyV2 {
     pub fn init() -> SetupLibraryAgencyV2 {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
         setup_agency_env();
         debug!("SetupLibraryAgencyV2 init >> completed");
@@ -300,7 +298,7 @@ impl Drop for SetupLibraryAgencyV2 {
 
 impl SetupLibraryAgencyV2ZeroFees {
     pub fn init() -> SetupLibraryAgencyV2ZeroFees {
-        setup(ThreadpoolConfig { num_threads: Some(4) });
+        setup();
         setup_agency_env();
         SetupLibraryAgencyV2ZeroFees
     }

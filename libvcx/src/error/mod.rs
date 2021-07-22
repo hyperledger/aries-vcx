@@ -295,6 +295,14 @@ impl From<agency_client::error::AgencyClientError> for VcxError {
     }
 }
 
+impl From<aries::error::VcxError> for VcxError {
+    fn from(aries_err: aries::error::VcxError) -> VcxError {
+        let kind_num: u32 = aries_err.kind().into();
+        VcxError::from_msg(kind_num.into(), utils::error::error_message(&aries_err.kind().clone().into()))
+    }
+
+}
+
 impl<T> From<sync::PoisonError<T>> for VcxError {
     fn from(_: sync::PoisonError<T>) -> Self {
         VcxError { inner: Context::new(Backtrace::new()).context(VcxErrorKind::PoisonedLock) }
@@ -306,7 +314,6 @@ impl From<Context<VcxErrorKind>> for VcxError {
         VcxError { inner }
     }
 }
-
 
 pub type VcxResult<T> = Result<T, VcxError>;
 

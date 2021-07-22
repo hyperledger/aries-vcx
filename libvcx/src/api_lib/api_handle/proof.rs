@@ -99,7 +99,7 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
 
 pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.generate_presentation_request_msg()
+        proof.generate_presentation_request_msg().map_err(|err| err.into())
     })
 }
 
@@ -112,7 +112,7 @@ pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<S
 
 pub fn get_proof(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation()
+        proof.get_presentation().map_err(|err| err.into())
     })
 }
 

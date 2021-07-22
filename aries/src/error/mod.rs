@@ -307,7 +307,6 @@ impl From<Context<VcxErrorKind>> for VcxError {
     }
 }
 
-
 pub type VcxResult<T> = Result<T, VcxError>;
 
 /// Extension methods for `Result`.

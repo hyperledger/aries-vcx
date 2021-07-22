@@ -821,6 +821,7 @@ version = "0.20.0"
 dependencies = [
  "agency_client",
  "android_logger",
+ "aries",
  "base64 0.8.0",
  "chrono",
  "env_logger",

@@ -123,7 +123,7 @@ pub fn release_all() {
 
 pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
-        proof.generate_presentation_msg()
+        proof.generate_presentation_msg().map_err(|err| err.into())
     })
 }
 
@@ -173,19 +173,19 @@ pub fn decline_presentation_request(handle: u32, connection_handle: u32, reason:
 
 pub fn retrieve_credentials(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.retrieve_credentials()
+        proof.retrieve_credentials().map_err(|err| err.into())
     })
 }
 
 pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.presentation_request_data()
+        proof.presentation_request_data().map_err(|err| err.into())
     })
 }
 
 pub fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.get_proof_request_attachment()
+        proof.get_proof_request_attachment().map_err(|err| err.into())
     })
 }
 

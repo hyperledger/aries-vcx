@@ -112,37 +112,37 @@ pub fn get_credential(handle: u32) -> VcxResult<String> {
 
 pub fn get_attributes(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_attributes()
+        credential.get_attributes().map_err(|err| err.into())
     })
 }
 
 pub fn get_attachment(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_attachment()
+        credential.get_attachment().map_err(|err| err.into())
     })
 }
 
 pub fn get_tails_location(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_tails_location()
+        credential.get_tails_location().map_err(|err| err.into())
     })
 }
 
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_tails_hash()
+        credential.get_tails_hash().map_err(|err| err.into())
     })
 }
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_rev_reg_id()
+        credential.get_rev_reg_id().map_err(|err| err.into())
     })
 }
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.is_revokable()
+        credential.is_revokable().map_err(|err| err.into())
     })
 }
 
@@ -279,7 +279,7 @@ pub fn is_payment_required(handle: u32) -> VcxResult<bool> {
 
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_credential_status()
+        credential.get_credential_status().map_err(|err| err.into())
     })
 }
 

@@ -47,13 +47,13 @@ pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
 
 pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.remote_did()
+        connection.remote_did().map_err(|err| err.into())
     })
 }
 
 pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.remote_vk()
+        connection.remote_vk().map_err(|err| err.into())
     })
 }
 
@@ -93,7 +93,7 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
 
 pub fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
-        connection.send_generic_message(msg)
+        connection.send_generic_message(msg).map_err(|err| err.into())
     })
 }
 
@@ -123,7 +123,7 @@ pub fn update_state(handle: u32) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         match connection.update_state() {
             Ok(_) => Ok(error::SUCCESS.code_num),
-            Err(err) => Err(err)
+            Err(err) => Err(err.into())
         }
     })
 }
@@ -150,7 +150,7 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.to_string()
+        connection.to_string().map_err(|err| err.into())
     })
 }
 
@@ -180,31 +180,31 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
 
 pub fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.get_messages()
+        connection.get_messages().map_err(|err| err.into())
     })
 }
 
 pub fn update_message_status(handle: u32, uid: String) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.update_message_status(uid.clone())
+        connection.update_message_status(uid.clone()).map_err(|err| err.into())
     })
 }
 
 pub fn get_message_by_id(handle: u32, msg_id: String) -> VcxResult<A2AMessage> {
     CONNECTION_MAP.get_mut(handle, |connection| {
-        connection.get_message_by_id(&msg_id)
+        connection.get_message_by_id(&msg_id).map_err(|err| err.into())
     })
 }
 
 pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
     let send_message = send_message_closure(handle)?;
-    send_message(&message)
+    send_message(&message).map_err(|err| err.into())
 }
 
-pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> VcxResult<()>> {
+pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> aries::error::VcxResult<()>> {
     CONNECTION_MAP.get(handle, |connection| {
-        return connection.send_message_closure();
+        return connection.send_message_closure().map_err(|err| err.into())
     })
 }
 
@@ -216,19 +216,19 @@ pub fn is_v3_connection(connection_handle: u32) -> VcxResult<bool> {
 
 pub fn send_ping(connection_handle: u32, comment: Option<String>) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(connection_handle, |connection| {
-        connection.send_ping(comment.clone())
+        connection.send_ping(comment.clone()).map_err(|err| err.into())
     })
 }
 
 pub fn send_discovery_features(connection_handle: u32, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
     CONNECTION_MAP.get_mut(connection_handle, |connection| {
-        connection.send_discovery_features(query.clone(), comment.clone())
+        connection.send_discovery_features(query.clone(), comment.clone()).map_err(|err| err.into())
     })
 }
 
 pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.get_connection_info()
+        connection.get_connection_info().map_err(|err| err.into())
     })
 }
 
