@@ -12,7 +12,8 @@ pub mod devsetup_agent;
 pub mod test {
     use agency_client::payload::PayloadKinds;
 
-    use crate::{aries, libindy, settings};
+    use aries::libindy;
+    use crate::{aries, settings};
     use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
     use aries::libindy::utils::wallet::*;
     use aries::utils::plugins::init_plugin;

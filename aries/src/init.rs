@@ -4,11 +4,11 @@ use indy::future::Future;
 use indy_sys::WalletHandle;
 
 use crate::{settings};
-use aries::utils;
+use crate::utils;
 use crate::error::{VcxError, VcxErrorExt, VcxErrorKind, VcxResult};
-use aries::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
-use aries::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
-use aries::utils::provision::AgencyClientConfig;
+use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
+use crate::utils::provision::AgencyClientConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PoolConfig {

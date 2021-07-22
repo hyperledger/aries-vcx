@@ -535,7 +535,7 @@ pub fn add_new_did(role: Option<&str>) -> (String, String) {
     (did, verkey)
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::utils::devsetup::*;
 

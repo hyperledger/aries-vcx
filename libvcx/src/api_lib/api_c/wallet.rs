@@ -9,7 +9,7 @@ use crate::api_lib::utils_c;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::init::open_as_main_wallet;
+use aries::init::open_as_main_wallet;
 use aries::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use aries::libindy::utils::wallet;
 use aries::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
@@ -57,7 +57,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     };
 
     thread::spawn(move || {
-        match wallet::create_indy_wallet(&wallet_config) {
+        match wallet::create_wallet(&wallet_config) {
             Err(e) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
                 cb(command_handle, e.into());

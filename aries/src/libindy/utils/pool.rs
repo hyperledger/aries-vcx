@@ -111,7 +111,7 @@ pub fn delete(pool_name: &str) -> VcxResult<()> {
     Ok(())
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use std::fs;
     use std::io::Write;

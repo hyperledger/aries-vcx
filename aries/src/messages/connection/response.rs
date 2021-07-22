@@ -150,7 +150,7 @@ impl Default for ConnectionSignature {
     }
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::did_doc::tests::*;
     use crate::libindy::utils::tests::test_setup;

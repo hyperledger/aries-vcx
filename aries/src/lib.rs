@@ -39,6 +39,7 @@ pub mod utils;
 pub mod error;
 pub mod libindy;
 pub mod settings;
+pub mod init;
 
 #[cfg(test)]
 pub mod test {

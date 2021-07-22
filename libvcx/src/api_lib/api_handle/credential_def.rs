@@ -484,7 +484,8 @@ pub mod tests {
         time::Duration,
     };
 
-    use crate::{libindy, settings, utils};
+    use crate::settings;
+    use aries::{libindy, utils};
     use crate::api_lib::api_handle::schema;
     #[cfg(feature = "pool_tests")]
     use aries::libindy::utils::payments::add_new_did;

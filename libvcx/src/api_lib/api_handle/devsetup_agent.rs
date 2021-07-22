@@ -3,19 +3,20 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 #[cfg(test)]
 pub mod test {
     use agency_client::payload::PayloadKinds;
-
     use crate::{aries, settings};
+
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
-    use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
-    use crate::aries::handlers::connection::inviter::state_machine::InviterState;
-    use crate::aries::messages::a2a::A2AMessage;
+    use aries::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
-    use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
+
+    use aries::messages::a2a::A2AMessage;
     use aries::libindy::utils::wallet::*;
     use aries::utils::constants;
     use aries::utils::devsetup::*;
     use aries::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+    use aries::handlers::connection::connection::{Connection, ConnectionState};
+    use aries::handlers::connection::invitee::state_machine::InviteeState;
+    use aries::handlers::connection::inviter::state_machine::InviterState;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {

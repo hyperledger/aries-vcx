@@ -517,7 +517,8 @@ pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use crate::{api_lib, utils};
+    use aries::utils;
+    use crate::api_lib;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use aries::utils::constants::SCHEMA_ID;

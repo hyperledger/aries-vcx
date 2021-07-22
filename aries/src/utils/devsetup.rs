@@ -9,7 +9,6 @@ use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
 use crate::settings::set_testing_defaults;
 use crate::utils::constants;
-use crate::api_lib::api_handle::devsetup_agent::test::{Faber};
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::logger::LibvcxDefaultLogger;
@@ -37,9 +36,7 @@ pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPoolZeroFees {
-    pub faber: Faber
-}  // set default settings, init indy wallet, init pool, set zero fees
+pub struct SetupLibraryWalletPoolZeroFees {}  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
     pub wallet_config: WalletConfig
@@ -54,12 +51,10 @@ fn setup() {
     init_test_logging();
     settings::clear_config();
     set_testing_defaults();
-    runtime::init_runtime(config);
 }
 
 fn setup_empty() {
     settings::clear_config();
-    runtime::init_runtime();
     init_test_logging();
 }
 
@@ -237,8 +232,8 @@ impl Drop for SetupIndyMocks {
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
         setup();
-        let faber = setup_indy_env(true);
-        SetupLibraryWalletPoolZeroFees { faber }
+        setup_indy_env(true);
+        SetupLibraryWalletPoolZeroFees {}
     }
 }
 
@@ -360,20 +355,16 @@ pub fn setup_libnullpay_nofees() {
     libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
-pub fn setup_indy_env(use_zero_fees: bool) -> Faber {
+pub fn setup_indy_env(use_zero_fees: bool) {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
-    let mut faber = Faber::setup();
-    faber.activate();
-
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
-    faber
 }
 
 pub fn cleanup_indy_env() {

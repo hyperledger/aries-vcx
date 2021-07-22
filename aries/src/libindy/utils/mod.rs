@@ -47,7 +47,7 @@ impl LibindyMock {
 }
 
 #[allow(unused_imports)]
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use indy::future::Future;
 

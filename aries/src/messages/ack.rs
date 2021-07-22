@@ -53,7 +53,7 @@ macro_rules! please_ack (($type:ident) => (
     }
 ));
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::response::tests::*;
 

@@ -10,7 +10,7 @@ use crate::error::VcxResult;
 pub mod version_constants;
 
 #[macro_use]
-#[cfg(test)]
+// #[cfg(test)]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]

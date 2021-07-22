@@ -264,13 +264,15 @@ pub mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::{aries, settings, utils};
+    use aries;
+    use aries::utils;
+    use crate::settings;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::VcxStateType;
     use crate::api_lib::api_handle::test::create_connected_connections;
-    use crate::aries::messages::a2a::A2AMessage;
-    use crate::aries::messages::ack::tests::_ack;
-    use crate::aries::messages::connection::invite::tests::_invitation_json;
+    use aries::messages::a2a::A2AMessage;
+    use aries::messages::ack::tests::_ack;
+    use aries::messages::connection::invite::tests::_invitation_json;
     use aries::utils::constants;
     use aries::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};

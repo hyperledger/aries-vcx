@@ -3,6 +3,7 @@ use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 use indy::future::Future;
 
 use crate::error::prelude::*;
+use crate::init::open_as_main_wallet;
 use crate::libindy::utils::{anoncreds, signus};
 use crate::settings;
 use crate::settings::Actors::Issuer;
@@ -85,6 +86,17 @@ pub fn reset_wallet_handle() -> VcxResult<()> {
     Ok(())
 }
 
+pub fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
+    let wh = create_and_open_as_main_wallet(&config)?;
+    trace!("Created wallet with handle {:?}", wh);
+
+    // If MS is already in wallet then just continue
+    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
+    
+    close_main_wallet()?;
+    Ok(())
+}
+
 pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
     Ok(IssuerConfig {
@@ -145,6 +157,16 @@ pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
             }
         }
     }
+}
+
+pub fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+    if settings::indy_mocks_enabled() {
+        warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
+        return Ok(set_wallet_handle(WalletHandle(1)));
+    }
+
+    create_indy_wallet(&wallet_config)?;
+    open_as_main_wallet(&wallet_config)
 }
 
 pub fn close_main_wallet() -> VcxResult<()> {
@@ -329,4 +351,53 @@ pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
     wallet::import_wallet(&new_wallet_config, &new_wallet_credentials, &import_config)
         .wait()
         .map_err(VcxError::from)
+}
+
+// #[cfg(test)]
+pub mod tests {
+    use agency_client::agency_settings;
+
+    use crate::libindy::utils::signus::create_and_store_my_did;
+    use crate::utils::devsetup::{SetupDefaults, SetupLibraryWallet, TempFile};
+    use crate::utils::get_temp_dir_path;
+
+    use super::*;
+
+    fn _record() -> (&'static str, &'static str, &'static str) {
+        ("type1", "id1", "value1")
+    }
+
+    pub fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
+        let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
+
+        let export_file = TempFile::prepare_path(wallet_name);
+
+        let wallet_config = WalletConfig {
+            wallet_name: wallet_name.into(),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None
+        };
+        let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
+
+        let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
+
+        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
+        settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
+
+        let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
+
+        let (type_, id, value) = _record();
+        add_record(type_, id, value, None).unwrap();
+
+        export_main_wallet(&export_file.path, &backup_key).unwrap();
+
+        close_main_wallet().unwrap();
+
+        (export_file, wallet_name.to_string(), wallet_config)
+    }
 }

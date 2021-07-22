@@ -311,7 +311,7 @@ impl From<DidDoc> for Invitation {
     }
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::a2a::MessageId;
     use crate::messages::connection::invite::tests::_invitation;

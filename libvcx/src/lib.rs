@@ -36,7 +36,6 @@ extern crate tokio;
 #[macro_use]
 pub mod api_lib;
 pub mod settings;
-pub mod init;
 pub mod error;
 
 mod filters;
@@ -64,6 +63,7 @@ mod tests {
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         get_temp_dir_path,
     };
+    use aries::{libindy, utils};
     use aries::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::aries::handlers::issuance::holder::holder::HolderState;

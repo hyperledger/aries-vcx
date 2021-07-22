@@ -639,14 +639,14 @@ pub fn generate_nonce() -> VcxResult<String> {
         .map_err(VcxError::from)
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use std::thread;
     use std::time::Duration;
 
     use crate::{libindy, settings};
     use crate::api_lib::api_handle::credential_def;
-    use crate::aries::handlers::issuance::issuer::utils::encode_attributes;
+    use crate::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::*;
     #[cfg(feature = "pool_tests")]
     use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};

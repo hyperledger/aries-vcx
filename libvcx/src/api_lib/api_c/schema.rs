@@ -538,7 +538,8 @@ mod tests {
     #[allow(unused_imports)]
     use rand::Rng;
 
-    use crate::{api_lib, libindy, settings, utils};
+    use aries::{libindy, utils};
+    use crate::{api_lib, settings};
     use crate::api_lib::api_handle::schema::CreateSchema;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils_c::return_types_u32;

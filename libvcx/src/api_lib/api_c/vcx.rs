@@ -10,7 +10,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::error::get_current_error_c_json;
 use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
-use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
+use aries::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
 use aries::libindy::utils::{ledger, pool, wallet};
 use aries::libindy::utils::pool::is_pool_open;
 use aries::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
@@ -526,7 +526,7 @@ mod tests {
     use crate::api_lib::utils_c::error::reset_current_error;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::init::PoolConfig;
+    use aries::init::PoolConfig;
     use aries::libindy::utils::pool::get_pool_handle;
     use aries::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
@@ -625,7 +625,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), aries::error::VcxErrorKind::NoPoolOpen);
 
         delete_named_test_pool(&pool_name);
     }
@@ -639,7 +639,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), aries::error::VcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -752,7 +752,7 @@ mod tests {
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
             wallet_key_derivation: None,
         };
-        assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
+        assert_eq!(import(&import_config).unwrap_err().kind(), aries::error::VcxErrorKind::DuplicationWallet);
 
         vcx_shutdown(true);
     }
