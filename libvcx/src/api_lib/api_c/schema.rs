@@ -547,6 +547,7 @@ mod tests {
     #[allow(unused_imports)]
     use aries::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use aries::utils::devsetup::*;
+    use aries::handlers::issuance::credential_def::PublicEntityStateType;
 
     use super::*;
 
@@ -739,17 +740,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Published as u32)
         }
     }
 }

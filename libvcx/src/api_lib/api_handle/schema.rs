@@ -3,7 +3,7 @@ use std::string::ToString;
 use serde_json;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::PublicEntityStateType;
+use aries::handlers::issuance::credential_def::PublicEntityStateType;
 use crate::error::prelude::*;
 use aries::libindy::utils::anoncreds;
 use aries::libindy::utils::ledger;

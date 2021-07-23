@@ -51,7 +51,7 @@ a2a_message!(PresentationRequest);
 
 pub type PresentationRequestData = ProofRequestData;
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::thread::Thread;
     use crate::messages::connection::service::tests::_service;

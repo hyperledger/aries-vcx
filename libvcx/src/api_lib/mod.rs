@@ -99,18 +99,6 @@ enum_number!(ProofStateType
     ProofInvalid = 2,
 });
 
-enum_number!(PublicEntityStateType
-{
-    Built = 0,
-    Published = 1,
-});
-
-impl Default for PublicEntityStateType {
-    fn default() -> Self {
-        PublicEntityStateType::Published
-    }
-}
-
 impl Default for VcxStateType {
     fn default() -> Self {
         VcxStateType::VcxStateNone

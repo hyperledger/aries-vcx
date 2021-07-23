@@ -249,7 +249,7 @@ impl Serialize for A2AMessage {
 pub struct MessageId(pub String);
 
 impl MessageId {
-    #[cfg(test)]
+    // #[cfg(test)]
     pub fn id() -> MessageId {
         MessageId(String::from("testid"))
     }

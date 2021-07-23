@@ -47,7 +47,7 @@ impl Invitation {
 
 a2a_message!(Invitation, ConnectionInvitation);
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use super::*;
     use crate::messages::connection::did_doc::tests::*;

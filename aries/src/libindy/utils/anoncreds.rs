@@ -645,7 +645,7 @@ pub mod tests {
     use std::time::Duration;
 
     use crate::{libindy, settings};
-    use crate::api_lib::api_handle::credential_def;
+    use crate::handlers::issuance::credential_def::CredentialDef;
     use crate::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::*;
     #[cfg(feature = "pool_tests")]
@@ -680,7 +680,7 @@ pub mod tests {
         (schema_id, schema_json)
     }
 
-    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, u32, Option<String>) {
+    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, Option<String>) {
         /* create schema */
         let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
 
@@ -694,23 +694,23 @@ pub mod tests {
             revocation_details["tails_url"] = json!(TEST_TAILS_URL);
             revocation_details["max_creds"] = json!(10);
         }
-        let handle = credential_def::create_and_publish_credentialdef("1".to_string(),
-                                                                      name,
-                                                                      institution_did.clone(),
-                                                                      schema_id.clone(),
-                                                                      "tag1".to_string(),
-                                                                      revocation_details.to_string()).unwrap();
+        let cred_def = CredentialDef::create("1".to_string(),
+                                             name,
+                                             institution_did.clone(),
+                                             schema_id.clone(),
+                                             "tag1".to_string(),
+                                             revocation_details.to_string()).unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        let cred_def_id = credential_def::get_cred_def_id(handle).unwrap();
+        let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
         let (_, cred_def_json) = get_cred_def_json(&cred_def_id).unwrap();
-        let rev_reg_id = credential_def::get_rev_reg_id(handle).ok();
-        (schema_id, schema_json, cred_def_id, cred_def_json, handle, rev_reg_id)
+        let rev_reg_id = cred_def.get_rev_reg_id();
+        (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id)
     }
 
     pub fn create_credential_offer(attr_list: &str, revocation: bool) -> (String, String, String, String, String, Option<String>) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _, rev_reg_id) = create_and_store_credential_def(attr_list, revocation);
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id) = create_and_store_credential_def(attr_list, revocation);
 
         let offer = libindy::utils::anoncreds::libindy_issuer_create_credential_offer(&cred_def_id).unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, offer, rev_reg_id)
@@ -995,7 +995,7 @@ pub mod tests {
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
-        let (_, _, cred_def_id, _, _, _) = libindy::utils::anoncreds::tests::create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, cred_def_id, _,  _) = libindy::utils::anoncreds::tests::create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let rc = generate_rev_reg(&did, &cred_def_id, get_temp_dir_path("path.txt").to_str().unwrap(), 2, "tag1");
 
@@ -1024,7 +1024,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, _, rev_reg_id) =
+        let (_, _, _, _, rev_reg_id) =
             libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
 
         let rev_reg_id = rev_reg_id.unwrap();
@@ -1038,7 +1038,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, _, rev_reg_id) =
+        let (_, _, _, _, rev_reg_id) =
             libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
         let rev_reg_id = rev_reg_id.unwrap();
 
@@ -1052,7 +1052,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, _, rev_reg_id) =
+        let (_, _, _, _, rev_reg_id) =
             libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
         let rev_reg_id = rev_reg_id.unwrap();
 
@@ -1066,7 +1066,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, cred_def_id, cred_def_json, _, _) =
+        let (_, _, cred_def_id, cred_def_json, _) =
             libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
 
         let (id, cred_def) = get_cred_def(None, &cred_def_id).unwrap();

@@ -73,6 +73,35 @@ mod tests {
 
     use super::*;
 
+    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, u32, Option<String>) {
+        /* create schema */
+        let (schema_id, schema_json) = libindy::utils::anoncreds::tests::create_and_write_test_schema(attr_list);
+
+        let name: String = aries::utils::random::generate_random_name();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+
+        /* create cred-def */
+        let mut revocation_details = json!({"support_revocation":support_rev});
+        if support_rev {
+            revocation_details["tails_file"] = json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string());
+            revocation_details["tails_url"] = json!(TEST_TAILS_URL);
+            revocation_details["max_creds"] = json!(10);
+        }
+        let handle = credential_def::create_and_publish_credentialdef("1".to_string(),
+                                                                      name,
+                                                                      institution_did.clone(),
+                                                                      schema_id.clone(),
+                                                                      "tag1".to_string(),
+                                                                      revocation_details.to_string()).unwrap();
+
+        thread::sleep(Duration::from_millis(1000));
+        let cred_def_id = credential_def::get_cred_def_id(handle).unwrap();
+        thread::sleep(Duration::from_millis(1000));
+        let (_, cred_def_json) =  libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
+        let rev_reg_id = credential_def::get_rev_reg_id(handle).ok();
+        (schema_id, schema_json, cred_def_id, cred_def_json, handle, rev_reg_id)
+    }
+
     #[cfg(feature = "agency_pool_tests")]
     #[cfg(feature = "to_restore")] // message type spec/pairwise/1.0/UPDATE_CONN_STATUS no implemented in nodevcx agency
     #[test]
@@ -296,7 +325,7 @@ mod tests {
     fn _create_address_schema() -> (String, String, String, String, u32, Option<String>) {
         info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true)
+        create_and_store_credential_def(&attrs_list, true)
     }
 
     fn _exchange_credential(consumer: &mut Alice, institution: &mut Faber, credential_data: String, cred_def_handle: u32, consumer_to_issuer: u32, issuer_to_consumer: u32, comment: Option<&str>) -> u32 {
@@ -682,7 +711,7 @@ mod tests {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
         }
         let attrs_list = attrs_list.to_string();
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, false);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = create_and_store_credential_def(&attrs_list, false);
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));

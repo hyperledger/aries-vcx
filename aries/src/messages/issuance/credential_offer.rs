@@ -57,7 +57,7 @@ impl CredentialOffer {
 
 a2a_message!(CredentialOffer);
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::response::tests::*;
 

@@ -39,7 +39,7 @@ impl Into<DidDoc> for Service {
     }
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::did_doc::tests::{_recipient_keys, _routing_keys, _service_endpoint};
 

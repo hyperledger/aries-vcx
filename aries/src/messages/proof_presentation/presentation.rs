@@ -40,7 +40,7 @@ threadlike!(Presentation);
 a2a_message!(Presentation);
 
 
-#[cfg(test)]
+// #[cfg(test)]
 pub mod tests {
     use crate::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
 
