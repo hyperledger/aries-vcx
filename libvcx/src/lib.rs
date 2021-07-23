@@ -37,8 +37,6 @@ extern crate tokio;
 pub mod api_lib;
 pub mod error;
 
-mod filters;
-
 #[allow(unused_imports)]
 #[allow(dead_code)]
 #[cfg(test)]
@@ -56,7 +54,7 @@ mod tests {
     use crate::api_lib::api_handle::issuer_credential;
     use crate::api_lib::api_handle::proof;
     use crate::api_lib::ProofStateType;
-    use crate::filters;
+    use crate::api_lib::utils::filters;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
