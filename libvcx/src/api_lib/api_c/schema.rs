@@ -8,7 +8,7 @@ use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::settings;
+use aries_vcx::settings;
 use aries_vcx::utils::error;
 
 /// Create a new Schema object and publish corresponding record on the ledger
@@ -539,7 +539,7 @@ mod tests {
     use rand::Rng;
 
     use aries_vcx::{libindy, utils};
-    use crate::{api_lib, settings};
+    use crate::api_lib;
     use crate::api_lib::api_handle::schema::CreateSchema;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils_c::return_types_u32;

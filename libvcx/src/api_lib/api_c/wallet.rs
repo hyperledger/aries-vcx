@@ -1185,7 +1185,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use crate::settings;
+    use aries_vcx::settings;
     use aries_vcx::libindy;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;

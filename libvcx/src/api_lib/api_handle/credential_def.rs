@@ -158,7 +158,7 @@ pub mod tests {
         time::Duration,
     };
 
-    use crate::settings;
+    use aries_vcx::settings;
     use aries_vcx::{libindy, utils};
     use crate::api_lib::api_handle::schema;
     #[cfg(feature = "pool_tests")]

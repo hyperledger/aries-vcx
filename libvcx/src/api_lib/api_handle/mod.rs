@@ -13,7 +13,7 @@ pub mod test {
     use agency_client::payload::PayloadKinds;
 
     use aries_vcx::libindy;
-    use crate::{aries_vcx, settings};
+    use crate::aries_vcx::settings;
     use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::utils::plugins::init_plugin;

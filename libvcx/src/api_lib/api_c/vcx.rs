@@ -4,7 +4,7 @@ use indy::{CommandHandle, INVALID_WALLET_HANDLE};
 use indy_sys::WalletHandle;
 use libc::c_char;
 
-use crate::settings;
+use aries_vcx::settings;
 use aries_vcx::{libindy, utils};
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::error::get_current_error_c_json;

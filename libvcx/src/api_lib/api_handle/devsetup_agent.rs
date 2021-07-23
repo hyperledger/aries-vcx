@@ -3,7 +3,7 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 #[cfg(test)]
 pub mod test {
     use agency_client::payload::PayloadKinds;
-    use crate::{aries_vcx, settings};
+    use aries_vcx::settings;
 
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};

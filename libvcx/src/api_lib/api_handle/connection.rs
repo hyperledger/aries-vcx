@@ -266,7 +266,7 @@ pub mod tests {
 
     use aries_vcx;
     use aries_vcx::utils;
-    use crate::settings;
+    use aries_vcx::settings;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::VcxStateType;
     use crate::api_lib::api_handle::test::create_connected_connections;
@@ -343,8 +343,7 @@ pub mod tests {
     }
 
     pub fn build_test_connection_invitee_completed() -> u32 {
-        let handle = from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap();
-        handle
+        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
     }
 
     pub fn build_test_connection_inviter_requested() -> u32 {

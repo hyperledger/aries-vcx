@@ -7,7 +7,7 @@ use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use crate::settings;
+use aries_vcx::settings;
 use aries_vcx::utils::error;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger

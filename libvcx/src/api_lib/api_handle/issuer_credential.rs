@@ -180,7 +180,7 @@ pub mod tests {
     use crate::api_lib::api_handle::issuer_credential;
     use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use aries_vcx::libindy::utils::LibindyMock;
-    use crate::settings;
+    use aries_vcx::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
     use aries_vcx::utils::devsetup::*;

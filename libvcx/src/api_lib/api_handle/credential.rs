@@ -10,7 +10,7 @@ use crate::aries_vcx::{
     messages::issuance::credential_offer::CredentialOffer,
 };
 use crate::error::prelude::*;
-use crate::settings::indy_mocks_enabled;
+use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;

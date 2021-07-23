@@ -843,7 +843,7 @@ pub mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use crate::settings;
+    use aries_vcx::settings;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::get_temp_dir_path;
