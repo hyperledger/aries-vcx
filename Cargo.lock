@@ -92,7 +92,6 @@ dependencies = [
  "strum",
  "strum_macros",
  "time",
- "tokio 1.7.1",
  "url 1.7.2",
  "uuid",
 ]
