@@ -5,8 +5,8 @@ use libc::c_char;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
@@ -996,8 +996,8 @@ mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
 
     use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
     use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::*;

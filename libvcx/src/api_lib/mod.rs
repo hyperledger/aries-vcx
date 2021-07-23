@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[macro_use]
-pub mod utils_c;
+pub mod utils;
 pub mod api_c;
 pub mod api_handle;
 

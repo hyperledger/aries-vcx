@@ -5,9 +5,9 @@ use libc::c_char;
 
 use crate::api_lib::api_handle::connection::*;
 use crate::api_lib::api_handle::connection;
-use crate::api_lib::utils_c;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
@@ -844,7 +844,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, x);
 
-                let (signature_raw, signature_len) = utils_c::cstring::vec_to_pointer(&x);
+                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&x);
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
             Err(e) => {
@@ -1206,8 +1206,8 @@ mod tests {
 
     use crate::agency_client::mocking::AgencyMockDecrypted;
     use crate::api_lib::api_handle::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::*;

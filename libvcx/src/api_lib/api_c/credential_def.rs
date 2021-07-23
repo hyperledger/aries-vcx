@@ -4,8 +4,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::api_handle::credential_def;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::settings;
 use aries_vcx::utils::error;
@@ -519,8 +519,8 @@ mod tests {
 
     use aries_vcx::utils;
     use crate::api_lib;
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::*;
 

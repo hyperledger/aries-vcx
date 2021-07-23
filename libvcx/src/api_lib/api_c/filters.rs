@@ -3,8 +3,8 @@ use std::ptr;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use crate::filters;
 use aries_vcx::utils::error;
@@ -65,8 +65,8 @@ mod tests {
     use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     #[test]
