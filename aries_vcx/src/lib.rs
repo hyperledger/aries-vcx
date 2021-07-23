@@ -1,5 +1,5 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-#![crate_name = "aries"]
+#![crate_name = "aries_vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 extern crate agency_client;

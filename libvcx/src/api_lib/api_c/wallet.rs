@@ -9,11 +9,11 @@ use crate::api_lib::utils_c;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use aries::init::open_as_main_wallet;
-use aries::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
-use aries::libindy::utils::wallet;
-use aries::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
-use aries::utils::error;
+use aries_vcx::init::open_as_main_wallet;
+use aries_vcx::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
+use aries_vcx::libindy::utils::wallet;
+use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::utils::error;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -1186,13 +1186,13 @@ pub mod tests {
     use std::ptr;
 
     use crate::settings;
-    use aries::libindy;
+    use aries_vcx::libindy;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     #[cfg(feature = "pool_tests")]
-    use aries::libindy::utils::payments::build_test_address;
-    use aries::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
-    use aries::utils::devsetup::*;
+    use aries_vcx::libindy::utils::payments::build_test_address;
+    use aries_vcx::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
+    use aries_vcx::utils::devsetup::*;
 
     use super::*;
 

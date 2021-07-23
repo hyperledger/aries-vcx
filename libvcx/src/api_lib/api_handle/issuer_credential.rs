@@ -3,10 +3,10 @@ use serde_json;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
-use crate::aries::messages::a2a::A2AMessage;
+use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
+use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -178,15 +178,15 @@ pub mod tests {
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
     use crate::api_lib::api_handle::issuer_credential;
-    use aries::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use aries::libindy::utils::LibindyMock;
+    use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use aries_vcx::libindy::utils::LibindyMock;
     use crate::settings;
-    use aries::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
-    use aries::utils::devsetup::*;
-    use aries::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
-    use aries::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
     use super::*;
 

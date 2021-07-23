@@ -8,7 +8,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::settings;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -517,12 +517,12 @@ pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use aries::utils;
+    use aries_vcx::utils;
     use crate::api_lib;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use aries::utils::constants::SCHEMA_ID;
-    use aries::utils::devsetup::*;
+    use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::*;
 
     use super::*;
 

@@ -1,7 +1,7 @@
 use serde_json;
 
-use crate::aries::messages::issuance::credential_offer::CredentialOffer;
-use crate::aries::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::error::prelude::*;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
@@ -61,7 +61,7 @@ pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxRe
 
 #[cfg(test)]
 pub mod tests {
-    use aries::utils::mockdata::mockdata_proof;
+    use aries_vcx::utils::mockdata::mockdata_proof;
 
     use super::*;
 

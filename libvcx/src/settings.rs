@@ -14,9 +14,9 @@ use url::Url;
 use agency_client::agency_settings;
 
 use crate::error::prelude::*;
-use aries::utils::{error, get_temp_dir_path};
-use aries::utils::file::read_file;
-use aries::utils::validation;
+use aries_vcx::utils::{error, get_temp_dir_path};
+use aries_vcx::utils::file::read_file;
+use aries_vcx::utils::validation;
 use crate::agency_client::agency_client::AgencyClient;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
@@ -192,7 +192,7 @@ pub fn clear_config() {
 
 #[cfg(test)]
 pub mod tests {
-    use aries::utils::devsetup::{SetupDefaults, TempFile};
+    use aries_vcx::utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;
 

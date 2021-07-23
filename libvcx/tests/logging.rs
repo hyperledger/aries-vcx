@@ -8,7 +8,7 @@ extern crate futures;
 use self::libc::{c_void, c_char};
 use std::ptr::null;
 use vcx::api_lib::api_c::logger::*;
-use aries::utils::logger::{LOGGER_STATE, LoggerState};
+use aries_vcx::utils::logger::{LOGGER_STATE, LoggerState};
 use indy::wallet;
 use vcx::api_lib::utils_c::cstring::CStringUtils;
 use vcx::api_lib::api_c::logger::vcx_set_logger;

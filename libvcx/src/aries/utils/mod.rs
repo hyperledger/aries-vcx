@@ -1,6 +1,6 @@
-use crate::aries::messages::connection::did_doc::DidDoc;
-use crate::aries::messages::a2a::A2AMessage;
-use crate::aries::utils::encryption_envelope::EncryptionEnvelope;
+use crate::aries_vcx::messages::connection::did_doc::DidDoc;
+use crate::aries_vcx::messages::a2a::A2AMessage;
+use crate::aries_vcx::utils::encryption_envelope::EncryptionEnvelope;
 use crate::error::VcxResult;
 
 pub mod encryption_envelope;

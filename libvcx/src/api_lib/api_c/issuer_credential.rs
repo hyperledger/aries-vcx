@@ -7,7 +7,7 @@ use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -844,11 +844,11 @@ pub mod tests {
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
     use crate::settings;
-    use aries::utils::constants::*;
-    use aries::utils::devsetup::*;
-    use aries::utils::get_temp_dir_path;
-    use aries::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::utils::constants::*;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
+    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
     use super::*;
 

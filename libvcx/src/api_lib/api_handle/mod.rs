@@ -12,11 +12,11 @@ pub mod devsetup_agent;
 pub mod test {
     use agency_client::payload::PayloadKinds;
 
-    use aries::libindy;
-    use crate::{aries, settings};
+    use aries_vcx::libindy;
+    use crate::{aries_vcx, settings};
     use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
-    use aries::libindy::utils::wallet::*;
-    use aries::utils::plugins::init_plugin;
+    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::utils::plugins::init_plugin;
 
     use std::thread;
     use std::time::Duration;
@@ -28,15 +28,15 @@ pub mod test {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::aries::messages::ack::tests::_ack;
-    use crate::aries::messages::a2a::A2AMessage;
-    use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
-    use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
-    use crate::aries::handlers::connection::inviter::state_machine::InviterState;
-    use aries::utils::constants;
-    use aries::utils::devsetup::*;
+    use crate::aries_vcx::messages::ack::tests::_ack;
+    use crate::aries_vcx::messages::a2a::A2AMessage;
+    use crate::aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use crate::aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
+    use crate::aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use aries::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 
@@ -528,7 +528,7 @@ pub mod test {
         {
             use agency_client::get_message::{MessageByConnection, Message};
 
-            let credential_offer = aries::messages::issuance::credential_offer::tests::_credential_offer();
+            let credential_offer = aries_vcx::messages::issuance::credential_offer::tests::_credential_offer();
 
             faber.activate().unwrap();
             faber.connection.send_message_closure().unwrap()(&credential_offer.to_a2a_message()).unwrap();
@@ -538,7 +538,7 @@ pub mod test {
             let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
             let message: Message = msgs[0].clone();
             let decrypted_msg = message.decrypted_msg.unwrap();
-            let _payload: aries::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
 
             alice.connection.update_message_status(message.uid.clone()).unwrap()
         }

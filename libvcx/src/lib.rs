@@ -3,7 +3,7 @@
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 #[macro_use]
-extern crate aries;
+extern crate aries_vcx;
 extern crate agency_client;
 extern crate base64;
 extern crate chrono;
@@ -59,17 +59,17 @@ mod tests {
     use crate::api_lib::ProofStateType;
     use crate::filters;
     use crate::settings;
-    use aries::utils::{
+    use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         get_temp_dir_path,
     };
-    use aries::{libindy, utils};
-    use aries::utils::devsetup::*;
+    use aries_vcx::{libindy, utils};
+    use aries_vcx::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use crate::aries::handlers::issuance::holder::holder::HolderState;
-    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
-    use crate::aries::handlers::proof_presentation::prover::prover::ProverState;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
+    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;
 
@@ -77,7 +77,7 @@ mod tests {
         /* create schema */
         let (schema_id, schema_json) = libindy::utils::anoncreds::tests::create_and_write_test_schema(attr_list);
 
-        let name: String = aries::utils::random::generate_random_name();
+        let name: String = aries_vcx::utils::random::generate_random_name();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         /* create cred-def */

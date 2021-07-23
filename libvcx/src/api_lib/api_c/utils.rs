@@ -12,10 +12,10 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use aries::libindy::utils::payments;
-use aries::utils::constants::*;
-use aries::utils::error;
-use aries::utils::provision::AgentProvisionConfig;
+use aries_vcx::libindy::utils::payments;
+use aries_vcx::utils::constants::*;
+use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgentProvisionConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -73,7 +73,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     };
 
     thread::spawn(move || {
-        match aries::utils::provision::provision_cloud_agent(&agency_config) {
+        match aries_vcx::utils::provision::provision_cloud_agent(&agency_config) {
             Err(e) => {
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -112,7 +112,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
            command_handle);
 
     execute(move || {
-        match aries::libindy::utils::payments::get_ledger_fees() {
+        match aries_vcx::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -440,7 +440,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { aries::libindy::utils::pool::set_pool_handle(None); } else { aries::libindy::utils::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { aries_vcx::libindy::utils::pool::set_pool_handle(None); } else { aries_vcx::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -519,7 +519,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     execute(move || {
-        match aries::libindy::utils::ledger::endorse_transaction(&transaction) {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -548,9 +548,9 @@ mod tests {
 
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use aries::utils::constants;
-    use aries::utils::devsetup::*;
-    use aries::utils::provision::AgentProvisionConfig;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use super::*;
 

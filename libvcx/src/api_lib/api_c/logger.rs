@@ -2,8 +2,8 @@ use libc::c_char;
 
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::error::prelude::*;
-use aries::utils::error::SUCCESS;
-use aries::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
+use aries_vcx::utils::error::SUCCESS;
+use aries_vcx::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
 
 /// Set default logger implementation.
 ///

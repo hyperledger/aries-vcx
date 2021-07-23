@@ -7,8 +7,8 @@ use failure::{Backtrace, Context, Fail};
 
 use agency_client;
 
-use aries::utils;
-use aries::utils::error;
+use aries_vcx::utils;
+use aries_vcx::utils::error;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -284,7 +284,7 @@ pub fn err_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
 
 impl From<VcxErrorKind> for VcxError {
     fn from(kind: VcxErrorKind) -> VcxError {
-        VcxError::from_msg(kind, aries::utils::error::error_message(&kind.clone().into()))
+        VcxError::from_msg(kind, aries_vcx::utils::error::error_message(&kind.clone().into()))
     }
 }
 
@@ -295,8 +295,8 @@ impl From<agency_client::error::AgencyClientError> for VcxError {
     }
 }
 
-impl From<aries::error::VcxError> for VcxError {
-    fn from(aries_err: aries::error::VcxError) -> VcxError {
+impl From<aries_vcx::error::VcxError> for VcxError {
+    fn from(aries_err: aries_vcx::error::VcxError) -> VcxError {
         let kind_num: u32 = aries_err.kind().into();
         VcxError::from_msg(kind_num.into(), utils::error::error_message(&aries_err.kind().clone().into()))
     }

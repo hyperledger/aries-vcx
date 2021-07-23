@@ -11,11 +11,11 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::utils_c::timeout::TimeoutUtils;
-use aries::libindy::utils::callback::POISON_MSG;
-use aries::libindy::utils::callback_u32 as callback;
-use aries::libindy::utils::error_codes::map_indy_error;
-use aries::libindy::utils::next_command_handle;
-use aries::utils::error;
+use aries_vcx::libindy::utils::callback::POISON_MSG;
+use aries_vcx::libindy::utils::callback_u32 as callback;
+use aries_vcx::libindy::utils::error_codes::map_indy_error;
+use aries_vcx::libindy::utils::next_command_handle;
+use aries_vcx::utils::error;
 
 fn log_error<T: Display>(e: T) {
     warn!("Unable to send through libindy callback in vcx: {}", e);

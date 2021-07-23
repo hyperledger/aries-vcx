@@ -1,14 +1,14 @@
 use serde_json;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use aries::handlers::issuance::credential_def::PublicEntityStateType;
-use aries::handlers::issuance::credential_def::CredentialDef;
+use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+use aries_vcx::handlers::issuance::credential_def::CredentialDef;
 use crate::error::prelude::*;
-use aries::libindy::utils::{anoncreds, ledger};
-use aries::libindy::utils::cache::update_rev_reg_ids_cache;
-use aries::libindy::utils::payments::PaymentTxn;
-use aries::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use aries::utils::serialization::ObjectWithVersion;
+use aries_vcx::libindy::utils::{anoncreds, ledger};
+use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
+use aries_vcx::libindy::utils::payments::PaymentTxn;
+use aries_vcx::utils::constants::DEFAULT_SERIALIZE_VERSION;
+use aries_vcx::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
@@ -142,7 +142,7 @@ pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
         match &s.get_rev_reg_def() {
             Some(rev_reg_def) => {
-                let rev_reg_def: aries::handlers::issuance::credential_def::RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)
+                let rev_reg_def: aries_vcx::handlers::issuance::credential_def::RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize current rev_reg_def: {:?}, error: {:?}", rev_reg_def, err)))?;
                 Ok(rev_reg_def.value.tails_hash)
             }
@@ -159,15 +159,15 @@ pub mod tests {
     };
 
     use crate::settings;
-    use aries::{libindy, utils};
+    use aries_vcx::{libindy, utils};
     use crate::api_lib::api_handle::schema;
     #[cfg(feature = "pool_tests")]
-    use aries::libindy::utils::payments::add_new_did;
-    use aries::utils::{
+    use aries_vcx::libindy::utils::payments::add_new_did;
+    use aries_vcx::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use aries::utils::devsetup::*;
+    use aries_vcx::utils::devsetup::*;
 
     use super::*;
 
@@ -411,7 +411,7 @@ pub mod tests {
         let credentialdef2: CredentialDef = CredentialDef::from_str(&new_credentialdef_data).unwrap();
 
         assert_eq!(credentialdef1, credentialdef2);
-        assert_eq!(CredentialDef::from_str("{}").unwrap_err().kind(), aries::error::VcxErrorKind::CreateCredDef);
+        assert_eq!(CredentialDef::from_str("{}").unwrap_err().kind(), aries_vcx::error::VcxErrorKind::CreateCredDef);
     }
 
     #[test]

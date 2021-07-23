@@ -2,10 +2,10 @@ use serde_json;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-use crate::aries::messages::a2a::A2AMessage;
+use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -124,13 +124,13 @@ pub mod tests {
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use crate::aries::messages::proof_presentation::presentation::tests::_comment;
-    use aries::utils::constants::*;
-    use aries::utils::devsetup::*;
-    use aries::utils::mockdata::mock_settings::MockBuilder;
-    use aries::utils::mockdata::mockdata_proof;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+    use crate::aries_vcx::messages::proof_presentation::presentation::tests::_comment;
+    use aries_vcx::utils::constants::*;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
+    use aries_vcx::utils::mockdata::mockdata_proof;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;
 

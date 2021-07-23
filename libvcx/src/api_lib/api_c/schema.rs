@@ -9,7 +9,7 @@ use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
 use crate::settings;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -538,16 +538,16 @@ mod tests {
     #[allow(unused_imports)]
     use rand::Rng;
 
-    use aries::{libindy, utils};
+    use aries_vcx::{libindy, utils};
     use crate::{api_lib, settings};
     use crate::api_lib::api_handle::schema::CreateSchema;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     #[allow(unused_imports)]
-    use aries::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries::utils::devsetup::*;
-    use aries::handlers::issuance::credential_def::PublicEntityStateType;
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 
     use super::*;
 

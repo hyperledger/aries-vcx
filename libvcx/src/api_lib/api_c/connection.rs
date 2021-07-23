@@ -9,8 +9,8 @@ use crate::api_lib::utils_c;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use aries::libindy;
-use aries::utils::error;
+use aries_vcx::libindy;
+use aries_vcx::utils::error;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -1209,11 +1209,11 @@ mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use aries::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
-    use aries::utils::devsetup::*;
-    use aries::utils::error;
-    use aries::utils::error::SUCCESS;
-    use aries::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
+    use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::error;
+    use aries_vcx::utils::error::SUCCESS;
+    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
 
     use super::*;
 

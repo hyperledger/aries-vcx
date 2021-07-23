@@ -8,7 +8,7 @@ use crate::api_lib::api_handle::disclosed_proof;
 use crate::api_lib::utils_c::cstring::CStringUtils;
 use crate::api_lib::utils_c::runtime::execute;
 use crate::error::prelude::*;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.
@@ -956,12 +956,12 @@ mod tests {
     use crate::api_lib::utils_c::return_types_u32;
     use crate::api_lib::utils_c::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use aries::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    use aries::utils::devsetup::*;
-    use aries::utils::mockdata::mock_settings::MockBuilder;
-    use aries::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use aries::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-    use crate::aries::handlers::proof_presentation::prover::prover::ProverState;
+    use aries_vcx::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
 
     use super::*;
 

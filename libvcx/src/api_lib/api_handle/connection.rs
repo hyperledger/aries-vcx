@@ -7,11 +7,11 @@ use agency_client::get_message::MessageByConnection;
 use agency_client::MessageStatusCode;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::handlers::connection::connection::Connection;
-use crate::aries::messages::a2a::A2AMessage;
-use crate::aries::messages::connection::invite::Invitation as InvitationV3;
+use crate::aries_vcx::handlers::connection::connection::Connection;
+use crate::aries_vcx::messages::a2a::A2AMessage;
+use crate::aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
-use aries::utils::error;
+use aries_vcx::utils::error;
 
 lazy_static! {
     static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
@@ -202,7 +202,7 @@ pub fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     send_message(&message).map_err(|err| err.into())
 }
 
-pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> aries::error::VcxResult<()>> {
+pub fn send_message_closure(handle: u32) -> VcxResult<impl Fn(&A2AMessage) -> aries_vcx::error::VcxResult<()>> {
     CONNECTION_MAP.get(handle, |connection| {
         return connection.send_message_closure().map_err(|err| err.into())
     })
@@ -264,19 +264,19 @@ pub mod tests {
     use agency_client::mocking::AgencyMockDecrypted;
     use agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use aries;
-    use aries::utils;
+    use aries_vcx;
+    use aries_vcx::utils;
     use crate::settings;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::VcxStateType;
     use crate::api_lib::api_handle::test::create_connected_connections;
-    use aries::messages::a2a::A2AMessage;
-    use aries::messages::ack::tests::_ack;
-    use aries::messages::connection::invite::tests::_invitation_json;
-    use aries::utils::constants;
-    use aries::utils::devsetup::*;
+    use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::ack::tests::_ack;
+    use aries_vcx::messages::connection::invite::tests::_invitation_json;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use aries::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 
