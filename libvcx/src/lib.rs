@@ -53,8 +53,8 @@ mod tests {
     use crate::api_lib::api_handle::disclosed_proof;
     use crate::api_lib::api_handle::issuer_credential;
     use crate::api_lib::api_handle::proof;
+    use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::api_lib::ProofStateType;
-    use crate::api_lib::utils::filters;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
@@ -62,11 +62,11 @@ mod tests {
     };
     use aries_vcx::{libindy, utils};
     use aries_vcx::utils::devsetup::*;
-    use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
-    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
-    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
-    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
-    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use aries_vcx::utils::filters;
 
     use super::*;
 

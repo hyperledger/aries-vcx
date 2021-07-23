@@ -6,7 +6,7 @@ use libc::c_char;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use crate::api_lib::utils::filters;
+use aries_vcx::utils::filters;
 use aries_vcx::utils::error;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
