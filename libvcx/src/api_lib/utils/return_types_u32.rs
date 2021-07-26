@@ -11,8 +11,8 @@ use indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::utils::timeout::TimeoutUtils;
-use aries_vcx::libindy::utils::callback::POISON_MSG;
-use aries_vcx::libindy::utils::callback_u32 as callback;
+use crate::api_lib::utils::callback::POISON_MSG;
+use crate::api_lib::utils::callback_u32 as callback;
 use aries_vcx::libindy::utils::error_codes::map_indy_error;
 use aries_vcx::libindy::utils::next_command_handle;
 use aries_vcx::utils::error;

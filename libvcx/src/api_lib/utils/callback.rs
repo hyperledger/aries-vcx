@@ -53,8 +53,6 @@ pub fn get_cb<H: Eq + Hash, T>(command_handle: H, map: &Mutex<HashMap<H, T>>) ->
 mod tests {
     use std::ffi::CString;
 
-    use crate::utils::devsetup::SetupDefaults;
-
     use super::*;
 
     fn cstring(str_val: &String) -> CString {
@@ -64,8 +62,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_string() {
-        let _setup = SetupDefaults::init();
-
         let test_str = "Journey before destination".to_string();
 
         let test = build_string(cstring(&test_str).as_ptr());
@@ -75,8 +71,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_cb() {
-        let _setup = SetupDefaults::init();
-
         let mutex_map: Mutex<HashMap<i32, Box<dyn FnMut(i32) + Send>>> = Default::default();
         assert!(get_cb(2123, &mutex_map).is_none());
 

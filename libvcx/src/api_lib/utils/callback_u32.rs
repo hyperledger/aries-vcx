@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::libindy::utils::callback::{build_buf, build_string, get_cb};
+use crate::api_lib::utils::callback::{build_buf, build_string, get_cb};
 
 lazy_static! {
     pub static ref CALLBACKS_U32: Mutex<HashMap<CommandHandle, Box<dyn FnMut(u32) + Send>>> = Default::default();
@@ -106,8 +106,6 @@ pub extern "C" fn call_cb_u32_u32_str_str_str(command_handle: CommandHandle, arg
 mod tests {
     use std::ffi::CString;
 
-    use crate::utils::devsetup::SetupDefaults;
-
     use super::*;
 
     fn cstring(str_val: &String) -> CString {
@@ -117,8 +115,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_string() {
-        let _setup = SetupDefaults::init();
-
         let test_str = "Journey before destination".to_string();
 
         let test = build_string(cstring(&test_str).as_ptr());
@@ -129,8 +125,6 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_get_cb() {
-        let _setup = SetupDefaults::init();
-
         let mutex_map: Mutex<HashMap<u32, Box<dyn FnMut(u32) + Send>>> = Default::default();
         assert!(get_cb(2123, &mutex_map).is_none());
 

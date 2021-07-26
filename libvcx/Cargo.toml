@@ -52,7 +52,7 @@ uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
 failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
-aries = { version = "0.1.0", path = "../aries_vcx" }
+aries-vcx = { version = "0.1.0", path = "../aries_vcx" }
 agency_client = { version = "0.1.0", path = "../agency_client" }
 
 [target.'cfg(target_os = "android")'.dependencies]
