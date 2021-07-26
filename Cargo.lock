@@ -77,7 +77,6 @@ dependencies = [
  "indy",
  "indy-sys",
  "lazy_static",
- "libc",
  "libloading",
  "log",
  "num-traits",

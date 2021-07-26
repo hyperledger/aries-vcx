@@ -11,7 +11,7 @@ use std::io::Write;
 use std::ptr;
 
 use crate::error::prelude::*;
-use crate::utils::cstring::CStringUtils;
+use crate::api_lib::utils::cstring::CStringUtils;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
@@ -20,7 +20,7 @@ use self::env_logger::Builder as EnvLoggerBuilder;
 pub use self::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
-use crate::libindy;
+use aries_vcx::libindy;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();
@@ -62,7 +62,7 @@ impl LibvcxLogger {
             .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting logger failed with: {}", err)))?;
         log::set_max_level(LevelFilter::Trace);
         libindy::utils::logger::set_logger(log::logger())
-            .map_err(|err| err.map(VcxErrorKind::LoggingError, "Setting logger failed"))?;
+            .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::LoggingError, "Setting logger failed"))?;
 
         unsafe {
             LOGGER_STATE = LoggerState::Custom;
@@ -133,13 +133,6 @@ impl log::Log for LibvcxLogger {
 pub struct LibvcxDefaultLogger;
 
 impl LibvcxDefaultLogger {
-    pub fn init_testing_logger() {
-        trace!("LibvcxDefaultLogger::init_testing_logger >>>");
-
-        env::var("RUST_LOG")
-            .map_or((), |log_pattern| LibvcxDefaultLogger::init(Some(log_pattern)).unwrap())
-    }
-
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
         info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
 
@@ -180,6 +173,7 @@ impl LibvcxDefaultLogger {
             }
         }
         libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting default logger failed: {:?}", err)))
     }
 
     extern fn enabled(_context: *const CVoid,
@@ -262,21 +256,21 @@ mod tests {
         unsafe { COUNT = COUNT + 1 }
     }
 
-    #[ignore]
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_logging_get_logger() {
-        LibvcxDefaultLogger::init(Some("debug".to_string())).unwrap();
-        unsafe {
-            let (context, enabled_cb, _log_cb, _flush_cb) = LOGGER_STATE.get();
-            assert_eq!(context, ptr::null());
-            let target = CStringUtils::string_to_cstring("target".to_string());
-            let level = 1;
-            let b = LibvcxDefaultLogger::enabled(ptr::null(), 1, target.as_ptr());
+    // #[ignore]
+    // #[test]
+    // #[cfg(feature = "general_test")]
+    // fn test_logging_get_logger() {
+    //     LibvcxDefaultLogger::init(Some("debug".to_string())).unwrap();
+    //     unsafe {
+    //         let (context, enabled_cb, _log_cb, _flush_cb) = LOGGER_STATE.get();
+    //         assert_eq!(context, ptr::null());
+    //         let target = CStringUtils::string_to_cstring("target".to_string());
+    //         let level = 1;
+    //         let b = LibvcxDefaultLogger::enabled(ptr::null(), 1, target.as_ptr());
 
-            assert_eq!(enabled_cb.unwrap()(ptr::null(), level, target.as_ptr()), b);
-        }
-    }
+    //         assert_eq!(enabled_cb.unwrap()(ptr::null(), level, target.as_ptr()), b);
+    //     }
+    // }
 
     // Can only have one test that initializes logging.
     #[ignore]
@@ -291,12 +285,5 @@ mod tests {
         unsafe {
             assert_eq!(COUNT, 2) // second-time log function was called inside libindy
         }
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_logger_for_testing() {
-        LibvcxDefaultLogger::init_testing_logger();
-        LibvcxDefaultLogger::init_testing_logger();
     }
 }

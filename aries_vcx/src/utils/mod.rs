@@ -53,11 +53,10 @@ pub mod random;
 pub mod plugins;
 
 #[macro_use]
-pub mod logger;
+pub mod test_logger;
 pub mod validation;
 pub mod serialization;
 pub mod encryption_envelope;
-pub mod cstring;
 pub mod filters;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {

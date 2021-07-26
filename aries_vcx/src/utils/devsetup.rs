@@ -11,7 +11,7 @@ use crate::settings::set_testing_defaults;
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
-use crate::utils::logger::LibvcxDefaultLogger;
+use crate::utils::test_logger::LibvcxDefaultLogger;
 use crate::utils::plugins::init_plugin;
 
 pub struct SetupEmpty; // clears settings, setups up logging
