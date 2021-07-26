@@ -9,7 +9,7 @@ license = "Apache-2.0"
 edition = "2018"
 
 [lib]
-name = "libvcx"
+name = "vcx"
 path = "src/lib.rs"
 crate-type = ["staticlib","rlib", "cdylib"]
 
