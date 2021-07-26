@@ -1,5 +1,5 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-#![crate_name = "vcx"]
+#![crate_name = "libvcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 #[macro_use]
@@ -18,18 +18,13 @@ extern crate libc;
 extern crate log;
 extern crate openssl;
 extern crate rand;
-extern crate regex;
 extern crate rmp_serde;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate strum;
-#[macro_use]
-extern crate strum_macros;
 extern crate time;
-extern crate url;
 extern crate uuid;
 extern crate tokio;
 
