@@ -13,6 +13,9 @@ use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::test_logger::LibvcxDefaultLogger;
 use crate::utils::plugins::init_plugin;
+use crate::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+use crate::libindy::utils::wallet::{create_wallet, configure_issuer_wallet};
+use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -360,6 +363,32 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
+
+    let enterprise_seed = "000000000000000000000000Trustee1";
+    let config_wallet = WalletConfig {
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None
+    };
+    let config_provision_agent = AgentProvisionConfig {
+        agency_did: AGENCY_DID.to_string(),
+        agency_verkey: AGENCY_VERKEY.to_string(),
+        agency_endpoint: AGENCY_ENDPOINT.to_string(),
+        agent_seed: None
+    };
+
+    create_wallet(&config_wallet).unwrap();
+    open_as_main_wallet(&config_wallet).unwrap();
+
+    let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
+    init_issuer_config(&config_issuer).unwrap();
+
+    provision_cloud_agent(&config_provision_agent).unwrap();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
