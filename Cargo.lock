@@ -69,6 +69,7 @@ name = "aries-vcx"
 version = "0.1.0"
 dependencies = [
  "agency_client",
+ "android_logger",
  "base64 0.8.0",
  "chrono",
  "env_logger",
