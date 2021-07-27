@@ -11,6 +11,7 @@ extern crate indy_sys;
 extern crate indyrs as indy;
 #[macro_use]
 extern crate lazy_static;
+extern crate libc;
 #[macro_use]
 extern crate log;
 extern crate openssl;
