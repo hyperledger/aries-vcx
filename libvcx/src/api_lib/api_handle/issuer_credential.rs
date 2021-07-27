@@ -173,7 +173,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
-    use agency_client::mocking::HttpClientMockResponse;
+    use aries_vcx::agency_client::mocking::HttpClientMockResponse;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
@@ -290,7 +290,7 @@ pub mod tests {
         assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(agency_client::error::AgencyClientResult::Err(agency_client::error::AgencyClientError::from_msg(agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);

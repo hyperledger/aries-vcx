@@ -1204,7 +1204,7 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::agency_client::mocking::AgencyMockDecrypted;
+    use crate::aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use crate::api_lib::api_handle::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;

@@ -2,7 +2,7 @@
 #![crate_name = "aries_vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
-extern crate agency_client;
+pub extern crate agency_client;
 extern crate base64;
 extern crate chrono;
 extern crate failure;

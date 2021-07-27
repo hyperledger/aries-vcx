@@ -120,7 +120,7 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use agency_client::mocking::HttpClientMockResponse;
+    use aries_vcx::agency_client::mocking::HttpClientMockResponse;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
@@ -355,7 +355,7 @@ pub mod tests {
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
 
-        HttpClientMockResponse::set_next_response(agency_client::error::AgencyClientResult::Err(agency_client::error::AgencyClientError::from_msg(agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::IOError);
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
 

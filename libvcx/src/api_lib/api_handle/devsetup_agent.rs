@@ -2,7 +2,7 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 
 #[cfg(test)]
 pub mod test {
-    use agency_client::payload::PayloadKinds;
+    use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::settings;
 
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
@@ -47,7 +47,7 @@ pub mod test {
     }
 
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
-        let mut messages = agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 

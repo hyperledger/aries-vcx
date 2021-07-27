@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use agency_client;
-use agency_client::get_message::MessageByConnection;
-use agency_client::MessageStatusCode;
+use aries_vcx::agency_client;
+use aries_vcx::agency_client::get_message::MessageByConnection;
+use aries_vcx::agency_client::MessageStatusCode;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::connection::connection::Connection;
@@ -259,10 +259,10 @@ pub mod tests {
 
     use serde_json::Value;
 
-    use agency_client::get_message::download_messages_noauth;
-    use agency_client::MessageStatusCode;
-    use agency_client::mocking::AgencyMockDecrypted;
-    use agency_client::update_message::{UIDsByConn, update_agency_messages};
+    use aries_vcx::agency_client::get_message::download_messages_noauth;
+    use aries_vcx::agency_client::MessageStatusCode;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
 
     use aries_vcx;
     use aries_vcx::utils;

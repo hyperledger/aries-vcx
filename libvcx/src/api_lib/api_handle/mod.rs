@@ -10,7 +10,7 @@ pub mod devsetup_agent;
 
 #[cfg(test)]
 pub mod test {
-    use agency_client::payload::PayloadKinds;
+    use aries_vcx::agency_client::payload::PayloadKinds;
 
     use aries_vcx::libindy;
     use crate::aries_vcx::settings;
@@ -23,10 +23,10 @@ pub mod test {
 
     use serde_json::Value;
 
-    use agency_client::get_message::download_messages_noauth;
-    use agency_client::MessageStatusCode;
-    use agency_client::mocking::AgencyMockDecrypted;
-    use agency_client::update_message::{UIDsByConn, update_agency_messages};
+    use aries_vcx::agency_client::get_message::download_messages_noauth;
+    use aries_vcx::agency_client::MessageStatusCode;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
 
     use crate::aries_vcx::messages::ack::tests::_ack;
     use crate::aries_vcx::messages::a2a::A2AMessage;
@@ -526,7 +526,7 @@ pub mod test {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            use agency_client::get_message::{MessageByConnection, Message};
+            use aries_vcx::agency_client::get_message::{MessageByConnection, Message};
 
             let credential_offer = aries_vcx::messages::issuance::credential_offer::tests::_credential_offer();
 

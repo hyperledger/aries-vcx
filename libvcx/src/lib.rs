@@ -4,7 +4,6 @@
 #![recursion_limit = "128"]
 #[macro_use]
 extern crate aries_vcx;
-extern crate agency_client;
 extern crate base64;
 extern crate chrono;
 extern crate failure;

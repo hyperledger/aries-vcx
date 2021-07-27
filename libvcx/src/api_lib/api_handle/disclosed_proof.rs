@@ -1,6 +1,6 @@
 use serde_json;
 
-use agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;

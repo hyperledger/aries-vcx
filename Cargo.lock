@@ -813,7 +813,6 @@ dependencies = [
 name = "libvcx"
 version = "0.20.0"
 dependencies = [
- "agency_client",
  "android_logger",
  "aries-vcx",
  "base64 0.8.0",

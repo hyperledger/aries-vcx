@@ -838,7 +838,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
