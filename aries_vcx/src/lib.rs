@@ -7,8 +7,8 @@ extern crate base64;
 extern crate chrono;
 extern crate failure;
 extern crate futures;
-extern crate indy_sys;
-extern crate indyrs as indy;
+pub extern crate indy_sys;
+pub extern crate indyrs as indy;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;

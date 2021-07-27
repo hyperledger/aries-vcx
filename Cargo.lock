@@ -821,8 +821,6 @@ dependencies = [
  "env_logger",
  "failure",
  "futures 0.3.15",
- "indy",
- "indy-sys",
  "lazy_static",
  "libc",
  "log",

@@ -1,7 +1,7 @@
 use std::ffi::CString;
 
-use indy::{CommandHandle, INVALID_WALLET_HANDLE};
-use indy_sys::WalletHandle;
+use aries_vcx::indy::{CommandHandle, INVALID_WALLET_HANDLE};
+use aries_vcx::indy_sys::WalletHandle;
 use libc::c_char;
 
 use aries_vcx::settings;

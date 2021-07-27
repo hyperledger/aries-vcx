@@ -1,7 +1,7 @@
 use std::ptr;
 use std::thread;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 

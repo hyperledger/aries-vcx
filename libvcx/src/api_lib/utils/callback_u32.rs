@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Mutex;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::utils::callback::{build_buf, build_string, get_cb};

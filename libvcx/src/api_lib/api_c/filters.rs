@@ -1,6 +1,6 @@
 use std::ptr;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;

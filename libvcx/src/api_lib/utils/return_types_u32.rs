@@ -7,7 +7,7 @@ use std::sync::mpsc::RecvTimeoutError;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::utils::timeout::TimeoutUtils;

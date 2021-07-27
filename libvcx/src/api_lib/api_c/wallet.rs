@@ -1,7 +1,7 @@
 use std::ptr::null;
 use std::thread;
 
-use indy::{CommandHandle, SearchHandle, WalletHandle};
+use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
 use serde_json::Error;
 
@@ -154,7 +154,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
         match open_as_main_wallet(&wallet_config) {
             Err(e) => {
                 error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into(), indy::INVALID_WALLET_HANDLE.0);
+                cb(command_handle, e.into(), aries_vcx::indy::INVALID_WALLET_HANDLE.0);
             }
             Ok(wh) => {
                 trace!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",

@@ -1,7 +1,6 @@
 #[cfg(target_os = "android")]
 extern crate android_logger;
 extern crate env_logger;
-extern crate indy_sys;
 extern crate libc;
 extern crate log;
 
@@ -17,7 +16,7 @@ use crate::api_lib::utils::cstring::CStringUtils;
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 use self::env_logger::Builder as EnvLoggerBuilder;
-pub use self::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
+pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
 use aries_vcx::libindy;
