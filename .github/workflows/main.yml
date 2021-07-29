@@ -122,7 +122,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_HASH"
 
           echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::docker.pkg.github.com/absaoss/vcxagencynode/vcxagency-node:0.1.2"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:0.1.2"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$LIBVCX_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_CODECOV::codecov:$CODECOV_HASH"
@@ -148,7 +148,7 @@ jobs:
       - name: Docker Login
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -367,7 +367,7 @@ jobs:
       - name: Login to docker
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -499,7 +499,7 @@ jobs:
       - name: Login to docker
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -558,7 +558,7 @@ jobs:
       - name: Login to docker
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -685,7 +685,7 @@ jobs:
       - name: Login to docker
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -892,7 +892,7 @@ jobs:
       - name: Docker Login
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -903,7 +903,7 @@ jobs:
             IFS=$':' read -a arr <<< $DOCKER_IMG_NAME_LIBVCX
             DOCKER_IMG_NAME_TAGLESS=${arr[0]}
             GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
-            REMOTE_DOCKER_IMG_NAME_LIBVCX="docker.pkg.github.com/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_NAME_TAGLESS}:${PUBLISH_VERSION}"
+            REMOTE_DOCKER_IMG_NAME_LIBVCX="ghcr.io/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_NAME_TAGLESS}:${PUBLISH_VERSION}"
             echo "Releasing libvcx docker image version $PUBLISH_VERSION, tagged $REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker tag "$DOCKER_IMG_NAME_LIBVCX" "$REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker push "$REMOTE_DOCKER_IMG_NAME_LIBVCX" || true
@@ -942,7 +942,7 @@ jobs:
       - name: Docker Login
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -989,7 +989,7 @@ jobs:
       - name: Docker Login
         uses: azure/docker-login@v1
         with:
-          login-server: docker.pkg.github.com
+          login-server: ghcr.io
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
 
