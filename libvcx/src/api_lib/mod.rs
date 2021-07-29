@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[macro_use]
-pub mod utils_c;
+pub mod utils;
 pub mod api_c;
 pub mod api_handle;
 
@@ -98,18 +98,6 @@ enum_number!(ProofStateType
     ProofValidated = 1,
     ProofInvalid = 2,
 });
-
-enum_number!(PublicEntityStateType
-{
-    Built = 0,
-    Published = 1,
-});
-
-impl Default for PublicEntityStateType {
-    fn default() -> Self {
-        PublicEntityStateType::Published
-    }
-}
 
 impl Default for VcxStateType {
     fn default() -> Self {

@@ -1,13 +1,13 @@
 use std::ptr;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries_vcx::utils::error;
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -838,17 +838,17 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use crate::settings;
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
-    use crate::utils::get_temp_dir_path;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
-    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::settings;
+    use aries_vcx::utils::constants::*;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::get_temp_dir_path;
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
+    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
     use super::*;
 

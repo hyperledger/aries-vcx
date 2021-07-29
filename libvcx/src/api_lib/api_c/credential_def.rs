@@ -1,14 +1,14 @@
 use std::ptr;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
 use crate::api_lib::api_handle::credential_def;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use crate::settings;
-use crate::utils::error;
+use aries_vcx::settings;
+use aries_vcx::utils::error;
 
 /// Create a new CredentialDef object and publish correspondent record on the ledger
 ///
@@ -517,11 +517,12 @@ pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use crate::{api_lib, utils};
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::utils::constants::SCHEMA_ID;
-    use crate::utils::devsetup::*;
+    use aries_vcx::utils;
+    use crate::api_lib;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
+    use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::*;
 
     use super::*;
 

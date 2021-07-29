@@ -1,21 +1,22 @@
 use std::ffi::CString;
 
-use indy::{CommandHandle, INVALID_WALLET_HANDLE};
-use indy_sys::WalletHandle;
+use aries_vcx::indy::{CommandHandle, INVALID_WALLET_HANDLE};
+use aries_vcx::indy_sys::WalletHandle;
 use libc::c_char;
 
-use crate::{libindy, settings, utils};
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::error::get_current_error_c_json;
-use crate::api_lib::utils_c::runtime::{execute, init_threadpool};
+use aries_vcx::settings;
+use aries_vcx::{libindy, utils};
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::get_current_error_c_json;
+use crate::api_lib::utils::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
-use crate::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
-use crate::libindy::utils::{ledger, pool, wallet};
-use crate::libindy::utils::pool::is_pool_open;
-use crate::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
-use crate::utils::error;
-use crate::utils::provision::AgencyClientConfig;
-use crate::utils::version_constants;
+use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
+use aries_vcx::libindy::utils::{ledger, pool, wallet};
+use aries_vcx::libindy::utils::pool::is_pool_open;
+use aries_vcx::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
+use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgencyClientConfig;
+use aries_vcx::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -356,7 +357,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
     execute(move || {
-        match agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -522,21 +523,21 @@ mod tests {
     use crate::api_lib::api_c::wallet::tests::_test_add_and_get_wallet_record;
     use crate::api_lib::api_c::wallet::vcx_open_main_wallet;
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api_lib::utils_c::error::reset_current_error;
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::init::PoolConfig;
-    use crate::libindy::utils::pool::get_pool_handle;
-    use crate::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
+    use crate::api_lib::utils::error::reset_current_error;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
+    use aries_vcx::init::PoolConfig;
+    use aries_vcx::libindy::utils::pool::get_pool_handle;
+    use aries_vcx::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::pool::tests::delete_test_pool;
-    use crate::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::libindy::utils::pool::tests::delete_test_pool;
+    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::wallet::get_wallet_handle;
-    use crate::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use crate::utils::devsetup::*;
+    use aries_vcx::libindy::utils::wallet::get_wallet_handle;
+    use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
+    use aries_vcx::utils::devsetup::*;
     #[cfg(any(feature = "agency", feature = "pool_tests"))]
-    use crate::utils::get_temp_dir_path;
+    use aries_vcx::utils::get_temp_dir_path;
 
     use super::*;
 
@@ -624,7 +625,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
 
         delete_named_test_pool(&pool_name);
     }
@@ -638,7 +639,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -751,7 +752,7 @@ mod tests {
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
             wallet_key_derivation: None,
         };
-        assert_eq!(import(&import_config).unwrap_err().kind(), VcxErrorKind::DuplicationWallet);
+        assert_eq!(import(&import_config).unwrap_err().kind(), aries_vcx::error::VcxErrorKind::DuplicationWallet);
 
         vcx_shutdown(true);
     }
@@ -923,7 +924,7 @@ mod tests {
         assert_eq!(vcx_get_ledger_author_agreement(cb.command_handle,
                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         let agreement = cb.receive(TimeoutUtils::some_short()).unwrap();
-        assert_eq!(crate::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
+        assert_eq!(aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
     }
 
     #[cfg(feature = "general_test")]
@@ -1002,7 +1003,7 @@ mod tests {
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _cred_def_handle, _rev_reg_id) =
+        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
             libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
         assert!(schema_id.len() > 0);
 

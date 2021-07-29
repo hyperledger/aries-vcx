@@ -2,20 +2,21 @@ pub const SERIALIZE_VERSION: &'static str = "2.0";
 
 #[cfg(test)]
 pub mod test {
-    use agency_client::payload::PayloadKinds;
+    use aries_vcx::agency_client::payload::PayloadKinds;
+    use aries_vcx::settings;
 
-    use crate::{aries, settings};
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::aries::handlers::connection::connection::{Connection, ConnectionState};
-    use crate::aries::handlers::connection::invitee::state_machine::InviteeState;
-    use crate::aries::handlers::connection::inviter::state_machine::InviterState;
-    use crate::aries::messages::a2a::A2AMessage;
+    use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
-    use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
-    use crate::libindy::utils::wallet::*;
-    use crate::utils::constants;
-    use crate::utils::devsetup::*;
-    use crate::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+
+    use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -46,7 +47,7 @@ pub mod test {
     }
 
     fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
-        let mut messages = agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
@@ -155,7 +156,7 @@ pub mod test {
             self.activate().unwrap();
             let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let data = r#"["name","date","degree", "empty_param"]"#.to_string();
-            let name: String = crate::utils::random::generate_random_schema_name();
+            let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
             self.schema_handle = schema::create_and_publish_schema("test_schema", did.clone(), name, version, data).unwrap();
@@ -250,7 +251,7 @@ pub mod test {
             issuer_credential::send_credential(self.credential_handle, connection_by_handle).unwrap();
             issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
         }
 
         pub fn request_presentation(&mut self) {
@@ -267,7 +268,7 @@ pub mod test {
 
         pub fn verify_presentation(&mut self) {
             self.activate().unwrap();
-            self.update_proof_state(2, aries::messages::status::Status::Success.code())
+            self.update_proof_state(2, aries_vcx::messages::status::Status::Success.code())
         }
 
         pub fn update_proof_state(&mut self, expected_state: u32, expected_status: u32) {
@@ -372,7 +373,7 @@ pub mod test {
             let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
             credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
             assert_eq!(2, credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
         }
 
         pub fn get_proof_request_messages(&mut self) -> String {
@@ -451,7 +452,7 @@ pub mod test {
             self.activate().unwrap();
             let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
             disclosed_proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
-            assert_eq!(aries::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
         }
     }
 

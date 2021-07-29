@@ -1,19 +1,19 @@
 use serde_json;
 
-use agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::{
+use crate::aries_vcx::{
     handlers::issuance::holder::holder::Holder,
     messages::a2a::A2AMessage,
     messages::issuance::credential_offer::CredentialOffer,
 };
 use crate::error::prelude::*;
-use crate::settings::indy_mocks_enabled;
-use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use crate::utils::error;
-use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use aries_vcx::settings::indy_mocks_enabled;
+use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries_vcx::utils::error;
+use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -112,37 +112,37 @@ pub fn get_credential(handle: u32) -> VcxResult<String> {
 
 pub fn get_attributes(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_attributes()
+        credential.get_attributes().map_err(|err| err.into())
     })
 }
 
 pub fn get_attachment(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_attachment()
+        credential.get_attachment().map_err(|err| err.into())
     })
 }
 
 pub fn get_tails_location(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_tails_location()
+        credential.get_tails_location().map_err(|err| err.into())
     })
 }
 
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_tails_hash()
+        credential.get_tails_hash().map_err(|err| err.into())
     })
 }
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_rev_reg_id()
+        credential.get_rev_reg_id().map_err(|err| err.into())
     })
 }
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.is_revokable()
+        credential.is_revokable().map_err(|err| err.into())
     })
 }
 
@@ -279,7 +279,7 @@ pub fn is_payment_required(handle: u32) -> VcxResult<bool> {
 
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| {
-        credential.get_credential_status()
+        credential.get_credential_status().map_err(|err| err.into())
     })
 }
 
@@ -287,12 +287,12 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 pub mod tests {
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
-    use crate::aries::messages::issuance::credential::Credential;
+    use crate::aries_vcx::messages::issuance::credential::Credential;
     use crate::error::VcxErrorKind;
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
-    use crate::utils::mockdata::mockdata_credex;
-    use crate::aries::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
+    use aries_vcx::utils::mockdata::mockdata_credex;
+    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
 
     use super::*;
 

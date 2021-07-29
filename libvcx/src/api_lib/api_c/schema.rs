@@ -1,15 +1,15 @@
 use std::ptr;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
 use crate::api_lib::api_handle::schema;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use crate::settings;
-use crate::utils::error;
+use aries_vcx::settings;
+use aries_vcx::utils::error;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -538,14 +538,16 @@ mod tests {
     #[allow(unused_imports)]
     use rand::Rng;
 
-    use crate::{api_lib, libindy, settings, utils};
+    use aries_vcx::{libindy, utils};
+    use crate::api_lib;
     use crate::api_lib::api_handle::schema::CreateSchema;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     #[allow(unused_imports)]
-    use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use crate::utils::devsetup::*;
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 
     use super::*;
 
@@ -738,17 +740,17 @@ mod tests {
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Built as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Built as u32)
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32);
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Published as u32);
         }
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), api_lib::PublicEntityStateType::Published as u32)
+            assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), PublicEntityStateType::Published as u32)
         }
     }
 }

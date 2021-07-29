@@ -3,13 +3,13 @@ use std::string::ToString;
 use serde_json;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::PublicEntityStateType;
+use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::ledger;
-use crate::libindy::utils::payments::PaymentTxn;
-use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use crate::utils::serialization::ObjectWithVersion;
+use aries_vcx::libindy::utils::anoncreds;
+use aries_vcx::libindy::utils::ledger;
+use aries_vcx::libindy::utils::payments::PaymentTxn;
+use aries_vcx::utils::constants::DEFAULT_SERIALIZE_VERSION;
+use aries_vcx::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
@@ -133,7 +133,7 @@ pub fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32,
     trace!("get_schema_attrs >>> source_id: {}, schema_id: {}", source_id, schema_id);
 
     let (schema_id, schema_data_json) = anoncreds::get_schema_json(&schema_id)
-        .map_err(|err| err.map(VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
+        .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
 
     let schema_data: SchemaData = serde_json::from_str(&schema_data_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
@@ -216,15 +216,16 @@ pub mod tests {
 
     use rand::Rng;
 
-    use crate::{libindy, settings};
+    use aries_vcx::settings;
+    use aries_vcx::libindy;
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::anoncreds::tests::create_and_write_test_schema;
+    use aries_vcx::libindy::utils::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
-    use crate::libindy::utils::payments::add_new_did;
+    use aries_vcx::libindy::utils::payments::add_new_did;
     #[cfg(feature = "pool_tests")]
-    use crate::utils::constants;
-    use crate::utils::constants::SCHEMA_ID;
-    use crate::utils::devsetup::*;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::*;
 
     use super::*;
 
@@ -234,7 +235,7 @@ pub mod tests {
 
     pub fn prepare_schema_data() -> (String, String, String, String) {
         let data = json!(data()).to_string();
-        let schema_name: String = crate::utils::random::generate_random_schema_name();
+        let schema_name: String = aries_vcx::utils::random::generate_random_schema_name();
         let schema_version: String = format!("{}.{}", rand::thread_rng().gen::<u32>().to_string(),
                                              rand::thread_rng().gen::<u32>().to_string());
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();

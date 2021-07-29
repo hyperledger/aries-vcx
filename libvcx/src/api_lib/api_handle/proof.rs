@@ -2,10 +2,10 @@ use serde_json;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-use crate::aries::messages::a2a::A2AMessage;
+use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries_vcx::utils::error;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -99,7 +99,7 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
 
 pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.generate_presentation_request_msg()
+        proof.generate_presentation_request_msg().map_err(|err| err.into())
     })
 }
 
@@ -112,7 +112,7 @@ pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<S
 
 pub fn get_proof(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation()
+        proof.get_presentation().map_err(|err| err.into())
     })
 }
 
@@ -120,17 +120,17 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use serde_json::Value;
 
-    use agency_client::mocking::HttpClientMockResponse;
+    use aries_vcx::agency_client::mocking::HttpClientMockResponse;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::Verifier;
-    use crate::aries::messages::proof_presentation::presentation::tests::_comment;
-    use crate::utils::constants::*;
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::mockdata::mockdata_proof;
-    use crate::aries::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+    use crate::aries_vcx::messages::proof_presentation::presentation::tests::_comment;
+    use aries_vcx::utils::constants::*;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
+    use aries_vcx::utils::mockdata::mockdata_proof;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
 
     use super::*;
 
@@ -355,7 +355,7 @@ pub mod tests {
         let _request = generate_proof_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
 
-        HttpClientMockResponse::set_next_response(agency_client::error::AgencyClientResult::Err(agency_client::error::AgencyClientError::from_msg(agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::IOError);
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
 

@@ -1,19 +1,19 @@
 use serde_json;
 
-use agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::{
+use crate::aries_vcx::{
     handlers::proof_presentation::prover::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
-use crate::aries::messages::a2a::A2AMessage;
+use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use crate::settings::indy_mocks_enabled;
-use crate::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use crate::utils::error;
-use crate::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+use aries_vcx::settings::indy_mocks_enabled;
+use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries_vcx::utils::error;
+use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -123,7 +123,7 @@ pub fn release_all() {
 
 pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
-        proof.generate_presentation_msg()
+        proof.generate_presentation_msg().map_err(|err| err.into())
     })
 }
 
@@ -173,19 +173,19 @@ pub fn decline_presentation_request(handle: u32, connection_handle: u32, reason:
 
 pub fn retrieve_credentials(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.retrieve_credentials()
+        proof.retrieve_credentials().map_err(|err| err.into())
     })
 }
 
 pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.presentation_request_data()
+        proof.presentation_request_data().map_err(|err| err.into())
     })
 }
 
 pub fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.get_proof_request_attachment()
+        proof.get_proof_request_attachment().map_err(|err| err.into())
     })
 }
 
@@ -259,14 +259,14 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::aries::messages::proof_presentation::presentation_request::PresentationRequestData;
-    use crate::utils;
-    use crate::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::mockdata::mockdata_proof;
-    use crate::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
-    use crate::aries::handlers::proof_presentation::prover::prover::ProverState;
+    use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use aries_vcx::utils;
+    use aries_vcx::utils::constants::{ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE};
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
+    use aries_vcx::utils::mockdata::mockdata_proof;
+    use aries_vcx::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
+    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
 
     use super::*;
 

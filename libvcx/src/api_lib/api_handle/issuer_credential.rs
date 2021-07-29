@@ -3,10 +3,10 @@ use serde_json;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
-use crate::aries::messages::a2a::A2AMessage;
+use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
+use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
-use crate::utils::error;
+use aries_vcx::utils::error;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -65,7 +65,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_credential_status()
+        credential.get_credential_status().map_err(|err| err.into())
     })
 }
 
@@ -129,13 +129,13 @@ pub fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
 pub fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.revoke_credential(true)
+        credential.revoke_credential(true).map_err(|err| err.into())
     })
 }
 
 pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.revoke_credential(false)
+        credential.revoke_credential(false).map_err(|err| err.into())
     })
 }
 
@@ -155,38 +155,38 @@ pub fn get_credential_attributes(handle: u32) -> VcxResult<String> {
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_rev_reg_id()
+        credential.get_rev_reg_id().map_err(|err| err.into())
     })
 }
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.is_revokable()
+        credential.is_revokable().map_err(|err| err.into())
     })
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.get_source_id()
+        credential.get_source_id().map_err(|err| err.into())
     })
 }
 
 #[cfg(test)]
 pub mod tests {
-    use agency_client::mocking::HttpClientMockResponse;
+    use aries_vcx::agency_client::mocking::HttpClientMockResponse;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
     use crate::api_lib::api_handle::issuer_credential;
-    use crate::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use crate::libindy::utils::LibindyMock;
-    use crate::settings;
-    use crate::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
+    use aries_vcx::libindy::utils::LibindyMock;
+    use aries_vcx::settings;
+    use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     #[allow(unused_imports)]
-    use crate::utils::devsetup::*;
-    use crate::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
-    use crate::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
-    use crate::aries::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
     use super::*;
 
@@ -290,7 +290,7 @@ pub mod tests {
         assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
 
         // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(agency_client::error::AgencyClientResult::Err(agency_client::error::AgencyClientError::from_msg(agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
         assert_eq!(send_result.is_err(), true);
         assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);

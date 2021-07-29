@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "aries_vcx",
     "libvcx",
     "agency_client"
 ]

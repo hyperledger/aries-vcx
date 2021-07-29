@@ -1,21 +1,21 @@
 use std::ptr;
 use std::thread;
 
-use indy_sys::CommandHandle;
+use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
-use agency_client::get_message::{parse_connection_handles, parse_status_codes};
-use agency_client::mocking::AgencyMock;
+use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
+use aries_vcx::agency_client::mocking::AgencyMock;
 
 use crate::api_lib::api_handle::connection;
-use crate::api_lib::utils_c::cstring::CStringUtils;
-use crate::api_lib::utils_c::runtime::execute;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use crate::libindy::utils::payments;
-use crate::utils::constants::*;
-use crate::utils::error;
-use crate::utils::provision::AgentProvisionConfig;
+use aries_vcx::libindy::utils::payments;
+use aries_vcx::utils::constants::*;
+use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgentProvisionConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -73,7 +73,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     };
 
     thread::spawn(move || {
-        match crate::utils::provision::provision_cloud_agent(&agency_config) {
+        match aries_vcx::utils::provision::provision_cloud_agent(&agency_config) {
             Err(e) => {
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -112,7 +112,7 @@ pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
            command_handle);
 
     execute(move || {
-        match crate::libindy::utils::payments::get_ledger_fees() {
+        match aries_vcx::libindy::utils::payments::get_ledger_fees() {
             Ok(x) => {
                 trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
                        command_handle, error::SUCCESS.message, x);
@@ -225,7 +225,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
            command_handle, message_status, uids);
 
     execute(move || {
-        match agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+        match aries_vcx::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -409,7 +409,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     execute(move || {
-        match agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
+        match aries_vcx::agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -440,7 +440,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { crate::libindy::utils::pool::set_pool_handle(None); } else { crate::libindy::utils::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { aries_vcx::libindy::utils::pool::set_pool_handle(None); } else { aries_vcx::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
 }
@@ -519,7 +519,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     execute(move || {
-        match crate::libindy::utils::ledger::endorse_transaction(&transaction) {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction) {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -544,13 +544,13 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
-    use crate::api_lib::utils_c::return_types_u32;
-    use crate::api_lib::utils_c::timeout::TimeoutUtils;
-    use crate::utils::constants;
-    use crate::utils::devsetup::*;
-    use crate::utils::provision::AgentProvisionConfig;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use super::*;
 

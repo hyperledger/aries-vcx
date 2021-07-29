@@ -34,6 +34,7 @@ impl AgencyClient {
         self.wallet_handle = wh; 
         crate::utils::wallet::set_wallet_handle(indy::WalletHandle(wh));
     }
+
     pub fn reset_wallet_handle(&mut self) { 
         self.wallet_handle = indy::INVALID_WALLET_HANDLE.0; 
         crate::utils::wallet::reset_wallet_handle();

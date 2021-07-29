@@ -1,9 +1,9 @@
 use libc::c_char;
 
-use crate::api_lib::utils_c::cstring::CStringUtils;
+use crate::api_lib::utils::cstring::CStringUtils;
 use crate::error::prelude::*;
-use crate::utils::error::SUCCESS;
-use crate::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
+use aries_vcx::utils::error::SUCCESS;
+use crate::api_lib::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
 
 /// Set default logger implementation.
 ///
@@ -108,6 +108,3 @@ pub extern fn vcx_get_logger(context_p: *mut *const CVoid,
     trace!("vcx_get_logger: <<< res: {:?}", res);
     res
 }
-
-
-
