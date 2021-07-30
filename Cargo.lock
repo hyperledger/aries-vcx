@@ -731,9 +731,8 @@ dependencies = [
 
 [[package]]
 name = "indy"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5194ac62bab75f57a2ccd1ad6764844ebaae9c4550f8841708b434fa9539d2a"
+version = "1.15.0"
+source = "git+https://gitlab.com/evernym/verity/vdr-tools?rev=6351b2#6351b293b76a1ef95de15f7f3b1a7caa05c03bd5"
 dependencies = [
  "failure",
  "futures 0.1.31",
@@ -750,9 +749,8 @@ dependencies = [
 
 [[package]]
 name = "indy-sys"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "262b2993279ec9e7339c127d9d45f72422416ebe6ee0b6cc56680d571a11fdd9"
+version = "1.15.0"
+source = "git+https://gitlab.com/evernym/verity/vdr-tools?rev=6351b2#6351b293b76a1ef95de15f7f3b1a7caa05c03bd5"
 dependencies = [
  "libc",
  "pkg-config",
@@ -795,9 +793,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.66"
+version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
+checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 
 [[package]]
 name = "libloading"
