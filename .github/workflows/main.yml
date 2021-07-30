@@ -1065,57 +1065,57 @@ jobs:
           else
              echo "New version was not defined, skipping release."
           fi
-
-  make-release:
-    runs-on: ubuntu-16.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
-    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
-    outputs:
-      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
-
-      - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          releaseBranch: master
-          pullRequests: true
-          unreleased: true
-          unreleasedOnly: true
-          issuesWoLabels: true
-          prWoLabels: true
-          stripGeneratorNotice: true
-          stripHeaders: false
-          maxIssues: 50
-          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
-          breakingLabels: backwards-incompatible,breaking
-          deprecatedLabels: deprecated
-          headerLabel: "# Changelog"
-          breakingLabel: '### Breaking changes'
-          enhancementLabel: '### Enhancements'
-          bugsLabel: '### Bug fixes'
-          deprecatedLabel: '###  Deprecations'
-          removedLabel: '### Removals'
-          securityLabel: '### Security fixes'
-          issuesLabel: '### Other issues'
-          prLabel: '### Other pull requests'
-          addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]},"wrappers":{"prefix":"### Wrapper changes","labels":["wrappers"]}}'
-          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
-
-      - name: Create a new release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          body_path: ./CHANGELOG.md
-          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
-          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+#
+#  make-release:
+#    runs-on: ubuntu-16.04
+#    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
+#    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+#    outputs:
+#      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
+#    steps:
+#      - name: Git checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Generate changelog
+#        uses: heinrichreimer/github-changelog-generator-action@v2.2
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+#          releaseBranch: master
+#          pullRequests: true
+#          unreleased: true
+#          unreleasedOnly: true
+#          issuesWoLabels: true
+#          prWoLabels: true
+#          stripGeneratorNotice: true
+#          stripHeaders: false
+#          maxIssues: 50
+#          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
+#          breakingLabels: backwards-incompatible,breaking
+#          deprecatedLabels: deprecated
+#          headerLabel: "# Changelog"
+#          breakingLabel: '### Breaking changes'
+#          enhancementLabel: '### Enhancements'
+#          bugsLabel: '### Bug fixes'
+#          deprecatedLabel: '###  Deprecations'
+#          removedLabel: '### Removals'
+#          securityLabel: '### Security fixes'
+#          issuesLabel: '### Other issues'
+#          prLabel: '### Other pull requests'
+#          addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]},"wrappers":{"prefix":"### Wrapper changes","labels":["wrappers"]}}'
+#          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
+#
+#      - name: Create a new release
+#        id: create-release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+#          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+#          body_path: ./CHANGELOG.md
+#          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+#          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
 #
 #  release-android-device:
 #    runs-on: ubuntu-16.04
