@@ -732,7 +732,7 @@ dependencies = [
 [[package]]
 name = "indy"
 version = "1.15.0"
-source = "git+https://gitlab.com/evernym/verity/vdr-tools?rev=6351b2#6351b293b76a1ef95de15f7f3b1a7caa05c03bd5"
+source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=963c6c287#963c6c28712a6f7c632759249d56a5f40b27f834"
 dependencies = [
  "failure",
  "futures 0.1.31",
@@ -750,7 +750,7 @@ dependencies = [
 [[package]]
 name = "indy-sys"
 version = "1.15.0"
-source = "git+https://gitlab.com/evernym/verity/vdr-tools?rev=6351b2#6351b293b76a1ef95de15f7f3b1a7caa05c03bd5"
+source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=963c6c287#963c6c28712a6f7c632759249d56a5f40b27f834"
 dependencies = [
  "libc",
  "pkg-config",

@@ -4,8 +4,8 @@ ARG UID=1000
 ARG GID=1000
 
 ARG INDYSDK_PATH=/home/indy/vdr-tools
-ARG INDYSDK_REPO=https://gitlab.com/evernym/verity/vdr-tools.git
-ARG INDYSDK_REVISION=6351b2
+ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
+ARG INDYSDK_REVISION=963c6c287
 
 ENV RUST_LOG=warning
 
