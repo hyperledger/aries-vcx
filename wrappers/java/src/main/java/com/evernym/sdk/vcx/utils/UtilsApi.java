@@ -81,6 +81,23 @@ public class UtilsApi extends VcxJava.API {
         return future;
     }
 
+    public static CompletableFuture<String> vcxV2GetMessages(String connectionHandles, String messageStatus, String uids) throws VcxException {
+        ParamGuard.notNullOrWhiteSpace(connectionHandles, "connectionHandles");
+        logger.debug("vcxGetMessages() called with: connectionHandles = [" + connectionHandles + "], messageStatus = [" + messageStatus + "], uids = [" + uids + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_v2_messages_download(
+                commandHandle,
+                connectionHandles,
+                messageStatus,
+                uids,
+                vcxGetMessagesCB
+        );
+        checkResult(result);
+        return future;
+    }
+
     private static Callback vcxUpdateMessagesCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int commandHandle, int err) {
@@ -147,7 +164,7 @@ public class UtilsApi extends VcxJava.API {
     }
 
     public static void setActiveTxnAuthorAgreementMeta(String text, String version,
-                                                         String hash, String accMechType, long timeOfAcceptance) throws VcxException {
+                                                       String hash, String accMechType, long timeOfAcceptance) throws VcxException {
         ParamGuard.notNull(accMechType, "accMechType");
         logger.debug("vcxProvisionAgent() called with: text = [" + text + "], version = [" + version + "]," +
                 " hash = [" + hash + "], accMechType = [" + accMechType + "], timeOfAcceptance = [" + timeOfAcceptance + "]");
