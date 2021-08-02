@@ -5,19 +5,21 @@
 [![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
-- **Aries VCX** is Rust implementation of Aries with C-Callable API and number of language wrappers:
+- **Aries VCX** is Rust implementation of Aries protocols with 
+  [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md) integration.
+- **libvcx** is provides C-bindings and memory management on top AriesVCX so you can harness it on
+essentially any platform. Oficially we support:
   - Java (+Android)
   - iOS, 
   - NodeJS
-  - Python (looking for a maintainer)  
 - Overview of [implemented Aries protocols](./aries.md)
 - Aries VCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
   One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
   
 # Work in progress
-- This is spin off what has previously been known as LibVCX library. 
-- There's still outstanding work to cleanup code, restructure library so small breaking changes occurs with almost every release.
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
+- Although most APIs are stable, breaking changes still occurs in our releases. See our 
+  [releases](https://github.com/hyperledger/aries-vcx/releases) page to see history of our changes.
 - See our [roadmap](./roadmap.md).
 
 # Get started
