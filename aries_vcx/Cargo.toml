@@ -7,6 +7,9 @@ publish = false
 license = "Apache-2.0"
 edition = "2018"
 
+[features]
+test_integration = []
+
 [lib]
 name = "aries_vcx"
 path = "src/lib.rs"
