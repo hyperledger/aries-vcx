@@ -31,10 +31,10 @@ extern crate url;
 extern crate uuid;
 
 #[macro_use]
+pub mod utils;
+#[macro_use]
 pub mod handlers;
 pub mod messages;
-#[macro_use]
-pub mod utils;
 pub mod error;
 pub mod libindy;
 pub mod settings;
