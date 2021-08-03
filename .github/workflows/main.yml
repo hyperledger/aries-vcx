@@ -458,10 +458,12 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
-                              bash -c '(cd $HOME/libvcx && \
+                              bash -c '(cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
-                                cd $HOME/agency_client && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test")'
+                                cd $HOME/aries_vcx && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
+                                cd $HOME/libvcx && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
 
   test-libvcx-image-pool_tests:
     runs-on: ubuntu-latest
@@ -520,7 +522,9 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" && \
+                              cd $HOME/aries_vcx && \
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" )'
 
   test-libvcx-image-agency_pool_tests:
     runs-on: ubuntu-latest

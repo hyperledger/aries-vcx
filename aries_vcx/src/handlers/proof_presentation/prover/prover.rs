@@ -146,6 +146,7 @@ mod tests {
     use crate::utils::get_temp_dir_path;
 
     use super::*;
+    use crate::settings::{get_config_value, CONFIG_INSTITUTION_DID};
 
     #[test]
     #[cfg(feature = "pool_tests")]
@@ -198,7 +199,7 @@ mod tests {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let did = setup.faber.config_issuer.institution_did.clone();
+        let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
         let mut req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -254,7 +255,7 @@ mod tests {
     fn test_generate_proof() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = setup.faber.config_issuer.institution_did.clone();
+        let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
@@ -341,7 +342,7 @@ mod tests {
     fn test_generate_proof_with_predicates() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = setup.faber.config_issuer.institution_did.clone();
+        let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
@@ -381,7 +382,7 @@ mod tests {
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
            },
-           "predicates":{ 
+           "predicates":{
                "zip_3": {
                 "credential": all_creds["attrs"]["zip_3"][0],
                }
