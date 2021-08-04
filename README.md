@@ -1,25 +1,25 @@
-# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> Aries VCX
+# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> AriesVCX
 
 ![CI build](https://github.com/hyperledger/aries-vcx/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
 [![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
-- **Aries VCX** is Rust implementation of Aries protocols with 
+- **aries_vcx** is Rust implementation of Aries protocols with 
   [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md) integration.
-- **libvcx** is provides C-bindings and memory management on top AriesVCX so you can harness it on
-essentially any platform. Oficially we support:
+- **libvcx** is provides C-bindings and memory management on top AriesVCX, so you can harness it on
+essentially any platform. Officially we support:
   - Java (+Android)
   - iOS, 
   - NodeJS
 - Overview of [implemented Aries protocols](./aries.md)
-- Aries VCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
+- AriesVCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
   One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
   
 # Work in progress
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
-- Although most APIs are stable, breaking changes still occurs in our releases. See our 
-  [releases](https://github.com/hyperledger/aries-vcx/releases) page to see history of our changes.
+- Although the API is mostly stable, breaking changes still occur in our releases. See our
+  [releases](https://github.com/hyperledger/aries-vcx/releases) page for our change history.
 - See our [roadmap](./roadmap.md).
 
 # Get started
@@ -32,20 +32,20 @@ The best way to get your hands on.
 #### ::Important::
 However before you'll be able to pick one of these demos and run them locally, you need to build binary library which
 all these demos depends on.  
-- [Building aries-vcx on OSX, Linux](./docs/build-general.md)
+- [Building AriesVCX on OSX, Linux](./docs/build-general.md)
 
 # Artifacts
 Number of artifacts are built for every CI run (unless it's coming from a forked repository due to limitations of Github Actions). 
 Artifacts tied with particular release can be found on 
  [release page](https://github.com/hyperledger/aries-vcx/releases).
  
-Artifacts produced:
-- Alpine based docker image with precompiled `aries-vcx`
+## Artifacts produced:
+- Alpine based docker image with precompiled `libvcx`
 - iOS wrapper
 - Android wrapper
 - NodeJS wrapper
 
-When looking for artifcats for a particular CI run:
+#### When looking for artifacts for a particular CI run:
 - NodeJS wrappers are published on [npmjs](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper)
 - Docker images are in [Github Packages](https://github.com/hyperledger/aries-vcx/packages)
 - Mobile artifacts are attached to [CI runs](https://github.com/hyperledger/aries-vcx/actions) (click on particular CI run to
