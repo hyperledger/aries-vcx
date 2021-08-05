@@ -6,9 +6,12 @@ use serde_json::Value;
 use aries_vcx::indy::ErrorCode;
 
 use crate::pgwallet::dyn_lib::load_lib;
+use crate::pgwallet::constants::POSTGRES_ADDITIONAL_INITIALIZER;
+use crate::pgwallet::constants::DEFAULT_POSTGRES_PLUGIN_PATH;
+use crate::pgwallet::constants::DEFAULT_POSTGRES_PLUGIN_INITIALIZER;
 
 pub fn load_storage_library(library: &str, initializer: &str) -> Result<libloading::Library, String> {
-    debug!("Loading storage plugin '{:}' as dynamic library.", library);
+    debug!("Loading storage plugin '{:}' as a dynamic library.", library);
     match load_lib(library) {
         Ok(lib) => {
             unsafe {
@@ -26,19 +29,17 @@ pub fn load_storage_library(library: &str, initializer: &str) -> Result<libloadi
     }
 }
 
-const POSTGRES_ADDITIONAL_INITIALIZER: &str = "init_storagetype";
-
 pub fn finish_loading_postgres(storage_lib: libloading::Library, storage_config: &str, storage_credentials: &str) -> Result<(), String> {
     unsafe {
-        debug!("Finishing initialization for postgre wallet plugin.");
+        debug!("Finishing initialization for postgres wallet plugin.");
         let init_storage_func: libloading::Symbol<unsafe extern fn(config: *const c_char, credentials: *const c_char) -> ErrorCode> = storage_lib.get(POSTGRES_ADDITIONAL_INITIALIZER.as_bytes()).unwrap();
         let init_config = CString::new(storage_config).expect("CString::new failed");
         let init_credentials = CString::new(storage_credentials).expect("CString::new failed");
         match init_storage_func(init_config.as_ptr(), init_credentials.as_ptr()) {
             ErrorCode::Success => {
-                debug!("Successfully completed postgre library initialization.");
+                debug!("Successfully completed postgres library initialization.");
             }
-            err => return Err(format!("Failed to complete postgre library initialization. Details {:?}.", err))
+            err => return Err(format!("Failed to complete postgres library initialization. Details {:?}.", err))
         }
     }
     Ok(())
@@ -61,16 +62,6 @@ fn get_plugin_init_function(storage_type: &str, plugin_init_function: &Option<St
             .ok_or(format!("You have to specify 'storage.plugin_init_function' in con_load_libfig because storage of type {} does not have known default path.", storage_type))
     }
 }
-
-
-const DEFAULT_POSTGRES_PLUGIN_INITIALIZER: &str = "postgresstorage_init";
-
-#[cfg(target_os = "macos")]
-static DEFAULT_POSTGRES_PLUGIN_PATH: &str = "/usr/local/lib/libindystrgpostgres.dylib";
-#[cfg(target_os = "linux")]
-static DEFAULT_POSTGRES_PLUGIN_PATH: &str = "/usr/lib/libindystrgpostgres.so";
-#[cfg(target_os = "windows")]
-static DEFAULT_POSTGRES_PLUGIN_PATH: &str = "c:\\windows\\system32\\libindystrgpostgres.dll";
 
 pub fn serialize_storage_plugin_configuration(storage_type: &str,
                                               storage_config: &Option<Value>,
