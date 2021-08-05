@@ -17,7 +17,6 @@ use aries_vcx::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 
 use crate::pgwallet::wallet_plugin::{finish_loading_postgres, load_storage_library, serialize_storage_plugin_configuration};
 
-mod pgwallet;
 
 fn _init_wallet(wallet_storage_config: &WalletStorageConfig) -> Result<(), String> {
     info!("_init_wallet >>> wallet_storage_config:\n{}", serde_json::to_string(wallet_storage_config).unwrap());
@@ -64,8 +63,8 @@ pub struct WalletStorageConfig {
 }
 
 #[test]
-#[cfg(feature = "test_integration")]
-fn it_should_use_pgsql_wallet_to_provision_cloud_agent() {
+#[cfg(feature = "plugin_test")]
+fn test_provision_cloud_agent_with_pgsql_wallet() {
     let storage_config = r#"
           {
             "config": {
