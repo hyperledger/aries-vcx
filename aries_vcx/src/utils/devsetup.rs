@@ -39,7 +39,9 @@ pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPoolZeroFees {}  // set default settings, init indy wallet, init pool, set zero fees
+pub struct SetupLibraryWalletPoolZeroFees {
+    pub institution_did: String
+}  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
     pub wallet_config: WalletConfig
@@ -235,8 +237,10 @@ impl Drop for SetupIndyMocks {
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
         setup();
-        setup_indy_env(true);
-        SetupLibraryWalletPoolZeroFees {}
+        let institution_did = setup_indy_env(true);
+        SetupLibraryWalletPoolZeroFees {
+            institution_did
+        }
     }
 }
 
@@ -358,7 +362,7 @@ pub fn setup_libnullpay_nofees() {
     libindy::utils::payments::tests::token_setup(None, None, true);
 }
 
-pub fn setup_indy_env(use_zero_fees: bool) {
+pub fn setup_indy_env(use_zero_fees: bool) -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
@@ -394,6 +398,9 @@ pub fn setup_indy_env(use_zero_fees: bool) {
     open_test_pool();
 
     libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
+
+    let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+    institution_did
 }
 
 pub fn cleanup_indy_env() {

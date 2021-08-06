@@ -11,6 +11,12 @@ edition = "2018"
 name = "aries_vcx"
 path = "src/lib.rs"
 
+[features]
+pool_tests = []
+general_test = []
+fatal_warnings = []
+warnlog_fetched_messages = []
+
 [dependencies]
 env_logger = "0.5.10"
 log = "0.4"
