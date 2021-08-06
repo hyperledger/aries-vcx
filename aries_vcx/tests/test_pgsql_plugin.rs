@@ -1,3 +1,5 @@
+mod pgwallet;
+
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -11,92 +13,50 @@ use serde_json::Value;
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
 use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_wallet, WalletConfig};
-use aries_vcx::settings;
+use aries_vcx::{settings, libindy};
 use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
 use aries_vcx::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 
-use crate::pgwallet::wallet_plugin::{finish_loading_postgres, load_storage_library, serialize_storage_plugin_configuration};
-
-
-fn _init_wallet(wallet_storage_config: &WalletStorageConfig) -> Result<(), String> {
-    info!("_init_wallet >>> wallet_storage_config:\n{}", serde_json::to_string(wallet_storage_config).unwrap());
-    match wallet_storage_config.xtype.as_ref() {
-        Some(wallet_type) => {
-            let (plugin_library_path_serialized,
-                plugin_init_function_serialized,
-                storage_config_serialized,
-                storage_credentials_serialized)
-                = serialize_storage_plugin_configuration(wallet_type,
-                                                         &wallet_storage_config.config,
-                                                         &wallet_storage_config.credentials,
-                                                         &wallet_storage_config.plugin_library_path,
-                                                         &wallet_storage_config.plugin_init_function)?;
-            let lib = load_storage_library(&plugin_library_path_serialized, &plugin_init_function_serialized)?;
-            if wallet_type == "postgres_storage" {
-                finish_loading_postgres(lib, &storage_config_serialized, &storage_credentials_serialized)?;
-            }
-            info!("Successfully loaded wallet plugin {}.", wallet_type);
-            Ok(())
-        }
-        None => {
-            info!("Using default builtin IndySDK wallets.");
-            Ok(())
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct WalletStorageConfig {
-    // Wallet storage type for agents wallets
-    #[serde(rename = "type")]
-    pub xtype: Option<String>,
-    // Optional to override default library path. Default value is determined based on value of
-    // xtype and OS
-    pub plugin_library_path: Option<String>,
-    // Optional to override default storage initialization function. Default value is  determined
-    // based on value of xtype and OS
-    pub plugin_init_function: Option<String>,
-    // Wallet storage config for agents wallets
-    pub config: Option<Value>,
-    // Wallet storage credentials for agents wallets
-    pub credentials: Option<Value>,
-}
+use crate::pgwallet::wallet_plugin_loader::{PluginInitConfig, init_wallet_plugin};
+use std::env;
+use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
 
 #[test]
 #[cfg(feature = "plugin_test")]
 fn test_provision_cloud_agent_with_pgsql_wallet() {
+    LibvcxDefaultLogger::init_testing_logger();
     let storage_config = r#"
           {
-            "config": {
               "url": "localhost:5432",
               "max_connections" : 90,
               "connection_timeout" : 30,
               "wallet_scheme": "MultiWalletSingleTableSharedPool"
-            },
-            "credentials": {
+          }"#;
+    let storage_credentials = r#"
+          {
               "account": "postgres",
               "password": "mysecretpassword",
-              "admin_acount": "postgres",
+              "admin_account": "postgres",
               "admin_password": "mysecretpassword"
-            },
-            "type": "postgres_storage"
           }"#;
-    let storage_config: WalletStorageConfig = serde_json::from_str(storage_config).unwrap();
-    info!("Init pgsql storage: Starting.");
-    _init_wallet(&storage_config).unwrap();
-    info!("Init pgsql storage: Finished.");
-    let storage_credentials = storage_config.credentials.map(|a| serde_json::to_string(&a).unwrap()).clone();
-    let storage_config = storage_config.config.map(|a| serde_json::to_string(&a).unwrap()).clone();
+    let init_config: PluginInitConfig = PluginInitConfig {
+        storage_type: String::from("postgres_storage"),
+        plugin_library_path: None,
+        plugin_init_function: None,
+        config: storage_config.into(),
+        credentials: storage_credentials.into()
+    };
 
-    settings::clear_config();
+    init_wallet_plugin(&init_config).unwrap();
+
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
         wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
         wallet_key: settings::DEFAULT_WALLET_KEY.into(),
         wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
         wallet_type: Some("postgres_storage".into()),
-        storage_config,
-        storage_credentials,
+        storage_config: Some(String::from(storage_config)),
+        storage_credentials: Some(String::from(storage_credentials)),
         rekey: None,
         rekey_derivation_method: None,
     };
@@ -112,5 +72,4 @@ fn test_provision_cloud_agent_with_pgsql_wallet() {
     init_issuer_config(&config_issuer).unwrap();
     provision_cloud_agent(&config_provision_agent).unwrap();
     close_main_wallet().unwrap();
-    assert_eq!(4, 4);
 }
