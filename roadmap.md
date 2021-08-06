@@ -23,13 +23,13 @@ This phase is all about decoupling parts of the library into independent modules
 the library into 3 pieces.
 - ✅ `mediator agent client` - client for talking to a compatible agencies - the only open source 
   implementation available is [vcxagencynode](https://github.com/AbsaOSS/vcxagencynode).
-- ✅ `aries_vcx` - the "glue" between Aries state machines, `libindy` and mediator agent.  
-- ✅ `libvcx` - adds memory management and C bindings on top of `aries_vcx` - making it consumable
+- ✅ `aries-vcx` - the "glue" between Aries state machines, `libindy` and mediator agent.  
+- ✅ `libvcx` - adds memory management and C bindings on top of `aries-vcx` - making it consumable
    on Android, iOS and any programming language.
 
 # Phase 2 - In progress 🚧
-- 🚧 Concise `aries_vcx` crate API and start publishing on crates.io
-- 🚧 Implement testing backchannel for aries_vcx. [WIP](https://github.com/hyperledger/aries-agent-test-harness/pull/243)
+- 🚧 Concise `aries-vcx` crate API and start publishing on crates.io
+- 🚧 Implement testing backchannel for aries-vcx. [WIP](https://github.com/hyperledger/aries-agent-test-harness/pull/243)
 - Support for public DID-based connection invitations
 - Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
 - Explore possibility migrating from IndySDK `libindy` to [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools) 
@@ -46,18 +46,18 @@ the library into 3 pieces.
 The library was built so that it can power both mobile (usually in the role of holder, prover) and 
 institutional agents (usually in the role of issuer, verifier). The current architecture only supports 
 single tenant architectures. In order to build scalable institutional agents, we need to enable 
-using in multi-tenant context - a single process using `aries_vcx` should be able to 
+using in multi-tenant context - a single process using `aries-vcx` should be able to 
 manage multiple wallets/agents. 
 
 ### Migrating to aries-askar
-Currently, the main bottleneck of `aries_vcx`, especially in institutional contexts is reliance on 
+Currently, the main bottleneck of `aries-vcx`, especially in institutional contexts is reliance on 
 IndySDK implementation of wallet (see [issue](https://github.com/hyperledger/indy-sdk/issues/2164)). 
 
 There are following solutions under consideration:
 1. Use [aries-askar](https://github.com/andrewwhitehead/aries-askar) as a new implementation for storage 
 exposing asynchronous API. Getting this done might be challenging, as either:
 - `IndySDK` would have to be updated to reuse `aries-askar`,
-- we drop dependency on IndySDK from `aries_vcx` and substitute it with component such as 
+- we drop dependency on IndySDK from `aries-vcx` and substitute it with component such as 
   [indy-utils](https://docs.rs/crate/indy-utils/0.3.2), 
   [indy-shared-rs](https://github.com/bcgov/indy-shared-rs), 
   [aries-credx](https://github.com/sovrin-foundation/aries-credx-framework-rs).

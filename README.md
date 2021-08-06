@@ -5,7 +5,7 @@
 [![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
-- **aries_vcx** is Rust implementation of Aries protocols with 
+- **aries-vcx** is Rust implementation of Aries protocols with 
   [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md) integration.
 - **libvcx** is provides C-bindings and memory management on top AriesVCX, so you can harness it on
 essentially any platform. Officially we support:
