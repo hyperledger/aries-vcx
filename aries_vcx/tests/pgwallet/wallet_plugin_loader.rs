@@ -5,12 +5,52 @@ use serde_json::Value;
 
 use aries_vcx::indy::ErrorCode;
 
-use crate::pgwallet::dyn_lib::load_lib;
 use crate::pgwallet::constants::POSTGRES_ADDITIONAL_INITIALIZER;
 use crate::pgwallet::constants::DEFAULT_POSTGRES_PLUGIN_PATH;
 use crate::pgwallet::constants::DEFAULT_POSTGRES_PLUGIN_INITIALIZER;
 
-pub fn load_storage_library(library: &str, initializer: &str) -> Result<libloading::Library, String> {
+#[cfg(all(unix, test))]
+pub fn load_lib(library: &str) -> libloading::Result<libloading::Library> {
+    libloading::os::unix::Library::open(Some(library), ::libc::RTLD_NOW | ::libc::RTLD_NODELETE)
+        .map(libloading::Library::from)
+}
+
+#[cfg(any(not(unix), not(test)))]
+pub fn load_lib(library: &str) -> libloading::Result<libloading::Library> {
+    libloading::Library::new(library)
+}
+
+
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PluginInitConfig {
+    pub storage_type: String,
+    // Optional to override default library path. Default value is determined based on value of
+    // xtype and OS
+    pub plugin_library_path: Option<String>,
+    // Optional to override default storage initialization function. Default value is  determined
+    // based on value of xtype and OS
+    pub plugin_init_function: Option<String>,
+    // Wallet storage config for agents wallets
+    pub config: String,
+    // Wallet storage credentials for agents wallets
+    pub credentials: String,
+}
+
+pub fn init_wallet_plugin(plugin_init_config: &PluginInitConfig) -> Result<(), String> {
+    info!("_init_wallet >>> wallet_storage_config:\n{}", serde_json::to_string(plugin_init_config).unwrap());
+
+    let plugin_library_path = get_plugin_library_path(&plugin_init_config.storage_type, &plugin_init_config.plugin_library_path)?;
+    let plugin_init_function = get_plugin_init_function(&plugin_init_config.storage_type, &plugin_init_config.plugin_init_function)?;
+    let lib = load_storage_library(&plugin_library_path, &plugin_init_function)?;
+    if plugin_init_config.storage_type == "postgres_storage" {
+        finish_loading_postgres(lib, &plugin_init_config.config, &plugin_init_config.credentials)?;
+    }
+    info!("Successfully loaded wallet plugin.");
+    Ok(())
+}
+
+fn load_storage_library(library: &str, initializer: &str) -> Result<libloading::Library, String> {
     debug!("Loading storage plugin '{:}' as a dynamic library.", library);
     match load_lib(library) {
         Ok(lib) => {
@@ -29,7 +69,7 @@ pub fn load_storage_library(library: &str, initializer: &str) -> Result<libloadi
     }
 }
 
-pub fn finish_loading_postgres(storage_lib: libloading::Library, storage_config: &str, storage_credentials: &str) -> Result<(), String> {
+fn finish_loading_postgres(storage_lib: libloading::Library, storage_config: &str, storage_credentials: &str) -> Result<(), String> {
     unsafe {
         debug!("Finishing initialization for postgres wallet plugin.");
         let init_storage_func: libloading::Symbol<unsafe extern fn(config: *const c_char, credentials: *const c_char) -> ErrorCode> = storage_lib.get(POSTGRES_ADDITIONAL_INITIALIZER.as_bytes()).unwrap();
@@ -61,23 +101,4 @@ fn get_plugin_init_function(storage_type: &str, plugin_init_function: &Option<St
         plugin_init_function.clone()
             .ok_or(format!("You have to specify 'storage.plugin_init_function' in con_load_libfig because storage of type {} does not have known default path.", storage_type))
     }
-}
-
-pub fn serialize_storage_plugin_configuration(storage_type: &str,
-                                              storage_config: &Option<Value>,
-                                              storage_credentials: &Option<Value>,
-                                              plugin_library_path: &Option<String>,
-                                              plugin_init_function: &Option<String>)
-                                              -> Result<(String, String, String, String), String> {
-    let plugin_library_path_serialized = get_plugin_library_path(storage_type, plugin_library_path)?;
-    let plugin_init_function_serialized = get_plugin_init_function(storage_type, plugin_init_function)?;
-    let storage_config_serialized = serde_json::to_string(storage_config)
-        .map_err(|err| format!("Failed to serialize 'storage_config'. {:?}", err))?;
-    let storage_credentials_serialized = serde_json::to_string(storage_credentials)
-        .map_err(|err| format!("Failed to serialize 'storage_credentials' {:?}", err))?;
-    Ok((plugin_library_path_serialized,
-        plugin_init_function_serialized,
-        storage_config_serialized,
-        storage_credentials_serialized)
-    )
 }

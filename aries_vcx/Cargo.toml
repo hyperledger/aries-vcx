@@ -7,9 +7,6 @@ publish = false
 license = "Apache-2.0"
 edition = "2018"
 
-[features]
-plugin_test = []
-
 [lib]
 name = "aries_vcx"
 path = "src/lib.rs"
@@ -19,6 +16,7 @@ pool_tests = []
 general_test = []
 fatal_warnings = []
 warnlog_fetched_messages = []
+plugin_test = []
 
 [dependencies]
 env_logger = "0.5.10"
