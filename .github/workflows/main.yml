@@ -97,16 +97,20 @@ jobs:
           fi;
 
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
+          ARIESVCX_SOURCE_HASH=${{ hashFiles('aries_vcx') }}
+          AGENCY_CLIENT_HASH=${{ hashFiles('agency_client') }}
+          
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
+          ALPINE_CORE_DOCKERFILE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
           CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-ubuntu.dockerfile') }}
+
+          JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           LIBVCX_NODE_WRAPPERS_HASH=${{ hashFiles('wrappers/node') }}
           LIBVCX_NODE_AGENT_HASH=${{ hashFiles('agents/node') }}
-          AGENCY_CLIENT_HASH=${{ hashFiles('agency_client') }}
-          JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
+          
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
-          ALPINE_CORE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
 
-          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
@@ -119,7 +123,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_CODECOV::$CODECOV_HASH"
           echo "::set-output name=CACHE_KEY_ANDROID::$ANDROID_HASH"
           echo "::set-output name=CACHE_KEY_POOL::$POOL_HASH"
-          echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_HASH"
+          echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_DOCKERFILE_HASH"
 
           echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:0.1.2"
@@ -454,10 +458,12 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
-                              bash -c '(cd $HOME/libvcx && \
+                              bash -c '(cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
-                                cd $HOME/agency_client && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test")'
+                                cd $HOME/aries_vcx && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
+                                cd $HOME/libvcx && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
 
   test-libvcx-image-pool_tests:
     runs-on: ubuntu-latest
@@ -516,7 +522,9 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2")'
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" && \
+                              cd $HOME/aries_vcx && \
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" )'
 
   test-libvcx-image-agency_pool_tests:
     runs-on: ubuntu-latest
