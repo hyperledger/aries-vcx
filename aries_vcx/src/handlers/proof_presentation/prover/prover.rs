@@ -198,7 +198,7 @@ mod tests {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let did = setup.faber.config_issuer.institution_did.clone();
+
         let mut req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -206,7 +206,7 @@ mod tests {
            "requested_attributes": json!({
                "zip_1": json!({
                    "name":"zip",
-                   "restrictions": [json!({ "issuer_did": did })]
+                   "restrictions": [json!({ "issuer_did": setup.institution_did })]
                })
            }),
            "requested_predicates": json!({}),
@@ -254,7 +254,6 @@ mod tests {
     fn test_generate_proof() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = setup.faber.config_issuer.institution_did.clone();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
@@ -264,7 +263,7 @@ mod tests {
             "requested_attributes": {
                 "address1_1": {
                     "name": "address1",
-                    "restrictions": [{"issuer_did": did}],
+                    "restrictions": [{"issuer_did": setup.institution_did}],
                     "non_revoked":  {"from": 123, "to": to}
                 },
                 "zip_2": { "name": "zip" }
@@ -341,7 +340,6 @@ mod tests {
     fn test_generate_proof_with_predicates() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let did = setup.faber.config_issuer.institution_did.clone();
         libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
@@ -351,7 +349,7 @@ mod tests {
             "requested_attributes": {
                 "address1_1": {
                     "name": "address1",
-                    "restrictions": [{"issuer_did": did}],
+                    "restrictions": [{"issuer_did": setup.institution_did}],
                     "non_revoked":  {"from": 123, "to": to}
                 },
                 "zip_2": { "name": "zip" }
@@ -381,7 +379,7 @@ mod tests {
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
            },
-           "predicates":{ 
+           "predicates":{
                "zip_3": {
                 "credential": all_creds["attrs"]["zip_3"][0],
                }

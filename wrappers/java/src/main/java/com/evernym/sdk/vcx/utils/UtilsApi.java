@@ -94,6 +94,7 @@ public class UtilsApi extends VcxJava.API {
                 uids,
                 vcxGetMessagesCB
         );
+
         checkResult(result);
         return future;
     }
