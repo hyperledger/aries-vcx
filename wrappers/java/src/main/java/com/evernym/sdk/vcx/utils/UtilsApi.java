@@ -83,7 +83,7 @@ public class UtilsApi extends VcxJava.API {
 
     public static CompletableFuture<String> vcxV2GetMessages(String connectionHandles, String messageStatus, String uids) throws VcxException {
         ParamGuard.notNullOrWhiteSpace(connectionHandles, "connectionHandles");
-        logger.debug("vcxGetMessages() called with: connectionHandles = [" + connectionHandles + "], messageStatus = [" + messageStatus + "], uids = [" + uids + "]");
+        logger.debug("vcxV2GetMessages() called with: connectionHandles = [" + connectionHandles + "], messageStatus = [" + messageStatus + "], uids = [" + uids + "]");
         CompletableFuture<String> future = new CompletableFuture<String>();
         int commandHandle = addFuture(future);
 

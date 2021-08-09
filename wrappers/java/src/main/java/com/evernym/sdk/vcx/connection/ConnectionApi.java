@@ -529,4 +529,31 @@ public class ConnectionApi extends VcxJava.API {
 		checkResult(result);
 		return future;
 	}
+
+	private static Callback downloadMessagesCB = new Callback() {
+		@SuppressWarnings({"unused", "unchecked"})
+		public void callback(int commandHandle, int err, String info) {
+			logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], info = [" + info + "]");
+			CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(commandHandle);
+			if (! checkCallback(future, err)) return;
+			future.complete(info);
+		}
+	};
+
+    public static CompletableFuture<String> downloadMessages(int connectionHandle, String messageStatus, String uids) throws VcxException {
+        logger.debug("downloadMessages() called with: connectionHandle = [" + connectionHandle + "], messageStatus = [" + messageStatus + "], uids = [" + uids + "]");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_connection_messages_download(
+                commandHandle,
+                connectionHandle,
+                messageStatus,
+                uids,
+                downloadMessagesCB
+        );
+
+        checkResult(result);
+        return future;
+    }
 }
