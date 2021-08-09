@@ -600,6 +600,9 @@ public abstract class LibVcx {
         /** Get messages for given uids or pairwise did from agency endpoint */
         public int vcx_messages_download(int command_handle, String messageStatus, String uids, String pwdids, Callback cb);
 
+        /** Get messages for given connectionHandles from agency endpoint */
+        public int vcx_v2_messages_download(int command_handle, String connectionHandles, String messageStatus, String uids, Callback cb);
+
         /** Update message status for a object of uids */
         public int vcx_messages_update_status(int command_handle, String messageStatus, String msgJson, Callback cb);
 
