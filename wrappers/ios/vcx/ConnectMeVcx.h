@@ -345,6 +345,11 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
                   pwdids:(NSString *)pwdids
               completion:(void (^)(NSError *error, NSString* messages))completion;
 
+- (void)downloadMessagesV2:(NSString *)connection_handles
+            messageStatus:(NSString *)messageStatus
+                    uid_s:(NSString *)uid_s
+              completion:(void (^)(NSError *error, NSString* messages))completion;
+
 - (void)updateMessages:(NSString *)messageStatus
             pwdidsJson:(NSString *)pwdidsJson
             completion:(void (^)(NSError *error))completion;
