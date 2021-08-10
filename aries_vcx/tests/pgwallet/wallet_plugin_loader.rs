@@ -20,8 +20,6 @@ pub fn load_lib(library: &str) -> libloading::Result<libloading::Library> {
     libloading::Library::new(library)
 }
 
-
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PluginInitConfig {
     pub storage_type: String,
@@ -38,7 +36,7 @@ pub struct PluginInitConfig {
 }
 
 pub fn init_wallet_plugin(plugin_init_config: &PluginInitConfig) -> Result<(), String> {
-    info!("_init_wallet >>> wallet_storage_config:\n{}", serde_json::to_string(plugin_init_config).unwrap());
+    debug!("init_wallet_plugin >>> wallet_storage_config: {}", serde_json::to_string(plugin_init_config).unwrap());
 
     let plugin_library_path = get_plugin_library_path(&plugin_init_config.storage_type, &plugin_init_config.plugin_library_path)?;
     let plugin_init_function = get_plugin_init_function(&plugin_init_config.storage_type, &plugin_init_config.plugin_init_function)?;
@@ -46,7 +44,7 @@ pub fn init_wallet_plugin(plugin_init_config: &PluginInitConfig) -> Result<(), S
     if plugin_init_config.storage_type == "postgres_storage" {
         finish_loading_postgres(lib, &plugin_init_config.config, &plugin_init_config.credentials)?;
     }
-    info!("Successfully loaded wallet plugin.");
+    debug!("Successfully loaded wallet plugin.");
     Ok(())
 }
 
