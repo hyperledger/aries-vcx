@@ -701,7 +701,7 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char * message_status = [messageStatus cStringUsingEncoding:NSUTF8StringEncoding];
     const char * uids = [uid_s cStringUsingEncoding:NSUTF8StringEncoding];
-    vcx_error_t ret = vcx_connection_messages_download(handle, connection_handle, message_status, uids, VcxWrapperCommonStringCallback);
+    vcx_error_t ret = vcx_connection_messages_download(handle, connectionHandle, message_status, uids, VcxWrapperCommonStringCallback);
 
     if( ret != 0 )
     {
@@ -1642,7 +1642,7 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     }
 }
 
-- (void)downloadMessagesV2:(NSString *)connection_handles
+- (void)downloadMessagesV2:(NSString *)connectionHandles
             messageStatus:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
               completion:(void (^)(NSError *error, NSString* messages))completion{
@@ -1650,7 +1650,7 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char * message_status = [messageStatus cStringUsingEncoding:NSUTF8StringEncoding];
     const char * uids = [uid_s cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * connection_handles = [connection_handles cStringUsingEncoding:NSUTF8StringEncoding];
+    const char * connection_handles = [connectionHandles cStringUsingEncoding:NSUTF8StringEncoding];
     ret = vcx_v2_messages_download(handle, connection_handles, message_status, uids, VcxWrapperCommonStringCallback);
 
     if( ret != 0 )
