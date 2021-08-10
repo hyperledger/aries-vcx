@@ -161,6 +161,8 @@ vcx_error_t vcx_connection_get_pw_did(vcx_command_handle_t command_handle, vcx_c
 /** Retrieves their_pw_did from Connection object. */
 vcx_error_t vcx_connection_get_their_pw_did(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *their_pw_did));
 
+vcx_error_t vcx_connection_messages_download(vcx_command_handle_t command_handle,  vcx_connection_handle_t connection_handle, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
+
 /** Send a message to the specified connection
 ///
 /// #params

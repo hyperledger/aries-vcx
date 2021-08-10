@@ -149,6 +149,11 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
                 withSignatureData:(NSData *)signatureRaw
                    withCompletion:(void (^)(NSError *error, vcx_bool_t valid))completion;
 
+- (void)connectionDownloadMessages:(VcxHandle)connectionHandle
+                    messageStatus:(NSString *)messageStatus
+                            uid_s:(NSString *)uid_s
+                      completion:(void (^)(NSError *error, NSString* messages))completion;
+
 - (void)agentUpdateInfo:(NSString *)config
              completion:(void (^)(NSError *error))completion;
 
