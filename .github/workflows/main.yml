@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
       - "**"
@@ -79,10 +79,10 @@ jobs:
                 PRERELEASE="true"
               fi;
             elif [[ "${{ github.event_name }}" == "push" ]]; then
-              if [[ "$BRANCH_NAME" == "master" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
+              if [[ "$BRANCH_NAME" == "main" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
                 PUBLISH_VERSION="$REPO_VERSION_DESIRED"
                 RELEASE="true"
-                echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
+                echo "This is push to main, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
               fi;
             fi;
 
@@ -1029,7 +1029,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
-          releaseBranch: master
+          releaseBranch: main
           pullRequests: true
           unreleased: true
           unreleasedOnly: true
