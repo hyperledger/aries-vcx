@@ -16,6 +16,7 @@ pool_tests = []
 general_test = []
 fatal_warnings = []
 warnlog_fetched_messages = []
+plugin_test = []
 
 [dependencies]
 env_logger = "0.5.10"
