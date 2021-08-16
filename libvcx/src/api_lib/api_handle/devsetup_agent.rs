@@ -17,6 +17,8 @@ pub mod test {
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::issuer::issuer::Issuer;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -75,7 +77,7 @@ pub mod test {
         pub config_issuer: IssuerConfig,
         pub connection: Connection,
         pub schema_handle: u32,
-        pub cred_def_handle: u32,
+        pub cred_def: CredentialDef,
         pub credential_handle: u32,
         pub presentation_handle: u32,
     }
@@ -143,7 +145,7 @@ pub mod test {
                 config_agency,
                 config_issuer,
                 schema_handle: 0,
-                cred_def_handle: 0,
+                cred_def: CredentialDef::default(),
                 connection: Connection::create("alice", true).unwrap(),
                 credential_handle: 0,
                 presentation_handle: 0,
@@ -170,7 +172,7 @@ pub mod test {
             let name = String::from("degree");
             let tag = String::from("tag");
 
-            self.cred_def_handle = credential_def::create_and_publish_credentialdef(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
+            self.cred_def = CredentialDef::create(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
         }
 
         pub fn create_presentation_request(&self) -> u32 {
@@ -230,7 +232,7 @@ pub mod test {
                 "empty_param": ""
             }).to_string();
 
-            self.credential_handle = issuer_credential::issuer_credential_create(self.cred_def_handle,
+            self.credential_handle = issuer_credential::issuer_credential_create_temp(self.cred_def.clone(),
                                                                                  String::from("alice_degree"),
                                                                                  did,
                                                                                  String::from("cred"),

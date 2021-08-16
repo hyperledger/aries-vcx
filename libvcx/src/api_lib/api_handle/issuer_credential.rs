@@ -4,6 +4,7 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
+use crate::aries_vcx::handlers::issuance::credential_def::CredentialDef;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
@@ -17,6 +18,21 @@ lazy_static! {
 enum IssuerCredentials {
     #[serde(rename = "2.0")]
     V3(Issuer),
+}
+
+pub fn issuer_credential_create_temp(cred_def: CredentialDef,
+                                source_id: String,
+                                issuer_did: String,
+                                credential_name: String,
+                                credential_data: String,
+                                price: u64) -> VcxResult<u32> {
+    let issuer_config = IssuerConfig {
+        cred_def_id: cred_def.get_cred_def_id(),
+        rev_reg_id: cred_def.get_rev_reg_id(),
+        tails_file: cred_def.get_tails_file(),
+    };
+    let issuer = Issuer::create(&issuer_config, &credential_data, &source_id)?;
+    ISSUER_CREDENTIAL_MAP.add(issuer)
 }
 
 pub fn issuer_credential_create(cred_def_handle: u32,
