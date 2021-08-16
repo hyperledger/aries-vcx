@@ -241,17 +241,17 @@ pub mod test {
             self.issuer_credential = Issuer::create(&issuer_config, &credential_data, "alice_degree").unwrap();
             self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
-            assert_eq!(IssuerState::Initial, self.issuer_credential.get_state());
+            assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
         pub fn send_credential(&mut self) {
             self.activate().unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
-            assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
+            assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
             self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
-            assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
+            assert_eq!(IssuerState::Finished, self.issuer_credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.issuer_credential.get_credential_status().unwrap());
         }
 
