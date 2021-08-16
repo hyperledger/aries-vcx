@@ -184,7 +184,8 @@ pub extern fn vcx_set_next_agency_response(message_index: u32) {
 /// Error code as a u32
 #[no_mangle]
 #[deprecated(since = "0.12.0", note = "This is dangerous because downloaded messages are not \
-authenticated and a message appearing to be received from certain connection might have been spoofed.")]
+authenticated and a message appearing to be received from certain connection might have been spoofed. \
+Use vcx_connection_messages_download instead.")]
 pub extern fn vcx_messages_download(command_handle: CommandHandle,
                                     message_status: *const c_char,
                                     uids: *const c_char,
@@ -290,6 +291,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.20.0", note = "Deprecated in favor of vcx_connection_messages_download.")]
 pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
                                        conn_handles: *const c_char,
                                        message_statuses: *const c_char,

@@ -269,6 +269,13 @@ export interface IFFIEntryPoint {
   vcx_connection_get_pw_did: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_get_their_pw_did: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_info: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_connection_messages_download: (
+    commandId: number,
+    handle: number,
+    status: string,
+    uids: string,
+    cb: ICbRef,
+  ) => number;
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number;
@@ -745,6 +752,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_info: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_messages_download: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
 
   // issuer

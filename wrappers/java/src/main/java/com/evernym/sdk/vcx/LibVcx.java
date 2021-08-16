@@ -178,6 +178,8 @@ public abstract class LibVcx {
          */
         public int vcx_connection_info(int command_handle, int connection_handle, Callback cb);
 
+        public int vcx_connection_messages_download(int command_handle, int connection_handle, String messageStatus, String uids, Callback cb);
+
         /**
          * credential issuer object
          *

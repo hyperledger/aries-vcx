@@ -112,7 +112,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function getMessages (connectionId, filterStatuses = [], filterUids = []) {
     const connection = await loadConnection(connectionId)
-    return getMessagesForConnection([connection], filterStatuses, filterUids)
+    return getMessagesForConnection(connection, filterStatuses, filterUids)
   }
 
   async function getState (connectionId) {
@@ -138,7 +138,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function getMessagesV2 (connectionId, filterStatuses = [], filterUids = []) {
     const connection = await getVcxConnection(connectionId)
-    return getMessagesForConnection([connection], filterStatuses, filterUids)
+    return getMessagesForConnection(connection, filterStatuses, filterUids)
   }
 
   async function updateMessagesStatus (connectionId, uids) {

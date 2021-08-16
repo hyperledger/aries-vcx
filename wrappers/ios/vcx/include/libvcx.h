@@ -161,6 +161,8 @@ vcx_error_t vcx_connection_get_pw_did(vcx_command_handle_t command_handle, vcx_c
 /** Retrieves their_pw_did from Connection object. */
 vcx_error_t vcx_connection_get_their_pw_did(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *their_pw_did));
 
+vcx_error_t vcx_connection_messages_download(vcx_command_handle_t command_handle,  vcx_connection_handle_t connection_handle, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
+
 /** Send a message to the specified connection
 ///
 /// #params
@@ -428,7 +430,9 @@ vcx_error_t vcx_wallet_send_tokens(vcx_command_handle_t chandle, vcx_payment_han
 vcx_error_t vcx_shutdown(vcx_bool_t deleteWallet);
 
 /** Get Messages (Connections) of given status */
-vcx_error_t vcx_messages_download( vcx_command_handle_t command_handle, const char *message_status, const char *uids, const char *pw_dids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
+vcx_error_t vcx_messages_download(vcx_command_handle_t command_handle, const char *message_status, const char *uids, const char *pw_dids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
+
+vcx_error_t vcx_v2_messages_download(vcx_command_handle_t command_handle, const char *connection_handles, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
 
 /** Update Message status */
 vcx_error_t vcx_messages_update_status( vcx_command_handle_t command_handle, const char *message_status, const char *msg_json, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
