@@ -12,7 +12,7 @@ use crate::handlers::proof_presentation::verifier::states::initial::InitialState
 use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
     source_id: String,
     state: VerifierFullState,
@@ -29,6 +29,12 @@ pub enum VerifierFullState {
     Initiated(InitialState),
     PresentationRequestSent(PresentationRequestSentState),
     Finished(FinishedState),
+}
+
+impl Default for VerifierFullState {
+    fn default() -> Self {
+        Self::Initiated(InitialState::default())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -28,13 +28,6 @@ pub enum IssuerFullState {
     Finished(FinishedState),
 }
 
-
-impl Default for IssuerFullState {
-    fn default() -> Self {
-        Self::Initial(InitialState::default())
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationInfoV1 {
     pub cred_rev_id: Option<String>,
@@ -51,6 +44,12 @@ impl IssuerFullState {
             IssuerFullState::CredentialSent(state) => state.thread_id.clone(),
             IssuerFullState::Finished(state) => state.thread_id.clone(),
         }
+    }
+}
+
+impl Default for IssuerFullState {
+    fn default() -> Self {
+        Self::Initial(InitialState::default())
     }
 }
 

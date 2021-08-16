@@ -19,6 +19,7 @@ pub mod test {
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
+    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -79,7 +80,7 @@ pub mod test {
         pub schema_handle: u32,
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
-        pub presentation_handle: u32,
+        pub verifier: Verifier,
     }
 
     impl TestAgent for Faber {
@@ -148,7 +149,7 @@ pub mod test {
                 cred_def: CredentialDef::default(),
                 connection: Connection::create("alice", true).unwrap(),
                 issuer_credential: Issuer::default(),
-                presentation_handle: 0,
+                verifier: Verifier::default(),
             };
             close_main_wallet().unwrap();
             faber
@@ -175,7 +176,7 @@ pub mod test {
             self.cred_def = CredentialDef::create(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
         }
 
-        pub fn create_presentation_request(&self) -> u32 {
+        pub fn create_presentation_request(&self) -> Verifier {
             let requested_attrs = json!([
                 {"name": "name"},
                 {"name": "date"},
@@ -183,11 +184,11 @@ pub mod test {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
 
-            proof::create_proof(String::from("alice_degree"),
-                                requested_attrs,
-                                json!([]).to_string(),
-                                json!({}).to_string(),
-                                String::from("proof_from_alice")).unwrap()
+            Verifier::create(String::from("alice_degree"),
+                             requested_attrs,
+                             json!([]).to_string(),
+                             json!({}).to_string(),
+                             String::from("proof_from_alice")).unwrap()
         }
 
         pub fn create_invite(&mut self) -> String {
@@ -256,28 +257,26 @@ pub mod test {
 
         pub fn request_presentation(&mut self) {
             self.activate().unwrap();
-            self.presentation_handle = self.create_presentation_request();
-            assert_eq!(0, proof::get_state(self.presentation_handle).unwrap());
+            self.verifier = self.create_presentation_request();
+            assert_eq!(VerifierState::Initial, self.verifier.get_state());
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            proof::send_proof_request(self.presentation_handle, connection_by_handle, None).unwrap();
-            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.verifier.update_state(&self.connection).unwrap();
 
-            assert_eq!(1, proof::get_state(self.presentation_handle).unwrap());
+            assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
 
         pub fn verify_presentation(&mut self) {
             self.activate().unwrap();
-            self.update_proof_state(2, aries_vcx::messages::status::Status::Success.code())
+            self.update_proof_state(VerifierState::Finished, aries_vcx::messages::status::Status::Success.code())
         }
 
-        pub fn update_proof_state(&mut self, expected_state: u32, expected_status: u32) {
+        pub fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().unwrap();
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
-            assert_eq!(expected_state, proof::get_state(self.presentation_handle).unwrap());
-            assert_eq!(expected_status, proof::get_proof_state(self.presentation_handle).unwrap());
+            self.verifier.update_state(&self.connection).unwrap();
+            assert_eq!(expected_state, self.verifier.get_state());
+            assert_eq!(expected_status, self.verifier.presentation_status());
         }
 
         pub fn teardown(&mut self) {
