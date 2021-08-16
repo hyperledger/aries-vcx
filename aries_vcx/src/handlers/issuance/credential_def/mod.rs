@@ -20,7 +20,7 @@ pub struct RevocationRegistry {
     rev_reg_delta_payment_txn: Option<PaymentTxn>,
 }
 
-#[derive(Default, Clone, Deserialize, Debug, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
     pub id: String,
     tag: String,

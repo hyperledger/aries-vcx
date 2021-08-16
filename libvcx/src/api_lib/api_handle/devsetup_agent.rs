@@ -18,7 +18,7 @@ pub mod test {
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
-    use aries_vcx::handlers::issuance::issuer::issuer::Issuer;
+    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -78,7 +78,7 @@ pub mod test {
         pub connection: Connection,
         pub schema_handle: u32,
         pub cred_def: CredentialDef,
-        pub credential_handle: u32,
+        pub issuer_credential: Issuer,
         pub presentation_handle: u32,
     }
 
@@ -147,7 +147,7 @@ pub mod test {
                 schema_handle: 0,
                 cred_def: CredentialDef::default(),
                 connection: Connection::create("alice", true).unwrap(),
-                credential_handle: 0,
+                issuer_credential: Issuer::default(),
                 presentation_handle: 0,
             };
             close_main_wallet().unwrap();
@@ -232,28 +232,26 @@ pub mod test {
                 "empty_param": ""
             }).to_string();
 
-            self.credential_handle = issuer_credential::issuer_credential_create_temp(self.cred_def.clone(),
-                                                                                 String::from("alice_degree"),
-                                                                                 did,
-                                                                                 String::from("cred"),
-                                                                                 credential_data,
-                                                                                 0).unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            issuer_credential::send_credential_offer(self.credential_handle, connection_by_handle, None).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(1, issuer_credential::get_state(self.credential_handle).unwrap());
+            let issuer_config = AriesIssuerConfig {
+                cred_def_id: self.cred_def.get_cred_def_id(),
+                rev_reg_id: self.cred_def.get_rev_reg_id(),
+                tails_file: self.cred_def.get_tails_file(),
+            };
+            self.issuer_credential = Issuer::create(&issuer_config, &credential_data, "alice_degree").unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::Initial, self.issuer_credential.get_state());
         }
 
         pub fn send_credential(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
 
-            issuer_credential::send_credential(self.credential_handle, connection_by_handle).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
+            self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).unwrap();
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.issuer_credential.get_credential_status().unwrap());
         }
 
         pub fn request_presentation(&mut self) {
