@@ -6,7 +6,7 @@ repository:
   name: aries-vcx
   description: aries-vcx
   homepage: https://wiki.hyperledger.org/display/aries
-  default_branch: master 
+  default_branch: main
   has_downloads: false
   has_issues: true
   has_projects: false
