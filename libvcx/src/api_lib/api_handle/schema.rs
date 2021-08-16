@@ -4,6 +4,7 @@ use serde_json;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
 use crate::error::prelude::*;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
@@ -12,62 +13,7 @@ use aries_vcx::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use aries_vcx::utils::serialization::ObjectWithVersion;
 
 lazy_static! {
-    static ref SCHEMA_MAP: ObjectCache<CreateSchema> = ObjectCache::<CreateSchema>::new("schemas-cache");
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct SchemaData {
-    name: String,
-    version: String,
-    #[serde(rename = "attrNames")]
-    attr_names: Vec<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct CreateSchema {
-    data: Vec<String>,
-    version: String,
-    schema_id: String,
-    name: String,
-    source_id: String,
-    payment_txn: Option<PaymentTxn>,
-    #[serde(default)]
-    state: PublicEntityStateType,
-}
-
-impl CreateSchema {
-    pub fn get_source_id(&self) -> &String { &self.source_id }
-
-    pub fn get_schema_id(&self) -> &String { &self.schema_id }
-
-    fn get_payment_txn(&self) -> VcxResult<PaymentTxn> {
-        trace!("CreateSchema::get_payment_txn >>>");
-        self.payment_txn.clone()
-            .ok_or(VcxError::from(VcxErrorKind::NoPaymentInformation))
-    }
-
-    fn to_string(&self) -> VcxResult<String> {
-        ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
-            .serialize()
-            .map_err(|err| err.into())
-            .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
-    }
-
-    fn from_str(data: &str) -> VcxResult<CreateSchema> {
-        ObjectWithVersion::deserialize(data)
-            .map(|obj: ObjectWithVersion<CreateSchema>| obj.data)
-            .map_err(|err| err.into())
-            .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
-    }
-
-    fn update_state(&mut self) -> VcxResult<u32> {
-        if anoncreds::get_schema_json(&self.schema_id).is_ok() {
-            self.state = PublicEntityStateType::Published
-        }
-        Ok(self.state as u32)
-    }
-
-    fn get_state(&self) -> u32 { self.state as u32 }
+    static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
 }
 
 pub fn create_and_publish_schema(source_id: &str,
@@ -115,7 +61,7 @@ fn _store_schema(source_id: &str,
                  data: String,
                  payment_txn: Option<PaymentTxn>,
                  state: PublicEntityStateType) -> VcxResult<u32> {
-    let schema = CreateSchema {
+    let schema = Schema {
         source_id: source_id.to_string(),
         name,
         data: serde_json::from_str(&data).unwrap_or_default(),
@@ -138,7 +84,7 @@ pub fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32,
     let schema_data: SchemaData = serde_json::from_str(&schema_data_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
 
-    let schema = CreateSchema {
+    let schema = Schema {
         source_id,
         schema_id,
         name: schema_data.name,
@@ -162,7 +108,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     SCHEMA_MAP.get(handle, |s| {
-        s.to_string()
+        s.to_string().map_err(|err| err.into())
     })
 }
 
@@ -180,12 +126,12 @@ pub fn get_schema_id(handle: u32) -> VcxResult<String> {
 
 pub fn get_payment_txn(handle: u32) -> VcxResult<PaymentTxn> {
     SCHEMA_MAP.get(handle, |s| {
-        s.get_payment_txn()
+        s.get_payment_txn().map_err(|err| err.into())
     })
 }
 
 pub fn from_string(schema_data: &str) -> VcxResult<u32> {
-    let schema: CreateSchema = CreateSchema::from_str(schema_data)?;
+    let schema: Schema = Schema::from_str(schema_data)?;
     SCHEMA_MAP.add(schema)
 }
 
@@ -200,7 +146,7 @@ pub fn release_all() {
 
 pub fn update_state(handle: u32) -> VcxResult<u32> {
     SCHEMA_MAP.get_mut(handle, |s| {
-        s.update_state()
+        s.update_state().map_err(|err| err.into())
     })
 }
 
@@ -249,7 +195,7 @@ pub mod tests {
     }
 
     fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
-        let schema: CreateSchema = CreateSchema::from_str(schema_json).unwrap();
+        let schema: Schema = Schema::from_str(schema_json).unwrap();
         assert_eq!(schema.schema_id, schema_id.to_string());
         assert_eq!(schema.data.clone().sort(), vec!(data).sort());
         assert!(schema_handle > 0);
