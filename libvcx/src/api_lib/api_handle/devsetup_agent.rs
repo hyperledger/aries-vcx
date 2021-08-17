@@ -5,7 +5,7 @@ pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::settings;
 
-    use crate::api_lib::api_handle::{connection, credential, disclosed_proof, schema};
+    use crate::api_lib::api_handle::{connection, disclosed_proof};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
@@ -21,7 +21,8 @@ pub mod test {
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
-    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
+    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData, create_and_publish_schema_temp};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
@@ -167,7 +168,7 @@ pub mod test {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            self.schema = schema::create_and_publish_schema_temp("test_schema", did.clone(), name, version, data).unwrap();
+            self.schema = create_and_publish_schema_temp("test_schema", did.clone(), name, version, data).unwrap();
         }
 
         pub fn create_credential_definition(&mut self) {
@@ -360,8 +361,7 @@ pub mod test {
 
         pub fn accept_offer(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            let offers = credential::get_credential_offer_messages(connection_by_handle).unwrap();
+            let offers = get_credential_offer_messages(&self.connection).unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
             let offer = serde_json::to_string(&offer).unwrap();
             let cred_offer: CredentialOffer = serde_json::from_str(&offer)

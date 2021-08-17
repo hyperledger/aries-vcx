@@ -183,7 +183,7 @@ mod tests {
         info!("send_cred_req >>> switching to consumer");
         alice.activate().unwrap();
         info!("send_cred_req :: getting offers");
-        let credential_offers = credential::get_credential_offer_messages(connection).unwrap();
+        let credential_offers = credential::get_credential_offer_messages_with_conn_handle(connection).unwrap();
         let credential_offers = match comment {
             Some(comment) => {
                 let filtered = filters::filter_credential_offers_by_comment(&credential_offers, comment).unwrap();
