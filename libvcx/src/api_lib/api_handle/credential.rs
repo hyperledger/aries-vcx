@@ -68,6 +68,21 @@ pub fn credential_create_with_offer(source_id: &str, offer: &str) -> VcxResult<u
     return HANDLE_MAP.add(holder);
 }
 
+pub fn credential_create_with_offer_temp(source_id: &str, offer: &str) -> VcxResult<Holder> {
+    let cred_offer: CredentialOffer = serde_json::from_str(offer)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                          format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err)))?;
+    let holder = Holder::create(cred_offer, source_id)?;
+    Ok(holder)
+}
+
+pub fn credential_create_with_msgid_temp(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(Holder, String)> {
+    let offer = get_credential_offer_msg(connection_handle, &msg_id)?;
+    let credential = create_credential(source_id, &offer)?
+        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))?;
+    Ok((credential, offer))
+}
+
 pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
     trace!("credential_create_with_msgid >>> source_id: {}, connection_handle: {}, msg_id: {}", source_id, connection_handle, secret!(&msg_id));
 

@@ -28,11 +28,12 @@ pub mod test {
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
 
-    use crate::aries_vcx::messages::ack::tests::_ack;
-    use crate::aries_vcx::messages::a2a::A2AMessage;
-    use crate::aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use crate::aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use crate::aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::messages::ack::tests::_ack;
+    use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
@@ -182,11 +183,12 @@ pub mod test {
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
             let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            let (credential_handle, _credential_offer) = credential::credential_create_with_msgid("test", alice_connection_by_handle, &message.uid).unwrap();
-            alice.credential_handle = credential_handle;
+            let (credential, _credential_offer) = credential::credential_create_with_msgid_temp("test", alice_connection_by_handle, &message.uid).unwrap();
+            alice.credential = credential;
 
-            credential::send_credential_request(alice.credential_handle, alice_connection_by_handle).unwrap();
-            assert_eq!(1, credential::get_state(alice.credential_handle).unwrap());
+            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+            alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap());
+            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
         faber.send_credential();
@@ -251,13 +253,13 @@ pub mod test {
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
 
-            alice.credential_handle = credential::credential_create_with_offer("test", &message.decrypted_msg).unwrap();
+            alice.credential = credential::credential_create_with_offer_temp("test", &message.decrypted_msg).unwrap();
 
             alice.connection.update_message_status(message.uid).unwrap();
 
-            let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            credential::send_credential_request(alice.credential_handle, alice_connection_by_handle).unwrap();
-            assert_eq!(1, credential::get_state(alice.credential_handle).unwrap());
+            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+            alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap());
+            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
         faber.send_credential();

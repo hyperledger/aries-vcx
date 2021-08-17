@@ -5,11 +5,12 @@ pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::settings;
 
-    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_lib::api_handle::{connection, credential, disclosed_proof, schema};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
     use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
@@ -19,7 +20,8 @@ pub mod test {
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
-    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -291,7 +293,7 @@ pub mod test {
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub connection: Connection,
-        pub credential_handle: u32,
+        pub credential: Holder,
         pub presentation_handle: u32,
     }
 
@@ -325,7 +327,7 @@ pub mod test {
                 config_wallet,
                 config_agency,
                 connection: Connection::create("tmp_empoty", true).unwrap(),
-                credential_handle: 0,
+                credential: Holder::default(),
                 presentation_handle: 0,
             };
             close_main_wallet().unwrap();
@@ -358,21 +360,24 @@ pub mod test {
             let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
             let offers = credential::get_credential_offer_messages(connection_by_handle).unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
-            let offer_json = serde_json::to_string(&offer).unwrap();
+            let offer = serde_json::to_string(&offer).unwrap();
+            let cred_offer: CredentialOffer = serde_json::from_str(&offer)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                                  format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err))).unwrap();
 
-            self.credential_handle = credential::credential_create_with_offer("degree", &offer_json).unwrap();
-            assert_eq!(0, credential::get_state(self.credential_handle).unwrap());
+            self.credential = Holder::create(cred_offer, "degree").unwrap();
+            assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
-            credential::send_credential_request(self.credential_handle, connection_by_handle).unwrap();
-            assert_eq!(1, credential::get_state(self.credential_handle).unwrap());
+            let pw_did = self.connection.pairwise_info().pw_did.to_string();
+            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap());
+            assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 
         pub fn accept_credential(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(2, credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
+            self.credential.update_state(&self.connection).unwrap();
+            assert_eq!(HolderState::Finished, self.credential.get_state());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
         pub fn get_proof_request_messages(&mut self) -> String {
