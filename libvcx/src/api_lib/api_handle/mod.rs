@@ -34,10 +34,12 @@ pub mod test {
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 
     use super::*;
 
@@ -201,17 +203,16 @@ pub mod test {
         {
             let message = alice.download_message(PayloadKinds::ProofRequest).unwrap();
             let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            let (presentation_handle, _presentation_request) = disclosed_proof::create_proof_with_msgid("test", alice_connection_by_handle, &message.uid).unwrap();
-            alice.presentation_handle = presentation_handle;
+            let (prover, _presentation_request) = disclosed_proof::create_proof_with_msgid_temp("test", alice_connection_by_handle, &message.uid).unwrap();
+            alice.prover = prover;
 
             let credentials = alice.get_credentials_for_presentation();
 
-            disclosed_proof::generate_proof(alice.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
-            assert_eq!(1, disclosed_proof::get_state(alice.presentation_handle).unwrap());
+            alice.prover.generate_presentation(credentials.to_string(), String::from("{}")).unwrap();
+            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            disclosed_proof::send_proof(alice.presentation_handle, alice_connection_by_handle).unwrap();
-            assert_eq!(3, disclosed_proof::get_state(alice.presentation_handle).unwrap());
+            alice.prover.send_presentation(&alice.connection.send_message_closure().unwrap()).unwrap();
+            assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
         faber.verify_presentation();
@@ -272,18 +273,18 @@ pub mod test {
         {
             let agency_msg = alice.download_message(PayloadKinds::ProofRequest).unwrap();
 
-            alice.presentation_handle = disclosed_proof::create_proof("test", &agency_msg.decrypted_msg).unwrap();
+            let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
+            alice.prover = Prover::create("test", presentation_request).unwrap();
 
             alice.connection.update_message_status(agency_msg.uid).unwrap();
 
             let credentials = alice.get_credentials_for_presentation();
 
-            disclosed_proof::generate_proof(alice.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
-            assert_eq!(1, disclosed_proof::get_state(alice.presentation_handle).unwrap());
+            alice.prover.generate_presentation(credentials.to_string(), String::from("{}")).unwrap();
+            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            disclosed_proof::send_proof(alice.presentation_handle, alice_connection_by_handle).unwrap();
-            assert_eq!(3, disclosed_proof::get_state(alice.presentation_handle).unwrap());
+            alice.prover.send_presentation(&alice.connection.send_message_closure().unwrap()).unwrap();
+            assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
         faber.verify_presentation();

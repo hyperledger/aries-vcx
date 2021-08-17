@@ -6,7 +6,7 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InitialState {
     pub presentation_request: PresentationRequest,
 }

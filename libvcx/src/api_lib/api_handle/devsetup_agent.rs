@@ -22,6 +22,8 @@ pub mod test {
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -294,7 +296,7 @@ pub mod test {
         pub config_agency: AgencyClientConfig,
         pub connection: Connection,
         pub credential: Holder,
-        pub presentation_handle: u32,
+        pub prover: Prover
     }
 
     impl Alice {
@@ -328,7 +330,7 @@ pub mod test {
                 config_agency,
                 connection: Connection::create("tmp_empoty", true).unwrap(),
                 credential: Holder::default(),
-                presentation_handle: 0,
+                prover: Prover::default()
             };
             close_main_wallet().unwrap();
             alice
@@ -390,7 +392,7 @@ pub mod test {
         }
 
         pub fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
-            let credentials = disclosed_proof::retrieve_credentials(self.presentation_handle).unwrap();
+            let credentials = self.prover.retrieve_credentials().unwrap();
             let credentials: std::collections::HashMap<String, serde_json::Value> = serde_json::from_str(&credentials).unwrap();
 
             let mut use_credentials = json!({});
@@ -408,32 +410,35 @@ pub mod test {
             self.activate().unwrap();
             let presentation_request_json = self.get_proof_request_messages();
 
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
+            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
 
-            disclosed_proof::generate_proof(self.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
-            assert_eq!(1, disclosed_proof::get_state(self.presentation_handle).unwrap());
+            self.prover.generate_presentation(credentials.to_string(), String::from("{}")).unwrap();
+            assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::send_proof(self.presentation_handle, connection_by_handle).unwrap();
-            assert_eq!(3, disclosed_proof::get_state(self.presentation_handle).unwrap());
+            self.prover.send_presentation(&self.connection.send_message_closure().unwrap()).unwrap();
+            assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
         pub fn decline_presentation_request(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
-            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, Some(String::from("reason")), None).unwrap();
+            let presentation_request_json = self.get_proof_request_messages();
+            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
+
+            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
         }
 
         pub fn propose_presentation(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
 
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
+            let presentation_request_json = self.get_proof_request_messages();
+            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
+
             let proposal_data = json!({
                 "attributes": [
                     {
@@ -447,16 +452,14 @@ pub mod test {
                         "threshold": 18
                     }
                 ]
-            });
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, None, Some(proposal_data.to_string())).unwrap();
+            }).to_string();
+            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, Some(proposal_data)).unwrap();
         }
 
         pub fn ensure_presentation_verified(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
+            self.prover.update_state(&self.connection).unwrap();
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }
 
