@@ -16,6 +16,32 @@ lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
 }
 
+pub fn create_and_publish_schema_temp(source_id: &str,
+                                 issuer_did: String,
+                                 name: String,
+                                 version: String,
+                                 data: String) -> VcxResult<Schema> {
+    trace!("create_new_schema >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}", source_id, issuer_did, name, version, data);
+    debug!("creating schema with source_id: {}, name: {}, issuer_did: {}", source_id, name, issuer_did);
+
+    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
+    let payment_txn = anoncreds::publish_schema(&schema)?;
+
+    debug!("created schema on ledger with id: {}", schema_id);
+
+    let schema = Schema {
+        source_id: source_id.to_string(),
+        name,
+        data: serde_json::from_str(&data).unwrap_or_default(),
+        version,
+        schema_id,
+        payment_txn,
+        state: PublicEntityStateType::Published,
+    };
+
+    Ok(schema)
+}
+
 pub fn create_and_publish_schema(source_id: &str,
                                  issuer_did: String,
                                  name: String,

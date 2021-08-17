@@ -21,6 +21,7 @@ pub mod test {
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
@@ -81,7 +82,7 @@ pub mod test {
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
         pub connection: Connection,
-        pub schema_handle: u32,
+        pub schema: Schema,
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
@@ -149,7 +150,7 @@ pub mod test {
                 config_wallet,
                 config_agency,
                 config_issuer,
-                schema_handle: 0,
+                schema: Schema::default(),
                 cred_def: CredentialDef::default(),
                 connection: Connection::create("alice", true).unwrap(),
                 issuer_credential: Issuer::default(),
@@ -166,13 +167,13 @@ pub mod test {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            self.schema_handle = schema::create_and_publish_schema("test_schema", did.clone(), name, version, data).unwrap();
+            self.schema = schema::create_and_publish_schema_temp("test_schema", did.clone(), name, version, data).unwrap();
         }
 
         pub fn create_credential_definition(&mut self) {
             self.activate().unwrap();
 
-            let schema_id = schema::get_schema_id(self.schema_handle).unwrap();
+            let schema_id = self.schema.get_schema_id().to_string();
             let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let name = String::from("degree");
             let tag = String::from("tag");

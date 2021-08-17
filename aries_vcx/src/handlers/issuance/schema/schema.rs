@@ -13,7 +13,7 @@ pub struct SchemaData {
     pub attr_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
