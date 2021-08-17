@@ -76,13 +76,6 @@ pub fn credential_create_with_offer_temp(source_id: &str, offer: &str) -> VcxRes
     Ok(holder)
 }
 
-pub fn credential_create_with_msgid_temp(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(Holder, String)> {
-    let offer = get_credential_offer_msg(connection_handle, &msg_id)?;
-    let credential = create_credential(source_id, &offer)?
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")))?;
-    Ok((credential, offer))
-}
-
 pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
     trace!("credential_create_with_msgid >>> source_id: {}, connection_handle: {}, msg_id: {}", source_id, connection_handle, secret!(&msg_id));
 

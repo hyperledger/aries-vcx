@@ -47,22 +47,6 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
     HANDLE_MAP.add(proof)
 }
 
-pub fn create_proof_with_msgid_temp(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(Prover, String)> {
-    if !connection::is_v3_connection(connection_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
-    };
-
-    let proof_request = get_proof_request(connection_handle, &msg_id)?;
-
-    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                          format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
-
-    let prover = Prover::create(source_id, presentation_request)?;
-
-    Ok((prover, proof_request))
-}
-
 pub fn create_proof_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
     if !connection::is_v3_connection(connection_handle)? {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));

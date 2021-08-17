@@ -14,7 +14,6 @@ pub mod test {
 
     use aries_vcx::libindy;
     use crate::aries_vcx::settings;
-    use crate::api_lib::api_handle::{connection, credential, disclosed_proof};
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::utils::plugins::init_plugin;
 
@@ -184,9 +183,8 @@ pub mod test {
         // Alice creates Credential object with message id
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
-            let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            let (credential, _credential_offer) = credential::credential_create_with_msgid_temp("test", alice_connection_by_handle, &message.uid).unwrap();
-            alice.credential = credential;
+            let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).unwrap();
+            alice.credential = Holder::create(cred_offer, "test").unwrap();
 
             let pw_did = alice.connection.pairwise_info().pw_did.to_string();
             alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap());
@@ -202,9 +200,8 @@ pub mod test {
         // Alice creates Presentation object with message id
         {
             let message = alice.download_message(PayloadKinds::ProofRequest).unwrap();
-            let alice_connection_by_handle = connection::store_connection(alice.connection.clone()).unwrap();
-            let (prover, _presentation_request) = disclosed_proof::create_proof_with_msgid_temp("test", alice_connection_by_handle, &message.uid).unwrap();
-            alice.prover = prover;
+            let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).unwrap();
+            alice.prover = Prover::create("test", presentation_request).unwrap();
 
             let credentials = alice.get_credentials_for_presentation();
 

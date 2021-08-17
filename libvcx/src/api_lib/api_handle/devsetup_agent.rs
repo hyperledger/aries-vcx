@@ -383,12 +383,35 @@ pub mod test {
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
-        pub fn get_proof_request_messages(&mut self) -> String {
+        pub fn get_proof_request_messages(&mut self) -> PresentationRequest {
             self.activate().unwrap();
             let presentation_requests = get_proof_request_messages(&self.connection).unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
-            presentation_request_json
+            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            presentation_request
+        }
+
+        pub fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
+            self.activate().unwrap();
+            match self.connection.get_message_by_id(msg_id).unwrap() {
+                A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
+                msg => {
+                    Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
+                                                  format!("Message of different type was received: {:?}", msg)))
+                }
+            }
+        }
+
+        pub fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
+            self.activate().unwrap();
+            match self.connection.get_message_by_id(msg_id).unwrap() {
+                A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
+                msg => {
+                    Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
+                                                  format!("Message of different type was received: {:?}", msg)))
+                }
+            }
         }
 
         pub fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
@@ -408,9 +431,8 @@ pub mod test {
 
         pub fn send_presentation(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
+            let presentation_request = self.get_proof_request_messages();
 
-            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
             self.prover = Prover::create("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
@@ -425,8 +447,7 @@ pub mod test {
         pub fn decline_presentation_request(&mut self) {
             self.activate().unwrap();
 
-            let presentation_request_json = self.get_proof_request_messages();
-            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            let presentation_request = self.get_proof_request_messages();
             self.prover = Prover::create("degree", presentation_request).unwrap();
 
             self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
@@ -435,8 +456,7 @@ pub mod test {
         pub fn propose_presentation(&mut self) {
             self.activate().unwrap();
 
-            let presentation_request_json = self.get_proof_request_messages();
-            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            let presentation_request = self.get_proof_request_messages();
             self.prover = Prover::create("degree", presentation_request).unwrap();
 
             let proposal_data = json!({
