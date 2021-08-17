@@ -5,7 +5,6 @@ pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::settings;
 
-    use crate::api_lib::api_handle::{connection, disclosed_proof};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
@@ -25,6 +24,7 @@ pub mod test {
     use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData, create_and_publish_schema_temp};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 
     #[derive(Debug)]
@@ -385,8 +385,7 @@ pub mod test {
 
         pub fn get_proof_request_messages(&mut self) -> String {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            let presentation_requests = disclosed_proof::get_proof_request_messages(connection_by_handle).unwrap();
+            let presentation_requests = get_proof_request_messages(&self.connection).unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
             presentation_request_json
