@@ -4,6 +4,7 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
@@ -49,6 +50,28 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
             if let Some((uid, message)) = proof.find_message_to_handle(messages) {
                 proof.handle_message(message.into(), Some(&send_message))?;
                 connection::update_message_status(connection_handle, uid)?;
+            };
+        }
+        Ok(proof.get_state().into())
+    })
+}
+
+pub fn update_state_temp(handle: u32, message: Option<&str>, connection: &Connection) -> VcxResult<u32> {
+    PROOF_MAP.get_mut(handle, |proof| {
+        if !proof.has_transitions() { return Ok(proof.get_state().into()); }
+        let send_message = connection.send_message_closure()?;
+
+        if let Some(message) = message {
+            let message: A2AMessage = serde_json::from_str(message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
+            trace!("proof::update_state >>> updating using message {:?}", message);
+            proof.handle_message(message.into(), Some(&send_message))?;
+        } else {
+            let messages = connection.get_messages()?;
+            trace!("proof::update_state >>> found messages: {:?}", messages);
+            if let Some((uid, message)) = proof.find_message_to_handle(messages) {
+                proof.handle_message(message.into(), Some(&send_message))?;
+                connection.update_message_status(uid)?;
             };
         }
         Ok(proof.get_state().into())
@@ -106,6 +129,13 @@ pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
 pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
         proof.send_presentation_request(connection::send_message_closure(connection_handle)?, comment.clone())?;
+        Ok(error::SUCCESS.code_num)
+    })
+}
+
+pub fn send_proof_request_temp(handle: u32, connection: &Connection, comment: Option<String>) -> VcxResult<u32> {
+    PROOF_MAP.get_mut(handle, |proof| {
+        proof.send_presentation_request(connection.send_message_closure()?, comment.clone())?;
         Ok(error::SUCCESS.code_num)
     })
 }

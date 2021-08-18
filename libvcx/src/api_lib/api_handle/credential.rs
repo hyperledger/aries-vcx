@@ -14,6 +14,7 @@ use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use aries_vcx::handlers::connection::connection::Connection;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -112,6 +113,27 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
     })
 }
 
+pub fn update_state_temp(handle: u32, message: Option<&str>, connection: &Connection) -> VcxResult<u32> {
+    HANDLE_MAP.get_mut(handle, |credential| {
+        trace!("credential::update_state >>> ");
+        if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
+        let send_message = connection.send_message_closure()?;
+
+        if let Some(message) = message {
+            let message: A2AMessage = serde_json::from_str(&message)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+            credential.step(message.into(), Some(&send_message))?;
+        } else {
+            let messages = connection.get_messages()?;
+            if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+                credential.step(msg.into(), Some(&send_message))?;
+                connection.update_message_status(uid)?;
+            }
+        }
+        Ok(credential.get_state().into())
+    })
+}
+
 pub fn get_credential(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
         Ok(json!(credential.get_credential()?.1).to_string())
@@ -195,6 +217,17 @@ pub fn send_credential_request(handle: u32, connection_handle: u32) -> VcxResult
     HANDLE_MAP.get_mut(handle, |credential| {
         let my_pw_did = connection::get_pw_did(connection_handle)?;
         let send_message = connection::send_message_closure(connection_handle)?;
+        credential.send_request(my_pw_did, send_message)?;
+        let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
+        *credential = new_credential;
+        Ok(error::SUCCESS.code_num)
+    }).map_err(handle_err)
+}
+
+pub fn send_credential_request_temp(handle: u32, connection: &Connection) -> VcxResult<u32> {
+    HANDLE_MAP.get_mut(handle, |credential| {
+        let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        let send_message = connection.send_message_closure()?;
         credential.send_request(my_pw_did, send_message)?;
         let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
         *credential = new_credential;

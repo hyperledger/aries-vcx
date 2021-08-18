@@ -138,6 +138,16 @@ pub fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     })
 }
 
+pub fn send_proof_temp(handle: u32, connection: &Connection) -> VcxResult<u32> {
+    HANDLE_MAP.get_mut(handle, |proof| {
+        let send_message = connection.send_message_closure()?;
+        proof.send_presentation(&send_message)?;
+        let new_proof = proof.clone();
+        *proof = new_proof;
+        Ok(error::SUCCESS.code_num)
+    })
+}
+
 pub fn generate_reject_proof_msg(handle: u32) -> VcxResult<String> {
     HANDLE_MAP.get_mut(handle, |_| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported,

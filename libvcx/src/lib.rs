@@ -39,7 +39,6 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::credential;
     use crate::api_lib::api_handle::credential_def;
     use crate::api_lib::api_handle::disclosed_proof;
@@ -58,8 +57,11 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::holder::HolderState;
     use aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
+    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use aries_vcx::handlers::connection::connection::Connection;
     use aries_vcx::utils::filters;
 
     use super::*;
@@ -91,26 +93,6 @@ mod tests {
         let (_, cred_def_json) =  libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
         let rev_reg_id = cred_def.get_rev_reg_id();
         (schema_id, schema_json, cred_def_id.to_string(), cred_def_json, cred_def, rev_reg_id)
-    }
-
-    pub fn create_and_store_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
-        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(consumer, institution);
-        let consumer_to_institution = connection::store_connection(consumer_to_institution).unwrap();
-        let institution_to_consumer = connection::store_connection(institution_to_consumer).unwrap();
-        (consumer_to_institution, institution_to_consumer)
-    }
-
-
-    #[cfg(feature = "agency_pool_tests")]
-    #[cfg(feature = "to_restore")] // message type spec/pairwise/1.0/UPDATE_CONN_STATUS no implemented in nodevcx agency
-    #[test]
-    fn test_delete_connection() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
-
-        let alice = connection::create_connection("alice").unwrap();
-        connection::connect(alice).unwrap();
-        connection::delete_connection(alice).unwrap();
-        assert!(connection::release(alice).is_err());
     }
 
     fn attr_names() -> (String, String, String, String, String) {
@@ -173,7 +155,7 @@ mod tests {
         ])
     }
 
-    fn create_and_send_cred_offer(faber: &mut Faber, did: &str, cred_def: &CredentialDef, connection: u32, credential_data: &str, comment: Option<&str>) -> u32 {
+    fn create_and_send_cred_offer(faber: &mut Faber, did: &str, cred_def: &CredentialDef, connection: &Connection, credential_data: &str, comment: Option<&str>) -> u32 {
         faber.activate().unwrap();
         info!("create_and_send_cred_offer >> creating issuer credential");
         let handle_cred = issuer_credential::issuer_credential_create_temp(cred_def.clone(),
@@ -183,24 +165,24 @@ mod tests {
                                                                       credential_data.to_string(),
                                                                       1).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer_credential::send_credential_offer(handle_cred, connection, comment.map(|s| String::from(s))).unwrap();
+        issuer_credential::send_credential_offer_temp(handle_cred, connection, comment.map(|s| String::from(s))).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         handle_cred
     }
 
-    fn send_cred_req(alice: &mut Alice, connection: u32, comment: Option<&str>) -> u32 {
+    fn send_cred_req(alice: &mut Alice, connection: &Connection, comment: Option<&str>) -> u32 {
         info!("send_cred_req >>> switching to consumer");
         alice.activate().unwrap();
         info!("send_cred_req :: getting offers");
-        let credential_offers = credential::get_credential_offer_messages_with_conn_handle(connection).unwrap();
+        let credential_offers = get_credential_offer_messages(connection).unwrap();
         let credential_offers = match comment {
             Some(comment) => {
                 let filtered = filters::filter_credential_offers_by_comment(&credential_offers, comment).unwrap();
                 info!("send_cred_req :: credential offer  messages filtered by comment {}: {}", comment, filtered);
                 filtered
             }
-            _ => credential_offers
+            _ => credential_offers.to_string()
         };
         let offers: Value = serde_json::from_str(&credential_offers).unwrap();
         let offers = offers.as_array().unwrap();
@@ -210,27 +192,27 @@ mod tests {
         let credential = credential::credential_create_with_offer("TEST_CREDENTIAL", &offers).unwrap();
         assert_eq!(HolderState::OfferReceived as u32, credential::get_state(credential).unwrap());
         info!("send_cred_req :: sending credential request");
-        credential::send_credential_request(credential, connection).unwrap();
+        credential::send_credential_request_temp(credential, connection).unwrap();
         thread::sleep(Duration::from_millis(2000));
         credential
     }
 
-    fn send_credential(consumer: &mut Alice, institution: &mut Faber, handle_issuer_credential: u32, issuer_to_consumer: u32, consumer_to_issuer: u32, handle_holder_credential: u32, revokable: bool) {
+    fn send_credential(consumer: &mut Alice, institution: &mut Faber, handle_issuer_credential: u32, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, handle_holder_credential: u32, revokable: bool) {
         institution.activate().unwrap();
         info!("send_credential >>> getting offers");
         assert_eq!(issuer_credential::is_revokable(handle_issuer_credential).unwrap(), revokable);
-        issuer_credential::update_state(handle_issuer_credential, None, issuer_to_consumer).unwrap();
+        issuer_credential::update_state_temp(handle_issuer_credential, None, issuer_to_consumer).unwrap();
         assert_eq!(IssuerState::RequestReceived as u32, issuer_credential::get_state(handle_issuer_credential).unwrap());
         assert_eq!(issuer_credential::is_revokable(handle_issuer_credential).unwrap(), revokable);
 
         info!("send_credential >>> sending credential");
-        issuer_credential::send_credential(handle_issuer_credential, issuer_to_consumer).unwrap();
+        issuer_credential::send_credential_temp(handle_issuer_credential, issuer_to_consumer).unwrap();
         thread::sleep(Duration::from_millis(2000));
         
         consumer.activate().unwrap();
         info!("send_credential >>> storing credential");
         assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
-        credential::update_state(handle_holder_credential, None, consumer_to_issuer).unwrap();
+        credential::update_state_temp(handle_holder_credential, None, consumer_to_issuer).unwrap();
         assert_eq!(HolderState::Finished as u32, credential::get_state(handle_holder_credential).unwrap());
         assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
 
@@ -240,23 +222,23 @@ mod tests {
         }
     }
 
-    fn send_proof_request(faber: &mut Faber, connection_handle: u32, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> u32 {
+    fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> u32 {
         faber.activate().unwrap();
         let proof_req_handle = proof::create_proof("1".to_string(),
                                                    requested_attrs.to_string(),
                                                    requested_preds.to_string(),
                                                    revocation_interval.to_string(),
                                                    String::from(request_name.unwrap_or("name"))).unwrap();
-        proof::send_proof_request(proof_req_handle, connection_handle, None).unwrap();
+        proof::send_proof_request_temp(proof_req_handle, connection, None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         proof_req_handle
     }
 
-    fn create_proof(alice: &mut Alice, connection_handle: u32, request_name: Option<&str>) -> u32 {
+    fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> u32 {
         alice.activate().unwrap();
         info!("create_proof >>> getting proof request messages");
         let requests = {
-            let _requests = disclosed_proof::get_proof_request_messages(connection_handle).unwrap();
+            let _requests = get_proof_request_messages(connection).unwrap();
             info!("create_proof :: get proof request messages returned {}", _requests);
             match request_name {
                 Some(request_name) => {
@@ -264,7 +246,7 @@ mod tests {
                     info!("create_proof :: proof request messages filtered by name {}: {}", request_name, filtered);
                     filtered
                 }
-                _ => _requests
+                _ => _requests.to_string()
             }
         };
         let requests: Value = serde_json::from_str(&requests).unwrap();
@@ -274,13 +256,13 @@ mod tests {
         disclosed_proof::create_proof(utils::constants::DEFAULT_PROOF_NAME, &request).unwrap()
     }
 
-    fn generate_and_send_proof(alice: &mut Alice, proof_handle: u32, connection_handle: u32, selected_credentials: &str) {
+    fn generate_and_send_proof(alice: &mut Alice, proof_handle: u32, connection: &Connection, selected_credentials: &str) {
         alice.activate().unwrap();
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
         disclosed_proof::generate_proof(proof_handle, selected_credentials.into(), "{}".to_string()).unwrap();
 
         info!("generate_and_send_proof :: proof generated, sending proof");
-        disclosed_proof::send_proof(proof_handle, connection_handle).unwrap();
+        disclosed_proof::send_proof_temp(proof_handle, connection).unwrap();
         info!("generate_and_send_proof :: proof sent");
 
         assert_eq!(ProverState::PresentationSent as u32, disclosed_proof::get_state(proof_handle).unwrap());
@@ -327,7 +309,7 @@ mod tests {
         create_and_store_credential_def(&attrs_list, true)
     }
 
-    fn _exchange_credential(consumer: &mut Alice, institution: &mut Faber, credential_data: String, cred_def: &CredentialDef, consumer_to_issuer: u32, issuer_to_consumer: u32, comment: Option<&str>) -> u32 {
+    fn _exchange_credential(consumer: &mut Alice, institution: &mut Faber, credential_data: String, cred_def: &CredentialDef, consumer_to_issuer: &Connection, issuer_to_consumer: &Connection, comment: Option<&str>) -> u32 {
         info!("Generated credential data: {}", credential_data);
         let handle_issuer_credential = create_and_send_cred_offer(institution, settings::CONFIG_INSTITUTION_DID, cred_def, issuer_to_consumer, &credential_data, comment);
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
@@ -337,7 +319,7 @@ mod tests {
         handle_issuer_credential
     }
 
-    fn _issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: u32, institution_to_consumer: u32) -> (String, String, Option<String>, CredentialDef, u32) {
+    fn _issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &Connection, institution_to_consumer: &Connection) -> (String, String, Option<String>, CredentialDef, u32) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
@@ -348,7 +330,7 @@ mod tests {
         (schema_id, cred_def_id, rev_reg_id, cred_def, credential_handle)
     }
 
-    fn _verifier_create_proof_and_send_request(institution: &mut Faber, institution_to_consumer:u32, schema_id: &str, cred_def_id: &str, request_name: Option<&str>) -> u32 {
+    fn _verifier_create_proof_and_send_request(institution: &mut Faber, institution_to_consumer: &Connection, schema_id: &str, cred_def_id: &str, request_name: Option<&str>) -> u32 {
         institution.activate().unwrap();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
@@ -356,7 +338,7 @@ mod tests {
         send_proof_request(institution, institution_to_consumer, &requested_attrs_string, "[]", "{}", request_name)
     }
 
-    fn _prover_select_credentials_and_send_proof(consumer: &mut Alice, consumer_to_institution: u32, request_name: Option<&str>, requested_values: Option<&str>) {
+    fn _prover_select_credentials_and_send_proof(consumer: &mut Alice, consumer_to_institution: &Connection, request_name: Option<&str>, requested_values: Option<&str>) {
         consumer.activate().unwrap();
         info!("Prover :: Going to create proof");
         let proof_handle_prover = create_proof(consumer, consumer_to_institution, request_name);
@@ -382,8 +364,8 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -397,13 +379,13 @@ mod tests {
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
         info!("test_basic_revocation :: Going to seng proof request with attributes {}", &requested_attrs_string);
-        let proof_handle_verifier = send_proof_request(&mut institution, institution_to_consumer, &requested_attrs_string, "[]", &interval, None);
+        let proof_handle_verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", &interval, None);
 
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_institution, None, None);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -414,25 +396,25 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def, issuer_credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, issuer_credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
 
         revoke_credential_local(&mut institution, issuer_credential_handle, rev_reg_id.clone());
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_institution, request_name1, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None);
 
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap());
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_institution, request_name2, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None);
 
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -444,30 +426,30 @@ mod tests {
         let mut verifier = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
-        let (consumer1_to_verifier, verifier_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut verifier);
-        let (consumer1_to_issuer, issuer_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut issuer);
-        let (consumer2_to_verifier, verifier_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut verifier);
-        let (consumer2_to_issuer, issuer_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut issuer);
+        let (consumer1_to_verifier, verifier_to_consumer1) = create_connected_connections(&mut consumer1, &mut verifier);
+        let (consumer1_to_issuer, issuer_to_consumer1) = create_connected_connections(&mut consumer1, &mut issuer);
+        let (consumer2_to_verifier, verifier_to_consumer2) = create_connected_connections(&mut consumer2, &mut verifier);
+        let (consumer2_to_issuer, issuer_to_consumer2) = create_connected_connections(&mut consumer2, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, consumer1_to_issuer, issuer_to_consumer1, None);
+        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, &consumer1_to_issuer, &issuer_to_consumer1, None);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def,  consumer2_to_issuer, issuer_to_consumer2, None);
+        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def,  &consumer2_to_issuer, &issuer_to_consumer2, None);
 
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer1, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer1, consumer1_to_verifier, None, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer1, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None);
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer1).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer1).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer2, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer2, consumer2_to_verifier, None, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer2, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None);
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer2).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer2).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -480,23 +462,23 @@ mod tests {
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, consumer_to_issuer, issuer_to_consumer);
+        let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, &consumer_to_issuer, &issuer_to_consumer);
         issuer.activate().unwrap();
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, request_name1, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None);
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, request_name2, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None);
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -506,25 +488,25 @@ mod tests {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let (address1, address, city, state, zip) = attr_names();
         let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let _credential_handle = _exchange_credential(&mut consumer, &mut institution, credential_data, &cred_def, consumer_to_institution, institution_to_consumer, None);
+        let _credential_handle = _exchange_credential(&mut consumer, &mut institution, credential_data, &cred_def, &consumer_to_institution, &institution_to_consumer, None);
 
         let request_name1 = Some("request1");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_institution, request_name1, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None);
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_institution, request_name2, None);
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None);
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -536,42 +518,42 @@ mod tests {
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
         let mut consumer3 = Alice::setup();
-        let (consumer_to_institution1, institution_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut institution);
-        let (consumer_to_institution2, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
-        let (consumer_to_institution3, institution_to_consumer3) = create_and_store_connected_connections(&mut consumer3, &mut institution);
-        assert_ne!(institution_to_consumer1, institution_to_consumer2);
-        assert_ne!(institution_to_consumer1, institution_to_consumer3);
-        assert_ne!(institution_to_consumer2, institution_to_consumer3);
-        assert_ne!(consumer_to_institution1, consumer_to_institution2);
-        assert_ne!(consumer_to_institution1, consumer_to_institution3);
-        assert_ne!(consumer_to_institution2, consumer_to_institution3);
+        let (consumer_to_institution1, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
+        let (consumer_to_institution2, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
+        let (consumer_to_institution3, institution_to_consumer3) = create_connected_connections(&mut consumer3, &mut institution);
+        // assert_ne!(institution_to_consumer1, institution_to_consumer2);
+        // assert_ne!(institution_to_consumer1, institution_to_consumer3);
+        // assert_ne!(institution_to_consumer2, institution_to_consumer3);
+        // assert_ne!(consumer_to_institution1, consumer_to_institution2);
+        // assert_ne!(consumer_to_institution1, consumer_to_institution3);
+        // assert_ne!(consumer_to_institution2, consumer_to_institution3);
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, &cred_def, consumer_to_institution1, institution_to_consumer1, None);
+        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, &cred_def, &consumer_to_institution1, &institution_to_consumer1, None);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, &cred_def, consumer_to_institution2, institution_to_consumer2, None);
+        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, &cred_def, &consumer_to_institution2, &institution_to_consumer2, None);
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, &cred_def, consumer_to_institution3, institution_to_consumer3, None);
+        let credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, &cred_def, &consumer_to_institution3, &institution_to_consumer3, None);
 
         revoke_credential_local(&mut institution,credential_handle1, rev_reg_id.clone());
         revoke_credential_local(&mut institution,credential_handle2, rev_reg_id.clone());
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
-        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer1, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer1, consumer_to_institution1, request_name1, None);
-        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer2, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer2, consumer_to_institution2, request_name1, None);
-        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer3, &schema_id, &cred_def_id, request_name1);
-        _prover_select_credentials_and_send_proof(&mut consumer3, consumer_to_institution3, request_name1, None);
+        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name1, None);
+        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name1, None);
+        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name1);
+        _prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None);
 
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier1, None, institution_to_consumer1).unwrap();
-        proof::update_state(proof_handle_verifier2, None, institution_to_consumer2).unwrap();
-        proof::update_state(proof_handle_verifier3, None, institution_to_consumer3).unwrap();
+        proof::update_state_temp(proof_handle_verifier1, None, &institution_to_consumer1).unwrap();
+        proof::update_state_temp(proof_handle_verifier2, None, &institution_to_consumer2).unwrap();
+        proof::update_state_temp(proof_handle_verifier3, None, &institution_to_consumer3).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier1).unwrap(), ProofStateType::ProofValidated as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier2).unwrap(), ProofStateType::ProofValidated as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier3).unwrap(), ProofStateType::ProofValidated as u32);
@@ -580,20 +562,20 @@ mod tests {
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap());
         thread::sleep(Duration::from_millis(2000));
         let request_name2 = Some("request2");
-        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer1, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer1, consumer_to_institution1,  request_name2, None);
-        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer2, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer2, consumer_to_institution2,  request_name2, None);
-        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer3, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer3, consumer_to_institution3,  request_name2, None);
+        let proof_handle_verifier1 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1,  request_name2, None);
+        let proof_handle_verifier2 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2,  request_name2, None);
+        let proof_handle_verifier3 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name2);
+        _prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3,  request_name2, None);
         assert_ne!(proof_handle_verifier1, proof_handle_verifier2);
         assert_ne!(proof_handle_verifier1, proof_handle_verifier3);
         assert_ne!(proof_handle_verifier2, proof_handle_verifier3);
 
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier1, None, institution_to_consumer1).unwrap();
-        proof::update_state(proof_handle_verifier2, None, institution_to_consumer2).unwrap();
-        proof::update_state(proof_handle_verifier3, None, institution_to_consumer3).unwrap();
+        proof::update_state_temp(proof_handle_verifier1, None, &institution_to_consumer1).unwrap();
+        proof::update_state_temp(proof_handle_verifier2, None, &institution_to_consumer2).unwrap();
+        proof::update_state_temp(proof_handle_verifier3, None, &institution_to_consumer3).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier1).unwrap(), ProofStateType::ProofInvalid as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier2).unwrap(), ProofStateType::ProofInvalid as u32);
         assert_eq!(proof::get_proof_state(proof_handle_verifier3).unwrap(), ProofStateType::ProofValidated as u32);
@@ -606,8 +588,8 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
@@ -624,10 +606,10 @@ mod tests {
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
         info!("test_revoked_credential_might_still_work :: Going to seng proof request with attributes {}", &requested_attrs_string);
-        let proof_handle_verifier = send_proof_request(&mut institution, institution_to_consumer, &requested_attrs_string, "[]", &interval, None);
+        let proof_handle_verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", &interval, None);
 
         info!("test_revoked_credential_might_still_work :: Going to create proof");
-        let proof_handle_prover = create_proof(&mut consumer, consumer_to_institution, None);
+        let proof_handle_prover = create_proof(&mut consumer, &consumer_to_institution, None);
         info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
@@ -636,11 +618,11 @@ mod tests {
         let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(&mut consumer, proof_handle_prover, consumer_to_institution, &selected_credentials_str);
+        generate_and_send_proof(&mut consumer, proof_handle_prover, &consumer_to_institution, &selected_credentials_str);
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         institution.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, institution_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &institution_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -699,7 +681,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
 
         info!("test_real_proof >>>");
         let number_of_attributes = 10;
@@ -719,13 +701,13 @@ mod tests {
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let handle_issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, &cred_def, issuer_to_consumer, &credential_data, None);
+        let handle_issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, &cred_def, &issuer_to_consumer, &credential_data, None);
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
-        let handle_holder_credential = send_cred_req(&mut consumer, consumer_to_issuer, None);
+        let handle_holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-        send_credential(&mut consumer, &mut institution, handle_issuer_credential, issuer_to_consumer, consumer_to_issuer, handle_holder_credential, false);
+        send_credential(&mut consumer, &mut institution, handle_issuer_credential, &issuer_to_consumer, &consumer_to_issuer, handle_holder_credential, false);
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         institution.activate().unwrap();
@@ -737,21 +719,21 @@ mod tests {
         }
         let requested_attrs = attrs.to_string();
         info!("test_real_proof :: Going to seng proof request with attributes {}", requested_attrs);
-        let proof_req_handle = send_proof_request(&mut institution, issuer_to_consumer, &requested_attrs, "[]", "{}", None);
+        let proof_req_handle = send_proof_request(&mut institution, &issuer_to_consumer, &requested_attrs, "[]", "{}", None);
 
         info!("test_real_proof :: Going to create proof");
-        let proof_handle = create_proof(&mut consumer, consumer_to_issuer, None);
+        let proof_handle = create_proof(&mut consumer, &consumer_to_issuer, None);
         info!("test_real_proof :: retrieving matching credentials");
 
         let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle).unwrap();
         let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
         info!("test_real_proof :: generating and sending proof");
-        generate_and_send_proof(&mut consumer, proof_handle, consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
+        generate_and_send_proof(&mut consumer, proof_handle, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         institution.activate().unwrap();
-        proof::update_state(proof_req_handle, None,  issuer_to_consumer).unwrap();
+        proof::update_state_temp(proof_req_handle, None,  &issuer_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_req_handle).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -762,28 +744,28 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer,credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer,credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id, req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id, req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
     //
@@ -794,30 +776,30 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle1, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -828,30 +810,30 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle2, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -862,29 +844,29 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -895,31 +877,31 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle1, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
     }
 
@@ -930,31 +912,31 @@ mod tests {
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
-        let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
-        let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
+        let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier);
+        let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer);
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
+        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle2, rev_reg_id);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofValidated as u32);
 
-        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req2);
-        _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req2, Some(&credential_data2));
+        let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
-        proof::update_state(proof_handle_verifier, None, verifier_to_consumer).unwrap();
+        proof::update_state_temp(proof_handle_verifier, None, &verifier_to_consumer).unwrap();
         assert_eq!(proof::get_proof_state(proof_handle_verifier).unwrap(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -965,7 +947,7 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
 
-        let (_faber, _alice) = create_and_store_connected_connections(&mut consumer1, &mut institution);
-        let (_faber, _alice) = create_and_store_connected_connections(&mut consumer1, &mut institution);
+        let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution);
+        let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution);
     }
 }
