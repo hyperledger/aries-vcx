@@ -57,13 +57,14 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::handlers::issuance::holder::holder::HolderState;
     use aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
+    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
     use aries_vcx::utils::filters;
 
     use super::*;
 
-    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, u32, Option<String>) {
+    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, CredentialDef, Option<String>) {
         /* create schema */
         let (schema_id, schema_json) = libindy::utils::anoncreds::tests::create_and_write_test_schema(attr_list);
 
@@ -77,19 +78,19 @@ mod tests {
             revocation_details["tails_url"] = json!(TEST_TAILS_URL);
             revocation_details["max_creds"] = json!(10);
         }
-        let handle = credential_def::create_and_publish_credentialdef("1".to_string(),
-                                                                      name,
-                                                                      institution_did.clone(),
-                                                                      schema_id.clone(),
-                                                                      "tag1".to_string(),
-                                                                      revocation_details.to_string()).unwrap();
+        let cred_def = CredentialDef::create("1".to_string(),
+                                           name,
+                                           institution_did.clone(),
+                                           schema_id.clone(),
+                                           "tag1".to_string(),
+                                           revocation_details.to_string()).unwrap();
 
         thread::sleep(Duration::from_millis(1000));
-        let cred_def_id = credential_def::get_cred_def_id(handle).unwrap();
+        let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
         let (_, cred_def_json) =  libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
-        let rev_reg_id = credential_def::get_rev_reg_id(handle).ok();
-        (schema_id, schema_json, cred_def_id, cred_def_json, handle, rev_reg_id)
+        let rev_reg_id = cred_def.get_rev_reg_id();
+        (schema_id, schema_json, cred_def_id.to_string(), cred_def_json, cred_def, rev_reg_id)
     }
 
     pub fn create_and_store_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
@@ -172,10 +173,10 @@ mod tests {
         ])
     }
 
-    fn create_and_send_cred_offer(faber: &mut Faber, did: &str, cred_def_handle: u32, connection: u32, credential_data: &str, comment: Option<&str>) -> u32 {
+    fn create_and_send_cred_offer(faber: &mut Faber, did: &str, cred_def: &CredentialDef, connection: u32, credential_data: &str, comment: Option<&str>) -> u32 {
         faber.activate().unwrap();
         info!("create_and_send_cred_offer >> creating issuer credential");
-        let handle_cred = issuer_credential::issuer_credential_create(cred_def_handle,
+        let handle_cred = issuer_credential::issuer_credential_create_temp(cred_def.clone(),
                                                                       "1".to_string(),
                                                                       did.to_string(),
                                                                       "credential_name".to_string(),
@@ -305,14 +306,14 @@ mod tests {
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
 
-    fn rotate_rev_reg(faber: &mut Faber, cred_def_handle: u32) {
+    fn rotate_rev_reg(faber: &mut Faber, cred_def: &mut CredentialDef) {
         faber.activate().unwrap();
         let revocation_details = json!({
             "tails_file": json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
             "tails_url": json!(TEST_TAILS_URL),
             "max_creds": json!(10)
         }).to_string();
-        credential_def::rotate_rev_reg_def(cred_def_handle, &revocation_details).unwrap();
+        cred_def.rotate_rev_reg(&revocation_details).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
@@ -320,15 +321,15 @@ mod tests {
         libindy::utils::anoncreds::publish_local_revocations(rev_reg_id.as_str()).unwrap();
     }
 
-    fn _create_address_schema() -> (String, String, String, String, u32, Option<String>) {
+    fn _create_address_schema() -> (String, String, String, String, CredentialDef, Option<String>) {
         info!("test_real_proof_with_revocation >>> CREATE SCHEMA AND CRED DEF");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         create_and_store_credential_def(&attrs_list, true)
     }
 
-    fn _exchange_credential(consumer: &mut Alice, institution: &mut Faber, credential_data: String, cred_def_handle: u32, consumer_to_issuer: u32, issuer_to_consumer: u32, comment: Option<&str>) -> u32 {
+    fn _exchange_credential(consumer: &mut Alice, institution: &mut Faber, credential_data: String, cred_def: &CredentialDef, consumer_to_issuer: u32, issuer_to_consumer: u32, comment: Option<&str>) -> u32 {
         info!("Generated credential data: {}", credential_data);
-        let handle_issuer_credential = create_and_send_cred_offer(institution, settings::CONFIG_INSTITUTION_DID, cred_def_handle, issuer_to_consumer, &credential_data, comment);
+        let handle_issuer_credential = create_and_send_cred_offer(institution, settings::CONFIG_INSTITUTION_DID, cred_def, issuer_to_consumer, &credential_data, comment);
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
         let handle_holder_credential = send_cred_req(consumer, consumer_to_issuer, comment);
         info!("AS INSTITUTION SEND CREDENTIAL");
@@ -336,15 +337,15 @@ mod tests {
         handle_issuer_credential
     }
 
-    fn _issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: u32, institution_to_consumer: u32) -> (String, String, Option<String>, u32, u32) {
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+    fn _issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: u32, institution_to_consumer: u32) -> (String, String, Option<String>, CredentialDef, u32) {
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data = json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
 
-        let credential_handle = _exchange_credential(consumer, institution, credential_data, cred_def_handle, consumer_to_institution, institution_to_consumer, None);
-        (schema_id, cred_def_id, rev_reg_id, cred_def_handle, credential_handle)
+        let credential_handle = _exchange_credential(consumer, institution, credential_data, &cred_def, consumer_to_institution, institution_to_consumer, None);
+        (schema_id, cred_def_id, rev_reg_id, cred_def, credential_handle)
     }
 
     fn _verifier_create_proof_and_send_request(institution: &mut Faber, institution_to_consumer:u32, schema_id: &str, cred_def_id: &str, request_name: Option<&str>) -> u32 {
@@ -382,7 +383,7 @@ mod tests {
         let mut consumer = Alice::setup();
 
         let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -414,7 +415,7 @@ mod tests {
         let mut consumer = Alice::setup();
 
         let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, issuer_credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, issuer_credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         revoke_credential_local(&mut institution, issuer_credential_handle, rev_reg_id.clone());
         let request_name1 = Some("request1");
@@ -448,12 +449,12 @@ mod tests {
         let (consumer2_to_verifier, verifier_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut verifier);
         let (consumer2_to_issuer, issuer_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, cred_def_handle, consumer1_to_issuer, issuer_to_consumer1, None);
+        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, consumer1_to_issuer, issuer_to_consumer1, None);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, cred_def_handle,  consumer2_to_issuer, issuer_to_consumer2, None);
+        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def,  consumer2_to_issuer, issuer_to_consumer2, None);
 
         let request_name1 = Some("request1");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer1, &schema_id, &cred_def_id, request_name1);
@@ -482,7 +483,7 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, cred_def_id, _rev_reg_id, _cred_def_handle, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, consumer_to_issuer, issuer_to_consumer);
+        let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, consumer_to_issuer, issuer_to_consumer);
         issuer.activate().unwrap();
         let request_name1 = Some("request1");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  request_name1);
@@ -507,10 +508,10 @@ mod tests {
         let mut consumer = Alice::setup();
         let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let (address1, address, city, state, zip) = attr_names();
         let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let _credential_handle = _exchange_credential(&mut consumer, &mut institution, credential_data, cred_def_handle, consumer_to_institution, institution_to_consumer, None);
+        let _credential_handle = _exchange_credential(&mut consumer, &mut institution, credential_data, &cred_def, consumer_to_institution, institution_to_consumer, None);
 
         let request_name1 = Some("request1");
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut institution, institution_to_consumer, &schema_id, &cred_def_id, request_name1);
@@ -546,14 +547,14 @@ mod tests {
         assert_ne!(consumer_to_institution2, consumer_to_institution3);
 
         // Issue and send three credentials of the same schema
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, cred_def_handle, consumer_to_institution1, institution_to_consumer1, None);
+        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, &cred_def, consumer_to_institution1, institution_to_consumer1, None);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, cred_def_handle, consumer_to_institution2, institution_to_consumer2, None);
+        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, &cred_def, consumer_to_institution2, institution_to_consumer2, None);
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, cred_def_handle, consumer_to_institution3, institution_to_consumer3, None);
+        let credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, &cred_def, consumer_to_institution3, institution_to_consumer3, None);
 
         revoke_credential_local(&mut institution,credential_handle1, rev_reg_id.clone());
         revoke_credential_local(&mut institution,credential_handle2, rev_reg_id.clone());
@@ -606,7 +607,7 @@ mod tests {
         let mut consumer = Alice::setup();
 
         let (consumer_to_institution, institution_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut institution);
-        let (schema_id, cred_def_id, rev_reg_id, _cred_def_handle, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, consumer_to_institution, institution_to_consumer);
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
@@ -709,7 +710,7 @@ mod tests {
             attrs_list.as_array_mut().unwrap().push(json!(format!("key{}",i)));
         }
         let attrs_list = attrs_list.to_string();
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _) = create_and_store_credential_def(&attrs_list, false);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _) = create_and_store_credential_def(&attrs_list, false);
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
@@ -718,7 +719,7 @@ mod tests {
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let handle_issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, cred_def_handle, issuer_to_consumer, &credential_data, None);
+        let handle_issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, &cred_def, issuer_to_consumer, &credential_data, None);
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
         let handle_holder_credential = send_cred_req(&mut consumer, consumer_to_issuer, None);
@@ -764,14 +765,14 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, _rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, _rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer,credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer,credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
@@ -796,14 +797,14 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle1, rev_reg_id);
 
@@ -830,14 +831,14 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle2, rev_reg_id);
 
@@ -864,15 +865,15 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
-        rotate_rev_reg(&mut issuer, cred_def_handle);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         let proof_handle_verifier = _verifier_create_proof_and_send_request(&mut verifier, verifier_to_consumer, &schema_id, &cred_def_id,  req1);
         _prover_select_credentials_and_send_proof(&mut consumer, consumer_to_verifier, req1, Some(&credential_data1));
@@ -897,15 +898,15 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
-        rotate_rev_reg(&mut issuer, cred_def_handle);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle1, rev_reg_id);
 
@@ -932,15 +933,15 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut verifier);
         let (consumer_to_issuer, issuer_to_consumer) = create_and_store_connected_connections(&mut consumer, &mut issuer);
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def_handle, rev_reg_id) = _create_address_schema();
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg_id) = _create_address_schema();
         let mut institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(); // Issuer's did
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer,  req1);
-        rotate_rev_reg(&mut issuer, cred_def_handle);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer,  req1);
+        rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), cred_def_handle, consumer_to_issuer, issuer_to_consumer, req2);
+        let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, consumer_to_issuer, issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, credential_handle2, rev_reg_id);
 
