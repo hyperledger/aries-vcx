@@ -40,8 +40,6 @@ mod tests {
     use serde_json::Value;
 
     use crate::api_lib::api_handle::credential;
-    use crate::api_lib::api_handle::credential_def;
-    use crate::api_lib::api_handle::disclosed_proof;
     use crate::api_lib::api_handle::issuer_credential;
     use crate::api_lib::api_handle::proof;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
@@ -54,13 +52,14 @@ mod tests {
     };
     use aries_vcx::{libindy, utils};
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::handlers::issuance::holder::holder::{HolderState, Holder};
     use aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
+    use aries_vcx::handlers::proof_presentation::prover::prover::{ProverState, Prover};
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::{VerifierState, Verifier};
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
     use aries_vcx::handlers::connection::connection::Connection;
     use aries_vcx::utils::filters;
 
@@ -234,7 +233,7 @@ mod tests {
         proof_req_handle
     }
 
-    fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> u32 {
+    fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> Prover {
         alice.activate().unwrap();
         info!("create_proof >>> getting proof request messages");
         let requests = {
@@ -253,19 +252,20 @@ mod tests {
         let requests = requests.as_array().unwrap();
         assert_eq!(requests.len(), 1);
         let request = serde_json::to_string(&requests[0]).unwrap();
-        disclosed_proof::create_proof(utils::constants::DEFAULT_PROOF_NAME, &request).unwrap()
+        let presentation_request: PresentationRequest = serde_json::from_str(&request).unwrap();
+        Prover::create(utils::constants::DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
-    fn generate_and_send_proof(alice: &mut Alice, proof_handle: u32, connection: &Connection, selected_credentials: &str) {
+    fn generate_and_send_proof(alice: &mut Alice, prover: &mut Prover, connection: &Connection, selected_credentials: &str) {
         alice.activate().unwrap();
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
-        disclosed_proof::generate_proof(proof_handle, selected_credentials.into(), "{}".to_string()).unwrap();
+        prover.generate_presentation(selected_credentials.into(), "{}".to_string()).unwrap();
 
         info!("generate_and_send_proof :: proof generated, sending proof");
-        disclosed_proof::send_proof_temp(proof_handle, connection).unwrap();
+        prover.send_presentation(&connection.send_message_closure().unwrap()).unwrap();
         info!("generate_and_send_proof :: proof sent");
 
-        assert_eq!(ProverState::PresentationSent as u32, disclosed_proof::get_state(proof_handle).unwrap());
+        assert_eq!(ProverState::PresentationSent, prover.get_state());
         thread::sleep(Duration::from_millis(5000));
     }
 
@@ -341,20 +341,20 @@ mod tests {
     fn _prover_select_credentials_and_send_proof(consumer: &mut Alice, consumer_to_institution: &Connection, request_name: Option<&str>, requested_values: Option<&str>) {
         consumer.activate().unwrap();
         info!("Prover :: Going to create proof");
-        let proof_handle_prover = create_proof(consumer, consumer_to_institution, request_name);
+        let mut prover = create_proof(consumer, consumer_to_institution, request_name);
         info!("Prover :: Retrieving matching credentials");
-        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
+        let retrieved_credentials = prover.retrieve_credentials().unwrap();
         info!("Prover :: Based on proof, retrieved credentials: {}", &retrieved_credentials);
         let selected_credentials_value = match requested_values {
             Some(requested_values) => {
-                let credential_data = disclosed_proof::get_proof_request_data(proof_handle_prover).unwrap();
+                let credential_data = prover.presentation_request_data().unwrap();
                 retrieved_to_selected_credentials_specific(&retrieved_credentials, requested_values, &credential_data, true)
             }
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true)
         };
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(consumer, proof_handle_prover, consumer_to_institution, &selected_credentials_str);
+        generate_and_send_proof(consumer, &mut prover, consumer_to_institution, &selected_credentials_str);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -609,16 +609,16 @@ mod tests {
         let proof_handle_verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", &interval, None);
 
         info!("test_revoked_credential_might_still_work :: Going to create proof");
-        let proof_handle_prover = create_proof(&mut consumer, &consumer_to_institution, None);
+        let mut prover = create_proof(&mut consumer, &consumer_to_institution, None);
         info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
-        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle_prover).unwrap();
+        let retrieved_credentials = prover.retrieve_credentials().unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}", &retrieved_credentials);
 
         let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(&mut consumer, proof_handle_prover, &consumer_to_institution, &selected_credentials_str);
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str);
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         institution.activate().unwrap();
@@ -722,14 +722,14 @@ mod tests {
         let proof_req_handle = send_proof_request(&mut institution, &issuer_to_consumer, &requested_attrs, "[]", "{}", None);
 
         info!("test_real_proof :: Going to create proof");
-        let proof_handle = create_proof(&mut consumer, &consumer_to_issuer, None);
+        let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None);
         info!("test_real_proof :: retrieving matching credentials");
 
-        let retrieved_credentials = disclosed_proof::retrieve_credentials(proof_handle).unwrap();
+        let retrieved_credentials = prover.retrieve_credentials().unwrap();
         let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
         info!("test_real_proof :: generating and sending proof");
-        generate_and_send_proof(&mut consumer, proof_handle, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         institution.activate().unwrap();
