@@ -269,13 +269,11 @@ pub mod tests {
     use aries_vcx::settings;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::VcxStateType;
-    use crate::api_lib::api_handle::test::create_connected_connections;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::tests::_ack;
     use aries_vcx::messages::connection::invite::tests::_invitation_json;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
-    use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
@@ -350,13 +348,6 @@ pub mod tests {
         let handle = build_test_connection_inviter_invited();
         update_state_with_message(handle, ARIES_CONNECTION_REQUEST).unwrap();
         handle
-    }
-
-    pub fn create_and_store_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (u32, u32) {
-        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(consumer, institution);
-        let consumer_to_institution = store_connection(consumer_to_institution).unwrap();
-        let institution_to_consumer = store_connection(institution_to_consumer).unwrap();
-        (consumer_to_institution, institution_to_consumer)
     }
 
     #[test]
@@ -526,35 +517,5 @@ pub mod tests {
 
         let err = send_generic_message(handle, "this is the message").unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
-    }
-
-    #[cfg(feature = "agency_v2")]
-    #[test]
-    fn test_download_messages_from_multiple_connections() {
-        let _setup = SetupEmpty::init();
-        let mut institution = Faber::setup();
-        let mut consumer1 = Alice::setup();
-        let mut consumer2 = Alice::setup();
-        let (consumer1_to_institution, institution_to_consumer1) = create_and_store_connected_connections(&mut consumer1, &mut institution);
-        let (consumer2_to_institution, institution_to_consumer2) = create_and_store_connected_connections(&mut consumer2, &mut institution);
-
-        let consumer1_pwdid = get_their_pw_did(consumer1_to_institution).unwrap();
-        let consumer2_pwdid = get_their_pw_did(consumer2_to_institution).unwrap();
-
-        consumer1.activate().unwrap();
-        send_generic_message(consumer1_to_institution, "Hello Institution from consumer1").unwrap();
-        consumer2.activate().unwrap();
-        send_generic_message(consumer2_to_institution, "Hello Institution from consumer2").unwrap();
-
-        institution.activate().unwrap();
-        let all_msgs = download_messages([institution_to_consumer1, institution_to_consumer2].to_vec(), None, None).unwrap();
-        assert_eq!(all_msgs.len(), 2);
-        assert_eq!(all_msgs[0].msgs.len(), 2);
-        assert_eq!(all_msgs[1].msgs.len(), 2);
-
-        let consumer1_msgs = download_messages([institution_to_consumer1].to_vec(), None, None).unwrap();
-        assert_eq!(consumer1_msgs.len(), 1);
-        assert_eq!(consumer1_msgs[0].msgs.len(), 2);
-        assert_eq!(consumer1_msgs[0].pairwise_did, consumer1_pwdid);
     }
 }

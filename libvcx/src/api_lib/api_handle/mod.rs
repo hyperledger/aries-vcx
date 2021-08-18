@@ -613,4 +613,27 @@ pub mod test {
         let specific_review = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Reviewed]), Some(vec![uid.clone()])).unwrap();
         assert_eq!(specific_review[0].uid, uid);
     }
+
+    #[cfg(feature = "agency_v2")]
+    #[test]
+    fn test_download_messages_from_multiple_connections() {
+        let _setup = SetupEmpty::init();
+        let mut institution = Faber::setup();
+        let mut consumer1 = Alice::setup();
+        let mut consumer2 = Alice::setup();
+        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution);
+        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution);
+
+        consumer1.activate().unwrap();
+        consumer1_to_institution.send_generic_message("Hello Institution from consumer1").unwrap();
+        consumer2.activate().unwrap();
+        consumer2_to_institution.send_generic_message("Hello Institution from consumer2").unwrap();
+
+        institution.activate().unwrap();
+        let consumer1_msgs = institution_to_consumer1.download_messages(None, None).unwrap();
+        assert_eq!(consumer1_msgs.len(), 2);
+
+        let consumer2_msgs = institution_to_consumer2.download_messages(None, None).unwrap();
+        assert_eq!(consumer2_msgs.len(), 2);
+    }
 }
