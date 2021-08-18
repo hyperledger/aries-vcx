@@ -28,12 +28,11 @@ the library into 3 pieces.
    on Android, iOS and any programming language.
 
 # Phase 2 - In progress 🚧
+- 🚧 Migration from `libindy` to its fork [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools).
 - 🚧 Concise `aries-vcx` crate API and start publishing on crates.io
 - 🚧 Implement testing backchannel for aries-vcx. [WIP](https://github.com/hyperledger/aries-agent-test-harness/pull/243)
 - Support for public DID-based connection invitations
 - Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
-- Explore possibility migrating from IndySDK `libindy` to [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools) 
-  forked version of `libindy`.
 
 # Future work 
 
@@ -43,33 +42,10 @@ the library into 3 pieces.
   followed by support for AIP 2.0 in the future.
   
 ### Multitenancy 
-The library was built so that it can power both mobile (usually in the role of holder, prover) and 
-institutional agents (usually in the role of issuer, verifier). The current architecture only supports 
-single tenant architectures. In order to build scalable institutional agents, we need to enable 
-using in multi-tenant context - a single process using `aries-vcx` should be able to 
-manage multiple wallets/agents. 
+"AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this capability is on our roadmap."
 
-### Migrating to aries-askar
-Currently, the main bottleneck of `aries-vcx`, especially in institutional contexts is reliance on 
-IndySDK implementation of wallet (see [issue](https://github.com/hyperledger/indy-sdk/issues/2164)). 
-
-There are following solutions under consideration:
-1. Use [aries-askar](https://github.com/andrewwhitehead/aries-askar) as a new implementation for storage 
-exposing asynchronous API. Getting this done might be challenging, as either:
-- `IndySDK` would have to be updated to reuse `aries-askar`,
-- we drop dependency on IndySDK from `aries-vcx` and substitute it with component such as 
-  [indy-utils](https://docs.rs/crate/indy-utils/0.3.2), 
-  [indy-shared-rs](https://github.com/bcgov/indy-shared-rs), 
-  [aries-credx](https://github.com/sovrin-foundation/aries-credx-framework-rs).
-2. Swap the `indy-sdk` version of `libindy` library for its [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools)
-   version, as it contains asynchronous implementation of the storage module.
-   
-Migration from `libindy` to `vdr-tools` will likely be effortless relative to migration to `aries-askar`,
-so we will likely go for the second option.
-
-
-
-
+# Future vision architecture diagram
+# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_180821.png"/>
 
 
 

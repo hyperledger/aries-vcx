@@ -15,7 +15,7 @@ essentially any platform. Officially we support:
 - Overview of [implemented Aries protocols](./aries.md)
 - AriesVCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
   One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
-  
+
 # Work in progress
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
 - Although the API is mostly stable, breaking changes still occur in our releases. See our
@@ -33,6 +33,11 @@ The best way to get your hands on.
 However before you'll be able to pick one of these demos and run them locally, you need to build binary library which
 all these demos depends on.  
 - [Building AriesVCX on OSX, Linux](./docs/build-general.md)
+
+# Project architecture
+The architecture is evolving - you can compare the diagram below with diagram under [roadmap](./roadmap.md).
+
+# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_now_180821.png"/>
 
 # Artifacts
 Number of artifacts are built for every CI run (unless it's coming from a forked repository due to limitations of Github Actions). 
