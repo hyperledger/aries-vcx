@@ -37,12 +37,12 @@ the library into 3 pieces.
 # Future work 
 
 ### AIP 2.0
-- Our current priority is to get satisfying AIP1.0 results
+Our current priority is to get satisfying AIP1.0 results
   on [aries-agent-test-harness](https://github.com/hyperledger/aries-agent-test-harness) tests, 
   followed by support for AIP 2.0 in the future.
   
 ### Multitenancy 
-"AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this capability is on our roadmap."
+AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this capability is on our roadmap.
 
 # Future vision architecture diagram
 # <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_180821.png"/>
