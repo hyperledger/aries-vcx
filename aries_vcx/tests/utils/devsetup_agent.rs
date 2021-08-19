@@ -6,7 +6,7 @@ pub mod test {
     use aries_vcx::settings;
 
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
-    use crate::error::{VcxError, VcxErrorKind, VcxResult};
+    use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
