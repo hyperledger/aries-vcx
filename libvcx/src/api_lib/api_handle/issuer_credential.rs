@@ -21,21 +21,6 @@ enum IssuerCredentials {
     V3(Issuer),
 }
 
-pub fn issuer_credential_create_temp(cred_def: CredentialDef,
-                                source_id: String,
-                                issuer_did: String,
-                                credential_name: String,
-                                credential_data: String,
-                                price: u64) -> VcxResult<u32> {
-    let issuer_config = IssuerConfig {
-        cred_def_id: cred_def.get_cred_def_id(),
-        rev_reg_id: cred_def.get_rev_reg_id(),
-        tails_file: cred_def.get_tails_file(),
-    };
-    let issuer = Issuer::create(&issuer_config, &credential_data, &source_id)?;
-    ISSUER_CREDENTIAL_MAP.add(issuer)
-}
-
 pub fn issuer_credential_create(cred_def_handle: u32,
                                 source_id: String,
                                 issuer_did: String,
@@ -145,15 +130,6 @@ pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)>
 pub fn send_credential_offer(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
         credential.send_credential_offer(connection::send_message_closure(connection_handle)?, comment.clone())?;
-        let new_credential = credential.clone();
-        *credential = new_credential;
-        Ok(error::SUCCESS.code_num)
-    })
-}
-
-pub fn send_credential_offer_temp(handle: u32, connection: &Connection, comment: Option<String>) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential_offer(connection.send_message_closure()?, comment.clone())?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
