@@ -59,27 +59,6 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
     })
 }
 
-pub fn update_state_temp(handle: u32, message: Option<&str>, connection: &Connection) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        trace!("issuer_credential::update_state >>> ");
-        if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
-        let send_message = connection.send_message_closure()?;
-
-        if let Some(message) = message {
-            let message: A2AMessage = serde_json::from_str(&message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-            credential.step(message.into(), Some(&send_message))?;
-        } else {
-            let messages = connection.get_messages()?;
-            if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-                credential.step(msg.into(), Some(&send_message))?;
-                connection.update_message_status(uid)?;
-            }
-        }
-        Ok(credential.get_state().into())
-    })
-}
-
 pub fn get_state(handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         Ok(credential.get_state().into())

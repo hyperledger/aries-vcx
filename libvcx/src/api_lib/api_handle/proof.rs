@@ -56,28 +56,6 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
     })
 }
 
-pub fn update_state_temp(handle: u32, message: Option<&str>, connection: &Connection) -> VcxResult<u32> {
-    PROOF_MAP.get_mut(handle, |proof| {
-        if !proof.has_transitions() { return Ok(proof.get_state().into()); }
-        let send_message = connection.send_message_closure()?;
-
-        if let Some(message) = message {
-            let message: A2AMessage = serde_json::from_str(message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
-            trace!("proof::update_state >>> updating using message {:?}", message);
-            proof.handle_message(message.into(), Some(&send_message))?;
-        } else {
-            let messages = connection.get_messages()?;
-            trace!("proof::update_state >>> found messages: {:?}", messages);
-            if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-                proof.handle_message(message.into(), Some(&send_message))?;
-                connection.update_message_status(uid)?;
-            };
-        }
-        Ok(proof.get_state().into())
-    })
-}
-
 pub fn get_state(handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get(handle, |proof| {
         Ok(proof.get_state().into())
