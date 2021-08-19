@@ -641,7 +641,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
-                              bash -c '(cd $HOME/aries-vcx && \
+                              bash -c '(cd $HOME/aries_vcx && \
                               cargo --version && \
                               rustc --version && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
