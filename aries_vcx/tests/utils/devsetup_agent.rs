@@ -11,6 +11,7 @@ pub mod test {
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
@@ -21,7 +22,8 @@ pub mod test {
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData, create_and_publish_schema_temp};
+    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
+    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
@@ -168,7 +170,18 @@ pub mod test {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            self.schema = create_and_publish_schema_temp("test_schema", did.clone(), name, version, data).unwrap();
+            let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).unwrap();
+            let payment_txn = anoncreds::publish_schema(&schema).unwrap();
+
+            self.schema = Schema {
+                source_id: "test_schema".to_string(),
+                name,
+                data: serde_json::from_str(&data).unwrap_or_default(),
+                version,
+                schema_id,
+                payment_txn,
+                state: PublicEntityStateType::Published,
+            };
         }
 
         pub fn create_credential_definition(&mut self) {

@@ -69,14 +69,6 @@ pub fn credential_create_with_offer(source_id: &str, offer: &str) -> VcxResult<u
     return HANDLE_MAP.add(holder);
 }
 
-pub fn credential_create_with_offer_temp(source_id: &str, offer: &str) -> VcxResult<Holder> {
-    let cred_offer: CredentialOffer = serde_json::from_str(offer)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                          format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err)))?;
-    let holder = Holder::create(cred_offer, source_id)?;
-    Ok(holder)
-}
-
 pub fn credential_create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
     trace!("credential_create_with_msgid >>> source_id: {}, connection_handle: {}, msg_id: {}", source_id, connection_handle, secret!(&msg_id));
 
@@ -196,17 +188,6 @@ pub fn send_credential_request(handle: u32, connection_handle: u32) -> VcxResult
     HANDLE_MAP.get_mut(handle, |credential| {
         let my_pw_did = connection::get_pw_did(connection_handle)?;
         let send_message = connection::send_message_closure(connection_handle)?;
-        credential.send_request(my_pw_did, send_message)?;
-        let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
-        *credential = new_credential;
-        Ok(error::SUCCESS.code_num)
-    }).map_err(handle_err)
-}
-
-pub fn send_credential_request_temp(handle: u32, connection: &Connection) -> VcxResult<u32> {
-    HANDLE_MAP.get_mut(handle, |credential| {
-        let my_pw_did = connection.pairwise_info().pw_did.to_string();
-        let send_message = connection.send_message_closure()?;
         credential.send_request(my_pw_did, send_message)?;
         let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
         *credential = new_credential;

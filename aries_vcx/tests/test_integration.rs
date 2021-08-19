@@ -1214,7 +1214,8 @@ mod tests {
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
 
-            alice.credential = credential::credential_create_with_offer_temp("test", &message.decrypted_msg).unwrap();
+            let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+            alice.credential = Holder::create(cred_offer, "test").unwrap();
 
             alice.connection.update_message_status(message.uid).unwrap();
 
