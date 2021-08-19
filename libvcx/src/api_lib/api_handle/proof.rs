@@ -111,13 +111,6 @@ pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<S
     })
 }
 
-pub fn send_proof_request_temp(handle: u32, connection: &Connection, comment: Option<String>) -> VcxResult<u32> {
-    PROOF_MAP.get_mut(handle, |proof| {
-        proof.send_presentation_request(connection.send_message_closure()?, comment.clone())?;
-        Ok(error::SUCCESS.code_num)
-    })
-}
-
 pub fn get_proof(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         proof.get_presentation().map_err(|err| err.into())

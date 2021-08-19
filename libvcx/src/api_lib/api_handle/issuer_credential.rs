@@ -128,13 +128,6 @@ pub fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     })
 }
 
-pub fn send_credential_temp(handle: u32, connection: &Connection) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential(connection.send_message_closure()?)?;
-        Ok(error::SUCCESS.code_num)
-    })
-}
-
 pub fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
