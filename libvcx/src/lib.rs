@@ -39,7 +39,6 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::api_lib::api_handle::credential;
     use crate::api_lib::api_handle::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::api_lib::api_handle::test::create_connected_connections;
     use crate::api_lib::ProofStateType;
@@ -57,6 +56,7 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::prover::{ProverState, Prover};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{VerifierState, Verifier};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::connection::connection::Connection;
     use aries_vcx::utils::filters;
@@ -168,7 +168,7 @@ mod tests {
         issuer
     }
 
-    fn send_cred_req(alice: &mut Alice, connection: &Connection, comment: Option<&str>) -> u32 {
+    fn send_cred_req(alice: &mut Alice, connection: &Connection, comment: Option<&str>) -> Holder {
         info!("send_cred_req >>> switching to consumer");
         alice.activate().unwrap();
         info!("send_cred_req :: getting offers");
@@ -184,17 +184,19 @@ mod tests {
         let offers: Value = serde_json::from_str(&credential_offers).unwrap();
         let offers = offers.as_array().unwrap();
         assert_eq!(offers.len(), 1);
-        let offers = serde_json::to_string(&offers[0]).unwrap();
+        let offer = serde_json::to_string(&offers[0]).unwrap();
         info!("send_cred_req :: creating credential from offer");
-        let credential = credential::credential_create_with_offer("TEST_CREDENTIAL", &offers).unwrap();
-        assert_eq!(HolderState::OfferReceived as u32, credential::get_state(credential).unwrap());
+        let cred_offer: CredentialOffer = serde_json::from_str(&offer).unwrap();
+        let mut holder = Holder::create(cred_offer, "TEST_CREDENTIAL").unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
-        credential::send_credential_request_temp(credential, connection).unwrap();
+        let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).unwrap();
         thread::sleep(Duration::from_millis(2000));
-        credential
+        holder
     }
 
-    fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, handle_holder_credential: u32, revokable: bool) {
+    fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, holder_credential: &mut Holder, revokable: bool) {
         institution.activate().unwrap();
         info!("send_credential >>> getting offers");
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
@@ -208,14 +210,14 @@ mod tests {
         
         consumer.activate().unwrap();
         info!("send_credential >>> storing credential");
-        assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
-        credential::update_state_temp(handle_holder_credential, None, consumer_to_issuer).unwrap();
-        assert_eq!(HolderState::Finished as u32, credential::get_state(handle_holder_credential).unwrap());
-        assert_eq!(credential::is_revokable(handle_holder_credential).unwrap(), revokable);
+        assert_eq!(holder_credential.is_revokable().unwrap(), revokable);
+        holder_credential.update_state(consumer_to_issuer).unwrap();
+        assert_eq!(HolderState::Finished, holder_credential.get_state());
+        assert_eq!(holder_credential.is_revokable().unwrap(), revokable);
 
         if revokable {
             thread::sleep(Duration::from_millis(2000));
-            assert_eq!(credential::get_tails_location(handle_holder_credential).unwrap(), TEST_TAILS_URL.to_string());
+            assert_eq!(holder_credential.get_tails_location().unwrap(), TEST_TAILS_URL.to_string());
         }
     }
 
@@ -311,9 +313,9 @@ mod tests {
         info!("Generated credential data: {}", credential_data);
         let mut issuer_credential = create_and_send_cred_offer(institution, settings::CONFIG_INSTITUTION_DID, cred_def, issuer_to_consumer, &credential_data, comment);
         info!("AS CONSUMER SEND CREDENTIAL REQUEST");
-        let handle_holder_credential = send_cred_req(consumer, consumer_to_issuer, comment);
+        let mut holder_credential = send_cred_req(consumer, consumer_to_issuer, comment);
         info!("AS INSTITUTION SEND CREDENTIAL");
-        send_credential(consumer, institution, &mut issuer_credential, issuer_to_consumer, consumer_to_issuer, handle_holder_credential, true);
+        send_credential(consumer, institution, &mut issuer_credential, issuer_to_consumer, consumer_to_issuer, &mut holder_credential, true);
         issuer_credential
     }
 
@@ -702,10 +704,10 @@ mod tests {
         let mut issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, &cred_def, &issuer_to_consumer, &credential_data, None);
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
-        let handle_holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);
+        let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-        send_credential(&mut consumer, &mut institution, &mut issuer_credential, &issuer_to_consumer, &consumer_to_issuer, handle_holder_credential, false);
+        send_credential(&mut consumer, &mut institution, &mut issuer_credential, &issuer_to_consumer, &consumer_to_issuer, &mut holder_credential, false);
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         institution.activate().unwrap();
