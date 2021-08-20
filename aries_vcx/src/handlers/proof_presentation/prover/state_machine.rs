@@ -17,7 +17,7 @@ use crate::error::prelude::*;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProverSM {
     source_id: String,
     thread_id: String,
@@ -43,6 +43,12 @@ pub enum ProverFullState {
     PresentationPreparationFailed(PresentationPreparationFailedState),
     PresentationSent(PresentationSentState),
     Finished(FinishedState),
+}
+
+impl Default for ProverFullState {
+    fn default() -> Self {
+        Self::Initiated(InitialState::default())
+    }
 }
 
 impl ProverSM {

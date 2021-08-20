@@ -47,7 +47,13 @@ impl IssuerFullState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+impl Default for IssuerFullState {
+    fn default() -> Self {
+        Self::Initial(InitialState::default())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct IssuerSM {
     state: IssuerFullState,
     source_id: String,

@@ -4,6 +4,7 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
 use crate::aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 

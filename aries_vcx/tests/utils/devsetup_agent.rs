@@ -5,18 +5,29 @@ pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::settings;
 
-    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
-    use crate::error::{VcxError, VcxErrorKind, VcxResult};
+    use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
     use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
+    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
+    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -74,10 +85,10 @@ pub mod test {
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
         pub connection: Connection,
-        pub schema_handle: u32,
-        pub cred_def_handle: u32,
-        pub credential_handle: u32,
-        pub presentation_handle: u32,
+        pub schema: Schema,
+        pub cred_def: CredentialDef,
+        pub issuer_credential: Issuer,
+        pub verifier: Verifier,
     }
 
     impl TestAgent for Faber {
@@ -142,11 +153,11 @@ pub mod test {
                 config_wallet,
                 config_agency,
                 config_issuer,
-                schema_handle: 0,
-                cred_def_handle: 0,
+                schema: Schema::default(),
+                cred_def: CredentialDef::default(),
                 connection: Connection::create("alice", true).unwrap(),
-                credential_handle: 0,
-                presentation_handle: 0,
+                issuer_credential: Issuer::default(),
+                verifier: Verifier::default(),
             };
             close_main_wallet().unwrap();
             faber
@@ -159,21 +170,32 @@ pub mod test {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            self.schema_handle = schema::create_and_publish_schema("test_schema", did.clone(), name, version, data).unwrap();
+            let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).unwrap();
+            let payment_txn = anoncreds::publish_schema(&schema).unwrap();
+
+            self.schema = Schema {
+                source_id: "test_schema".to_string(),
+                name,
+                data: serde_json::from_str(&data).unwrap_or_default(),
+                version,
+                schema_id,
+                payment_txn,
+                state: PublicEntityStateType::Published,
+            };
         }
 
         pub fn create_credential_definition(&mut self) {
             self.activate().unwrap();
 
-            let schema_id = schema::get_schema_id(self.schema_handle).unwrap();
+            let schema_id = self.schema.get_schema_id().to_string();
             let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let name = String::from("degree");
             let tag = String::from("tag");
 
-            self.cred_def_handle = credential_def::create_and_publish_credentialdef(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
+            self.cred_def = CredentialDef::create(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
         }
 
-        pub fn create_presentation_request(&self) -> u32 {
+        pub fn create_presentation_request(&self) -> Verifier {
             let requested_attrs = json!([
                 {"name": "name"},
                 {"name": "date"},
@@ -181,11 +203,11 @@ pub mod test {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
 
-            proof::create_proof(String::from("alice_degree"),
-                                requested_attrs,
-                                json!([]).to_string(),
-                                json!({}).to_string(),
-                                String::from("proof_from_alice")).unwrap()
+            Verifier::create(String::from("alice_degree"),
+                             requested_attrs,
+                             json!([]).to_string(),
+                             json!({}).to_string(),
+                             String::from("proof_from_alice")).unwrap()
         }
 
         pub fn create_invite(&mut self) -> String {
@@ -230,54 +252,50 @@ pub mod test {
                 "empty_param": ""
             }).to_string();
 
-            self.credential_handle = issuer_credential::issuer_credential_create(self.cred_def_handle,
-                                                                                 String::from("alice_degree"),
-                                                                                 did,
-                                                                                 String::from("cred"),
-                                                                                 credential_data,
-                                                                                 0).unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            issuer_credential::send_credential_offer(self.credential_handle, connection_by_handle, None).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(1, issuer_credential::get_state(self.credential_handle).unwrap());
+            let issuer_config = AriesIssuerConfig {
+                cred_def_id: self.cred_def.get_cred_def_id(),
+                rev_reg_id: self.cred_def.get_rev_reg_id(),
+                tails_file: self.cred_def.get_tails_file(),
+            };
+            self.issuer_credential = Issuer::create(&issuer_config, &credential_data, "alice_degree").unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
         pub fn send_credential(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(2, issuer_credential::get_state(self.credential_handle).unwrap());
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
-            issuer_credential::send_credential(self.credential_handle, connection_by_handle).unwrap();
-            issuer_credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(4, issuer_credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), issuer_credential::get_credential_status(self.credential_handle).unwrap());
+            self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).unwrap();
+            self.issuer_credential.update_state(&self.connection).unwrap();
+            assert_eq!(IssuerState::Finished, self.issuer_credential.get_state());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.issuer_credential.get_credential_status().unwrap());
         }
 
         pub fn request_presentation(&mut self) {
             self.activate().unwrap();
-            self.presentation_handle = self.create_presentation_request();
-            assert_eq!(0, proof::get_state(self.presentation_handle).unwrap());
+            self.verifier = self.create_presentation_request();
+            assert_eq!(VerifierState::Initial, self.verifier.get_state());
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            proof::send_proof_request(self.presentation_handle, connection_by_handle, None).unwrap();
-            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.verifier.update_state(&self.connection).unwrap();
 
-            assert_eq!(1, proof::get_state(self.presentation_handle).unwrap());
+            assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
 
         pub fn verify_presentation(&mut self) {
             self.activate().unwrap();
-            self.update_proof_state(2, aries_vcx::messages::status::Status::Success.code())
+            self.update_proof_state(VerifierState::Finished, aries_vcx::messages::status::Status::Success.code())
         }
 
-        pub fn update_proof_state(&mut self, expected_state: u32, expected_status: u32) {
+        pub fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().unwrap();
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
-            assert_eq!(expected_state, proof::get_state(self.presentation_handle).unwrap());
-            assert_eq!(expected_status, proof::get_proof_state(self.presentation_handle).unwrap());
+            self.verifier.update_state(&self.connection).unwrap();
+            assert_eq!(expected_state, self.verifier.get_state());
+            assert_eq!(expected_status, self.verifier.presentation_status());
         }
 
         pub fn teardown(&mut self) {
@@ -292,8 +310,8 @@ pub mod test {
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub connection: Connection,
-        pub credential_handle: u32,
-        pub presentation_handle: u32,
+        pub credential: Holder,
+        pub prover: Prover
     }
 
     impl Alice {
@@ -326,8 +344,8 @@ pub mod test {
                 config_wallet,
                 config_agency,
                 connection: Connection::create("tmp_empoty", true).unwrap(),
-                credential_handle: 0,
-                presentation_handle: 0,
+                credential: Holder::default(),
+                prover: Prover::default()
             };
             close_main_wallet().unwrap();
             alice
@@ -356,37 +374,61 @@ pub mod test {
 
         pub fn accept_offer(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            let offers = credential::get_credential_offer_messages(connection_by_handle).unwrap();
+            let offers = get_credential_offer_messages(&self.connection).unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
-            let offer_json = serde_json::to_string(&offer).unwrap();
+            let offer = serde_json::to_string(&offer).unwrap();
+            let cred_offer: CredentialOffer = serde_json::from_str(&offer)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
+                                                  format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err))).unwrap();
 
-            self.credential_handle = credential::credential_create_with_offer("degree", &offer_json).unwrap();
-            assert_eq!(0, credential::get_state(self.credential_handle).unwrap());
+            self.credential = Holder::create(cred_offer, "degree").unwrap();
+            assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
-            credential::send_credential_request(self.credential_handle, connection_by_handle).unwrap();
-            assert_eq!(1, credential::get_state(self.credential_handle).unwrap());
+            let pw_did = self.connection.pairwise_info().pw_did.to_string();
+            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap());
+            assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 
         pub fn accept_credential(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            credential::update_state(self.credential_handle, None, connection_by_handle).unwrap();
-            assert_eq!(2, credential::get_state(self.credential_handle).unwrap());
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), credential::get_credential_status(self.credential_handle).unwrap());
+            self.credential.update_state(&self.connection).unwrap();
+            assert_eq!(HolderState::Finished, self.credential.get_state());
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
-        pub fn get_proof_request_messages(&mut self) -> String {
+        pub fn get_proof_request_messages(&mut self) -> PresentationRequest {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            let presentation_requests = disclosed_proof::get_proof_request_messages(connection_by_handle).unwrap();
+            let presentation_requests = get_proof_request_messages(&self.connection).unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
-            presentation_request_json
+            let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
+            presentation_request
+        }
+
+        pub fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
+            self.activate().unwrap();
+            match self.connection.get_message_by_id(msg_id).unwrap() {
+                A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
+                msg => {
+                    Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
+                                                  format!("Message of different type was received: {:?}", msg)))
+                }
+            }
+        }
+
+        pub fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
+            self.activate().unwrap();
+            match self.connection.get_message_by_id(msg_id).unwrap() {
+                A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
+                msg => {
+                    Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
+                                                  format!("Message of different type was received: {:?}", msg)))
+                }
+            }
         }
 
         pub fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
-            let credentials = disclosed_proof::retrieve_credentials(self.presentation_handle).unwrap();
+            let credentials = self.prover.retrieve_credentials().unwrap();
             let credentials: std::collections::HashMap<String, serde_json::Value> = serde_json::from_str(&credentials).unwrap();
 
             let mut use_credentials = json!({});
@@ -402,34 +444,34 @@ pub mod test {
 
         pub fn send_presentation(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
+            let presentation_request = self.get_proof_request_messages();
 
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
 
-            disclosed_proof::generate_proof(self.presentation_handle, credentials.to_string(), String::from("{}")).unwrap();
-            assert_eq!(1, disclosed_proof::get_state(self.presentation_handle).unwrap());
+            self.prover.generate_presentation(credentials.to_string(), String::from("{}")).unwrap();
+            assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::send_proof(self.presentation_handle, connection_by_handle).unwrap();
-            assert_eq!(3, disclosed_proof::get_state(self.presentation_handle).unwrap());
+            self.prover.send_presentation(&self.connection.send_message_closure().unwrap()).unwrap();
+            assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
         pub fn decline_presentation_request(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
 
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
-            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, Some(String::from("reason")), None).unwrap();
+            let presentation_request = self.get_proof_request_messages();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
+
+            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
         }
 
         pub fn propose_presentation(&mut self) {
             self.activate().unwrap();
-            let presentation_request_json = self.get_proof_request_messages();
 
-            self.presentation_handle = disclosed_proof::create_proof("degree", &presentation_request_json).unwrap();
+            let presentation_request = self.get_proof_request_messages();
+            self.prover = Prover::create("degree", presentation_request).unwrap();
+
             let proposal_data = json!({
                 "attributes": [
                     {
@@ -443,16 +485,14 @@ pub mod test {
                         "threshold": 18
                     }
                 ]
-            });
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::decline_presentation_request(self.presentation_handle, connection_by_handle, None, Some(proposal_data.to_string())).unwrap();
+            }).to_string();
+            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, Some(proposal_data)).unwrap();
         }
 
         pub fn ensure_presentation_verified(&mut self) {
             self.activate().unwrap();
-            let connection_by_handle = connection::store_connection(self.connection.clone()).unwrap();
-            disclosed_proof::update_state(self.presentation_handle, None, connection_by_handle).unwrap();
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), disclosed_proof::get_presentation_status(self.presentation_handle).unwrap());
+            self.prover.update_state(&self.connection).unwrap();
+            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }
 

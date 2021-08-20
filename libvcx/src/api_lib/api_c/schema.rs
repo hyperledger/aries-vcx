@@ -540,7 +540,7 @@ mod tests {
 
     use aries_vcx::{libindy, utils};
     use crate::api_lib;
-    use crate::api_lib::api_handle::schema::CreateSchema;
+    use aries_vcx::handlers::issuance::schema::schema::Schema;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -694,7 +694,7 @@ mod tests {
         let schema_json = vcx_schema_serialize_c_closure(handle);
 
         let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-        let _schema: CreateSchema = serde_json::from_value(j["data"].clone()).unwrap();
+        let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
         assert_eq!(j["version"], "1.0");
     }
 

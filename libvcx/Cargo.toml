@@ -15,8 +15,6 @@ crate-type = ["staticlib","rlib", "cdylib"]
 
 [features]
 pool_tests = []
-agency_pool_tests = []
-agency_v2 = []
 general_test = []
 to_restore = []
 fatal_warnings = []

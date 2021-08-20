@@ -22,11 +22,17 @@ pub enum HolderFullState {
     Finished(FinishedHolderState),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct HolderSM {
     state: HolderFullState,
     source_id: String,
     thread_id: String,
+}
+
+impl Default for HolderFullState {
+    fn default() -> Self {
+        Self::OfferReceived(OfferReceivedState::default())
+    }
 }
 
 impl HolderSM {

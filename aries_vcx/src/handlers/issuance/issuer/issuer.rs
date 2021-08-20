@@ -6,7 +6,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
     issuer_sm: IssuerSM
 }

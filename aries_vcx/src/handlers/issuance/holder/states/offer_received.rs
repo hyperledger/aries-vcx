@@ -7,7 +7,7 @@ use crate::messages::status::Status;
 use crate::handlers::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::libindy::utils::anoncreds::get_cred_def_json;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferReceivedState {
     pub offer: CredentialOffer
 }

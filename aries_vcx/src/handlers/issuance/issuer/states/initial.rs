@@ -3,7 +3,7 @@ use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::a2a::MessageId;
 use crate::messages::status::Status;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct InitialState {
     pub cred_def_id: String,
     pub credential_json: String,

@@ -14,6 +14,7 @@ use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use aries_vcx::handlers::connection::connection::Connection;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -218,8 +219,8 @@ fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<S
         });
 }
 
-pub fn get_credential_offer_messages(connection_handle: u32) -> VcxResult<String> {
-    trace!("Credential::get_credential_offer_messages >>> connection_handle: {}", connection_handle);
+pub fn get_credential_offer_messages_with_conn_handle(connection_handle: u32) -> VcxResult<String> {
+    trace!("Credential::get_credential_offer_messages_with_conn_handle >>> connection_handle: {}", connection_handle);
 
     AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
     AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
@@ -299,7 +300,7 @@ pub mod tests {
     pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
     fn _get_offer(handle: u32) -> String {
-        let offers = get_credential_offer_messages(handle).unwrap();
+        let offers = get_credential_offer_messages_with_conn_handle(handle).unwrap();
         let offers: serde_json::Value = serde_json::from_str(&offers).unwrap();
         let offer = serde_json::to_string(&offers[0]).unwrap();
         offer
@@ -440,7 +441,7 @@ pub mod tests {
 
         let connection_h = connection::tests::build_test_connection_invitee_completed();
 
-        let offer = get_credential_offer_messages(connection_h).unwrap();
+        let offer = get_credential_offer_messages_with_conn_handle(connection_h).unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();
         debug!("Serialized credential offer: {:?}", &o[0]);
         let _credential_offer: CredentialOffer = serde_json::from_str(&o[0].to_string()).unwrap();

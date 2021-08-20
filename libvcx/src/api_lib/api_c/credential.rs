@@ -644,7 +644,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
            command_handle, connection_handle);
 
     execute(move || {
-        match credential::get_credential_offer_messages(connection_handle) {
+        match credential::get_credential_offer_messages_with_conn_handle(connection_handle) {
             Ok(x) => {
                 trace!("vcx_credential_get_offers_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, x.to_string(), x);

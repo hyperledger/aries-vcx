@@ -4,7 +4,9 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
+use crate::aries_vcx::handlers::issuance::credential_def::CredentialDef;
 use crate::aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 

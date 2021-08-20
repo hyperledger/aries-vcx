@@ -10,7 +10,7 @@ use crate::messages::proof_presentation::presentation_request::PresentationReque
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
     prover_sm: ProverSM,
 }
