@@ -1,22 +1,22 @@
 use std::ffi::CString;
 
-use aries_vcx::indy::{CommandHandle, INVALID_WALLET_HANDLE};
-use aries_vcx::indy_sys::WalletHandle;
 use libc::c_char;
 
-use aries_vcx::settings;
 use aries_vcx::{libindy, utils};
+use aries_vcx::indy::CommandHandle;
+use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
+use aries_vcx::libindy::utils::{ledger, pool, wallet};
+use aries_vcx::libindy::utils::pool::is_pool_open;
+use aries_vcx::libindy::utils::wallet::{close_main_wallet, IssuerConfig, WalletConfig};
+use aries_vcx::settings;
+use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgencyClientConfig;
+use aries_vcx::utils::version_constants;
+
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::get_current_error_c_json;
 use crate::api_lib::utils::runtime::{execute, init_threadpool};
 use crate::error::prelude::*;
-use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_as_main_wallet, open_main_pool, PoolConfig};
-use aries_vcx::libindy::utils::{ledger, pool, wallet};
-use aries_vcx::libindy::utils::pool::is_pool_open;
-use aries_vcx::libindy::utils::wallet::{close_main_wallet, get_wallet_handle, IssuerConfig, set_wallet_handle, WalletConfig};
-use aries_vcx::utils::error;
-use aries_vcx::utils::provision::AgencyClientConfig;
-use aries_vcx::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -514,8 +514,18 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
     use std::ptr;
+
+    use aries_vcx::indy::INVALID_WALLET_HANDLE;
+    use aries_vcx::init::PoolConfig;
+    use aries_vcx::libindy::utils::pool::get_pool_handle;
+    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::libindy::utils::wallet::get_wallet_handle;
+    use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
+    use aries_vcx::utils::devsetup::{configure_trustee_did, setup_libnullpay_nofees, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -526,18 +536,10 @@ mod tests {
     use crate::api_lib::utils::error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use aries_vcx::init::PoolConfig;
-    use aries_vcx::libindy::utils::pool::get_pool_handle;
-    use aries_vcx::libindy::utils::pool::tests::{create_tmp_genesis_txn_file, delete_named_test_pool};
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::pool::tests::delete_test_pool;
-    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::wallet::get_wallet_handle;
-    use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::*;
 
     use super::*;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
+    use aries_vcx::libindy::utils::pool::test_utils::{delete_named_test_pool, create_tmp_genesis_txn_file, delete_test_pool};
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -681,7 +683,7 @@ mod tests {
     fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, _wallet_name, wallet_config) = create_main_wallet_and_its_backup();
 
         wallet::delete_wallet(&wallet_config).unwrap();
 
@@ -911,14 +913,6 @@ mod tests {
         assert_eq!(aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement.unwrap());
     }
 
-    #[cfg(feature = "general_test")]
-    fn get_settings() -> String {
-        json!({
-            settings::CONFIG_INSTITUTION_DID:             settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap(),
-            settings::CONFIG_PAYMENT_METHOD:              settings::get_config_value(settings::CONFIG_PAYMENT_METHOD).unwrap()
-        }).to_string()
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_call_c_callable_api_without_threadpool() {
@@ -988,7 +982,7 @@ mod tests {
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential_def(&attrs_list, true);
+            create_and_store_credential_def(&attrs_list, true);
         assert!(schema_id.len() > 0);
 
         delete_test_pool();

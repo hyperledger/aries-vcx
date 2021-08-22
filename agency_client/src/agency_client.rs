@@ -1,10 +1,10 @@
-use crate::agency_settings;
-
-use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use serde_json::Value;
-use crate::utils::{error_utils, validation};
-use crate::mocking;
 use url::Url;
+
+use crate::agency_settings;
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::mocking;
+use crate::utils::{error_utils, validation};
 
 #[derive(Default, Deserialize)]
 pub struct AgencyClient {
@@ -16,7 +16,7 @@ pub struct AgencyClient {
     agent_pwdid: String,
     agent_vk: String,
     my_pwdid: String,
-    my_vk: String
+    my_vk: String,
 }
 
 impl AgencyClient {
@@ -30,13 +30,13 @@ impl AgencyClient {
     pub fn get_my_pwdid(&self) -> AgencyClientResult<String> { Ok(self.my_pwdid.clone()) }
     pub fn get_my_vk(&self) -> AgencyClientResult<String> { Ok(self.my_vk.clone()) }
 
-    pub fn set_wallet_handle(&mut self, wh: i32) { 
-        self.wallet_handle = wh; 
+    pub fn set_wallet_handle(&mut self, wh: i32) {
+        self.wallet_handle = wh;
         crate::utils::wallet::set_wallet_handle(indy::WalletHandle(wh));
     }
 
-    pub fn reset_wallet_handle(&mut self) { 
-        self.wallet_handle = indy::INVALID_WALLET_HANDLE.0; 
+    pub fn reset_wallet_handle(&mut self) {
+        self.wallet_handle = indy::INVALID_WALLET_HANDLE.0;
         crate::utils::wallet::reset_wallet_handle();
     }
     pub fn set_agency_url(&mut self, url: &str) {
@@ -80,8 +80,8 @@ impl AgencyClient {
     pub fn process_config_string(&mut self, config: &str, validate: bool) -> AgencyClientResult<u32> {
         trace!("AgencyClient::process_config_string >>> config {:?}, validate: {:?}", config, validate);
 
-    let configuration: Value = serde_json::from_str(config)
-        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
+        let configuration: Value = serde_json::from_str(config)
+            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
 
         if let Value::Object(ref map) = configuration {
             for (key, value) in map {
@@ -91,18 +91,18 @@ impl AgencyClient {
                     _ => {
                         warn!("Unexpected config value type for key: {}, value: {:?}", key, value);
                         continue;
-                    },
+                    }
                 };
                 match key.as_ref() {
-                   agency_settings::CONFIG_AGENCY_ENDPOINT => { self.set_agency_url(&value.to_string()); },
-                   agency_settings::CONFIG_AGENCY_DID => { self.set_agency_did(&value.to_string()); },
-                   agency_settings::CONFIG_AGENCY_VERKEY => { self.set_agency_vk(&value.to_string()); },
-                   agency_settings::CONFIG_REMOTE_TO_SDK_DID => { self.set_agent_pwdid(&value.to_string()); },
-                   agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY => { self.set_agent_vk(&value.to_string()); },
-                   agency_settings::CONFIG_SDK_TO_REMOTE_DID => { self.set_my_pwdid(&value.to_string()); },
-                   agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY => { self.set_my_vk(&value.to_string()); },
-                   agency_settings::CONFIG_ENABLE_TEST_MODE => { self.enable_test_mode(); },
-                   _ => { trace!("AgencyClient::process_config_string >>> ignoring key {}", key); }
+                    agency_settings::CONFIG_AGENCY_ENDPOINT => { self.set_agency_url(&value.to_string()); }
+                    agency_settings::CONFIG_AGENCY_DID => { self.set_agency_did(&value.to_string()); }
+                    agency_settings::CONFIG_AGENCY_VERKEY => { self.set_agency_vk(&value.to_string()); }
+                    agency_settings::CONFIG_REMOTE_TO_SDK_DID => { self.set_agent_pwdid(&value.to_string()); }
+                    agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY => { self.set_agent_vk(&value.to_string()); }
+                    agency_settings::CONFIG_SDK_TO_REMOTE_DID => { self.set_my_pwdid(&value.to_string()); }
+                    agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY => { self.set_my_vk(&value.to_string()); }
+                    agency_settings::CONFIG_ENABLE_TEST_MODE => { self.enable_test_mode(); }
+                    _ => { trace!("AgencyClient::process_config_string >>> ignoring key {}", key); }
                 }
             }
         }

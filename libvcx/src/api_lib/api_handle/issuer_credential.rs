@@ -1,14 +1,13 @@
 use serde_json;
 
+use aries_vcx::utils::error;
+
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
-use crate::aries_vcx::handlers::issuance::credential_def::CredentialDef;
 use crate::aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -174,20 +173,20 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 pub mod tests {
     use aries_vcx::agency_client::mocking::HttpClientMockResponse;
-
-    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
-    use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
-    use crate::api_lib::api_handle::issuer_credential;
     use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use aries_vcx::libindy::utils::LibindyMock;
     use aries_vcx::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
-    #[allow(unused_imports)]
-    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::issuer_credential;
     use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
     use super::*;

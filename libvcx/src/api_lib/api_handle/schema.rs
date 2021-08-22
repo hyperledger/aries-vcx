@@ -2,15 +2,14 @@ use std::string::ToString;
 
 use serde_json;
 
-use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
-use crate::error::prelude::*;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
 use aries_vcx::libindy::utils::payments::PaymentTxn;
-use aries_vcx::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use aries_vcx::utils::serialization::ObjectWithVersion;
+
+use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::error::prelude::*;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
@@ -157,23 +156,22 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 pub mod tests {
     extern crate rand;
 
     use rand::Rng;
 
-    use aries_vcx::settings;
-    use aries_vcx::libindy;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::anoncreds::tests::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::payments::add_new_did;
+    use aries_vcx::settings;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks};
 
     use super::*;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
 
     fn data() -> Vec<String> {
         vec!["address1".to_string(), "address2".to_string(), "zip".to_string(), "city".to_string(), "state".to_string()]

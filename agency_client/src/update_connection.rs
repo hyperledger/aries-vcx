@@ -1,9 +1,9 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::{prepare_message_for_agent, A2AMessageKinds, A2AMessageV2, A2AMessage, GeneralMessage, delete_connection, parse_response_from_agency};
+use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
 use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -140,13 +140,13 @@ impl GeneralMessage for DeleteConnectionBuilder {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
-    use crate::utils::constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
+    use crate::utils::test_constants::DELETE_CONNECTION_DECRYPTED_RESPONSE;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_deserialize_delete_connection_payload() {
-
         let delete_connection_payload: UpdateConnectionResponse = serde_json::from_str(DELETE_CONNECTION_DECRYPTED_RESPONSE).unwrap();
         assert_eq!(delete_connection_payload.status_code, ConnectionStatus::Deleted);
     }

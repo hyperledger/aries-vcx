@@ -29,7 +29,7 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct LibindyMock {
-    results: Vec<u32>
+    results: Vec<u32>,
 }
 
 impl LibindyMock {
@@ -44,8 +44,57 @@ impl LibindyMock {
     }
 }
 
+// TODO:  Is used for Aries tests...try to remove and use one of devsetup's
+#[cfg(feature = "test_utils")]
+pub mod test_setup {
+    use indy;
+    use indy::future::Future;
+
+    use super::*;
+
+    pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
+    pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
+
+    pub struct WalletSetup {
+        pub name: String,
+        pub wallet_config: String,
+        pub wh: indy::WalletHandle,
+    }
+
+    pub fn setup_wallet() -> WalletSetup {
+        let name: String = crate::utils::random::generate_random_name();
+        let wallet_config = json!({"id": name}).to_string();
+
+        indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
+        let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
+        wallet::set_wallet_handle(wallet_handle);
+
+        WalletSetup { name, wallet_config, wh: wallet_handle }
+    }
+
+    pub fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
+        let key_config = json!({"seed": TRUSTEE_SEED}).to_string();
+        indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
+    }
+
+    pub fn create_key(wallet_handle: indy::WalletHandle) -> String {
+        let seed: String = crate::utils::random::generate_random_seed();
+        let key_config = json!({"seed": seed}).to_string();
+        indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
+    }
+
+    impl Drop for WalletSetup {
+        fn drop(&mut self) {
+            if self.wh.0 != 0 {
+                indy::wallet::close_wallet(self.wh).wait().unwrap();
+                indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS).wait().unwrap();
+            }
+        }
+    }
+}
+
 #[allow(unused_imports)]
-// #[cfg(test)]
+#[cfg(feature = "pool_tests")]
 pub mod tests {
     use indy::future::Future;
 
@@ -54,53 +103,6 @@ pub mod tests {
     use crate::utils::devsetup::*;
 
     use super::*;
-
-    // TODO:  Is used for Aries tests...try to remove and use one of devsetup's
-    pub mod test_setup {
-        use indy;
-
-        use super::*;
-
-        pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
-        pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
-
-        pub struct WalletSetup {
-            pub name: String,
-            pub wallet_config: String,
-            pub wh: indy::WalletHandle,
-        }
-
-        pub fn setup_wallet() -> WalletSetup {
-            let name: String = crate::utils::random::generate_random_name();
-            let wallet_config = json!({"id": name}).to_string();
-
-            indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
-            let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).wait().unwrap();
-            wallet::set_wallet_handle(wallet_handle);
-
-            WalletSetup { name, wallet_config, wh: wallet_handle }
-        }
-
-        pub fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
-            let key_config = json!({"seed": TRUSTEE_SEED}).to_string();
-            indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
-        }
-
-        pub fn create_key(wallet_handle: indy::WalletHandle) -> String {
-            let seed: String = crate::utils::random::generate_random_seed();
-            let key_config = json!({"seed": seed}).to_string();
-            indy::crypto::create_key(wallet_handle, Some(&key_config)).wait().unwrap()
-        }
-
-        impl Drop for WalletSetup {
-            fn drop(&mut self) {
-                if self.wh.0 != 0 {
-                    indy::wallet::close_wallet(self.wh).wait().unwrap();
-                    indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS).wait().unwrap();
-                }
-            }
-        }
-    }
 
     #[cfg(feature = "pool_tests")]
     #[test]

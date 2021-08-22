@@ -21,7 +21,7 @@ impl Forward {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::ack::tests::*;
+    use crate::messages::ack::test_utils::*;
 
     use super::*;
 

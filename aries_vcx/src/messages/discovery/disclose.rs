@@ -1,6 +1,6 @@
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
 use crate::settings::Actors;
-use crate::messages::a2a::{MessageId, A2AMessage};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -8,14 +8,14 @@ pub struct Disclose {
     pub id: MessageId,
     pub protocols: Vec<ProtocolDescriptor>,
     #[serde(rename = "~thread")]
-    pub thread: Thread
+    pub thread: Thread,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProtocolDescriptor {
     pub pid: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roles: Option<Vec<Actors>>
+    pub roles: Option<Vec<Actors>>,
 }
 
 impl Disclose {
@@ -44,8 +44,9 @@ impl Disclose {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::messages::connection::response::test_utils::*;
+
     use super::*;
-    use crate::messages::connection::response::tests::*;
 
     fn _protocol_descriptor() -> ProtocolDescriptor {
         ProtocolDescriptor { pid: String::from("https://didcomm.org/"), roles: None }

@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::Mutex;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::indy_sys::CommandHandle;
 
 use crate::api_lib::utils::callback::{build_buf, build_string, get_cb};
 
@@ -103,6 +104,7 @@ pub extern "C" fn call_cb_u32_u32_str_str_str(command_handle: CommandHandle, arg
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
 

@@ -31,7 +31,7 @@ impl FinishedHolderState {
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot convert {:?} into object", attach)))
         }
     }
-    
+
     pub fn get_attachment(&self) -> VcxResult<String> {
         let credential = self.credential.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
         credential.credentials_attach.content()

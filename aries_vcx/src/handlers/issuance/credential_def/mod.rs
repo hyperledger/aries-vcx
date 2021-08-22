@@ -1,9 +1,9 @@
-use serde_json;
 use std::fmt;
 
+use serde_json;
+
 use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, ledger};
-use crate::libindy::utils::cache::update_rev_reg_ids_cache;
+use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;

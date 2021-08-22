@@ -3,19 +3,19 @@ use std::sync::Once;
 
 use crate::{libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
+use crate::init::{init_issuer_config, open_as_main_wallet};
 use crate::init::PoolConfig;
 use crate::libindy::utils::pool::reset_pool_handle;
-use crate::libindy::utils::pool::tests::{create_test_ledger_config, delete_test_pool, open_test_pool};
+use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
+use crate::libindy::utils::wallet::{configure_issuer_wallet, create_wallet};
 use crate::settings::set_testing_defaults;
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
-use crate::utils::test_logger::LibvcxDefaultLogger;
 use crate::utils::plugins::init_plugin;
-use crate::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
-use crate::libindy::utils::wallet::{create_wallet, configure_issuer_wallet};
-use crate::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
+use crate::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
+use crate::utils::test_logger::LibvcxDefaultLogger;
 
 pub struct SetupEmpty; // clears settings, setups up logging
 
@@ -32,19 +32,19 @@ pub struct SetupWallet {
 
 pub struct SetupPoolConfig {
     skip_cleanup: bool,
-    pub pool_config: PoolConfig
+    pub pool_config: PoolConfig,
 }
 
 pub struct SetupLibraryWallet {
-    pub wallet_config: WalletConfig
+    pub wallet_config: WalletConfig,
 } // set default settings and init indy wallet
 
 pub struct SetupLibraryWalletPoolZeroFees {
-    pub institution_did: String
+    pub institution_did: String,
 }  // set default settings, init indy wallet, init pool, set zero fees
 
 pub struct SetupAgencyMock {
-    pub wallet_config: WalletConfig
+    pub wallet_config: WalletConfig,
 } // set default settings and enable mock agency mode
 
 pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0
@@ -98,7 +98,6 @@ impl Drop for SetupDefaults {
 }
 
 impl SetupMocks {
-
     fn _init() -> SetupMocks {
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
         settings::get_agency_client_mut().unwrap().enable_test_mode();
@@ -108,7 +107,6 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         setup();
         SetupMocks::_init()
-
     }
 
     pub fn init_without_threadpool() -> SetupMocks {
@@ -137,7 +135,7 @@ impl SetupLibraryWallet {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
@@ -168,7 +166,7 @@ impl SetupWallet {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
         create_indy_wallet(&wallet_config).unwrap();
 
@@ -184,9 +182,9 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            let _res = close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping SetupWallet test config."));
-            delete_wallet(&self.wallet_config).unwrap_or_else(|e| error!("Failed to delete wallet while dropping SetupWallet test config."));
-            reset_wallet_handle().unwrap_or_else(|e| error!("Failed to reset wallet handle while dropping SetupWallet test config."));
+            let _res = close_main_wallet().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping SetupWallet test config."));
+            delete_wallet(&self.wallet_config).unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
+            reset_wallet_handle().unwrap_or_else(|_e| error!("Failed to reset wallet handle while dropping SetupWallet test config."));
         }
     }
 }
@@ -198,7 +196,7 @@ impl SetupPoolConfig {
         let pool_config = PoolConfig {
             genesis_path,
             pool_name: None,
-            pool_config: None
+            pool_config: None,
         };
 
         SetupPoolConfig { skip_cleanup: false, pool_config }
@@ -265,7 +263,7 @@ impl SetupAgencyMock {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
         create_and_open_as_main_wallet(&wallet_config).unwrap();
 
@@ -359,7 +357,7 @@ pub fn configure_trustee_did() {
 
 pub fn setup_libnullpay_nofees() {
     init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    libindy::utils::payments::tests::token_setup(None, None, true);
+    libindy::utils::payments::test_utils::token_setup(None, None, true);
 }
 
 pub fn setup_indy_env(use_zero_fees: bool) -> String {
@@ -377,13 +375,13 @@ pub fn setup_indy_env(use_zero_fees: bool) -> String {
         storage_config: None,
         storage_credentials: None,
         rekey: None,
-        rekey_derivation_method: None
+        rekey_derivation_method: None,
     };
     let config_provision_agent = AgentProvisionConfig {
         agency_did: AGENCY_DID.to_string(),
         agency_verkey: AGENCY_VERKEY.to_string(),
         agency_endpoint: AGENCY_ENDPOINT.to_string(),
-        agent_seed: None
+        agent_seed: None,
     };
 
     create_wallet(&config_wallet).unwrap();
@@ -397,7 +395,7 @@ pub fn setup_indy_env(use_zero_fees: bool) -> String {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    libindy::utils::payments::tests::token_setup(None, None, use_zero_fees);
+    libindy::utils::payments::test_utils::token_setup(None, None, use_zero_fees);
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did

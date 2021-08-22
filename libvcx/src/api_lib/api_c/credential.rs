@@ -1,14 +1,15 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -994,15 +995,14 @@ mod tests {
     use serde_json::Value;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
+    use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
 
     use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::api_lib::VcxStateType;
-    use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
-    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
 
     use super::*;
 

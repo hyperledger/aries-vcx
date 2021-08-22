@@ -50,6 +50,7 @@ pub fn get_cb<H: Eq + Hash, T>(command_handle: H, map: &Mutex<HashMap<H, T>>) ->
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
 

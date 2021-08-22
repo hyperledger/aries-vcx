@@ -1,14 +1,15 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::disclosed_proof;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.
@@ -952,15 +953,14 @@ mod tests {
     use serde_json::Value;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-
-    use crate::api_lib::utils::return_types_u32;
-    use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::api_lib::VcxStateType;
     use aries_vcx::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
 
     use super::*;

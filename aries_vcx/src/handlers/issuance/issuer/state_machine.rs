@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
-
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::initial::InitialState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
@@ -17,7 +17,6 @@ use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -367,10 +366,10 @@ fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, 
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::issuance::credential::tests::_credential;
-    use crate::messages::issuance::credential_offer::tests::_credential_offer;
-    use crate::messages::issuance::credential_proposal::tests::_credential_proposal;
-    use crate::messages::issuance::credential_request::tests::_credential_request;
+    use crate::messages::issuance::credential::test_utils::_credential;
+    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
+    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use crate::messages::issuance::credential_request::test_utils::_credential_request;
     use crate::messages::issuance::test::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;

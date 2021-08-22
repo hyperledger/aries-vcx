@@ -3,7 +3,7 @@ use crate::messages::proof_presentation::presentation_request::{PresentationRequ
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InitialState {
-    pub presentation_request_data: PresentationRequestData
+    pub presentation_request_data: PresentationRequestData,
 }
 
 impl From<(InitialState, PresentationRequest)> for PresentationRequestSentState {

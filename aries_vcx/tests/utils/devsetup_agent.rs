@@ -415,7 +415,7 @@ pub mod test {
             assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
-            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap());
+            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap()).unwrap();
             assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 

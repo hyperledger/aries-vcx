@@ -1,6 +1,10 @@
 use serde_json;
 
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::settings::indy_mocks_enabled;
+use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
+use aries_vcx::utils::error;
+use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -10,11 +14,6 @@ use crate::aries_vcx::{
     messages::issuance::credential_offer::CredentialOffer,
 };
 use crate::error::prelude::*;
-use aries_vcx::settings::indy_mocks_enabled;
-use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::error;
-use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
-use aries_vcx::handlers::connection::connection::Connection;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -286,14 +285,15 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
+    use aries_vcx::utils::mockdata::mockdata_credex;
+
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
+    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
     use crate::aries_vcx::messages::issuance::credential::Credential;
     use crate::error::VcxErrorKind;
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
-    use aries_vcx::utils::mockdata::mockdata_credex;
-    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
 
     use super::*;
 

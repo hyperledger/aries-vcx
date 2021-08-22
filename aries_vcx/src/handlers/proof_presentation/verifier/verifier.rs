@@ -1,14 +1,15 @@
+use std::collections::HashMap;
+
 use crate::error::prelude::*;
+use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::handlers::proof_presentation::verifier::state_machine::VerifierSM;
-use crate::handlers::connection::connection::Connection;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_request::*;
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
-    verifier_sm: VerifierSM
+    verifier_sm: VerifierSM,
 }
 
 #[derive(Debug, PartialEq)]
@@ -16,7 +17,7 @@ pub enum VerifierState {
     Initial,
     PresentationRequestSent,
     Finished,
-    Failed
+    Failed,
 }
 
 impl Verifier {
@@ -79,7 +80,7 @@ impl Verifier {
     }
 
     pub fn step(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
-        -> VcxResult<()> 
+                -> VcxResult<()>
     {
         self.verifier_sm = self.verifier_sm.clone().step(message, send_message)?;
         Ok(())

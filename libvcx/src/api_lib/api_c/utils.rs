@@ -1,21 +1,21 @@
 use std::ptr;
 use std::thread;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::libindy::utils::payments;
+use aries_vcx::utils::constants::*;
+use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::libindy::utils::payments;
-use aries_vcx::utils::constants::*;
-use aries_vcx::utils::error;
-use aries_vcx::utils::provision::AgentProvisionConfig;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UpdateAgentInfo {
@@ -79,7 +79,8 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                 cb(command_handle, e.into(), ptr::null_mut());
             }
             Ok(agency_config) => {
-                let agency_config = serde_json::to_string(&agency_config).unwrap(); // todo: no unwrap
+                let agency_config = serde_json::to_string(&agency_config).unwrap();
+                // todo: no unwrap
                 trace!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
                        command_handle, error::SUCCESS.message, agency_config);
                 let msg = CStringUtils::string_to_cstring(agency_config);
@@ -547,12 +548,12 @@ mod tests {
     use std::ffi::CString;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use aries_vcx::utils::constants;
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use super::*;
 

@@ -1,7 +1,11 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::agency_client::get_message::parse_status_codes;
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::libindy;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection::*;
 use crate::api_lib::api_handle::connection;
@@ -9,9 +13,6 @@ use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::libindy;
-use aries_vcx::utils::error;
-use aries_vcx::agency_client::get_message::parse_status_codes;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -1316,16 +1317,17 @@ mod tests {
 
     use serde_json::Value;
 
-    use crate::aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
+    use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::error;
+    use aries_vcx::utils::error::SUCCESS;
+    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
+
     use crate::api_lib::api_handle::connection::tests::{build_test_connection_inviter_invited, build_test_connection_inviter_null, build_test_connection_inviter_requested};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::error;
-    use aries_vcx::utils::error::SUCCESS;
-    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION};
+    use crate::aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
     use super::*;
 

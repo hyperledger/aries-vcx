@@ -1,9 +1,9 @@
 use url::Url;
 
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation, PublicInvitation};
 use crate::error::prelude::*;
-use crate::utils::validation::validate_verkey;
 use crate::libindy::utils::ledger;
+use crate::messages::connection::invite::{Invitation, PairwiseInvitation, PublicInvitation};
+use crate::utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -19,7 +19,8 @@ pub struct DidDoc {
     pub id: String,
     #[serde(default)]
     #[serde(rename = "publicKey")]
-    pub public_key: Vec<Ed25519PublicKey>, // TODO: A DID document MAY include a publicKey property??? (https://w3c.github.io/did-core/#public-keys)
+    pub public_key: Vec<Ed25519PublicKey>,
+    // TODO: A DID document MAY include a publicKey property??? (https://w3c.github.io/did-core/#public-keys)
     #[serde(default)]
     pub authentication: Vec<Authentication>,
     pub service: Vec<Service>,
@@ -29,7 +30,8 @@ pub struct DidDoc {
 pub struct Ed25519PublicKey {
     pub id: String,
     #[serde(rename = "type")]
-    pub type_: String, // all list of types: https://w3c-ccg.github.io/ld-cryptosuite-registry/
+    pub type_: String,
+    // all list of types: https://w3c-ccg.github.io/ld-cryptosuite-registry/
     pub controller: String,
     #[serde(rename = "publicKeyBase58")]
     pub public_key_base_58: String,
@@ -298,10 +300,10 @@ impl From<Invitation> for DidDoc {
                 did_doc.set_id(invitation.did.clone());
                 let service = ledger::get_service(&invitation.did).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
-                    Service::default()                
+                    Service::default()
                 });
                 (service.service_endpoint, service.recipient_keys, service.routing_keys)
-            },
+            }
             Invitation::Pairwise(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
                 (invitation.service_endpoint.clone(), invitation.recipient_keys, invitation.routing_keys)
@@ -325,11 +327,8 @@ impl From<DidDoc> for PairwiseInvitation {
     }
 }
 
-// #[cfg(test)]
-pub mod tests {
-    use crate::messages::a2a::MessageId;
-    use crate::messages::connection::invite::tests::_pairwise_invitation;
-
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use super::*;
 
     pub fn _key_1() -> String {
@@ -406,7 +405,7 @@ pub mod tests {
             public_key: vec![
                 Ed25519PublicKey { id: _key_reference_1(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_1() },
                 Ed25519PublicKey { id: _key_reference_2(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_2() },
-                Ed25519PublicKey { id: _key_reference_3(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_3() }
+                Ed25519PublicKey { id: _key_reference_3(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_3() },
             ],
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_reference_1() }
@@ -427,7 +426,7 @@ pub mod tests {
             public_key: vec![
                 Ed25519PublicKey { id: _key_1(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_1() },
                 Ed25519PublicKey { id: _key_1(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_2() },
-                Ed25519PublicKey { id: _key_1(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_3() }
+                Ed25519PublicKey { id: _key_1(), type_: KEY_TYPE.to_string(), controller: _id(), public_key_base_58: _key_3() },
             ],
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_1() }
@@ -478,6 +477,15 @@ pub mod tests {
             }],
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::a2a::MessageId;
+    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::messages::connection::invite::test_utils::_pairwise_invitation;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,9 +1,9 @@
+use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
-use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialOffer {
@@ -57,20 +57,20 @@ impl CredentialOffer {
 
 a2a_message!(CredentialOffer);
 
-// #[cfg(test)]
-pub mod tests {
-    use crate::messages::connection::response::tests::*;
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::connection::response::test_utils::_thread;
 
     use super::*;
 
-    fn _attachment() -> ::serde_json::Value {
+    pub fn _attachment() -> ::serde_json::Value {
         json!({
             "schema_id":"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0",
             "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1"
         })
     }
 
-    fn _comment() -> Option<String> {
+    pub fn _comment() -> Option<String> {
         Some(String::from("comment"))
     }
 
@@ -104,6 +104,14 @@ pub mod tests {
             thread: Some(_thread()),
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::connection::response::test_utils::_thread_id;
+    use crate::messages::issuance::credential_offer::test_utils::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
-use crate::error::AgencyClientResult;
 use crate::agency_settings;
+use crate::error::AgencyClientResult;
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -15,7 +15,7 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct HttpClientMockResponse {
-    responses: Vec<AgencyClientResult<Vec<u8>>>
+    responses: Vec<AgencyClientResult<Vec<u8>>>,
 }
 
 impl HttpClientMockResponse {
@@ -36,17 +36,17 @@ impl HttpClientMockResponse {
 
 #[derive(Default)]
 pub struct AgencyMockDecryptedMessages {
-    messages: Vec<String>
+    messages: Vec<String>,
 }
 
 #[derive(Default)]
 pub struct AgencyMock {
-    responses: Vec<Vec<u8>>
+    responses: Vec<Vec<u8>>,
 }
 
 #[derive(Default)]
 pub struct AgencyMockDecrypted {
-    responses: Vec<String>
+    responses: Vec<String>,
 }
 
 impl AgencyMock {

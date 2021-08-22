@@ -1,5 +1,5 @@
-use crate::handlers::issuance::credential_def::PublicEntityStateType;
 use crate::error::prelude::*;
+use crate::handlers::issuance::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;

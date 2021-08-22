@@ -4,11 +4,11 @@ use crate::agency_client::get_message::{get_connection_messages, Message};
 use crate::agency_client::MessageStatusCode;
 use crate::agency_client::update_connection::send_delete_connection_message;
 use crate::agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
+use crate::error::prelude::*;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::A2AMessage;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::error::prelude::*;
 use crate::settings;
+use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloudAgentInfo {

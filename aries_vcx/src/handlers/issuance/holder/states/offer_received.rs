@@ -1,15 +1,15 @@
 use crate::error::prelude::*;
+use crate::handlers::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::handlers::issuance::holder::states::request_sent::RequestSentState;
+use crate::libindy::utils::anoncreds::get_cred_def_json;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::status::Status;
-use crate::handlers::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::libindy::utils::anoncreds::get_cred_def_json;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferReceivedState {
-    pub offer: CredentialOffer
+    pub offer: CredentialOffer,
 }
 
 impl From<(OfferReceivedState, String, String)> for RequestSentState {
@@ -18,7 +18,7 @@ impl From<(OfferReceivedState, String, String)> for RequestSentState {
         trace!("cred_def_json={:?}", cred_def_json);
         RequestSentState {
             req_meta,
-            cred_def_json
+            cred_def_json,
         }
     }
 }

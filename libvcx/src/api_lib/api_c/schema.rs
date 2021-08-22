@@ -1,15 +1,16 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 use serde_json;
+
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::settings;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::settings;
-use aries_vcx::utils::error;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -529,25 +530,26 @@ pub extern fn vcx_schema_get_state(command_handle: CommandHandle,
 
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
     extern crate serde_json;
     extern crate rand;
 
     use std::ffi::CString;
 
-    #[allow(unused_imports)]
     use rand::Rng;
 
-    use aries_vcx::{libindy, utils};
-    use crate::api_lib;
+    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
     use aries_vcx::handlers::issuance::schema::schema::Schema;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::utils;
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
+    use aries_vcx::utils::devsetup::{SetupLibraryWalletPoolZeroFees, SetupMocks};
+
+    use crate::api_lib;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    #[allow(unused_imports)]
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::*;
-    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 
     use super::*;
 
@@ -600,7 +602,7 @@ mod tests {
     fn test_vcx_schema_get_attrs_with_pool() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,

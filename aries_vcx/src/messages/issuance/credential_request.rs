@@ -1,7 +1,7 @@
 use crate::error::VcxResult;
-use crate::messages::thread::Thread;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -34,20 +34,20 @@ impl CredentialRequest {
 threadlike!(CredentialRequest);
 a2a_message!(CredentialRequest);
 
-#[cfg(test)]
-pub mod tests {
-    use crate::messages::issuance::credential_offer::tests::{thread, thread_id};
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::issuance::credential_offer::test_utils::thread;
 
     use super::*;
 
-    fn _attachment() -> serde_json::Value {
+    pub fn _attachment() -> serde_json::Value {
         json!({
             "prover_did":"VsKV7grR1BUE29mG2Fm2kX",
             "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1"
         })
     }
 
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("comment")
     }
 
@@ -66,6 +66,14 @@ pub mod tests {
             thread: thread(),
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::issuance::credential_offer::test_utils::thread_id;
+    use crate::messages::issuance::credential_request::test_utils::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

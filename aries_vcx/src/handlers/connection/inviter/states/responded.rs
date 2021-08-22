@@ -1,3 +1,4 @@
+use crate::error::prelude::*;
 use crate::handlers::connection::inviter::states::complete::CompleteState;
 use crate::handlers::connection::inviter::states::null::NullState;
 use crate::handlers::connection::util::handle_ping;
@@ -8,7 +9,6 @@ use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::error::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RespondedState {

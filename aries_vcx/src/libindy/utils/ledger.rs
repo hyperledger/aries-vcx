@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use indy::future::Future;
 use indy::cache;
+use indy::future::Future;
 use indy::ledger;
 use serde_json;
 
@@ -140,21 +140,21 @@ pub mod auth_rule {
     Structure for parsing GET_AUTH_RULE response
     # parameters
     result - the payload containing data relevant to the GET_AUTH_RULE transaction
-    */
+     */
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     pub struct GetAuthRuleResponse {
-        pub result: GetAuthRuleResult
+        pub result: GetAuthRuleResult,
     }
 
     /**
-       Structure of the result value within the GAT_AUTH_RULE response
-        # parameters
-       identifier - The DID this request was submitted from
-       req_id - Unique ID number of the request with transaction
-       txn_type - the type of transaction that was submitted
-       data - A key:value map with the action id as the key and the auth rule as the value
-   */
+    Structure of the result value within the GAT_AUTH_RULE response
+     # parameters
+    identifier - The DID this request was submitted from
+    req_id - Unique ID number of the request with transaction
+    txn_type - the type of transaction that was submitted
+    data - A key:value map with the action id as the key and the auth rule as the value
+     */
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "camelCase")]
     pub struct GetAuthRuleResult {
@@ -167,13 +167,13 @@ pub mod auth_rule {
     }
 
     /**
-       Enum of the constraint type within the GAT_AUTH_RULE result data
-        # parameters
-       Role - The final constraint
-       And - Combine multiple constraints all of them must be met
-       Or - Combine multiple constraints any of them must be met
-       Forbidden - action is forbidden
-   */
+    Enum of the constraint type within the GAT_AUTH_RULE result data
+     # parameters
+    Role - The final constraint
+    And - Combine multiple constraints all of them must be met
+    Or - Combine multiple constraints any of them must be met
+    Forbidden - action is forbidden
+     */
     #[derive(Serialize, Deserialize, Debug, Clone)]
     #[serde(tag = "constraint_id")]
     pub enum Constraint {
@@ -188,13 +188,13 @@ pub mod auth_rule {
     }
 
     /**
-       The final constraint
-        # parameters
-       sig_count - The number of signatures required to execution action
-       role - The role which the user must have to execute the action.
-       metadata -  An additional parameters of the constraint (contains transaction FEE cost).
-       need_to_be_owner - The flag specifying if a user must be an owner of the transaction.
-   */
+    The final constraint
+     # parameters
+    sig_count - The number of signatures required to execution action
+    role - The role which the user must have to execute the action.
+    metadata -  An additional parameters of the constraint (contains transaction FEE cost).
+    need_to_be_owner - The flag specifying if a user must be an owner of the transaction.
+     */
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct RoleConstraint {
         pub sig_count: Option<u32>,
@@ -206,30 +206,30 @@ pub mod auth_rule {
     }
 
     /**
-       The empty constraint means that action is forbidden
-   */
+    The empty constraint means that action is forbidden
+     */
     #[derive(Serialize, Deserialize, Debug, Clone)]
     #[serde(deny_unknown_fields)]
     pub struct ForbiddenConstraint {}
 
     /**
-       The constraint metadata
-        # parameters
-       fees - The action cost
-   */
+    The constraint metadata
+     # parameters
+    fees - The action cost
+     */
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct Metadata {
         pub fees: Option<String>,
     }
 
     /**
-       Combine multiple constraints
-        # parameters
-       auth_constraints - The type of the combination
-   */
+    Combine multiple constraints
+     # parameters
+    auth_constraints - The type of the combination
+     */
     #[derive(Serialize, Deserialize, Debug, Clone)]
     pub struct CombinationConstraint {
-        pub auth_constraints: Vec<Constraint>
+        pub auth_constraints: Vec<Constraint>,
     }
 
     /* Map contains default Auth Rules set on the Ledger*/
@@ -490,6 +490,8 @@ mod test {
     use crate::utils::devsetup::*;
 
     use super::*;
+    use std::thread;
+    use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -536,6 +538,7 @@ mod test {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = Service::default();
         add_service(&did, &expect_service).unwrap();
+        thread::sleep(Duration::from_millis(50));
         let service = get_service(&did).unwrap();
 
         assert_eq!(expect_service, service)
@@ -553,8 +556,8 @@ pub struct Request {
     pub endorser: Option<String>,
 }
 
-#[serde(tag = "op")]
 #[derive(Deserialize, Debug)]
+#[serde(tag = "op")]
 pub enum Response {
     #[serde(rename = "REQNACK")]
     ReqNACK(Reject),
@@ -567,7 +570,7 @@ pub enum Response {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Reject {
-    pub reason: String
+    pub reason: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -579,15 +582,15 @@ pub enum Reply {
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyV0 {
-    pub result: serde_json::Value
+    pub result: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyV1 {
-    pub data: ReplyDataV1
+    pub data: ReplyDataV1,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1 {
-    pub result: serde_json::Value
+    pub result: serde_json::Value,
 }

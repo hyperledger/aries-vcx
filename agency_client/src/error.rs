@@ -3,7 +3,6 @@ use std::ffi::CString;
 use std::fmt;
 
 use failure::{Backtrace, Context, Fail};
-
 use indy::IndyError;
 
 use crate::utils::error_utils;
@@ -100,7 +99,7 @@ pub enum AgencyClientErrorKind {
 
 #[derive(Debug)]
 pub struct AgencyClientError {
-    inner: Context<AgencyClientErrorKind>
+    inner: Context<AgencyClientErrorKind>,
 }
 
 impl Fail for AgencyClientError {
@@ -117,7 +116,7 @@ impl fmt::Display for AgencyClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut first = true;
 
-        for cause in Fail::iter_chain(&self.inner) {
+        for cause in <dyn Fail>::iter_chain(&self.inner) {
             if first {
                 first = false;
                 writeln!(f, "Error: {}", cause)?;
@@ -312,7 +311,7 @@ pub fn set_current_error(err: &AgencyClientError) {
         let error_json = json!({
             "error": err.kind().to_string(),
             "message": err.to_string(),
-            "cause": Fail::find_root_cause(err).to_string(),
+            "cause": <dyn Fail>::find_root_cause(err).to_string(),
             "backtrace": err.backtrace().map(|bt| bt.to_string())
         }).to_string();
         error.replace(Some(string_to_cstring(error_json)));

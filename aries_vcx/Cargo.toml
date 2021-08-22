@@ -12,13 +12,14 @@ name = "aries_vcx"
 path = "src/lib.rs"
 
 [features]
-pool_tests = []
-agency_pool_tests = []
-agency_v2 = []
-general_test = []
+test_utils = []
+pool_tests = ["test_utils"]
+agency_pool_tests = ["test_utils"]
+agency_v2 = ["test_utils"]
+general_test = ["test_utils"]
 fatal_warnings = []
 warnlog_fetched_messages = []
-plugin_test = []
+plugin_test = ["test_utils"]
 
 [dependencies]
 env_logger = "0.5.10"

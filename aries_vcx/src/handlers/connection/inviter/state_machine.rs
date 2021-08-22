@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::error::prelude::*;
 use crate::handlers::connection::inviter::states::complete::CompleteState;
 use crate::handlers::connection::inviter::states::invited::InvitedState;
 use crate::handlers::connection::inviter::states::null::NullState;
@@ -18,7 +19,6 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::error::prelude::*;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -466,10 +466,10 @@ impl SmConnectionInviter {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::ack::tests::_ack;
+    use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
-    use crate::messages::connection::response::tests::_signed_response;
+    use crate::messages::connection::response::test_utils::_signed_response;
     use crate::messages::discovery::disclose::tests::_disclose;
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;

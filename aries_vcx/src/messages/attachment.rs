@@ -38,8 +38,8 @@ impl Attachments {
     }
 }
 
-#[serde(tag = "mime-type")]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "mime-type")]
 pub enum Attachment {
     #[serde(rename = "application/json")]
     JSON(Json),
@@ -83,7 +83,7 @@ impl Json {
                         }
                     )
                 )
-            },
+            }
             AttachmentEncoding::Json => {
                 AttachmentData::Json(json)
             }
@@ -106,7 +106,7 @@ impl Json {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum AttachmentEncoding {
     Base64,
-    Json
+    Json,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -114,7 +114,7 @@ pub enum AttachmentData {
     #[serde(rename = "base64")]
     Base64(String),
     #[serde(rename = "json")]
-    Json(serde_json::Value)
+    Json(serde_json::Value),
 }
 
 impl AttachmentData {

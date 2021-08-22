@@ -1,4 +1,4 @@
-use crate::error::{VcxResult, VcxResultExt, VcxErrorKind};
+use crate::error::{VcxErrorKind, VcxResult, VcxResultExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectWithVersion<'a, T> {

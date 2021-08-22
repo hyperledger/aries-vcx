@@ -1,4 +1,4 @@
-use crate::{httpclient, agency_settings};
+use crate::{agency_settings, httpclient};
 use crate::error::AgencyClientResult;
 
 pub fn post_to_agency(body_content: &Vec<u8>) -> AgencyClientResult<Vec<u8>> {

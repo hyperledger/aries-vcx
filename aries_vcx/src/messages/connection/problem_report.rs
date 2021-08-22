@@ -1,6 +1,6 @@
-use crate::messages::thread::Thread;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::localization::Localization;
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -60,7 +60,7 @@ impl Default for ProblemCode {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::response::tests::*;
+    use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 

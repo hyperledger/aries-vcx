@@ -5,7 +5,7 @@ use std::sync::RwLock;
 use serde_json::Value;
 use url::Url;
 
-use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::{error_utils, validation};
 
 pub const CONFIG_AGENCY_ENDPOINT: &str = "agency_endpoint";
@@ -56,20 +56,20 @@ pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorK
 pub fn set_testing_defaults_agency() -> u32 {
     trace!("set_testing_defaults_agency >>>");
 
-    let DEFAULT_DID= "VsKV7grR1BUE29mG2Fm2kX";
-    let DEFAULT_VERKEY= "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
-    let DEFAULT_URL= "http://127.0.0.1:8080";
+    let default_did = "VsKV7grR1BUE29mG2Fm2kX";
+    let default_verkey = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
+    let default_url = "http://127.0.0.1:8080";
 
     // if this fails the test should exit
     let mut agency_settings = AGENCY_SETTINGS.write().unwrap();
 
-    agency_settings.insert(CONFIG_AGENCY_ENDPOINT.to_string(), DEFAULT_URL.to_string());
-    agency_settings.insert(CONFIG_AGENCY_DID.to_string(), DEFAULT_DID.to_string());
-    agency_settings.insert(CONFIG_AGENCY_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
-    agency_settings.insert(CONFIG_REMOTE_TO_SDK_DID.to_string(), DEFAULT_DID.to_string());
-    agency_settings.insert(CONFIG_REMOTE_TO_SDK_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
-    agency_settings.insert(CONFIG_SDK_TO_REMOTE_DID.to_string(), DEFAULT_DID.to_string());
-    agency_settings.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), DEFAULT_VERKEY.to_string());
+    agency_settings.insert(CONFIG_AGENCY_ENDPOINT.to_string(), default_url.to_string());
+    agency_settings.insert(CONFIG_AGENCY_DID.to_string(), default_did.to_string());
+    agency_settings.insert(CONFIG_AGENCY_VERKEY.to_string(), default_verkey.to_string());
+    agency_settings.insert(CONFIG_REMOTE_TO_SDK_DID.to_string(), default_did.to_string());
+    agency_settings.insert(CONFIG_REMOTE_TO_SDK_VERKEY.to_string(), default_verkey.to_string());
+    agency_settings.insert(CONFIG_SDK_TO_REMOTE_DID.to_string(), default_did.to_string());
+    agency_settings.insert(CONFIG_SDK_TO_REMOTE_VERKEY.to_string(), default_verkey.to_string());
 
     error_utils::SUCCESS.code_num
 }
@@ -114,7 +114,7 @@ pub fn process_agency_config_string(config: &str, validate: bool) -> AgencyClien
                     Value::String(value_) => set_config_value(key, &value_),
                     Value::Bool(value_) => set_config_value(key, &json!(value_).to_string()),
                     _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson,
-                                                              format!("Invalid agency config value for key {}", key))),
+                                                                format!("Invalid agency config value for key {}", key))),
                 }
             }
         }

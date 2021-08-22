@@ -1,13 +1,13 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 use crate::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
+use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
-use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
@@ -17,7 +17,7 @@ pub struct PresentationRequestSentState {
 impl PresentationRequestSentState {
     pub fn verify_presentation(&self, presentation: &Presentation, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
-                                               &self.presentation_request.request_presentations_attach.content()?)?;
+                                        &self.presentation_request.request_presentations_attach.content()?)?;
 
         if !valid {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, "Presentation verification failed"));

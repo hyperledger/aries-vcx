@@ -8,13 +8,13 @@ use std::env;
 use std::io::Write;
 
 use crate::error::prelude::*;
+use crate::libindy;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 use self::env_logger::Builder as EnvLoggerBuilder;
 use self::log::LevelFilter;
-use crate::libindy;
 
 pub struct LibvcxDefaultLogger;
 

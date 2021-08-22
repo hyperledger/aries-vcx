@@ -48,7 +48,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                     VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
                 })
         }
-        Err(err) => { // TODO: Check error type
+        Err(_err) => { // TODO: Check error type
             match serde_json::from_str::<Vec<serde_json::Value>>(attributes) {
                 Ok(mut attributes) => {
                     for cred_value in attributes.iter_mut() {

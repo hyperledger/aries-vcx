@@ -7,15 +7,16 @@ use std::sync::mpsc::RecvTimeoutError;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
 
-use crate::api_lib::utils::timeout::TimeoutUtils;
-use crate::api_lib::utils::callback::POISON_MSG;
-use crate::api_lib::utils::callback_u32 as callback;
+use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::libindy::utils::error_codes::map_indy_error;
 use aries_vcx::libindy::utils::next_command_handle;
 use aries_vcx::utils::error;
+
+use crate::api_lib::utils::callback::POISON_MSG;
+use crate::api_lib::utils::callback_u32 as callback;
+use crate::api_lib::utils::timeout::TimeoutUtils;
 
 fn log_error<T: Display>(e: T) {
     warn!("Unable to send through libindy callback in vcx: {}", e);
@@ -375,6 +376,7 @@ impl Return_U32_U32_STR_STR_STR {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
     use std::ptr;

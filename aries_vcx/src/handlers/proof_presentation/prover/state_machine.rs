@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use crate::handlers::proof_presentation::prover::prover::ProverState;
+use crate::error::prelude::*;
 use crate::handlers::proof_presentation::prover::messages::ProverMessages;
+use crate::handlers::proof_presentation::prover::prover::ProverState;
 use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
 use crate::handlers::proof_presentation::prover::states::initial::InitialState;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
@@ -13,7 +14,6 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
-use crate::error::prelude::*;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -301,9 +301,9 @@ impl ProverSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::proof_presentation::presentation::tests::_presentation;
-    use crate::messages::proof_presentation::presentation_proposal::tests::{_presentation_preview, _presentation_proposal};
-    use crate::messages::proof_presentation::presentation_request::tests::_presentation_request;
+    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
+    use crate::messages::proof_presentation::presentation_proposal::test_utils::{_presentation_preview, _presentation_proposal};
+    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use crate::messages::proof_presentation::test::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;

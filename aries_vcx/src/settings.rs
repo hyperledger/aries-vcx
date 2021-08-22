@@ -1,23 +1,15 @@
 extern crate serde_json;
 extern crate url;
 
-use std::borrow::Borrow;
+
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::{RwLockWriteGuard, RwLockReadGuard, RwLock};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use indy_sys::INVALID_WALLET_HANDLE;
-use serde_json::Value;
 use strum::IntoEnumIterator;
-use url::Url;
 
-use agency_client::agency_settings;
-
-use crate::error::prelude::*;
-use crate::utils::{error, get_temp_dir_path};
-use crate::utils::file::read_file;
-use crate::utils::validation;
 use crate::agency_client::agency_client::AgencyClient;
+use crate::error::prelude::*;
+use crate::utils::error;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
@@ -193,6 +185,7 @@ pub fn clear_config() {
 #[cfg(test)]
 pub mod tests {
     use crate::utils::devsetup::{SetupDefaults, TempFile};
+    use crate::utils::file::read_file;
 
     use super::*;
 

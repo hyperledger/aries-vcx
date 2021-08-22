@@ -39,7 +39,7 @@ a2a_message!(Ping);
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::response::tests::*;
+    use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 

@@ -1,14 +1,14 @@
 use core::fmt;
 use std::collections::HashMap;
-use std::fmt::Formatter;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde::de::{EnumAccess, Error, MapAccess, SeqAccess, Unexpected, Visitor};
+use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
 
 use agency_client::get_message::Message;
 use agency_client::MessageStatusCode;
 
+use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
@@ -22,7 +22,6 @@ use crate::messages::connection::invite::Invitation;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::messages::connection::request::Request;
 use crate::utils::send_message;
-use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
 
 #[derive(Clone)]
@@ -559,8 +558,8 @@ impl Connection {
     }
 
     /**
-Get messages received from connection counterparty.
- */
+    Get messages received from connection counterparty.
+     */
     pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -798,7 +797,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connect
 mod tests {
     use crate::messages::connection::request::tests::_request;
     use crate::handlers::connection::public_agent::tests::_public_agent;
-    use crate::messages::connection::invite::tests::{_pairwise_invitation, _public_invitation};
+    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

@@ -1,14 +1,9 @@
-use std::cell::RefCell;
-use std::ffi::CString;
 use std::fmt;
 use std::sync;
 
 use failure::{Backtrace, Context, Fail};
 
-use aries_vcx::agency_client;
-
 use aries_vcx::utils;
-use aries_vcx::utils::error;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -245,7 +240,7 @@ impl fmt::Display for VcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut first = true;
 
-        for cause in Fail::iter_chain(&self.inner) {
+        for cause in <dyn Fail>::iter_chain(&self.inner) {
             if first {
                 first = false;
                 writeln!(f, "Error: {}", cause)?;

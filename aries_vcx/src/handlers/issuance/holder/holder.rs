@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
+use crate::error::prelude::*;
+use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::messages::a2a::A2AMessage;
-use crate::handlers::connection::connection::Connection;
 use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
-    holder_sm: HolderSM
+    holder_sm: HolderSM,
 }
 
 #[derive(Debug, PartialEq)]
@@ -17,7 +17,7 @@ pub enum HolderState {
     OfferReceived,
     RequestSent,
     Finished,
-    Failed
+    Failed,
 }
 
 impl Holder {

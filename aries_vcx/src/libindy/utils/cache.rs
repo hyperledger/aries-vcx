@@ -10,7 +10,7 @@ static REV_REG_IDS_CACHE_PREFIX: &str = "rev_reg_ids:";
 // TODO: Maybe we need to persist more info
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 pub struct RevRegIdsCache {
-    pub rev_reg_ids: Vec<String>
+    pub rev_reg_ids: Vec<String>,
 }
 
 fn set_rev_reg_ids_cache(cred_def_id: &str, cache: &str) -> VcxResult<()> {

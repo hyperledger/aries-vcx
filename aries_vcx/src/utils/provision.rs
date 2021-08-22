@@ -1,19 +1,17 @@
 use serde::Deserialize;
 
-use indy::WalletHandle;
 use agency_client::agent_utils;
 
 use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, signus, wallet};
+use crate::libindy::utils::signus;
 use crate::settings;
-use crate::libindy::utils::wallet::{WalletConfig, IssuerConfig, configure_issuer_wallet};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentProvisionConfig {
     pub agency_did: String,
     pub agency_verkey: String,
     pub agency_endpoint: String,
-    pub agent_seed: Option<String>
+    pub agent_seed: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -45,7 +43,7 @@ pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> V
         agency_verkey: provision_agent_config.agency_verkey.clone(),
         remote_to_sdk_did: agent_did,
         remote_to_sdk_verkey: agent_vk,
-        sdk_to_remote_did:  my_did,
+        sdk_to_remote_did: my_did,
         sdk_to_remote_verkey: my_vk,
     })
 }

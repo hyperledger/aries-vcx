@@ -1,5 +1,5 @@
-use indy::future::Future;
 use indy::did;
+use indy::future::Future;
 
 use crate::{settings, utils};
 use crate::error::prelude::*;

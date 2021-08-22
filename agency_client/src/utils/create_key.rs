@@ -1,9 +1,9 @@
-use crate::error::{AgencyClientErrorKind, AgencyClientResult, AgencyClientError};
-use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds, mocking};
+use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, mocking, parse_response_from_agency, prepare_message_for_agency};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::utils::comm::post_to_agency;
-use crate::utils::{constants, validation};
 use crate::mocking::AgencyMock;
+use crate::utils::{constants, validation};
+use crate::utils::comm::post_to_agency;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -97,11 +97,12 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::error::AgencyClientErrorKind;
     use crate::create_keys;
+    use crate::error::AgencyClientErrorKind;
     use crate::utils::constants;
     use crate::utils::test_utils::SetupMocks;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -114,17 +115,17 @@ mod tests {
             .for_verkey(for_verkey).unwrap();
     }
 
-    #[test]	
-    #[cfg(feature = "general_test")]	
-    fn test_create_key_set_values_and_serialize() {	
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_key_set_values_and_serialize() {
         let _setup = SetupMocks::init();
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let my_vk = "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9";
-        let bytes = CreateKeyBuilder::create()	
-            .for_did(&to_did).unwrap()	
-            .for_verkey(&my_vk).unwrap()	
-            .prepare_request().unwrap();	
-        assert!(bytes.len() > 0);	
+        let bytes = CreateKeyBuilder::create()
+            .for_did(&to_did).unwrap()
+            .for_verkey(&my_vk).unwrap()
+            .prepare_request().unwrap();
+        assert!(bytes.len() > 0);
     }
 
     #[test]
