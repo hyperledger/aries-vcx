@@ -229,7 +229,10 @@ impl SmConnectionInvitee {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
             InviteeFullState::Null(state) => {
-                InviteeFullState::Invited((state, invitation).into())
+                match invitation {
+                    Invitation::Pairwise(invitation) => InviteeFullState::Invited((state, invitation).into()),
+                    Invitation::Public(invitation) => InviteeFullState::Invited((state, invitation).into())
+                }
             }
             _ => {
                 state.clone()
@@ -401,6 +404,7 @@ pub mod test {
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;
     use crate::messages::trust_ping::ping_response::tests::_ping_response;
+    use crate::messages::connection::invite::PairwiseInvitation;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -423,12 +427,12 @@ pub mod test {
 
         impl SmConnectionInvitee {
             pub fn to_invitee_invited_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(_invitation()).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_invitation())).unwrap();
                 self
             }
 
             pub fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(_invitation()).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_invitation())).unwrap();
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint).unwrap();
@@ -437,9 +441,9 @@ pub mod test {
 
             pub fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = Invitation::default().set_recipient_keys(vec![key.clone()]);
+                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
 
-                self = self.handle_invitation(invitation).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_invitation())).unwrap();
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -496,7 +500,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm();
 
-                did_exchange_sm = did_exchange_sm.handle_invitation(_invitation()).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_invitation(Invitation::Pairwise(_invitation())).unwrap();
 
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
             }

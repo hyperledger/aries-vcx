@@ -462,6 +462,23 @@ pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
     libindy_submit_request(&get_attrib_req)
 }
 
+// TODO: This should be responsibility of the service struct?
+pub fn get_service(did: &str) -> VcxResult<Service> {
+    let attr_resp = get_attr(did, "service")?;
+    let data = get_data_from_response(&attr_resp)?;
+    let ser_service = data["service"]
+        .as_str().ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Unable to read service from the ledger response")))?.to_string();
+    serde_json::from_str(&ser_service)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
+}
+
+fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
+    let resp: serde_json::Value = serde_json::from_str(&resp)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
+    serde_json::from_str(&resp["result"]["data"].as_str().unwrap_or("{}"))
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))
+}
+
 #[cfg(test)]
 mod test {
     use crate::utils::devsetup::*;

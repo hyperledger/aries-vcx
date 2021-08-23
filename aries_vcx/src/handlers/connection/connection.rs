@@ -450,8 +450,11 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
-                        A2AMessage::ConnectionInvitation(invitation) => {
-                            (sm_invitee.handle_invitation(invitation)?, false)
+                        A2AMessage::ConnectionInvitationPublic(invitation) => {
+                            (sm_invitee.handle_invitation(Invitation::Public(invitation))?, false)
+                        }
+                        A2AMessage::ConnectionInvitationPairwise(invitation) => {
+                            (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
                             (sm_invitee.handle_connection_response(response)?, true)

@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::invite::PublicInvitation;
 use crate::messages::connection::did_doc::{DidDoc, Service};
 use crate::libindy::utils::ledger::add_attr;
 use crate::settings::get_agency_client;
@@ -28,11 +28,11 @@ impl PublicAgent {
         Ok(Self { agent_info, institution_did })
     }
 
-    pub fn generate_public_invite(&self, source_id: &str, label: &str) -> VcxResult<Invitation> {
-        let invite: Invitation = Invitation::create()
+    pub fn generate_public_invite(&self, source_id: &str, label: &str) -> VcxResult<PublicInvitation> {
+        let invite: PublicInvitation = PublicInvitation::create()
             .set_label(label.to_string())
             .set_id(source_id.to_string())
-            .set_did(self.institution_did.to_string());
+            .set_public_did(self.institution_did.to_string());
         Ok(invite)
     }
 }

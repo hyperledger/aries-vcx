@@ -143,7 +143,10 @@ pub fn connect(handle: u32) -> VcxResult<Option<String>> {
     CONNECTION_MAP.get_mut(handle, |connection| {
         connection.connect()?;
         let invitation = connection.get_invite_details()
-            .map(|invitation| json!(invitation.to_a2a_message()).to_string());
+            .map(|invitation| match invitation {
+                InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+            });
         Ok(invitation)
     })
 }
@@ -172,7 +175,10 @@ pub fn release_all() {
 pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_invite_details()
-            .map(|invitation| json!(invitation.to_a2a_message()).to_string())
+            .map(|invitation| match invitation {
+                InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+            })
             .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }

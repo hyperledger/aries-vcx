@@ -9,7 +9,7 @@ use self::message_family::MessageFamilies;
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::invite::{PublicInvitation, PairwiseInvitation};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;
 use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
@@ -39,7 +39,8 @@ pub enum A2AMessage {
     Forward(Forward),
 
     /// DID Exchange
-    ConnectionInvitation(Invitation),
+    ConnectionInvitationPairwise(PairwiseInvitation),
+    ConnectionInvitationPublic(PublicInvitation),
     ConnectionRequest(Request),
     ConnectionResponse(SignedResponse),
     ConnectionProblemReport(ConnectionProblemReport),
@@ -100,8 +101,9 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION) => {
-                Invitation::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionInvitation(msg))
+                PairwiseInvitation::deserialize(value.clone())
+                    .map_or(PublicInvitation::deserialize(value)
+                            .map(|msg| A2AMessage::ConnectionInvitationPublic(msg)), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST) => {
@@ -218,7 +220,8 @@ impl Serialize for A2AMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         let value = match self {
             A2AMessage::Forward(msg) => set_a2a_message_type(msg, MessageFamilies::Routing, A2AMessage::FORWARD),
-            A2AMessage::ConnectionInvitation(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION),
+            A2AMessage::ConnectionInvitationPairwise(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION),
+            A2AMessage::ConnectionInvitationPublic(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION),
             A2AMessage::ConnectionRequest(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST),
             A2AMessage::ConnectionResponse(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE),
             A2AMessage::ConnectionProblemReport(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_PROBLEM_REPORT),
