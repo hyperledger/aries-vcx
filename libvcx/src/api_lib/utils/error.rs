@@ -109,7 +109,8 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
-            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num
+            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
+            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num
         }
     }
 }
@@ -158,8 +159,7 @@ impl From<u32> for VcxErrorKind {
             _ if { error::INVALID_REVOCATION_TIMESTAMP.code_num == code } => VcxErrorKind::InvalidRevocationTimestamp,
             _ if { error::INVALID_SCHEMA_CREATION.code_num == code } => VcxErrorKind::CreateSchema,
             _ if { error::INVALID_SCHEMA_HANDLE.code_num == code } => VcxErrorKind::InvalidSchemaHandle,
-            _ if { error::INVALID_SCHEMA_SEQ_NO.code_num == code } => VcxErrorKind::InvalidSchemaSeqNo,
-            _ if { error::DUPLICATE_SCHEMA.code_num == code } => VcxErrorKind::DuplicationSchema,
+            _ if { error::INVALID_SCHEMA_SEQ_NO.code_num == code } => VcxErrorKind::InvalidSchemaSeqNo, _ if { error::DUPLICATE_SCHEMA.code_num == code } => VcxErrorKind::DuplicationSchema,
             _ if { error::UNKNOWN_SCHEMA_REJECTION.code_num == code } => VcxErrorKind::UnknownSchemaRejection,
             _ if { error::INVALID_WALLET_CREATION.code_num == code } => VcxErrorKind::WalletCreate,
             _ if { error::MISSING_WALLET_NAME.code_num == code } => VcxErrorKind::MissingWalletName,
@@ -202,6 +202,7 @@ impl From<u32> for VcxErrorKind {
             _ if { error::NO_AGENT_INFO.code_num == code } => VcxErrorKind::NoAgentInformation,
             _ if { error::REV_REG_DEF_NOT_FOUND.code_num == code } => VcxErrorKind::RevRegDefNotFound,
             _ if { error::REV_DELTA_NOT_FOUND.code_num == code } => VcxErrorKind::RevDeltaNotFound,
+            _ if { error::CREATE_PUBLIC_AGENT.code_num == code } => VcxErrorKind::CreatePublicAgent,
             _ => VcxErrorKind::UnknownError,
         }
     }

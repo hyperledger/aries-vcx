@@ -11,7 +11,7 @@ use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
-use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
+use aries_vcx::agency_client::get_message::parse_status_codes;
 
 /*
     Tha API represents a pairwise connection with another identity owner.

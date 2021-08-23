@@ -6,3 +6,4 @@ pub mod issuer_credential;
 pub mod proof;
 pub mod schema;
 pub mod object_cache;
+pub mod agent;
