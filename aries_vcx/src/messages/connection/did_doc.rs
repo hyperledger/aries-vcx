@@ -334,6 +334,10 @@ pub mod tests {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }
 
+    pub fn _did() -> String {
+        String::from("VsKV7grR1BUE29mG2Fm2kX")
+    }
+
     pub fn _service_endpoint() -> String {
         String::from("http://localhost:8080")
     }

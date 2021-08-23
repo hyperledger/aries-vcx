@@ -10,6 +10,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::utils::random::generate_random_did;
+use crate::messages::connection::did_doc::Service;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -447,6 +448,18 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
     }
 
     Ok(())
+}
+
+// TODO: To test: does work like update, or write?
+pub fn add_attr(did: &str, key: &str, value: &str) -> VcxResult<String> {
+    let attrib_json = json!({ key: value }).to_string();
+    let attrib_req = ledger::build_attrib_request(&did, &did, None, Some(&attrib_json), None).wait()?;
+    libindy_sign_and_submit_request(&did, &attrib_req)
+}
+
+pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
+    let get_attrib_req = ledger::build_get_attrib_request(None, &did, Some(attr_name), None, None).wait()?;
+    libindy_submit_request(&get_attrib_req)
 }
 
 #[cfg(test)]

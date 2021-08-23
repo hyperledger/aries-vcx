@@ -12,6 +12,8 @@ pub struct Invitation {
     pub routing_keys: Vec<String>,
     #[serde(rename = "serviceEndpoint")]
     pub service_endpoint: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub did: String
 }
 
 impl Invitation {
@@ -43,6 +45,11 @@ impl Invitation {
         self.routing_keys = routing_keys;
         self
     }
+
+    pub fn set_did(mut self, did: String) -> Invitation {
+        self.did = did;
+        self
+    }
 }
 
 a2a_message!(Invitation, ConnectionInvitation);
@@ -59,6 +66,7 @@ pub mod tests {
             recipient_keys: _recipient_keys(),
             routing_keys: _routing_keys(),
             service_endpoint: _service_endpoint(),
+            did: _did()
         }
     }
 
