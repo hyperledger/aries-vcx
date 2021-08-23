@@ -28,10 +28,9 @@ impl PublicAgent {
         Ok(Self { agent_info, institution_did })
     }
 
-    pub fn generate_public_invite(&self, source_id: &str, label: &str) -> VcxResult<PublicInvitation> {
+    pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {
         let invite: PublicInvitation = PublicInvitation::create()
             .set_label(label.to_string())
-            .set_id(source_id.to_string())
             .set_public_did(self.institution_did.to_string());
         Ok(invite)
     }
