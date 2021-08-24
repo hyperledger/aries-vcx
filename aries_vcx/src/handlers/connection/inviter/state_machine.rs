@@ -281,7 +281,7 @@ impl SmConnectionInviter {
                                      new_service_endpoint: String) -> VcxResult<Self> {
         let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self;
         let state = match state {
-            InviterFullState::Invited(state) => {
+            InviterFullState::Invited(_) | InviterFullState::Null(_) => {
                 match Self::_build_response(
                     &request,
                     &bootstrap_pairwise_info,
@@ -289,7 +289,7 @@ impl SmConnectionInviter {
                     new_routing_keys,
                     new_service_endpoint) {
                     Ok(signed_response) => {
-                        InviterFullState::Requested((state, request, signed_response).into())
+                        InviterFullState::Requested((request, signed_response).into())
                     }
                     Err(err) => {
                         let problem_report = ProblemReport::create()
@@ -301,7 +301,7 @@ impl SmConnectionInviter {
                             &bootstrap_pairwise_info.pw_vk,
                             &request.connection.did_doc,
                             &problem_report.to_a2a_message()).ok();
-                        InviterFullState::Null((state, problem_report).into())
+                        InviterFullState::Null((problem_report).into())
                     }
                 }
             }
@@ -410,11 +410,11 @@ impl SmConnectionInviter {
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
-            InviterFullState::Responded(state) => {
-                InviterFullState::Null((state, problem_report).into())
+            InviterFullState::Responded(_) => {
+                InviterFullState::Null((problem_report).into())
             }
-            InviterFullState::Invited(state) => {
-                InviterFullState::Null((state, problem_report).into())
+            InviterFullState::Invited(_) => {
+                InviterFullState::Null((problem_report).into())
             }
             _ => {
                 state.clone()

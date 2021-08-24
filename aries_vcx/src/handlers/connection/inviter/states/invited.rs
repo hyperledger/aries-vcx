@@ -10,16 +10,17 @@ pub struct InvitedState {
     pub invitation: Invitation,
 }
 
-impl From<(InvitedState, ProblemReport)> for NullState {
-    fn from((_state, _error): (InvitedState, ProblemReport)) -> NullState {
-        trace!("ConnectionInviter: transit state from InvitedState to NullState");
+// TODO: These have no justification for being here anymore
+impl From<(ProblemReport)> for NullState {
+    fn from((_error): (ProblemReport)) -> NullState {
+        trace!("ConnectionInviter: transit state to NullState");
         NullState {}
     }
 }
 
-impl From<(InvitedState, Request, SignedResponse)> for RequestedState {
-    fn from((_state, request, signed_response): (InvitedState, Request, SignedResponse)) -> RequestedState {
-        trace!("ConnectionInviter: transit state from InvitedState to RespondedState");
+impl From<(Request, SignedResponse)> for RequestedState {
+    fn from((request, signed_response): (Request, SignedResponse)) -> RequestedState {
+        trace!("ConnectionInviter: transit state to RespondedState");
         RequestedState {
             signed_response,
             did_doc: request.connection.did_doc,

@@ -91,6 +91,19 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
     }
 }
 
+pub fn create_connection_with_connection_request(request_msg: &str) -> VcxResult<u32> {
+    debug!("create_connection_with_connection_request >>> request_msg: {}", request_msg);
+    let request_msg: A2AMessage = serde_json::from_str(request_msg)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message: {:?}", err)))?;
+    match request_msg {
+        A2AMessage::ConnectionRequest(request) => {
+            let connection = Connection::create_with_connection_request(request)?;
+            store_connection(connection)
+        }
+        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message")))
+    }
+}
+
 pub fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
     CONNECTION_MAP.get(connection_handle, |connection| {
         connection.send_generic_message(msg).map_err(|err| err.into())

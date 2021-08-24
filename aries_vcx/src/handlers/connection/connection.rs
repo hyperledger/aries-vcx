@@ -19,6 +19,7 @@ use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
+use crate::messages::connection::request::Request;
 use crate::utils::send_message;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
@@ -99,6 +100,13 @@ impl Connection {
             autohop_enabled,
         };
         connection.process_invite(invitation)?;
+        Ok(connection)
+    }
+
+    pub fn create_with_connection_request(request: Request) -> VcxResult<Connection> {
+        trace!("Connection::create_with_connection_request >>> request: {:?}", request);
+        let mut connection = Self::create(&request.id.0, true)?;
+        connection.process_request(request)?;
         Ok(connection)
     }
 
@@ -266,6 +274,23 @@ impl Connection {
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
+            }
+        };
+        Ok(())
+    }
+
+    fn process_request(&mut self, request: Request) -> VcxResult<()> {
+        trace!("Connection::process_request >>> request: {:?}", request);
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                let new_pairwise_info = PairwiseInfo::create()?;
+                let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info)?;
+                let new_routing_keys = new_cloud_agent.routing_keys()?;
+                let new_service_endpoint = new_cloud_agent.service_endpoint()?;
+                SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
         };
         Ok(())
