@@ -1,6 +1,7 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
 pub enum Invitation {
     Pairwise(PairwiseInvitation),
     Public(PublicInvitation)
