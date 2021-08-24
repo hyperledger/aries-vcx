@@ -18,6 +18,7 @@ pub mod test {
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
@@ -42,6 +43,7 @@ pub mod test {
             A2AMessage::CredentialOffer(_) => PayloadKinds::CredOffer,
             A2AMessage::Credential(_) => PayloadKinds::Cred,
             A2AMessage::Presentation(_) => PayloadKinds::Proof,
+            A2AMessage::ConnectionRequest(_) => PayloadKinds::ConnRequest,
             _msg => PayloadKinds::Other(String::from("aries"))
         }
     }
@@ -75,6 +77,21 @@ pub mod test {
         None
     }
 
+    fn download_a2a_message(filter_msg_type: PayloadKinds) -> Option<A2AMessage> {
+        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(None, Some(vec![String::from("MS-103")]), None).unwrap();
+        assert_eq!(1, messages.len());
+        let messages = messages.pop().unwrap();
+
+        for message in messages.msgs.into_iter() {
+            let decrypted_msg = &message.decrypted_msg.unwrap();
+            let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
+            if filter_msg_type == msg_type {
+                return Some(str_message_to_a2a_message(decrypted_msg).unwrap());
+            }
+        }
+        None
+    }
+
     pub trait TestAgent {
         fn activate(&mut self) -> VcxResult<()>;
     }
@@ -89,6 +106,7 @@ pub mod test {
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
+        pub agent: PublicAgent
     }
 
     impl TestAgent for Faber {
@@ -148,6 +166,7 @@ pub mod test {
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
+            let institution_did = config_issuer.clone().institution_did;
             let faber = Faber {
                 is_active: false,
                 config_wallet,
@@ -155,9 +174,10 @@ pub mod test {
                 config_issuer,
                 schema: Schema::default(),
                 cred_def: CredentialDef::default(),
-                connection: Connection::create("alice", true).unwrap(),
+                connection: Connection::create("faber", true).unwrap(),
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
+                agent: PublicAgent::create(&institution_did).unwrap()
             };
             close_main_wallet().unwrap();
             faber
@@ -217,6 +237,11 @@ pub mod test {
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
+        }
+
+        pub fn create_public_invite(&mut self) -> String {
+            self.activate().unwrap();
+            json!(self.agent.generate_public_invite("faber").unwrap()).to_string()
         }
 
         pub fn update_state(&mut self, expected_state: u32) {
@@ -296,6 +321,12 @@ pub mod test {
             self.verifier.update_state(&self.connection).unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.presentation_status());
+        }
+
+        pub fn download_a2a_message(&mut self, message_type: PayloadKinds) -> VcxResult<A2AMessage> {
+            self.activate()?;
+            download_a2a_message(message_type)
+                .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }
 
         pub fn teardown(&mut self) {

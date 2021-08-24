@@ -13,5 +13,6 @@ pub enum PayloadKinds {
     Cred,
     Proof,
     ProofRequest,
+    ConnRequest,
     Other(String),
 }

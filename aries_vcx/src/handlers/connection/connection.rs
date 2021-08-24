@@ -798,7 +798,7 @@ mod tests {
     fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true).unwrap();
-        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
 
     #[test]

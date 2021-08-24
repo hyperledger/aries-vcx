@@ -108,6 +108,7 @@ mod tests {
 
     use aries_vcx::messages::ack::tests::_ack;
     use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
@@ -992,6 +993,47 @@ mod tests {
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    #[ignore = "WIP"]
+    fn test_establish_connection_via_public_invite() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        institution.activate().unwrap();
+        let public_invite_json = institution.create_public_invite();
+        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
+
+        consumer.activate().unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
+        consumer_to_institution.connect().unwrap();
+        consumer_to_institution.update_state().unwrap();
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        let conn_req = institution.download_a2a_message(PayloadKinds::ConnRequest).unwrap();
+        let conn_req = match conn_req {
+            A2AMessage::ConnectionRequest(req) => req,
+            _ => panic!("Expected connection request message type, obtained {:?}", conn_req)
+        };
+        let mut institution_to_consumer = Connection::create_with_connection_request(conn_req).unwrap();
+
+        consumer.activate().unwrap();
+        consumer_to_institution.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
+
+        institution_to_consumer.send_generic_message("Hello Alice, Faber here").unwrap();
+
+        let consumer_msgs = consumer_to_institution.download_messages(None, None).unwrap();
+        assert_eq!(consumer_msgs.len(), 1);
     }
 
     #[test]
