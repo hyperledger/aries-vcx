@@ -328,7 +328,7 @@ impl From<DidDoc> for PairwiseInvitation {
 // #[cfg(test)]
 pub mod tests {
     use crate::messages::a2a::MessageId;
-    use crate::messages::connection::invite::tests::_invitation;
+    use crate::messages::connection::invite::tests::_pairwise_invitation;
 
     use super::*;
 
@@ -539,6 +539,6 @@ pub mod tests {
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_keys(_recipient_keys(), _routing_keys());
 
-        assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_invitation())));
+        assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_pairwise_invitation())));
     }
 }

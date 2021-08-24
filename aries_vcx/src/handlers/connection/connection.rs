@@ -788,13 +788,30 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connect
 #[cfg(test)]
 mod tests {
     use crate::messages::connection::request::tests::_request;
+    use crate::messages::connection::invite::tests::{_pairwise_invitation, _public_invitation};
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_with_request_works() {
+    fn test_create_with_pairwise_invite() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true).unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_with_public_invite() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true).unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_with_request() {
         let _setup = SetupMocks::init();
         let connection = Connection::create_with_connection_request(_request()).unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));

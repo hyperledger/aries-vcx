@@ -89,7 +89,7 @@ pub mod tests {
     use super::*;
     use crate::messages::connection::did_doc::tests::*;
 
-    pub fn _invitation() -> PairwiseInvitation {
+    pub fn _pairwise_invitation() -> PairwiseInvitation {
         PairwiseInvitation {
             id: MessageId::id(),
             label: _label(),
@@ -108,7 +108,7 @@ pub mod tests {
     }
 
     pub fn _pairwise_invitation_json() -> String {
-        serde_json::to_string(&_invitation().to_a2a_message()).unwrap()
+        serde_json::to_string(&_pairwise_invitation().to_a2a_message()).unwrap()
     }
 
     pub fn _public_invitation_json() -> String {
@@ -124,7 +124,7 @@ pub mod tests {
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        assert_eq!(_invitation(), invitation);
+        assert_eq!(_pairwise_invitation(), invitation);
     }
 
     #[test]

@@ -1614,6 +1614,4 @@ mod tests {
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
     }
-
 }
-

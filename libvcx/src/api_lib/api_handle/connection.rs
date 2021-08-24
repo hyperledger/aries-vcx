@@ -320,7 +320,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_pairwise_invite_works() {
+    fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
@@ -329,7 +329,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_public_invite_works() {
+    fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
@@ -338,7 +338,7 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_request_works() {
+    fn test_create_connection_with_request() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_connection_request(ARIES_CONNECTION_REQUEST).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
