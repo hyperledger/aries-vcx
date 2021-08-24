@@ -1451,7 +1451,7 @@ mod tests {
     #[test]
     #[cfg(feature = "agency_v2")]
     fn test_connection_send_works() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut faber = Faber::setup();
         let mut alice = Alice::setup();
 
@@ -1553,7 +1553,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_download_messages() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
@@ -1586,7 +1586,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_update_agency_messages() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
@@ -1623,7 +1623,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_download_messages_from_multiple_connections() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
