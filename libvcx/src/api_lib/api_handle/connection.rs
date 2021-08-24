@@ -290,7 +290,7 @@ pub mod tests {
     use crate::api_lib::VcxStateType;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::tests::_ack;
-    use aries_vcx::messages::connection::invite::tests::_invitation_json;
+    use aries_vcx::messages::connection::invite::tests::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
@@ -320,11 +320,29 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_invite_works() {
+    fn test_create_connection_with_pairwise_invite_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_invitation_json()).unwrap();
+        let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
         assert_eq!(1, connection::get_state(connection_handle));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_connection_with_public_invite_works() {
+        let _setup = SetupMocks::init();
+        let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).unwrap();
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(1, connection::get_state(connection_handle));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_connection_with_request_works() {
+        let _setup = SetupMocks::init();
+        let connection_handle = connection::create_connection_with_connection_request(ARIES_CONNECTION_REQUEST).unwrap();
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(2, connection::get_state(connection_handle));
     }
 
     #[test]

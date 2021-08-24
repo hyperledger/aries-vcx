@@ -99,7 +99,7 @@ pub mod tests {
         }
     }
 
-    pub fn _public_invitation(public_did: &str) -> PublicInvitation {
+    pub fn _public_invitation() -> PublicInvitation {
         PublicInvitation {
             id: MessageId::id(),
             label: _label(),
@@ -107,13 +107,17 @@ pub mod tests {
         }
     }
 
-    pub fn _invitation_json() -> String {
+    pub fn _pairwise_invitation_json() -> String {
         serde_json::to_string(&_invitation().to_a2a_message()).unwrap()
+    }
+
+    pub fn _public_invitation_json() -> String {
+        serde_json::to_string(&_public_invitation().to_a2a_message()).unwrap()
     }
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_request_build_works() {
+    fn test_pairwise_invite_build_works() {
         let invitation: PairwiseInvitation = PairwiseInvitation::default()
             .set_label(_label())
             .set_service_endpoint(_service_endpoint())
@@ -121,5 +125,15 @@ pub mod tests {
             .set_routing_keys(_routing_keys());
 
         assert_eq!(_invitation(), invitation);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_public_invite_build_works() {
+        let invitation: PublicInvitation = PublicInvitation::default()
+            .set_label(_label())
+            .set_public_did(_did());
+
+        assert_eq!(_public_invitation(), invitation);
     }
 }

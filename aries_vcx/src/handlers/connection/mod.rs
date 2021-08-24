@@ -6,4 +6,3 @@ pub mod invitee;
 pub mod inviter;
 pub mod public_agent;
 mod util;
-

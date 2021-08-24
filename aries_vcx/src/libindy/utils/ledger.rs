@@ -472,6 +472,12 @@ pub fn get_service(did: &str) -> VcxResult<Service> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
 }
 
+pub fn add_service(did: &str, service: &Service) -> VcxResult<String> {
+    let ser_service = serde_json::to_string(service)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
+    add_attr(did, "service", &ser_service)
+}
+
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
     let resp: serde_json::Value = serde_json::from_str(&resp)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
@@ -520,6 +526,19 @@ mod test {
         let schema_request = multisign_request(&author_did, &schema_request).unwrap();
 
         endorse_transaction(&schema_request).unwrap();
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[test]
+    fn test_add_get_service() {
+        let _setup = SetupLibraryWalletPoolZeroFees::init();
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let expect_service = Service::default();
+        add_service(&did, &expect_service).unwrap();
+        let service = get_service(&did).unwrap();
+
+        assert_eq!(expect_service, service)
     }
 }
 
