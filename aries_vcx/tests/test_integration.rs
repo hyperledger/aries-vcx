@@ -1020,6 +1020,9 @@ mod tests {
             _ => panic!("Expected connection request message type, obtained {:?}", conn_req)
         };
         let mut institution_to_consumer = Connection::create_with_connection_request(conn_req).unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
 
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();

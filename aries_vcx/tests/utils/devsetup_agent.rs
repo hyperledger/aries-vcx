@@ -79,7 +79,6 @@ pub mod test {
 
     fn download_a2a_message(filter_msg_type: PayloadKinds) -> Option<A2AMessage> {
         let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(None, Some(vec![String::from("MS-103")]), None).unwrap();
-        assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
         for message in messages.msgs.into_iter() {

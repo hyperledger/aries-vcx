@@ -283,11 +283,7 @@ impl Connection {
         trace!("Connection::process_request >>> request: {:?}", request);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let new_pairwise_info = PairwiseInfo::create()?;
-                let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info)?;
-                let new_routing_keys = new_cloud_agent.routing_keys()?;
-                let new_service_endpoint = new_cloud_agent.service_endpoint()?;
-                SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, self.pairwise_info(), self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
             }
             SmConnection::Invitee(sm_invitee) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
