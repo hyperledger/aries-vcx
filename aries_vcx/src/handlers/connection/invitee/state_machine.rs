@@ -254,8 +254,7 @@ impl SmConnectionInvitee {
 
                 let ddo = DidDoc::from(state.invitation.clone());
                 send_message(&pairwise_info.pw_vk, &ddo, &request.to_a2a_message())?;
-                let new_state = InviteeFullState::Requested((state, request).into());
-                new_state
+                InviteeFullState::Requested((state, request).into())
             }
             _ => {
                 state.clone()

@@ -12,6 +12,7 @@ use agency_client::MessageStatusCode;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
+use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::A2AMessage;
@@ -103,9 +104,14 @@ impl Connection {
         Ok(connection)
     }
 
-    pub fn create_with_connection_request(request: Request) -> VcxResult<Connection> {
-        trace!("Connection::create_with_connection_request >>> request: {:?}", request);
-        let mut connection = Self::create(&request.id.0, true)?;
+    pub fn create_with_connection_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Connection> {
+        trace!("Connection::create_with_connection_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
+        let pairwise_info: PairwiseInfo = public_agent.into();
+        let mut connection = Connection {
+            cloud_agent_info: public_agent.cloud_agent_info(),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info, send_message)),
+            autohop_enabled: true,
+        };
         connection.process_request(request)?;
         Ok(connection)
     }
@@ -784,6 +790,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connect
 #[cfg(test)]
 mod tests {
     use crate::messages::connection::request::tests::_request;
+    use crate::handlers::connection::public_agent::tests::_public_agent;
     use crate::messages::connection::invite::tests::{_pairwise_invitation, _public_invitation};
     use crate::utils::devsetup::SetupMocks;
 
@@ -809,7 +816,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_with_request() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_with_connection_request(_request()).unwrap();
+        let connection = Connection::create_with_connection_request(_request(), &_public_agent()).unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
     }
 }

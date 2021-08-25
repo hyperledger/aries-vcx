@@ -3,7 +3,7 @@ use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::error::prelude::*;
 
 lazy_static! {
-    static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
+    pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
 }
 
 fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {

@@ -246,16 +246,17 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_connection_create_with_connection_request(command_handle: CommandHandle,
                                                             request_msg: *const c_char,
+                                                            public_agent_handle: u32,
                                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>) -> u32 {
     info!("vcx_connection_create_with_connection_request >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(request_msg, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_create_with_connection_request(command_handle: {}, request_msg: {})", command_handle, request_msg);
+    trace!("vcx_connection_create_with_connection_request(command_handle: {}, request_msg: {}, public_agent_handle: {})", command_handle, request_msg, public_agent_handle);
 
     execute(move || {
-        match create_connection_with_connection_request(&request_msg) {
+        match create_connection_with_connection_request(&request_msg, public_agent_handle) {
             Ok(handle) => {
                 trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?})",
                        command_handle, error::SUCCESS.message, handle);

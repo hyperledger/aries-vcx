@@ -997,7 +997,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
-    #[ignore = "WIP"]
     fn test_establish_connection_via_public_invite() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
@@ -1019,7 +1018,7 @@ mod tests {
             A2AMessage::ConnectionRequest(req) => req,
             _ => panic!("Expected connection request message type, obtained {:?}", conn_req)
         };
-        let mut institution_to_consumer = Connection::create_with_connection_request(conn_req).unwrap();
+        let mut institution_to_consumer = Connection::create_with_connection_request(conn_req, &institution.agent).unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
@@ -1035,7 +1034,8 @@ mod tests {
 
         institution_to_consumer.send_generic_message("Hello Alice, Faber here").unwrap();
 
-        let consumer_msgs = consumer_to_institution.download_messages(None, None).unwrap();
+        consumer.activate().unwrap();
+        let consumer_msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
         assert_eq!(consumer_msgs.len(), 1);
     }
 

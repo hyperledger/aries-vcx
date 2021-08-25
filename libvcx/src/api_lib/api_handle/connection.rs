@@ -7,6 +7,7 @@ use aries_vcx::agency_client::get_message::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::aries_vcx::handlers::connection::connection::Connection;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -91,17 +92,18 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
     }
 }
 
-pub fn create_connection_with_connection_request(request_msg: &str) -> VcxResult<u32> {
-    debug!("create_connection_with_connection_request >>> request_msg: {}", request_msg);
-    let request_msg: A2AMessage = serde_json::from_str(request_msg)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message: {:?}", err)))?;
-    match request_msg {
-        A2AMessage::ConnectionRequest(request) => {
-            let connection = Connection::create_with_connection_request(request)?;
-            store_connection(connection)
+pub fn create_connection_with_connection_request(request_msg: &str, agent_handle: u32) -> VcxResult<u32> {
+    PUBLIC_AGENT_MAP.get(agent_handle, |agent| {
+        let request_msg: A2AMessage = serde_json::from_str(request_msg)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message: {:?}", err)))?;
+        match request_msg {
+            A2AMessage::ConnectionRequest(request) => {
+                let connection = Connection::create_with_connection_request(request, &agent)?;
+                store_connection(connection)
+            }
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message")))
         }
-        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message")))
-    }
+    })
 }
 
 pub fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
@@ -287,6 +289,7 @@ pub mod tests {
     use aries_vcx::utils;
     use aries_vcx::settings;
     use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::agent::create_public_agent;
     use crate::api_lib::VcxStateType;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::tests::_ack;
@@ -340,7 +343,9 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_connection_with_request() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_connection_request(ARIES_CONNECTION_REQUEST).unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let agent_handle = create_public_agent(&institution_did).unwrap();
+        let connection_handle = connection::create_connection_with_connection_request(ARIES_CONNECTION_REQUEST, agent_handle).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
         assert_eq!(2, connection::get_state(connection_handle));
     }

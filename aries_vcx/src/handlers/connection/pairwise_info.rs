@@ -1,5 +1,6 @@
 use crate::error::VcxResult;
 use crate::libindy::utils::signus::create_and_store_my_did;
+use crate::handlers::connection::public_agent::PublicAgent;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PairwiseInfo {
@@ -20,5 +21,11 @@ impl PairwiseInfo {
     pub fn create() -> VcxResult<PairwiseInfo> {
         let (pw_did, pw_vk) = create_and_store_my_did(None, None)?;
         Ok(PairwiseInfo { pw_did, pw_vk })
+    }
+}
+
+impl From<&PublicAgent> for PairwiseInfo {
+    fn from(agent: &PublicAgent) -> Self {
+        agent.pairwise_info()
     }
 }

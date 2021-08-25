@@ -6,8 +6,10 @@ use crate::messages::connection::did_doc::{DidDoc, Service};
 use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
 
+#[derive(Debug)]
 pub struct PublicAgent {
     agent_info: CloudAgentInfo,
+    pairwise_info: PairwiseInfo,
     institution_did: String
 }
 
@@ -23,7 +25,15 @@ impl PublicAgent {
             ..Default::default()
         };
         add_service(&institution_did, &service)?;
-        Ok(Self { agent_info, institution_did })
+        Ok(Self { agent_info, pairwise_info, institution_did })
+    }
+
+    pub fn pairwise_info(&self) -> PairwiseInfo {
+        self.pairwise_info.clone()
+    }
+
+    pub fn cloud_agent_info(&self) -> CloudAgentInfo {
+        self.agent_info.clone()
     }
 
     pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {
@@ -35,7 +45,7 @@ impl PublicAgent {
 }
 
 #[cfg(test)]
-mod test {
+pub mod tests {
     use super::*;
 
     use crate::utils::devsetup::*;
@@ -44,6 +54,20 @@ mod test {
 
     static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
     static LABEL: &str = "hello";
+
+    pub fn _public_agent() -> PublicAgent {
+        PublicAgent {
+            agent_info: CloudAgentInfo {
+                agent_did: "NaMhQmSjkWoi5aVWEkA9ya".to_string(),
+                agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string()
+            },
+            pairwise_info: PairwiseInfo {
+                pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
+                pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string()
+            },
+            institution_did: INSTITUTION_DID.to_string()
+        }
+    }
 
     #[test]
     #[cfg(feature = "general_test")]
