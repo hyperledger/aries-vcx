@@ -5,6 +5,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
+import { Agent } from './agent';
 import { PtrBuffer } from './utils';
 
 /**
@@ -127,6 +128,13 @@ export type IConnectionInvite = string;
 export interface IRecipientInviteInfo extends IConnectionCreateData {
   // Invitation provided by an entity that wishes to make a connection.
   invite: IConnectionInvite;
+}
+
+export interface IFromRequestInfo extends IConnectionCreateData {
+  // Invitation provided by an entity that wishes to make a connection.
+  invite: IConnectionInvite;
+  agent: Agent;
+  request: string;
 }
 
 /**
@@ -283,6 +291,23 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
         rustAPI().vcx_connection_create_with_invite(commandHandle, id, invite, cb),
       );
 
+      return connection;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public static async createWithConnectionRequest({
+    id,
+    agent,
+    request
+  }: IFromRequestInfo): Promise<Connection> {
+    const connection = new Connection(id);
+    const commandHandle = 0;
+    try {
+      await connection._create((cb) =>
+        rustAPI().vcx_connection_create_with_connection_request(commandHandle, id, agent.handle, request, cb),
+      );
       return connection;
     } catch (err) {
       throw new VCXInternalError(err);

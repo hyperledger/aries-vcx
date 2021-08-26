@@ -6,7 +6,7 @@ use crate::messages::connection::did_doc::{DidDoc, Service};
 use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
     agent_info: CloudAgentInfo,
     pairwise_info: PairwiseInfo,
@@ -41,6 +41,16 @@ impl PublicAgent {
             .set_label(label.to_string())
             .set_public_did(self.institution_did.to_string());
         Ok(invite)
+    }
+
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Agent: {:?}", err)))
+    }
+
+    pub fn from_string(agent_data: &str) -> VcxResult<Self> {
+        serde_json::from_str(agent_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Agent: {:?}", err)))
     }
 }
 
