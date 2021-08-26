@@ -20,6 +20,7 @@ export interface IPairwiseInfo {
 }
 
 export interface IAgentSerializedData {
+  source_id: string; // This needs to be here due to impl. of deserialize in base class
   agent_info: IAgentInfo,
   pairwise_info: IPairwiseInfo,
   institution_did: string
@@ -75,6 +76,13 @@ export class Agent extends VCXBase<IAgentSerializedData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  public static async deserialize(
+    agentData: ISerializedData<IAgentSerializedData>,
+  ): Promise<Agent> {
+    const agent = await super._deserialize(Agent, agentData);
+    return agent;
   }
 
   protected _serializeFn = rustAPI().vcx_public_agent_serialize;

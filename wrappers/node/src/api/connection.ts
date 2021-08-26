@@ -215,6 +215,10 @@ export interface IConnectionDownloadMessages {
   uids: string;
 }
 
+export interface IConnectionDownloadAllMessages extends IConnectionDownloadMessages {
+  pwdids: string;
+}
+
 export async function downloadMessagesV2({
   connections,
   status,

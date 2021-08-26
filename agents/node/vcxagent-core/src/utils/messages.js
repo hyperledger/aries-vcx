@@ -1,4 +1,4 @@
-const { downloadMessages, downloadMessagesV2 } = require('@hyperledger/node-vcx-wrapper')
+const { downloadMessages, downloadMessagesV2, downloadAllMessages } = require('@hyperledger/node-vcx-wrapper')
 const _ = require('lodash')
 
 async function maybeJoinWithComma (list) {
@@ -38,4 +38,18 @@ module.exports.getMessagesForConnection = async function getMessagesForConnectio
     uids: await maybeJoinWithComma(filterUids)
   }
   return parseDownloadMessagesResult(await connection.downloadMessages(downloadInstructions))
+}
+
+module.exports.getMessagesForAllConnections = async function getMessagesForAllConnections (
+  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
+  filterUids = [],
+  pwDids = []
+) {
+  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
+  const downloadInstructions = {
+    status: await maybeJoinWithComma(filterStatuses),
+    uids: await maybeJoinWithComma(filterUids),
+    pwdids: await maybeJoinWithComma(pwDids)
+  }
+  return parseDownloadMessagesResult(await downloadAllMessages(downloadInstructions))
 }

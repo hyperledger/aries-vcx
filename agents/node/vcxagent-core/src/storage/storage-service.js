@@ -7,7 +7,8 @@ const {
   CredentialDef,
   Schema,
   DisclosedProof,
-  Proof
+  Proof,
+  Agent
 } = require('@hyperledger/node-vcx-wrapper')
 
 async function createStorageService (agentName) {
@@ -24,6 +25,7 @@ async function createStorageService (agentName) {
   const storageDisclosedProof = await createFileStorage(`storage-dislosedProofs/${agentName}`)
   const storageCredentialDefinitons = await createFileStorage(`storage-credentialDefinitions/${agentName}`)
   const storageSchemas = await createFileStorage(`storage-schemas/${agentName}`)
+  const storageAgents = await createFileStorage(`storage-agents/${agentName}`)
 
   async function agentProvisionExists () {
     return storageAgentProvisions.hasKey('agent-provision')
@@ -128,6 +130,19 @@ async function createStorageService (agentName) {
     return Proof.deserialize(serialized)
   }
 
+  async function saveAgent (name, agent) {
+    const serialized = await agent.serialize()
+    await storageAgents.set(name, serialized)
+  }
+
+  async function loadAgent (name) {
+    const serialized = await storageAgents.get(name)
+    if (!serialized) {
+      throw Error(`Agent ${name} was not found.`)
+    }
+    return Agent.deserialize(serialized)
+  }
+
   async function listConnectionKeys () {
     return storageConnections.keys()
   }
@@ -181,6 +196,9 @@ async function createStorageService (agentName) {
 
     saveProof,
     loadProof,
+
+    saveAgent,
+    loadAgent,
 
     listConnectionKeys,
     listSchemaKeys,

@@ -1,12 +1,12 @@
-const { getMessagesForConnection } = require('../utils/messages')
+const { getMessagesForConnection, getMessagesForAllConnections } = require('../utils/messages')
 const {
   updateMessages,
   Connection,
-  ConnectionStateType
+  ConnectionStateType,
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, listConnectionIds }) {
+module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, loadAgent, listConnectionIds }) {
   async function inviterConnectionCreate (connectionId, cbInvitation) {
     logger.info(`InviterConnectionSM creating connection ${connectionId}`)
     const connection = await Connection.create({ id: connectionId })
@@ -20,6 +20,18 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     await saveConnection(connectionId, connection)
     logger.info(`InviterConnectionSM has established connection ${connectionId}`)
     return invite
+  }
+
+  async function inviterConnectionCreateFromRequest (connectionId, agentId, request) {
+    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and agent id ${agentId}`)
+    const agent = await loadAgent(agentId)
+    const connection = await Connection.createWithConnectionRequest({
+      id: connectionId,
+      agent,
+      request
+    })
+    await saveConnection(connectionId, connection)
+    return connection
   }
 
   async function inviterConnectionCreateAndAccept (conenctionId, cbInvitation) {
@@ -115,6 +127,10 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return getMessagesForConnection(connection, filterStatuses, filterUids)
   }
 
+  async function getAllMessages (filterStatuses = [], filterUids = [], pwdids = []) {
+    return getMessagesForAllConnections(filterStatuses, filterUids, pwdids)
+  }
+
   async function getState (connectionId) {
     const connection = await loadConnection(connectionId)
     return await connection.getState()
@@ -162,10 +178,10 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     await connection.sendDiscoveryFeatures()
   }
 
-
   return {
     // inviter
     inviterConnectionCreate,
+    inviterConnectionCreateFromRequest,
     inviterConnectionCreateAndAccept,
 
     // invitee
@@ -181,6 +197,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     verifySignature,
     sendMessage,
     getMessages,
+    getAllMessages,
 
     getMessagesV2,
     updateMessagesStatus,
