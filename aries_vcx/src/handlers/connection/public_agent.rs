@@ -8,16 +8,18 @@ use crate::settings::get_agency_client;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
+    source_id: String,
     agent_info: CloudAgentInfo,
     pairwise_info: PairwiseInfo,
     institution_did: String
 }
 
 impl PublicAgent {
-    pub fn create(institution_did: &str) -> VcxResult<Self> {
+    pub fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create()?;
         let agent_info = CloudAgentInfo::create(&pairwise_info)?;
         let institution_did = String::from(institution_did);
+        let source_id = String::from(source_id);
         let service = Service {
             service_endpoint: get_agency_client()?.get_agency_url()?,
             recipient_keys: vec![pairwise_info.pw_vk.clone()],
@@ -25,7 +27,7 @@ impl PublicAgent {
             ..Default::default()
         };
         add_service(&institution_did, &service)?;
-        Ok(Self { agent_info, pairwise_info, institution_did })
+        Ok(Self { source_id, agent_info, pairwise_info, institution_did })
     }
 
     pub fn pairwise_info(&self) -> PairwiseInfo {
@@ -67,6 +69,7 @@ pub mod tests {
 
     pub fn _public_agent() -> PublicAgent {
         PublicAgent {
+            source_id: "test-public-agent".to_string(),
             agent_info: CloudAgentInfo {
                 agent_did: "NaMhQmSjkWoi5aVWEkA9ya".to_string(),
                 agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string()
@@ -88,7 +91,7 @@ pub mod tests {
             label: "hello".to_string(),
             did: "2hoqvcwupRTUNkXn6ArYzs".to_string()
         };
-        let agent = PublicAgent::create(INSTITUTION_DID).unwrap();
+        let agent = PublicAgent::create("testid", INSTITUTION_DID).unwrap();
         let invite = agent.generate_public_invite(LABEL).unwrap();
         assert_eq!(expected_invite, invite);
     }

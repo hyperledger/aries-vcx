@@ -12,17 +12,19 @@ use aries_vcx::utils::error;
 
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
+                                      source_id: *const c_char,
                                       institution_did: *const c_char,
                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, agent_handle: u32)>) -> u32 {
     info!("vcx_public_agent_create >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
     check_useful_c_str!(institution_did, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_public_agent_create(command_handle: {}, institution_did: {})", command_handle, institution_did);
+    trace!("vcx_public_agent_create(command_handle: {}, institution_did: {}) source_id: {}", command_handle, institution_did, source_id);
 
     execute(move || {
-        match agent::create_public_agent(&institution_did) {
+        match agent::create_public_agent(&source_id, &institution_did) {
             Ok(handle) => {
                 trace!("vcx_public_agent_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);

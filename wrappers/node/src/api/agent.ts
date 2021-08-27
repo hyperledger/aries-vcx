@@ -20,19 +20,19 @@ export interface IPairwiseInfo {
 }
 
 export interface IAgentSerializedData {
-  source_id: string; // This needs to be here due to impl. of deserialize in base class
+  source_id: string; 
   agent_info: IAgentInfo,
   pairwise_info: IPairwiseInfo,
   institution_did: string
 }
 
 export class Agent extends VCXBase<IAgentSerializedData> {
-  public static async create(institution_did: string): Promise<Agent> {
-    const agent = new Agent('dummy_source_id');
+  public static async create(sourceId: string, institution_did: string): Promise<Agent> {
+    const agent = new Agent(sourceId);
     const commandHandle = 0;
     try {
       await agent._create((cb) =>
-        rustAPI().vcx_public_agent_create(commandHandle, institution_did, cb),
+        rustAPI().vcx_public_agent_create(commandHandle, sourceId, institution_did, cb),
       );
       return agent;
     } catch (err) {
@@ -81,7 +81,7 @@ export class Agent extends VCXBase<IAgentSerializedData> {
   public static async deserialize(
     agentData: ISerializedData<IAgentSerializedData>,
   ): Promise<Agent> {
-    const agent = await super._deserialize(Agent, agentData);
+    const agent = await super._deserialize<Agent>(Agent, agentData);
     return agent;
   }
 

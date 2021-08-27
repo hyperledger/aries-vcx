@@ -176,7 +176,7 @@ pub mod test {
                 connection: Connection::create("faber", true).unwrap(),
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent: PublicAgent::create(&institution_did).unwrap()
+                agent: PublicAgent::create("faber", &institution_did).unwrap()
             };
             close_main_wallet().unwrap();
             faber

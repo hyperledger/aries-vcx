@@ -344,7 +344,7 @@ pub mod tests {
     fn test_create_connection_with_request() {
         let _setup = SetupMocks::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let agent_handle = create_public_agent(&institution_did).unwrap();
+        let agent_handle = create_public_agent("test", &institution_did).unwrap();
         let connection_handle = connection::create_connection_with_connection_request(ARIES_CONNECTION_REQUEST, agent_handle).unwrap();
         assert!(connection::is_valid_handle(connection_handle));
         assert_eq!(2, connection::get_state(connection_handle));

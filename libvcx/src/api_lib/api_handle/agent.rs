@@ -15,9 +15,9 @@ fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
         .or(Err(VcxError::from(VcxErrorKind::CreatePublicAgent)))
 }
 
-pub fn create_public_agent(institution_did: &str) -> VcxResult<u32> {
-    trace!("create_public_agent >>> institution_did: {}", institution_did);
-    let agent = PublicAgent::create(institution_did)?;
+pub fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<u32> {
+    trace!("create_public_agent >>> source_id: {}, institution_did: {}", source_id, institution_did);
+    let agent = PublicAgent::create(source_id, institution_did)?;
     return store_public_agent(agent);
 }
 
