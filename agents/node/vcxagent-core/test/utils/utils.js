@@ -17,9 +17,9 @@ module.exports.createPairedAliceAndFaberViaPublicInvite = async function createP
   const alice = await createAlice()
   const faber = await createFaber()
   const invite = await faber.createPublicInvite()
-  // await alice.acceptInvite(invite)
-  // await faber.createConnectionFromReceivedRequest()
-  // await alice.updateConnection(ConnectionStateType.Finished)
-  // await faber.updateConnection(ConnectionStateType.Finished)
+  await alice.acceptInvite(invite)
+  await faber.createConnectionFromReceivedRequest()
+  await alice.updateConnection(ConnectionStateType.Finished)
+  await faber.updateConnection(ConnectionStateType.Finished)
   return { alice, faber }
 }

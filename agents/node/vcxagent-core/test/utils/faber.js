@@ -48,7 +48,7 @@ module.exports.createFaber = async function createFaber () {
 
     await vcxAgent.agentShutdownVcx()
 
-    // return invite
+    return invite
   }
 
   async function sendConnectionResponse () {
@@ -151,14 +151,17 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
-  async function downloadConnectionRequests () {
+  async function _downloadConnectionRequests () {
     logger.info('Faber is going to download connection requests')
-    await vcxAgent.agentInitVcx()
-
-    const agencyMessages = await vcxAgent.serviceConnections.getAllMessages()
+    let agencyMessages = await vcxAgent.serviceConnections.getAllMessages()
     logger.info(`Downloaded agency messages: ${JSON.stringify(agencyMessages)}`)
-
-    await vcxAgent.agentShutdownVcx()
+    agencyMessages = agencyMessages
+      .map(msg => JSON.parse(msg.decryptedMsg))
+      .filter(parsedMsg => {
+        const parsedMsgType = parsedMsg['@type']
+        const extractedType = parsedMsgType.split('/').slice(-3, parsedMsgType.length).join('/')
+        return extractedType === 'connections/1.0/request'
+      })
     return agencyMessages
   }
 
@@ -166,8 +169,8 @@ module.exports.createFaber = async function createFaber () {
     logger.info('Faber is going to download connection requests')
     await vcxAgent.agentInitVcx()
 
-    const requests = await downloadConnectionRequests()
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, requests[0])
+    const requests = await _downloadConnectionRequests()
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
@@ -220,10 +223,17 @@ module.exports.createFaber = async function createFaber () {
     return tailsHash
   }
 
+  async function sendMessage (message) {
+    logger.info('Faber is going to send message')
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceConnections.sendMessage(connectionId, message)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
-    downloadConnectionRequests,
+    sendMessage,
     verifySignature,
     createInvite,
     createPublicInvite,
