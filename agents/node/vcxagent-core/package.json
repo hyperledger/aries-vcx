@@ -43,7 +43,7 @@
     "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js",
     "test:integration:trustping": "jest --forceExit --env=node --runInBand test/trustping.spec.js",
     "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js",
-    "test:integration:public-invite": "jest --forceExit --env=node --runInBand test/public-invite.spec.js"
+    "test:integration:public-invite": "jest --env=node --runInBand test/public-invite.spec.js"
   },
   "dependencies": {
     "axios": "^0.21.1",

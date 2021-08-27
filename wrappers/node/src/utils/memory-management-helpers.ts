@@ -13,8 +13,11 @@ export abstract class GCWatcher {
 
   // Can not use setter because of https://github.com/Microsoft/TypeScript/issues/2521
   protected _setHandle(handle: number): void {
+    console.log('Inside _setHandle 0')
     this._handleRef = handle;
+    console.log('Inside _setHandle 1')
     this._clearOnExit();
+    console.log('Inside _setHandle 2')
   }
 
   // _clearOnExit creates a callback that will release the Rust Object

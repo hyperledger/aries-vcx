@@ -84,10 +84,14 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
   protected async _create(createFn: IVCXBaseCreateFn): Promise<void> {
     const handleRes = await createFFICallbackPromise<number>(
       (resolve, reject, cb) => {
+        console.log('Calling createFn')
         const rc = createFn(cb);
+        console.log('After createFn, rc = ', rc)
         if (rc) {
+          console.log('rejecting')
           reject(rc);
         }
+        console.log('Not rejected')
       },
       (resolve, reject) =>
         ffi.Callback(
@@ -102,6 +106,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
           },
         ),
     );
+    console.log('Setting handle: ', handleRes)
     this._setHandle(handleRes);
   }
 

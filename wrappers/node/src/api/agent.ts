@@ -10,20 +10,19 @@ import { VCXBase } from './vcx-base';
 import { PaymentManager } from './vcx-payment-txn';
 
 export interface IAgentInfo {
-  agent_did: string,
-  agent_vk: string
+  agent_did: string;
+  agent_vk: string;
 }
 
 export interface IPairwiseInfo {
-  my_did: string,
-  my_vk: string
+  my_did: string;
+  my_vk: string;
 }
 
 export interface IAgentSerializedData {
-  source_id: string; // This needs to be here due to impl. of deserialize in base class
-  agent_info: IAgentInfo,
-  pairwise_info: IPairwiseInfo,
-  institution_did: string
+  agent_info: IAgentInfo;
+  pairwise_info: IPairwiseInfo;
+  institution_did: string;
 }
 
 export class Agent extends VCXBase<IAgentSerializedData> {
@@ -78,11 +77,23 @@ export class Agent extends VCXBase<IAgentSerializedData> {
     }
   }
 
-  public static async deserialize(
-    agentData: ISerializedData<IAgentSerializedData>,
-  ): Promise<Agent> {
-    const agent = await super._deserialize(Agent, agentData);
-    return agent;
+  public static async deserialize(agentData: string): Promise<Agent> {
+    const agent = new Agent('dummy_source_id');
+    const commandHandle = 0;
+    try {
+      await agent._create((cb) => {
+        console.log('Inside create fn')
+        const rc = rustAPI().vcx_public_agent_deserialize(commandHandle, agentData, cb);
+        console.log('Created, rc = ', rc)
+        return rc
+      }
+      );
+    } catch (err) {
+      // if (err > 0) {
+        throw new VCXInternalError(err);
+      // }
+    }
+    return agent
   }
 
   protected _serializeFn = rustAPI().vcx_public_agent_serialize;

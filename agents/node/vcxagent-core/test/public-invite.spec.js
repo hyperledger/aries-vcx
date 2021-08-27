@@ -5,7 +5,7 @@ const { initRustapi } = require('../src/index')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'trace')
 })
 
 describe('test public invite', () => {
