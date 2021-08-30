@@ -203,7 +203,7 @@ describe('Connection:', () => {
       assert.isString(parsedInvitation['@id']);
       assert.equal(
         parsedInvitation['@type'],
-        'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation',
+        'https://didcomm.org/connections/1.0/invitation',
       );
       assert.isString(parsedInvitation.label);
       assert.isArray(parsedInvitation.recipientKeys);
