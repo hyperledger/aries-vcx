@@ -3,11 +3,11 @@ use strum::IntoEnumIterator;
 
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
-use crate::settings::Actors;
 use crate::settings;
+use crate::settings::Actors;
 
 pub struct ProtocolRegistry {
-    protocols: Vec<ProtocolDescriptor>
+    protocols: Vec<ProtocolDescriptor>,
 }
 
 impl ProtocolRegistry {
