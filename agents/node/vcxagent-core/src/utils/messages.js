@@ -39,17 +39,3 @@ module.exports.getMessagesForConnection = async function getMessagesForConnectio
   }
   return parseDownloadMessagesResult(await connection.downloadMessages(downloadInstructions))
 }
-
-module.exports.getMessagesForAllConnections = async function getMessagesForAllConnections (
-  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
-  filterUids = [],
-  pwDids = []
-) {
-  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
-  const downloadInstructions = {
-    status: await maybeJoinWithComma(filterStatuses),
-    uids: await maybeJoinWithComma(filterUids),
-    pwdids: await maybeJoinWithComma(pwDids)
-  }
-  return parseDownloadMessagesResult(await downloadAllMessages(downloadInstructions))
-}

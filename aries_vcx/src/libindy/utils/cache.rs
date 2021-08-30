@@ -151,24 +151,3 @@ pub fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
         Err(VcxError::from(VcxErrorKind::IOError))
     }
 }
-
-pub fn get_from_cache<'a, T: serde::de::DeserializeOwned>(prefix: &str, id: &str) -> VcxResult<T> {
-    let wallet_id = format!("{}:{}", prefix, id);
-    match get_record(CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()) {
-        Ok(json) => serde_json::from_str(&json)
-            .and_then(|x: serde_json::Value| serde_json::from_str(x.get("value").unwrap_or(&serde_json::Value::Null).as_str().unwrap_or("")))
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unable to deserialize object from cache, prefix: {}, id: {}, json: {}, error: {}", prefix, id, json, err))),
-        Err(err) => Err(VcxError::from_msg(VcxErrorKind::WalletAccessFailed , format!("Unable to read object from wallet, prefix: {}, id: {}, error: {} ", prefix, id, err)))
-    }
-}
-
-pub fn save_to_cache<T: serde::Serialize>(prefix: &str, id: &str, obj: &T) -> VcxResult<()> {
-    match serde_json::to_string(obj) {
-        Ok(json) => {
-            let wallet_id = format!("{}:{}", prefix, id);
-            update_record_value(CACHE_TYPE, &wallet_id, &json)
-                .or(add_record(CACHE_TYPE, &wallet_id, &json, None))
-        },
-        Err(err) => Err(VcxError::from_msg(VcxErrorKind::WalletAccessFailed , format!("Unable to convert object in cache to JSON, error: {:?}", err)))
-    }
-}
