@@ -564,6 +564,7 @@ export interface IFFIEntryPoint {
   vcx_schema_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_create: (commandId: number, sourceId: string, institutionDid: string, cb: ICbRef) => number;
   vcx_public_agent_generate_public_invite: (commandId: number, handle: number, label: string, cb: ICbRef) => number;
+  vcx_public_agent_download_connection_requests: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_public_agent_release: (handle: number) => number;
@@ -1153,6 +1154,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_public_agent_generate_public_invite: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_public_agent_download_connection_requests: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_public_agent_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_CALLBACK_PTR]],
   vcx_public_agent_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],

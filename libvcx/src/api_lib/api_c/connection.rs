@@ -247,18 +247,18 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
 pub extern fn vcx_connection_create_with_connection_request(command_handle: CommandHandle,
                                                             source_id: *const c_char,
                                                             agent_handle: u32,
-                                                            request_msg: *const c_char,
+                                                            request: *const c_char,
                                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>) -> u32 {
     info!("vcx_connection_create_with_connection_request >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(request_msg, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request_msg: {}) source_id: {}", command_handle, agent_handle, request_msg, source_id);
+    trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
 
     execute(move || {
-        match create_connection_with_connection_request(&request_msg, agent_handle) {
+        match create_connection_with_connection_request(&request, agent_handle) {
             Ok(handle) => {
                 trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}",
                        command_handle, error::SUCCESS.message, handle, source_id);

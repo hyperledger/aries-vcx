@@ -9,6 +9,7 @@ use aries_vcx::agency_client::MessageStatusCode;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::aries_vcx::handlers::connection::connection::Connection;
+use crate::aries_vcx::messages::connection::request::Request;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use crate::error::prelude::*;
@@ -92,17 +93,12 @@ pub fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResul
     }
 }
 
-pub fn create_connection_with_connection_request(request_msg: &str, agent_handle: u32) -> VcxResult<u32> {
+pub fn create_connection_with_connection_request(request: &str, agent_handle: u32) -> VcxResult<u32> {
     PUBLIC_AGENT_MAP.get(agent_handle, |agent| {
-        let request_msg: A2AMessage = serde_json::from_str(request_msg)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message: {:?}", err)))?;
-        match request_msg {
-            A2AMessage::ConnectionRequest(request) => {
-                let connection = Connection::create_with_connection_request(request, &agent)?;
-                store_connection(connection)
-            }
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request message")))
-        }
+        let request: Request = serde_json::from_str(request)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
+        let connection = Connection::create_with_connection_request(request, &agent)?;
+        store_connection(connection)
     })
 }
 

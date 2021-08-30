@@ -78,6 +78,43 @@ export class Agent extends VCXBase<IAgentSerializedData> {
     }
   }
 
+  public async downloadConnectionRequests(): Promise<string> {
+    try {
+      const data = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_public_agent_download_connection_requests(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, requests: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              if (!requests) {
+                reject('no connection requests returned');
+                return;
+              }
+              resolve(requests);
+            },
+          ),
+      );
+      return data;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public static async deserialize(
     agentData: ISerializedData<IAgentSerializedData>,
   ): Promise<Agent> {

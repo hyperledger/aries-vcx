@@ -16,8 +16,15 @@ module.exports.createServiceAgents = function createServiceAgents ({ logger, sav
     return agent.generatePublicInvite(label)
   }
 
+  async function downloadConnectionRequests (agentId) {
+    logger.info(`Public agent with id ${agentId} is downloading connection requests`)
+    const agent = await loadAgent(agentId)
+    return agent.downloadConnectionRequests()
+  }
+
   return {
     publicAgentCreate,
-    getPublicInvite
+    getPublicInvite,
+    downloadConnectionRequests
   }
 }

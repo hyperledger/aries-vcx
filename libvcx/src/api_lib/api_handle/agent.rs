@@ -31,6 +31,16 @@ pub fn generate_public_invite(agent_handle: u32, label: &str) -> VcxResult<Strin
     })
 }
 
+pub fn download_connection_requests(agent_handle: u32) -> VcxResult<String> {
+    trace!("download_connection_requests >>> agent_handle: {}", agent_handle);
+    PUBLIC_AGENT_MAP.get(agent_handle, |agent| {
+        let requests = agent.download_connection_requests()?;
+        let requests = serde_json::to_string(&requests)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded connection requests {:?}, err: {:?}", requests, err)))?;
+        Ok(requests)
+    })
+}
+
 pub fn to_string(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
         agent.to_string().map_err(|err| err.into())

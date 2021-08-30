@@ -153,16 +153,9 @@ module.exports.createFaber = async function createFaber () {
 
   async function _downloadConnectionRequests () {
     logger.info('Faber is going to download connection requests')
-    let agencyMessages = await vcxAgent.serviceConnections.getAllMessages()
-    logger.info(`Downloaded agency messages: ${JSON.stringify(agencyMessages)}`)
-    agencyMessages = agencyMessages
-      .map(msg => JSON.parse(msg.decryptedMsg))
-      .filter(parsedMsg => {
-        const parsedMsgType = parsedMsg['@type']
-        const extractedType = parsedMsgType.split('/').slice(-3, parsedMsgType.length).join('/')
-        return extractedType === 'connections/1.0/request'
-      })
-    return agencyMessages
+    const connectionRequests = await vcxAgent.serviceAgent.downloadConnectionRequests(agentId)
+    logger.info(`Downloaded connection requests: ${connectionRequests}`)
+    return JSON.parse(connectionRequests)
   }
 
   async function createConnectionFromReceivedRequest () {
