@@ -228,15 +228,8 @@ impl SmConnectionInvitee {
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
-            InviteeFullState::Null(state) => {
-                match invitation {
-                    Invitation::Pairwise(invitation) => InviteeFullState::Invited((state, invitation).into()),
-                    Invitation::Public(invitation) => InviteeFullState::Invited((state, invitation).into())
-                }
-            }
-            _ => {
-                state.clone()
-            }
+            InviteeFullState::Null(state) => InviteeFullState::Invited((state, invitation).into()),
+            _ => state.clone()
         };
         Ok(Self { source_id, pairwise_info, state, send_message })
     }

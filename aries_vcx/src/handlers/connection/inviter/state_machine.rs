@@ -263,8 +263,9 @@ impl SmConnectionInviter {
                     .set_routing_keys(routing_keys)
                     .set_service_endpoint(service_endpoint);
 
-                let new_state = InviterFullState::Invited((state, invite).into());
-                new_state
+                InviterFullState::Invited(
+                    (state, Invitation::Pairwise(invite)).into()
+                )
             }
             _ => {
                 state.clone()
