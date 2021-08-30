@@ -48,7 +48,7 @@ pub mod tests {
     use crate::messages::connection::response::tests::*;
 
     fn _protocol_descriptor() -> ProtocolDescriptor {
-        ProtocolDescriptor { pid: String::from("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/"), roles: None }
+        ProtocolDescriptor { pid: String::from("https://didcomm.org/"), roles: None }
     }
 
     pub fn _disclose() -> Disclose {

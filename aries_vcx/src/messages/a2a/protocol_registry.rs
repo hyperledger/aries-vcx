@@ -176,13 +176,13 @@ pub mod tests {
         let protocols = registry.get_protocols_for_query(None);
         assert!(!protocols.is_empty());
 
-        let protocols = registry.get_protocols_for_query(Some("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections"));
+        let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections"));
         let expected_protocols = vec![
             ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: None },
         ];
         assert_eq!(expected_protocols, protocols);
 
-        let protocols = registry.get_protocols_for_query(Some("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0"));
+        let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections/1.0"));
         let expected_protocols = vec![
             ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: None },
         ];
@@ -198,7 +198,7 @@ pub mod tests {
 
         let registry: ProtocolRegistry = ProtocolRegistry::init();
 
-        let protocols = registry.get_protocols_for_query(Some("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0"));
+        let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections/1.0"));
 
         let expected_protocols = vec![
             ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: Some(vec![Actors::Invitee]) },
