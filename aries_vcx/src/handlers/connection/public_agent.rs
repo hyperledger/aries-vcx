@@ -5,6 +5,9 @@ use crate::messages::connection::invite::PublicInvitation;
 use crate::messages::connection::did_doc::{DidDoc, Service};
 use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
+use crate::agency_client::get_message::{get_connection_messages, Message};
+use crate::messages::connection::request::Request;
+use crate::messages::a2a::A2AMessage;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
@@ -43,6 +46,22 @@ impl PublicAgent {
             .set_label(label.to_string())
             .set_public_did(self.institution_did.to_string());
         Ok(invite)
+    }
+
+    pub fn download_connection_requests(&self) -> VcxResult<Vec<Request>> {
+        let connection_requests: Vec<Request> = self.agent_info.get_messages_noauth(&self.pairwise_info)?
+            .into_iter()
+            .filter_map(|(uid, message)| {
+                match message {
+                    A2AMessage::ConnectionRequest(request) => {
+                        self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
+                        Some(request)
+                    }
+                    _ => None
+                }
+            })
+            .collect();
+       Ok(connection_requests) 
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
