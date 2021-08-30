@@ -57,7 +57,10 @@ impl PublicAgent {
                         self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
                         Some(request)
                     }
-                    _ => None
+                    _ => {
+                        self.agent_info.reject_message(&self.pairwise_info, uid).ok()?;
+                        None
+                    }
                 }
             })
             .collect();

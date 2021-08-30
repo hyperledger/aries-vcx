@@ -84,6 +84,18 @@ impl CloudAgentInfo {
             .map_err(|err| err.into())
     }
 
+    pub fn reject_message(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
+        trace!("CloudAgentInfo::reject_message >>> uid: {:?}", uid);
+
+        let messages_to_reject = vec![UIDsByConn {
+            pairwise_did: pairwise_info.pw_did.clone(),
+            uids: vec![uid],
+        }];
+
+        update_messages_status(MessageStatusCode::Rejected, messages_to_reject)
+            .map_err(|err| err.into())
+    }
+
     pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<Message>> {
         trace!("CloudAgentInfo::download_encrypted_messages >>>");
         get_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
