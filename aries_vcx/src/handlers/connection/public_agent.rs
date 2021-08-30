@@ -48,14 +48,23 @@ impl PublicAgent {
         Ok(invite)
     }
 
-    pub fn download_connection_requests(&self) -> VcxResult<Vec<Request>> {
+    pub fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
         let connection_requests: Vec<Request> = self.agent_info.get_messages_noauth(&self.pairwise_info)?
             .into_iter()
             .filter_map(|(uid, message)| {
                 match message {
-                    A2AMessage::ConnectionRequest(request) => {
-                        self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
-                        Some(request)
+                    // TODO: Rewrite once if let chains become stable: https://github.com/rust-lang/rust/issues/53667
+                    A2AMessage::ConnectionRequest(request) => match &uids {
+                        Some(uids) => if uids.contains(&uid) {
+                            self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
+                            Some(request)
+                        } else {
+                            None
+                        }
+                        None => {
+                            self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
+                            Some(request)
+                        }
                     }
                     _ => {
                         self.agent_info.reject_message(&self.pairwise_info, uid).ok()?;

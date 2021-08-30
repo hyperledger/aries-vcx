@@ -81,6 +81,7 @@ pub extern fn vcx_public_agent_generate_public_invite(command_handle: CommandHan
 #[no_mangle]
 pub extern fn vcx_public_agent_download_connection_requests(command_handle: CommandHandle,
                                                             agent_handle: u32,
+                                                            uids: *const c_char,
                                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, requests: *const c_char)>) -> u32 {
     info!("vcx_public_agent_download_connection_requests >>>");
 
@@ -90,10 +91,19 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_public_agent_download_connection_requests(command_handle: {})", command_handle);
+    let uids = if !uids.is_null() {
+        check_useful_c_str!(uids, VcxErrorKind::InvalidOption);
+        let v: Vec<&str> = uids.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        Some(v.to_owned())
+    } else {
+        None
+    };
+
+    trace!("vcx_public_agent_download_connection_requests(command_handle: {}, agent_handle: {}, uids: {:?})", command_handle, agent_handle, uids);
 
     execute(move || {
-        match agent::download_connection_requests(agent_handle) {
+        match agent::download_connection_requests(agent_handle, uids) {
             Ok(requests) => {
                 trace!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
                        command_handle, error::SUCCESS.message, requests);

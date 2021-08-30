@@ -78,7 +78,7 @@ export class Agent extends VCXBase<IAgentSerializedData> {
     }
   }
 
-  public async downloadConnectionRequests(): Promise<string> {
+  public async downloadConnectionRequests(uids: string): Promise<string> {
     try {
       const data = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
@@ -86,6 +86,7 @@ export class Agent extends VCXBase<IAgentSerializedData> {
           const rc = rustAPI().vcx_public_agent_download_connection_requests(
             commandHandle,
             this.handle,
+            uids,
             cb,
           );
           if (rc) {
