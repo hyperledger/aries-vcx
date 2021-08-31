@@ -17,6 +17,7 @@ pub enum MessageFamilies {
 
 impl MessageFamilies {
     pub const ARIES_CORE_PREFIX: &'static str = "https://didcomm.org";
+    pub const DID_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg";
 
     pub fn version(&self) -> &'static str {
         match self {
