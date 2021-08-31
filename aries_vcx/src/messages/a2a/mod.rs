@@ -299,6 +299,7 @@ pub mod test_a2a_serialization {
     use crate::messages::ack::{Ack, AckStatus};
     use crate::messages::connection::request::Request;
     use crate::utils::devsetup::SetupDefaults;
+    use crate::messages::forward::Forward;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -351,6 +352,19 @@ pub mod test_a2a_serialization {
         } else {
             panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
         }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
+    fn test_serialize_forward_message_to_legacy_format() {
+        let _setup = SetupDefaults::init();
+        let a2a_msg = A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(),  "{}".as_bytes().to_vec()).unwrap());
+        let serialized = serde_json::to_string(&a2a_msg).unwrap();
+
+        // serialization
+        let val: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(val["@type"], Value::String("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward".into()));
     }
 
     #[test]
