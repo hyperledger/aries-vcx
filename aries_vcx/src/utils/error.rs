@@ -117,6 +117,7 @@ pub static NO_AGENT_INFO: Error = Error { code_num: 1106, message: "Agent pairwi
 pub static REV_REG_DEF_NOT_FOUND: Error = Error { code_num: 1107, message: "No revocation definition found" };
 pub static REV_DELTA_NOT_FOUND: Error = Error { code_num: 1108, message: "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?" };
 pub static POISONED_LOCK: Error = Error { code_num: 1109, message: "Attempted to lock a poisoned lock" };
+pub static CREATE_PUBLIC_AGENT: Error = Error { code_num: 1110, message: "Error creating public agent" };
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {

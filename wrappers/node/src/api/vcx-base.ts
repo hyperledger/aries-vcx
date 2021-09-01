@@ -14,7 +14,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
     constructorParams?: P,
   ): Promise<T> {
     try {
-      const obj = new VCXClass(objData.data.source_id || objData.source_id, constructorParams);
+      const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
       await obj._initFromData(objData);
       return obj;
     } catch (err) {

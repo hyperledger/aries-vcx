@@ -108,6 +108,7 @@ mod tests {
 
     use aries_vcx::messages::ack::tests::_ack;
     use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
@@ -996,6 +997,47 @@ mod tests {
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
+    fn test_establish_connection_via_public_invite() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        institution.activate().unwrap();
+        let public_invite_json = institution.create_public_invite();
+        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
+
+        consumer.activate().unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
+        consumer_to_institution.connect().unwrap();
+        consumer_to_institution.update_state().unwrap();
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
+        assert_eq!(conn_requests.len(), 1);
+        let mut institution_to_consumer = Connection::create_with_connection_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
+
+        consumer.activate().unwrap();
+        consumer_to_institution.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
+
+        institution_to_consumer.send_generic_message("Hello Alice, Faber here").unwrap();
+
+        consumer.activate().unwrap();
+        let consumer_msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
+        assert_eq!(consumer_msgs.len(), 1);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
     pub fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2ZeroFees::init();
         let mut institution = Faber::setup();
@@ -1409,7 +1451,7 @@ mod tests {
     #[test]
     #[cfg(feature = "agency_v2")]
     fn test_connection_send_works() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut faber = Faber::setup();
         let mut alice = Alice::setup();
 
@@ -1511,7 +1553,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_download_messages() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
@@ -1544,7 +1586,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_update_agency_messages() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution);
@@ -1581,7 +1623,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[test]
     fn test_download_messages_from_multiple_connections() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
@@ -1614,6 +1656,4 @@ mod tests {
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
     }
-
 }
-

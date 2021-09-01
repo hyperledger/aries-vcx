@@ -2,6 +2,7 @@ import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
+import { IConnectionDownloadAllMessages } from './connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 
 export async function provisionCloudAgent (configAgent: object): Promise<string> {
@@ -206,6 +207,33 @@ export async function endorseTransaction(transaction: string): Promise<void> {
           }
           resolve();
         }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function downloadAllMessages({ status, uids, pwdids }: IConnectionDownloadAllMessages): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_messages_download(0, status, uids, pwdids, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback(
+          'void',
+          ['uint32', 'uint32', 'string'],
+          (xhandle: number, err: number, messages: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(messages);
+          },
+        ),
     );
   } catch (err) {
     throw new VCXInternalError(err);

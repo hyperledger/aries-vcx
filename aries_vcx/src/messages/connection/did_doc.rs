@@ -1,8 +1,9 @@
 use url::Url;
 
-use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::invite::{Invitation, PairwiseInvitation, PublicInvitation};
 use crate::error::prelude::*;
 use crate::utils::validation::validate_verkey;
+use crate::libindy::utils::ledger;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -290,20 +291,33 @@ impl Default for Service {
 }
 
 impl From<Invitation> for DidDoc {
-    fn from(invite: Invitation) -> DidDoc {
+    fn from(invitation: Invitation) -> DidDoc {
         let mut did_doc: DidDoc = DidDoc::default();
-        did_doc.set_id(invite.id.0.clone()); // TODO: FIXME DIDDoc id always MUST be a valid DID
-        did_doc.set_service_endpoint(invite.service_endpoint.clone());
-        did_doc.set_keys(invite.recipient_keys, invite.routing_keys);
+        let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+            Invitation::Public(invitation) => {
+                did_doc.set_id(invitation.did.clone());
+                let service = ledger::get_service(&invitation.did).unwrap_or_else(|err| {
+                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    Service::default()                
+                });
+                (service.service_endpoint, service.recipient_keys, service.routing_keys)
+            },
+            Invitation::Pairwise(invitation) => {
+                did_doc.set_id(invitation.id.0.clone());
+                (invitation.service_endpoint.clone(), invitation.recipient_keys, invitation.routing_keys)
+            }
+        };
+        did_doc.set_service_endpoint(service_endpoint);
+        did_doc.set_keys(recipient_keys, routing_keys);
         did_doc
     }
 }
 
-impl From<DidDoc> for Invitation {
-    fn from(did_doc: DidDoc) -> Invitation {
+impl From<DidDoc> for PairwiseInvitation {
+    fn from(did_doc: DidDoc) -> PairwiseInvitation {
         let (recipient_keys, routing_keys) = did_doc.resolve_keys();
 
-        Invitation::create()
+        PairwiseInvitation::create()
             .set_id(did_doc.id.clone())
             .set_service_endpoint(did_doc.get_endpoint())
             .set_recipient_keys(recipient_keys)
@@ -314,7 +328,7 @@ impl From<DidDoc> for Invitation {
 // #[cfg(test)]
 pub mod tests {
     use crate::messages::a2a::MessageId;
-    use crate::messages::connection::invite::tests::_invitation;
+    use crate::messages::connection::invite::tests::_pairwise_invitation;
 
     use super::*;
 
@@ -331,6 +345,10 @@ pub mod tests {
     }
 
     pub fn _id() -> String {
+        String::from("VsKV7grR1BUE29mG2Fm2kX")
+    }
+
+    pub fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }
 
@@ -521,6 +539,6 @@ pub mod tests {
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_keys(_recipient_keys(), _routing_keys());
 
-        assert_eq!(did_doc, DidDoc::from(_invitation()))
+        assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_pairwise_invitation())));
     }
 }

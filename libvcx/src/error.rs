@@ -221,6 +221,9 @@ pub enum VcxErrorKind {
 
     #[fail(display = "Attempted to unlock poisoned lock")]
     PoisonedLock,
+
+    #[fail(display = "Error creating public agent")]
+    CreatePublicAgent,
 }
 
 #[derive(Debug)]

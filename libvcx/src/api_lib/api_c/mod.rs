@@ -9,4 +9,5 @@ pub mod schema;
 pub mod utils;
 pub mod vcx;
 pub mod wallet;
+pub mod agent;
 mod filters;

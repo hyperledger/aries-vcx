@@ -37,6 +37,7 @@ export const FFI_CREDENTIAL_HANDLE = 'uint32';
 export const FFI_PROOF_HANDLE = 'uint32';
 export const FFI_CREDENTIALDEF_HANDLE = 'uint32';
 export const FFI_SCHEMA_HANDLE = 'uint32';
+export const FFI_AGENT_HANDLE = 'uint32';
 export const FFI_SCHEMA_NUMBER = 'uint32';
 export const FFI_PAYMENT_HANDLE = 'uint32';
 export const FFI_PRICE = 'uint32';
@@ -213,6 +214,13 @@ export interface IFFIEntryPoint {
     invite: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_create_with_connection_request: (
+    commandId: number,
+    sourceId: string,
+    agentHandle: number,
+    request: string,
+    cb: ICbRef,
+  ) => number;
   vcx_connection_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_connection_release: (handle: number) => number;
   vcx_connection_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -274,6 +282,13 @@ export interface IFFIEntryPoint {
     handle: number,
     status: string,
     uids: string,
+    cb: ICbRef,
+  ) => number;
+  vcx_messages_download: (
+    commandId: number,
+    status: string,
+    uids: string,
+    pwdids: string,
     cb: ICbRef,
   ) => number;
 
@@ -547,6 +562,12 @@ export interface IFFIEntryPoint {
   vcx_schema_get_payment_txn: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_schema_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_schema_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_public_agent_create: (commandId: number, sourceId: string, institutionDid: string, cb: ICbRef) => number;
+  vcx_public_agent_generate_public_invite: (commandId: number, handle: number, label: string, cb: ICbRef) => number;
+  vcx_public_agent_download_connection_requests: (commandId: number, handle: number, uids: string, cb: ICbRef) => number;
+  vcx_public_agent_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_public_agent_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_public_agent_release: (handle: number) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -682,6 +703,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_connection_create_with_connection_request: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_connection_deserialize: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -756,6 +781,11 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_messages_download: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+
+  vcx_messages_download: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
 
   // issuer
@@ -1117,6 +1147,21 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
+  vcx_public_agent_create: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_public_agent_generate_public_invite: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_public_agent_download_connection_requests: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_public_agent_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_public_agent_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_public_agent_release: [FFI_ERROR_CODE, [FFI_CONNECTION_HANDLE]],
 };
 
 let _rustAPI: IFFIEntryPoint;

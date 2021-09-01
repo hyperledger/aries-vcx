@@ -1,4 +1,4 @@
-const { downloadMessages, downloadMessagesV2 } = require('@hyperledger/node-vcx-wrapper')
+const { downloadMessages, downloadMessagesV2, downloadAllMessages } = require('@hyperledger/node-vcx-wrapper')
 const _ = require('lodash')
 
 async function maybeJoinWithComma (list) {

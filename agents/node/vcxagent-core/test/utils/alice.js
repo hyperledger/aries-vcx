@@ -20,7 +20,7 @@ module.exports.createAlice = async function createAlice () {
   const vcxAgent = await createVcxAgent(aliceAgentConfig)
 
   async function acceptInvite (invite) {
-    logger.info('Alice establishing connection with Faber')
+    logger.info(`Alice establishing connection with Faber using invite ${invite}`)
 
     await vcxAgent.agentInitVcx()
 

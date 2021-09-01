@@ -11,7 +11,7 @@ use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
-use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
+use aries_vcx::agency_client::get_message::parse_status_codes;
 
 /*
     Tha API represents a pairwise connection with another identity owner.
@@ -232,6 +232,40 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
             }
             Err(x) => {
                 warn!("vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
+                      command_handle, x, 0, source_id);
+                cb(command_handle, x.into(), 0);
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_connection_create_with_connection_request(command_handle: CommandHandle,
+                                                            source_id: *const c_char,
+                                                            agent_handle: u32,
+                                                            request: *const c_char,
+                                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>) -> u32 {
+    info!("vcx_connection_create_with_connection_request >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
+
+    execute(move || {
+        match create_connection_with_connection_request(&request, agent_handle) {
+            Ok(handle) => {
+                trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}",
+                       command_handle, error::SUCCESS.message, handle, source_id);
+                cb(command_handle, error::SUCCESS.code_num, handle);
+            }
+            Err(x) => {
+                warn!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                       command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
             }

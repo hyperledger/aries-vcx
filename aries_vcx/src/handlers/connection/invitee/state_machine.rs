@@ -228,12 +228,8 @@ impl SmConnectionInvitee {
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
-            InviteeFullState::Null(state) => {
-                InviteeFullState::Invited((state, invitation).into())
-            }
-            _ => {
-                state.clone()
-            }
+            InviteeFullState::Null(state) => InviteeFullState::Invited((state, invitation).into()),
+            _ => state.clone()
         };
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
@@ -251,8 +247,7 @@ impl SmConnectionInvitee {
 
                 let ddo = DidDoc::from(state.invitation.clone());
                 send_message(&pairwise_info.pw_vk, &ddo, &request.to_a2a_message())?;
-                let new_state = InviteeFullState::Requested((state, request).into());
-                new_state
+                InviteeFullState::Requested((state, request).into())
             }
             _ => {
                 state.clone()
@@ -393,7 +388,7 @@ impl SmConnectionInvitee {
 #[cfg(test)]
 pub mod test {
     use crate::messages::ack::tests::_ack;
-    use crate::messages::connection::invite::tests::_invitation;
+    use crate::messages::connection::invite::tests::_pairwise_invitation;
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
     use crate::messages::connection::response::tests::_signed_response;
@@ -401,6 +396,7 @@ pub mod test {
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;
     use crate::messages::trust_ping::ping_response::tests::_ping_response;
+    use crate::messages::connection::invite::PairwiseInvitation;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -423,12 +419,12 @@ pub mod test {
 
         impl SmConnectionInvitee {
             pub fn to_invitee_invited_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(_invitation()).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
                 self
             }
 
             pub fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(_invitation()).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint).unwrap();
@@ -437,9 +433,9 @@ pub mod test {
 
             pub fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = Invitation::default().set_recipient_keys(vec![key.clone()]);
+                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
 
-                self = self.handle_invitation(invitation).unwrap();
+                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -496,7 +492,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm();
 
-                did_exchange_sm = did_exchange_sm.handle_invitation(_invitation()).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
             }

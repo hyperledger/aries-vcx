@@ -109,7 +109,8 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
-            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num
+            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
+            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num
         }
     }
 }
@@ -202,6 +203,7 @@ impl From<u32> for VcxErrorKind {
             _ if { error::NO_AGENT_INFO.code_num == code } => VcxErrorKind::NoAgentInformation,
             _ if { error::REV_REG_DEF_NOT_FOUND.code_num == code } => VcxErrorKind::RevRegDefNotFound,
             _ if { error::REV_DELTA_NOT_FOUND.code_num == code } => VcxErrorKind::RevDeltaNotFound,
+            _ if { error::CREATE_PUBLIC_AGENT.code_num == code } => VcxErrorKind::CreatePublicAgent,
             _ => VcxErrorKind::UnknownError,
         }
     }

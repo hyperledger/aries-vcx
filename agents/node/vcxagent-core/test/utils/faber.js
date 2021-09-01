@@ -8,6 +8,7 @@ module.exports.createFaber = async function createFaber () {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
+  const agentId = 'faber-public-agent'
   let credDefId
   const proofId = 'proof-from-alice'
   const logger = require('../../demo/logger')('Faber')
@@ -31,6 +32,19 @@ module.exports.createFaber = async function createFaber () {
     logger.info(`Faber generated invite:\n${invite}`)
     const connection = await vcxAgent.serviceConnections.getVcxConnection(connectionId)
     expect(await connection.getState()).toBe(ConnectionStateType.Invited)
+
+    await vcxAgent.agentShutdownVcx()
+
+    return invite
+  }
+
+  async function createPublicInvite () {
+    logger.info('Faber is going to generate public invite')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceAgent.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
+    const invite = await vcxAgent.serviceAgent.getPublicInvite(agentId, 'faber-label')
+    logger.info(`Faber generated public invite:\n${invite}`)
 
     await vcxAgent.agentShutdownVcx()
 
@@ -137,6 +151,24 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
+  async function _downloadConnectionRequests () {
+    logger.info('Faber is going to download connection requests')
+    const connectionRequests = await vcxAgent.serviceAgent.downloadConnectionRequests(agentId)
+    logger.info(`Downloaded connection requests: ${connectionRequests}`)
+    return JSON.parse(connectionRequests)
+  }
+
+  async function createConnectionFromReceivedRequest () {
+    logger.info('Faber is going to download connection requests')
+    await vcxAgent.agentInitVcx()
+
+    const requests = await _downloadConnectionRequests()
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function updateMessageStatus (uids) {
     await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.updateMessagesStatus(connectionId, uids)
@@ -184,11 +216,21 @@ module.exports.createFaber = async function createFaber () {
     return tailsHash
   }
 
+  async function sendMessage (message) {
+    logger.info('Faber is going to send message')
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceConnections.sendMessage(connectionId, message)
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
+    sendMessage,
     verifySignature,
     createInvite,
+    createPublicInvite,
+    createConnectionFromReceivedRequest,
     updateConnection,
     sendConnectionResponse,
     sendCredentialOffer,

@@ -6,6 +6,7 @@ const { createServiceProver } = require('./services/service-prover')
 const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
+const { createServiceAgents } = require('./services/service-agents')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   initThreadpool,
@@ -14,7 +15,7 @@ const {
   openMainWallet,
   openMainPool,
   vcxUpdateWebhookUrl,
-  shutdownVcx,
+  shutdownVcx
 } = require('@hyperledger/node-vcx-wrapper')
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady } = require('./common')
@@ -67,13 +68,14 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
   }
 
   function getInstitutionDid () {
-    return agentProvision.institution_did
+    return issuerDid
   }
 
   const serviceConnections = createServiceConnections({
     logger,
     saveConnection: storageService.saveConnection,
     loadConnection: storageService.loadConnection,
+    loadAgent: storageService.loadAgent,
     listConnectionIds: storageService.listConnectionKeys
   })
   const serviceLedgerSchema = createServiceLedgerSchema({
@@ -118,6 +120,11 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     loadProof: storageService.loadProof,
     listProofIds: storageService.listProofKeys
   })
+  const serviceAgent = createServiceAgents({
+    logger,
+    saveAgent: storageService.saveAgent,
+    loadAgent: storageService.loadAgent
+  })
 
   return {
     // vcx controls
@@ -140,7 +147,10 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
 
     // proofs
     serviceProver,
-    serviceVerifier
+    serviceVerifier,
+
+    // agents
+    serviceAgent
   }
 }
 

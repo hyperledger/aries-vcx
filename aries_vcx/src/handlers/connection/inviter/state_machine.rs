@@ -10,7 +10,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
 use crate::messages::connection::did_doc::DidDoc;
-use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::invite::{Invitation, PairwiseInvitation, PublicInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
@@ -257,14 +257,15 @@ impl SmConnectionInviter {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
             InviterFullState::Null(state) => {
-                let invite: Invitation = Invitation::create()
+                let invite: PairwiseInvitation = PairwiseInvitation::create()
                     .set_label(source_id.to_string())
                     .set_recipient_keys(vec!(pairwise_info.pw_vk.clone()))
                     .set_routing_keys(routing_keys)
                     .set_service_endpoint(service_endpoint);
 
-                let new_state = InviterFullState::Invited((state, invite).into());
-                new_state
+                InviterFullState::Invited(
+                    (state, Invitation::Pairwise(invite)).into()
+                )
             }
             _ => {
                 state.clone()
@@ -281,7 +282,7 @@ impl SmConnectionInviter {
                                      new_service_endpoint: String) -> VcxResult<Self> {
         let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self;
         let state = match state {
-            InviterFullState::Invited(state) => {
+            InviterFullState::Invited(_) | InviterFullState::Null(_) => {
                 match Self::_build_response(
                     &request,
                     &bootstrap_pairwise_info,
@@ -289,7 +290,7 @@ impl SmConnectionInviter {
                     new_routing_keys,
                     new_service_endpoint) {
                     Ok(signed_response) => {
-                        InviterFullState::Requested((state, request, signed_response).into())
+                        InviterFullState::Requested((request, signed_response).into())
                     }
                     Err(err) => {
                         let problem_report = ProblemReport::create()
@@ -301,7 +302,7 @@ impl SmConnectionInviter {
                             &bootstrap_pairwise_info.pw_vk,
                             &request.connection.did_doc,
                             &problem_report.to_a2a_message()).ok();
-                        InviterFullState::Null((state, problem_report).into())
+                        InviterFullState::Null((problem_report).into())
                     }
                 }
             }
@@ -410,11 +411,11 @@ impl SmConnectionInviter {
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
-            InviterFullState::Responded(state) => {
-                InviterFullState::Null((state, problem_report).into())
+            InviterFullState::Responded(_) => {
+                InviterFullState::Null((problem_report).into())
             }
-            InviterFullState::Invited(state) => {
-                InviterFullState::Null((state, problem_report).into())
+            InviterFullState::Invited(_) => {
+                InviterFullState::Null((problem_report).into())
             }
             _ => {
                 state.clone()

@@ -12,6 +12,7 @@ use agency_client::MessageStatusCode;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
+use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::A2AMessage;
@@ -19,6 +20,7 @@ use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
+use crate::messages::connection::request::Request;
 use crate::utils::send_message;
 use crate::error::prelude::*;
 use crate::utils::serialization::SerializableObjectWithState;
@@ -100,6 +102,17 @@ impl Connection {
         };
         connection.process_invite(invitation)?;
         Ok(connection)
+    }
+
+    pub fn create_with_connection_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Connection> {
+        trace!("Connection::create_with_connection_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
+        let pairwise_info: PairwiseInfo = public_agent.into();
+        let mut connection = Connection {
+            cloud_agent_info: public_agent.cloud_agent_info(),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info, send_message)),
+            autohop_enabled: true,
+        };
+        connection.process_request(request)
     }
 
     pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Connection {
@@ -269,6 +282,27 @@ impl Connection {
             }
         };
         Ok(())
+    }
+
+    fn process_request(&mut self, request: Request) -> VcxResult<Connection> {
+        trace!("Connection::process_request >>> request: {:?}", request);
+        let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                let new_pairwise_info = PairwiseInfo::create()?;
+                let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info)?;
+                let new_routing_keys = new_cloud_agent.routing_keys()?;
+                let new_service_endpoint = new_cloud_agent.service_endpoint()?;
+                (SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint)?), new_cloud_agent)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
+        };
+        Ok(Connection {
+            connection_sm,
+            cloud_agent_info: new_cloud_agent_info,
+            autohop_enabled: self.autohop_enabled
+        })
     }
 
     /**
@@ -450,8 +484,11 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
-                        A2AMessage::ConnectionInvitation(invitation) => {
-                            (sm_invitee.handle_invitation(invitation)?, false)
+                        A2AMessage::ConnectionInvitationPublic(invitation) => {
+                            (sm_invitee.handle_invitation(Invitation::Public(invitation))?, false)
+                        }
+                        A2AMessage::ConnectionInvitationPairwise(invitation) => {
+                            (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
                             (sm_invitee.handle_connection_response(response)?, true)
@@ -754,5 +791,39 @@ impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connect
 impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
     fn from((state, pairwise_info, cloud_agent_info, source_id): (SmConnectionState, PairwiseInfo, CloudAgentInfo, String)) -> Connection {
         Connection::from_parts(source_id, pairwise_info, cloud_agent_info, state, true)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::messages::connection::request::tests::_request;
+    use crate::handlers::connection::public_agent::tests::_public_agent;
+    use crate::messages::connection::invite::tests::{_pairwise_invitation, _public_invitation};
+    use crate::utils::devsetup::SetupMocks;
+
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_with_pairwise_invite() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true).unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_with_public_invite() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true).unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_create_with_request() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_with_connection_request(_request(), &_public_agent()).unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
     }
 }
