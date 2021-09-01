@@ -35,7 +35,7 @@ pub mod tests {
     use super::*;
 
     fn _query_string() -> String {
-        String::from("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/")
+        String::from("https://didcomm.org/")
     }
 
 

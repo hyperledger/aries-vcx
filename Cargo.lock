@@ -811,7 +811,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.20.0"
+version = "0.20.1"
 dependencies = [
  "android_logger",
  "aries-vcx",

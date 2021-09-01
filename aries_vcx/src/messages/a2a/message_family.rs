@@ -16,7 +16,8 @@ pub enum MessageFamilies {
 }
 
 impl MessageFamilies {
-    pub const DID: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg";
+    pub const ARIES_CORE_PREFIX: &'static str = "https://didcomm.org";
+    pub const DID_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg";
 
     pub fn version(&self) -> &'static str {
         match self {
@@ -35,7 +36,7 @@ impl MessageFamilies {
     }
 
     pub fn id(&self) -> String {
-        format!("{};spec/{}/{}", Self::DID, self.to_string(), self.version().to_string())
+        format!("{}/{}/{}", Self::ARIES_CORE_PREFIX, self.to_string(), self.version().to_string())
     }
 
     pub fn actors(&self) -> Option<(Actors, Actors)> {

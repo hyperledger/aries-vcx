@@ -20,9 +20,9 @@ pub const CREDENTIAL_ISSUER_SM_INITIAL: &str = r#"
 // Faber send Cred offer to Alice
 pub const ARIES_CREDENTIAL_OFFER: &str = r#"{
     "@id": "57b3f85d-7673-4e6f-bb09-cc27cf2653c0",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential",
+    "@type": "https://didcomm.org/issue-credential/1.0/offer-credential",
     "credential_preview": {
-        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+        "@type": "https://didcomm.org/issue-credential/1.0/credential-preview",
         "attributes": [
             {
                 "name": "age",
@@ -63,9 +63,9 @@ pub const ARIES_CREDENTIAL_OFFER: &str = r#"{
 
 pub const ARIES_CREDENTIAL_OFFER_JSON_FORMAT: &str = r#"{
     "@id": "57b3f85d-7673-4e6f-bb09-cc27cf2653c0",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential",
+    "@type": "https://didcomm.org/issue-credential/1.0/offer-credential",
     "credential_preview": {
-        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+        "@type": "https://didcomm.org/issue-credential/1.0/credential-preview",
         "attributes": [
             {
                 "name": "age",
@@ -153,7 +153,7 @@ pub const CREDENTIAL_SM_OFFER_RECEIVED: &str = r#"
                     "offer": {
                         "@id": "0a794e24-c6b4-46bc-93b6-642b6dc98c98",
                         "credential_preview": {
-                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+                            "@type": "https://didcomm.org/issue-credential/1.0/credential-preview",
                             "attributes": [
                                 {
                                     "name": "age",
@@ -229,7 +229,7 @@ pub const SERIALIZED_CREDENTIAL_V2_OFFER_RECEIVED: &str = r#"{
                     "offer": {
                         "@id": "e314d535-6996-4c97-baab-d778d498f349",
                         "credential_preview": {
-                            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
+                            "@type": "https://didcomm.org/issue-credential/1.0/credential-preview",
                             "attributes": [
                                 {
                                     "name": "age",
@@ -279,7 +279,7 @@ pub const SERIALIZED_CREDENTIAL_V2_OFFER_RECEIVED: &str = r#"{
 pub const ARIES_CREDENTIAL_REQUEST: &str = r#"
 {
     "@id": "fbd9e14b-4370-4086-8271-3808203e9ef9",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential",
+    "@type": "https://didcomm.org/issue-credential/1.0/request-credential",
     "requests~attach": [
         {
             "@id": "libindy-cred-request-0",
@@ -338,7 +338,7 @@ pub const CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED: &str = r#"
 // Faber sends credential
 pub const ARIES_CREDENTIAL_RESPONSE: &str = r#"{
     "@id": "e5b39a25-36fe-49df-9534-3e486bfb6fb8",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/issue-credential",
+    "@type": "https://didcomm.org/issue-credential/1.0/issue-credential",
     "credentials~attach": [
         {
             "@id": "libindy-cred-0",
