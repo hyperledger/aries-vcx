@@ -374,7 +374,7 @@ pub mod test_a2a_serialization {
         let msg =
             r#"{
             "@id": "testid",
-            "@type": "https://didcomm.org/notification/1.0/ack",
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack",
             "status": "OK",
             "~thread": {
                 "received_orders": {},
@@ -397,7 +397,7 @@ pub mod test_a2a_serialization {
         let msg =
             r#"{
             "@id": "testid",
-            "@type": "https://didcomm.org/connections/1.0/request",
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request",
             "connection": {
                 "DID": "",
                 "DIDDoc": {
