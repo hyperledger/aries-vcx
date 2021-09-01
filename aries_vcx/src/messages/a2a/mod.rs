@@ -1,37 +1,34 @@
-pub mod message_family;
-pub mod message_type;
-pub mod protocol_registry;
-
-use log;
-use self::message_type::MessageType;
-use self::message_family::MessageFamilies;
-
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
+use log;
+
+use crate::messages::ack::Ack;
+use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;
-use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
-use crate::messages::trust_ping::ping::Ping;
-use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::messages::forward::Forward;
+use crate::messages::discovery::disclose::Disclose;
+use crate::messages::discovery::query::Query;
 use crate::messages::error::ProblemReport as CommonProblemReport;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::ack::Ack;
-
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::forward::Forward;
 use crate::messages::issuance::credential::Credential;
-
+use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::proof_presentation::presentation::Presentation;
+use crate::messages::trust_ping::ping::Ping;
+use crate::messages::trust_ping::ping_response::PingResponse;
 
-use crate::messages::discovery::query::Query;
-use crate::messages::discovery::disclose::Disclose;
+use self::message_family::MessageFamilies;
+use self::message_type::MessageType;
 
-use crate::messages::basic_message::message::BasicMessage;
+pub mod message_family;
+pub mod message_type;
+pub mod protocol_registry;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum A2AMessage {
@@ -93,7 +90,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
             Err(_) => return Ok(A2AMessage::Generic(value))
         };
 
-        match (message_type.family, message_type.type_.as_str()) {
+        match (message_type.family, message_type.msg_type.as_str()) {
             (MessageFamilies::Routing, A2AMessage::FORWARD) => {
                 Forward::deserialize(value)
                     .map(|msg| A2AMessage::Forward(msg))
@@ -292,6 +289,144 @@ impl A2AMessage {
     const QUERY: &'static str = "query";
     const DISCLOSE: &'static str = "disclose";
     const BASIC_MESSAGE: &'static str = "message";
+}
+
+#[cfg(test)]
+pub mod test_a2a_serialization {
+    use serde_json::Value;
+
+    use crate::messages::a2a::{A2AMessage, MessageId};
+    use crate::messages::ack::{Ack, AckStatus};
+    use crate::messages::connection::request::Request;
+    use crate::utils::devsetup::SetupDefaults;
+    use crate::messages::forward::Forward;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialization_deserialization_connection_request() {
+        let _setup = SetupDefaults::init();
+        let a2a_msg = A2AMessage::ConnectionRequest(Request {
+            id: Default::default(),
+            label: "foobar".to_string(),
+            connection: Default::default(),
+        });
+        let serialized = serde_json::to_string(&a2a_msg).unwrap();
+
+        // serialization
+        let val: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(val["@id"], Value::String("testid".into()));
+        assert_eq!(val["@type"], Value::String("https://didcomm.org/connections/1.0/request".into()));
+        assert_eq!(val["label"], Value::String("foobar".into()));
+        assert_eq!(val["connection"]["DID"], Value::String("".into()));
+        assert!(val["connection"]["DIDDoc"].is_object());
+
+        // deserialization back
+        let a2a_msg: A2AMessage = serde_json::from_str(&serialized).unwrap();
+        if let A2AMessage::ConnectionRequest(request) = &a2a_msg {
+            assert_eq!(request.id, MessageId("testid".into()));
+            assert_eq!(request.label, "foobar");
+        } else {
+            panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialize_deserialize_connection_ack() {
+        let _setup = SetupDefaults::init();
+        let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok));
+        let serialized = serde_json::to_string(&a2a_msg).unwrap();
+
+        // serialization
+        let val: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(val["@id"], Value::String("testid".into()));
+        assert_eq!(val["@type"], Value::String("https://didcomm.org/notification/1.0/ack".into()));
+        assert_eq!(val["status"], Value::String("OK".into()));
+        assert!(val["~thread"].is_object());
+
+        // deserialization back
+        let a2a_msg: A2AMessage = serde_json::from_str(&serialized).unwrap();
+        if let A2AMessage::Ack(ack) = &a2a_msg {
+            assert_eq!(ack.id, MessageId("testid".into()));
+            assert_eq!(ack.thread.sender_order, 0);
+        } else {
+            panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
+    fn test_serialize_forward_message_to_legacy_format() {
+        let _setup = SetupDefaults::init();
+        let a2a_msg = A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(),  "{}".as_bytes().to_vec()).unwrap());
+        let serialized = serde_json::to_string(&a2a_msg).unwrap();
+
+        // serialization
+        let val: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(val["@type"], Value::String("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward".into()));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialize_connection_ack_legacy() {
+        let _setup = SetupDefaults::init();
+        let msg =
+            r#"{
+            "@id": "testid",
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack",
+            "status": "OK",
+            "~thread": {
+                "received_orders": {},
+                "sender_order": 0
+            }
+        }"#;
+        let a2a_msg: A2AMessage = serde_json::from_str(msg).unwrap();
+        if let A2AMessage::Ack(ack) = &a2a_msg {
+            assert_eq!(ack.id, MessageId("testid".into()));
+            assert_eq!(ack.thread.sender_order, 0);
+        } else {
+            panic!("The message was expected to be deserialized as Ack, but was not.")
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_deserialization_connection_request_legacy() {
+        let _setup = SetupDefaults::init();
+        let msg =
+            r#"{
+            "@id": "testid",
+            "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request",
+            "connection": {
+                "DID": "",
+                "DIDDoc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "authentication": [],
+                    "id": "",
+                    "publicKey": [],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "priority": 0,
+                            "recipientKeys": [],
+                            "routingKeys": [],
+                            "serviceEndpoint": "",
+                            "type": "IndyAgent"
+                        }
+                    ]
+                }
+            },
+            "label": "foofoo"
+        }"#;
+        let a2a_msg: A2AMessage = serde_json::from_str(msg).unwrap();
+        if let A2AMessage::ConnectionRequest(request) = &a2a_msg {
+            assert_eq!(request.id, MessageId("testid".into()));
+            assert_eq!(request.label, "foofoo");
+        } else {
+            panic!("The message was expected to be deserialized as Connection Request, but was not.")
+        }
+    }
 }
 
 #[macro_export]

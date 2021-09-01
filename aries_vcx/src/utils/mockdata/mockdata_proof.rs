@@ -2,7 +2,7 @@
 pub const ARIES_PROOF_REQUEST_PRESENTATION: &str = r#"
 {
     "@id": "4e62363d-6348-4b59-9d98-a86497f9301b",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
     "comment": "alice-131bc1e2-fa29-404c-a87c-69983e02084d wants you to share proofForAlice",
     "request_presentations~attach": [
         {
@@ -19,7 +19,7 @@ pub const ARIES_PROOF_REQUEST_PRESENTATION: &str = r#"
 pub const ARIES_PROOF_PRESENTATION: &str = r#"
 {
     "@id": "6ab775f7-a712-41a3-9248-36dff8955525",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/presentation",
     "presentations~attach": [
         {
             "@id": "libindy-presentation-0",
@@ -41,7 +41,7 @@ pub const ARIES_PROOF_PRESENTATION: &str = r#"
 pub static ARIES_PRESENTATION_REQUEST: &str = r#"
 {
   "@id": "c0431961-f755-4c3e-9bf6-0216019e560c",
-  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
   "comment": "faber-2110edd8-98f3-4164-9aa8-9f6e7a1a0658 wants you to share proofForAlice",
   "request_presentations~attach": [
     {
@@ -58,7 +58,7 @@ pub static ARIES_PRESENTATION_REQUEST: &str = r#"
 pub static ARIES_PROOF_PRESENTATION_ACK: &str = r#"
 {
   "@id": "c4c2685d-e0b4-49f4-8a3e-7fe4bb3c0c8f",
-  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/ack",
+  "@type": "https://didcomm.org/present-proof/1.0/ack",
   "status": "OK",
   "~thread": {
     "received_orders": {},
@@ -241,7 +241,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
 [
   {
     "@id": "testid",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request1",
     "request_presentations~attach": [
       {
@@ -255,7 +255,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
   },
   {
     "@id": "testid",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request2",
     "request_presentations~attach": [
       {
@@ -273,7 +273,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY: &str = r#"
 pub static PRESENTATION_REQUEST_MESSAGE_1: &str = r#"
 {
   "@id": "testid",
-  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
   "comment": "institution wants you to share request1",
   "request_presentations~attach": [
     {
@@ -290,7 +290,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_1: &str = r#"
 pub static PRESENTATION_REQUEST_MESSAGE_2: &str = r#"
 {
   "@id": "testid",
-  "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+  "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
   "comment": "institution wants you to share request2",
   "request_presentations~attach": [
     {
@@ -308,7 +308,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH: &str = r#"
 [
   {
     "@id": "testid",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request1",
     "request_presentations~attach": [
       {
@@ -322,7 +322,7 @@ pub static PRESENTATION_REQUEST_MESSAGE_ARRAY_EMPTY_ATTACH: &str = r#"
   },
   {
     "@id": "testid",
-    "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation",
+    "@type": "https://didcomm.org/present-proof/1.0/request-presentation",
     "comment": "institution wants you to share request2",
     "request_presentations~attach": [
       {
