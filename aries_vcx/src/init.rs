@@ -3,11 +3,10 @@ use indy::ErrorCode;
 use indy::future::Future;
 use indy_sys::WalletHandle;
 
-use crate::{settings};
-use crate::utils;
-use crate::error::{VcxError, VcxErrorExt, VcxErrorKind, VcxResult};
+use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
+use crate::settings;
 use crate::utils::provision::AgencyClientConfig;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -30,7 +29,8 @@ pub fn enable_agency_mocks() -> VcxResult<()> {
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
-    let config = serde_json::to_string(config).unwrap(); // todo: remove unwrap
+    let config = serde_json::to_string(config).unwrap();
+    // todo: remove unwrap
     info!("init_agency_client >>> config = {}", config);
     settings::get_agency_client_mut()?.process_config_string(&config, false)?;
     Ok(())

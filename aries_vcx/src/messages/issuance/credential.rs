@@ -1,8 +1,8 @@
+use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
-use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct Credential {
@@ -54,14 +54,15 @@ please_ack!(Credential);
 threadlike!(Credential);
 a2a_message!(Credential);
 
-#[cfg(test)]
-pub mod tests {
-    use crate::messages::issuance::credential_offer::tests::{thread, thread_id};
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::a2a::MessageId;
+    use crate::messages::attachment::{AttachmentId, Attachments};
+    use crate::messages::issuance::credential::Credential;
+    use crate::messages::issuance::credential_offer::test_utils::thread;
     use crate::utils::constants;
 
-    use super::*;
-
-    fn _attachment() -> ::serde_json::Value {
+    pub fn _attachment() -> ::serde_json::Value {
         json!({
             "schema_id":"NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0",
             "cred_def_id":"NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:TAG1",
@@ -70,7 +71,7 @@ pub mod tests {
         })
     }
 
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("comment")
     }
 
@@ -86,6 +87,15 @@ pub mod tests {
             please_ack: None,
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::issuance::credential::test_utils::*;
+    use crate::messages::issuance::credential_offer::test_utils::thread_id;
+    use crate::utils::constants;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

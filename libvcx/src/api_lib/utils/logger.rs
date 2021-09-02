@@ -9,17 +9,18 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
-use crate::error::prelude::*;
+pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
+use aries_vcx::libindy;
+
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::error::prelude::*;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 use self::env_logger::Builder as EnvLoggerBuilder;
-pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
-use aries_vcx::libindy;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();

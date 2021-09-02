@@ -1,6 +1,6 @@
 /* test isn't ready until > libindy 1.0.1 */
-use indy::future::Future;
 use indy::crypto;
+use indy::future::Future;
 
 use crate::{libindy, settings};
 use crate::error::prelude::*;

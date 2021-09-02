@@ -2,9 +2,10 @@ extern crate rust_base58;
 
 use regex::Regex;
 use url::Url;
-use self::rust_base58::FromBase58;
 
-use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+
+use self::rust_base58::FromBase58;
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -53,8 +54,9 @@ pub fn validate_url(url: &str) -> AgencyClientResult<String> {
 mod tests {
     // use utils::devsetup::SetupDefaults;
 
-    use super::*;
     use crate::error::AgencyClientErrorKind;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

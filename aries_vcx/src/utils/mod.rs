@@ -1,16 +1,16 @@
 use std::env;
 use std::path::PathBuf;
 
-use crate::messages::connection::did_doc::DidDoc;
-use crate::messages::a2a::A2AMessage;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::error::VcxResult;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::connection::did_doc::DidDoc;
+use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
 pub mod version_constants;
 
 #[macro_use]
-// #[cfg(test)]
+#[cfg(feature = "test_utils")]
 pub mod devsetup;
 
 #[cfg(debug_assertions)]

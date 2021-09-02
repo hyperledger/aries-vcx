@@ -47,6 +47,7 @@ serde = "1.0"
 toml = "0.4"
 serde_json = "1.0"
 serde_derive = "1.0"
+aries-vcx = { path = "../aries_vcx", features = ["test_utils"] }
 
 [package.metadata.deb]
 depends = "libindy (= 1.16.0-post-59)"

@@ -1,14 +1,15 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.
@@ -614,16 +615,17 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use crate::api_lib::{ProofStateType, VcxStateType};
-    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
-    use crate::api_lib::api_handle::proof;
-    use crate::api_lib::utils::return_types_u32;
-    use crate::api_lib::utils::timeout::TimeoutUtils;
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+
+    use crate::api_lib::ProofStateType;
+    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::proof;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
 
     use super::*;
 

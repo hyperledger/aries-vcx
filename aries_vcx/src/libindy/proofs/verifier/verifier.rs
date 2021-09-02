@@ -37,8 +37,9 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{libindy, utils, settings};
+    use crate::{libindy, settings, utils};
     use crate::libindy::proofs::proof_request::ProofRequestData;
+    use crate::libindy::utils::anoncreds::test_utils::create_and_store_credential;
     use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     use super::*;
@@ -121,7 +122,7 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -182,7 +183,7 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 

@@ -11,8 +11,8 @@ pub struct InvitedState {
 }
 
 // TODO: These have no justification for being here anymore
-impl From<(ProblemReport)> for NullState {
-    fn from((_error): (ProblemReport)) -> NullState {
+impl From<ProblemReport> for NullState {
+    fn from(_error: ProblemReport) -> NullState {
         trace!("ConnectionInviter: transit state to NullState");
         NullState {}
     }

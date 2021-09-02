@@ -1,13 +1,13 @@
 use crate::error::prelude::*;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
-use crate::messages::issuance::credential::Credential;
 use crate::messages::error::ProblemReport;
+use crate::messages::issuance::credential::Credential;
 use crate::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {
     pub req_meta: String,
-    pub cred_def_json: String
+    pub cred_def_json: String,
 }
 
 impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHolderState {

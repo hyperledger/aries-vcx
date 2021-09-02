@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
+use crate::error::prelude::*;
+use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::handlers::proof_presentation::prover::state_machine::ProverSM;
-use crate::handlers::connection::connection::Connection;
+use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -22,7 +22,7 @@ pub enum ProverState {
     PresentationPreparationFailed,
     PresentationSent,
     Finished,
-    Failed
+    Failed,
 }
 
 impl Prover {
@@ -140,6 +140,7 @@ impl Prover {
 #[cfg(test)]
 mod tests {
     use crate::{libindy, utils};
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use crate::utils::constants::TEST_TAILS_FILE;
     use crate::utils::devsetup::*;
@@ -152,8 +153,8 @@ mod tests {
     fn test_retrieve_credentials() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let (_, _, req, _) = libindy::utils::anoncreds::tests::create_proof();
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, req, _) = create_proof();
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
@@ -196,8 +197,7 @@ mod tests {
     #[test]
     fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
-
-        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -254,7 +254,7 @@ mod tests {
     fn test_generate_proof() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -340,7 +340,7 @@ mod tests {
     fn test_generate_proof_with_predicates() {
         let setup = SetupLibraryWalletPoolZeroFees::init();
 
-        libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",

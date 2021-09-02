@@ -639,18 +639,15 @@ pub fn generate_nonce() -> VcxResult<String> {
         .map_err(VcxError::from)
 }
 
-// #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
     use crate::{libindy, settings};
     use crate::handlers::issuance::credential_def::CredentialDef;
     use crate::handlers::issuance::issuer::utils::encode_attributes;
-    use crate::utils::constants::*;
-    #[cfg(feature = "pool_tests")]
     use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
-    use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
 
     use super::*;
@@ -866,6 +863,19 @@ pub mod tests {
             None).unwrap();
         (schemas, cred_defs, proof_req, proof)
     }
+}
+
+#[cfg(feature = "pool_tests")]
+pub mod tests {
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
+    use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
+    use crate::utils::constants::SCHEMAS_JSON;
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use crate::utils::get_temp_dir_path;
+
+    use super::*;
+
+    extern crate serde_json;
 
     #[cfg(feature = "pool_tests")]
     #[test]
@@ -980,7 +990,7 @@ pub mod tests {
     fn test_create_cred_def_real() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let (_, schema_json) = get_schema_json(&schema_id).unwrap();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
@@ -995,7 +1005,7 @@ pub mod tests {
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
-        let (_, _, cred_def_id, _,  _) = libindy::utils::anoncreds::tests::create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, cred_def_id, _, _) = create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let rc = generate_rev_reg(&did, &cred_def_id, get_temp_dir_path("path.txt").to_str().unwrap(), 2, "tag1");
 
@@ -1007,7 +1017,7 @@ pub mod tests {
     fn test_create_rev_reg_def() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let (_, schema_json) = get_schema_json(&schema_id).unwrap();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
@@ -1024,8 +1034,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
 
         let rev_reg_id = rev_reg_id.unwrap();
         let (id, _json) = get_rev_reg_def_json(&rev_reg_id).unwrap();
@@ -1038,8 +1047,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
         let rev_reg_id = rev_reg_id.unwrap();
 
         let (id, _delta, _timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).unwrap();
@@ -1052,8 +1060,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) =
-            libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
         let rev_reg_id = rev_reg_id.unwrap();
 
         let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).unwrap();
@@ -1066,8 +1073,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, cred_def_id, cred_def_json, _) =
-            libindy::utils::anoncreds::tests::create_and_store_credential_def(attrs, true);
+        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_credential_def(attrs, true);
 
         let (id, cred_def) = get_cred_def(None, &cred_def_id).unwrap();
         assert_eq!(id, cred_def_id);
@@ -1087,7 +1093,7 @@ pub mod tests {
     fn from_pool_ledger_with_id() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _schema_json) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _schema_json) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
 
         let rc = get_schema_json(&schema_id);
 
@@ -1111,7 +1117,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
-            = libindy::utils::anoncreds::tests::create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
 
         let rev_reg_id = rev_reg_id.unwrap();
         let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).unwrap();

@@ -1,10 +1,10 @@
 use agency_client::mocking::AgencyMockDecrypted;
 
+use crate::error::prelude::*;
+use crate::libindy::utils::crypto;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::forward::Forward;
-use crate::error::prelude::*;
-use crate::libindy::utils::crypto;
 use crate::settings;
 
 #[derive(Debug)]
@@ -129,12 +129,12 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::ack::tests::_ack;
-    use crate::messages::connection::did_doc::tests::*;
+    use crate::libindy::utils::{test_setup, wallet};
     use crate::libindy::utils::crypto::create_key;
-    use crate::libindy::utils::tests::test_setup;
-    use crate::libindy::utils::tests::test_setup::create_trustee_key;
-    use crate::libindy::utils::wallet;
+    use crate::libindy::utils::test_setup::create_trustee_key;
+    use crate::messages::ack::test_utils::_ack;
+    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::messages::connection::did_doc::tests::*;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

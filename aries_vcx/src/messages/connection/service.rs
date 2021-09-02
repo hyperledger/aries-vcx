@@ -39,9 +39,10 @@ impl Into<DidDoc> for Service {
     }
 }
 
-// #[cfg(test)]
-pub mod tests {
-    use crate::messages::connection::did_doc::tests::{_recipient_keys, _routing_keys, _service_endpoint};
+
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
 
     use super::*;
 
@@ -52,6 +53,14 @@ pub mod tests {
             service_endpoint: _service_endpoint(),
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::messages::connection::service::test_utils::_service;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

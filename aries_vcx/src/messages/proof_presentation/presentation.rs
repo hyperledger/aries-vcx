@@ -1,8 +1,8 @@
+use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
-use crate::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -39,14 +39,13 @@ please_ack!(Presentation);
 threadlike!(Presentation);
 a2a_message!(Presentation);
 
-
-// #[cfg(test)]
-pub mod tests {
-    use crate::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
 
     use super::*;
 
-    fn _attachment() -> serde_json::Value {
+    pub fn _attachment() -> serde_json::Value {
         json!({"presentation": {}})
     }
 
@@ -66,6 +65,15 @@ pub mod tests {
             please_ack: Some(PleaseAck {}),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod tests {
+    use crate::messages::proof_presentation::presentation::test_utils::*;
+    use crate::messages::proof_presentation::presentation_request::test_utils::{thread, thread_id};
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

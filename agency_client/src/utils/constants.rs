@@ -4,23 +4,3 @@ pub const UPDATE_PROFILE_RESPONSE: &'static [u8; 57] = &[129, 167, 98, 117, 110,
 pub const CONNECTED_RESPONSE_DECRYPTED: &str = r#"{"@type":"did:sov:123456789abcdefghi1234;spec/onboarding/1.0/CONNECTED","withPairwiseDID":"XSasL1cESeSJ2v9wMYeXBf","withPairwiseDIDVerKey":"HbJb8uKp4mtjhnNknP66GgmUMYta6XArNaA4WJDEyyv9"}"#;
 pub const REGISTER_RESPONSE_DECRYPTED: &str = r#"{"@type":"did:sov:123456789abcdefghi1234;spec/onboarding/1.0/SIGNED_UP"}"#;
 pub const AGENT_CREATED_DECRYPTED: &str = r#"{"@type":"did:sov:123456789abcdefghi1234;spec/onboarding/1.0/AGENT_CREATED","withPairwiseDID":"DnEpUQJLupa5rKPkrKUpFd","withPairwiseDIDVerKey":"7y118tRW2EMJn18qs9MY5NJWYW2PLwV5QpaLyfoLHtgF"}"#;
-pub const DELETE_CONNECTION_DECRYPTED_RESPONSE: &str = r#"{"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CONN_STATUS_UPDATED","statusCode":"CS-103"}"#;
-pub const AGENCY_MSG_STATUS_UPDATED_BY_CONNS: &str = r#"
-{
-    "@type": "did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS",
-    "failed": [],
-    "updatedUidsByConns": [
-        {
-            "pairwiseDID": "6FRuB95abcmzz1nURoHyWE",
-            "uids": [
-                "Br4CoNP4TU"
-            ]
-        }
-    ]
-}"#;
-pub const AGENCY_CONFIGS_UPDATED: &str = r#"
-{
-	"@type": "did:sov:123456789abcdefghi1234;spec/configs/1.0/CONFIGS_UPDATED"
-}"#;
-pub const DID: &str = "FhrSrYtQcw3p9xwf7NYemf";
-pub const VERKEY: &str = "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE";

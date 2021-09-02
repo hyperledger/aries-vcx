@@ -6,9 +6,9 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
-pub mod utils;
-
 use std::fmt;
+
+pub mod utils;
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
@@ -77,50 +77,47 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
+    use aries_vcx::{libindy, utils};
+    use aries_vcx::agency_client::get_message::download_messages_noauth;
+    use aries_vcx::agency_client::MessageStatusCode;
+    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::payload::PayloadKinds;
+    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
+    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
+    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
+    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
+    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::ack::test_utils::_ack;
+    use aries_vcx::messages::connection::invite::Invitation;
+    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
         get_temp_dir_path,
     };
-    use aries_vcx::{libindy, utils};
+    use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::handlers::issuance::holder::holder::{HolderState, Holder};
-    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
-    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
-    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::proof_presentation::prover::prover::{ProverState, Prover};
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::{VerifierState, Verifier};
-    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::utils::filters;
-
-    use aries_vcx::agency_client::payload::PayloadKinds;
-
-    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
     use aries_vcx::utils::plugins::init_plugin;
 
-    use aries_vcx::agency_client::get_message::download_messages_noauth;
-    use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
-
-    use aries_vcx::messages::ack::tests::_ack;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::connection::invite::Invitation;
-    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
-    use aries_vcx::utils::constants;
-    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
-
+    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
     use super::*;
 
     pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, CredentialDef, Option<String>) {
         /* create schema */
-        let (schema_id, schema_json) = libindy::utils::anoncreds::tests::create_and_write_test_schema(attr_list);
+        let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
 
         let name: String = aries_vcx::utils::random::generate_random_name();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -133,16 +130,16 @@ mod tests {
             revocation_details["max_creds"] = json!(10);
         }
         let cred_def = CredentialDef::create("1".to_string(),
-                                           name,
-                                           institution_did.clone(),
-                                           schema_id.clone(),
-                                           "tag1".to_string(),
-                                           revocation_details.to_string()).unwrap();
+                                             name,
+                                             institution_did.clone(),
+                                             schema_id.clone(),
+                                             "tag1".to_string(),
+                                             revocation_details.to_string()).unwrap();
 
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let (_, cred_def_json) =  libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
+        let (_, cred_def_json) = libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();
         let rev_reg_id = cred_def.get_rev_reg_id();
         (schema_id, schema_json, cred_def_id.to_string(), cred_def_json, cred_def, rev_reg_id)
     }
@@ -262,7 +259,7 @@ mod tests {
         info!("send_credential >>> sending credential");
         issuer_credential.send_credential(issuer_to_consumer.send_message_closure().unwrap()).unwrap();
         thread::sleep(Duration::from_millis(2000));
-        
+
         consumer.activate().unwrap();
         info!("send_credential >>> storing credential");
         assert_eq!(holder_credential.is_revokable().unwrap(), revokable);
@@ -279,10 +276,10 @@ mod tests {
     fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> Verifier {
         faber.activate().unwrap();
         let mut verifier = Verifier::create("1".to_string(),
-                                        requested_attrs.to_string(),
-                                        requested_preds.to_string(),
-                                        revocation_interval.to_string(),
-                                        String::from(request_name.unwrap_or("name"))).unwrap();
+                                            requested_attrs.to_string(),
+                                            requested_preds.to_string(),
+                                            revocation_interval.to_string(),
+                                            String::from(request_name.unwrap_or("name"))).unwrap();
         verifier.send_presentation_request(connection.send_message_closure().unwrap(), None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         verifier
@@ -491,7 +488,7 @@ mod tests {
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, &consumer1_to_issuer, &issuer_to_consumer1, None);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def,  &consumer2_to_issuer, &issuer_to_consumer2, None);
+        let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def, &consumer2_to_issuer, &issuer_to_consumer2, None);
 
         let request_name1 = Some("request1");
         let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer1, &schema_id, &cred_def_id, request_name1);
@@ -523,7 +520,7 @@ mod tests {
         let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _credential_handle) = _issue_address_credential(&mut consumer, &mut issuer, &consumer_to_issuer, &issuer_to_consumer);
         issuer.activate().unwrap();
         let request_name1 = Some("request1");
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  request_name1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, request_name1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None);
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -618,11 +615,11 @@ mod tests {
         thread::sleep(Duration::from_millis(2000));
         let request_name2 = Some("request2");
         let mut verifier1 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1,  request_name2, None);
+        _prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name2, None);
         let mut verifier2 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2,  request_name2, None);
+        _prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name2, None);
         let mut verifier3 = _verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name2);
-        _prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3,  request_name2, None);
+        _prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name2, None);
         assert_ne!(verifier1, verifier2);
         assert_ne!(verifier1, verifier3);
         assert_ne!(verifier2, verifier3);
@@ -809,7 +806,7 @@ mod tests {
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer,credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
+        let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
@@ -823,6 +820,8 @@ mod tests {
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
     }
+
+
     //
     #[test]
     #[cfg(feature = "agency_pool_tests")]
@@ -839,19 +838,19 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, &credential_handle1, rev_reg_id);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -873,19 +872,19 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, &credential_handle2, rev_reg_id);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -907,18 +906,18 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -940,20 +939,20 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
+        let credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, &credential_handle1, rev_reg_id);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -975,20 +974,20 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer,  req1);
+        let _credential_handle1 = _exchange_credential(&mut consumer, &mut issuer, credential_data1.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req1);
         rotate_rev_reg(&mut issuer, &mut cred_def);
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2);
 
         revoke_credential(&mut issuer, &credential_handle2, rev_reg_id);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req1);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
 
-        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id,  req2);
+        let mut proof_verifier = _verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
@@ -1059,7 +1058,7 @@ mod tests {
 
     impl Pool {
         pub fn open() -> Pool {
-            libindy::utils::pool::tests::open_test_pool();
+            libindy::utils::pool::test_utils::open_test_pool();
             Pool {}
         }
     }
@@ -1067,7 +1066,7 @@ mod tests {
     impl Drop for Pool {
         fn drop(&mut self) {
             libindy::utils::pool::close().unwrap();
-            libindy::utils::pool::tests::delete_test_pool();
+            libindy::utils::pool::test_utils::delete_test_pool();
         }
     }
 
@@ -1534,7 +1533,7 @@ mod tests {
         {
             use aries_vcx::agency_client::get_message::{MessageByConnection, Message};
 
-            let credential_offer = aries_vcx::messages::issuance::credential_offer::tests::_credential_offer();
+            let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().unwrap();
             faber.connection.send_message_closure().unwrap()(&credential_offer.to_a2a_message()).unwrap();

@@ -58,10 +58,10 @@ impl Default for CredentialPreviewData {
 pub mod test {
     use crate::messages::ack;
     use crate::messages::error;
-    use crate::messages::issuance::credential_offer::tests::_credential_offer;
+    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
 
     pub fn _ack() -> ack::Ack {
-        ack::tests::_ack().set_thread_id(&_credential_offer().id.0)
+        ack::test_utils::_ack().set_thread_id(&_credential_offer().id.0)
     }
 
     pub fn _problem_report() -> error::ProblemReport {

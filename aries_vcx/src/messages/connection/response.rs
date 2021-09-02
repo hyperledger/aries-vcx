@@ -1,14 +1,14 @@
 use base64;
 use time;
 
+use crate::error::prelude::*;
+use crate::libindy::utils::crypto;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::ack::PleaseAck;
 use crate::messages::connection::did_doc::*;
 use crate::messages::thread::Thread;
-use crate::error::prelude::*;
-use crate::libindy::utils::crypto;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -150,19 +150,17 @@ impl Default for ConnectionSignature {
     }
 }
 
-// #[cfg(test)]
-pub mod tests {
-    use crate::messages::connection::did_doc::tests::*;
-    use crate::libindy::utils::tests::test_setup;
-    use crate::libindy::utils::tests::test_setup::create_trustee_key;
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::connection::did_doc::test_utils::_did_doc;
 
     use super::*;
 
-    fn _did() -> String {
+    pub fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }
 
-    fn _key() -> String {
+    pub fn _key() -> String {
         String::from("CnEDk9HrMnmiHXEV1WFgbVCRteYnPqsJwrTdcZaNhFVW")
     }
 
@@ -199,6 +197,15 @@ pub mod tests {
             please_ack: None,
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
+    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -215,7 +222,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_response_encode_works() {
-        let setup = test_setup::setup_wallet();
+        let setup = setup_wallet();
         let trustee_key = create_trustee_key(setup.wh);
         let signed_response: SignedResponse = _response().encode(&trustee_key).unwrap();
         assert_eq!(_response(), signed_response.decode(&trustee_key).unwrap());

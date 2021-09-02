@@ -4,7 +4,7 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 #[serde(untagged)]
 pub enum Invitation {
     Pairwise(PairwiseInvitation),
-    Public(PublicInvitation)
+    Public(PublicInvitation),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -26,7 +26,7 @@ pub struct PublicInvitation {
     #[serde(rename = "@id")]
     pub id: MessageId,
     pub label: String,
-    pub did: String
+    pub did: String,
 }
 
 impl PairwiseInvitation {
@@ -84,10 +84,11 @@ impl PublicInvitation {
 a2a_message!(PairwiseInvitation, ConnectionInvitationPairwise);
 a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
-// #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::connection::did_doc::test_utils::*;
+
     use super::*;
-    use crate::messages::connection::did_doc::tests::*;
 
     pub fn _pairwise_invitation() -> PairwiseInvitation {
         PairwiseInvitation {
@@ -103,7 +104,7 @@ pub mod tests {
         PublicInvitation {
             id: MessageId::id(),
             label: _label(),
-            did: _did()
+            did: _did(),
         }
     }
 
@@ -114,6 +115,14 @@ pub mod tests {
     pub fn _public_invitation_json() -> String {
         serde_json::to_string(&_public_invitation().to_a2a_message()).unwrap()
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

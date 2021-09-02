@@ -1,8 +1,8 @@
-use crate::messages::thread::Thread;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::mime_type::MimeType;
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -66,9 +66,9 @@ impl PresentationProposal {
 threadlike!(PresentationProposal);
 a2a_message!(PresentationProposal);
 
-#[cfg(test)]
-pub mod tests {
-    use crate::messages::proof_presentation::presentation_request::tests::{thread, thread_id};
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
 
     use super::*;
 
@@ -76,7 +76,7 @@ pub mod tests {
         json!({"presentation": {}})
     }
 
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("comment")
     }
 
@@ -102,6 +102,15 @@ pub mod tests {
             presentation_proposal: _presentation_preview(),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod tests {
+    use crate::messages::proof_presentation::presentation_proposal::test_utils::*;
+    use crate::messages::proof_presentation::presentation_request::test_utils::thread_id;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

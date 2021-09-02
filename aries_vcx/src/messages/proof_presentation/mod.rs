@@ -7,10 +7,10 @@ pub mod presentation_ack;
 pub mod test {
     use crate::messages::ack;
     use crate::messages::error;
-    use crate::messages::proof_presentation::presentation_request::tests::_presentation_request;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
 
     pub fn _ack() -> ack::Ack {
-        ack::tests::_ack().set_thread_id(&_presentation_request().id.0)
+        ack::test_utils::_ack().set_thread_id(&_presentation_request().id.0)
     }
 
     pub fn _problem_report() -> error::ProblemReport {

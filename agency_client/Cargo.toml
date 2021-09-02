@@ -5,7 +5,8 @@ authors = ["Miroslav Kovar <miroslavkovar@protonmail.com>"]
 edition = "2018"
 
 [features]
-general_test = []
+test_utils = []
+general_test = ["test_utils"]
 to_restore = []
 
 [dependencies]

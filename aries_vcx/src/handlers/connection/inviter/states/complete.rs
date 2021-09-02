@@ -1,3 +1,4 @@
+use crate::error::VcxResult;
 use crate::handlers::connection::util::handle_ping;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -5,7 +6,6 @@ use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
-use crate::error::VcxResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {

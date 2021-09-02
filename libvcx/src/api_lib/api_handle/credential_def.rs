@@ -1,14 +1,13 @@
 use serde_json;
 
-use crate::api_lib::api_handle::object_cache::ObjectCache;
-use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::handlers::issuance::credential_def::CredentialDef;
-use crate::error::prelude::*;
-use aries_vcx::libindy::utils::{anoncreds, ledger};
+use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
 use aries_vcx::libindy::utils::payments::PaymentTxn;
-use aries_vcx::utils::constants::DEFAULT_SERIALIZE_VERSION;
-use aries_vcx::utils::serialization::ObjectWithVersion;
+
+use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::error::prelude::*;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
@@ -20,7 +19,6 @@ pub fn create_and_publish_credentialdef(source_id: String,
                                         schema_id: String,
                                         tag: String,
                                         revocation_details: String) -> VcxResult<u32> {
-
     let cred_def = CredentialDef::create(source_id, name, issuer_did, schema_id, tag, revocation_details)?;
     let handle = CREDENTIALDEF_MAP.add(cred_def).or(Err(VcxError::from(VcxErrorKind::CreateCredDef)))?;
     Ok(handle)
@@ -152,22 +150,26 @@ pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 pub mod tests {
     use std::{
         thread::sleep,
         time::Duration,
     };
 
-    use aries_vcx::settings;
-    use aries_vcx::{libindy, utils};
-    use crate::api_lib::api_handle::schema;
+    use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::payments::add_new_did;
+    use aries_vcx::settings;
+    use aries_vcx::utils;
     use aries_vcx::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::utils::devsetup::{SetupLibraryWalletPoolZeroFees, SetupMocks};
+
+    use crate::api_lib::api_handle::schema;
 
     use super::*;
 
@@ -235,7 +237,7 @@ pub mod tests {
     fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
-        let (_, handle) = create_cred_def_real(false);
+        let (_, _) = create_cred_def_real(false);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -243,7 +245,7 @@ pub mod tests {
     fn test_create_revocable_fails_with_no_tails_file() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let rc = create_and_publish_credentialdef("1".to_string(),
@@ -260,7 +262,7 @@ pub mod tests {
     fn test_tails_url_written_to_ledger() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_url": utils::constants::TEST_TAILS_URL.to_string()}).to_string();
@@ -282,7 +284,7 @@ pub mod tests {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
         let tails_url = utils::constants::TEST_TAILS_URL.to_string();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_base_url": tails_url}).to_string();
@@ -303,7 +305,7 @@ pub mod tests {
     fn test_create_revocable_cred_def() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        let (schema_id, _) = libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2}).to_string();
@@ -317,7 +319,7 @@ pub mod tests {
         assert!(get_rev_reg_def(handle).unwrap().is_some());
         assert!(get_rev_reg_id(handle).ok().is_some());
         let cred_id = get_cred_def_id(handle).unwrap();
-        libindy::utils::anoncreds::get_cred_def_json(&cred_id).unwrap();
+        get_cred_def_json(&cred_id).unwrap();
     }
 
     #[cfg(feature = "pool_tests")]

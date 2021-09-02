@@ -1,13 +1,14 @@
 use std::ptr;
 
-use aries_vcx::indy_sys::CommandHandle;
 use libc::c_char;
+
+use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
+use aries_vcx::utils::filters;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
-use aries_vcx::utils::filters;
-use aries_vcx::utils::error;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///
@@ -61,13 +62,13 @@ mod tests {
     use std::ffi::CString;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     #[test]
     #[cfg(feature = "general_test")]

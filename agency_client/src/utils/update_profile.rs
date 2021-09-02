@@ -1,9 +1,9 @@
-use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
-use crate::{A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
+use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::utils::comm::post_to_agency;
-use crate::utils::{constants, validation};
 use crate::mocking::AgencyMock;
+use crate::utils::{constants, validation};
+use crate::utils::comm::post_to_agency;
 
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
@@ -110,11 +110,11 @@ impl UpdateProfileDataBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::constants::AGENCY_CONFIGS_UPDATED;
-    use crate::utils::update_profile::UpdateProfileDataBuilder;
+    use crate::{agency_settings, update_data};
     use crate::mocking::AgencyMockDecrypted;
+    use crate::utils::test_constants::AGENCY_CONFIGS_UPDATED;
     use crate::utils::test_utils::SetupMocks;
-    use crate::{update_data, agency_settings};
+    use crate::utils::update_profile::UpdateProfileDataBuilder;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -1,19 +1,19 @@
 use std::ptr::null;
 use std::thread;
 
-use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use libc::c_char;
-use serde_json::Error;
 
-use crate::api_lib::utils;
-use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
+use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::init::open_as_main_wallet;
 use aries_vcx::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
+
+use crate::api_lib::utils;
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::runtime::execute;
+use crate::error::prelude::*;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -1179,20 +1179,21 @@ pub extern fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 pub mod tests {
     extern crate serde_json;
 
     use std::ffi::CString;
     use std::ptr;
 
-    use aries_vcx::settings;
-    use aries_vcx::libindy;
-    use crate::api_lib::utils::return_types_u32;
-    use crate::api_lib::utils::timeout::TimeoutUtils;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::payments::build_test_address;
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
-    use aries_vcx::utils::devsetup::*;
+    use aries_vcx::settings;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks, TempFile};
+
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
 
     use super::*;
 
@@ -1328,7 +1329,7 @@ pub mod tests {
 
         let recipient = CStringUtils::string_to_cstring(build_test_address("2ZrAm5Jc3sP4NAXMQbaWzDxEa12xxJW3VgWjbbPtMPQCoznJyS"));
         debug!("sending payment to {:?}", recipient);
-        let balance = libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
+        let balance = get_wallet_token_info().unwrap().get_balance();
         let tokens = 5;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
@@ -1338,7 +1339,7 @@ pub mod tests {
                                           Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        let new_balance = libindy::utils::payments::get_wallet_token_info().unwrap().get_balance();
+        let new_balance = get_wallet_token_info().unwrap().get_balance();
         assert_eq!(balance - tokens, new_balance);
     }
 
@@ -1586,7 +1587,7 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
-        create_and_open_as_main_wallet(&wallet_config);
+        create_and_open_as_main_wallet(&wallet_config).unwrap();
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 

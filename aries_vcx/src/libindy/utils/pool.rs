@@ -1,7 +1,7 @@
 use std::sync::RwLock;
 
-use indy::future::Future;
 use indy::{ErrorCode, pool};
+use indy::future::Future;
 
 use crate::error::prelude::*;
 use crate::settings;
@@ -111,8 +111,8 @@ pub fn delete(pool_name: &str) -> VcxResult<()> {
     Ok(())
 }
 
-// #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use std::fs;
     use std::io::Write;
 
@@ -120,8 +120,6 @@ pub mod tests {
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
     };
-    #[cfg(feature = "pool_tests")]
-    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     use super::*;
 
@@ -164,6 +162,12 @@ pub mod tests {
         f.sync_all().unwrap();
         file_path
     }
+}
+
+#[cfg(feature = "pool_tests")]
+pub mod tests {
+    use crate::libindy::utils::pool::get_pool_handle;
+    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     #[cfg(feature = "pool_tests")]
     #[test]

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
+use crate::error::prelude::*;
 use crate::handlers::connection::invitee::states::complete::CompleteState;
 use crate::handlers::connection::invitee::states::invited::InvitedState;
 use crate::handlers::connection::invitee::states::null::NullState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
-use crate::handlers::connection::inviter::state_machine::InviterState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -19,7 +19,6 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::error::prelude::*;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -387,11 +386,11 @@ impl SmConnectionInvitee {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::ack::tests::_ack;
-    use crate::messages::connection::invite::tests::_pairwise_invitation;
+    use crate::messages::ack::test_utils::_ack;
+    use crate::messages::connection::invite::test_utils::_pairwise_invitation;
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
-    use crate::messages::connection::response::tests::_signed_response;
+    use crate::messages::connection::response::test_utils::_signed_response;
     use crate::messages::discovery::disclose::tests::_disclose;
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;
@@ -403,7 +402,7 @@ pub mod test {
     use super::*;
 
     pub mod invitee {
-        use crate::messages::connection::did_doc::tests::_service_endpoint;
+        use crate::messages::connection::did_doc::test_utils::_service_endpoint;
         use crate::messages::connection::response::{Response, SignedResponse};
 
         use super::*;

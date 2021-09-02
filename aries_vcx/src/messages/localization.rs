@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Localization {
-    locale: Locales
+    locale: Locales,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

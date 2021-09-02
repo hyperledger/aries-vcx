@@ -2,7 +2,6 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::messages::a2a::message_family::MessageFamilies;
 
 #[derive(Debug, Clone, PartialEq, Default)]

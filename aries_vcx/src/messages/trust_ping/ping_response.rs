@@ -1,5 +1,5 @@
-use crate::messages::thread::Thread;
 use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PingResponse {
@@ -27,7 +27,7 @@ a2a_message!(PingResponse);
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::response::tests::*;
+    use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 

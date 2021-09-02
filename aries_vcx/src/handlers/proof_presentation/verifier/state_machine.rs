@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
+use crate::handlers::proof_presentation::verifier::states::initial::InitialState;
+use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 use crate::messages::status::Status;
-use crate::handlers::proof_presentation::verifier::states::initial::InitialState;
-use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -221,13 +221,13 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::utils::devsetup::SetupMocks;
-    use crate::messages::proof_presentation::presentation::tests::{_presentation, _comment};
-    use crate::messages::proof_presentation::presentation_proposal::tests::_presentation_proposal;
-    use crate::messages::proof_presentation::presentation_request::tests::_presentation_request;
-    use crate::messages::proof_presentation::presentation_request::tests::_presentation_request_data;
+    use crate::messages::proof_presentation::presentation::test_utils::{_comment, _presentation};
+    use crate::messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
     use crate::messages::proof_presentation::test::{_ack, _problem_report};
     use crate::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -266,8 +266,9 @@ pub mod test {
     }
 
     mod step {
-        use super::*;
         use crate::utils::mockdata::mock_settings::MockBuilder;
+
+        use super::*;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -524,8 +525,9 @@ pub mod test {
     }
 
     mod get_state {
-        use super::*;
         use crate::utils::mockdata::mock_settings::MockBuilder;
+
+        use super::*;
 
         #[test]
         #[cfg(feature = "general_test")]

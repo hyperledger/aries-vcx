@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
+use crate::error::prelude::*;
+use crate::handlers::issuance::holder::holder::HolderState;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::handlers::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::handlers::issuance::holder::states::request_sent::RequestSentState;
-use crate::handlers::issuance::holder::holder::HolderState;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
@@ -12,8 +14,6 @@ use crate::messages::issuance::credential_ack::CredentialAck;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
-use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -326,10 +326,10 @@ fn _make_credential_request(my_pw_did: String, offer: &CredentialOffer) -> VcxRe
 
 #[cfg(test)]
 mod test {
-    use crate::messages::issuance::credential::tests::_credential;
-    use crate::messages::issuance::credential_offer::tests::_credential_offer;
-    use crate::messages::issuance::credential_proposal::tests::_credential_proposal;
-    use crate::messages::issuance::credential_request::tests::{_credential_request, _my_pw_did};
+    use crate::messages::issuance::credential::test_utils::_credential;
+    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
+    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use crate::messages::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
     use crate::messages::issuance::test::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::constants;

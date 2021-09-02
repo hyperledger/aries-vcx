@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
+use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
-use crate::libindy::proofs::proof_request::ProofRequestData;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -48,13 +48,11 @@ impl PresentationRequest {
 
 a2a_message!(PresentationRequest);
 
-
 pub type PresentationRequestData = ProofRequestData;
 
-// #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use crate::messages::thread::Thread;
-    use crate::messages::connection::service::tests::_service;
 
     use super::*;
 
@@ -88,6 +86,14 @@ pub mod tests {
             request_presentations_attach: _attachment(),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod tests {
+    use crate::messages::proof_presentation::presentation_request::test_utils::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

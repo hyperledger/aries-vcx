@@ -1,3 +1,4 @@
+use crate::error::VcxResult;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::util::handle_ping;
@@ -8,7 +9,6 @@ use crate::messages::connection::response::Response;
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
-use crate::error::VcxResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteState {

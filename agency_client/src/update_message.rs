@@ -1,9 +1,9 @@
-use crate::{mocking, MessageStatusCode, A2AMessageV2, A2AMessage, parse_response_from_agency, prepare_message_for_agency, agency_settings, A2AMessageKinds};
-use crate::error::{AgencyClientResult, AgencyClientErrorKind, AgencyClientError};
+use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, MessageStatusCode, mocking, parse_response_from_agency, prepare_message_for_agency};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
+use crate::mocking::AgencyMock;
 use crate::utils::comm::post_to_agency;
 use crate::utils::constants;
-use crate::mocking::AgencyMock;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -127,11 +127,10 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
-    use crate::utils::test_utils::SetupMocks;
-
-    use crate::update_message::UpdateMessageStatusByConnectionsBuilder;
     use crate::mocking;
+    use crate::update_message::UpdateMessageStatusByConnectionsBuilder;
+    use crate::utils::test_constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
+    use crate::utils::test_utils::SetupMocks;
 
     #[test]
     #[cfg(feature = "general_test")]

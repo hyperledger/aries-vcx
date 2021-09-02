@@ -535,10 +535,8 @@ pub fn add_new_did(role: Option<&str>) -> (String, String) {
     (did, verkey)
 }
 
-// #[cfg(test)]
-pub mod tests {
-    use crate::utils::devsetup::*;
-
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use super::*;
 
     static ZERO_FEES: &str = r#"{"0":0, "1":0, "101":0, "10001":0, "102":0, "103":0, "104":0, "105":0, "107":0, "108":0, "109":0, "110":0, "111":0, "112":0, "113":0, "114":0, "115":0, "116":0, "117":0, "118":0, "119":0}"#;
@@ -549,10 +547,19 @@ pub mod tests {
     }
 
     #[allow(dead_code)]
-    fn get_my_balance() -> u64 {
+    pub fn get_my_balance() -> u64 {
         let info: WalletInfo = get_wallet_token_info().unwrap();
         info.balance
     }
+}
+
+#[cfg(any(feature = "general_test", feature = "pool_tests"))]
+pub mod tests {
+    use crate::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use crate::libindy::utils::payments::test_utils::get_my_balance;
+    use crate::utils::devsetup::{SetupDefaults, SetupLibraryWalletPoolZeroFees, SetupMocks};
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -672,7 +679,7 @@ pub mod tests {
 
         let addresses = vec![
             UTXO { source: Some(build_test_address("2")), recipient: build_test_address("J81AxU9hVHYFtJc"), amount: 2, extra: Some("abcde".to_string()) },
-            UTXO { source: Some(build_test_address("3")), recipient: build_test_address("J81AxU9hVHYFtJc"), amount: 3, extra: Some("bcdef".to_string()) }
+            UTXO { source: Some(build_test_address("3")), recipient: build_test_address("J81AxU9hVHYFtJc"), amount: 3, extra: Some("bcdef".to_string()) },
         ];
 
         assert_eq!(_address_balance(&addresses), 5);
@@ -791,7 +798,7 @@ pub mod tests {
 
         mint_tokens_and_set_fees(Some(0), Some(0), Some("{\"101\":0, \"102\":0}".to_string()), None).unwrap();
         let _fees = get_ledger_fees().unwrap();
-        libindy::utils::anoncreds::tests::create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
     }
 
     fn _action() -> String {

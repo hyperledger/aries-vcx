@@ -1,4 +1,4 @@
-use crate::error::{AgencyClientErrorKind, AgencyClientError, AgencyClientResult};
+use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
 
@@ -54,7 +54,7 @@ impl EncryptionEnvelope {
                     if sender_vk != expected_vk {
                         error!("auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}", sender_vk, expected_vk);
                         return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson,
-                                                             format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
+                                                               format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk))
                         );
                     }
                 }

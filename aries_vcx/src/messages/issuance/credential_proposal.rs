@@ -1,8 +1,8 @@
+use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
-use crate::error::VcxResult;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialProposal {
@@ -51,25 +51,25 @@ impl CredentialProposal {
 
 a2a_message!(CredentialProposal);
 
-#[cfg(test)]
-pub mod tests {
-    use crate::messages::issuance::credential_offer::tests::{_value, thread, thread_id};
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use crate::messages::issuance::credential_offer::test_utils::{_value, thread};
 
     use super::*;
 
-    fn _attachment() -> ::serde_json::Value {
+    pub fn _attachment() -> ::serde_json::Value {
         json!({"credential offer": {}})
     }
 
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("comment")
     }
 
-    fn _schema_id() -> String { String::from("schema:id") }
+    pub fn _schema_id() -> String { String::from("schema:id") }
 
-    fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
 
-    fn _credential_preview_data() -> CredentialPreviewData {
+    pub fn _credential_preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
 
         CredentialPreviewData::new()
@@ -86,6 +86,14 @@ pub mod tests {
             cred_def_id: _cred_def_id(),
         }
     }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::issuance::credential_offer::test_utils::{_value, thread_id};
+    use crate::messages::issuance::credential_proposal::test_utils::*;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

@@ -6,7 +6,6 @@ use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
 use crate::libindy::utils::{anoncreds, signus};
 use crate::settings;
-use crate::settings::Actors::Issuer;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletConfig {
@@ -22,13 +21,13 @@ pub struct WalletConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub rekey_derivation_method: Option<String>
+    pub rekey_derivation_method: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IssuerConfig {
     pub institution_did: String,
-    pub institution_verkey: String
+    pub institution_verkey: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -40,7 +39,7 @@ struct WalletCredentials {
     storage_credentials: Option<serde_json::Value>,
     key_derivation_method: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    rekey_derivation_method: Option<String>
+    rekey_derivation_method: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -59,7 +58,7 @@ pub struct RestoreWalletConfigs {
     pub exported_wallet_path: String,
     pub backup_key: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub wallet_key_derivation: Option<String>, // todo: i renamed this, consolide stuff, orignal name was key_derivation
+    pub wallet_key_derivation: Option<String>,
 }
 
 impl RestoreWalletConfigs {
@@ -92,7 +91,7 @@ pub fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
 
     // If MS is already in wallet then just continue
     anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
-    
+
     close_main_wallet()?;
     Ok(())
 }
@@ -101,7 +100,7 @@ pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig>
     let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
     Ok(IssuerConfig {
         institution_did,
-        institution_verkey
+        institution_verkey,
     })
 }
 
@@ -121,7 +120,7 @@ pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, ke
         rekey: rekey.map(|s| s.into()),
         storage_credentials: storage_credentials.map(|val| serde_json::from_str(val).unwrap()),
         key_derivation_method: key_derivation_method.into(),
-        rekey_derivation_method: rekey_derivation_method.map(|s| s.into())
+        rekey_derivation_method: rekey_derivation_method.map(|s| s.into()),
     }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
 }
 
@@ -136,7 +135,7 @@ pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
         wallet_config.storage_credentials.as_deref(),
         &wallet_config.wallet_key_derivation,
         None,
-        None
+        None,
     )?;
 
     trace!("Credentials: {:?}", credentials);
@@ -353,13 +352,10 @@ pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
-// #[cfg(test)]
+#[cfg(feature = "test_utils")]
 pub mod tests {
-    use agency_client::agency_settings;
-
     use crate::libindy::utils::signus::create_and_store_my_did;
-    use crate::utils::devsetup::{SetupDefaults, SetupLibraryWallet, TempFile};
-    use crate::utils::get_temp_dir_path;
+    use crate::utils::devsetup::TempFile;
 
     use super::*;
 
@@ -380,7 +376,7 @@ pub mod tests {
             storage_config: None,
             storage_credentials: None,
             rekey: None,
-            rekey_derivation_method: None
+            rekey_derivation_method: None,
         };
         let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
 

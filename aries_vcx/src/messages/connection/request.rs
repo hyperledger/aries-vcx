@@ -48,7 +48,7 @@ a2a_message!(Request, ConnectionRequest);
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::did_doc::tests::*;
+    use crate::messages::connection::did_doc::test_utils::*;
 
     use super::*;
 
