@@ -120,7 +120,6 @@ pub mod test_utils {
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
     };
-    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     use super::*;
 
@@ -167,8 +166,8 @@ pub mod test_utils {
 
 #[cfg(feature = "pool_tests")]
 pub mod tests {
-    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
     use crate::libindy::utils::pool::get_pool_handle;
+    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
 
     #[cfg(feature = "pool_tests")]
     #[test]

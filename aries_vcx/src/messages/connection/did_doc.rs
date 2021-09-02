@@ -2,7 +2,7 @@ use url::Url;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation, PublicInvitation};
+use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";

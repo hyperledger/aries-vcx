@@ -6,7 +6,6 @@ use log;
 
 use crate::messages::ack::Ack;
 use crate::messages::basic_message::message::BasicMessage;
-use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;

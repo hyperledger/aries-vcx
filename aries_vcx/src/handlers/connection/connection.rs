@@ -293,7 +293,7 @@ impl Connection {
                 let new_service_endpoint = new_cloud_agent.service_endpoint()?;
                 (SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint)?), new_cloud_agent)
             }
-            SmConnection::Invitee(sm_invitee) => {
+            SmConnection::Invitee(_) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
         };
