@@ -1,4 +1,5 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::messages::connection::did_doc::Did;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -26,7 +27,7 @@ pub struct PublicInvitation {
     #[serde(rename = "@id")]
     pub id: MessageId,
     pub label: String,
-    pub did: String,
+    pub did: Did,
 }
 
 impl PairwiseInvitation {

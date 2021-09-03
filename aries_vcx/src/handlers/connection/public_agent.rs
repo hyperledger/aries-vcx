@@ -2,7 +2,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::connection::invite::PublicInvitation;
-use crate::messages::connection::did_doc::Service;
+use crate::messages::connection::did_doc::FullService;
 use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
 use crate::messages::connection::request::Request;
@@ -22,7 +22,7 @@ impl PublicAgent {
         let agent_info = CloudAgentInfo::create(&pairwise_info)?;
         let institution_did = String::from(institution_did);
         let source_id = String::from(source_id);
-        let service = Service {
+        let service = FullService {
             service_endpoint: get_agency_client()?.get_agency_url()?,
             recipient_keys: vec![pairwise_info.pw_vk.clone()],
             routing_keys: agent_info.routing_keys()?,
