@@ -21,9 +21,9 @@ impl ServiceResolvable {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FullService {
-    pub id: String,
+    pub id: Did,
     #[serde(rename = "type")]
     pub type_: String,
     #[serde(default)]
@@ -38,6 +38,27 @@ pub struct FullService {
     pub service_endpoint: String,
 }
 
+impl FullService {
+    pub fn create() -> Self {
+        Self::default()
+    }
+
+    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Self {
+        self.service_endpoint = service_endpoint;
+        self
+    }
+
+    pub fn set_routing_keys(mut self, routing_keys: Vec<String>) -> Self {
+        self.routing_keys = routing_keys;
+        self
+    }
+
+    pub fn set_recipient_keys(mut self, recipient_keys: Vec<String>) -> Self {
+        self.recipient_keys = recipient_keys;
+        self
+    }
+}
+
 impl Default for FullService {
     fn default() -> FullService {
         FullService {
@@ -49,5 +70,41 @@ impl Default for FullService {
             recipient_keys: Vec::new(),
             routing_keys: Vec::new(),
         }
+    }
+}
+
+impl PartialEq for FullService {
+    fn eq(&self, other: &Self) -> bool {
+        self.recipient_keys == other.recipient_keys
+            && self.routing_keys == other.routing_keys
+            && self.service_endpoint == other.service_endpoint
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_service_comparison() {
+        let service1 = FullService::create()
+            .set_service_endpoint(_service_endpoint())
+            .set_recipient_keys(_recipient_keys())
+            .set_routing_keys(_routing_keys());
+
+        let service2 = FullService::create()
+            .set_service_endpoint(_service_endpoint())
+            .set_recipient_keys(_recipient_keys())
+            .set_routing_keys(_routing_keys());
+
+        let service3 = FullService::create()
+            .set_service_endpoint("bogus_endpoint".to_string())
+            .set_recipient_keys(_recipient_keys())
+            .set_routing_keys(_routing_keys());
+
+        assert!(service1 == service2);
+        assert!(service1 != service3);
     }
 }

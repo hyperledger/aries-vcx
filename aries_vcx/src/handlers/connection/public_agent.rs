@@ -22,12 +22,10 @@ impl PublicAgent {
         let agent_info = CloudAgentInfo::create(&pairwise_info)?;
         let institution_did = String::from(institution_did);
         let source_id = String::from(source_id);
-        let service = FullService {
-            service_endpoint: get_agency_client()?.get_agency_url()?,
-            recipient_keys: vec![pairwise_info.pw_vk.clone()],
-            routing_keys: agent_info.routing_keys()?,
-            ..Default::default()
-        };
+        let service = FullService::create()
+            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
+            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
+            .set_routing_keys(agent_info.routing_keys()?);
         add_service(&institution_did, &service)?;
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })
     }
