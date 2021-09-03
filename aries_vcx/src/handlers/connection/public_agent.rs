@@ -7,13 +7,14 @@ use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
 use crate::messages::connection::request::Request;
 use crate::messages::a2a::A2AMessage;
+use crate::messages::connection::did_doc::Did;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
     source_id: String,
     agent_info: CloudAgentInfo,
     pairwise_info: PairwiseInfo,
-    institution_did: String
+    institution_did: Did
 }
 
 impl PublicAgent {
@@ -36,6 +37,10 @@ impl PublicAgent {
 
     pub fn cloud_agent_info(&self) -> CloudAgentInfo {
         self.agent_info.clone()
+    }
+
+    pub fn did(&self) -> String {
+        self.institution_did.clone()
     }
 
     pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {

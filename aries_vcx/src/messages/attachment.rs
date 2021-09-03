@@ -16,6 +16,10 @@ impl Attachments {
         self.0.get(0)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     pub fn add(&mut self, attachment: Attachment) {
         self.0.push(attachment);
     }
@@ -44,6 +48,15 @@ pub enum Attachment {
     #[serde(rename = "application/json")]
     JSON(Json),
     Blank,
+}
+
+impl Attachment {
+    pub fn id(&self) -> Option<AttachmentId> {
+        match self {
+            Self::JSON(json) => Some(json.id.clone()),
+            Self::Blank => None
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

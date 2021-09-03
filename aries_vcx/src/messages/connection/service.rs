@@ -1,6 +1,9 @@
+use std::convert::TryFrom;
+
 use crate::messages::connection::did_doc::Did;
 use crate::libindy::utils::ledger;
 use crate::error::prelude::*;
+use crate::handlers::connection::public_agent::PublicAgent;
 
 pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -78,6 +81,13 @@ impl PartialEq for FullService {
         self.recipient_keys == other.recipient_keys
             && self.routing_keys == other.routing_keys
             && self.service_endpoint == other.service_endpoint
+    }
+}
+
+impl TryFrom<PublicAgent> for FullService {
+    type Error = VcxError;
+    fn try_from(agent: PublicAgent) -> Result<Self, Self::Error> {
+        ledger::get_service(&agent.did())
     }
 }
 

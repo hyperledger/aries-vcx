@@ -9,6 +9,7 @@ use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
 pub mod connection;
 pub mod issuance;
 pub mod proof_presentation;
+pub mod out_of_band;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {
