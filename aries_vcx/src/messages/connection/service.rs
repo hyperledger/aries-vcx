@@ -7,16 +7,16 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
-pub enum Service {
+pub enum ServiceResolvable {
     FullService(FullService),
     Did(Did)
 }
 
-impl Service {
+impl ServiceResolvable {
     pub fn resolve(&self) -> VcxResult<FullService> {
         match self {
-            Service::FullService(full_service) => Ok(full_service.clone()),
-            Service::Did(did) => ledger::get_service(&did)
+            ServiceResolvable::FullService(full_service) => Ok(full_service.clone()),
+            ServiceResolvable::Did(did) => ledger::get_service(&did)
         }
     }
 }
