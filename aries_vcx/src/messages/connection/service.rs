@@ -1,75 +1,53 @@
-use crate::messages::connection::did_doc::DidDoc;
+use crate::messages::connection::did_doc::Did;
+use crate::libindy::utils::ledger;
+use crate::error::prelude::*;
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct Service {
-    #[serde(default)]
-    pub recipient_keys: Vec<String>,
-    pub routing_keys: Option<Vec<String>>,
-    pub service_endpoint: String,
+pub const SERVICE_SUFFIX: &str = "indy";
+pub const SERVICE_TYPE: &str = "IndyAgent";
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum Service {
+    FullService(FullService),
+    Did(Did)
 }
 
 impl Service {
-    pub fn create() -> Self {
-        Service::default()
-    }
-
-    pub fn set_service_endpoint(mut self, service_endpoint: String) -> Self {
-        self.service_endpoint = service_endpoint;
-        self
-    }
-
-    pub fn set_routing_keys(mut self, routing_keys: Vec<String>) -> Self {
-        self.routing_keys = Some(routing_keys);
-        self
-    }
-
-    pub fn set_recipient_keys(mut self, recipient_keys: Vec<String>) -> Self {
-        self.recipient_keys = recipient_keys;
-        self
-    }
-}
-
-impl Into<DidDoc> for Service {
-    fn into(self) -> DidDoc {
-        let mut did_doc: DidDoc = DidDoc::default();
-        did_doc.set_service_endpoint(self.service_endpoint.clone());
-        did_doc.set_keys(self.recipient_keys, self.routing_keys.unwrap_or_default());
-        did_doc
-    }
-}
-
-
-#[cfg(feature = "test_utils")]
-pub mod test_utils {
-    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
-
-    use super::*;
-
-    pub fn _service() -> Service {
-        Service {
-            recipient_keys: _recipient_keys(),
-            routing_keys: Some(_routing_keys()),
-            service_endpoint: _service_endpoint(),
+    pub fn resolve(&self) -> VcxResult<FullService> {
+        match self {
+            Service::FullService(full_service) => Ok(full_service.clone()),
+            Service::Did(did) => ledger::get_service(&did)
         }
     }
 }
 
-#[cfg(test)]
-pub mod tests {
-    use crate::messages::connection::did_doc::test_utils::*;
-    use crate::messages::connection::service::test_utils::_service;
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct FullService {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub type_: String,
+    #[serde(default)]
+    pub priority: u32,
+    #[serde(default)]
+    #[serde(rename = "recipientKeys")]
+    pub recipient_keys: Vec<String>,
+    #[serde(default)]
+    #[serde(rename = "routingKeys")]
+    pub routing_keys: Vec<String>,
+    #[serde(rename = "serviceEndpoint")]
+    pub service_endpoint: String,
+}
 
-    use super::*;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_service_build_works() {
-        let service: Service = Service::default()
-            .set_service_endpoint(_service_endpoint())
-            .set_recipient_keys(_recipient_keys())
-            .set_routing_keys(_routing_keys());
-
-        assert_eq!(_service(), service);
+impl Default for FullService {
+    fn default() -> FullService {
+        FullService {
+            // TODO: FIXME Several services????
+            id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
+            type_: String::from(SERVICE_TYPE),
+            priority: 0,
+            service_endpoint: String::new(),
+            recipient_keys: Vec::new(),
+            routing_keys: Vec::new(),
+        }
     }
 }

@@ -10,7 +10,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::utils::random::generate_random_did;
-use crate::messages::connection::did_doc::FullService;
+use crate::messages::connection::service::FullService;
 use crate::messages::connection::did_doc::Did;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {

@@ -2,7 +2,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::connection::invite::PublicInvitation;
-use crate::messages::connection::did_doc::FullService;
+use crate::messages::connection::service::FullService;
 use crate::libindy::utils::ledger::add_service;
 use crate::settings::get_agency_client;
 use crate::messages::connection::request::Request;

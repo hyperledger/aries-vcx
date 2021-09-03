@@ -3,13 +3,12 @@ use url::Url;
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::service::FullService;
 use crate::utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
 pub const KEY_AUTHENTICATION_TYPE: &str = "Ed25519SignatureAuthentication2018";
-pub const SERVICE_SUFFIX: &str = "indy";
-pub const SERVICE_TYPE: &str = "IndyAgent";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct DidDoc {
@@ -46,39 +45,6 @@ pub struct Authentication {
 }
 
 pub type Did = String;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum Service {
-    FullService(FullService),
-    Did(Did)
-}
-
-impl Service {
-    pub fn resolve(&self) -> VcxResult<FullService> {
-        match self {
-            Service::FullService(full_service) => Ok(full_service.clone()),
-            Service::Did(did) => ledger::get_service(&did)
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct FullService {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub type_: String,
-    #[serde(default)]
-    pub priority: u32,
-    #[serde(default)]
-    #[serde(rename = "recipientKeys")]
-    pub recipient_keys: Vec<String>,
-    #[serde(default)]
-    #[serde(rename = "routingKeys")]
-    pub routing_keys: Vec<String>,
-    #[serde(rename = "serviceEndpoint")]
-    pub service_endpoint: String,
-}
 
 impl Default for DidDoc {
     fn default() -> DidDoc {
@@ -293,20 +259,6 @@ impl DidDoc {
     fn _parse_key_reference(key_reference: &str) -> String {
         let pars: Vec<&str> = DidDoc::_key_parts(key_reference);
         pars.get(1).or(pars.get(0)).map(|s| s.to_string()).unwrap_or_default()
-    }
-}
-
-impl Default for FullService {
-    fn default() -> FullService {
-        FullService {
-            // TODO: FIXME Several services????
-            id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
-            type_: String::from(SERVICE_TYPE),
-            priority: 0,
-            service_endpoint: String::new(),
-            recipient_keys: Vec::new(),
-            routing_keys: Vec::new(),
-        }
     }
 }
 
