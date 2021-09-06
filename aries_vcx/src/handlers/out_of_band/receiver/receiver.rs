@@ -12,6 +12,13 @@ use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use std::convert::TryFrom;
 
 impl OutOfBand {
+    pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
+        match msg {
+            A2AMessage::OutOfBand(oob) => Ok(oob.clone()),
+            _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
+        }
+    }
+
     pub fn connection_exists(&self, connections: Vec<Connection>) -> VcxResult<bool> {
         for service in &self.services {
             let full_service = service.resolve()?;
@@ -70,15 +77,15 @@ impl OutOfBand {
         return Ok(None);
     }
 
-    pub fn build_connection(&self) -> VcxResult<Connection> {
+    pub fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
         let service = match self.services.get(0) {
             Some(service) => service,
             None => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidInviteDetail, "No service found in OoB message"));
             }
         };
-        let invite: PairwiseInvitation = PairwiseInvitation::try_from(service.clone())?;
-        Connection::create_with_invite(&self.id.0, Invitation::Pairwise(invite), false)
+        let invite: PairwiseInvitation = PairwiseInvitation::try_from(service)?;
+        Connection::create_with_invite(&self.id.0, Invitation::Pairwise(invite), autohop_enabled)
     }
 }
 

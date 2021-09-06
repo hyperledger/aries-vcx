@@ -43,25 +43,3 @@ pub struct OutOfBand {
 }
 
 a2a_message!(OutOfBand);
-
-#[cfg(test)]
-pub mod tests {
-    use super::*;
-
-    use crate::utils::devsetup::*;
-    use crate::messages::connection::service::FullService;
-    use std::convert::TryFrom;
-
-    #[test]
-    #[cfg(feature = "agency_pool_tests")]
-    fn test_connection_reusable() {
-        let _setup = SetupLibraryAgencyV2::init();
-        let agent = PublicAgent::create("public-agent", "2hoqvcwupRTUNkXn6ArYzs").unwrap();
-        let service = FullService::try_from(agent).unwrap();
-        let oob_msg = OutOfBand::create()
-            .set_label("test-label")
-            .set_goal_code(GoalCode::P2PMessaging)
-            .set_goal("To exchange message")
-            .append_service(ServiceResolvable::FullService(service));
-    }
-}

@@ -84,9 +84,9 @@ impl PartialEq for FullService {
     }
 }
 
-impl TryFrom<PublicAgent> for FullService {
+impl TryFrom<&PublicAgent> for FullService {
     type Error = VcxError;
-    fn try_from(agent: PublicAgent) -> Result<Self, Self::Error> {
+    fn try_from(agent: &PublicAgent) -> Result<Self, Self::Error> {
         ledger::get_service(&agent.did())
     }
 }

@@ -1035,6 +1035,54 @@ mod tests {
         assert_eq!(consumer_msgs.len(), 1);
     }
 
+    use aries_vcx::messages::connection::service::FullService;
+    use std::convert::TryFrom;
+    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
+    use aries_vcx::messages::connection::service::ServiceResolvable;
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    fn test_connection_reusable() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        institution.activate().unwrap();
+        let service = FullService::try_from(&institution.agent).unwrap();
+        let oob_sender = OutOfBand::create()
+            .set_label("test-label")
+            .set_goal_code(GoalCode::P2PMessaging)
+            .set_goal("To exchange message")
+            .append_service(ServiceResolvable::FullService(service));
+        let oob_msg = oob_sender.to_a2a_message();
+
+        consumer.activate().unwrap();
+        let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
+        conn_receiver.connect().unwrap();
+        conn_receiver.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        let mut requests = institution.agent.download_connection_requests(None).unwrap();
+        assert_eq!(requests.len(), 1);
+        let mut conn_sender = Connection::create_with_connection_request(requests.pop().unwrap(), &institution.agent).unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Requested), conn_sender.get_state());
+        conn_sender.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), conn_sender.get_state());
+
+        consumer.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        conn_receiver.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), conn_receiver.get_state());
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        conn_sender.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), conn_sender.get_state());
+    }
+
     #[test]
     #[cfg(feature = "agency_pool_tests")]
     pub fn test_two_enterprise_connections() {

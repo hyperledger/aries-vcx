@@ -219,6 +219,9 @@ pub enum VcxErrorKind {
     #[fail(display = "No Agent pairwise information")]
     NoAgentInformation,
 
+    #[fail(display = "Invalid message format")]
+    InvalidMessageFormat,
+
     #[fail(display = "Attempted to unlock poisoned lock")]
     PoisonedLock,
 }
@@ -451,7 +454,8 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::NoAgentInformation => error::NO_AGENT_INFO.code_num,
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
-            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num
+            VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
+            VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num
         }
     }
 }

@@ -86,9 +86,9 @@ impl PublicInvitation {
     }
 }
 
-impl TryFrom<ServiceResolvable> for PairwiseInvitation {
+impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
     type Error = VcxError;
-    fn try_from(service: ServiceResolvable) -> Result<Self, Self::Error> {
+    fn try_from(service: &ServiceResolvable) -> Result<Self, Self::Error> {
         let full_service = service.resolve()?;
         Ok(Self::create()
             .set_recipient_keys(full_service.recipient_keys)
