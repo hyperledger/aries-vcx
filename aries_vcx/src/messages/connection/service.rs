@@ -78,9 +78,8 @@ impl Default for FullService {
 
 impl PartialEq for FullService {
     fn eq(&self, other: &Self) -> bool {
-        self.recipient_keys == other.recipient_keys
-            && self.routing_keys == other.routing_keys
-            && self.service_endpoint == other.service_endpoint
+        self.recipient_keys == other.recipient_keys &&
+            self.routing_keys == other.routing_keys 
     }
 }
 
