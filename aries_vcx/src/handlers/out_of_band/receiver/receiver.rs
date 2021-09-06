@@ -22,12 +22,14 @@ impl OutOfBand {
     pub fn connection_exists(&self, connections: Vec<Connection>) -> VcxResult<bool> {
         for service in &self.services {
             let full_service = service.resolve()?;
+            println!("full_service: {:?}", full_service);
             for connection in &connections {
-                let did_doc = connection.their_did_doc();
+                let did_doc = connection.boostrap_did_doc();
                 match did_doc {
                     Some(did_doc) => {
                         for service in &did_doc.service {
-                            if *service == full_service {
+                            if service.routing_keys == full_service.routing_keys {
+                                // && service.recipient_keys === full_service.recipient_keys {
                                 return Ok(true)
                             }
                         }

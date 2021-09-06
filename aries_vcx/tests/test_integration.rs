@@ -1058,6 +1058,8 @@ mod tests {
 
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let exists = oob_receiver.connection_exists(vec![]).unwrap();
+        assert!(!exists);
         let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
@@ -1081,6 +1083,9 @@ mod tests {
         thread::sleep(Duration::from_millis(500));
         conn_sender.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), conn_sender.get_state());
+
+        let exists = oob_receiver.connection_exists(vec![conn_receiver]).unwrap();
+        assert!(exists);
     }
 
     #[test]
