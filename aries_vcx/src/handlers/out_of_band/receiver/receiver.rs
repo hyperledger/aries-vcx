@@ -44,29 +44,29 @@ impl OutOfBand {
             match attach.id() {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
-                        let offer: CredentialOffer = serde_json::from_str(&attach_json)
+                        let mut offer: CredentialOffer = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::CredentialOffer(offer)));
+                        return Ok(Some(A2AMessage::CredentialOffer(offer.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::CredentialRequest => {
-                        let request: CredentialRequest = serde_json::from_str(&attach_json)
+                        let mut request: CredentialRequest = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::CredentialRequest(request)));
+                        return Ok(Some(A2AMessage::CredentialRequest(request.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::Credential => {
-                        let credential: Credential = serde_json::from_str(&attach_json)
+                        let mut credential: Credential = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::Credential(credential)));
+                        return Ok(Some(A2AMessage::Credential(credential.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::PresentationRequest => {
-                        let request: PresentationRequest = serde_json::from_str(&attach_json)
+                        let mut request: PresentationRequest = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::PresentationRequest(request)));
+                        return Ok(Some(A2AMessage::PresentationRequest(request.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::Presentation => {
-                        let presentation: Presentation = serde_json::from_str(&attach_json)
+                        let mut presentation: Presentation = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::Presentation(presentation)));
+                        return Ok(Some(A2AMessage::Presentation(presentation.set_parent_thread_id(&self.id.0))));
                     }
                 }
                 None => { return Ok(None); }

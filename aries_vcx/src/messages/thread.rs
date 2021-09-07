@@ -22,6 +22,11 @@ impl Thread {
         self
     }
 
+    pub fn set_pthid(mut self, thid: String) -> Thread {
+        self.pthid = Some(thid);
+        self
+    }
+
     pub fn increment_receiver(&mut self, did: &str) {
         self.received_orders.entry(did.to_string())
             .and_modify(|e| *e += 1)
@@ -49,6 +54,11 @@ macro_rules! threadlike (($type:ident) => (
     impl $type {
         pub fn set_thread_id(mut self, id: &str) -> $type {
             self.thread.thid = Some(id.to_string());
+            self
+        }
+
+        pub fn set_parent_thread_id(mut self, id: &str) -> $type {
+            self.thread.pthid = Some(id.to_string());
             self
         }
 

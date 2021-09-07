@@ -73,6 +73,7 @@ enum_number!(ProofStateType
 mod tests {
     use std::thread;
     use std::time::Duration;
+    use std::convert::TryFrom;
 
     use rand::Rng;
     use serde_json::Value;
@@ -93,6 +94,7 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
@@ -100,6 +102,8 @@ mod tests {
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::connection::service::FullService;
+    use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
@@ -514,7 +518,6 @@ mod tests {
         proof_verifier.update_state(&verifier_to_consumer2).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
     }
-
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
@@ -1020,11 +1023,6 @@ mod tests {
         assert_eq!(consumer_msgs.len(), 1);
     }
 
-    use aries_vcx::messages::connection::service::FullService;
-    use std::convert::TryFrom;
-    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
-    use aries_vcx::messages::connection::service::ServiceResolvable;
-
     #[test]
     #[cfg(feature = "agency_pool_tests")]
     fn test_establish_connection_via_oob_message_request_included() {
@@ -1059,6 +1057,7 @@ mod tests {
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
+        assert_eq!(oob_sender.id.0, oob_receiver.id.0);
 
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
@@ -1085,7 +1084,8 @@ mod tests {
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
         if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
-            assert_eq!(request_receiver, request_sender);
+            assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
+            assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
     }
 
@@ -1112,7 +1112,6 @@ mod tests {
         let conn = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
         assert!(conn.is_some());
     }
-
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]

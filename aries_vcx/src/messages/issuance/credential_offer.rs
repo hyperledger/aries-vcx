@@ -50,7 +50,18 @@ impl CredentialOffer {
     }
 
     pub fn set_thread_id(mut self, id: &str) -> Self {
-        self.thread = Some(Thread::new().set_thid(id.to_string()));
+        self.thread = match self.thread {
+            Some(thread) => Some(thread.set_thid(id.to_string())),
+            None => Some(Thread::new().set_thid(id.to_string()))
+        };
+        self
+    }
+
+    pub fn set_parent_thread_id(mut self, id: &str) -> Self {
+        self.thread = match self.thread {
+            Some(thread) => Some(thread.set_pthid(id.to_string())),
+            None => Some(Thread::new().set_pthid(id.to_string()))
+        };
         self
     }
 }
