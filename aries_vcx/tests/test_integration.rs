@@ -1055,24 +1055,7 @@ mod tests {
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
         assert_eq!(oob_sender.id.0, oob_receiver.id.0);
 
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        let mut requests = institution.agent.download_connection_requests(None).unwrap();
-        assert_eq!(requests.len(), 1);
-        let mut conn_sender = Connection::create_with_connection_request(requests.pop().unwrap(), &institution.agent).unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Requested), conn_sender.get_state());
-        conn_sender.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Responded), conn_sender.get_state());
-
-        consumer.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        conn_receiver.update_state().unwrap();
-        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), conn_receiver.get_state());
-
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        conn_sender.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Completed), conn_sender.get_state());
+        let mut conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver);
 
         let conn = oob_receiver.connection_exists(vec![&conn_receiver]).unwrap();
         assert!(conn.is_some());
@@ -1479,16 +1462,7 @@ mod tests {
         (consumer_to_institution, institution_to_consumer)
     }
 
-    pub fn create_connected_connections_via_public_invite(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
-        institution.activate().unwrap();
-        let public_invite_json = institution.create_public_invite();
-        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
-
-        consumer.activate().unwrap();
-        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
-        consumer_to_institution.connect().unwrap();
-        consumer_to_institution.update_state().unwrap();
-
+    pub fn connect_using_request_sent_to_public_agent(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
@@ -1507,6 +1481,20 @@ mod tests {
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
+        institution_to_consumer
+    }
+
+    pub fn create_connected_connections_via_public_invite(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
+        institution.activate().unwrap();
+        let public_invite_json = institution.create_public_invite();
+        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
+
+        consumer.activate().unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
+        consumer_to_institution.connect().unwrap();
+        consumer_to_institution.update_state().unwrap();
+        
+        let mut institution_to_consumer = connect_using_request_sent_to_public_agent(consumer, institution, &mut consumer_to_institution);
         (consumer_to_institution, institution_to_consumer)
     }
 
