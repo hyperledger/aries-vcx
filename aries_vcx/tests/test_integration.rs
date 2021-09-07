@@ -1057,8 +1057,15 @@ mod tests {
 
         let mut conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver);
 
-        let conn = oob_receiver.connection_exists(vec![&conn_receiver]).unwrap();
+        let (conn_receiver_pw1, conn_sender_pw1) = create_connected_connections(&mut consumer, &mut institution);
+        let (conn_receiver_pw2, conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution);
+
+        let conn = oob_receiver.connection_exists(vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
         assert!(conn.is_some());
+        assert!(*conn.unwrap() == conn_receiver);
+
+        let conn = oob_receiver.connection_exists(vec![&conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
+        assert!(conn.is_none());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));

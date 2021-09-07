@@ -2,7 +2,7 @@ use crate::error::VcxResult;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::handlers::connection::public_agent::PublicAgent;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PairwiseInfo {
     pub pw_did: String,
     pub pw_vk: String,

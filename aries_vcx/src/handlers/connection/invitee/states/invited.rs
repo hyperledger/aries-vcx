@@ -5,7 +5,7 @@ use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::request::Request;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {
     pub invitation: Invitation,
 }

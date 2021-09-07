@@ -28,7 +28,7 @@ pub struct SmConnectionInviter {
     send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviterFullState {
     Null(NullState),
     Invited(InvitedState),
@@ -44,6 +44,14 @@ pub enum InviterState {
     Requested,
     Responded,
     Completed,
+}
+
+impl PartialEq for SmConnectionInviter {
+    fn eq(&self, other: &Self) -> bool {
+        self.source_id == other.source_id &&
+            self.pairwise_info == other.pairwise_info &&
+            self.state == other.state
+    }
 }
 
 impl From<InviterFullState> for InviterState {

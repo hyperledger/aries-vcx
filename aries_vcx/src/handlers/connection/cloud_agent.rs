@@ -10,7 +10,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::settings;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CloudAgentInfo {
     pub agent_did: String,
     pub agent_vk: String,

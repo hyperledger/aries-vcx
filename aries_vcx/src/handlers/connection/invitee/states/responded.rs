@@ -4,7 +4,7 @@ use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
     pub response: SignedResponse,
     pub request: Request,

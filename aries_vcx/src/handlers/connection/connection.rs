@@ -24,14 +24,14 @@ use crate::messages::connection::request::Request;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Connection {
     connection_sm: SmConnection,
     cloud_agent_info: CloudAgentInfo,
     autohop_enabled: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
