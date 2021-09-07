@@ -345,6 +345,10 @@ pub mod test_utils {
         vec![_key_2(), _key_3()]
     }
 
+    pub fn _routing_keys_1() -> Vec<String> {
+        vec![_key_1(), _key_3()]
+    }
+
     pub fn _key_reference_1() -> String {
         DidDoc::_build_key_reference(&_id(), "1")
     }

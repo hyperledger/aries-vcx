@@ -92,7 +92,7 @@ impl TryFrom<&PublicAgent> for FullService {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
+    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
     use super::*;
 
     #[test]
@@ -113,7 +113,13 @@ pub mod tests {
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
+        let service4 = FullService::create()
+            .set_service_endpoint(_service_endpoint())
+            .set_recipient_keys(_recipient_keys())
+            .set_routing_keys(_routing_keys_1());
+
         assert!(service1 == service2);
-        assert!(service1 != service3);
+        assert!(service1 == service3);
+        assert!(service1 != service4);
     }
 }
