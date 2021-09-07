@@ -31,7 +31,7 @@ impl Attachments {
     }
 
     pub fn add_base64_encoded_json_attachment(&mut self, id: AttachmentId, json: serde_json::Value) -> VcxResult<()> {
-        self.add_json_attachment(id, json, AttachmentEncoding::Base64)
+        self.add_json_attachment(id, json, AttachmentEncoding::Base64) // TODO: AttachmentEncoding::Json does not seem to work
     }
 
     pub fn content(&self) -> VcxResult<String> {

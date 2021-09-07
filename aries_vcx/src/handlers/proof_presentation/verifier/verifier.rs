@@ -72,6 +72,14 @@ impl Verifier {
         Ok(json!(proof_request).to_string())
     }
 
+    pub fn generate_presentation_request(&self) -> VcxResult<PresentationRequest> {
+        trace!("Verifier::generate_presentation_request >>>");
+
+        let proof_request = self.verifier_sm.presentation_request()?;
+
+        Ok(proof_request)
+    }
+
     pub fn get_presentation(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
 

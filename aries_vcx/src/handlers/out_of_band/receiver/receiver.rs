@@ -19,7 +19,7 @@ impl OutOfBand {
         }
     }
 
-    pub fn connection_exists(&self, connections: Vec<Connection>) -> VcxResult<bool> {
+    pub fn connection_exists(&self, connections: Vec<&Connection>) -> VcxResult<bool> {
         for service in &self.services {
             let full_service = service.resolve()?;
             for connection in &connections {
