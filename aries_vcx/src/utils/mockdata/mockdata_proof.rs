@@ -68,6 +68,81 @@ pub static ARIES_PROOF_PRESENTATION_ACK: &str = r#"
 }
 "#;
 
+pub static REQUESTED_ATTRIBUTES: &str = r#"
+[
+  {
+    "name": "Address1",
+    "non_revoked": {
+      "from": null,
+      "to": null
+    },
+    "restrictions": [
+      {
+        "cred_def_id": "V4SGRU86Z58d6TV7PBUe6f:3:CL:90:tag1",
+        "issuer_did": "V4SGRU86Z58d6TV7PBUe6f",
+        "schema_id": "V4SGRU86Z58d6TV7PBUe6f:2:XM6TfvyutZy3zLWADhjznf5AI:3706839017.653055621"
+      }
+    ]
+  },
+  {
+    "name": "address2",
+    "non_revoked": {
+      "from": null,
+      "to": null
+    },
+    "restrictions": [
+      {
+        "cred_def_id": "V4SGRU86Z58d6TV7PBUe6f:3:CL:90:tag1",
+        "issuer_did": "V4SGRU86Z58d6TV7PBUe6f",
+        "schema_id": "V4SGRU86Z58d6TV7PBUe6f:2:XM6TfvyutZy3zLWADhjznf5AI:3706839017.653055621"
+      }
+    ]
+  },
+  {
+    "name": "CITY",
+    "non_revoked": {
+      "from": null,
+      "to": null
+    },
+    "restrictions": [
+      {
+        "cred_def_id": "V4SGRU86Z58d6TV7PBUe6f:3:CL:90:tag1",
+        "issuer_did": "V4SGRU86Z58d6TV7PBUe6f",
+        "schema_id": "V4SGRU86Z58d6TV7PBUe6f:2:XM6TfvyutZy3zLWADhjznf5AI:3706839017.653055621"
+      }
+    ]
+  },
+  {
+    "name": "State",
+    "non_revoked": {
+      "from": null,
+      "to": null
+    },
+    "restrictions": [
+      {
+        "cred_def_id": "V4SGRU86Z58d6TV7PBUe6f:3:CL:90:tag1",
+        "issuer_did": "V4SGRU86Z58d6TV7PBUe6f",
+        "schema_id": "V4SGRU86Z58d6TV7PBUe6f:2:XM6TfvyutZy3zLWADhjznf5AI:3706839017.653055621"
+      }
+    ]
+  },
+  {
+    "name": "zip",
+    "non_revoked": {
+      "from": null,
+      "to": null
+    },
+    "restrictions": [
+      {
+        "cred_def_id": "V4SGRU86Z58d6TV7PBUe6f:3:CL:90:tag1",
+        "issuer_did": "V4SGRU86Z58d6TV7PBUe6f",
+        "schema_id": "V4SGRU86Z58d6TV7PBUe6f:2:XM6TfvyutZy3zLWADhjznf5AI:3706839017.653055621"
+      }
+    ]
+  }
+]
+"#;
+
 pub static SERIALIZIED_PROOF_INITIATED: &str = r#"
 {
   "version": "2.0",

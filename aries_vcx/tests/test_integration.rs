@@ -113,6 +113,7 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::filters;
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use aries_vcx::utils::plugins::init_plugin;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
@@ -1025,20 +1026,14 @@ mod tests {
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
-    fn test_establish_connection_via_oob_message_request_included() {
+    fn test_oob_connection_bootstrap() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
         institution.activate().unwrap();
-
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
-        let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
-
-        let mut request_sender = create_proof_request(&mut institution, &requested_attrs_string, "[]", "{}", None);
+        let mut request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None);
 
         let service = FullService::try_from(&institution.agent).unwrap();
         let oob_sender = OutOfBand::create()
@@ -1053,7 +1048,7 @@ mod tests {
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
         let conn = oob_receiver.connection_exists(vec![]).unwrap();
-        assert!(!conn.is_some());
+        assert!(conn.is_none());
         let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
@@ -1092,7 +1087,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
-    fn test_connection_reuse() {
+    fn test_oob_connection_reuse() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
