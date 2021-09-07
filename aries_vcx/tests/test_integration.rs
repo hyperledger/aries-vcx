@@ -1083,6 +1083,16 @@ mod tests {
             assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
             assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
+
+        conn_sender.send_generic_message("Hello oob receiver, from oob sender").unwrap();
+        consumer.activate().unwrap();
+        conn_receiver.send_generic_message("Hello oob sender, from oob receiver").unwrap();
+        institution.activate().unwrap();
+        let sender_msgs = conn_sender.download_messages(None, None).unwrap();
+        consumer.activate().unwrap();
+        let receiver_msgs = conn_receiver.download_messages(None, None).unwrap();
+        assert_eq!(sender_msgs.len(), 2);
+        assert_eq!(receiver_msgs.len(), 2);
     }
 
     #[test]
@@ -1107,6 +1117,11 @@ mod tests {
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
         let conn = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
         assert!(conn.is_some());
+        conn.unwrap().send_generic_message("Hello oob sender, from oob receiver").unwrap();
+
+        institution.activate().unwrap();
+        let msgs = institution_to_consumer.download_messages(None, None).unwrap();
+        assert_eq!(msgs.len(), 2);
     }
 
     #[test]
