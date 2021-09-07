@@ -10,7 +10,8 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::utils::random::generate_random_did;
-use crate::messages::connection::did_doc::Service;
+use crate::messages::connection::service::FullService;
+use crate::messages::connection::did_doc::Did;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -463,7 +464,7 @@ pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
 }
 
 // TODO: This should be responsibility of the service struct?
-pub fn get_service(did: &str) -> VcxResult<Service> {
+pub fn get_service(did: &Did) -> VcxResult<FullService> {
     let attr_resp = get_attr(did, "service")?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = data["service"]
@@ -472,7 +473,7 @@ pub fn get_service(did: &str) -> VcxResult<Service> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
 }
 
-pub fn add_service(did: &str, service: &Service) -> VcxResult<String> {
+pub fn add_service(did: &str, service: &FullService) -> VcxResult<String> {
     let ser_service = serde_json::to_string(service)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
     add_attr(did, "service", &ser_service)
@@ -536,7 +537,7 @@ mod test {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let expect_service = Service::default();
+        let expect_service = FullService::default();
         add_service(&did, &expect_service).unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&did).unwrap();

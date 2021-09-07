@@ -3,13 +3,12 @@ use url::Url;
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::service::FullService;
 use crate::utils::validation::validate_verkey;
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
 pub const KEY_AUTHENTICATION_TYPE: &str = "Ed25519SignatureAuthentication2018";
-pub const SERVICE_SUFFIX: &str = "indy";
-pub const SERVICE_TYPE: &str = "IndyAgent";
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct DidDoc {
@@ -23,7 +22,7 @@ pub struct DidDoc {
     // TODO: A DID document MAY include a publicKey property??? (https://w3c.github.io/did-core/#public-keys)
     #[serde(default)]
     pub authentication: Vec<Authentication>,
-    pub service: Vec<Service>,
+    pub service: Vec<FullService>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -45,22 +44,7 @@ pub struct Authentication {
     pub public_key: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct Service {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub type_: String,
-    #[serde(default)]
-    pub priority: u32,
-    #[serde(default)]
-    #[serde(rename = "recipientKeys")]
-    pub recipient_keys: Vec<String>,
-    #[serde(default)]
-    #[serde(rename = "routingKeys")]
-    pub routing_keys: Vec<String>,
-    #[serde(rename = "serviceEndpoint")]
-    pub service_endpoint: String,
-}
+pub type Did = String;
 
 impl Default for DidDoc {
     fn default() -> DidDoc {
@@ -69,7 +53,7 @@ impl Default for DidDoc {
             id: String::new(),
             public_key: vec![],
             authentication: vec![],
-            service: vec![Service::default()],
+            service: vec![FullService::default()],
         }
     }
 }
@@ -219,7 +203,7 @@ impl DidDoc {
     }
 
     pub fn resolve_keys(&self) -> (Vec<String>, Vec<String>) {
-        let service: Service = match self.service.get(0).cloned() {
+        let service: FullService = match self.service.get(0).cloned() {
             Some(service) => service,
             None => return (Vec::new(), Vec::new())
         };
@@ -278,20 +262,6 @@ impl DidDoc {
     }
 }
 
-impl Default for Service {
-    fn default() -> Service {
-        Service {
-            // TODO: FIXME Several services????
-            id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
-            type_: String::from(SERVICE_TYPE),
-            priority: 0,
-            service_endpoint: String::new(),
-            recipient_keys: Vec::new(),
-            routing_keys: Vec::new(),
-        }
-    }
-}
-
 impl From<Invitation> for DidDoc {
     fn from(invitation: Invitation) -> DidDoc {
         let mut did_doc: DidDoc = DidDoc::default();
@@ -300,7 +270,7 @@ impl From<Invitation> for DidDoc {
                 did_doc.set_id(invitation.did.clone());
                 let service = ledger::get_service(&invitation.did).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
-                    Service::default()
+                    FullService::default()                
                 });
                 (service.service_endpoint, service.recipient_keys, service.routing_keys)
             }
@@ -389,7 +359,7 @@ pub mod test_utils {
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_reference_1() }
             ],
-            service: vec![Service {
+            service: vec![FullService {
                 service_endpoint: _service_endpoint(),
                 recipient_keys: vec![_key_reference_1()],
                 routing_keys: vec![_key_2(), _key_3()],
@@ -410,7 +380,7 @@ pub mod test_utils {
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_reference_1() }
             ],
-            service: vec![Service {
+            service: vec![FullService {
                 service_endpoint: _service_endpoint(),
                 recipient_keys: vec![_key_1()],
                 routing_keys: vec![_key_2(), _key_3()],
@@ -431,7 +401,7 @@ pub mod test_utils {
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_1() }
             ],
-            service: vec![Service {
+            service: vec![FullService {
                 service_endpoint: _service_endpoint(),
                 recipient_keys: vec![_key_1()],
                 routing_keys: vec![_key_2(), _key_3()],
@@ -450,7 +420,7 @@ pub mod test_utils {
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_1() }
             ],
-            service: vec![Service {
+            service: vec![FullService {
                 service_endpoint: _service_endpoint(),
                 recipient_keys: vec![_key_1()],
                 routing_keys: vec![],
@@ -469,7 +439,7 @@ pub mod test_utils {
             authentication: vec![
                 Authentication { type_: KEY_AUTHENTICATION_TYPE.to_string(), public_key: _key_reference_1() }
             ],
-            service: vec![Service {
+            service: vec![FullService {
                 service_endpoint: _service_endpoint(),
                 recipient_keys: vec![_key_1()],
                 routing_keys: vec![_key_2(), _key_3()],
