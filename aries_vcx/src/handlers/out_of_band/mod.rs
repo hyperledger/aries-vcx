@@ -23,6 +23,11 @@ pub enum GoalCode {
     P2PMessaging
 }
 
+pub enum HandshakeProtocol {
+    ConnectionV1,
+    DidExchangeV1
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
 pub struct OutOfBand {
     #[serde(rename = "@id")]

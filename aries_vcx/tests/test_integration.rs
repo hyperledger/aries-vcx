@@ -94,7 +94,7 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
-    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
+    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
@@ -1046,6 +1046,7 @@ mod tests {
             .set_goal_code(GoalCode::P2PMessaging)
             .set_goal("To exchange message")
             .append_service(ServiceResolvable::FullService(service))
+            .append_handshake_protocol(HandshakeProtocol::ConnectionV1).unwrap()
             .append_a2a_message(request_sender.to_a2a_message()).unwrap();
         let oob_msg = oob_sender.to_a2a_message();
 
