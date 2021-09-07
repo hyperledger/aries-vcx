@@ -19,7 +19,7 @@ impl OutOfBand {
         }
     }
 
-    pub fn connection_exists(&self, connections: Vec<&Connection>) -> VcxResult<bool> {
+    pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         for service in &self.services {
             let full_service = service.resolve()?;
             for connection in &connections {
@@ -27,14 +27,14 @@ impl OutOfBand {
                 match did_doc {
                     Some(did_doc) => {
                         if did_doc.resolve_service()? == full_service {
-                            return Ok(true)
+                            return Ok(Some(connection))
                         }
                     }
                     None => break
                 }
             }
         };
-        Ok(false)
+        Ok(None)
     }
 
     // TODO: There may be multiple A2AMessages in a single OoB msg

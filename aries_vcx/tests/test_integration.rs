@@ -1053,8 +1053,8 @@ mod tests {
 
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
-        let exists = oob_receiver.connection_exists(vec![]).unwrap();
-        assert!(!exists);
+        let conn = oob_receiver.connection_exists(vec![]).unwrap();
+        assert!(!conn.is_some());
         let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
@@ -1079,8 +1079,8 @@ mod tests {
         conn_sender.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), conn_sender.get_state());
 
-        let exists = oob_receiver.connection_exists(vec![&conn_receiver]).unwrap();
-        assert!(exists);
+        let conn = oob_receiver.connection_exists(vec![&conn_receiver]).unwrap();
+        assert!(conn.is_some());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
@@ -1109,8 +1109,8 @@ mod tests {
 
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
-        let exists = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
-        assert!(exists);
+        let conn = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
+        assert!(conn.is_some());
     }
 
 
