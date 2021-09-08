@@ -9,6 +9,7 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::service::ServiceResolvable;
 use std::convert::TryFrom;
 
 impl OutOfBand {
@@ -21,14 +22,17 @@ impl OutOfBand {
 
     pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         for service in &self.services {
-            let full_service = service.resolve()?;
             for connection in &connections {
-                let did_doc = connection.boostrap_did_doc();
-                match did_doc {
+                match connection.boostrap_did_doc() {
                     Some(did_doc) => {
-                        if did_doc.resolve_service()? == full_service {
+                        if let ServiceResolvable::Did(did) = service {
+                            if did.to_string() == did_doc.id {
+                                return Ok(Some(connection))
+                            }
+                        };
+                        if did_doc.resolve_service()? == service.resolve()? {
                             return Ok(Some(connection))
-                        }
+                        };
                     }
                     None => break
                 }
