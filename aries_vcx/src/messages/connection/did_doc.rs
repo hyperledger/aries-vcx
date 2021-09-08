@@ -202,6 +202,7 @@ impl DidDoc {
         Ok(())
     }
 
+    // TODO: Expects one service only
     pub fn resolve_keys(&self) -> (Vec<String>, Vec<String>) {
         let service: FullService = match self.service.get(0).cloned() {
             Some(service) => service,
@@ -238,6 +239,17 @@ impl DidDoc {
             Some(service) => service.service_endpoint.to_string(),
             None => String::new()
         }
+    }
+
+    // TODO: Expects one service only
+    pub fn resolve_service(&self) -> VcxResult<FullService> {
+        let service = self.service.get(0).ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, format!("No service found on did doc: {:?}", self)))?;
+        let (recipient_keys, routing_keys) = self.resolve_keys();
+        Ok(FullService {
+            recipient_keys,
+            routing_keys,
+            ..service.clone()
+        })
     }
 
     fn key_for_reference(&self, key_reference: &str) -> String {
@@ -331,6 +343,10 @@ pub mod test_utils {
 
     pub fn _routing_keys() -> Vec<String> {
         vec![_key_2(), _key_3()]
+    }
+
+    pub fn _routing_keys_1() -> Vec<String> {
+        vec![_key_1(), _key_3()]
     }
 
     pub fn _key_reference_1() -> String {

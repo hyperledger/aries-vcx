@@ -118,6 +118,7 @@ pub static REV_REG_DEF_NOT_FOUND: Error = Error { code_num: 1107, message: "No r
 pub static REV_DELTA_NOT_FOUND: Error = Error { code_num: 1108, message: "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?" };
 pub static POISONED_LOCK: Error = Error { code_num: 1109, message: "Attempted to lock a poisoned lock" };
 pub static CREATE_PUBLIC_AGENT: Error = Error { code_num: 1110, message: "Error creating public agent" };
+pub static INVALID_MESSAGE_FORMAT: Error = Error { code_num: 1111, message: "Invalid message format" };
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {

@@ -1,5 +1,9 @@
+use std::convert::TryFrom;
+
+use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::service::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -79,6 +83,17 @@ impl PublicInvitation {
     pub fn set_public_did(mut self, public_did: String) -> Self {
         self.did = public_did;
         self
+    }
+}
+
+impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
+    type Error = VcxError;
+    fn try_from(service: &ServiceResolvable) -> Result<Self, Self::Error> {
+        let full_service = service.resolve()?;
+        Ok(Self::create()
+            .set_recipient_keys(full_service.recipient_keys)
+            .set_routing_keys(full_service.routing_keys)
+            .set_service_endpoint(full_service.service_endpoint))
     }
 }
 

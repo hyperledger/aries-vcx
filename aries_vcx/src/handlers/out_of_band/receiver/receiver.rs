@@ -1,0 +1,92 @@
+use crate::handlers::out_of_band::OutOfBand;
+use crate::handlers::connection::connection::Connection;
+use crate::error::prelude::*;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::attachment::AttachmentId;
+use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::issuance::credential::Credential;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::messages::proof_presentation::presentation::Presentation;
+use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::service::ServiceResolvable;
+use std::convert::TryFrom;
+
+impl OutOfBand {
+    pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
+        match msg {
+            A2AMessage::OutOfBand(oob) => Ok(oob.clone()),
+            _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
+        }
+    }
+
+    pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+        for service in &self.services {
+            for connection in &connections {
+                match connection.bootstrap_did_doc() {
+                    Some(did_doc) => {
+                        if let ServiceResolvable::Did(did) = service {
+                            if did.to_string() == did_doc.id {
+                                return Ok(Some(connection))
+                            }
+                        };
+                        if did_doc.resolve_service()? == service.resolve()? {
+                            return Ok(Some(connection))
+                        };
+                    }
+                    None => break
+                }
+            }
+        };
+        Ok(None)
+    }
+
+    // TODO: There may be multiple A2AMessages in a single OoB msg
+    pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
+        if let Some(attach) = self.requests_attach.get() {
+            let attach_json = self.requests_attach.content()?;
+            match attach.id() {
+                Some(id) => match id {
+                    AttachmentId::CredentialOffer => {
+                        let mut offer: CredentialOffer = serde_json::from_str(&attach_json)
+                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        return Ok(Some(A2AMessage::CredentialOffer(offer.set_parent_thread_id(&self.id.0))));
+                    }
+                    AttachmentId::CredentialRequest => {
+                        let mut request: CredentialRequest = serde_json::from_str(&attach_json)
+                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        return Ok(Some(A2AMessage::CredentialRequest(request.set_parent_thread_id(&self.id.0))));
+                    }
+                    AttachmentId::Credential => {
+                        let mut credential: Credential = serde_json::from_str(&attach_json)
+                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        return Ok(Some(A2AMessage::Credential(credential.set_parent_thread_id(&self.id.0))));
+                    }
+                    AttachmentId::PresentationRequest => {
+                        let mut request: PresentationRequest = serde_json::from_str(&attach_json)
+                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        return Ok(Some(A2AMessage::PresentationRequest(request.set_parent_thread_id(&self.id.0))));
+                    }
+                    AttachmentId::Presentation => {
+                        let mut presentation: Presentation = serde_json::from_str(&attach_json)
+                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        return Ok(Some(A2AMessage::Presentation(presentation.set_parent_thread_id(&self.id.0))));
+                    }
+                }
+                None => { return Ok(None); }
+            };
+        };
+        return Ok(None);
+    }
+
+    pub fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
+        let service = match self.services.get(0) {
+            Some(service) => service,
+            None => {
+                return Err(VcxError::from_msg(VcxErrorKind::InvalidInviteDetail, "No service found in OoB message"));
+            }
+        };
+        let invite: PairwiseInvitation = PairwiseInvitation::try_from(service)?;
+        Connection::create_with_invite(&self.id.0, Invitation::Pairwise(invite), autohop_enabled)
+    }
+}

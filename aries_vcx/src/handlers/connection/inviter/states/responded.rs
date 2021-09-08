@@ -10,7 +10,7 @@ use crate::messages::connection::response::SignedResponse;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
     pub signed_response: SignedResponse,
     pub did_doc: DidDoc,

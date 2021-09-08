@@ -1,6 +1,9 @@
+use std::convert::TryFrom;
+
 use crate::messages::connection::did_doc::Did;
 use crate::libindy::utils::ledger;
 use crate::error::prelude::*;
+use crate::handlers::connection::public_agent::PublicAgent;
 
 pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -75,15 +78,21 @@ impl Default for FullService {
 
 impl PartialEq for FullService {
     fn eq(&self, other: &Self) -> bool {
-        self.recipient_keys == other.recipient_keys
-            && self.routing_keys == other.routing_keys
-            && self.service_endpoint == other.service_endpoint
+        self.recipient_keys == other.recipient_keys &&
+            self.routing_keys == other.routing_keys 
+    }
+}
+
+impl TryFrom<&PublicAgent> for FullService {
+    type Error = VcxError;
+    fn try_from(agent: &PublicAgent) -> Result<Self, Self::Error> {
+        ledger::get_service(&agent.did())
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
+    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
     use super::*;
 
     #[test]
@@ -104,7 +113,13 @@ pub mod tests {
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
+        let service4 = FullService::create()
+            .set_service_endpoint(_service_endpoint())
+            .set_recipient_keys(_recipient_keys())
+            .set_routing_keys(_routing_keys_1());
+
         assert!(service1 == service2);
-        assert!(service1 != service3);
+        assert!(service1 == service3);
+        assert!(service1 != service4);
     }
 }

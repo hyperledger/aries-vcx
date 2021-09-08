@@ -1,7 +1,7 @@
 use crate::handlers::connection::inviter::states::invited::InvitedState;
 use crate::messages::connection::invite::Invitation;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct NullState {}
 
 impl From<(NullState, Invitation)> for InvitedState {

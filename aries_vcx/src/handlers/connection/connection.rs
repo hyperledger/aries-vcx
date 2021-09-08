@@ -24,14 +24,14 @@ use crate::messages::connection::request::Request;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Connection {
     connection_sm: SmConnection,
     cloud_agent_info: CloudAgentInfo,
     autohop_enabled: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
@@ -264,6 +264,13 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => {
                 sm_invitee.their_did_doc()
             }
+        }
+    }
+
+    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc()
         }
     }
 

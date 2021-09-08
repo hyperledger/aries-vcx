@@ -22,6 +22,7 @@ use crate::messages::proof_presentation::presentation_proposal::PresentationProp
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::handlers::out_of_band::OutOfBand;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -69,6 +70,9 @@ pub enum A2AMessage {
 
     /// basic message
     BasicMessage(BasicMessage),
+
+    /// out of band
+    OutOfBand(OutOfBand),
 
     /// Any Raw Message
     Generic(Value),
@@ -198,6 +202,11 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(|msg| A2AMessage::BasicMessage(msg))
                     .map_err(de::Error::custom)
             }
+            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND) => {
+                OutOfBand::deserialize(value)
+                    .map(|msg| A2AMessage::OutOfBand(msg))
+                    .map_err(de::Error::custom)
+            }
             (_, other_type) => {
                 warn!("Unexpected @type field structure: {}", other_type);
                 Ok(A2AMessage::Generic(value))
@@ -238,6 +247,7 @@ impl Serialize for A2AMessage {
             A2AMessage::Query(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY),
             A2AMessage::Disclose(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE),
             A2AMessage::BasicMessage(msg) => set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE),
+            A2AMessage::OutOfBand(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND),
             A2AMessage::Generic(msg) => Ok(msg.clone())
         }.map_err(ser::Error::custom)?;
 
@@ -291,6 +301,7 @@ impl A2AMessage {
     const QUERY: &'static str = "query";
     const DISCLOSE: &'static str = "disclose";
     const BASIC_MESSAGE: &'static str = "message";
+    const OUT_OF_BAND: &'static str = "out-of-band";
 }
 
 #[cfg(test)]

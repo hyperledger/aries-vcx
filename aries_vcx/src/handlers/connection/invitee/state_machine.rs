@@ -28,7 +28,7 @@ pub struct SmConnectionInvitee {
     send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviteeFullState {
     Null(NullState),
     Invited(InvitedState),
@@ -44,6 +44,14 @@ pub enum InviteeState {
     Requested,
     Responded,
     Completed,
+}
+
+impl PartialEq for SmConnectionInvitee {
+    fn eq(&self, other: &Self) -> bool {
+        self.source_id == other.source_id &&
+            self.pairwise_info == other.pairwise_info &&
+            self.state == other.state
+    }
 }
 
 impl From<InviteeFullState> for InviteeState {
@@ -111,6 +119,16 @@ impl SmConnectionInvitee {
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
+        }
+    }
+
+    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+        match self.state {
+            InviteeFullState::Null(_) => None,
+            InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
+            InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
+            InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
+            InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
         }
     }
 

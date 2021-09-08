@@ -73,6 +73,7 @@ enum_number!(ProofStateType
 mod tests {
     use std::thread;
     use std::time::Duration;
+    use std::convert::TryFrom;
 
     use rand::Rng;
     use serde_json::Value;
@@ -93,6 +94,7 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
@@ -100,6 +102,8 @@ mod tests {
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::connection::service::FullService;
+    use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
@@ -109,6 +113,7 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::filters;
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
+    use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use aries_vcx::utils::plugins::init_plugin;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
@@ -283,6 +288,16 @@ mod tests {
         verifier.send_presentation_request(connection.send_message_closure().unwrap(), None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         verifier
+    }
+
+    fn create_proof_request(faber: &mut Faber, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> PresentationRequest {
+        faber.activate().unwrap();
+        let mut verifier = Verifier::create("1".to_string(),
+                                            requested_attrs.to_string(),
+                                            requested_preds.to_string(),
+                                            revocation_interval.to_string(),
+                                            String::from(request_name.unwrap_or("name"))).unwrap();
+        verifier.generate_presentation_request().unwrap()
     }
 
     fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> Prover {
@@ -504,7 +519,6 @@ mod tests {
         proof_verifier.update_state(&verifier_to_consumer2).unwrap();
         assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
     }
-
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
@@ -1001,38 +1015,103 @@ mod tests {
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
 
-        institution.activate().unwrap();
-        let public_invite_json = institution.create_public_invite();
-        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
-
-        consumer.activate().unwrap();
-        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
-        consumer_to_institution.connect().unwrap();
-        consumer_to_institution.update_state().unwrap();
-
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
-        assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_connection_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
-        institution_to_consumer.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
-
-        consumer.activate().unwrap();
-        consumer_to_institution.update_state().unwrap();
-        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
-
-        institution.activate().unwrap();
-        thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state().unwrap();
-        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution);
 
         institution_to_consumer.send_generic_message("Hello Alice, Faber here").unwrap();
 
         consumer.activate().unwrap();
         let consumer_msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).unwrap();
         assert_eq!(consumer_msgs.len(), 1);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    fn test_oob_connection_bootstrap() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        institution.activate().unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let mut request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None);
+
+        let service = FullService::try_from(&institution.agent).unwrap();
+        let oob_sender = OutOfBand::create()
+            .set_label("test-label")
+            .set_goal_code(GoalCode::P2PMessaging)
+            .set_goal("To exchange message")
+            .append_service(ServiceResolvable::FullService(service))
+            .append_handshake_protocol(HandshakeProtocol::ConnectionV1).unwrap()
+            .append_a2a_message(request_sender.to_a2a_message()).unwrap();
+        let oob_msg = oob_sender.to_a2a_message();
+
+        consumer.activate().unwrap();
+        let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let conn = oob_receiver.connection_exists(vec![]).unwrap();
+        assert!(conn.is_none());
+        let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
+        conn_receiver.connect().unwrap();
+        conn_receiver.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
+        assert_eq!(oob_sender.id.0, oob_receiver.id.0);
+
+        let mut conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver);
+
+        let (conn_receiver_pw1, conn_sender_pw1) = create_connected_connections(&mut consumer, &mut institution);
+        let (conn_receiver_pw2, conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution);
+
+        let conn = oob_receiver.connection_exists(vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
+        assert!(conn.is_some());
+        assert!(*conn.unwrap() == conn_receiver);
+
+        let conn = oob_receiver.connection_exists(vec![&conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
+        assert!(conn.is_none());
+
+        let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
+        assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
+        if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
+            assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
+            assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
+        }
+
+        conn_sender.send_generic_message("Hello oob receiver, from oob sender").unwrap();
+        consumer.activate().unwrap();
+        conn_receiver.send_generic_message("Hello oob sender, from oob receiver").unwrap();
+        institution.activate().unwrap();
+        let sender_msgs = conn_sender.download_messages(None, None).unwrap();
+        consumer.activate().unwrap();
+        let receiver_msgs = conn_receiver.download_messages(None, None).unwrap();
+        assert_eq!(sender_msgs.len(), 2);
+        assert_eq!(receiver_msgs.len(), 2);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    fn test_oob_connection_reuse() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution);
+
+        institution.activate().unwrap();
+        let service = FullService::try_from(&institution.agent).unwrap();
+        let oob_sender = OutOfBand::create()
+            .set_label("test-label")
+            .set_goal_code(GoalCode::P2PMessaging)
+            .set_goal("To exchange message")
+            .append_service(ServiceResolvable::FullService(service));
+        let oob_msg = oob_sender.to_a2a_message();
+
+        consumer.activate().unwrap();
+        let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let conn = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
+        assert!(conn.is_some());
+        conn.unwrap().send_generic_message("Hello oob sender, from oob receiver").unwrap();
+
+        institution.activate().unwrap();
+        let msgs = institution_to_consumer.download_messages(None, None).unwrap();
+        assert_eq!(msgs.len(), 2);
     }
 
     #[test]
@@ -1387,6 +1466,42 @@ mod tests {
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
+        (consumer_to_institution, institution_to_consumer)
+    }
+
+    pub fn connect_using_request_sent_to_public_agent(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
+        assert_eq!(conn_requests.len(), 1);
+        let mut institution_to_consumer = Connection::create_with_connection_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
+
+        consumer.activate().unwrap();
+        consumer_to_institution.update_state().unwrap();
+        assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
+
+        institution.activate().unwrap();
+        thread::sleep(Duration::from_millis(500));
+        institution_to_consumer.update_state().unwrap();
+        assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
+
+        institution_to_consumer
+    }
+
+    pub fn create_connected_connections_via_public_invite(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
+        institution.activate().unwrap();
+        let public_invite_json = institution.create_public_invite();
+        let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
+
+        consumer.activate().unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
+        consumer_to_institution.connect().unwrap();
+        consumer_to_institution.update_state().unwrap();
+        
+        let mut institution_to_consumer = connect_using_request_sent_to_public_agent(consumer, institution, &mut consumer_to_institution);
         (consumer_to_institution, institution_to_consumer)
     }
 

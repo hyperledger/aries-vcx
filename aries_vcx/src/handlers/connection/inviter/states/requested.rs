@@ -4,7 +4,7 @@ use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
     pub signed_response: SignedResponse,
     pub did_doc: DidDoc,

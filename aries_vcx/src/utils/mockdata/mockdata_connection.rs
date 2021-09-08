@@ -248,6 +248,39 @@ pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
                         }
                     ]
                 },
+                "bootstrap_did_doc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "id": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+                    "publicKey": [
+                        {
+                            "id": "1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "18ac5f5d-c81d-451a-be20-a0df4933513a",
+                            "publicKeyBase58": "HoNSv4aPCRQ8BsJrVXS26Za4rdEFvtCyyoQEtCS175dw"
+                        }
+                    ],
+                    "authentication": [
+                        {
+                            "type": "Ed25519SignatureAuthentication2018",
+                            "publicKey": "18ac5f5d-c81d-451a-be20-a0df4933513a#1"
+                        }
+                    ],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "type": "IndyAgent",
+                            "priority": 0,
+                            "recipientKeys": [
+                                "18ac5f5d-c81d-451a-be20-a0df4933513a#1"
+                            ],
+                            "routingKeys": [
+                                "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
+                                "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                            ],
+                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                        }
+                    ]
+                },
                 "protocols": null
             }
         }
