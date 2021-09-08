@@ -47,7 +47,7 @@ impl OutOfBand {
         Ok(self)
     }
 
-    pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
+    pub fn append_a2a_message(&mut self, msg: A2AMessage) -> VcxResult<()> {
         let (attach_id, attach) = match msg {
             A2AMessage::CredentialRequest(request) => {
                 (AttachmentId::CredentialRequest,
@@ -79,6 +79,6 @@ impl OutOfBand {
             }
         };
         self.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
-        Ok(self)
+        Ok(())
     }
 }
