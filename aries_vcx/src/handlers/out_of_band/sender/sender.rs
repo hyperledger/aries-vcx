@@ -16,8 +16,8 @@ impl OutOfBand {
         self
     }
 
-    pub fn set_goal_code(mut self, goal_code: GoalCode) -> Self {
-        self.goal_code = Some(goal_code);
+    pub fn set_goal_code(mut self, goal_code: &GoalCode) -> Self {
+        self.goal_code = Some(goal_code.clone());
         self
     }
 
@@ -26,8 +26,8 @@ impl OutOfBand {
         self
     }
 
-    pub fn append_service(mut self, service: ServiceResolvable) -> Self {
-        self.services.push(service);
+    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
+        self.services.push(service.clone());
         self
     }
 

@@ -10,4 +10,5 @@ pub mod utils;
 pub mod vcx;
 pub mod wallet;
 pub mod agent;
+pub mod out_of_band;
 mod filters;

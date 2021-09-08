@@ -1,13 +1,9 @@
 import * as ffi from 'ffi-napi';
-import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
-import { ISerializedData, ConnectionStateType } from './common';
-import { VCXBaseWithState } from './vcx-base-with-state';
-import { PtrBuffer } from './utils';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { ISerializedData } from './common';
 import { VCXBase } from './vcx-base';
-import { PaymentManager } from './vcx-payment-txn';
 
 export interface IAgentInfo {
   agent_did: string,

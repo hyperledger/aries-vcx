@@ -9,7 +9,6 @@ use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
-
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
                                       source_id: *const c_char,

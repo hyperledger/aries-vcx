@@ -37,6 +37,7 @@ export const FFI_CREDENTIAL_HANDLE = 'uint32';
 export const FFI_PROOF_HANDLE = 'uint32';
 export const FFI_CREDENTIALDEF_HANDLE = 'uint32';
 export const FFI_SCHEMA_HANDLE = 'uint32';
+export const FFI_OOB_HANDLE = 'uint32';
 export const FFI_AGENT_HANDLE = 'uint32';
 export const FFI_SCHEMA_NUMBER = 'uint32';
 export const FFI_PAYMENT_HANDLE = 'uint32';
@@ -568,6 +569,10 @@ export interface IFFIEntryPoint {
   vcx_public_agent_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_public_agent_release: (handle: number) => number;
+  vcx_out_of_band_create: (commandId: number, data: string, config: string, cb: ICbRef) => number;
+  vcx_out_of_band_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_out_of_band_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_out_of_band_release: (handle: number) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1162,6 +1167,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_public_agent_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_CALLBACK_PTR]],
   vcx_public_agent_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_public_agent_release: [FFI_ERROR_CODE, [FFI_CONNECTION_HANDLE]],
+  vcx_out_of_band_create: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
 };
 
 let _rustAPI: IFFIEntryPoint;

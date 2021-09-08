@@ -9,6 +9,7 @@ use crate::messages::a2a::message_type::MessageType;
 use crate::messages::connection::service::ServiceResolvable;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::handlers::connection::public_agent::PublicAgent;
+use crate::error::prelude::*;
 use crate::a2a_message;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -48,3 +49,15 @@ pub struct OutOfBand {
 }
 
 a2a_message!(OutOfBand);
+
+impl OutOfBand {
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize out of band message: {:?}", err)))
+    }
+
+    pub fn from_string(oob_data: &str) -> VcxResult<OutOfBand> {
+        serde_json::from_str(oob_data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize out of band message: {:?}", err)))
+    }
+}

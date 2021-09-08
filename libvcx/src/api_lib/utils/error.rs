@@ -107,7 +107,8 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
             VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
-            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num
+            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
+            VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num
         }
     }
 }
