@@ -23,7 +23,7 @@ impl OutOfBand {
     pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         for service in &self.services {
             for connection in &connections {
-                match connection.boostrap_did_doc() {
+                match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {
                             if did.to_string() == did_doc.id {
@@ -90,11 +90,3 @@ impl OutOfBand {
         Connection::create_with_invite(&self.id.0, Invitation::Pairwise(invite), autohop_enabled)
     }
 }
-
-// TODO
-// impl TryFrom<OutOfBand> for A2AMessage {
-//     type Error = VcxError;
-// 
-//     fn try_from(OutOfBand: i32) -> Result<Self, Self::Error> {
-//     }
-// }

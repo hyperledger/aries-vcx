@@ -122,7 +122,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn boostrap_did_doc(&self) -> Option<DidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Null(_) => None,
             InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),

@@ -267,10 +267,10 @@ impl Connection {
         }
     }
 
-    pub fn boostrap_did_doc(&self) -> Option<DidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => None, // TODO: Inviter can remember boostrap agent too, but we don't need it
-            SmConnection::Invitee(sm_invitee) => sm_invitee.boostrap_did_doc()
+            SmConnection::Inviter(sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc()
         }
     }
 
