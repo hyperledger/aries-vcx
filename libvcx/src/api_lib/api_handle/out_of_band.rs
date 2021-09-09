@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
-use crate::aries_vcx::messages::a2a::message_type::MessageType;
-use crate::aries_vcx::messages::connection::service::ServiceResolvable;
+use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
+use crate::aries_vcx::messages::connection::service::{ServiceResolvable, FullService};
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::connection::{CONNECTION_MAP, store_connection};
@@ -57,6 +56,15 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
         let msg: A2AMessage = serde_json::from_str(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
         oob.append_a2a_message(msg).map_err(|err| err.into())
+    })
+}
+
+pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
+    trace!("append_service >>> handle: {}, service: {}", handle, service);
+    OUT_OF_BAND_MAP.get_mut(handle, |oob| {
+        let service: FullService = serde_json::from_str(service)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize service: {:?}", err)))?;
+        oob.append_service(&ServiceResolvable::FullService(service)).map_err(|err| err.into())
     })
 }
 

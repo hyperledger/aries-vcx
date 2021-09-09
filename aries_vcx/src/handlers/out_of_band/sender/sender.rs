@@ -26,12 +26,12 @@ impl OutOfBand {
         self
     }
 
-    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
+    pub fn append_service(&mut self, service: &ServiceResolvable) -> VcxResult<()> {
         self.services.push(service.clone());
-        self
+        Ok(())
     }
 
-    pub fn append_handshake_protocol(mut self, protocol: HandshakeProtocol) -> VcxResult<Self> {
+    pub fn append_handshake_protocol(&mut self, protocol: &HandshakeProtocol) -> VcxResult<()> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
@@ -44,7 +44,7 @@ impl OutOfBand {
                 self.handshake_protocols = Some(vec![new_protocol]);
             }
         };
-        Ok(self)
+        Ok(())
     }
 
     pub fn append_a2a_message(&mut self, msg: A2AMessage) -> VcxResult<()> {
