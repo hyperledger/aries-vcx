@@ -48,6 +48,20 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
     }
   }
 
+  public static async createWithMessage(sourceId: string, msg: string): Promise<OutOfBand> {
+    const oob = new OutOfBand(sourceId);
+    const commandHandle = 0;
+    try {
+      await oob._create((cb) =>
+        rustAPI().vcx_out_of_band_create_from_message(commandHandle, sourceId, msg, cb),
+      );
+
+      return oob;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async appendMessage(message: string): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
@@ -76,6 +90,39 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async extractMessage(): Promise<string> {
+    try {
+      const msg = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_out_of_band_extract_message(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, msg: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(msg);
+            },
+          ),
+      );
+      return msg
     } catch (err) {
       throw new VCXInternalError(err);
     }

@@ -5,7 +5,7 @@ use crate::aries_vcx::messages::a2a::message_type::MessageType;
 use crate::aries_vcx::messages::connection::service::ServiceResolvable;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::api_handle::connection::CONNECTION_MAP;
+use crate::api_lib::api_handle::connection::{CONNECTION_MAP, store_connection};
 use crate::error::prelude::*;
 
 lazy_static! {
@@ -42,7 +42,13 @@ pub fn create_out_of_band_msg(config: &str) -> VcxResult<u32> {
     if let Some(goal_code) = &config.goal_code {
         oob = oob.set_goal_code(&goal_code);
     };
-    return store_out_of_band(oob);
+    store_out_of_band(oob)
+}
+
+pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
+    let msg: A2AMessage = serde_json::from_str(msg)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
+    store_out_of_band(OutOfBand::create_from_a2a_msg(&msg)?)
 }
 
 pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
@@ -51,6 +57,18 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
         let msg: A2AMessage = serde_json::from_str(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
         oob.append_a2a_message(msg).map_err(|err| err.into())
+    })
+}
+
+pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
+    OUT_OF_BAND_MAP.get(handle, |oob| {
+        if let Some(msg) = oob.extract_a2a_message()? {
+            let msg = serde_json::to_string(&msg)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize message {:?}, err: {:?}", msg, err)))?;
+            Ok(msg)
+        } else {
+            Ok("".to_string())
+        }
     })
 }
 
@@ -77,6 +95,12 @@ pub fn connection_exists(handle: u32, conn_handles: Vec<u32>) -> VcxResult<(u32,
         } else {
             Ok((0, false))
         }
+    })
+}
+
+pub fn build_connection(handle: u32) -> VcxResult<u32> {
+    OUT_OF_BAND_MAP.get(handle, |oob| {
+        store_connection(oob.build_connection(false)?)
     })
 }
 

@@ -570,11 +570,14 @@ export interface IFFIEntryPoint {
   vcx_public_agent_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_public_agent_release: (handle: number) => number;
   vcx_out_of_band_create: (commandId: number, data: string, config: string, cb: ICbRef) => number;
+  vcx_out_of_band_create_from_message: (commandId: number, data: string, msg: string, cb: ICbRef) => number;
   vcx_out_of_band_append_message: (commandId: number, handle: number, message: string, cb: ICbRef) => number;
+  vcx_out_of_band_extract_message: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_out_of_band_release: (handle: number) => number;
   vcx_out_of_band_connection_exists: (commandId: number, handle: number, handles: string, cb: ICbRef) => number;
+  vcx_out_of_band_build_connection: (commandId: number, handle: number, cb: ICbRef) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1170,11 +1173,14 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_public_agent_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_public_agent_release: [FFI_ERROR_CODE, [FFI_CONNECTION_HANDLE]],
   vcx_out_of_band_create: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_create_from_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_append_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_extract_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
-  vcx_out_of_band_connection_exists: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]]
+  vcx_out_of_band_connection_exists: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_build_connection: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]]
 };
 
 let _rustAPI: IFFIEntryPoint;
