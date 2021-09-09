@@ -3,7 +3,7 @@ use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::connection::invite::PublicInvitation;
 use crate::messages::connection::service::FullService;
-use crate::libindy::utils::ledger::add_service;
+use crate::libindy::utils::ledger::{add_service, get_service};
 use crate::settings::get_agency_client;
 use crate::messages::connection::request::Request;
 use crate::messages::a2a::A2AMessage;
@@ -41,6 +41,10 @@ impl PublicAgent {
 
     pub fn did(&self) -> String {
         self.institution_did.clone()
+    }
+
+    pub fn service(&self) -> VcxResult<FullService> {
+        get_service(&self.institution_did)
     }
 
     pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {
