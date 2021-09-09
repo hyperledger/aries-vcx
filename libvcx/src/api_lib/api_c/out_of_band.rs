@@ -77,6 +77,50 @@ pub extern fn vcx_out_of_band_append_message(command_handle: CommandHandle,
 }
 
 #[no_mangle]
+pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
+                                                handle: u32,
+                                                conn_handles: *const c_char,
+                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, conn_handle: u32, found_one: bool)>) -> u32 {
+    info!("vcx_out_of_band_connection_exists >>>");
+
+    check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !out_of_band::is_valid_handle(handle) {
+        return VcxError::from(VcxErrorKind::InvalidHandle).into();
+    }
+
+    trace!("vcx_out_of_band_connection_exists(command_handle: {}, handle: {}, conn_handles: {})", command_handle, handle, conn_handles);
+
+    let conn_handles = match serde_json::from_str::<Vec<u32>>(&conn_handles) {
+        Ok(conn_handles) => conn_handles,
+        Err(err) => {
+            error!("vcx_out_of_band_connection_exists >>> failed to parse connection handles: {}, err: {:?}", conn_handles, err);
+            return error::INVALID_CONNECTION_HANDLE.code_num;
+        }
+    };
+
+    execute(move || {
+        match out_of_band::connection_exists(handle, conn_handles) {
+            Ok((conn_handle, found_one)) => {
+                trace!("vcx_out_of_band_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
+                       command_handle, error::SUCCESS.message, conn_handle, found_one);
+                cb(command_handle, error::SUCCESS.code_num, conn_handle, found_one);
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
+                      command_handle, x, 0, false);
+                cb(command_handle, x.into(), 0, false);
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
+#[no_mangle]
 pub extern fn vcx_out_of_band_serialize(command_handle: CommandHandle,
                                         handle: u32,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, oob_json: *const c_char)>) -> u32 {
