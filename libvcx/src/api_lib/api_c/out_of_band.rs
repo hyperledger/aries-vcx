@@ -219,7 +219,7 @@ pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
                                                handle: u32,
-                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, conn_handle: u32)>) -> u32 {
+                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, connection: *const c_char)>) -> u32 {
     info!("vcx_out_of_band_build_connection >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -232,15 +232,17 @@ pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
 
     execute(move || {
         match out_of_band::build_connection(handle) {
-            Ok(conn_handle) => {
-                trace!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, conn_handle: {})",
-                       command_handle, error::SUCCESS.message, conn_handle);
-                cb(command_handle, error::SUCCESS.code_num, conn_handle);
+            Ok(connection) => {
+                trace!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
+                       command_handle, error::SUCCESS.message, connection);
+                let connection = CStringUtils::string_to_cstring(connection);
+                cb(command_handle, error::SUCCESS.code_num, connection.as_ptr());
+
             }
             Err(x) => {
-                warn!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, conn_handle: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
+                warn!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
+                      command_handle, x, "");
+                cb(command_handle, x.into(), ptr::null());
             }
         }
         Ok(())

@@ -106,9 +106,9 @@ pub fn connection_exists(handle: u32, conn_handles: Vec<u32>) -> VcxResult<(u32,
     })
 }
 
-pub fn build_connection(handle: u32) -> VcxResult<u32> {
+pub fn build_connection(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_MAP.get(handle, |oob| {
-        store_connection(oob.build_connection(false)?)
+        oob.build_connection(false)?.to_string().map_err(|err| err.into())
     })
 }
 

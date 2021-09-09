@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData } from './common';
-import { Connection } from './connection';
+import { Connection, IConnectionData } from './connection';
 import { VCXBase } from './vcx-base';
 
 export interface IOOBSerializedData {
@@ -199,6 +199,39 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async buildConnection(): Promise<Connection> {
+    try {
+      const connection = await createFFICallbackPromise<ISerializedData<IConnectionData>>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_out_of_band_build_connection(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, connection: ISerializedData<IConnectionData>) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(connection);
+            },
+          ),
+      );
+      return await Connection.deserialize(connection);
     } catch (err) {
       throw new VCXInternalError(err);
     }
