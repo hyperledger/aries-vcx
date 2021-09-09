@@ -35,12 +35,12 @@ export enum HandshakeProtocol {
 }
 
 export class OutOfBand extends VCXBase<IOOBSerializedData> {
-  public static async create(sourceId: string, config: IOOBCreateData): Promise<OutOfBand> {
-    const oob = new OutOfBand(sourceId);
+  public static async create(config: IOOBCreateData): Promise<OutOfBand> {
+    const oob = new OutOfBand("");
     const commandHandle = 0;
     try {
       await oob._create((cb) =>
-        rustAPI().vcx_out_of_band_create(commandHandle, sourceId, JSON.stringify(config), cb),
+        rustAPI().vcx_out_of_band_create(commandHandle, JSON.stringify(config), cb),
       );
       return oob;
     } catch (err) {
@@ -48,12 +48,12 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
     }
   }
 
-  public static async createWithMessage(sourceId: string, msg: string): Promise<OutOfBand> {
-    const oob = new OutOfBand(sourceId);
+  public static async createWithMessage(msg: string): Promise<OutOfBand> {
+    const oob = new OutOfBand("");
     const commandHandle = 0;
     try {
       await oob._create((cb) =>
-        rustAPI().vcx_out_of_band_create_from_message(commandHandle, sourceId, msg, cb),
+        rustAPI().vcx_out_of_band_create_from_message(commandHandle, msg, cb),
       );
 
       return oob;

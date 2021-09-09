@@ -11,27 +11,25 @@ use aries_vcx::utils::error;
 
 #[no_mangle]
 pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
-                                     source_id: *const c_char,
                                      config: *const c_char,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
     info!("vcx_out_of_band_create >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_out_of_band_create(command_handle: {}, config: {}) source_id: {}", command_handle, config, source_id);
+    trace!("vcx_out_of_band_create(command_handle: {}, config: {})", command_handle, config);
 
     execute(move || {
         match out_of_band::create_out_of_band_msg(&config) {
             Ok(handle) => {
-                trace!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, handle, source_id);
+                trace!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {})",
+                       command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
+                warn!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {})",
+                      command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
             }
         }
@@ -43,27 +41,25 @@ pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_out_of_band_create_from_message(command_handle: CommandHandle,
-                                                  source_id: *const c_char,
                                                   message: *const c_char,
                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
     info!("vcx_out_of_band_create_from_message >>>");
 
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_out_of_band_create_from_message(command_handle: {}, message: {}) source_id: {}", command_handle, message, source_id);
+    trace!("vcx_out_of_band_create_from_message(command_handle: {}, message: {})", command_handle, message);
 
     execute(move || {
         match out_of_band::create_out_of_band_msg_from_msg(&message) {
             Ok(handle) => {
-                trace!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, handle, source_id);
+                trace!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {})",
+                       command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
+                warn!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {}):",
+                      command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
             }
         }
