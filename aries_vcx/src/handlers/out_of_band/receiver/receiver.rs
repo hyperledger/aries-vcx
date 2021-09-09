@@ -20,9 +20,9 @@ impl OutOfBand {
         }
     }
 
-    pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+    pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         for service in &self.services {
-            for connection in &connections {
+            for connection in connections {
                 match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {

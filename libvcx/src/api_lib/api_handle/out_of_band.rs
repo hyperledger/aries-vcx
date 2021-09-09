@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
 use crate::aries_vcx::messages::a2a::message_type::MessageType;
 use crate::aries_vcx::messages::connection::service::ServiceResolvable;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::error::prelude::*;
 
 lazy_static! {
@@ -48,6 +51,32 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
         let msg: A2AMessage = serde_json::from_str(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
         oob.append_a2a_message(msg).map_err(|err| err.into())
+    })
+}
+
+pub fn connection_exists(handle: u32, conn_handles: Vec<u32>) -> VcxResult<(u32, bool)> {
+    trace!("connection_exists >>> handle: {}, conn_handles: {:?}", handle, conn_handles);
+    let mut conn_map = HashMap::new();
+    for conn_handle in conn_handles {
+        let connection = CONNECTION_MAP.get(conn_handle, |connection| {
+                Ok(connection.clone())
+            },
+        )?;
+        conn_map.insert(conn_handle, connection);
+    };
+    let connections = conn_map.values().collect();
+    OUT_OF_BAND_MAP.get(handle, |oob| {
+        if let Some(connection) = oob.connection_exists(&connections)? {
+            if let Some((&handle, _)) = conn_map
+                .iter()
+                .find(|(_, conn)| *conn == connection) {
+                    Ok((handle, true))
+                } else {
+                    Err(VcxError::from(VcxErrorKind::InvalidState))
+                }
+        } else {
+            Ok((0, false))
+        }
     })
 }
 
