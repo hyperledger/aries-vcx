@@ -41,6 +41,7 @@ pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
 pub extern fn vcx_out_of_band_create_from_message(command_handle: CommandHandle,
                                                   source_id: *const c_char,
                                                   message: *const c_char,
@@ -217,7 +218,6 @@ pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-
 #[no_mangle]
 pub extern fn vcx_out_of_band_serialize(command_handle: CommandHandle,
                                         handle: u32,
@@ -299,4 +299,3 @@ pub extern fn vcx_out_of_band_release(handle: u32) -> u32 {
         }
     }
 }
-

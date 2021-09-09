@@ -1047,7 +1047,8 @@ mod tests {
 
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
-        let conn = oob_receiver.connection_exists(vec![]).unwrap();
+        let conns = vec![];
+        let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver.build_connection(true).unwrap();
         conn_receiver.connect().unwrap();
@@ -1060,11 +1061,13 @@ mod tests {
         let (conn_receiver_pw1, conn_sender_pw1) = create_connected_connections(&mut consumer, &mut institution);
         let (conn_receiver_pw2, conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution);
 
-        let conn = oob_receiver.connection_exists(vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
+        let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
+        let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_some());
         assert!(*conn.unwrap() == conn_receiver);
 
-        let conn = oob_receiver.connection_exists(vec![&conn_receiver_pw1, &conn_receiver_pw2]).unwrap();
+        let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
+        let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_none());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
@@ -1105,7 +1108,8 @@ mod tests {
 
         consumer.activate().unwrap();
         let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
-        let conn = oob_receiver.connection_exists(vec![&consumer_to_institution]).unwrap();
+        let conns = vec![&consumer_to_institution];
+        let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_some());
         conn.unwrap().send_generic_message("Hello oob sender, from oob receiver").unwrap();
 
