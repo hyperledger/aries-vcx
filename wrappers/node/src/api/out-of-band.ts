@@ -3,6 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData } from './common';
+import { Connection } from './connection';
 import { VCXBase } from './vcx-base';
 
 export interface IOOBSerializedData {
@@ -72,6 +73,49 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
                 return;
               }
               resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async connectionExists(connections: [Connection]): Promise<void | Connection> {
+    try {
+      await createFFICallbackPromise<void | Connection>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_out_of_band_connection_exists(
+            commandHandle,
+            this.handle,
+            JSON.stringify(connections),
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'uint32', 'bool'],
+            (handle: number, err: number, conn_handle: number, found_one: boolean) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              if (!found_one) {
+                resolve();
+              } else {
+                connections.forEach((conn) => {
+                  if (conn.handle === conn_handle) {
+                    resolve(conn);
+                    return;
+                  }
+                });
+                reject(Error('Unexpected state: should have found connection'));
+              }
             },
           ),
       );
