@@ -4,11 +4,9 @@ pub mod sender;
 // TODO: move to messages
 use crate::messages::mime_type::MimeType;
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::connection::service::ServiceResolvable;
-use crate::messages::attachment::{AttachmentId, Attachments};
-use crate::handlers::connection::public_agent::PublicAgent;
+use crate::messages::attachment::Attachments;
 use crate::error::prelude::*;
 use crate::a2a_message;
 

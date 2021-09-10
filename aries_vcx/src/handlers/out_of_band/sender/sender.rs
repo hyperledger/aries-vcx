@@ -1,5 +1,5 @@
 use crate::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
-use crate::messages::attachment::{AttachmentId, AttachmentEncoding};
+use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::service::ServiceResolvable;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::message_type::MessageType;
