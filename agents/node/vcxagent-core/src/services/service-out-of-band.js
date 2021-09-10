@@ -11,6 +11,7 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   async function createConnectionFromOobMsg (connectionId, oobMsg) {
     const oob = await OutOfBand.createWithMessage(oobMsg)
     const connection = await oob.buildConnection()
+    await connection.connect('{}')
     await saveConnection(connectionId, connection)
   }
 
