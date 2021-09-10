@@ -14,6 +14,7 @@ use std::convert::TryFrom;
 
 impl OutOfBand {
     pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
+        trace!("OutOfBand::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBand(oob) => Ok(oob.clone()),
             _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
@@ -21,6 +22,7 @@ impl OutOfBand {
     }
 
     pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+        trace!("OutOfBand::connection_exists >>>");
         for service in &self.services {
             for connection in connections {
                 match connection.bootstrap_did_doc() {
@@ -43,6 +45,7 @@ impl OutOfBand {
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
+        trace!("OutOfBand::extract_a2a_message >>>");
         if let Some(attach) = self.requests_attach.get() {
             let attach_json = self.requests_attach.content()?;
             match attach.id() {
@@ -80,6 +83,7 @@ impl OutOfBand {
     }
 
     pub fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
+        trace!("OutOfBand::build_connection >>> autohop_enabled: {}", autohop_enabled);
         let service = match self.services.get(0) {
             Some(service) => service,
             None => {

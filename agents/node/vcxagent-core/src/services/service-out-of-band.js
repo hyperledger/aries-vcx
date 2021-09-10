@@ -1,11 +1,12 @@
 const { OutOfBand } = require('@hyperledger/node-vcx-wrapper')
 
+// TODO: Should be transmitted as A2AMsg
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
   async function createOobMsg (agent, label) {
     const oob = await OutOfBand.create({ label })
     const service = await agent.getService()
     await oob.appendService(service)
-    return oob.serialize()
+    return oob.toMessage()
   }
 
   async function createConnectionFromOobMsg (connectionId, oobMsg) {

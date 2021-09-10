@@ -575,6 +575,7 @@ export interface IFFIEntryPoint {
   vcx_out_of_band_append_message: (commandId: number, handle: number, message: string, cb: ICbRef) => number;
   vcx_out_of_band_append_service: (commandId: number, handle: number, service: string, cb: ICbRef) => number;
   vcx_out_of_band_extract_message: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_out_of_band_to_message: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_out_of_band_release: (handle: number) => number;
@@ -1183,6 +1184,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_out_of_band_append_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_append_service: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_extract_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_to_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],

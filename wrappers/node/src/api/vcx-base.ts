@@ -10,11 +10,14 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
   protected static async _deserialize<T extends VCXBase<unknown>, P = unknown>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     VCXClass: new (sourceId: string, args?: any) => T,
-    objData: ISerializedData<{ source_id: string }>,
+    objData: ISerializedData<{ source_id: string } | unknown>,
     constructorParams?: P,
   ): Promise<T> {
     try {
-      const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
+      const obj = new VCXClass(
+        objData.source_id || '',
+        constructorParams,
+      );
       await obj._initFromData(objData);
       return obj;
     } catch (err) {
@@ -105,7 +108,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
     this._setHandle(handleRes);
   }
 
-  private async _initFromData(objData: ISerializedData<{ source_id: string }>): Promise<void> {
+  private async _initFromData(objData: ISerializedData<unknown>): Promise<void> {
     const commandHandle = 0;
     const objHandle = await createFFICallbackPromise<number>(
       (resolve, reject, cb) => {

@@ -27,8 +27,8 @@ fn store_out_of_band(oob: OutOfBand) -> VcxResult<u32> {
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
 
-pub fn create_out_of_band_msg(config: &str) -> VcxResult<u32> {
-    trace!("create_out_of_band_msg >>> config: {:?}", config);
+pub fn create_out_of_band(config: &str) -> VcxResult<u32> {
+    trace!("create_out_of_band >>> config: {}", config);
     let config: OOBConfig = serde_json::from_str(config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize out of band message config: {:?}", err)))?;
     let mut oob = OutOfBand::create();
@@ -45,6 +45,7 @@ pub fn create_out_of_band_msg(config: &str) -> VcxResult<u32> {
 }
 
 pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
+    trace!("create_out_of_band_msg_from_msg >>> msg: {}", msg);
     let msg: A2AMessage = serde_json::from_str(msg)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
     store_out_of_band(OutOfBand::create_from_a2a_msg(&msg)?)
@@ -69,6 +70,7 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 }
 
 pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
+    trace!("extract_a2a_message >>> handle: {}", handle);
     OUT_OF_BAND_MAP.get(handle, |oob| {
         if let Some(msg) = oob.extract_a2a_message()? {
             let msg = serde_json::to_string(&msg)
@@ -77,6 +79,14 @@ pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
         } else {
             Ok("".to_string())
         }
+    })
+}
+
+pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
+    OUT_OF_BAND_MAP.get(handle, |oob| {
+        let msg = oob.to_a2a_message();
+        Ok(serde_json::to_string(&msg)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize message {:?}, err: {:?}", msg, err)))?)
     })
 }
 

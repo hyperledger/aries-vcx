@@ -21,7 +21,7 @@ pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
     trace!("vcx_out_of_band_create(command_handle: {}, config: {})", command_handle, config);
 
     execute(move || {
-        match out_of_band::create_out_of_band_msg(&config) {
+        match out_of_band::create_out_of_band(&config) {
             Ok(handle) => {
                 trace!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -163,6 +163,40 @@ pub extern fn vcx_out_of_band_extract_message(command_handle: CommandHandle,
             }
             Err(x) => {
                 warn!("vcx_out_of_band_append_message_cb(command_handle: {}, rc: {}, msg: {})",
+                      command_handle, x, "");
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
+                                         handle: u32,
+                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, message: *const c_char)>) -> u32 {
+    info!("vcx_out_of_band_to_message >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !out_of_band::is_valid_handle(handle) {
+        return VcxError::from(VcxErrorKind::InvalidHandle).into();
+    }
+
+    trace!("vcx_out_of_band_to_message(command_handle: {}, handle: {})", command_handle, handle);
+
+    execute(move || {
+        match out_of_band::to_a2a_message(handle) {
+            Ok(msg) => {
+                trace!("vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
+                       command_handle, error::SUCCESS.message, msg);
+                let msg = CStringUtils::string_to_cstring(msg);
+                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
             }

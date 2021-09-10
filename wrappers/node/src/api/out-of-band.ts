@@ -55,7 +55,6 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
       await oob._create((cb) =>
         rustAPI().vcx_out_of_band_create_from_message(commandHandle, msg, cb),
       );
-
       return oob;
     } catch (err) {
       throw new VCXInternalError(err);
@@ -161,6 +160,39 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
     }
   }
 
+  public async toMessage(): Promise<string> {
+    try {
+      const msg = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_out_of_band_to_message(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, msg: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(msg);
+            },
+          ),
+      );
+      return msg
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async connectionExists(connections: [Connection]): Promise<void | Connection> {
     try {
       await createFFICallbackPromise<void | Connection>(
@@ -235,6 +267,12 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  public static async deserialize(
+    oobData: ISerializedData<IOOBSerializedData>,
+  ): Promise<OutOfBand> {
+    return await super._deserialize<OutOfBand>(OutOfBand, oobData);
   }
 
   protected _serializeFn = rustAPI().vcx_out_of_band_serialize;
