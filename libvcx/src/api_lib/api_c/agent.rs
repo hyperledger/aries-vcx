@@ -136,7 +136,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
     trace!("vcx_public_agent_get_service(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
     execute(move || {
-        match agent::to_string(agent_handle) {
+        match agent::get_service(agent_handle) {
             Ok(service) => {
                 trace!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
                        command_handle, error::SUCCESS.message, service);

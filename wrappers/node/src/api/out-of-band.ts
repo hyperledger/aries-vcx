@@ -100,7 +100,7 @@ export class OutOfBand extends VCXBase<IOOBSerializedData> {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_append_message(
+          const rc = rustAPI().vcx_out_of_band_append_service(
             commandHandle,
             this.handle,
             service,

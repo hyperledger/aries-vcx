@@ -4,7 +4,7 @@ use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
 use crate::aries_vcx::messages::connection::service::{ServiceResolvable, FullService};
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::api_handle::connection::{CONNECTION_MAP, store_connection};
+use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::error::prelude::*;
 
 lazy_static! {
