@@ -172,6 +172,12 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
+        credential.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {

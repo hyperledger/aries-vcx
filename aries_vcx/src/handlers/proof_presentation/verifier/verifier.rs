@@ -87,6 +87,10 @@ impl Verifier {
         Ok(json!(proof).to_string())
     }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        Ok(self.verifier_sm.thread_id())
+    }
+
     pub fn step(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
                 -> VcxResult<()>
     {

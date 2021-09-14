@@ -233,6 +233,10 @@ impl HolderSM {
         }
     }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        Ok(self.thread_id.clone())
+    }
+
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match self.state {
             HolderFullState::OfferReceived(ref state) => state.is_revokable(),

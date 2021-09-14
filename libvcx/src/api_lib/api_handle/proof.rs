@@ -117,6 +117,12 @@ pub fn get_proof(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    PROOF_MAP.get(handle, |proof| {
+        proof.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;

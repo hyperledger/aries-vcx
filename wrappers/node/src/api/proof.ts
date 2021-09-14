@@ -380,6 +380,35 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
       throw new VCXInternalError(err);
     }
   }
+
+  public async getThreadId(): Promise<string> {
+    try {
+      const threadId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_proof_get_thread_id(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, threadId: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(threadId);
+            },
+          ),
+      );
+      return threadId;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   /**
    * Returns the requested proof if available
    *

@@ -68,6 +68,10 @@ impl Issuer {
         self.issuer_sm.get_rev_reg_id()
     }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        self.issuer_sm.get_thread_id()
+    }
+
     pub fn is_revokable(&self) -> VcxResult<bool> {
         self.issuer_sm.is_revokable()
     }

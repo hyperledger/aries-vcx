@@ -309,6 +309,10 @@ impl IssuerSM {
             _ => false
         }
     }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        Ok(self.state.thread_id())
+    }
 }
 
 

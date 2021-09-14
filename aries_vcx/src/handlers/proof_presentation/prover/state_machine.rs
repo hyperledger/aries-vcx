@@ -245,6 +245,8 @@ impl ProverSM {
 
     pub fn source_id(&self) -> String { self.source_id.clone() }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> { Ok(self.thread_id.clone()) }
+
     pub fn get_state(&self) -> ProverState {
         match self.state {
             ProverFullState::Initiated(_) => ProverState::Initial,
