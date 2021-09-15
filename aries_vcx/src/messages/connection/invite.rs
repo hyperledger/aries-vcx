@@ -34,6 +34,15 @@ pub struct PublicInvitation {
     pub did: Did,
 }
 
+impl Invitation {
+    pub fn get_id(&self) -> VcxResult<String> {
+        match self {
+            Self::Pairwise(invite) => Ok(invite.id.0.clone()),
+            Self::Public(invite) => Ok(invite.id.0.clone())
+        }
+    }
+}
+
 impl PairwiseInvitation {
     pub fn create() -> Self {
         Self::default()

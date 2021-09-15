@@ -144,6 +144,17 @@ impl Connection {
         }.into()
     }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.get_thread_id()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.get_thread_id()
+            }
+        }.into()
+    }
+
     pub fn get_state(&self) -> ConnectionState {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {

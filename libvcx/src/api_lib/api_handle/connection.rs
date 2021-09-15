@@ -58,6 +58,12 @@ pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.get(handle, |connection| {
+        connection.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP.get(handle, |connection| {

@@ -400,6 +400,16 @@ impl SmConnectionInvitee {
     pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self> {
         Ok(self)
     }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.state {
+            InviteeFullState::Invited(state) => state.invitation.get_id(),
+            InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
+            InviteeFullState::Responded(state) => state.response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviteeFullState::Null(_) => Ok(String::new())
+        }
+    }
 }
 
 #[cfg(test)]

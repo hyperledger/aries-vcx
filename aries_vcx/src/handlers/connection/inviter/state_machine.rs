@@ -470,6 +470,16 @@ impl SmConnectionInviter {
         };
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.state {
+            InviterFullState::Invited(state) => state.invitation.get_id(),
+            InviterFullState::Requested(state) => Ok(state.thread_id.clone()),
+            InviterFullState::Responded(state) => state.signed_response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviterFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviterFullState::Null(_) => Ok(String::new())
+        }
+    }
 }
 
 #[cfg(test)]
