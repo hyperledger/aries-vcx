@@ -16,6 +16,10 @@ pub struct PresentationRequestSentState {
 
 impl PresentationRequestSentState {
     pub fn verify_presentation(&self, presentation: &Presentation, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+        if !presentation.from_thread(&self.presentation_request.thread.thid) {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle presentation: thread id does not match: {:?}", presentation.thread)));
+        };
+
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                         &self.presentation_request.request_presentations_attach.content()?)?;
 

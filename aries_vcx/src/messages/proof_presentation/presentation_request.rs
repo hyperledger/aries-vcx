@@ -12,9 +12,8 @@ pub struct PresentationRequest {
     pub comment: Option<String>,
     #[serde(rename = "request_presentations~attach")]
     pub request_presentations_attach: Attachments,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>,
+    pub thread: Thread
 }
 
 impl PresentationRequest {
@@ -48,25 +47,10 @@ impl PresentationRequest {
         serde_json::to_string(self)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize PresentationRequest: {}", err)))
     }
-
-    pub fn set_thread_id(mut self, id: &str) -> Self {
-        self.thread = match self.thread {
-            Some(thread) => Some(thread.set_thid(id.to_string())),
-            None => Some(Thread::new().set_thid(id.to_string()))
-        };
-        self
-    }
-
-    pub fn set_parent_thread_id(mut self, id: &str) -> Self {
-        self.thread = match self.thread {
-            Some(thread) => Some(thread.set_pthid(id.to_string())),
-            None => Some(Thread::new().set_pthid(id.to_string()))
-        };
-        self
-    }
 }
 
 a2a_message!(PresentationRequest);
+threadlike!(PresentationRequest);
 
 pub type PresentationRequestData = ProofRequestData;
 
@@ -104,7 +88,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: _comment(),
             request_presentations_attach: _attachment(),
-            thread: None,
+            thread: Thread::default(),
         }
     }
 }

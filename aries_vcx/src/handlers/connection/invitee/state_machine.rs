@@ -359,7 +359,6 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
 
-
     pub fn handle_send_ack(self) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
@@ -403,7 +402,7 @@ impl SmConnectionInvitee {
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
         match &self.state {
-            InviteeFullState::Invited(state) => state.invitation.get_id(),
+            InviteeFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
             InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
             InviteeFullState::Responded(state) => state.response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
             InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),

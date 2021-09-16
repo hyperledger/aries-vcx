@@ -1073,7 +1073,7 @@ mod tests {
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
         if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
-            assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
+            assert_eq!(request_receiver.thread.pthid.unwrap(), oob_receiver.id.0);
             assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
 

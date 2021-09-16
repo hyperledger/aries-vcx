@@ -282,7 +282,6 @@ impl SmConnectionInviter {
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
 
-
     pub fn handle_connection_request(self,
                                      request: Request,
                                      new_pairwise_info: &PairwiseInfo,
@@ -459,10 +458,21 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_ack(self, ack: Ack) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info, state, send_message } = self.clone();
         let state = match state {
             InviterFullState::Responded(state) => {
-                InviterFullState::Completed((state, ack).into())
+                let thread_id = self.get_thread_id()?;
+                if !ack.from_thread(&thread_id) {
+                    let problem_report = ProblemReport::create()
+                        .set_problem_code(ProblemCode::RequestProcessingError)
+                        .set_explain(format!("Cannot handle Response: thread id does not match: {:?}", ack.thread))
+                        .set_thread_id(&thread_id); // TODO: Maybe set sender's thread id?
+
+                    send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
+                    InviterFullState::Null((state, problem_report).into())
+                } else {
+                    InviterFullState::Completed((state, ack).into())
+                }
             }
             _ => {
                 state.clone()
@@ -473,7 +483,7 @@ impl SmConnectionInviter {
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
         match &self.state {
-            InviterFullState::Invited(state) => state.invitation.get_id(),
+            InviterFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
             InviterFullState::Requested(state) => Ok(state.thread_id.clone()),
             InviterFullState::Responded(state) => state.signed_response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
             InviterFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
