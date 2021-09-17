@@ -372,7 +372,7 @@ pub mod test {
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use crate::messages::issuance::credential_request::test_utils::_credential_request;
+    use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use crate::messages::issuance::test::{_ack, _problem_report};
     use crate::messages::connection::did_doc::DidDoc;
     use crate::messages::a2a::A2AMessage;
@@ -566,6 +566,19 @@ pub mod test {
 
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_issuer_credential_send_fails_with_incorrect_thread_id() {
+            let _setup = SetupMocks::init();
+
+            let mut issuer_sm = _issuer_sm();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request_1()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
+            assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
         // TRANSITIONS TO/FROM CREDENTIAL SENT STATE AREN'T POSSIBLE NOW

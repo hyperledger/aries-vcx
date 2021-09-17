@@ -36,7 +36,7 @@ a2a_message!(CredentialRequest);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::issuance::credential_offer::test_utils::thread;
+    use crate::messages::issuance::credential_offer::test_utils::{thread, thread_1};
 
     use super::*;
 
@@ -64,6 +64,18 @@ pub mod test_utils {
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: thread(),
+        }
+    }
+
+    pub fn _credential_request_1() -> CredentialRequest {
+        let mut attachment = Attachments::new();
+        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();
+
+        CredentialRequest {
+            id: MessageId::id(),
+            comment: Some(_comment()),
+            requests_attach: attachment,
+            thread: thread_1(),
         }
     }
 }

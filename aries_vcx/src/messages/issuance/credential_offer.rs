@@ -99,6 +99,10 @@ pub mod test_utils {
         Thread::new().set_thid(_credential_offer().id.0)
     }
 
+    pub fn thread_1() -> Thread {
+        Thread::new().set_thid("testid_1".into())
+    }
+
     pub fn thread_id() -> String {
         thread().thid.unwrap()
     }
