@@ -221,7 +221,7 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::proof_presentation::presentation::test_utils::{_comment, _presentation};
+    use crate::messages::proof_presentation::presentation::test_utils::{_comment, _presentation, _presentation_1};
     use crate::messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
@@ -336,6 +336,23 @@ pub mod test {
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
+            assert_eq!(Status::Failed(ProblemReport::create()).code(), verifier_sm.presentation_status());
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_presentation_verification_fails_with_incorrect_thread_id() {
+            let _setup = SetupMocks::init();
+            let _mock_builder = MockBuilder::init().
+                set_mock_result_for_validate_indy_proof(Ok(false));
+
+            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
+            let mut verifier_sm = _verifier_sm();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation_1()), send_message).unwrap();
+
+            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_eq!(VerifierState::Failed, verifier_sm.get_state());
             assert_eq!(Status::Failed(ProblemReport::create()).code(), verifier_sm.presentation_status());
         }
 
