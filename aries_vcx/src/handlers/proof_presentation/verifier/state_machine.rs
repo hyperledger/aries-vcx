@@ -84,7 +84,7 @@ impl VerifierSM {
     pub fn step(self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<VerifierSM> {
         trace!("VerifierSM::step >>> message: {:?}", message);
 
-        let VerifierSM { source_id, state } = self;
+        let VerifierSM { source_id, state } = self.clone();
 
         let state = match state {
             VerifierFullState::Initiated(state) => {
@@ -107,7 +107,7 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 match message {
                     VerifierMessages::VerifyPresentation(presentation) => {
-                        match state.verify_presentation(&presentation, send_message) {
+                        match state.verify_presentation(&presentation, &self.thread_id(), send_message) {
                             Ok(()) => {
                                 VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into())
                             }
