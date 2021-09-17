@@ -481,6 +481,14 @@ pub mod test {
                 .encode(&key).unwrap()
         }
 
+        fn _response_1(key: &str) -> SignedResponse {
+            Response::default()
+                .set_service_endpoint(_service_endpoint())
+                .set_keys(vec![key.to_string()], vec![])
+                .set_thread_id("testid_1")
+                .encode(&key).unwrap()
+        }
+
         mod new {
             use super::*;
 
@@ -493,6 +501,28 @@ pub mod test {
 
                 assert_match!(InviteeFullState::Null(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
+            }
+        }
+
+        mod get_thread_id {
+            use super::*;
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn handle_response_fails_with_incorrect_thread_id() {
+                let _setup = SetupMocks::init();
+                let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
+                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
+                let mut invitee = invitee_sm();
+
+                invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+
+                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let service_endpoint = String::from("https://example.org/agent");
+                invitee = invitee.handle_connect(routing_keys, service_endpoint).unwrap();
+                invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
+                invitee = invitee.handle_send_ack().unwrap();
+                assert_match!(InviteeState::Null, invitee.get_state());
             }
         }
 
