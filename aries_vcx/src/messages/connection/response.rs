@@ -168,6 +168,10 @@ pub mod test_utils {
         Thread::new().set_thid(String::from("testid"))
     }
 
+    pub fn _thread_1() -> Thread {
+        Thread::new().set_thid(String::from("testid_1"))
+    }
+
     pub fn _thread_id() -> String {
         _thread().thid.unwrap()
     }

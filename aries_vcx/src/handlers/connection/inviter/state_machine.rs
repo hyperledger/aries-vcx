@@ -494,7 +494,7 @@ impl SmConnectionInviter {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::ack::test_utils::_ack;
+    use crate::messages::ack::test_utils::{_ack, _ack_1};
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
@@ -552,6 +552,28 @@ pub mod test {
                 self = self.handle_send_response().unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
+            }
+        }
+
+        mod get_thread_id {
+            use super::*;
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn ack_fails_with_incorrect_thread_id() {
+                let _setup = SetupMocks::init();
+                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let service_endpoint = String::from("https://example.org/agent");
+                let mut inviter = inviter_sm();
+                inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
+
+                let new_pairwise_info = PairwiseInfo { pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(), pw_vk: "verkey456".to_string() };
+                let new_routing_keys: Vec<String> = vec!("AC3Gx1RoAz8iYVcfY47gjJ".into());
+                let new_service_endpoint = String::from("https://example.org/agent");
+                inviter = inviter.handle_connection_request(_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint).unwrap();
+                inviter = inviter.handle_send_response().unwrap();
+                inviter = inviter.handle_ack(_ack_1()).unwrap();
+                assert_match!(InviterState::Null, inviter.get_state());
             }
         }
 
