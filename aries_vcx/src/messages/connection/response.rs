@@ -165,7 +165,7 @@ pub mod test_utils {
     }
 
     pub fn _thread() -> Thread {
-        Thread::new().set_thid(String::from("test_id"))
+        Thread::new().set_thid(String::from("testid"))
     }
 
     pub fn _thread_id() -> String {

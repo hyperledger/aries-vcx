@@ -352,8 +352,8 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
 }
 
 fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
-    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {:?}, cred_data: {:?}", request, rev_reg_id, tails_file, offer, cred_data);
-    if request.from_thread(&thread_id) {
+    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+    if !request.from_thread(&thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
     };
     let request = &request.requests_attach.content()?;
@@ -374,21 +374,26 @@ pub mod test {
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
     use crate::messages::issuance::test::{_ack, _problem_report};
+    use crate::messages::connection::did_doc::DidDoc;
+    use crate::messages::a2a::A2AMessage;
+    use crate::messages::basic_message::message::BasicMessage;
     use crate::test::source_id;
+    use crate::utils::send_message;
     use crate::utils::devsetup::SetupMocks;
+    use agency_client::mocking::HttpClientMockResponse;
 
     use super::*;
 
-    fn _rev_reg_id() -> String {
+    pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
     }
 
-    fn _tails_file() -> String {
+    pub fn _tails_file() -> String {
         String::from("TEST_TAILS_FILE")
     }
 
-    fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+        Some(&|_: &A2AMessage| send_message("", &DidDoc::default(), &A2AMessage::BasicMessage(BasicMessage::default())))
     }
 
     fn _issuer_sm() -> IssuerSM {
