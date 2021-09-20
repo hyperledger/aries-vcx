@@ -169,5 +169,6 @@ mod tests {
         verifier.to_finished_state();
         let presentation = verifier.get_presentation().unwrap();
         assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
+        assert_eq!(verifier.get_state(), VerifierState::Finished);
     }
 }

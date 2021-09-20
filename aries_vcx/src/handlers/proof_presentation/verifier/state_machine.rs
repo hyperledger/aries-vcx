@@ -227,7 +227,7 @@ pub mod test {
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
     use crate::messages::proof_presentation::test::{_ack, _problem_report};
     use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
+    use crate::utils::devsetup::{SetupMocks, SetupEmpty};
 
     use super::*;
 
@@ -342,7 +342,7 @@ pub mod test {
         #[test]
         #[cfg(feature = "general_test")]
         fn test_prover_presentation_verification_fails_with_incorrect_thread_id() {
-            let _setup = SetupMocks::init();
+            let _setup = SetupEmpty::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
