@@ -314,26 +314,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().
-            set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested();
-        let handle_proof = create_default_proof();
-
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
-
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
-
-        let proof_str = get_proof(handle_proof).unwrap();
-        assert_eq!(proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION.replace("\n", "").replace(" ", ""));
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_release_all() {
         let _setup = SetupMocks::init();
 

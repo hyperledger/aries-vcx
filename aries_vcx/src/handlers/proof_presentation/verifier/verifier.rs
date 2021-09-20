@@ -119,3 +119,55 @@ impl Verifier {
         Ok(self.get_state())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::messages::connection::did_doc::DidDoc;
+    use crate::messages::a2a::A2AMessage;
+    use crate::messages::basic_message::message::BasicMessage;
+    use crate::utils::devsetup::*;
+    use crate::messages::proof_presentation::presentation::test_utils::_comment;
+    use crate::utils::send_message;
+    use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+    use crate::utils::mockdata::mockdata_proof;
+
+    use super::*;
+
+    fn _verifier() -> Verifier {
+        Verifier::create("1".to_string(),
+                     REQUESTED_ATTRS.to_owned(),
+                     REQUESTED_PREDICATES.to_owned(),
+                     r#"{"support_revocation":false}"#.to_string(),
+                     "Optional".to_owned()).unwrap()
+
+    }
+
+    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+        Some(&|_: &A2AMessage| send_message("", &DidDoc::default(), &A2AMessage::BasicMessage(BasicMessage::default())))
+    }
+
+    impl Verifier {
+        fn to_presentation_request_sent_state(&mut self) {
+            self.send_presentation_request(_send_message().unwrap(), _comment()).unwrap();
+        }
+
+        fn to_finished_state(&mut self) {
+            self.to_presentation_request_sent_state();
+            self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_get_presentation() {
+        let _setup = SetupMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
+        let mut verifier = _verifier();
+        verifier.to_finished_state();
+        let presentation = verifier.get_presentation().unwrap();
+        assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
+    }
+}

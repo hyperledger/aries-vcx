@@ -168,7 +168,7 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_retrieve_credentials_emtpy() {
+    fn test_retrieve_credentials_empty() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let mut req = json!({
