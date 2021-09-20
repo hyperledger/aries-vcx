@@ -31,7 +31,7 @@ export enum GoalCode {
 
 export enum HandshakeProtocol {
   ConnectionV1 = 0,
-  DidCommV1 = 1,
+  DidExchangeV1 = 1,
 }
 
 export class OutOfBand extends VCXBase<IOOBSerializedData> {

@@ -66,16 +66,20 @@ mod test {
     use super::*;
 
     use crate::messages::connection::service::FullService;
+    use crate::utils::mockdata::mockdata_oob;
+    use crate::utils::devsetup::SetupMocks;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_oob_serialize_deserialize() {
+        let _setup = SetupMocks::init();
         let mut oob = OutOfBand::create()
             .set_label("test")
             .set_goal("test")
             .set_goal_code(&GoalCode::P2PMessaging);
         oob.append_service(&ServiceResolvable::FullService(FullService::default())).unwrap();
         let serialized_oob = oob.to_string().unwrap();
+        assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
         let deserialized_oob = OutOfBand::from_string(&serialized_oob).unwrap();
         assert_eq!(oob, deserialized_oob);
     }
