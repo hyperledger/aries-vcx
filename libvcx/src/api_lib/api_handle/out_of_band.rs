@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
+use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
 use crate::aries_vcx::messages::connection::service::{ServiceResolvable, FullService};
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -9,6 +10,7 @@ use crate::error::prelude::*;
 
 lazy_static! {
     pub static ref OUT_OF_BAND_MAP: ObjectCache<OutOfBand> = ObjectCache::<OutOfBand>::new("out-of-band-cache");
+    pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> = ObjectCache::<OutOfBandSender>::new("out-of-band-sender-cache");
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,11 +29,16 @@ fn store_out_of_band(oob: OutOfBand) -> VcxResult<u32> {
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
 
+fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
+    OUT_OF_BAND_SENDER_MAP.add(oob)
+        .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
+}
+
 pub fn create_out_of_band(config: &str) -> VcxResult<u32> {
     trace!("create_out_of_band >>> config: {}", config);
     let config: OOBConfig = serde_json::from_str(config)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize out of band message config: {:?}", err)))?;
-    let mut oob = OutOfBand::create();
+    let mut oob = OutOfBandSender::create();
     if let Some(label) = &config.label {
         oob = oob.set_label(&label);
     };
@@ -41,7 +48,7 @@ pub fn create_out_of_band(config: &str) -> VcxResult<u32> {
     if let Some(goal_code) = &config.goal_code {
         oob = oob.set_goal_code(&goal_code);
     };
-    store_out_of_band(oob)
+    store_out_of_band_sender(oob)
 }
 
 pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
@@ -53,7 +60,7 @@ pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
 
 pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
-    OUT_OF_BAND_MAP.get_mut(handle, |oob| {
+    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob| {
         let msg: A2AMessage = serde_json::from_str(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
         oob.append_a2a_message(msg).map_err(|err| err.into())
@@ -62,7 +69,7 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
 
 pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
-    OUT_OF_BAND_MAP.get_mut(handle, |oob| {
+    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob| {
         let service: FullService = serde_json::from_str(service)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize service: {:?}", err)))?;
         oob.append_service(&ServiceResolvable::FullService(service)).map_err(|err| err.into())
