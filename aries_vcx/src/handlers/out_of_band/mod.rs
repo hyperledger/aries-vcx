@@ -69,6 +69,7 @@ mod test {
     use crate::utils::mockdata::mockdata_oob;
     use crate::utils::devsetup::SetupMocks;
     use crate::handlers::out_of_band::sender::sender::OutOfBandSender;
+    use crate::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -81,7 +82,10 @@ mod test {
         oob_sender.append_service(&ServiceResolvable::FullService(FullService::default())).unwrap();
         let serialized_oob = oob_sender.to_string().unwrap();
         assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
-        let deserialized_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();
-        assert_eq!(oob_sender, deserialized_oob);
+        let deserialized_sender_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();
+        assert_eq!(oob_sender, deserialized_sender_oob);
+        assert_eq!(oob_sender.to_a2a_message(), deserialized_sender_oob.to_a2a_message());
+        let deserialized_receiver_oob = OutOfBandReceiver::from_string(&serialized_oob).unwrap();
+        assert_eq!(oob_sender.to_a2a_message(), deserialized_receiver_oob.to_a2a_message());
     }
 }

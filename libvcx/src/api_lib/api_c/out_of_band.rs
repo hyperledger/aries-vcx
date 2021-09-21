@@ -286,10 +286,10 @@ pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_serialize(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
                                         handle: u32,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, oob_json: *const c_char)>) -> u32 {
-    info!("vcx_out_of_band_serialize >>>");
+    info!("vcx_out_of_band_sender_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -297,18 +297,18 @@ pub extern fn vcx_out_of_band_serialize(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_serialize(command_handle: {}, handle: {})", command_handle, handle);
+    trace!("vcx_out_of_band_sender_serialize(command_handle: {}, handle: {})", command_handle, handle);
 
     execute(move || {
-        match out_of_band::to_string(handle) {
+        match out_of_band::to_string_sender(handle) {
             Ok(oob_json) => {
-                trace!("vcx_out_of_band_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
+                trace!("vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                        command_handle, error::SUCCESS.message, oob_json);
                 let oob_json = CStringUtils::string_to_cstring(oob_json);
                 cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
             }
             Err(x) => {
-                warn!("vcx_out_of_band_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
+                warn!("vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
             }
@@ -320,25 +320,59 @@ pub extern fn vcx_out_of_band_serialize(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_deserialize(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
+                                        handle: u32,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, oob_json: *const c_char)>) -> u32 {
+    info!("vcx_out_of_band_receiver_serialize >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !out_of_band::is_valid_handle(handle) {
+        return VcxError::from(VcxErrorKind::InvalidHandle).into();
+    }
+
+    trace!("vcx_out_of_band_receiver_serialize(command_handle: {}, handle: {})", command_handle, handle);
+
+    execute(move || {
+        match out_of_band::to_string_receiver(handle) {
+            Ok(oob_json) => {
+                trace!("vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
+                       command_handle, error::SUCCESS.message, oob_json);
+                let oob_json = CStringUtils::string_to_cstring(oob_json);
+                cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_out_of_band_sender_deserialize(command_handle: CommandHandle,
                                            oob_json: *const c_char,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
-    info!("vcx_out_of_band_deserialize >>>");
+    info!("vcx_out_of_band_sender_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(oob_json, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_out_of_band_deserialize(command_handle: {}, oob_json: {})", command_handle, oob_json);
+    trace!("vcx_out_of_band_sender_deserialize(command_handle: {}, oob_json: {})", command_handle, oob_json);
 
     execute(move || {
-        match out_of_band::from_string(&oob_json) {
+        match out_of_band::from_string_sender(&oob_json) {
             Ok(handle) => {
-                trace!("vcx_out_of_band_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
+                trace!("vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
+                warn!("vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
             }
@@ -350,17 +384,65 @@ pub extern fn vcx_out_of_band_deserialize(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_release(handle: u32) -> u32 {
-    info!("vcx_out_of_band_release >>>");
+pub extern fn vcx_out_of_band_receiver_deserialize(command_handle: CommandHandle,
+                                           oob_json: *const c_char,
+                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
+    info!("vcx_out_of_band_receiver_deserialize >>>");
 
-    match out_of_band::release(handle) {
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(oob_json, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_out_of_band_receiver_deserialize(command_handle: {}, oob_json: {})", command_handle, oob_json);
+
+    execute(move || {
+        match out_of_band::from_string_receiver(&oob_json) {
+            Ok(handle) => {
+                trace!("vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
+                       command_handle, error::SUCCESS.message, handle);
+                cb(command_handle, error::SUCCESS.code_num, handle);
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), 0);
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_out_of_band_sender_release(handle: u32) -> u32 {
+    info!("vcx_out_of_band_sender_release >>>");
+
+    match out_of_band::release_sender(handle) {
         Ok(()) => {
-            trace!("vcx_out_of_band_release(handle: {}, rc: {})",
+            trace!("vcx_out_of_band_sender_release(handle: {}, rc: {})",
                    handle, error::SUCCESS.message);
             error::SUCCESS.code_num
         }
         Err(e) => {
-            warn!("vcx_out_of_band_release(handle: {}), rc: {})",
+            warn!("vcx_out_of_band_sender_release(handle: {}), rc: {})",
+                  handle, e);
+            e.into()
+        }
+    }
+}
+
+#[no_mangle]
+pub extern fn vcx_out_of_band_receiver_release(handle: u32) -> u32 {
+    info!("vcx_out_of_band_receiver_release >>>");
+
+    match out_of_band::release_receiver(handle) {
+        Ok(()) => {
+            trace!("vcx_out_of_band_receiver_release(handle: {}, rc: {})",
+                   handle, error::SUCCESS.message);
+            error::SUCCESS.code_num
+        }
+        Err(e) => {
+            warn!("vcx_out_of_band_receiver_release(handle: {}), rc: {})",
                   handle, e);
             e.into()
         }
