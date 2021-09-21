@@ -14,7 +14,7 @@ use std::convert::TryFrom;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct OutOfBandReceiver {
-    oob: OutOfBand
+    pub oob: OutOfBand
 }
 
 impl OutOfBandReceiver {

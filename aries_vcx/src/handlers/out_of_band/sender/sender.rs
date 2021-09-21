@@ -8,7 +8,7 @@ use crate::error::prelude::*;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct OutOfBandSender {
-    oob: OutOfBand
+    pub oob: OutOfBand
 }
 
 impl OutOfBandSender {

@@ -1056,7 +1056,7 @@ mod tests {
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
-        // assert_eq!(oob_sender.id.0, oob_receiver.id.0);
+        assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
         let mut conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver);
 
@@ -1075,7 +1075,7 @@ mod tests {
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
         if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
-            // assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
+            assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.oob.id.0);
             assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
 
