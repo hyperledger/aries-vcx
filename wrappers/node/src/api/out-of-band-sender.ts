@@ -2,8 +2,6 @@ import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { ISerializedData } from './common';
-import { Connection, IConnectionData } from './connection';
 import { VCXBase } from './vcx-base';
 
 export interface IOOBSerializedData {

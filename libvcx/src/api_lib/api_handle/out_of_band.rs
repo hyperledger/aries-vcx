@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode};
+use crate::aries_vcx::handlers::out_of_band::GoalCode;
 use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
 use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
 use crate::aries_vcx::messages::connection::service::{ServiceResolvable, FullService};
@@ -91,7 +91,7 @@ pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
 }
 
 pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         let msg = oob.to_a2a_message();
         Ok(serde_json::to_string(&msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize message {:?}, err: {:?}", msg, err)))?)
