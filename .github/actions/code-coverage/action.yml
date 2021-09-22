@@ -36,10 +36,10 @@ runs:
       run: |
         set -x
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-        if [[ ${{ inputs.run-services }} ]]; then
+        if [[ ${{ inputs.run-services }} == true ]]; then
           docker run --rm -d --name indypool --network host ${{ inputs.pool-img-name }}
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
-          [[ -n ${{ inputs.agency-img-name }} ]] && docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}
+          if [[ -n "${{ inputs.agency-img-name }}" ]]; then docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}; fi
         fi
         docker run --name ${{ inputs.codecov-cont-name }} --network host \
           -e RUST_TEST_THREADS=1 \
@@ -48,10 +48,10 @@ runs:
           -e RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           -e RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           -e TEST_PATH=${{ inputs.test-path }} \
-          -e FEATURES=${{ inputs.test-features }} \
+          -e FEATURES='${{ inputs.test-features }}' \
           ${{ inputs.codecov-img-name }} \
           bash -c '(cd $HOME/$TEST_PATH && \
-              cargo test --features $FEATURES && \
+              cargo test --features "$FEATURES" && \
               grcov ../target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ../target/debug/coverage.lcov)'
         docker_id=$(docker ps -a | grep ${{ inputs.codecov-cont-name }} | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep codecov | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
