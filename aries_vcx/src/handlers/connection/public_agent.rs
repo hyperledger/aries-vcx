@@ -1,10 +1,11 @@
+use std::convert::TryFrom;
+
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::connection::invite::PublicInvitation;
 use crate::messages::connection::service::FullService;
 use crate::libindy::utils::ledger::add_service;
-use crate::settings::get_agency_client;
 use crate::messages::connection::request::Request;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::Did;
@@ -23,10 +24,7 @@ impl PublicAgent {
         let agent_info = CloudAgentInfo::create(&pairwise_info)?;
         let institution_did = String::from(institution_did);
         let source_id = String::from(source_id);
-        let service = FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
-            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
-            .set_routing_keys(agent_info.routing_keys()?);
+        let service = FullService::try_from((&pairwise_info, &agent_info))?;
         add_service(&institution_did, &service)?;
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })
     }
@@ -41,6 +39,10 @@ impl PublicAgent {
 
     pub fn did(&self) -> String {
         self.institution_did.clone()
+    }
+
+    pub fn service(&self) -> VcxResult<FullService> {
+        FullService::try_from(self)
     }
 
     pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {

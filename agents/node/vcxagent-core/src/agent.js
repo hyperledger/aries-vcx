@@ -7,6 +7,7 @@ const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
 const { createServiceAgents } = require('./services/service-agents')
+const { createServiceOutOfBand } = require('./services/service-out-of-band')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   initThreadpool,
@@ -31,7 +32,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     await storageService.saveAgentProvision(agentProvision)
   }
   const agentProvision = await storageService.loadAgentProvision()
-  const issuerDid = agentProvision.issuerConfig["institution_did"]
+  const issuerDid = agentProvision.issuerConfig.institution_did
 
   async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
@@ -125,6 +126,11 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     saveAgent: storageService.saveAgent,
     loadAgent: storageService.loadAgent
   })
+  const serviceOutOfBand = createServiceOutOfBand({
+    logger,
+    saveConnection: storageService.saveConnection,
+    loadConnection: storageService.loadConnection
+  })
 
   return {
     // vcx controls
@@ -150,7 +156,10 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     serviceVerifier,
 
     // agents
-    serviceAgent
+    serviceAgent,
+
+    // out of band
+    serviceOutOfBand
   }
 }
 

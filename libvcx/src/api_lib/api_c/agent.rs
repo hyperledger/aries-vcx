@@ -9,7 +9,6 @@ use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
-
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
                                       source_id: *const c_char,
@@ -112,6 +111,40 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
             }
             Err(x) => {
                 warn!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
+                                           agent_handle: u32,
+                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>) -> u32 {
+    info!("vcx_public_agent_get_service >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    if !agent::is_valid_handle(agent_handle) {
+        return VcxError::from(VcxErrorKind::InvalidHandle).into();
+    }
+
+    trace!("vcx_public_agent_get_service(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
+
+    execute(move || {
+        match agent::get_service(agent_handle) {
+            Ok(service) => {
+                trace!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
+                       command_handle, error::SUCCESS.message, service);
+                let service = CStringUtils::string_to_cstring(service);
+                cb(command_handle, error::SUCCESS.code_num, service.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
             }

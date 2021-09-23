@@ -31,6 +31,16 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function acceptOobMsg (oobMsg) {
+    logger.info(`Alice accepting out of band message ${oobMsg}`)
+
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, oobMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function updateConnection (expectedNextState) {
     logger.info(`Alice is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
@@ -144,6 +154,7 @@ module.exports.createAlice = async function createAlice () {
     sendMessage,
     signData,
     acceptInvite,
+    acceptOobMsg,
     updateConnection,
     acceptCredentialOffer,
     updateStateCredentialV2,

@@ -1,5 +1,5 @@
 use crate::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
-use crate::messages::attachment::{AttachmentId, AttachmentEncoding};
+use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::service::ServiceResolvable;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::message_type::MessageType;
@@ -16,8 +16,8 @@ impl OutOfBand {
         self
     }
 
-    pub fn set_goal_code(mut self, goal_code: GoalCode) -> Self {
-        self.goal_code = Some(goal_code);
+    pub fn set_goal_code(mut self, goal_code: &GoalCode) -> Self {
+        self.goal_code = Some(goal_code.clone());
         self
     }
 
@@ -26,12 +26,12 @@ impl OutOfBand {
         self
     }
 
-    pub fn append_service(mut self, service: ServiceResolvable) -> Self {
-        self.services.push(service);
-        self
+    pub fn append_service(&mut self, service: &ServiceResolvable) -> VcxResult<()> {
+        self.services.push(service.clone());
+        Ok(())
     }
 
-    pub fn append_handshake_protocol(mut self, protocol: HandshakeProtocol) -> VcxResult<Self> {
+    pub fn append_handshake_protocol(&mut self, protocol: &HandshakeProtocol) -> VcxResult<()> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
@@ -44,10 +44,10 @@ impl OutOfBand {
                 self.handshake_protocols = Some(vec![new_protocol]);
             }
         };
-        Ok(self)
+        Ok(())
     }
 
-    pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
+    pub fn append_a2a_message(&mut self, msg: A2AMessage) -> VcxResult<()> {
         let (attach_id, attach) = match msg {
             A2AMessage::CredentialRequest(request) => {
                 (AttachmentId::CredentialRequest,
@@ -79,6 +79,6 @@ impl OutOfBand {
             }
         };
         self.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
-        Ok(self)
+        Ok(())
     }
 }

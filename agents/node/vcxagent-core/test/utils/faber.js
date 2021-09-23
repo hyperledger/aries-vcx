@@ -51,6 +51,18 @@ module.exports.createFaber = async function createFaber () {
     return invite
   }
 
+  async function createOobMsg () {
+    logger.info('Faber is going to generate out of band message')
+    await vcxAgent.agentInitVcx()
+
+    const agent = await vcxAgent.serviceAgent.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
+    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMsg(agent, 'faber-oob-msg')
+
+    await vcxAgent.agentShutdownVcx()
+
+    return oobMsg
+  }
+
   async function sendConnectionResponse () {
     logger.info('Faber is going to generate invite')
     await vcxAgent.agentInitVcx()
@@ -230,6 +242,7 @@ module.exports.createFaber = async function createFaber () {
     verifySignature,
     createInvite,
     createPublicInvite,
+    createOobMsg,
     createConnectionFromReceivedRequest,
     updateConnection,
     sendConnectionResponse,
