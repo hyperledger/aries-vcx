@@ -15,7 +15,7 @@ use crate::aries_vcx::messages::connection::request::Request;
 use crate::error::prelude::*;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
+    pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {

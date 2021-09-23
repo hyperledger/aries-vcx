@@ -14,15 +14,17 @@ use std::convert::TryFrom;
 
 impl OutOfBand {
     pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
+        trace!("OutOfBand::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBand(oob) => Ok(oob.clone()),
             _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
         }
     }
 
-    pub fn connection_exists<'a>(&self, connections: Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+    pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+        trace!("OutOfBand::connection_exists >>>");
         for service in &self.services {
-            for connection in &connections {
+            for connection in connections {
                 match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {
@@ -43,32 +45,33 @@ impl OutOfBand {
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
+        trace!("OutOfBand::extract_a2a_message >>>");
         if let Some(attach) = self.requests_attach.get() {
             let attach_json = self.requests_attach.content()?;
             match attach.id() {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
-                        let mut offer: CredentialOffer = serde_json::from_str(&attach_json)
+                        let offer: CredentialOffer = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
                         return Ok(Some(A2AMessage::CredentialOffer(offer.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::CredentialRequest => {
-                        let mut request: CredentialRequest = serde_json::from_str(&attach_json)
+                        let request: CredentialRequest = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
                         return Ok(Some(A2AMessage::CredentialRequest(request.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::Credential => {
-                        let mut credential: Credential = serde_json::from_str(&attach_json)
+                        let credential: Credential = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
                         return Ok(Some(A2AMessage::Credential(credential.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::PresentationRequest => {
-                        let mut request: PresentationRequest = serde_json::from_str(&attach_json)
+                        let request: PresentationRequest = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
                         return Ok(Some(A2AMessage::PresentationRequest(request.set_parent_thread_id(&self.id.0))));
                     }
                     AttachmentId::Presentation => {
-                        let mut presentation: Presentation = serde_json::from_str(&attach_json)
+                        let presentation: Presentation = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
                         return Ok(Some(A2AMessage::Presentation(presentation.set_parent_thread_id(&self.id.0))));
                     }
@@ -80,6 +83,7 @@ impl OutOfBand {
     }
 
     pub fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
+        trace!("OutOfBand::build_connection >>> autohop_enabled: {}", autohop_enabled);
         let service = match self.services.get(0) {
             Some(service) => service,
             None => {
