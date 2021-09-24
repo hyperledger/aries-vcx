@@ -10,25 +10,25 @@ use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_sender_create(command_handle: CommandHandle,
                                      config: *const c_char,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
-    info!("vcx_out_of_band_create >>>");
+    info!("vcx_out_of_band_sender_create >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_out_of_band_create(command_handle: {}, config: {})", command_handle, config);
+    trace!("vcx_out_of_band_sender_create(command_handle: {}, config: {})", command_handle, config);
 
     execute(move || {
         match out_of_band::create_out_of_band(&config) {
             Ok(handle) => {
-                trace!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {})",
+                trace!("vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_create_cb(command_handle: {}, rc: {}, handle: {})",
+                warn!("vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
             }
@@ -40,25 +40,25 @@ pub extern fn vcx_out_of_band_create(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_create_from_message(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_receiver_create(command_handle: CommandHandle,
                                                   message: *const c_char,
                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
-    info!("vcx_out_of_band_create_from_message >>>");
+    info!("vcx_out_of_band_receiver_create >>>");
 
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_out_of_band_create_from_message(command_handle: {}, message: {})", command_handle, message);
+    trace!("vcx_out_of_band_receiver_create(command_handle: {}, message: {})", command_handle, message);
 
     execute(move || {
         match out_of_band::create_out_of_band_msg_from_msg(&message) {
             Ok(handle) => {
-                trace!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {})",
+                trace!("vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_create_from_message_cb(command_handle: {}, rc: {}, handle: {}):",
+                warn!("vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {}):",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
             }
@@ -70,11 +70,11 @@ pub extern fn vcx_out_of_band_create_from_message(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_append_message(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandle,
                                              handle: u32,
                                              message: *const c_char,
                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_out_of_band_append_message >>>");
+    info!("vcx_out_of_band_sender_append_message >>>");
 
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -83,17 +83,17 @@ pub extern fn vcx_out_of_band_append_message(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_append_message(command_handle: {}, handle: {}, message: {})", command_handle, handle, message);
+    trace!("vcx_out_of_band_sender_append_message(command_handle: {}, handle: {}, message: {})", command_handle, handle, message);
 
     execute(move || {
         match out_of_band::append_message(handle, &message) {
             Ok(()) => {
-                trace!("vcx_out_of_band_append_message_cb(command_handle: {}, rc: {})",
+                trace!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_append_message_cb(command_handle: {}, rc: {})",
+                warn!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
                       command_handle, x);
                 cb(command_handle, x.into());
             }
@@ -105,11 +105,11 @@ pub extern fn vcx_out_of_band_append_message(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_append_service(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandle,
                                              handle: u32,
                                              service: *const c_char,
                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_out_of_band_append_service >>>");
+    info!("vcx_out_of_band_sender_append_service >>>");
 
     check_useful_c_str!(service, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -118,17 +118,17 @@ pub extern fn vcx_out_of_band_append_service(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_append_service(command_handle: {}, handle: {}, service: {})", command_handle, handle, service);
+    trace!("vcx_out_of_band_sender_append_service(command_handle: {}, handle: {}, service: {})", command_handle, handle, service);
 
     execute(move || {
         match out_of_band::append_service(handle, &service) {
             Ok(()) => {
-                trace!("vcx_out_of_band_append_service_cb(command_handle: {}, rc: {})",
+                trace!("vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_append_service_cb(command_handle: {}, rc: {})",
+                warn!("vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
                       command_handle, x);
                 cb(command_handle, x.into());
             }
@@ -140,10 +140,10 @@ pub extern fn vcx_out_of_band_append_service(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_extract_message(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHandle,
                                               handle: u32,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, message: *const c_char)>) -> u32 {
-    info!("vcx_out_of_band_extract_message >>>");
+    info!("vcx_out_of_band_receiver_extract_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -151,18 +151,18 @@ pub extern fn vcx_out_of_band_extract_message(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_extract_message(command_handle: {}, handle: {})", command_handle, handle);
+    trace!("vcx_out_of_band_receiver_extract_message(command_handle: {}, handle: {})", command_handle, handle);
 
     execute(move || {
         match out_of_band::extract_a2a_message(handle) {
             Ok(msg) => {
-                trace!("vcx_out_of_band_append_message_cb(command_handle: {}, rc: {}, msg: {})",
+                trace!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, msg);
                 let msg = CStringUtils::string_to_cstring(msg);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                warn!("vcx_out_of_band_append_message_cb(command_handle: {}, rc: {}, msg: {})",
+                warn!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {}, msg: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
             }
@@ -208,11 +208,11 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: CommandHandle,
                                                 handle: u32,
                                                 conn_handles: *const c_char,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, conn_handle: u32, found_one: bool)>) -> u32 {
-    info!("vcx_out_of_band_connection_exists >>>");
+    info!("vcx_out_of_band_receiver_connection_exists >>>");
 
     check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -221,12 +221,12 @@ pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_connection_exists(command_handle: {}, handle: {}, conn_handles: {})", command_handle, handle, conn_handles);
+    trace!("vcx_out_of_band_receiver_connection_exists(command_handle: {}, handle: {}, conn_handles: {})", command_handle, handle, conn_handles);
 
     let conn_handles = match serde_json::from_str::<Vec<u32>>(&conn_handles) {
         Ok(conn_handles) => conn_handles,
         Err(err) => {
-            error!("vcx_out_of_band_connection_exists >>> failed to parse connection handles: {}, err: {:?}", conn_handles, err);
+            error!("vcx_out_of_band_receiver_connection_exists >>> failed to parse connection handles: {}, err: {:?}", conn_handles, err);
             return error::INVALID_CONNECTION_HANDLE.code_num;
         }
     };
@@ -234,12 +234,12 @@ pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
     execute(move || {
         match out_of_band::connection_exists(handle, conn_handles) {
             Ok((conn_handle, found_one)) => {
-                trace!("vcx_out_of_band_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
+                trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
                        command_handle, error::SUCCESS.message, conn_handle, found_one);
                 cb(command_handle, error::SUCCESS.code_num, conn_handle, found_one);
             }
             Err(x) => {
-                warn!("vcx_out_of_band_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
+                warn!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
                       command_handle, x, 0, false);
                 cb(command_handle, x.into(), 0, false);
             }
@@ -251,10 +251,10 @@ pub extern fn vcx_out_of_band_connection_exists(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
+pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandHandle,
                                                handle: u32,
                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, connection: *const c_char)>) -> u32 {
-    info!("vcx_out_of_band_build_connection >>>");
+    info!("vcx_out_of_band_receiver_build_connection >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -262,19 +262,19 @@ pub extern fn vcx_out_of_band_build_connection(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
-    trace!("vcx_out_of_band_build_connection(command_handle: {}, handle: {})", command_handle, handle);
+    trace!("vcx_out_of_band_receiver_build_connection(command_handle: {}, handle: {})", command_handle, handle);
 
     execute(move || {
         match out_of_band::build_connection(handle) {
             Ok(connection) => {
-                trace!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
+                trace!("vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
                        command_handle, error::SUCCESS.message, connection);
                 let connection = CStringUtils::string_to_cstring(connection);
                 cb(command_handle, error::SUCCESS.code_num, connection.as_ptr());
 
             }
             Err(x) => {
-                warn!("vcx_out_of_band_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
+                warn!("vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
             }

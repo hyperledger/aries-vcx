@@ -12,7 +12,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
     const commandHandle = 0;
     try {
       await oob._create((cb) =>
-        rustAPI().vcx_out_of_band_create_from_message(commandHandle, msg, cb),
+        rustAPI().vcx_out_of_band_receiver_create(commandHandle, msg, cb),
       );
       return oob;
     } catch (err) {
@@ -25,7 +25,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
       const msg = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_extract_message(
+          const rc = rustAPI().vcx_out_of_band_receiver_extract_message(
             commandHandle,
             this.handle,
             cb,
@@ -58,7 +58,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
       await createFFICallbackPromise<void | Connection>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_connection_exists(
+          const rc = rustAPI().vcx_out_of_band_receiver_connection_exists(
             commandHandle,
             this.handle,
             JSON.stringify(connections),
@@ -101,7 +101,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
       const connection = await createFFICallbackPromise<string>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_build_connection(
+          const rc = rustAPI().vcx_out_of_band_receiver_build_connection(
             commandHandle,
             this.handle,
             cb,
