@@ -47,6 +47,13 @@ impl CredentialProposal {
         self.thread = Some(Thread::new().set_thid(id.to_string()));
         self
     }
+
+    pub fn from_thread(&self, thread_id: &str) -> bool {
+        match &self.thread {
+            Some(thread) => thread.is_reply(thread_id),
+            None => true
+        }
+    }
 }
 
 a2a_message!(CredentialProposal);

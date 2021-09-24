@@ -6,6 +6,7 @@ use crate::handlers::proof_presentation::verifier::states::finished::FinishedSta
 use crate::handlers::proof_presentation::verifier::states::initial::InitialState;
 use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
+use crate::handlers::proof_presentation::verifier::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -83,9 +84,8 @@ impl VerifierSM {
 
     pub fn step(self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<VerifierSM> {
         trace!("VerifierSM::step >>> message: {:?}", message);
-
         let VerifierSM { source_id, state } = self.clone();
-
+        verify_thread_id(&self.thread_id(), &message)?;
         let state = match state {
             VerifierFullState::Initiated(state) => {
                 match message {
@@ -349,11 +349,8 @@ pub mod test {
             let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation_1()), send_message).unwrap();
-
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(VerifierState::Failed, verifier_sm.get_state());
-            assert_eq!(Status::Failed(ProblemReport::create()).code(), verifier_sm.presentation_status());
+            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), send_message);
+            assert!(res.is_err());
         }
 
         //    #[test]

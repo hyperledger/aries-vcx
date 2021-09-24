@@ -9,6 +9,7 @@ use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::verify_thread_id;
 use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
@@ -201,7 +202,7 @@ impl IssuerSM {
 
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
-
+        verify_thread_id(&self.get_thread_id()?, &cim)?;
         let IssuerSM { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state_data) => match cim {

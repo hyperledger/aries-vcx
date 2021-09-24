@@ -14,6 +14,17 @@ pub enum VerifierMessages {
     Unknown,
 }
 
+impl VerifierMessages {
+    pub fn thread_id_matches(&self, thread_id: &str) -> bool {
+        match self {
+            Self::VerifyPresentation(presentation) => presentation.from_thread(thread_id),
+            Self::PresentationProposalReceived(proposal) => proposal.from_thread(thread_id),
+            Self::PresentationRejectReceived(problem_report) => problem_report.from_thread(thread_id),
+            _ => true
+        }
+    }
+}
+
 impl From<A2AMessage> for VerifierMessages {
     fn from(msg: A2AMessage) -> Self {
         match msg {

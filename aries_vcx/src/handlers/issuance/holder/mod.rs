@@ -1,5 +1,6 @@
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
+use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::messages::a2a::A2AMessage;
 
 pub mod holder;

@@ -1,8 +1,9 @@
-use crate::error::VcxResult;
+use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::settings;
 
 fn _build_ping_response(ping: &Ping) -> PingResponse {
     PingResponse::create().set_thread_id(
@@ -17,6 +18,13 @@ pub fn handle_ping(ping: &Ping,
     if ping.response_requested {
         send_message(pw_vk, &did_doc, &_build_ping_response(ping).to_a2a_message())?;
     }
+    Ok(())
+}
+
+pub fn verify_thread_id(thread_id: &str, message: &A2AMessage) -> VcxResult<()> {
+    if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle message {:?}: thread id does not match, expected {:?}", message, thread_id)));
+    };
     Ok(())
 }
 
