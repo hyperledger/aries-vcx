@@ -375,11 +375,8 @@ pub mod test {
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use crate::messages::issuance::test::{_ack, _problem_report};
-    use crate::messages::connection::did_doc::DidDoc;
     use crate::messages::a2a::A2AMessage;
-    use crate::messages::basic_message::message::BasicMessage;
     use crate::test::source_id;
-    use crate::utils::send_message;
     use crate::utils::devsetup::SetupMocks;
     use agency_client::mocking::HttpClientMockResponse;
 
@@ -394,7 +391,7 @@ pub mod test {
     }
 
     pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| send_message("", &DidDoc::default(), &A2AMessage::BasicMessage(BasicMessage::default())))
+        Some(&|_: &A2AMessage| VcxResult::Ok(()))
     }
 
     fn _issuer_sm() -> IssuerSM {

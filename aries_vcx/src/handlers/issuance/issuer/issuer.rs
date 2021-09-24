@@ -135,6 +135,10 @@ pub mod test {
         Issuer::create(&issuer_config, &_cred_data(), "test_source_id").unwrap()
     }
 
+    fn _send_message_but_fail() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+        Some(&|_: &A2AMessage| Err(VcxError::from(VcxErrorKind::IOError)))
+    }
+
     impl Issuer {
         fn to_offer_sent_state(mut self) -> Issuer {
             self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
@@ -172,8 +176,7 @@ pub mod test {
         let mut issuer = _issuer().to_request_received_state();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        HttpClientMockResponse::set_next_response(agency_client::error::AgencyClientResult::Err(agency_client::error::AgencyClientError::from_msg(agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
-        let send_result = issuer.send_credential(_send_message().unwrap());
+        let send_result = issuer.send_credential(_send_message_but_fail().unwrap());
         assert_eq!(send_result.is_err(), true);
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
