@@ -82,7 +82,7 @@ impl A2AMessage {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
             Self::Presentation(presentation) => presentation.from_thread(thread_id),
-            Self::PingResponse(ping_response) => ping_response.from_thread(thread_id),
+            // Self::PingResponse(ping_response) => ping_response.from_thread(thread_id),
             Self::ConnectionProblemReport(connection_problem_report) => connection_problem_report.from_thread(thread_id),
             Self::CommonProblemReport(common_problem_report) => common_problem_report.from_thread(thread_id),
             Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
