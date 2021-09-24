@@ -7,6 +7,7 @@ use crate::handlers::connection::invitee::states::null::NullState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -274,6 +275,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
             InviteeFullState::Requested(state) => {
@@ -404,7 +406,7 @@ impl SmConnectionInvitee {
         match &self.state {
             InviteeFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
             InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
-            InviteeFullState::Responded(state) => state.response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviteeFullState::Responded(state) => Ok(state.request.id.0.clone()),
             InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
             InviteeFullState::Null(_) => Ok(String::new())
         }

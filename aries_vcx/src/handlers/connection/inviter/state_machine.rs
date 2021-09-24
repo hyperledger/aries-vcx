@@ -7,6 +7,7 @@ use crate::handlers::connection::inviter::states::null::NullState;
 use crate::handlers::connection::inviter::states::requested::RequestedState;
 use crate::handlers::connection::inviter::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -234,24 +235,6 @@ impl SmConnectionInviter {
         }
     }
 
-    fn _build_response(
-        request: &Request,
-        bootstrap_pairwise_info: &PairwiseInfo,
-        new_pairwise_info: &PairwiseInfo,
-        new_routing_keys: Vec<String>,
-        new_service_endpoint: String,
-    ) -> VcxResult<SignedResponse> {
-        request.connection.did_doc.validate()?;
-        let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
-        Response::create()
-            .set_did(new_pairwise_info.pw_did.to_string())
-            .set_service_endpoint(new_service_endpoint)
-            .set_keys(new_recipient_keys, new_routing_keys)
-            .ask_for_ack()
-            .set_thread_id(&request.id.0)
-            .encode(&bootstrap_pairwise_info.pw_vk)
-    }
-
     fn _send_response(
         state: &RequestedState,
         new_pw_vk: &str,
@@ -287,17 +270,17 @@ impl SmConnectionInviter {
                                      new_pairwise_info: &PairwiseInfo,
                                      new_routing_keys: Vec<String>,
                                      new_service_endpoint: String) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self.clone();
         let state = match state {
             InviterFullState::Invited(_) | InviterFullState::Null(_) => {
-                match Self::_build_response(
+                match &self.build_response(
                     &request,
                     &bootstrap_pairwise_info,
                     &new_pairwise_info,
                     new_routing_keys,
                     new_service_endpoint) {
                     Ok(signed_response) => {
-                        InviterFullState::Requested((request, signed_response).into())
+                        InviterFullState::Requested((request, signed_response.clone()).into())
                     }
                     Err(err) => {
                         let problem_report = ProblemReport::create()
@@ -483,13 +466,37 @@ impl SmConnectionInviter {
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
         match &self.state {
-            InviterFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
+            InviterFullState::Invited(state) => state.invitation.get_id(), 
             InviterFullState::Requested(state) => Ok(state.thread_id.clone()),
             InviterFullState::Responded(state) => state.signed_response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
             InviterFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
             InviterFullState::Null(_) => Ok(String::new())
         }
     }
+
+    fn build_response(
+        &self,
+        request: &Request,
+        bootstrap_pairwise_info: &PairwiseInfo,
+        new_pairwise_info: &PairwiseInfo,
+        new_routing_keys: Vec<String>,
+        new_service_endpoint: String,
+    ) -> VcxResult<SignedResponse> {
+        request.connection.did_doc.validate()?;
+        match self.get_invitation() {
+            Some(invite) => verify_thread_id(&invite.get_id()?, &A2AMessage::ConnectionRequest(request.clone()))?,
+            _ => {}
+        };
+        let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
+        Response::create()
+            .set_did(new_pairwise_info.pw_did.to_string())
+            .set_service_endpoint(new_service_endpoint)
+            .set_keys(new_recipient_keys, new_routing_keys)
+            .ask_for_ack()
+            .set_thread_id(&request.id.0)
+            .encode(&bootstrap_pairwise_info.pw_vk)
+    }
+
 }
 
 #[cfg(test)]
