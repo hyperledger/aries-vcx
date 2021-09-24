@@ -10,7 +10,7 @@ on:
 
 jobs:
   workflow-setup:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     outputs:
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
       CACHE_KEY_ANDROID: ${{ steps.mainstep.outputs.CACHE_KEY_ANDROID }}
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.53.0
+          toolchain: 1.55.0
       - name: Set outputs
         id: mainstep
         run: |
@@ -134,7 +134,7 @@ jobs:
 
   build-image-indypool:
     needs: workflow-setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_POOL: ${{ needs.workflow-setup.outputs.CACHE_KEY_POOL }}
@@ -174,7 +174,7 @@ jobs:
 
   build-image-alpine-core:
     needs: workflow-setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_ALPINE_CORE: ${{ needs.workflow-setup.outputs.CACHE_KEY_ALPINE_CORE }}
@@ -208,7 +208,7 @@ jobs:
 
   build-image-libvcx:
     needs: [workflow-setup, build-image-alpine-core]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_LIBVCX: ${{ needs.workflow-setup.outputs.CACHE_KEY_LIBVCX }}
@@ -257,7 +257,7 @@ jobs:
 
   build-image-codecov:
     needs: workflow-setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_CODECOV: ${{ needs.workflow-setup.outputs.CACHE_KEY_CODECOV }}
@@ -289,7 +289,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_CODECOV" || { echo "Image $DOCKER_IMG_NAME_CODECOV was not found!" ; exit 1; }
 
   code-coverage-unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-codecov]
     env:
       DOCKER_BUILDKIT: 1
@@ -332,7 +332,7 @@ jobs:
           path: /tmp/artifacts/coverage
 
   code-coverage-integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-codecov, build-image-indypool]
     env:
       DOCKER_BUILDKIT: 1
@@ -400,7 +400,7 @@ jobs:
 
   build-image-android:
     needs: workflow-setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_ANDROID: ${{needs.workflow-setup.outputs.CACHE_KEY_ANDROID}}
@@ -432,7 +432,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_ANDROID" || { echo "Image $DOCKER_IMG_NAME_ANDROID was not found!" ; exit 1; }
 
   test-libvcx-image-general_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -466,7 +466,7 @@ jobs:
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
 
   test-libvcx-image-pool_tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -527,7 +527,7 @@ jobs:
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
 
   test-libvcx-pgsql-integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -586,7 +586,7 @@ jobs:
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "plugin_test")'
 
   test-libvcx-image-agency_pool_tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -647,7 +647,7 @@ jobs:
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
 
   test-android-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-android]
     env:
       DOCKER_BUILDKIT: 1
@@ -675,7 +675,7 @@ jobs:
                               bash -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
 
   test-node-wrapper:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -712,7 +712,7 @@ jobs:
 
   # TODO: Run in parallel once https://github.com/actions/runner/issues/646 is ready
   test-integration-node-wrapper:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       DOCKER_BUILDKIT: 1
@@ -825,7 +825,7 @@ jobs:
         path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
   # test-android-wrapper:
-  #   runs-on: ubuntu-latest
+  #   runs-on: ubuntu-20.04
   #   needs: [workflow-setup, build-image-android]
   #   env:
   #     DOCKER_BUILDKIT: 1
@@ -854,7 +854,7 @@ jobs:
   #                             bash -c '(cd $HOME/aries-vcx/libvcx && ./android.wrapper.test.sh x86)'
 
   publish-android-wrapper-device:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-android]
     env:
       DOCKER_BUILDKIT: 1
@@ -892,7 +892,7 @@ jobs:
           path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
 
   publish-android-wrapper-emulator:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-android]
     env:
       DOCKER_BUILDKIT: 1
@@ -930,7 +930,7 @@ jobs:
           path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
 
   publish-libvcx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
@@ -979,7 +979,7 @@ jobs:
           fi
 
   publish-node-wrapper:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
@@ -1027,7 +1027,7 @@ jobs:
           fi
 
   publish-agent-core:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
@@ -1074,7 +1074,7 @@ jobs:
           fi
 
   make-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
@@ -1125,7 +1125,7 @@ jobs:
           prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
 
   release-android-device:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch android device build from artifacts
@@ -1144,7 +1144,7 @@ jobs:
 
 
   release-android-emulator:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch android emulator build from artifacts
@@ -1162,7 +1162,7 @@ jobs:
           asset_content_type: application/aar
 
   release-ios-device:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch iOS device build from artifacts
@@ -1180,7 +1180,7 @@ jobs:
           asset_content_type: application/zip
 
   release-ios-universal:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, make-release]
     steps:
       - name: Fetch iOS universal build from artifacts
