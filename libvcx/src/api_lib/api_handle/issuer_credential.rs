@@ -172,6 +172,12 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
+        credential.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
@@ -273,38 +279,6 @@ pub mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_credential_can_be_resent_after_failure() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested();
-
-        let handle_cred = _issuer_credential_create();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::Initial as u32);
-        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
-
-        assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
-        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
-
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);
-        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
-
-        // First attempt to send credential fails
-        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
-        let send_result = issuer_credential::send_credential(handle_cred, handle_conn);
-        assert_eq!(send_result.is_err(), true);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);
-        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
-
-        // Can retry after initial failure
-        issuer_credential::send_credential(handle_cred, handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::Finished as u32);
-        assert_eq!(get_rev_reg_id(handle_cred).unwrap(), REV_REG_ID);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
@@ -380,29 +354,6 @@ pub mod tests {
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_cant_revoke_without_revocation_details() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = build_test_connection_inviter_requested();
-
-        let handle_cred = _issuer_credential_create();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::Initial as u32);
-
-        assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
-
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);
-
-        issuer_credential::send_credential(handle_cred, handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::Finished as u32);
-
-        let revoc_result = issuer_credential::revoke_credential(handle_cred);
-        assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 
     // todo: Write test which will use use credetial definition supporting revocation, then actually revoke credential

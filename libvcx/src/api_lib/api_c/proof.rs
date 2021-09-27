@@ -608,6 +608,42 @@ pub extern fn vcx_proof_accepted(proof_handle: u32, response_data: *const c_char
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_proof_get_thread_id(command_handle: CommandHandle,
+                                      proof_handle: u32,
+                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thread_id: *const c_char)>) -> u32 {
+    info!("vcx_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
+    }
+
+    let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_proof_get_thread_id(command_handle: {}, proof_handle: {}) source_id: {})",
+           command_handle, proof_handle, source_id);
+
+    execute(move || {
+        match proof::get_thread_id(proof_handle) {
+            Ok(s) => {
+                trace!("vcx_proof_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let thread_id = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, thread_id.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_proof_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 
 #[cfg(test)]
 mod tests {

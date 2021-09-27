@@ -8,6 +8,7 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
+use crate::settings;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
@@ -15,7 +16,11 @@ pub struct PresentationRequestSentState {
 }
 
 impl PresentationRequestSentState {
-    pub fn verify_presentation(&self, presentation: &Presentation, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+    pub fn verify_presentation(&self, presentation: &Presentation, thread_id: &str, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+        if !settings::indy_mocks_enabled() && !presentation.from_thread(&thread_id) {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
+        };
+
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                         &self.presentation_request.request_presentations_attach.content()?)?;
 

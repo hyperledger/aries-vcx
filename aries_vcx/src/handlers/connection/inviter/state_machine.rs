@@ -7,6 +7,7 @@ use crate::handlers::connection::inviter::states::null::NullState;
 use crate::handlers::connection::inviter::states::requested::RequestedState;
 use crate::handlers::connection::inviter::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -234,24 +235,6 @@ impl SmConnectionInviter {
         }
     }
 
-    fn _build_response(
-        request: &Request,
-        bootstrap_pairwise_info: &PairwiseInfo,
-        new_pairwise_info: &PairwiseInfo,
-        new_routing_keys: Vec<String>,
-        new_service_endpoint: String,
-    ) -> VcxResult<SignedResponse> {
-        request.connection.did_doc.validate()?;
-        let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
-        Response::create()
-            .set_did(new_pairwise_info.pw_did.to_string())
-            .set_service_endpoint(new_service_endpoint)
-            .set_keys(new_recipient_keys, new_routing_keys)
-            .ask_for_ack()
-            .set_thread_id(&request.id.0)
-            .encode(&bootstrap_pairwise_info.pw_vk)
-    }
-
     fn _send_response(
         state: &RequestedState,
         new_pw_vk: &str,
@@ -282,23 +265,22 @@ impl SmConnectionInviter {
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
 
-
     pub fn handle_connection_request(self,
                                      request: Request,
                                      new_pairwise_info: &PairwiseInfo,
                                      new_routing_keys: Vec<String>,
                                      new_service_endpoint: String) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info: bootstrap_pairwise_info, state, send_message } = self.clone();
         let state = match state {
             InviterFullState::Invited(_) | InviterFullState::Null(_) => {
-                match Self::_build_response(
+                match &self.build_response(
                     &request,
                     &bootstrap_pairwise_info,
                     &new_pairwise_info,
                     new_routing_keys,
                     new_service_endpoint) {
                     Ok(signed_response) => {
-                        InviterFullState::Requested((request, signed_response).into())
+                        InviterFullState::Requested((request, signed_response.clone()).into())
                     }
                     Err(err) => {
                         let problem_report = ProblemReport::create()
@@ -459,10 +441,21 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_ack(self, ack: Ack) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info, state, send_message } = self.clone();
         let state = match state {
             InviterFullState::Responded(state) => {
-                InviterFullState::Completed((state, ack).into())
+                let thread_id = self.get_thread_id()?;
+                if !ack.from_thread(&thread_id) {
+                    let problem_report = ProblemReport::create()
+                        .set_problem_code(ProblemCode::RequestProcessingError)
+                        .set_explain(format!("Cannot handle Response: thread id does not match: {:?}", ack.thread))
+                        .set_thread_id(&thread_id); // TODO: Maybe set sender's thread id?
+
+                    send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
+                    InviterFullState::Null((state, problem_report).into())
+                } else {
+                    InviterFullState::Completed((state, ack).into())
+                }
             }
             _ => {
                 state.clone()
@@ -470,11 +463,45 @@ impl SmConnectionInviter {
         };
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.state {
+            InviterFullState::Invited(state) => state.invitation.get_id(), 
+            InviterFullState::Requested(state) => Ok(state.thread_id.clone()),
+            InviterFullState::Responded(state) => state.signed_response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviterFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviterFullState::Null(_) => Ok(String::new())
+        }
+    }
+
+    fn build_response(
+        &self,
+        request: &Request,
+        bootstrap_pairwise_info: &PairwiseInfo,
+        new_pairwise_info: &PairwiseInfo,
+        new_routing_keys: Vec<String>,
+        new_service_endpoint: String,
+    ) -> VcxResult<SignedResponse> {
+        request.connection.did_doc.validate()?;
+        match self.get_invitation() {
+            Some(invite) => verify_thread_id(&invite.get_id()?, &A2AMessage::ConnectionRequest(request.clone()))?,
+            _ => {}
+        };
+        let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
+        Response::create()
+            .set_did(new_pairwise_info.pw_did.to_string())
+            .set_service_endpoint(new_service_endpoint)
+            .set_keys(new_recipient_keys, new_routing_keys)
+            .ask_for_ack()
+            .set_thread_id(&request.id.0)
+            .encode(&bootstrap_pairwise_info.pw_vk)
+    }
+
 }
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::ack::test_utils::_ack;
+    use crate::messages::ack::test_utils::{_ack, _ack_1};
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
@@ -532,6 +559,28 @@ pub mod test {
                 self = self.handle_send_response().unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
+            }
+        }
+
+        mod get_thread_id {
+            use super::*;
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn ack_fails_with_incorrect_thread_id() {
+                let _setup = SetupMocks::init();
+                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let service_endpoint = String::from("https://example.org/agent");
+                let mut inviter = inviter_sm();
+                inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
+
+                let new_pairwise_info = PairwiseInfo { pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(), pw_vk: "verkey456".to_string() };
+                let new_routing_keys: Vec<String> = vec!("AC3Gx1RoAz8iYVcfY47gjJ".into());
+                let new_service_endpoint = String::from("https://example.org/agent");
+                inviter = inviter.handle_connection_request(_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint).unwrap();
+                inviter = inviter.handle_send_response().unwrap();
+                inviter = inviter.handle_ack(_ack_1()).unwrap();
+                assert_match!(InviterState::Null, inviter.get_state());
             }
         }
 

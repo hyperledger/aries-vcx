@@ -16,7 +16,7 @@ pub struct CredentialOffer {
     pub offers_attach: Attachments,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>,
+    pub thread: Option<Thread>, // TODO: Make mandatory
 }
 
 impl CredentialOffer {
@@ -55,6 +55,13 @@ impl CredentialOffer {
             None => Some(Thread::new().set_thid(id.to_string()))
         };
         self
+    }
+
+    pub fn from_thread(&self, thread_id: &str) -> bool {
+        match &self.thread {
+            Some(thread) => thread.is_reply(thread_id),
+            None => true
+        }
     }
 
     pub fn set_parent_thread_id(mut self, id: &str) -> Self {
@@ -97,6 +104,10 @@ pub mod test_utils {
 
     pub fn thread() -> Thread {
         Thread::new().set_thid(_credential_offer().id.0)
+    }
+
+    pub fn thread_1() -> Thread {
+        Thread::new().set_thid("testid_1".into())
     }
 
     pub fn thread_id() -> String {

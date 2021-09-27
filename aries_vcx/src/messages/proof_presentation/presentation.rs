@@ -42,6 +42,7 @@ a2a_message!(Presentation);
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::messages::proof_presentation::presentation_request::test_utils::thread;
+    use crate::messages::connection::response::test_utils::_thread_1;
 
     use super::*;
 
@@ -62,6 +63,19 @@ pub mod test_utils {
             comment: _comment(),
             presentations_attach: attachment,
             thread: thread(),
+            please_ack: Some(PleaseAck {}),
+        }
+    }
+
+    pub fn _presentation_1() -> Presentation {
+        let mut attachment = Attachments::new();
+        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
+
+        Presentation {
+            id: MessageId::id(),
+            comment: _comment(),
+            presentations_attach: attachment,
+            thread: _thread_1(),
             please_ack: Some(PleaseAck {}),
         }
     }

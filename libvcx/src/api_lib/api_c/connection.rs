@@ -401,6 +401,44 @@ pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
+                                           connection_handle: u32,
+                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thread_id: *const c_char)>) -> u32 {
+    info!("vcx_connection_get_thread_id >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
+    trace!("vcx_connection_get_thread_id(command_handle: {}, connection_handle: {}), source_id: {:?}",
+           command_handle, connection_handle, source_id);
+
+    if !is_valid_handle(connection_handle) {
+        error!("vcx_connection_get_thread_id - invalid handle");
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
+    }
+
+    execute(move || {
+        match get_thread_id(connection_handle) {
+            Ok(tid) => {
+                trace!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}",
+                       command_handle, connection_handle, error::SUCCESS.message, tid, source_id);
+                let tid = CStringUtils::string_to_cstring(tid);
+                cb(command_handle, error::SUCCESS.code_num, tid.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}",
+                      command_handle, connection_handle, x, "null", source_id);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 /// Takes the Connection object and returns a json string of all its attributes
 ///
 /// # Params

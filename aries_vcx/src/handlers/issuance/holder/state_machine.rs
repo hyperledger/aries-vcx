@@ -6,6 +6,7 @@ use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::handlers::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::handlers::issuance::holder::states::request_sent::RequestSentState;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::verify_thread_id;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
@@ -99,8 +100,8 @@ impl HolderSM {
 
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
-
         let HolderSM { state, source_id, thread_id } = self;
+        verify_thread_id(&thread_id, &cim)?;
         let state = match state {
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialRequestSend(my_pw_did) => {
@@ -231,6 +232,10 @@ impl HolderSM {
             HolderFullState::Finished(ref state) => state.get_rev_reg_id(),
             _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get tails hash: credential exchange not finished yet"))
         }
+    }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        Ok(self.thread_id.clone())
     }
 
     pub fn is_revokable(&self) -> VcxResult<bool> {

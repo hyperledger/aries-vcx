@@ -93,6 +93,8 @@ impl Prover {
 
     pub fn get_source_id(&self) -> String { self.prover_sm.source_id() }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> { self.prover_sm.get_thread_id() }
+
     pub fn step(&mut self,
                 message: ProverMessages,
                 send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
@@ -166,7 +168,7 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_retrieve_credentials_emtpy() {
+    fn test_retrieve_credentials_empty() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
         let mut req = json!({

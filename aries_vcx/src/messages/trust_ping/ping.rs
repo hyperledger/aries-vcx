@@ -56,6 +56,15 @@ pub mod tests {
         }
     }
 
+    pub fn _ping_no_thread() -> Ping {
+        Ping {
+            id: MessageId::id(),
+            response_requested: false,
+            thread: None,
+            comment: Some(_comment()),
+        }
+    }
+
     #[test]
     #[cfg(feature = "general_test")]
     fn test_ping_build_works() {

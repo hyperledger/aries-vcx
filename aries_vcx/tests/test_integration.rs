@@ -256,21 +256,26 @@ mod tests {
     fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, holder_credential: &mut Holder, revokable: bool) {
         institution.activate().unwrap();
         info!("send_credential >>> getting offers");
+        let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
         issuer_credential.update_state(issuer_to_consumer).unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
+        assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");
         issuer_credential.send_credential(issuer_to_consumer.send_message_closure().unwrap()).unwrap();
         thread::sleep(Duration::from_millis(2000));
+        assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         consumer.activate().unwrap();
         info!("send_credential >>> storing credential");
+        assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
         assert_eq!(holder_credential.is_revokable().unwrap(), revokable);
         holder_credential.update_state(consumer_to_issuer).unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(holder_credential.is_revokable().unwrap(), revokable);
+        assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
 
         if revokable {
             thread::sleep(Duration::from_millis(2000));
@@ -325,12 +330,15 @@ mod tests {
 
     fn generate_and_send_proof(alice: &mut Alice, prover: &mut Prover, connection: &Connection, selected_credentials: &str) {
         alice.activate().unwrap();
+        let thread_id = prover.get_thread_id().unwrap();
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
         prover.generate_presentation(selected_credentials.into(), "{}".to_string()).unwrap();
+        assert_eq!(thread_id, prover.get_thread_id().unwrap());
 
         info!("generate_and_send_proof :: proof generated, sending proof");
         prover.send_presentation(&connection.send_message_closure().unwrap()).unwrap();
         info!("generate_and_send_proof :: proof sent");
+        assert_eq!(thread_id, prover.get_thread_id().unwrap());
 
         assert_eq!(ProverState::PresentationSent, prover.get_state());
         thread::sleep(Duration::from_millis(5000));
@@ -768,12 +776,15 @@ mod tests {
         info!("test_real_proof :: generated credential data: {}", credential_data);
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let mut issuer_credential = create_and_send_cred_offer(&mut institution, &institution_did, &cred_def, &issuer_to_consumer, &credential_data, None);
+        let issuance_thread_id = issuer_credential.get_thread_id().unwrap();
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
         let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
         send_credential(&mut consumer, &mut institution, &mut issuer_credential, &issuer_to_consumer, &consumer_to_issuer, &mut holder_credential, false);
+        assert_eq!(issuance_thread_id, holder_credential.get_thread_id().unwrap());
+        assert_eq!(issuance_thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
         institution.activate().unwrap();
@@ -786,6 +797,7 @@ mod tests {
         let requested_attrs = attrs.to_string();
         info!("test_real_proof :: Going to seng proof request with attributes {}", requested_attrs);
         let mut verifier = send_proof_request(&mut institution, &issuer_to_consumer, &requested_attrs, "[]", "{}", None);
+        let presentation_thread_id = verifier.get_thread_id().unwrap();
 
         info!("test_real_proof :: Going to create proof");
         let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None);
@@ -796,11 +808,14 @@ mod tests {
 
         info!("test_real_proof :: generating and sending proof");
         generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
+        assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
+        assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         institution.activate().unwrap();
         verifier.update_state(&issuer_to_consumer).unwrap();
         assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
     }
 
     #[test]
@@ -1073,7 +1088,6 @@ mod tests {
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
         if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
-            assert_eq!(request_receiver.thread.unwrap().pthid.unwrap(), oob_receiver.id.0);
             assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
 
@@ -1437,7 +1451,6 @@ mod tests {
         assert_eq!(first_string, second_string);
     }
 
-
     pub fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
         institution.activate().unwrap();
@@ -1453,22 +1466,27 @@ mod tests {
         consumer_to_institution.connect().unwrap();
         consumer_to_institution.update_state().unwrap();
 
+        let thread_id = consumer_to_institution.get_thread_id().unwrap();
+
         debug!("Institution is going to process connection request.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
+        assert_eq!(thread_id, institution_to_consumer.get_thread_id().unwrap());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
+        assert_eq!(thread_id, consumer_to_institution.get_thread_id().unwrap());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
+        assert_eq!(thread_id, consumer_to_institution.get_thread_id().unwrap());
 
         (consumer_to_institution, institution_to_consumer)
     }

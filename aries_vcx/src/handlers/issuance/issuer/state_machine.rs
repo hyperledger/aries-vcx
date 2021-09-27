@@ -9,6 +9,7 @@ use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::verify_thread_id;
 use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
@@ -201,7 +202,7 @@ impl IssuerSM {
 
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
-
+        verify_thread_id(&self.get_thread_id()?, &cim)?;
         let IssuerSM { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state_data) => match cim {
@@ -245,7 +246,7 @@ impl IssuerSM {
             },
             IssuerFullState::RequestReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialSend() => {
-                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data);
+                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &state_data.thread_id);
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
                             let credential_msg = credential_msg.set_thread_id(&state_data.thread_id);
@@ -309,6 +310,10 @@ impl IssuerSM {
             _ => false
         }
     }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        Ok(self.state.thread_id())
+    }
 }
 
 
@@ -347,20 +352,19 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     Ok(new_offer)
 }
 
-fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str) -> VcxResult<(Credential, Option<String>)> {
-    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {:?}, cred_data: {:?}", request, rev_reg_id, tails_file, offer, cred_data);
-
+fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
+    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+    if !request.from_thread(&thread_id) {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
+    };
     let request = &request.requests_attach.content()?;
-
     let cred_data = encode_attributes(cred_data)?;
-
     let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(offer,
                                                                                        &request,
                                                                                        &cred_data,
                                                                                        rev_reg_id.clone(),
                                                                                        tails_file.clone())?;
     let credential = Credential::create().set_credential(ser_credential)?;
-
     Ok((credential, cred_rev_id))
 }
 
@@ -369,22 +373,24 @@ pub mod test {
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use crate::messages::issuance::credential_request::test_utils::_credential_request;
+    use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use crate::messages::issuance::test::{_ack, _problem_report};
+    use crate::messages::a2a::A2AMessage;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
+    use agency_client::mocking::HttpClientMockResponse;
 
     use super::*;
 
-    fn _rev_reg_id() -> String {
+    pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
     }
 
-    fn _tails_file() -> String {
+    pub fn _tails_file() -> String {
         String::from("TEST_TAILS_FILE")
     }
 
-    fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
         Some(&|_: &A2AMessage| VcxResult::Ok(()))
     }
 
@@ -558,6 +564,19 @@ pub mod test {
 
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_issuer_credential_send_fails_with_incorrect_thread_id() {
+            let _setup = SetupMocks::init();
+
+            let mut issuer_sm = _issuer_sm();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request_1()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
+            assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
         // TRANSITIONS TO/FROM CREDENTIAL SENT STATE AREN'T POSSIBLE NOW
