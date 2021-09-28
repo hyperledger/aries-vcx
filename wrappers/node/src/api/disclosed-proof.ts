@@ -364,6 +364,34 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
     }
   }
 
+  public async getThreadId(): Promise<string> {
+    try {
+      const threadId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_disclosed_proof_get_thread_id(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, threadId: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(threadId);
+            },
+          ),
+      );
+      return threadId;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   /**
    * Sends the proof to the Connection
    *

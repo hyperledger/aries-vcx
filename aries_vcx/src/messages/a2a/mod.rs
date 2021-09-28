@@ -78,6 +78,23 @@ pub enum A2AMessage {
     Generic(Value),
 }
 
+impl A2AMessage {
+    pub fn thread_id_matches(&self, thread_id: &str) -> bool {
+        match self {
+            Self::Presentation(presentation) => presentation.from_thread(thread_id),
+            // Self::PingResponse(ping_response) => ping_response.from_thread(thread_id),
+            Self::ConnectionProblemReport(connection_problem_report) => connection_problem_report.from_thread(thread_id),
+            Self::CommonProblemReport(common_problem_report) => common_problem_report.from_thread(thread_id),
+            Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
+            Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
+            Self::Credential(credential) => credential.from_thread(thread_id),
+            Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
+            Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
+            _ => true
+        }
+    }
+}
+
 impl<'de> Deserialize<'de> for A2AMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;

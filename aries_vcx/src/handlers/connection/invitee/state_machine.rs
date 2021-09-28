@@ -7,6 +7,7 @@ use crate::handlers::connection::invitee::states::null::NullState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -274,6 +275,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
             InviteeFullState::Requested(state) => {
@@ -359,7 +361,6 @@ impl SmConnectionInvitee {
         Ok(Self { source_id, pairwise_info, state, send_message })
     }
 
-
     pub fn handle_send_ack(self) -> VcxResult<Self> {
         let Self { source_id, pairwise_info, state, send_message } = self;
         let state = match state {
@@ -399,6 +400,16 @@ impl SmConnectionInvitee {
 
     pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self> {
         Ok(self)
+    }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.state {
+            InviteeFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
+            InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
+            InviteeFullState::Responded(state) => Ok(state.request.id.0.clone()),
+            InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
+            InviteeFullState::Null(_) => Ok(String::new())
+        }
     }
 }
 
@@ -472,6 +483,14 @@ pub mod test {
                 .encode(&key).unwrap()
         }
 
+        fn _response_1(key: &str) -> SignedResponse {
+            Response::default()
+                .set_service_endpoint(_service_endpoint())
+                .set_keys(vec![key.to_string()], vec![])
+                .set_thread_id("testid_1")
+                .encode(&key).unwrap()
+        }
+
         mod new {
             use super::*;
 
@@ -484,6 +503,28 @@ pub mod test {
 
                 assert_match!(InviteeFullState::Null(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
+            }
+        }
+
+        mod get_thread_id {
+            use super::*;
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn handle_response_fails_with_incorrect_thread_id() {
+                let _setup = SetupMocks::init();
+                let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
+                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
+                let mut invitee = invitee_sm();
+
+                invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+
+                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let service_endpoint = String::from("https://example.org/agent");
+                invitee = invitee.handle_connect(routing_keys, service_endpoint).unwrap();
+                invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
+                invitee = invitee.handle_send_ack().unwrap();
+                assert_match!(InviteeState::Null, invitee.get_state());
             }
         }
 

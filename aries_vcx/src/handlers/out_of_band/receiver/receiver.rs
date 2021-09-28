@@ -73,7 +73,7 @@ impl OutOfBandReceiver {
                     AttachmentId::PresentationRequest => {
                         let request: PresentationRequest = serde_json::from_str(&attach_json)
                             .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::PresentationRequest(request.set_parent_thread_id(&self.oob.id.0))));
+                        return Ok(Some(A2AMessage::PresentationRequest(request)));
                     }
                     AttachmentId::Presentation => {
                         let presentation: Presentation = serde_json::from_str(&attach_json)

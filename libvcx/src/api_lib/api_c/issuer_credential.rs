@@ -832,6 +832,43 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_issuer_credential_get_thread_id(command_handle: CommandHandle,
+                                                  credential_handle: u32,
+                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thread_id: *const c_char)>) -> u32 {
+    info!("vcx_issuer_credential_get_thread_id >>> credential_handle: {:?}", credential_handle);
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_issuer_credential_get_thread_id(command_handle: {}, credential_handle: {}) source_id: {})",
+           command_handle, credential_handle, source_id);
+
+    execute(move || {
+        match issuer_credential::get_thread_id(credential_handle) {
+            Ok(s) => {
+                trace!("vcx_issuer_credential_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
+                       command_handle, error::SUCCESS.code_num, s, source_id);
+                let thread_id = CStringUtils::string_to_cstring(s);
+                cb(command_handle, error::SUCCESS.code_num, thread_id.as_ptr());
+            }
+            Err(e) => {
+                error!("vcx_issuer_credential_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
+                       command_handle, e, "".to_string(), source_id);
+                cb(command_handle, e.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
 #[cfg(test)]
 pub mod tests {
     extern crate serde_json;

@@ -193,6 +193,12 @@ pub fn is_valid_handle(handle: u32) -> bool {
     HANDLE_MAP.has_handle(handle)
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get_mut(handle, |proof| {
+        proof.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
     if !connection::is_v3_connection(connection_handle)? {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));

@@ -283,6 +283,12 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
     })
 }
 
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    HANDLE_MAP.get(handle, |credential| {
+        credential.get_thread_id().map_err(|err| err.into())
+    })
+}
+
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};

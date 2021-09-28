@@ -73,6 +73,10 @@ impl Holder {
         self.holder_sm.get_rev_reg_id()
     }
 
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        self.holder_sm.get_thread_id()
+    }
+
     pub fn is_revokable(&self) -> VcxResult<bool> {
         self.holder_sm.is_revokable()
     }

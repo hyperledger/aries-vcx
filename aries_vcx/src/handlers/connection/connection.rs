@@ -15,6 +15,7 @@ use crate::handlers::connection::inviter::state_machine::{InviterFullState, Invi
 use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
@@ -140,6 +141,17 @@ impl Connection {
             }
             SmConnection::Invitee(sm_invitee) => {
                 sm_invitee.source_id()
+            }
+        }.into()
+    }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.get_thread_id()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.get_thread_id()
             }
         }.into()
     }
@@ -363,6 +375,10 @@ impl Connection {
     // }
 
     fn _update_state(&mut self, message: Option<A2AMessage>) -> VcxResult<()> {
+        match message.as_ref() {
+            Some(message) => verify_thread_id(&self.get_thread_id()?, message)?,
+            _ => {}
+        };
         let (new_connection_sm, can_autohop) = match &self.connection_sm {
             SmConnection::Inviter(_) => {
                 self._step_inviter(message)?
