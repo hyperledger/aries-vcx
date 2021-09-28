@@ -323,7 +323,7 @@ jobs:
           cov-file-path: libvcx/coverage.lcov
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: libvcx/coverage.lcov
           flags: unittests
@@ -394,7 +394,7 @@ jobs:
           cov-file-path: /tmp/artifacts/coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           directory: /tmp/artifacts/coverage
           flags: integration
@@ -441,7 +441,7 @@ jobs:
           cov-file-path: libvcx/coverage.lcov
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
           file: libvcx/coverage.lcov
           flags: unittests
@@ -512,7 +512,7 @@ jobs:
           cov-file-path: /tmp/artifacts/coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           directory: /tmp/artifacts/coverage
           flags: integration
@@ -559,7 +559,7 @@ jobs:
           cov-file-path: libvcx/coverage.lcov
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: libvcx/coverage.lcov
           flags: unittests
