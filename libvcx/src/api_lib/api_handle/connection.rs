@@ -15,7 +15,7 @@ use crate::aries_vcx::messages::connection::request::Request;
 use crate::error::prelude::*;
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
+    pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -55,6 +55,12 @@ pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
 pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.remote_vk().map_err(|err| err.into())
+    })
+}
+
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.get(handle, |connection| {
+        connection.get_thread_id().map_err(|err| err.into())
     })
 }
 

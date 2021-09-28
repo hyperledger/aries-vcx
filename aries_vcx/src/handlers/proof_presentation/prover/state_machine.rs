@@ -8,6 +8,7 @@ use crate::handlers::proof_presentation::prover::states::initial::InitialState;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
 use crate::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
+use crate::handlers::proof_presentation::prover::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -100,9 +101,8 @@ impl ProverSM {
                 send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>,
     ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
-
         let ProverSM { source_id, state, thread_id } = self;
-
+        verify_thread_id(&thread_id, &message)?;
         let state = match state {
             ProverFullState::Initiated(state) => {
                 match message {
@@ -244,6 +244,8 @@ impl ProverSM {
     }
 
     pub fn source_id(&self) -> String { self.source_id.clone() }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> { Ok(self.thread_id.clone()) }
 
     pub fn get_state(&self) -> ProverState {
         match self.state {

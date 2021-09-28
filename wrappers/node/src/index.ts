@@ -11,6 +11,7 @@ export * from './api/disclosed-proof';
 export * from './api/utils';
 export * from './api/wallet';
 export * from './api/agent';
+export * from './api/out-of-band';
 export * from './api/vcx-payment-txn';
 export * from './vcx';
 export * from './rustlib';

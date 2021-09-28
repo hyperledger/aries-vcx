@@ -219,6 +219,9 @@ pub enum VcxErrorKind {
 
     #[fail(display = "Error creating public agent")]
     CreatePublicAgent,
+
+    #[fail(display = "Error creating out of band message")]
+    CreateOutOfBand,
 }
 
 #[derive(Debug)]

@@ -48,7 +48,7 @@ RUN apk add --no-cache \
 
 USER node
 
-ARG RUST_VER="1.53.0"
+ARG RUST_VER="1.55.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
 ENV PATH="/home/node/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 

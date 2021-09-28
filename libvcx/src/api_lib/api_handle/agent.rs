@@ -41,6 +41,14 @@ pub fn download_connection_requests(agent_handle: u32, uids: Option<Vec<String>>
     })
 }
 
+pub fn get_service(handle: u32) -> VcxResult<String> {
+    PUBLIC_AGENT_MAP.get(handle, |agent| {
+        let service = agent.service()?;
+        serde_json::to_string(&service)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize agent service {:?}, err: {:?}", service, err)))
+    })
+}
+
 pub fn to_string(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
         agent.to_string().map_err(|err| err.into())

@@ -1,13 +1,9 @@
 import * as ffi from 'ffi-napi';
-import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
-import { ISerializedData, ConnectionStateType } from './common';
-import { VCXBaseWithState } from './vcx-base-with-state';
-import { PtrBuffer } from './utils';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
+import { ISerializedData } from './common';
 import { VCXBase } from './vcx-base';
-import { PaymentManager } from './vcx-payment-txn';
 
 export interface IAgentInfo {
   agent_did: string,
@@ -107,6 +103,43 @@ export class Agent extends VCXBase<IAgentSerializedData> {
                 return;
               }
               resolve(requests);
+            },
+          ),
+      );
+      return data;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async getService(): Promise<string> {
+    try {
+      const data = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_public_agent_get_service(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, service: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              if (!service) {
+                reject('no service returned');
+                return;
+              }
+              resolve(service);
             },
           ),
       );
