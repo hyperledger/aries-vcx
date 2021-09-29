@@ -320,7 +320,7 @@ jobs:
           run-services: false
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-unit-aries-vcx
-          cov-file-path: libvcx/coverage.lcov
+          cov-file-path: /tmp/artifacts/coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -438,7 +438,7 @@ jobs:
           run-services: false
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-unit-libvcx
-          cov-file-path: libvcx/coverage.lcov
+          cov-file-path: /tmp/artifacts/coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -556,7 +556,7 @@ jobs:
           run-services: false
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-unit-agency-client
-          cov-file-path: libvcx/coverage.lcov
+          cov-file-path: /tmp/artifacts/coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
