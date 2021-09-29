@@ -325,7 +325,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          file: libvcx/coverage.lcov
+          directory: /tmp/artifacts/coverage
           flags: unittests-aries-vcx
           name: codecov-unit-aries-vcx
           fail_ci_if_error: true
@@ -443,7 +443,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          file: libvcx/coverage.lcov
+          directory: /tmp/artifacts/coverage
           flags: unittests-libvcx
           name: codecov-unit-libvcx
           fail_ci_if_error: true
@@ -561,7 +561,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          file: libvcx/coverage.lcov
+          directory: /tmp/artifacts/coverage
           flags: unittests-agency-client
           name: codecov-unit-agency-client
           fail_ci_if_error: true
