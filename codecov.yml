@@ -1,2 +1,4 @@
 fixes:
    - "/home/indy/libvcx/::libvcx/"
+ignore:
+  - "libvcx"

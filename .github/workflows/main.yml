@@ -102,7 +102,7 @@ jobs:
 
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
           ALPINE_CORE_DOCKERFILE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
-          CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-ubuntu.dockerfile') }}
+          CODECOV_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx-codecov.dockerfile') }}
 
           JAVA_WRAPPERS_HASH=${{ hashFiles('wrappers/java') }}
           LIBVCX_NODE_WRAPPERS_HASH=${{ hashFiles('wrappers/node') }}
@@ -275,7 +275,7 @@ jobs:
         if: steps.cache-image-codecov.outputs.cache-hit != 'true'
         run: |
           set -x
-          docker build -f ci/libvcx-ubuntu.dockerfile \
+          docker build -f ci/libvcx-codecov.dockerfile \
                        -t "$DOCKER_IMG_NAME_CODECOV" \
                         .
           mkdir -p /tmp/imgcache
