@@ -68,19 +68,24 @@ mod test {
     use crate::messages::connection::service::FullService;
     use crate::utils::mockdata::mockdata_oob;
     use crate::utils::devsetup::SetupMocks;
+    use crate::handlers::out_of_band::sender::sender::OutOfBandSender;
+    use crate::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_oob_serialize_deserialize() {
         let _setup = SetupMocks::init();
-        let mut oob = OutOfBand::create()
+        let mut oob_sender = OutOfBandSender::create()
             .set_label("test")
             .set_goal("test")
-            .set_goal_code(&GoalCode::P2PMessaging);
-        oob.append_service(&ServiceResolvable::FullService(FullService::default())).unwrap();
-        let serialized_oob = oob.to_string().unwrap();
+            .set_goal_code(&GoalCode::P2PMessaging)
+            .append_service(&ServiceResolvable::FullService(FullService::default()));
+        let serialized_oob = oob_sender.to_string().unwrap();
         assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
-        let deserialized_oob = OutOfBand::from_string(&serialized_oob).unwrap();
-        assert_eq!(oob, deserialized_oob);
+        let deserialized_sender_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();
+        assert_eq!(oob_sender, deserialized_sender_oob);
+        assert_eq!(oob_sender.to_a2a_message(), deserialized_sender_oob.to_a2a_message());
+        let deserialized_receiver_oob = OutOfBandReceiver::from_string(&serialized_oob).unwrap();
+        assert_eq!(oob_sender.to_a2a_message(), deserialized_receiver_oob.to_a2a_message());
     }
 }

@@ -95,6 +95,8 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
+    use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
+    use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
@@ -1051,17 +1053,17 @@ mod tests {
         let mut request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None);
 
         let service = FullService::try_from(&institution.agent).unwrap();
-        let mut oob_sender = OutOfBand::create()
+        let mut oob_sender = OutOfBandSender::create()
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
-            .set_goal("To exchange message");
-        oob_sender.append_service(&ServiceResolvable::FullService(service));
-        oob_sender.append_handshake_protocol(&HandshakeProtocol::ConnectionV1).unwrap();
-        oob_sender.append_a2a_message(request_sender.to_a2a_message()).unwrap();
+            .set_goal("To exchange message")
+            .append_service(&ServiceResolvable::FullService(service))
+            .append_handshake_protocol(&HandshakeProtocol::ConnectionV1).unwrap()
+            .append_a2a_message(request_sender.to_a2a_message()).unwrap();
         let oob_msg = oob_sender.to_a2a_message();
 
         consumer.activate().unwrap();
-        let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![];
         let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_none());
@@ -1069,7 +1071,7 @@ mod tests {
         conn_receiver.connect().unwrap();
         conn_receiver.update_state().unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
-        assert_eq!(oob_sender.id.0, oob_receiver.id.0);
+        assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
         let mut conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver);
 
@@ -1113,15 +1115,15 @@ mod tests {
 
         institution.activate().unwrap();
         let service = FullService::try_from(&institution.agent).unwrap();
-        let mut oob_sender = OutOfBand::create()
+        let mut oob_sender = OutOfBandSender::create()
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
-            .set_goal("To exchange message");
-        oob_sender.append_service(&ServiceResolvable::FullService(service));
+            .set_goal("To exchange message")
+            .append_service(&ServiceResolvable::FullService(service));
         let oob_msg = oob_sender.to_a2a_message();
 
         consumer.activate().unwrap();
-        let oob_receiver = OutOfBand::create_from_a2a_msg(&oob_msg).unwrap();
+        let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
         let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_some());

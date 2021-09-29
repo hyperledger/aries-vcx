@@ -6,48 +6,53 @@ use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::error::prelude::*;
 
-impl OutOfBand {
+#[derive(Default, Debug, PartialEq, Clone)]
+pub struct OutOfBandSender {
+    pub oob: OutOfBand
+}
+
+impl OutOfBandSender {
     pub fn create() -> Self {
         Self::default()
     }
 
     pub fn set_label(mut self, label: &str) -> Self {
-        self.label = Some(label.to_string());
+        self.oob.label = Some(label.to_string());
         self
     }
 
     pub fn set_goal_code(mut self, goal_code: &GoalCode) -> Self {
-        self.goal_code = Some(goal_code.clone());
+        self.oob.goal_code = Some(goal_code.clone());
         self
     }
 
     pub fn set_goal(mut self, goal: &str) -> Self {
-        self.goal = Some(goal.to_string());
+        self.oob.goal = Some(goal.to_string());
         self
     }
 
-    pub fn append_service(&mut self, service: &ServiceResolvable) -> VcxResult<()> {
-        self.services.push(service.clone());
-        Ok(())
+    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
+        self.oob.services.push(service.clone());
+        self
     }
 
-    pub fn append_handshake_protocol(&mut self, protocol: &HandshakeProtocol) -> VcxResult<()> {
+    pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
         };
-        match self.handshake_protocols {
+        match self.oob.handshake_protocols {
             Some(ref mut protocols) => {
                 protocols.push(new_protocol);
             }
             None =>  {
-                self.handshake_protocols = Some(vec![new_protocol]);
+                self.oob.handshake_protocols = Some(vec![new_protocol]);
             }
         };
-        Ok(())
+        Ok(self)
     }
 
-    pub fn append_a2a_message(&mut self, msg: A2AMessage) -> VcxResult<()> {
+    pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
             A2AMessage::CredentialRequest(request) => {
                 (AttachmentId::CredentialRequest,
@@ -78,7 +83,21 @@ impl OutOfBand {
                 return Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
             }
         };
-        self.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
-        Ok(())
+        self.oob.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
+        Ok(self)
+    }
+
+    pub fn to_a2a_message(&self) -> A2AMessage {
+        self.oob.to_a2a_message()
+    }
+
+    pub fn to_string(&self) -> VcxResult<String> {
+        self.oob.to_string()
+    }
+
+    pub fn from_string(oob_data: &str) -> VcxResult<Self> {
+        Ok(Self {
+            oob: OutOfBand::from_string(oob_data)?
+        })
     }
 }
