@@ -64,7 +64,8 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob| {
         let msg: A2AMessage = serde_json::from_str(msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-        oob.append_a2a_message(msg).map_err(|err| err.into())
+        *oob = oob.clone().append_a2a_message(msg)?;
+        Ok(())
     })
 }
 
@@ -73,7 +74,8 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob| {
         let service: FullService = serde_json::from_str(service)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize service: {:?}", err)))?;
-        oob.append_service(&ServiceResolvable::FullService(service)).map_err(|err| err.into())
+        *oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
+        Ok(())
     })
 }
 

@@ -6,7 +6,7 @@ use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::error::prelude::*;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
     pub oob: OutOfBand
 }
@@ -31,12 +31,12 @@ impl OutOfBandSender {
         self
     }
 
-    pub fn append_service(&mut self, service: &ServiceResolvable) -> VcxResult<()> {
+    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
         self.oob.services.push(service.clone());
-        Ok(())
+        self
     }
 
-    pub fn append_handshake_protocol(&mut self, protocol: &HandshakeProtocol) -> VcxResult<()> {
+    pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
@@ -49,10 +49,10 @@ impl OutOfBandSender {
                 self.oob.handshake_protocols = Some(vec![new_protocol]);
             }
         };
-        Ok(())
+        Ok(self)
     }
 
-    pub fn append_a2a_message(&mut self, msg: A2AMessage) -> VcxResult<()> {
+    pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
             A2AMessage::CredentialRequest(request) => {
                 (AttachmentId::CredentialRequest,
@@ -84,7 +84,7 @@ impl OutOfBandSender {
             }
         };
         self.oob.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
-        Ok(())
+        Ok(self)
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {

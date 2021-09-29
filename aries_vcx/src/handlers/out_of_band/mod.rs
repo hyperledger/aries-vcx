@@ -78,8 +78,8 @@ mod test {
         let mut oob_sender = OutOfBandSender::create()
             .set_label("test")
             .set_goal("test")
-            .set_goal_code(&GoalCode::P2PMessaging);
-        oob_sender.append_service(&ServiceResolvable::FullService(FullService::default())).unwrap();
+            .set_goal_code(&GoalCode::P2PMessaging)
+            .append_service(&ServiceResolvable::FullService(FullService::default()));
         let serialized_oob = oob_sender.to_string().unwrap();
         assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
         let deserialized_sender_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();
