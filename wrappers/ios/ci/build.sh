@@ -55,7 +55,7 @@ setup() {
     which cmake &>/dev/null || brew install cmake
     which wget &>/dev/null || brew install wget
     which truncate &>/dev/null || brew install truncate
-    brew list openssl &>/dev/null || brew install openssl
+    brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
 
