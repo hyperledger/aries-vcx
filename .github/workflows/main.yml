@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - "**"
   pull_request:
     branches:
       - "**"
@@ -114,6 +114,9 @@ jobs:
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${ARIESVCX_SOURCE_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${ARIESVCX_SOURCE_HASH:0:11}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
+
+          echo "$GITHUB_ACTOR"
+          echo "${{ github.actor }}"
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=RELEASE::$RELEASE"
@@ -1011,12 +1014,12 @@ jobs:
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX" || { echo "Image $DOCKER_IMG_NAME_LIBVCX was not found!" ; exit 1; }
 
-      - name: Docker Login
-        uses: azure/docker-login@v1
-        with:
-          login-server: ghcr.io
-          username: $GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Docker Login
+      #   uses: azure/docker-login@v1
+      #   with:
+      #     login-server: ghcr.io
+      #     username: $GITHUB_ACTOR
+      #     password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish image
         run: |
