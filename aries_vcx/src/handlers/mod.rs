@@ -39,10 +39,12 @@ impl From<ConnectionState> for u32 {
 impl From<HolderState> for u32 {
     fn from(state: HolderState) -> u32 {
         match state {
-            HolderState::OfferReceived => 0,
-            HolderState::RequestSent => 1,
-            HolderState::Finished => 2,
-            HolderState::Failed => 3
+            HolderState::Initial => 0,
+            HolderState::ProposalSent => 1,
+            HolderState::OfferReceived => 2,
+            HolderState::RequestSent => 3,
+            HolderState::Finished => 4,
+            HolderState::Failed => 5
         }
     }
 }

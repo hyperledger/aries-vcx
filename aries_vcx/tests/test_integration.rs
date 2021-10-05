@@ -246,7 +246,7 @@ mod tests {
         let offer = serde_json::to_string(&offers[0]).unwrap();
         info!("send_cred_req :: creating credential from offer");
         let cred_offer: CredentialOffer = serde_json::from_str(&offer).unwrap();
-        let mut holder = Holder::create(cred_offer, "TEST_CREDENTIAL").unwrap();
+        let mut holder = Holder::create_from_offer(cred_offer, "TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
@@ -1287,7 +1287,7 @@ mod tests {
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
             let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).unwrap();
-            alice.credential = Holder::create(cred_offer, "test").unwrap();
+            alice.credential = Holder::create_from_offer(cred_offer, "test").unwrap();
 
             let pw_did = alice.connection.pairwise_info().pw_did.to_string();
             alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap());
@@ -1355,7 +1355,7 @@ mod tests {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
 
             let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
-            alice.credential = Holder::create(cred_offer, "test").unwrap();
+            alice.credential = Holder::create_from_offer(cred_offer, "test").unwrap();
 
             alice.connection.update_message_status(message.uid).unwrap();
 

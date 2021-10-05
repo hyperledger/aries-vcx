@@ -5,6 +5,8 @@ use crate::handlers::issuance::holder::holder::HolderState;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::handlers::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::handlers::issuance::holder::states::request_sent::RequestSentState;
+use crate::handlers::issuance::holder::states::proposal_sent::ProposalSentState;
+use crate::handlers::issuance::holder::states::initial::InitialHolderState;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
@@ -14,10 +16,13 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_ack::CredentialAck;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
+    Initial(InitialHolderState),
+    ProposalSent(ProposalSentState),
     OfferReceived(OfferReceivedState),
     RequestSent(RequestSentState),
     Finished(FinishedHolderState),
@@ -37,7 +42,15 @@ impl Default for HolderFullState {
 }
 
 impl HolderSM {
-    pub fn new(offer: CredentialOffer, source_id: String) -> Self {
+    pub fn from_proposal(proposal: CredentialProposal, source_id: String) -> Self {
+        HolderSM {
+            thread_id: proposal.id.0.clone(),
+            state: HolderFullState::Initial(InitialHolderState::new(proposal)),
+            source_id,
+        }
+    }
+
+    pub fn from_offer(offer: CredentialOffer, source_id: String) -> Self {
         HolderSM {
             thread_id: offer.id.0.clone(),
             state: HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
@@ -51,6 +64,8 @@ impl HolderSM {
 
     pub fn get_state(&self) -> HolderState {
         match self.state {
+            HolderFullState::Initial(_) => HolderState::Initial,
+            HolderFullState::ProposalSent(_) => HolderState::ProposalSent,
             HolderFullState::OfferReceived(_) => HolderState::OfferReceived,
             HolderFullState::RequestSent(_) => HolderState::RequestSent,
             HolderFullState::Finished(ref status) => {
@@ -67,6 +82,19 @@ impl HolderSM {
 
         for (uid, message) in messages {
             match self.state {
+                HolderFullState::Initial(_) => {
+                    // do not process messages
+                }
+                HolderFullState::ProposalSent(_) => {
+                    match message {
+                        A2AMessage::CredentialOffer(offer) => {
+                            if offer.from_thread(&self.thread_id) {
+                                return Some((uid, A2AMessage::CredentialOffer(offer)));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
                 HolderFullState::OfferReceived(_) => {
                     // do not process messages
                 }
@@ -103,6 +131,26 @@ impl HolderSM {
         let HolderSM { state, source_id, thread_id } = self;
         verify_thread_id(&thread_id, &cim)?;
         let state = match state {
+            HolderFullState::Initial(state_data) => match cim {
+                CredentialIssuanceMessage::CredentialProposalSend(proposal) => {
+                    send_message.ok_or(
+                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                    )?(&proposal.to_a2a_message())?;
+                    HolderFullState::Initial(state_data)
+                },
+                _ => {
+                    HolderFullState::Initial(state_data)
+                }
+            },
+            HolderFullState::ProposalSent(state_data) => match cim {
+                CredentialIssuanceMessage::CredentialOffer(offer) => {
+                    HolderFullState::OfferReceived(OfferReceivedState::new(offer))
+                },
+                _ => {
+                    warn!("In this state Credential Issuance can accept only Credential Offer");
+                    HolderFullState::ProposalSent(state_data)
+                }
+            },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialRequestSend(my_pw_did) => {
                     let request = _make_credential_request(my_pw_did, &state_data.offer);
@@ -240,6 +288,8 @@ impl HolderSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match self.state {
+            HolderFullState::Initial(ref state) => state.is_revokable(),
+            HolderFullState::ProposalSent(ref state) => state.is_revokable(),
             HolderFullState::OfferReceived(ref state) => state.is_revokable(),
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable()
@@ -343,7 +393,7 @@ mod test {
     use super::*;
 
     fn _holder_sm() -> HolderSM {
-        HolderSM::new(_credential_offer(), source_id())
+        HolderSM::from_offer(_credential_offer(), source_id())
     }
 
     fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
@@ -408,7 +458,7 @@ mod test {
 
             let credential_offer = CredentialOffer::create().set_offers_attach(r#"{"credential offer": {}}"#).unwrap();
 
-            let mut holder_sm = HolderSM::new(credential_offer, "test source".to_string());
+            let mut holder_sm = HolderSM::from_offer(credential_offer, "test source".to_string());
             holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
 
             assert_match!(HolderFullState::Finished(_), holder_sm.state);

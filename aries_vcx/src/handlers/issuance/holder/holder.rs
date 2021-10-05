@@ -6,6 +6,7 @@ use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_proposal::CredentialProposal;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -14,6 +15,8 @@ pub struct Holder {
 
 #[derive(Debug, PartialEq)]
 pub enum HolderState {
+    Initial,
+    ProposalSent,
     OfferReceived,
     RequestSent,
     Finished,
@@ -21,16 +24,29 @@ pub enum HolderState {
 }
 
 impl Holder {
-    pub fn create(credential_offer: CredentialOffer, source_id: &str) -> VcxResult<Holder> {
-        trace!("Holder::holder_create_credential >>> credential_offer: {:?}, source_id: {:?}", credential_offer, source_id);
-
-        let holder_sm = HolderSM::new(credential_offer, source_id.to_string());
-
+    pub fn create_from_proposal(credential_proposal: CredentialProposal, source_id: &str) -> VcxResult<Holder> {
+        trace!("Holder::create_from_proposal >>> credential_proposal: {:?}, source_id: {:?}", credential_proposal, source_id);
+        let holder_sm = HolderSM::from_proposal(credential_proposal, source_id.to_string());
         Ok(Holder { holder_sm })
+    }
+
+    pub fn create_from_offer(credential_offer: CredentialOffer, source_id: &str) -> VcxResult<Holder> {
+        trace!("Holder::create_from_offer >>> credential_offer: {:?}, source_id: {:?}", credential_offer, source_id);
+        let holder_sm = HolderSM::from_offer(credential_offer, source_id.to_string());
+        Ok(Holder { holder_sm })
+    }
+
+    pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
     }
 
     pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
+    }
+
+    // TODO: Allow to reject the offer
+    pub fn reject_offer(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        Ok(())
     }
 
     pub fn is_terminal_state(&self) -> bool {
