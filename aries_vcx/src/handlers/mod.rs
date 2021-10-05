@@ -53,11 +53,12 @@ impl From<IssuerState> for u32 {
     fn from(state: IssuerState) -> u32 {
         match state {
             IssuerState::Initial => 0,
-            IssuerState::OfferSent => 1,
-            IssuerState::RequestReceived => 2,
-            IssuerState::CredentialSent => 3,
-            IssuerState::Finished => 4,
-            IssuerState::Failed => 5
+            IssuerState::ProposalReceived => 1,
+            IssuerState::OfferSent => 2,
+            IssuerState::RequestReceived => 3,
+            IssuerState::CredentialSent => 4,
+            IssuerState::Finished => 5,
+            IssuerState::Failed => 6
         }
     }
 }

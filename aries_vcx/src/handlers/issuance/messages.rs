@@ -8,7 +8,7 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialInit(Option<String>),
+    CredentialOfferSend(Option<String>),
     CredentialSend(),
     CredentialProposalSend(CredentialProposal),
     CredentialProposal(CredentialProposal),

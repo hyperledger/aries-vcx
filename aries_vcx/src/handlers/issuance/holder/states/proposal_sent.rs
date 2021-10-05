@@ -8,10 +8,6 @@ pub struct ProposalSentState {
 }
 
 impl ProposalSentState {
-    pub fn new(credential_proposal: CredentialProposal) -> Self {
-        Self { credential_proposal }
-    }
-
     pub fn is_revokable(&self) -> VcxResult<bool> {
         is_cred_def_revokable(&self.credential_proposal.cred_def_id)
     }

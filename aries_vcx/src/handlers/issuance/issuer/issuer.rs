@@ -4,6 +4,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::a2a::A2AMessage;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -21,6 +22,7 @@ pub struct IssuerConfig {
 #[derive(Debug, PartialEq)]
 pub enum IssuerState {
     Initial,
+    ProposalReceived,
     OfferSent,
     RequestReceived,
     CredentialSent,
@@ -30,14 +32,19 @@ pub enum IssuerState {
 
 impl Issuer {
     pub fn create(issuer_config: &IssuerConfig, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::issuer_create_credential >>> issuer_config: {:?}, credential_data: {:?}, source_id: {:?}", issuer_config, credential_data, source_id);
-
+        trace!("Issuer::create >>> issuer_config: {:?}, credential_data: {:?}, source_id: {:?}", issuer_config, credential_data, source_id);
         let issuer_sm = IssuerSM::new(&issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone(), source_id);
         Ok(Issuer { issuer_sm })
     }
 
+    pub fn create_from_proposal(credential_proposal: &CredentialProposal, source_id: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::create_from_proposal >>> credential_proposal: {:?}, source_id: {:?}", credential_proposal, source_id);
+        let issuer_sm = IssuerSM::from_proposal(credential_proposal, source_id);
+        Ok(Issuer { issuer_sm })
+    }
+
     pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialInit(comment), Some(&send_message))
+        self.step(CredentialIssuanceMessage::CredentialOfferSend(comment), Some(&send_message))
     }
 
     pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -141,18 +148,18 @@ pub mod test {
 
     impl Issuer {
         fn to_offer_sent_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self
         }
 
         fn to_request_received_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
             self

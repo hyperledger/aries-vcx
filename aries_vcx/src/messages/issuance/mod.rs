@@ -1,7 +1,7 @@
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::mime_type::MimeType;
-use crate::error::VcxResult;
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
 pub mod credential;
 pub mod credential_offer;
@@ -33,6 +33,11 @@ impl CredentialPreviewData {
         };
         self.attributes.push(data_value);
         Ok(self)
+    }
+
+    pub fn get_values_json(&self) -> VcxResult<String> {
+        serde_json::to_string(&self.attributes)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed serialize credential preview attributes\nError: {}", err)))
     }
 }
 

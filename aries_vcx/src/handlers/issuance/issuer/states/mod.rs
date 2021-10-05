@@ -3,3 +3,4 @@ pub(super) mod finished;
 pub(super) mod initial;
 pub(super) mod offer_sent;
 pub(super) mod requested_received;
+pub(super) mod proposal_received;
