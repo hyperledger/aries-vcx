@@ -4,7 +4,7 @@ use crate::handlers::issuance::is_cred_def_revokable;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InitialHolderState {
-    credential_proposal: CredentialProposal
+    pub credential_proposal: CredentialProposal
 }
 
 impl InitialHolderState {

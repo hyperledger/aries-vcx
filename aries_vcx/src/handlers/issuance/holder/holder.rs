@@ -36,9 +36,10 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
-    }
+    // TODO: Maybe this would be better?
+    // pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    //     self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
+    // }
 
     pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
@@ -115,11 +116,17 @@ impl Holder {
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
-        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
-        }
+        match self.get_state() {
+            HolderState::Initial => self.step(CredentialIssuanceMessage::CredentialProposalSend(self.holder_sm.get_proposal()?), Some(&send_message))?,
+            _ => {
+                let messages = connection.get_messages()?;
+                if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+                    self.step(msg.into(), Some(&send_message))?;
+                    connection.update_message_status(uid)?;
+                }
+            }
+        };
+
         Ok(self.get_state())
     }
 }

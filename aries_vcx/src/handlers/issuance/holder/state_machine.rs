@@ -77,6 +77,14 @@ impl HolderSM {
         }
     }
 
+    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
+        match &self.state {
+            HolderFullState::Initial(state) => Ok(state.credential_proposal.clone()),
+            HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Proposal not available in this state"))
+        }
+    }
+
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Holder::find_message_to_handle >>> messages: {:?}, state: {:?}", messages, self.state);
 
@@ -136,7 +144,7 @@ impl HolderSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&proposal.to_a2a_message())?;
-                    HolderFullState::Initial(state_data)
+                    HolderFullState::ProposalSent(ProposalSentState::new(proposal))
                 },
                 _ => {
                     HolderFullState::Initial(state_data)

@@ -143,7 +143,7 @@ impl IssuerSM {
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
-        trace!("IssuerSM::find_message_to_handle >>> messages: {:?}", messages);
+        trace!("IssuerSM::find_message_to_handle >>> messages: {:?}, state: {:?}", messages, self.state);
 
         for (uid, message) in messages {
             match self.state {
@@ -252,6 +252,7 @@ impl IssuerSM {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.credential_proposal.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
+                        .set_thread_id(&state_data.credential_proposal.id.0)
                         .set_offers_attach(&cred_offer)?
                         .set_comment(comment);
                     let credential_json = state_data.credential_proposal.credential_proposal.get_values_json()?;
@@ -259,7 +260,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    IssuerFullState::OfferSent((credential_json, cred_offer, cred_offer_msg.id, state_data.rev_reg_id, state_data.tails_file).into())
+                    IssuerFullState::OfferSent((credential_json, cred_offer, state_data.credential_proposal.id.0.clone(), state_data.rev_reg_id, state_data.tails_file).into())
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");

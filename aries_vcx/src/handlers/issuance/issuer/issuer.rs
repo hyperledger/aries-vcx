@@ -134,7 +134,7 @@ pub mod test {
     }
 
     fn _issuer_revokable_from_proposal() -> Issuer {
-        Issuer::create_from_proposal("test_source_id", _credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())).unwrap()
+        Issuer::create_from_proposal("test_source_id", &_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())).unwrap()
     }
 
     fn _issuer_unrevokable() -> Issuer {
@@ -200,7 +200,7 @@ pub mod test {
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let issuer = _issuer_from_proposal().to_finished_state();
+        let issuer = _issuer_revokable_from_proposal().to_finished_state();
     }
 
     #[test]
