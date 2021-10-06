@@ -167,48 +167,48 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         json!([
            {
-              "name":address1,
+               "name": address1,
                "non_revoked": {"from": from, "to": to},
-              "restrictions": [{
-                "issuer_did": did,
-                "schema_id": schema_id,
-                "cred_def_id": cred_def_id,
+               "restrictions": [{
+                 "issuer_did": did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
                }]
            },
            {
-              "name":address2,
+               "name": address2,
                "non_revoked": {"from": from, "to": to},
-              "restrictions": [{
-                "issuer_did": did,
-                "schema_id": schema_id,
-                "cred_def_id": cred_def_id,
+               "restrictions": [{
+                 "issuer_did": did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
                }],
            },
            {
-              "name":city,
+               "name": city,
                "non_revoked": {"from": from, "to": to},
-              "restrictions": [{
-                "issuer_did": did,
-                "schema_id": schema_id,
-                "cred_def_id": cred_def_id,
+               "restrictions": [{
+                 "issuer_did": did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
                }]
            },
            {
-              "name":state,
+               "name": state,
                "non_revoked": {"from": from, "to": to},
-              "restrictions": [{
-                "issuer_did": did,
-                "schema_id": schema_id,
-                "cred_def_id": cred_def_id,
+               "restrictions": [{
+                 "issuer_did": did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
                }]
            },
            {
-              "name":zip,
+               "name": zip,
                "non_revoked": {"from": from, "to": to},
-              "restrictions": [{
-                "issuer_did": did,
-                "schema_id": schema_id,
-                "cred_def_id": cred_def_id,
+               "restrictions": [{
+                 "issuer_did": did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
                }]
            }
         ])
@@ -530,6 +530,100 @@ mod tests {
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
         generate_and_send_proof(consumer, &mut prover, consumer_to_institution, &selected_credentials_str);
     }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_proof_should_be_validated() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
+        institution.activate().unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let requested_attrs_string = serde_json::to_string(&json!([
+           {
+               "name": "address1",
+               "restrictions": [{
+                 "issuer_did": institution_did,
+                 "schema_id": schema_id,
+                 "cred_def_id": cred_def_id,
+               }]
+           }])).unwrap();
+
+
+        info!("test_basic_proof :: Going to seng proof request with attributes {}", &requested_attrs_string);
+        let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", "{}", None);
+
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
+
+        info!("test_basic_revocation :: verifier :: going to verify proof");
+        institution.activate().unwrap();
+        verifier.update_state(&institution_to_consumer).unwrap();
+        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+    }
+
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_proof_with_predicates_should_be_validated() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
+        institution.activate().unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let requested_preds_string = serde_json::to_string(&json!([
+           {
+               "name": "zip",
+               "p_type": ">=",
+               "p_value": 83000
+           }])).unwrap();
+
+        info!("test_basic_proof :: Going to seng proof request with attributes {}", &requested_preds_string);
+        let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, "[]", &requested_preds_string, "{}", None);
+
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
+
+        info!("test_basic_revocation :: verifier :: going to verify proof");
+        institution.activate().unwrap();
+        verifier.update_state(&institution_to_consumer).unwrap();
+        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        warn!("verifier received presentation!: {}", verifier.get_presentation_attachment().unwrap());
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[test]
+    fn test_it_should_fail_to_selected_credentials_for_predicate() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, cred_def_id, rev_reg_id, _cred_def, credential_handle) = _issue_address_credential(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer);
+        institution.activate().unwrap();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let requested_preds_string = serde_json::to_string(&json!([
+           {
+               "name": "zip",
+               "p_type": ">=",
+               "p_value": 85000
+           }])).unwrap();
+
+        info!("test_basic_proof :: Going to seng proof request with attributes {}", &requested_preds_string);
+        let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, "[]", &requested_preds_string, "{}", None);
+
+        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None); // << should fail, indeed!
+
+        info!("test_basic_revocation :: verifier :: going to verify proof");
+        institution.activate().unwrap();
+        verifier.update_state(&institution_to_consumer).unwrap();
+        assert_eq!(verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+    }
+
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
@@ -1674,7 +1768,7 @@ mod tests {
         let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).unwrap();
         consumer_to_institution.connect().unwrap();
         consumer_to_institution.update_state().unwrap();
-        
+
         let mut institution_to_consumer = connect_using_request_sent_to_public_agent(consumer, institution, &mut consumer_to_institution);
         (consumer_to_institution, institution_to_consumer)
     }

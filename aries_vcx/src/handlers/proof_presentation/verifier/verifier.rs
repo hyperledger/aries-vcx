@@ -87,6 +87,10 @@ impl Verifier {
         Ok(json!(proof).to_string())
     }
 
+    pub fn get_presentation_attachment(&self) -> VcxResult<String> {
+        self.verifier_sm.presentation()?.presentations_attach.content()
+    }
+
     pub fn get_thread_id(&self) -> VcxResult<String> {
         Ok(self.verifier_sm.thread_id())
     }
