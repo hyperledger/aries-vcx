@@ -31,15 +31,15 @@ pub enum IssuerState {
 }
 
 impl Issuer {
-    pub fn create(issuer_config: &IssuerConfig, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::create >>> issuer_config: {:?}, credential_data: {:?}, source_id: {:?}", issuer_config, credential_data, source_id);
+    pub fn create(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::create >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
         let issuer_sm = IssuerSM::new(&issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone(), source_id);
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn create_from_proposal(credential_proposal: &CredentialProposal, source_id: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::create_from_proposal >>> credential_proposal: {:?}, source_id: {:?}", credential_proposal, source_id);
-        let issuer_sm = IssuerSM::from_proposal(credential_proposal, source_id);
+    pub fn create_from_proposal(source_id: &str, credential_proposal: &CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Issuer> {
+        trace!("Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}", source_id, credential_proposal);
+        let issuer_sm = IssuerSM::from_proposal(source_id, credential_proposal, rev_reg_id, tails_file);
         Ok(Issuer { issuer_sm })
     }
 
@@ -130,7 +130,7 @@ pub mod test {
             rev_reg_id: Some(_rev_reg_id()),
             tails_file: Some(_tails_file())
         };
-        Issuer::create(&issuer_config, &_cred_data(), "test_source_id").unwrap()
+        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
     fn _issuer_unrevokable() -> Issuer {
@@ -139,7 +139,7 @@ pub mod test {
             rev_reg_id: None,
             tails_file: None
         };
-        Issuer::create(&issuer_config, &_cred_data(), "test_source_id").unwrap()
+        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
     fn _send_message_but_fail() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {

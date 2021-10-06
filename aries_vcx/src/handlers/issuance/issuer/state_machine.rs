@@ -72,9 +72,9 @@ impl IssuerSM {
         }
     }
 
-    pub fn from_proposal(credential_proposal: &CredentialProposal, source_id: &str) -> Self {
+    pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
         IssuerSM {
-            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone())),
+            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), rev_reg_id, tails_file)),
             source_id: source_id.to_string(),
         }
     }
@@ -118,7 +118,7 @@ impl IssuerSM {
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
             IssuerFullState::Initial(state) => state.rev_reg_id.clone(),
-            IssuerFullState::ProposalReceived(state) => state.get_rev_reg_id()?,
+            IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.clone()
@@ -163,6 +163,13 @@ impl IssuerSM {
                         A2AMessage::CredentialRequest(credential) => {
                             if credential.from_thread(&self.state.thread_id()) {
                                 return Some((uid, A2AMessage::CredentialRequest(credential)));
+                            }
+                        }
+                        A2AMessage::CredentialProposal(credential_proposal) => {
+                            if let Some(ref thread) = credential_proposal.thread {
+                                if thread.is_reply(&self.state.thread_id()) {
+                                    return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
+                                }
                             }
                         }
                         A2AMessage::CommonProblemReport(problem_report) => {
@@ -233,8 +240,8 @@ impl IssuerSM {
                     )?(&cred_offer_msg.to_a2a_message())?;
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
                 }
-                CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal))
+                CredentialIssuanceMessage::CredentialProposal(proposal, rev_reg_id, tails_file) => {
+                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, rev_reg_id, tails_file))
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");
@@ -243,10 +250,6 @@ impl IssuerSM {
             }
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
-                    let (_, cred_def_json) = get_cred_def(None, &state_data.credential_proposal.cred_def_id)?;
-                    let cred_def = CredentialDef::from_str(&cred_def_json)?;
-                    let rev_reg_id = cred_def.get_rev_reg_id();
-                    let tails_file = cred_def.get_tails_file();
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.credential_proposal.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
                         .set_offers_attach(&cred_offer)?
@@ -256,7 +259,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    IssuerFullState::OfferSent((credential_json, cred_offer, cred_offer_msg.id, rev_reg_id, tails_file).into())
+                    IssuerFullState::OfferSent((credential_json, cred_offer, cred_offer_msg.id, state_data.rev_reg_id, state_data.tails_file).into())
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");
@@ -267,7 +270,7 @@ impl IssuerSM {
                 CredentialIssuanceMessage::CredentialRequest(request) => {
                     IssuerFullState::RequestReceived((state_data, request).into())
                 }
-                CredentialIssuanceMessage::CredentialProposal(_) => {
+                CredentialIssuanceMessage::CredentialProposal(_, _, _) => {
                     let problem_report = ProblemReport::create()
                         .set_comment(String::from("CredentialProposal is not supported"))
                         .set_thread_id(&state_data.thread_id);
@@ -441,7 +444,7 @@ pub mod test {
 
     impl IssuerSM {
         fn to_proposal_received_state(mut self) -> IssuerSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())), _send_message()).unwrap();
             self
         }
 
@@ -505,7 +508,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_pffer_send__message_from_proposal_received() {
+        fn test_issuer_handle_credential_pffer_send_message_from_proposal_received() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm().to_proposal_received_state();
@@ -561,7 +564,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal(), None, None), _send_message()).unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -737,7 +740,9 @@ pub mod test {
                     "key_4".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
                 );
 
-                assert!(issuer.find_message_to_handle(messages).is_none());
+                let (uid, message) = issuer.find_message_to_handle(messages).unwrap();
+                assert_eq!("key_4", uid);
+                assert_match!(A2AMessage::CredentialProposal(_), message);
             }
 
             // Problem Report

@@ -33,7 +33,7 @@ pub fn issuer_credential_create(cred_def_handle: u32,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
-    let issuer = Issuer::create(&issuer_config, &credential_data, &source_id)?;
+    let issuer = Issuer::create(&source_id, &issuer_config, &credential_data)?;
     ISSUER_CREDENTIAL_MAP.add(issuer)
 }
 

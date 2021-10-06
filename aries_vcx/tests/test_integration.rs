@@ -219,7 +219,7 @@ mod tests {
             rev_reg_id: cred_def.get_rev_reg_id(),
             tails_file: cred_def.get_tails_file(),
         };
-        let mut issuer = Issuer::create(&issuer_config, &credential_data, "1").unwrap();
+        let mut issuer = Issuer::create("1", &issuer_config, &credential_data).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
         issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment.map(|s| String::from(s))).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
