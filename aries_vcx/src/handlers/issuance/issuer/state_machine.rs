@@ -65,7 +65,7 @@ pub struct IssuerSM {
 }
 
 impl IssuerSM {
-    pub fn new(cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>, source_id: &str) -> Self {
+    pub fn new(source_id: &str, cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
         IssuerSM {
             state: IssuerFullState::Initial(InitialState::new(cred_def_id, credential_data, rev_reg_id, tails_file)),
             source_id: source_id.to_string(),
@@ -439,7 +439,7 @@ pub mod test {
     }
 
     fn _issuer_sm() -> IssuerSM {
-        IssuerSM::new("test", &json!({"name": "alice"}).to_string(), Some(_rev_reg_id()), Some(_tails_file()), &source_id())
+        IssuerSM::new(&source_id(), "test", &json!({"name": "alice"}).to_string(), Some(_rev_reg_id()), Some(_tails_file()))
     }
 
     impl IssuerSM {

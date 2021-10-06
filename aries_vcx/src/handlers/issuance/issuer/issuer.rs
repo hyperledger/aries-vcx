@@ -33,7 +33,7 @@ pub enum IssuerState {
 impl Issuer {
     pub fn create(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
         trace!("Issuer::create >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
-        let issuer_sm = IssuerSM::new(&issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone(), source_id);
+        let issuer_sm = IssuerSM::new(source_id, &issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone());
         Ok(Issuer { issuer_sm })
     }
 
@@ -133,6 +133,10 @@ pub mod test {
         Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
+    fn _issuer_revokable_from_proposal() -> Issuer {
+        Issuer::create_from_proposal("test_source_id", _credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())).unwrap()
+    }
+
     fn _issuer_unrevokable() -> Issuer {
         let issuer_config = IssuerConfig {
             cred_def_id: _cred_def_id(),
@@ -190,5 +194,17 @@ pub mod test {
         let send_result = issuer.send_credential(_send_message().unwrap());
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_without_negotiation() {
+        let _setup = SetupMocks::init();
+        let issuer = _issuer_from_proposal().to_finished_state();
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_with_negotiation() {
     }
 }

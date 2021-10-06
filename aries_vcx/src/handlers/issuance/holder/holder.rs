@@ -24,14 +24,14 @@ pub enum HolderState {
 }
 
 impl Holder {
-    pub fn create_from_proposal(credential_proposal: CredentialProposal, source_id: &str) -> VcxResult<Holder> {
-        trace!("Holder::create_from_proposal >>> credential_proposal: {:?}, source_id: {:?}", credential_proposal, source_id);
+    pub fn create_from_proposal(source_id: &str, credential_proposal: CredentialProposal) -> VcxResult<Holder> {
+        trace!("Holder::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}", source_id, credential_proposal);
         let holder_sm = HolderSM::from_proposal(credential_proposal, source_id.to_string());
         Ok(Holder { holder_sm })
     }
 
-    pub fn create_from_offer(credential_offer: CredentialOffer, source_id: &str) -> VcxResult<Holder> {
-        trace!("Holder::create_from_offer >>> credential_offer: {:?}, source_id: {:?}", credential_offer, source_id);
+    pub fn create_from_offer(source_id: &str, credential_offer: CredentialOffer) -> VcxResult<Holder> {
+        trace!("Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}", source_id, credential_offer);
         let holder_sm = HolderSM::from_offer(credential_offer, source_id.to_string());
         Ok(Holder { holder_sm })
     }
@@ -121,5 +121,68 @@ impl Holder {
             connection.update_message_status(uid)?;
         }
         Ok(self.get_state())
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use crate::messages::issuance::credential::test_utils::_credential;
+    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
+    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use crate::messages::issuance::credential_request::test_utils::_my_pw_did;
+    use crate::utils::devsetup::SetupMocks;
+
+    use super::*;
+
+    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    }
+
+    fn _holder_from_offer() -> Holder {
+        Holder::create_from_offer("test_source_id", _credential_offer()).unwrap()
+    }
+
+    fn _holder_from_proposal() -> Holder {
+        Holder::create_from_proposal("test_source_id", _credential_proposal()).unwrap()
+    }
+
+    impl Holder {
+        fn to_proposal_sent_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self
+        }
+
+        fn to_offer_received_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
+            self
+        }
+
+        fn to_request_sent_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
+            self
+        }
+
+        fn to_finished_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+            self
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_without_negotiation() {
+        let _setup = SetupMocks::init();
+        let issuer = _holder_from_proposal().to_finished_state();
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_with_negotiation() {
     }
 }

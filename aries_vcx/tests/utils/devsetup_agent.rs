@@ -411,7 +411,7 @@ pub mod test {
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                                   format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err))).unwrap();
 
-            self.credential = Holder::create_from_offer(cred_offer, "degree").unwrap();
+            self.credential = Holder::create_from_offer("degree", cred_offer).unwrap();
             assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
