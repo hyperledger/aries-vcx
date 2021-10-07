@@ -822,7 +822,7 @@ jobs:
       - name: Run wrapper demo 
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo)'
@@ -830,7 +830,7 @@ jobs:
       - name: Run wrapper demo with revocation
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
@@ -838,7 +838,7 @@ jobs:
       - name: Run wrapper demo with legacy initialization
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:legacy)'

@@ -28,7 +28,7 @@ async function runFaber (options) {
     const agentName = `faber-${uuid.v4()}`
     vcxAgent = await createVcxAgent({
       agentName,
-      agencyUrl: 'http://localhost:8080',
+      agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
       seed: '000000000000000000000000Trustee1',
       usePostgresWallet: false,
       logger
