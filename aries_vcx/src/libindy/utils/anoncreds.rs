@@ -568,7 +568,7 @@ pub fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, Strin
 }
 
 pub fn get_cred_def(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
-    if settings::indy_mocks_enabled() { return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string())) }
+    if settings::indy_mocks_enabled() { return Err(VcxError::from(VcxErrorKind::LibndyError(309))); }
     libindy_build_get_cred_def_request(issuer_did, &cred_def_id)
         .and_then(|req| libindy_submit_request(&req))
         .and_then(|response| libindy_parse_get_cred_def_response(&response))
