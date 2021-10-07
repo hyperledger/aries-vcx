@@ -42,10 +42,10 @@ impl Default for HolderFullState {
 }
 
 impl HolderSM {
-    pub fn from_proposal(proposal: CredentialProposal, source_id: String) -> Self {
+    pub fn new(source_id: String) -> Self {
         HolderSM {
-            thread_id: proposal.id.0.clone(),
-            state: HolderFullState::Initial(InitialHolderState::new(proposal)),
+            thread_id: String::new(),
+            state: HolderFullState::Initial(InitialHolderState::new()),
             source_id,
         }
     }
@@ -79,7 +79,6 @@ impl HolderSM {
 
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
-            HolderFullState::Initial(state) => Ok(state.credential_proposal.clone()),
             HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Proposal not available in this state"))
         }
@@ -137,10 +136,12 @@ impl HolderSM {
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         let HolderSM { state, source_id, thread_id } = self;
+        let mut thread_id = thread_id.clone(); // TODO: Remove thread id from the SM
         verify_thread_id(&thread_id, &cim)?;
         let state = match state {
             HolderFullState::Initial(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialProposalSend(proposal) => {
+                    thread_id = proposal.id.0.clone();
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&proposal.to_a2a_message())?;

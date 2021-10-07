@@ -251,8 +251,9 @@ impl IssuerSM {
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.credential_proposal.cred_def_id)?;
+                    let thread_id = state_data.credential_proposal.id.0.clone();
                     let cred_offer_msg = CredentialOffer::create()
-                        .set_thread_id(&state_data.credential_proposal.id.0)
+                        .set_thread_id(&thread_id)
                         .set_offers_attach(&cred_offer)?
                         .set_comment(comment);
                     let credential_json = state_data.credential_proposal.credential_proposal.get_values_json()?;
@@ -260,7 +261,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    IssuerFullState::OfferSent((credential_json, cred_offer, state_data.credential_proposal.id.0.clone(), state_data.rev_reg_id, state_data.tails_file).into())
+                    IssuerFullState::OfferSent((credential_json, cred_offer, thread_id, state_data.rev_reg_id, state_data.tails_file).into())
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");

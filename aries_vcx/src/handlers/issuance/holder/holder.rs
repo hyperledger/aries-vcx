@@ -24,9 +24,9 @@ pub enum HolderState {
 }
 
 impl Holder {
-    pub fn create_from_proposal(source_id: &str, credential_proposal: CredentialProposal) -> VcxResult<Holder> {
-        trace!("Holder::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}", source_id, credential_proposal);
-        let holder_sm = HolderSM::from_proposal(credential_proposal, source_id.to_string());
+    pub fn create(source_id: &str) -> VcxResult<Holder> {
+        trace!("Holder::create >>> source_id: {:?}", source_id);
+        let holder_sm = HolderSM::new(source_id.to_string());
         Ok(Holder { holder_sm })
     }
 
@@ -36,10 +36,9 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    // TODO: Maybe this would be better?
-    // pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-    //     self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
-    // }
+    pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
+    }
 
     pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
@@ -116,17 +115,11 @@ impl Holder {
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        match self.get_state() {
-            HolderState::Initial => self.step(CredentialIssuanceMessage::CredentialProposalSend(self.holder_sm.get_proposal()?), Some(&send_message))?,
-            _ => {
-                let messages = connection.get_messages()?;
-                if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-                    self.step(msg.into(), Some(&send_message))?;
-                    connection.update_message_status(uid)?;
-                }
-            }
-        };
-
+        let messages = connection.get_messages()?;
+        if let Some((uid, msg)) = self.find_message_to_handle(messages) {
+            self.step(msg.into(), Some(&send_message))?;
+            connection.update_message_status(uid)?;
+        }
         Ok(self.get_state())
     }
 }
@@ -149,8 +142,8 @@ pub mod test {
         Holder::create_from_offer("test_source_id", _credential_offer()).unwrap()
     }
 
-    fn _holder_from_proposal() -> Holder {
-        Holder::create_from_proposal("test_source_id", _credential_proposal()).unwrap()
+    fn _holder() -> Holder {
+        Holder::create("test_source_id").unwrap()
     }
 
     impl Holder {
@@ -185,7 +178,7 @@ pub mod test {
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let issuer = _holder_from_proposal().to_finished_state();
+        let issuer = _holder().to_finished_state();
     }
 
     #[test]

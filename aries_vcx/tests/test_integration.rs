@@ -270,10 +270,9 @@ mod tests {
             .add_credential_preview_data(&city, "Draper", MimeType::Plain).unwrap()
             .add_credential_preview_data(&state, "UT", MimeType::Plain).unwrap()
             .add_credential_preview_data(&zip, "84000", MimeType::Plain).unwrap();
-        // TODO: Perheps create -> send_proposal would be better?
-        let mut holder = Holder::create_from_proposal("TEST_CREDENTIAL", proposal.clone()).unwrap();
+        let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
-        holder.update_state(connection).unwrap();
+        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
         thread::sleep(Duration::from_millis(1000));
         holder
@@ -282,10 +281,11 @@ mod tests {
     fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
         faber.activate().unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
-        let mut issuer = Issuer::create_from_proposal("testid", proposals.last().unwrap(), rev_reg_id, tails_file).unwrap();
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposals.last().unwrap(), rev_reg_id, tails_file).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment".to_string())).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        thread::sleep(Duration::from_millis(1000));
         issuer
     }
 
