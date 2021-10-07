@@ -278,6 +278,23 @@ mod tests {
         holder
     }
 
+    fn send_cred_proposal_1(holder: &mut Holder, alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) {
+        alice.activate().unwrap();
+        let (address1, address2, city, state, zip) = attr_names();
+        let proposal = CredentialProposal::create()
+            .set_schema_id(schema_id.to_string())
+            .set_cred_def_id(cred_def_id.to_string())
+            .set_comment(comment.to_string())
+            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&city, "Austin", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&state, "TX", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&zip, "42000", MimeType::Plain).unwrap();
+        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        thread::sleep(Duration::from_millis(1000));
+    }
+
     fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
         faber.activate().unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
@@ -289,6 +306,16 @@ mod tests {
         issuer
     }
 
+    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
+        faber.activate().unwrap();
+        let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
+        issuer.update_state(connection).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment".to_string())).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        thread::sleep(Duration::from_millis(1000));
+    }
+
     fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().unwrap();
         holder.update_state(connection).unwrap();
@@ -296,6 +323,15 @@ mod tests {
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
         holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
+    }
+
+    fn reject_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+        alice.activate().unwrap();
+        holder.update_state(connection).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+        let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        holder.reject_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::Finished, holder.get_state());
     }
 
     fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, holder_credential: &mut Holder, revokable: bool) {
@@ -1209,6 +1245,44 @@ mod tests {
         let tails_file = cred_def.get_tails_file().unwrap();
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_credential_exchange_via_proposal_failed() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
+        reject_offer(&mut consumer, &consumer_to_institution, &mut holder);
+        issuer.update_state(&institution_to_consumer).unwrap();
+        assert_eq!(IssuerState::Failed, issuer.get_state());
+    }
+
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_credential_exchange_via_proposal_with_negotiation() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id.clone(), Some(tails_file.clone()));
+        send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
+        accept_offer(&mut consumer, &consumer_to_institution, &mut holder);
+        send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true);
     }
 
     pub struct PaymentPlugin {}

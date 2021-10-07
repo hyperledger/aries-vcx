@@ -44,8 +44,8 @@ impl Holder {
         self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
     }
 
-    pub fn reject_offer(&mut self, comment: Option<String>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment), Some(&send_message))
+    pub fn reject_offer(&mut self, comment: Option<&str>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(&send_message))
     }
 
     pub fn is_terminal_state(&self) -> bool {
