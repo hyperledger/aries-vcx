@@ -136,7 +136,7 @@ impl HolderSM {
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         let HolderSM { state, source_id, thread_id } = self;
-        let mut thread_id = thread_id.clone(); // TODO: Remove thread id from the SM
+        let mut thread_id = thread_id.clone();
         verify_thread_id(&thread_id, &cim)?;
         let state = match state {
             HolderFullState::Initial(state_data) => match cim {
@@ -174,7 +174,7 @@ impl HolderSM {
                         }
                         Err(err) => {
                             let problem_report = ProblemReport::create()
-                                .set_comment(err.to_string())
+                                .set_comment(Some(err.to_string()))
                                 .set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
@@ -182,6 +182,22 @@ impl HolderSM {
                             HolderFullState::Finished((state_data, problem_report).into())
                         }
                     }
+                }
+                CredentialIssuanceMessage::CredentialProposalSend(mut proposal) => {
+                    proposal = proposal.set_thread_id(&thread_id);
+                    send_message.ok_or(
+                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                    )?(&proposal.to_a2a_message())?;
+                    HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+                },
+                CredentialIssuanceMessage::CredentialOfferReject(comment) => {
+                        let problem_report = ProblemReport::create()
+                            .set_thread_id(&thread_id)
+                            .set_comment(comment);
+                        send_message.ok_or(
+                            VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                        )?(&problem_report.to_a2a_message())?;
+                        HolderFullState::Finished((state_data, problem_report).into())
                 }
                 _ => {
                     warn!("Credential Issuance can only start on holder side with Credential Offer");
@@ -204,7 +220,7 @@ impl HolderSM {
                         }
                         Err(err) => {
                             let problem_report = ProblemReport::create()
-                                .set_comment(err.to_string())
+                                .set_comment(Some(err.to_string()))
                                 .set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")

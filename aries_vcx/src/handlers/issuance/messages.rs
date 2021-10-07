@@ -11,8 +11,9 @@ pub enum CredentialIssuanceMessage {
     CredentialOfferSend(Option<String>),
     CredentialSend(),
     CredentialProposalSend(CredentialProposal),
-    CredentialProposal(CredentialProposal, Option<String>, Option<String>),
+    CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
+    CredentialOfferReject(Option<String>),
     CredentialRequestSend(String),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
@@ -25,7 +26,7 @@ impl CredentialIssuanceMessage {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
             Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
-            Self::CredentialProposal(credential_proposal, _, _) => credential_proposal.from_thread(thread_id),
+            Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
             Self::Credential(credential) => credential.from_thread(thread_id),
             _ => true
         }
@@ -36,7 +37,7 @@ impl From<A2AMessage> for CredentialIssuanceMessage {
     fn from(msg: A2AMessage) -> Self {
         match msg {
             A2AMessage::CredentialProposal(proposal) => {
-                CredentialIssuanceMessage::CredentialProposal(proposal, None, None) // TODO: Is this a problem
+                CredentialIssuanceMessage::CredentialProposal(proposal)
             }
             A2AMessage::CredentialOffer(offer) => {
                 CredentialIssuanceMessage::CredentialOffer(offer)

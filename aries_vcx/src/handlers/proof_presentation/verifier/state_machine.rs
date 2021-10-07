@@ -114,7 +114,7 @@ impl VerifierSM {
                             Err(err) => {
                                 let problem_report =
                                     ProblemReport::create()
-                                        .set_comment(err.to_string())
+                                        .set_comment(Some(err.to_string()))
                                         .set_thread_id(&state.presentation_request.id.0);
                                 send_message.ok_or(
                                     VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
@@ -134,7 +134,7 @@ impl VerifierSM {
                     VerifierMessages::PresentationProposalReceived(_) => { // TODO: handle Presentation Proposal
                         let problem_report =
                             ProblemReport::create()
-                                .set_comment(String::from("PresentationProposal is not supported"))
+                                .set_comment(Some(String::from("PresentationProposal is not supported")))
                                 .set_thread_id(&state.presentation_request.id.0);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
@@ -186,7 +186,7 @@ impl VerifierSM {
                             Some(RevocationStatus::NonRevoked) => Status::Success.code(),
                             None => Status::Success.code(), // for backward compatibility
                             Some(RevocationStatus::Revoked) => {
-                                let problem_report = ProblemReport::create().set_comment(String::from("Revoked credential was used."));
+                                let problem_report = ProblemReport::create().set_comment(Some(String::from("Revoked credential was used.")));
                                 Status::Failed(problem_report).code()
                             }
                         }

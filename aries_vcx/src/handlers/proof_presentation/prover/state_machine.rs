@@ -123,7 +123,7 @@ impl ProverSM {
                             Err(err) => {
                                 let problem_report =
                                     ProblemReport::create()
-                                        .set_comment(err.to_string())
+                                        .set_comment(Some(err.to_string()))
                                         .set_thread_id(&thread_id);
 
                                 ProverFullState::PresentationPreparationFailed((state, problem_report).into())
@@ -225,7 +225,7 @@ impl ProverSM {
         thread_id: &str,
     ) -> VcxResult<()> {
         let problem_report = ProblemReport::create()
-            .set_comment(reason.to_string())
+            .set_comment(Some(reason.to_string()))
             .set_thread_id(thread_id);
 
         send_message(&problem_report.to_a2a_message())

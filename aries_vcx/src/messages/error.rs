@@ -48,8 +48,8 @@ impl ProblemReport {
         self
     }
 
-    pub fn set_comment(mut self, comment: String) -> Self {
-        self.comment = Some(comment);
+    pub fn set_comment(mut self, comment: Option<String>) -> Self {
+        self.comment = comment;
         self
     }
 }
@@ -108,8 +108,8 @@ pub mod tests {
 
     fn _code() -> u32 { 0 }
 
-    fn _comment() -> String {
-        String::from("test comment")
+    fn _comment() -> Option<String> {
+        Some(String::from("test comment"))
     }
 
     pub fn _problem_report() -> ProblemReport {
@@ -125,7 +125,7 @@ pub mod tests {
             noticed_time: None,
             location: None,
             problem_items: None,
-            comment: Some(_comment()),
+            comment: _comment(),
         }
     }
 

@@ -8,11 +8,10 @@ use crate::handlers::issuance::issuer::states::initial::InitialState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
-use crate::handlers::issuance::credential_def::CredentialDef;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
-use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer, get_cred_def};
+use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_offer};
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
@@ -91,7 +90,7 @@ impl IssuerSM {
     }
 
     pub fn revoke(&self, publish: bool) -> VcxResult<()> {
-        trace!("Issuer::revoke >>> publish={}", publish);
+        trace!("Issuer::revoke >>> publish: {}", publish);
         match &self.state {
             IssuerFullState::Finished(state) => {
                 match &state.revocation_info_v1 {
@@ -223,6 +222,13 @@ impl IssuerSM {
         }
     }
 
+    pub fn get_proposal(&self) -> Option<CredentialProposal> {
+        match &self.state {
+            IssuerFullState::ProposalReceived(state) => Some(state.credential_proposal.clone()),
+            _ => None
+        }
+    }
+
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.get_thread_id()?, &cim)?;
@@ -239,9 +245,6 @@ impl IssuerSM {
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
-                }
-                CredentialIssuanceMessage::CredentialProposal(proposal, rev_reg_id, tails_file) => {
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, rev_reg_id, tails_file))
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");
@@ -272,15 +275,8 @@ impl IssuerSM {
                 CredentialIssuanceMessage::CredentialRequest(request) => {
                     IssuerFullState::RequestReceived((state_data, request).into())
                 }
-                CredentialIssuanceMessage::CredentialProposal(_, _, _) => {
-                    let problem_report = ProblemReport::create()
-                        .set_comment(String::from("CredentialProposal is not supported"))
-                        .set_thread_id(&state_data.thread_id);
-
-                    send_message.ok_or(
-                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                    )?(&problem_report.to_a2a_message())?;
-                    IssuerFullState::Finished((state_data, problem_report).into())
+                CredentialIssuanceMessage::CredentialProposal(proposal) => {
+                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file)) // TODO: Allow to change revocation data during negotiation?
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
                     IssuerFullState::Finished((state_data, problem_report).into())
@@ -303,7 +299,7 @@ impl IssuerSM {
                         }
                         Err(err) => {
                             let problem_report = ProblemReport::create()
-                                .set_comment(err.to_string())
+                                .set_comment(Some(err.to_string()))
                                 .set_thread_id(&state_data.thread_id);
 
                             send_message.ok_or(
@@ -446,7 +442,7 @@ pub mod test {
 
     impl IssuerSM {
         fn to_proposal_received_state(mut self) -> IssuerSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())), _send_message()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
             self
         }
 
@@ -566,7 +562,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal(), None, None), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
