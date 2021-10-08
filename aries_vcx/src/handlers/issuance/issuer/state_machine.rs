@@ -401,7 +401,7 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
 
 fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
-    if !settings::indy_mocks_enabled() && !request.from_thread(&thread_id) {
+    if !request.from_thread(&thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
     };
     let request = &request.requests_attach.content()?;
