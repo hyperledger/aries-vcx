@@ -235,7 +235,6 @@ pub mod test {
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer.send_credential(_send_message().unwrap()).unwrap();
-        // assert_eq!(IssuerState::CredentialSent, issuer.get_state());
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 }

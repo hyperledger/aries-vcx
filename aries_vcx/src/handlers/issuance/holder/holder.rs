@@ -177,11 +177,44 @@ pub mod test {
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let issuer = _holder().to_finished_state();
+        let holder = _holder().to_finished_state();
     }
 
     #[test]
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_with_negotiation() {
+        let _setup = SetupMocks::init();
+        let mut holder = _holder();
+        assert_eq!(HolderState::Initial, holder.get_state());
+
+        holder.send_proposal(_credential_proposal(), _send_message().unwrap()).unwrap();
+        assert_eq!(HolderState::ProposalSent, holder.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
+        );
+        let (_, msg) = holder.find_message_to_handle(messages).unwrap();
+        holder.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+
+        holder.send_proposal(_credential_proposal(), _send_message().unwrap()).unwrap();
+        assert_eq!(HolderState::ProposalSent, holder.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
+        );
+        let (_, msg) = holder.find_message_to_handle(messages).unwrap();
+        holder.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+
+        holder.send_request(_my_pw_did(), _send_message().unwrap()).unwrap();
+        assert_eq!(HolderState::RequestSent, holder.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::Credential(_credential())
+        );
+        let (_, msg) = holder.find_message_to_handle(messages).unwrap();
+        holder.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(HolderState::Finished, holder.get_state());
     }
 }
