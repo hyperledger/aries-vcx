@@ -280,6 +280,8 @@ mod tests {
 
     fn send_cred_proposal_1(holder: &mut Holder, alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) {
         alice.activate().unwrap();
+        holder.update_state(connection).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
         let (address1, address2, city, state, zip) = attr_names();
         let proposal = CredentialProposal::create()
             .set_schema_id(schema_id.to_string())
@@ -308,7 +310,7 @@ mod tests {
 
     fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
         faber.activate().unwrap();
-        let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(connection).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment".to_string())).unwrap();
@@ -331,7 +333,7 @@ mod tests {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
         holder.reject_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).unwrap();
-        assert_eq!(HolderState::Finished, holder.get_state());
+        assert_eq!(HolderState::Failed, holder.get_state());
     }
 
     fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, holder_credential: &mut Holder, revokable: bool) {

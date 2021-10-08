@@ -33,7 +33,7 @@ impl EncryptionEnvelope {
 
         let receiver_keys = json!(did_doc.recipient_keys()).to_string();
 
-        warn!("Encrypting for pairwise; pw_verkey={:?}, receiver_keys={:?}", pw_verkey, receiver_keys);
+        debug!("Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}", pw_verkey, receiver_keys);
         crypto::pack_message(pw_verkey, &receiver_keys, message.as_bytes())
     }
 

@@ -48,6 +48,14 @@ impl CredentialProposal {
         self
     }
 
+    pub fn get_thread_id(&self) -> Option<String> {
+        if let Some(thread) = &self.thread {
+            thread.thid.clone()
+        } else {
+            None
+        }
+    }
+
     pub fn from_thread(&self, thread_id: &str) -> bool {
         match &self.thread {
             Some(thread) => thread.is_reply(thread_id),
