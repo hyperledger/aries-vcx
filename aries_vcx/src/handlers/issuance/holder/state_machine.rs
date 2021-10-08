@@ -77,6 +77,7 @@ impl HolderSM {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
             HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),

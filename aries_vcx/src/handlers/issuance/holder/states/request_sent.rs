@@ -1,6 +1,5 @@
 use crate::error::prelude::*;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
-use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::status::Status;
 
