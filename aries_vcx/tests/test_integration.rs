@@ -1263,10 +1263,11 @@ mod tests {
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
         reject_offer(&mut consumer, &consumer_to_institution, &mut holder);
+        institution.activate().unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(&institution_to_consumer).unwrap();
         assert_eq!(IssuerState::Failed, issuer.get_state());
     }
-
 
     #[test]
     #[cfg(feature = "agency_pool_tests")]
