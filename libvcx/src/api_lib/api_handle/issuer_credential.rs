@@ -107,7 +107,7 @@ pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)>
 
 pub fn send_credential_offer(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential_offer(connection::send_message_closure(connection_handle)?, comment.clone())?;
+        credential.send_credential_offer(connection::send_message_closure(connection_handle)?, comment.as_deref())?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
