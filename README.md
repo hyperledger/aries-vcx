@@ -14,7 +14,9 @@ essentially any platform. Officially we support:
   - NodeJS
 - Overview of [implemented Aries protocols](./aries.md)
 - AriesVCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
-  One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).    
+  One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/). 
+  For early development and experimentation, you can use agency we have deployed at 
+  `https://ariesvcx.agency.staging.absa.id/agency` (instance of NodeVCX Agency)
 
 # Work in progress
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
