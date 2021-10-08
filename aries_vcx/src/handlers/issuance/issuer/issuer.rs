@@ -210,5 +210,32 @@ pub mod test {
     #[test]
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_with_negotiation() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+
+        issuer.send_credential(_send_message().unwrap()).unwrap();
+        // assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+        assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 }

@@ -20,6 +20,7 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
+use crate::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -103,7 +104,7 @@ impl IssuerSM {
                             }
                             Ok(())
                         } else {
-                            warn!("Missing data to perform revocation. rev_info: {:?}", rev_info);
+                            warn!("Missing data to perform revocation. rev_info={:?}", rev_info);
                             Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails))
                         }
                     }
@@ -308,6 +309,7 @@ impl IssuerSM {
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                             )?(&problem_report.to_a2a_message())?;
+                            // TODO: Shouldn't we transition to CredentialSent and wait for ack?
                             IssuerFullState::Finished((state_data, problem_report).into())
                         }
                     }
@@ -399,7 +401,7 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
 
 fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
-    if !request.from_thread(&thread_id) {
+    if !settings::indy_mocks_enabled() && !request.from_thread(&thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
     };
     let request = &request.requests_attach.content()?;
