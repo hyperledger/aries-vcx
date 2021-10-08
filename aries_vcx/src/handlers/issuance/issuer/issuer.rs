@@ -43,8 +43,8 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialOfferSend(comment), Some(&send_message))
+    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<&str>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialOfferSend(comment.map(String::from)), Some(&send_message))
     }
 
     pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {

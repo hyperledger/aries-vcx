@@ -224,7 +224,7 @@ mod tests {
         };
         let mut issuer = Issuer::create("1", &issuer_config, &credential_data).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment.map(|s| String::from(s))).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -302,7 +302,7 @@ mod tests {
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposals.last().unwrap(), rev_reg_id, tails_file).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment".to_string())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -313,7 +313,7 @@ mod tests {
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(connection).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment".to_string())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
