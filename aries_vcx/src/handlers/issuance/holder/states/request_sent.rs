@@ -22,18 +22,6 @@ impl From<(RequestSentState, String, Credential, Option<String>)> for FinishedHo
     }
 }
 
-impl From<(RequestSentState, ProblemReport)> for FinishedHolderState {
-    fn from((_, problem_report): (RequestSentState, ProblemReport)) -> Self {
-        trace!("SM is now in Finished state");
-        FinishedHolderState {
-            cred_id: None,
-            credential: None,
-            status: Status::Failed(problem_report),
-            rev_reg_def_json: None,
-        }
-    }
-}
-
 impl RequestSentState {
     pub fn is_revokable(&self) -> VcxResult<bool> {
         let parsed_cred_def: serde_json::Value = serde_json::from_str(&self.cred_def_json)

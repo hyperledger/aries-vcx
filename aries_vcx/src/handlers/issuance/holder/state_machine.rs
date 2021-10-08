@@ -155,8 +155,11 @@ impl HolderSM {
                 CredentialIssuanceMessage::CredentialOffer(offer) => {
                     HolderFullState::OfferReceived(OfferReceivedState::new(offer))
                 },
+                CredentialIssuanceMessage::ProblemReport(problem_report) => {
+                    HolderFullState::Finished(problem_report.into())
+                }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Credential Offer");
+                    warn!("In this state Credential Issuance can accept only Credential Offer or Problem Report");
                     HolderFullState::ProposalSent(state_data)
                 }
             },
@@ -179,7 +182,7 @@ impl HolderSM {
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                             )?(&problem_report.to_a2a_message())?;
-                            HolderFullState::Finished((state_data, problem_report).into())
+                            HolderFullState::Finished(problem_report.into())
                         }
                     }
                 }
@@ -197,7 +200,7 @@ impl HolderSM {
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&problem_report.to_a2a_message())?;
-                        HolderFullState::Finished((state_data, problem_report).into())
+                        HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
                     warn!("Credential Issuance can only start on holder side with Credential Offer");
@@ -225,12 +228,12 @@ impl HolderSM {
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                             )?(&problem_report.to_a2a_message())?;
-                            HolderFullState::Finished((state_data, problem_report).into())
+                            HolderFullState::Finished(problem_report.into())
                         }
                     }
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
-                    HolderFullState::Finished((state_data, problem_report).into())
+                    HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
                     warn!("In this state Credential Issuance can accept only Credential and Problem Report");

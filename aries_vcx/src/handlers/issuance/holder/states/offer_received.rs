@@ -23,18 +23,6 @@ impl From<(OfferReceivedState, String, String)> for RequestSentState {
     }
 }
 
-impl From<(OfferReceivedState, ProblemReport)> for FinishedHolderState {
-    fn from((_state, problem_report): (OfferReceivedState, ProblemReport)) -> Self {
-        trace!("SM is now in Finished state");
-        FinishedHolderState {
-            cred_id: None,
-            credential: None,
-            status: Status::Failed(problem_report),
-            rev_reg_def_json: None,
-        }
-    }
-}
-
 impl OfferReceivedState {
     pub fn new(offer: CredentialOffer) -> Self {
         OfferReceivedState {

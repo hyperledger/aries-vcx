@@ -1,6 +1,7 @@
 use crate::error::prelude::*;
 use crate::messages::issuance::credential::{Credential, CredentialData};
 use crate::messages::status::Status;
+use crate::messages::error::ProblemReport;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
@@ -80,3 +81,16 @@ impl FinishedHolderState {
         Ok(self.rev_reg_def_json.is_some())
     }
 }
+
+impl From<ProblemReport> for FinishedHolderState {
+    fn from(problem_report: ProblemReport) -> Self {
+        trace!("SM is now in Finished state");
+        FinishedHolderState {
+            cred_id: None,
+            credential: None,
+            status: Status::Failed(problem_report),
+            rev_reg_def_json: None,
+        }
+    }
+}
+
