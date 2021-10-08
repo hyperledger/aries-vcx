@@ -71,9 +71,9 @@ enum_number!(ProofStateType
 #[allow(dead_code)]
 #[cfg(test)]
 mod tests {
+    use std::convert::TryFrom;
     use std::thread;
     use std::time::Duration;
-    use std::convert::TryFrom;
 
     use rand::Rng;
     use serde_json::Value;
@@ -84,6 +84,7 @@ mod tests {
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::agency_client::payload::PayloadKinds;
     use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
+    use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
@@ -92,17 +93,19 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::issuer::get_credential_proposal_messages;
+    use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
+    use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
+    use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
-    use aries_vcx::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
-    use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-    use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::messages::connection::invite::Invitation;
+    use aries_vcx::messages::connection::service::FullService;
+    use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
@@ -425,14 +428,13 @@ mod tests {
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
         prover.generate_presentation(selected_credentials.into(), "{}".to_string()).unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
-
-        info!("generate_and_send_proof :: proof generated, sending proof");
-        prover.send_presentation(&connection.send_message_closure().unwrap()).unwrap();
-        info!("generate_and_send_proof :: proof sent");
-        assert_eq!(thread_id, prover.get_thread_id().unwrap());
-
-        assert_eq!(ProverState::PresentationSent, prover.get_state());
-        thread::sleep(Duration::from_millis(5000));
+        if ProverState::PresentationPrepared == prover.get_state() {
+            info!("generate_and_send_proof :: proof generated, sending proof");
+            prover.send_presentation(&connection.send_message_closure().unwrap()).unwrap();
+            info!("generate_and_send_proof :: proof sent");
+            assert_eq!(thread_id, prover.get_thread_id().unwrap());
+            thread::sleep(Duration::from_millis(5000));
+        }
     }
 
     fn revoke_credential(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: Option<String>) {
@@ -512,7 +514,13 @@ mod tests {
         send_proof_request(institution, institution_to_consumer, &requested_attrs_string, "[]", "{}", request_name)
     }
 
-    fn _prover_select_credentials_and_send_proof(consumer: &mut Alice, consumer_to_institution: &Connection, request_name: Option<&str>, requested_values: Option<&str>) {
+    fn _prover_select_credentials_and_send_proof_and_assert(
+        consumer: &mut Alice,
+        consumer_to_institution: &Connection,
+        request_name: Option<&str>,
+        requested_values: Option<&str>,
+        expected_prover_state: ProverState
+    ) {
         consumer.activate().unwrap();
         info!("Prover :: Going to create proof");
         let mut prover = create_proof(consumer, consumer_to_institution, request_name);
@@ -528,7 +536,16 @@ mod tests {
         };
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof(consumer, &mut prover, consumer_to_institution, &selected_credentials_str);
+        let prover_state = generate_and_send_proof(consumer, &mut prover, consumer_to_institution, &selected_credentials_str);
+        assert_eq!(expected_prover_state, prover.get_state());
+    }
+
+    fn _prover_select_credentials_and_send_proof(consumer: &mut Alice, consumer_to_institution: &Connection, request_name: Option<&str>, requested_values: Option<&str>) {
+        _prover_select_credentials_and_send_proof_and_assert(consumer, consumer_to_institution, request_name, requested_values, ProverState::PresentationSent)
+    }
+
+    fn _prover_select_credentials_and_fail_to_generate_proof(consumer: &mut Alice, consumer_to_institution: &Connection, request_name: Option<&str>, requested_values: Option<&str>) {
+        _prover_select_credentials_and_send_proof_and_assert(consumer, consumer_to_institution, request_name, requested_values, ProverState::PresentationPreparationFailed)
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -597,7 +614,7 @@ mod tests {
 
     #[cfg(feature = "agency_pool_tests")]
     #[test]
-    fn test_it_should_fail_to_selected_credentials_for_predicate() {
+    fn test_it_should_fail_to_select_credentials_for_predicate() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer = Alice::setup();
@@ -616,12 +633,7 @@ mod tests {
         info!("test_basic_proof :: Going to seng proof request with attributes {}", &requested_preds_string);
         let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, "[]", &requested_preds_string, "{}", None);
 
-        _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None); // << should fail, indeed!
-
-        info!("test_basic_revocation :: verifier :: going to verify proof");
-        institution.activate().unwrap();
-        verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        _prover_select_credentials_and_fail_to_generate_proof(&mut consumer, &consumer_to_institution, None, None);
     }
 
 
@@ -886,6 +898,7 @@ mod tests {
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
         generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str);
+        assert_eq!(ProverState::PresentationSent, prover.get_state());
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         institution.activate().unwrap();
@@ -896,7 +909,7 @@ mod tests {
     fn retrieved_to_selected_credentials_simple(retrieved_credentials: &str, with_tails: bool) -> Value {
         info!("test_real_proof >>> retrieved matching credentials {}", retrieved_credentials);
         let data: Value = serde_json::from_str(retrieved_credentials).unwrap();
-        let mut credentials_mapped: Value = json!({"attrs":{}, "predicates":{}});
+        let mut credentials_mapped: Value = json!({"attrs":{}});
 
         for (key, val) in data["attrs"].as_object().unwrap().iter() {
             let cred_array = val.as_array().unwrap();
@@ -917,7 +930,7 @@ mod tests {
         let credential_data: Value = serde_json::from_str(credential_data).unwrap();
         let requested_values: Value = serde_json::from_str(requested_values).unwrap();
         let requested_attributes: &Value = &credential_data["requested_attributes"];
-        let mut credentials_mapped: Value = json!({"attrs":{}, "predicates":{}});
+        let mut credentials_mapped: Value = json!({"attrs":{}});
 
         for (key, val) in retrieved_credentials["attrs"].as_object().unwrap().iter() {
             let filtered: Vec<&Value> = val.as_array().unwrap()
@@ -1001,6 +1014,7 @@ mod tests {
 
         info!("test_real_proof :: generating and sending proof");
         generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap());
+        assert_eq!(ProverState::PresentationSent, prover.get_state());
         assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
 

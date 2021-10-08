@@ -293,8 +293,7 @@ mod tests {
                 "credential": all_creds["attrs"]["zip_2"][0],
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
-           },
-           "predicates":{ }
+           }
         });
 
         let self_attested: serde_json::Value = json!({
@@ -394,8 +393,5 @@ mod tests {
         warn!("selected credentials = {}", selected_credentials.to_string());
         let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
         assert!(generated_proof.is_ok());
-
-
-
     }
 }
