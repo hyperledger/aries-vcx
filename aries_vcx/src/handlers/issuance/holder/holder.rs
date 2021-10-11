@@ -6,7 +6,7 @@ use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::credential_proposal::CredentialProposalData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -36,7 +36,7 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn send_proposal(&mut self, credential_proposal: CredentialProposal, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
     }
 
@@ -131,7 +131,7 @@ impl Holder {
 pub mod test {
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
-    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
     use crate::messages::issuance::credential_request::test_utils::_my_pw_did;
     use crate::utils::devsetup::SetupMocks;
 
@@ -151,25 +151,25 @@ pub mod test {
 
     impl Holder {
         fn to_proposal_sent_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
             self
         }
 
         fn to_offer_received_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
             self
         }
 
         fn to_request_sent_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
@@ -191,7 +191,7 @@ pub mod test {
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(_credential_proposal(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
@@ -201,7 +201,7 @@ pub mod test {
         holder.step(msg.into(), _send_message()).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(_credential_proposal(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(

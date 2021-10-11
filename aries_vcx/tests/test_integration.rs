@@ -104,7 +104,7 @@ mod tests {
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+    use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::messages::connection::service::ServiceResolvable;
@@ -261,7 +261,7 @@ mod tests {
     fn send_cred_proposal(alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) -> Holder {
         alice.activate().unwrap();
         let (address1, address2, city, state, zip) = attr_names();
-        let proposal = CredentialProposal::create()
+        let proposal = CredentialProposalData::create()
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())
@@ -284,7 +284,7 @@ mod tests {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
-        let proposal = CredentialProposal::create()
+        let proposal = CredentialProposalData::create()
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())

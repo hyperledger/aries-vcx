@@ -10,7 +10,7 @@ use crate::handlers::issuance::holder::states::initial::InitialHolderState;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
-use crate::messages::a2a::A2AMessage;
+use crate::messages::a2a::{MessageId, A2AMessage};
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_ack::CredentialAck;
@@ -44,7 +44,7 @@ impl Default for HolderFullState {
 impl HolderSM {
     pub fn new(source_id: String) -> Self {
         HolderSM {
-            thread_id: String::new(),
+            thread_id: MessageId::new().0,
             state: HolderFullState::Initial(InitialHolderState::new()),
             source_id,
         }
@@ -137,12 +137,12 @@ impl HolderSM {
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         let HolderSM { state, source_id, thread_id } = self;
-        let mut thread_id = thread_id.clone();
         verify_thread_id(&thread_id, &cim)?;
         let state = match state {
             HolderFullState::Initial(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialProposalSend(proposal) => {
-                    thread_id = proposal.id.0.clone();
+                CredentialIssuanceMessage::CredentialProposalSend(proposal_data) => {
+                    let proposal = CredentialProposal::from(proposal_data)
+                        .set_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&proposal.to_a2a_message())?;
@@ -166,7 +166,6 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialRequestSend(my_pw_did) => {
-                    // TODO: Allow changing request
                     let request = _make_credential_request(my_pw_did, &state_data.offer);
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
@@ -188,8 +187,9 @@ impl HolderSM {
                         }
                     }
                 }
-                CredentialIssuanceMessage::CredentialProposalSend(mut proposal) => {
-                    proposal = proposal.set_thread_id(&thread_id);
+                CredentialIssuanceMessage::CredentialProposalSend(proposal_data) => {
+                    let proposal = CredentialProposal::from(proposal_data)
+                        .set_thread_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&proposal.to_a2a_message())?;
