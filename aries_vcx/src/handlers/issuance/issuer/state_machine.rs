@@ -224,10 +224,10 @@ impl IssuerSM {
         }
     }
 
-    pub fn get_proposal(&self) -> Option<CredentialProposal> {
+    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
-            IssuerFullState::ProposalReceived(state) => Some(state.credential_proposal.clone()),
-            _ => None
+            IssuerFullState::ProposalReceived(state) => Ok(state.credential_proposal.clone()),
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Proposal is only available in ProposalReceived state"))
         }
     }
 

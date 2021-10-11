@@ -81,7 +81,7 @@ impl Issuer {
         self.issuer_sm.get_thread_id()
     }
 
-    pub fn get_proposal(&self) -> Option<CredentialProposal> {
+    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         self.issuer_sm.get_proposal()
     }
 

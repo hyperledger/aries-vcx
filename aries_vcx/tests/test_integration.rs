@@ -282,6 +282,7 @@ mod tests {
         alice.activate().unwrap();
         holder.update_state(connection).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
+        assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
         let proposal = CredentialProposal::create()
             .set_schema_id(schema_id.to_string())
@@ -300,19 +301,23 @@ mod tests {
     fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
         faber.activate().unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
-        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposals.last().unwrap(), rev_reg_id, tails_file).unwrap();
+        let proposal = proposals.last().unwrap();
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal, rev_reg_id, tails_file).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
     }
 
-    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
+    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) {
         faber.activate().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(connection).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        let proposal = issuer.get_proposal().unwrap();
+        issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();
         issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
@@ -322,6 +327,7 @@ mod tests {
         alice.activate().unwrap();
         holder.update_state(connection).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
+        assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
         holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
@@ -1283,7 +1289,7 @@ mod tests {
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id.clone(), Some(tails_file.clone()));
         send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
-        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
+        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id, Some(tails_file));
         accept_offer(&mut consumer, &consumer_to_institution, &mut holder);
         send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true);
     }
