@@ -46,5 +46,3 @@ impl From<(InitialState, String, MessageId)> for OfferSentState {
         }
     }
 }
-
-

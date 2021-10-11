@@ -4,7 +4,9 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::a2a::A2AMessage;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -81,6 +83,11 @@ impl Issuer {
 
     pub fn get_proposal(&self) -> Option<CredentialProposal> {
         self.issuer_sm.get_proposal()
+    }
+
+    pub fn set_offer(&mut self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().set_offer(values, cred_def_id, rev_reg_id, tails_file)?;
+        Ok(())
     }
 
     pub fn is_revokable(&self) -> VcxResult<bool> {

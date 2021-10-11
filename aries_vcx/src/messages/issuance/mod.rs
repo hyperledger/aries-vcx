@@ -35,7 +35,7 @@ impl CredentialPreviewData {
         Ok(self)
     }
 
-    pub fn get_values_json(&self) -> VcxResult<String> {
+    pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self.attributes)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed serialize credential preview attributes\nError: {}", err)))
     }

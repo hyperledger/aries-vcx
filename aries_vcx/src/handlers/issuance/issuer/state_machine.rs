@@ -7,7 +7,7 @@ use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::initial::InitialState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
+use crate::handlers::issuance::issuer::states::proposal_received::{ProposalReceivedState, OfferInfo};
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
@@ -18,6 +18,7 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
 use crate::settings;
@@ -74,7 +75,7 @@ impl IssuerSM {
 
     pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
         IssuerSM {
-            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), rev_reg_id, tails_file)),
+            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), rev_reg_id, tails_file, None)),
             source_id: source_id.to_string(),
         }
     }
@@ -230,6 +231,30 @@ impl IssuerSM {
         }
     }
 
+    pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<IssuerSM> {
+        let IssuerSM { state, source_id } = self;
+        let state = match state {
+            IssuerFullState::Initial(mut state) => {
+                IssuerFullState::Initial(InitialState {
+                    credential_json: values.to_string()?,
+                    cred_def_id: cred_def_id.to_string(),
+                    rev_reg_id,
+                    tails_file
+                })
+            }
+            IssuerFullState::ProposalReceived(mut state) => {
+                IssuerFullState::ProposalReceived(ProposalReceivedState {
+                    offer_info: Some(OfferInfo::new(values.to_string()?, cred_def_id.to_string())),
+                    rev_reg_id,
+                    tails_file,
+                    ..state
+                })
+            }
+            _ => { state }
+        };
+        Ok(IssuerSM::step(state, source_id))
+    }
+
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.get_thread_id()?, &cim)?;
@@ -248,7 +273,8 @@ impl IssuerSM {
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
                 }
                 CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file))
+                    let offer_info = OfferInfo::new(state_data.credential_json, state_data.cred_def_id);
+                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file, Some(offer_info)))
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");
@@ -257,13 +283,21 @@ impl IssuerSM {
             }
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
-                    let cred_offer = libindy_issuer_create_credential_offer(&state_data.credential_proposal.cred_def_id)?;
+                    let (cred_def_id, credential_json) = match state_data.offer_info {
+                        None => {
+                            (
+                                state_data.credential_proposal.cred_def_id.to_string(),
+                                state_data.credential_proposal.credential_proposal.to_string()?
+                            )
+                        }
+                        Some(offer_info) => (offer_info.cred_def_id, offer_info.credential_json)
+                    };
+                    let cred_offer = libindy_issuer_create_credential_offer(&cred_def_id)?;
                     let thread_id = state_data.credential_proposal.get_thread_id().unwrap_or(state_data.credential_proposal.id.0.clone());
                     let cred_offer_msg = CredentialOffer::create()
                         .set_thread_id(&thread_id)
                         .set_offers_attach(&cred_offer)?
                         .set_comment(comment);
-                    let credential_json = state_data.credential_proposal.credential_proposal.get_values_json()?;
                     let cred_offer_msg = _append_credential_preview(cred_offer_msg, &credential_json)?;
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
@@ -280,7 +314,7 @@ impl IssuerSM {
                     IssuerFullState::RequestReceived((state_data, request).into())
                 }
                 CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file)) // TODO: Allow to change revocation data during negotiation?
+                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file, None)) // TODO: Allow to change revocation data during negotiation?
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
                     IssuerFullState::Finished((state_data, problem_report).into())
