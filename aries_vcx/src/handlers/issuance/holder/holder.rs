@@ -76,6 +76,10 @@ impl Holder {
         self.holder_sm.get_attachment()
     }
 
+    pub fn get_offer(&self) -> VcxResult<CredentialOffer> {
+        self.holder_sm.get_offer()
+    }
+
     pub fn get_tails_location(&self) -> VcxResult<String> {
         self.holder_sm.get_tails_location()
     }

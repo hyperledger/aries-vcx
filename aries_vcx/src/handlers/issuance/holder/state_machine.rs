@@ -166,6 +166,7 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialRequestSend(my_pw_did) => {
+                    // TODO: Allow changing request
                     let request = _make_credential_request(my_pw_did, &state_data.offer);
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
@@ -307,7 +308,14 @@ impl HolderSM {
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_rev_reg_id(),
-            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get tails hash: credential exchange not finished yet"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot get rev reg id: credential exchange not finished yet"))
+        }
+    }
+
+    pub fn get_offer(&self) -> VcxResult<CredentialOffer> {
+        match self.state {
+            HolderFullState::OfferReceived(ref state) => Ok(state.offer.clone()),
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Credential offer can only be obtained from OfferReceived state"))
         }
     }
 
