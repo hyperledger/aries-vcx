@@ -211,7 +211,36 @@ pub mod test {
     #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let issuer = _issuer_revokable_from_proposal().to_finished_state();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let values = _credential_proposal().credential_proposal.clone();
+        let cred_def_id = _credential_proposal().cred_def_id.clone();
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+
+        issuer.send_credential(_send_message().unwrap()).unwrap();
+        assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn send_offer_fails_if_no_offer_was_set() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert!(res.is_err());
     }
 
     #[test]
@@ -221,7 +250,10 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        let values = _credential_proposal().credential_proposal.clone();
+        let cred_def_id = _credential_proposal().cred_def_id.clone();
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
@@ -231,7 +263,8 @@ pub mod test {
         issuer.step(msg.into(), _send_message()).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(

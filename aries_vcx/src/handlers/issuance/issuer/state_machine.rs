@@ -234,7 +234,7 @@ impl IssuerSM {
     pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<IssuerSM> {
         let IssuerSM { state, source_id } = self;
         let state = match state {
-            IssuerFullState::Initial(mut state) => {
+            IssuerFullState::Initial(state) => {
                 IssuerFullState::Initial(InitialState {
                     credential_json: values.to_string()?,
                     cred_def_id: cred_def_id.to_string(),
@@ -242,7 +242,7 @@ impl IssuerSM {
                     tails_file
                 })
             }
-            IssuerFullState::ProposalReceived(mut state) => {
+            IssuerFullState::ProposalReceived(state) => {
                 IssuerFullState::ProposalReceived(ProposalReceivedState {
                     offer_info: Some(OfferInfo::new(values.to_string()?, cred_def_id.to_string())),
                     rev_reg_id,
@@ -284,12 +284,7 @@ impl IssuerSM {
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
                     let (cred_def_id, credential_json) = match state_data.offer_info {
-                        None => {
-                            (
-                                state_data.credential_proposal.cred_def_id.to_string(),
-                                state_data.credential_proposal.credential_proposal.to_string()?
-                            )
-                        }
+                        None => return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "`set_offer()` must be called before sending credential offer after receiving proposal")),
                         Some(offer_info) => (offer_info.cred_def_id, offer_info.credential_json)
                     };
                     let cred_offer = libindy_issuer_create_credential_offer(&cred_def_id)?;
@@ -314,7 +309,7 @@ impl IssuerSM {
                     IssuerFullState::RequestReceived((state_data, request).into())
                 }
                 CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file, None)) // TODO: Allow to change revocation data during negotiation?
+                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None, None, None))
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
                     IssuerFullState::Finished((state_data, problem_report).into())
@@ -552,6 +547,9 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm_from_proposal();
+            let values = _credential_proposal().credential_proposal.clone();
+            let cred_def_id = _credential_proposal().cred_def_id.clone();
+            issuer_sm = issuer_sm.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
