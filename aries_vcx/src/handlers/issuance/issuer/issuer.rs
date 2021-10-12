@@ -39,9 +39,9 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn create_from_proposal(source_id: &str, credential_proposal: &CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Issuer> {
+    pub fn create_from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> VcxResult<Issuer> {
         trace!("Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}", source_id, credential_proposal);
-        let issuer_sm = IssuerSM::from_proposal(source_id, credential_proposal, rev_reg_id, tails_file);
+        let issuer_sm = IssuerSM::from_proposal(source_id, credential_proposal);
         Ok(Issuer { issuer_sm })
     }
 
@@ -145,7 +145,7 @@ pub mod test {
     }
 
     fn _issuer_revokable_from_proposal() -> Issuer {
-        Issuer::create_from_proposal("test_source_id", &_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file())).unwrap()
+        Issuer::create_from_proposal("test_source_id", &_credential_proposal()).unwrap()
     }
 
     fn _issuer_unrevokable() -> Issuer {

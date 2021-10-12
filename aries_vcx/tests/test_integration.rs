@@ -302,7 +302,7 @@ mod tests {
         faber.activate().unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
         let proposal = proposals.last().unwrap();
-        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal, rev_reg_id.clone(), tails_file.clone()).unwrap();
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();

@@ -2,12 +2,7 @@ use crate::error::prelude::*;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::handlers::issuance::is_cred_def_revokable;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OfferInfo {
-    pub credential_json: String,
-    pub cred_def_id: String
-}
+use crate::handlers::issuance::issuer::states::OfferInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {

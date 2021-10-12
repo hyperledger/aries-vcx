@@ -7,7 +7,8 @@ use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::initial::InitialState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::handlers::issuance::issuer::states::proposal_received::{ProposalReceivedState, OfferInfo};
+use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
+use crate::handlers::issuance::issuer::states::OfferInfo;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
@@ -73,9 +74,9 @@ impl IssuerSM {
         }
     }
 
-    pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+    pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> Self {
         IssuerSM {
-            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), rev_reg_id, tails_file, None)),
+            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None, None, None)),
             source_id: source_id.to_string(),
         }
     }
@@ -149,12 +150,7 @@ impl IssuerSM {
         for (uid, message) in messages {
             match self.state {
                 IssuerFullState::Initial(_) => {
-                    match message {
-                        A2AMessage::CredentialProposal(proposal) => {
-                            return Some((uid, A2AMessage::CredentialProposal(proposal)));
-                        }
-                        _ => {}
-                    }
+                    // do not process messages
                 }
                 IssuerFullState::ProposalReceived(_) => {
                     // do not process messages
@@ -236,8 +232,7 @@ impl IssuerSM {
         let state = match state {
             IssuerFullState::Initial(state) => {
                 IssuerFullState::Initial(InitialState {
-                    credential_json: values.to_string()?,
-                    cred_def_id: cred_def_id.to_string(),
+                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string()),
                     rev_reg_id,
                     tails_file
                 })
@@ -262,19 +257,15 @@ impl IssuerSM {
         let state = match state {
             IssuerFullState::Initial(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
-                    let cred_offer = libindy_issuer_create_credential_offer(&state_data.cred_def_id)?;
+                    let cred_offer = libindy_issuer_create_credential_offer(&state_data.offer_info.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
                         .set_offers_attach(&cred_offer)?
                         .set_comment(comment);
-                    let cred_offer_msg = _append_credential_preview(cred_offer_msg, &state_data.credential_json)?;
+                    let cred_offer_msg = _append_credential_preview(cred_offer_msg, &state_data.offer_info.credential_json)?;
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
-                }
-                CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    let offer_info = OfferInfo::new(state_data.credential_json, state_data.cred_def_id);
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, state_data.rev_reg_id, state_data.tails_file, Some(offer_info)))
                 }
                 _ => {
                     warn!("Unable to process this message in this state, ignoring...");
@@ -475,12 +466,12 @@ pub mod test {
     }
 
     fn _issuer_sm_from_proposal() -> IssuerSM {
-        IssuerSM::from_proposal(&source_id(), &_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file()))
+        IssuerSM::from_proposal(&source_id(), &_credential_proposal())
     }
 
     impl IssuerSM {
         fn to_proposal_received_state(mut self) -> IssuerSM {
-            Self::from_proposal(&source_id(), &_credential_proposal(), Some(_rev_reg_id()), Some(_tails_file()))
+            Self::from_proposal(&source_id(), &_credential_proposal())
         }
 
         fn to_offer_sent_state(mut self) -> IssuerSM {
