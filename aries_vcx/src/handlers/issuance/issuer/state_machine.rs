@@ -471,7 +471,10 @@ pub mod test {
 
     impl IssuerSM {
         fn to_proposal_received_state(mut self) -> IssuerSM {
+            let values = _credential_proposal().credential_proposal.clone();
+            let cred_def_id = _credential_proposal().cred_def_id.clone();
             Self::from_proposal(&source_id(), &_credential_proposal())
+                .set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap()
         }
 
         fn to_offer_sent_state(mut self) -> IssuerSM {
@@ -714,29 +717,14 @@ pub mod test {
 
             let issuer = _issuer_sm();
 
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::Credential(_credential()),
-                    "key_4".to_string() => A2AMessage::CredentialAck(_ack()),
-                    "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-                );
-                assert!(issuer.find_message_to_handle(messages).is_none());
-            }
-            {
-                let messages = map!(
-                    "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
-                    "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
-                    "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::Credential(_credential()),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_ack()),
-                    "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-                );
-                let (uid, message) = issuer.find_message_to_handle(messages).unwrap();
-                assert_eq!("key_3", uid);
-                assert_match!(A2AMessage::CredentialProposal(_), message);
-            }
+            let messages = map!(
+                "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+                "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+                "key_3".to_string() => A2AMessage::Credential(_credential()),
+                "key_4".to_string() => A2AMessage::CredentialAck(_ack()),
+                "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+            );
+            assert!(issuer.find_message_to_handle(messages).is_none());
         }
 
         #[test]
