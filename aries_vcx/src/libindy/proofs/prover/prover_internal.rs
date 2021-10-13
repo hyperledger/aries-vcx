@@ -58,7 +58,7 @@ pub fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>
 }
 
 pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfoProver>> {
-    warn!("credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}", credentials, proof_req);
+    trace!("credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}", credentials, proof_req);
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(credentials)
@@ -70,7 +70,6 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
             (value["credential"]["cred_info"]["referent"].as_str(),
              value["credential"]["cred_info"]["schema_id"].as_str(),
              value["credential"]["cred_info"]["cred_def_id"].as_str()) {
-                warn!("requested_attr= {}", requested_attr);
                 let rev_reg_id = value["credential"]["cred_info"]["rev_reg_id"]
                     .as_str()
                     .map(|x| x.to_string());

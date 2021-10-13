@@ -370,7 +370,6 @@ mod tests {
         let mut proof: Prover = Prover::create("1", proof_req).unwrap();
 
         let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
-        warn!("all_creds = {}", all_creds.to_string());
         let selected_credentials: serde_json::Value = json!({
            "attrs":{
               "address1_1": {
@@ -390,7 +389,6 @@ mod tests {
         let self_attested: serde_json::Value = json!({
               "self_attested_attr_3":"attested_val"
         });
-        warn!("selected credentials = {}", selected_credentials.to_string());
         let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
         assert!(generated_proof.is_ok());
     }

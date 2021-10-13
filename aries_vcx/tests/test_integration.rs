@@ -568,12 +568,12 @@ mod tests {
            }])).unwrap();
 
 
-        info!("test_basic_proof :: Going to seng proof request with attributes {}", &requested_attrs_string);
+        info!("test_proof_should_be_validated :: Going to seng proof request with attributes {}", &requested_attrs_string);
         let mut verifier = send_proof_request(&mut institution, &institution_to_consumer, &requested_attrs_string, "[]", "{}", None);
 
         _prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
 
-        info!("test_basic_revocation :: verifier :: going to verify proof");
+        info!("test_proof_should_be_validated :: verifier :: going to verify proof");
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
         assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
@@ -607,7 +607,7 @@ mod tests {
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
         assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
-        warn!("verifier received presentation!: {}", verifier.get_presentation_attachment().unwrap());
+        info!("verifier received presentation!: {}", verifier.get_presentation_attachment().unwrap());
     }
 
     #[cfg(feature = "agency_pool_tests")]

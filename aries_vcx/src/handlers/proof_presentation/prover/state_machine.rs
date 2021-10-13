@@ -155,7 +155,6 @@ impl ProverSM {
                 match message {
                     ProverMessages::SendPresentation => {
                         if let Some(send_message) = send_message {
-                            warn!("Sending presentation: {}", serde_json::to_string(&state.presentation).unwrap());
                             send_message(&state.presentation.to_a2a_message())?;
                             ProverFullState::PresentationSent((state).into())
                         } else {
