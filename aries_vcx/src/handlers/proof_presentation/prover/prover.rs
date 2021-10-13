@@ -142,6 +142,7 @@ impl Prover {
 #[cfg(test)]
 mod tests {
     use crate::{libindy, utils};
+    use crate::handlers::proof_presentation::verifier::verifier::Verifier;
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use crate::utils::constants::TEST_TAILS_FILE;
@@ -292,8 +293,7 @@ mod tests {
                 "credential": all_creds["attrs"]["zip_2"][0],
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
-           },
-           "predicates":{ }
+           }
         });
 
         let self_attested: serde_json::Value = json!({
@@ -380,12 +380,11 @@ mod tests {
                 "credential": all_creds["attrs"]["zip_2"][0],
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
-           },
-           "predicates":{
-               "zip_3": {
+              "zip_3": {
                 "credential": all_creds["attrs"]["zip_3"][0],
-               }
-           }
+                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+              },
+           },
         });
         let self_attested: serde_json::Value = json!({
               "self_attested_attr_3":"attested_val"

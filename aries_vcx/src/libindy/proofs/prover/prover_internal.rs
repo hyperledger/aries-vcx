@@ -406,8 +406,7 @@ pub mod tests {
                     "interval":null
                 },
              }
-           },
-           "predicates":{ }
+           }
         });
         let proof_req = json!({
             "nonce": "123432421212",
@@ -442,9 +441,6 @@ pub mod tests {
         let selected_credentials: Value = json!({
            "attrs":{
               "height_1":{ "interval":null }
-           },
-           "predicates":{
-
            }
         });
         assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
@@ -470,8 +466,7 @@ pub mod tests {
                 },
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string(),
               },
-           },
-           "predicates":{ }
+           }
         });
         let creds = vec![CredInfoProver {
             requested_attr: "height_1".to_string(),
@@ -511,8 +506,7 @@ pub mod tests {
                 },
                 "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
               },
-           },
-           "predicates":{ }
+           }
         });
         assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
 
