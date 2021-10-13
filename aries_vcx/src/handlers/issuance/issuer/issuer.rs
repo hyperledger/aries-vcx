@@ -245,6 +245,25 @@ pub mod test {
 
     #[test]
     #[cfg(feature = "general_test")]
+    fn send_offer_fails_if_no_offer_was_set_after_previous_offer() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_unrevokable().to_offer_sent_state();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert!(res.is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
     fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer_revokable_from_proposal();
@@ -276,5 +295,17 @@ pub mod test {
 
         issuer.send_credential(_send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn issuer_cant_send_offer_twice() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_unrevokable().to_offer_sent_state();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        assert!(res.is_ok());
     }
 }
