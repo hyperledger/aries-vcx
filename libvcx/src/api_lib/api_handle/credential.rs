@@ -50,7 +50,7 @@ fn create_credential(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> 
     };
 
     if let Ok(cred_offer) = serde_json::from_value::<CredentialOffer>(offer_message) {
-        return Ok(Some(Holder::create(cred_offer, source_id)?));
+        return Ok(Some(Holder::create_from_offer(source_id, cred_offer)?));
     }
 
     // TODO: Return error in case of error
@@ -64,7 +64,7 @@ pub fn credential_create_with_offer(source_id: &str, offer: &str) -> VcxResult<u
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                           format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}", err)))?;
 
-    let holder = Holder::create(cred_offer, source_id)?;
+    let holder = Holder::create_from_offer(source_id, cred_offer)?;
     return HANDLE_MAP.add(holder);
 }
 

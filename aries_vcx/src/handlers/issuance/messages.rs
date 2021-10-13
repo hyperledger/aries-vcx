@@ -3,15 +3,17 @@ use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_ack::CredentialAck;
 use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 use crate::messages::issuance::credential_request::CredentialRequest;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialInit(Option<String>),
+    CredentialOfferSend(Option<String>),
     CredentialSend(),
+    CredentialProposalSend(CredentialProposalData),
     CredentialProposal(CredentialProposal),
     CredentialOffer(CredentialOffer),
+    CredentialOfferReject(Option<String>),
     CredentialRequestSend(String),
     CredentialRequest(CredentialRequest),
     Credential(Credential),

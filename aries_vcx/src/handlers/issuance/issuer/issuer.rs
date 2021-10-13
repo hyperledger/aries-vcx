@@ -4,6 +4,9 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::a2a::A2AMessage;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -21,6 +24,7 @@ pub struct IssuerConfig {
 #[derive(Debug, PartialEq)]
 pub enum IssuerState {
     Initial,
+    ProposalReceived,
     OfferSent,
     RequestReceived,
     CredentialSent,
@@ -29,15 +33,20 @@ pub enum IssuerState {
 }
 
 impl Issuer {
-    pub fn create(issuer_config: &IssuerConfig, credential_data: &str, source_id: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::issuer_create_credential >>> issuer_config: {:?}, credential_data: {:?}, source_id: {:?}", issuer_config, credential_data, source_id);
-
-        let issuer_sm = IssuerSM::new(&issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone(), source_id);
+    pub fn create(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::create >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
+        let issuer_sm = IssuerSM::new(source_id, &issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone());
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialInit(comment), Some(&send_message))
+    pub fn create_from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> VcxResult<Issuer> {
+        trace!("Issuer::create_from_proposal >>> source_id: {:?}, credential_proposal: {:?}", source_id, credential_proposal);
+        let issuer_sm = IssuerSM::from_proposal(source_id, credential_proposal);
+        Ok(Issuer { issuer_sm })
+    }
+
+    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<&str>) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialOfferSend(comment.map(String::from)), Some(&send_message))
     }
 
     pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -70,6 +79,15 @@ impl Issuer {
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
         self.issuer_sm.get_thread_id()
+    }
+
+    pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
+        self.issuer_sm.get_proposal()
+    }
+
+    pub fn set_offer(&mut self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().set_offer(values, cred_def_id, rev_reg_id, tails_file)?;
+        Ok(())
     }
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
@@ -123,7 +141,11 @@ pub mod test {
             rev_reg_id: Some(_rev_reg_id()),
             tails_file: Some(_tails_file())
         };
-        Issuer::create(&issuer_config, &_cred_data(), "test_source_id").unwrap()
+        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
+    }
+
+    fn _issuer_revokable_from_proposal() -> Issuer {
+        Issuer::create_from_proposal("test_source_id", &_credential_proposal()).unwrap()
     }
 
     fn _issuer_unrevokable() -> Issuer {
@@ -132,7 +154,7 @@ pub mod test {
             rev_reg_id: None,
             tails_file: None
         };
-        Issuer::create(&issuer_config, &_cred_data(), "test_source_id").unwrap()
+        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
     fn _send_message_but_fail() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
@@ -141,18 +163,18 @@ pub mod test {
 
     impl Issuer {
         fn to_offer_sent_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self
         }
 
         fn to_request_received_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialInit(None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
             self
@@ -183,5 +205,107 @@ pub mod test {
         let send_result = issuer.send_credential(_send_message().unwrap());
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_without_negotiation() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let values = _credential_proposal().credential_proposal.clone();
+        let cred_def_id = _credential_proposal().cred_def_id.clone();
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+
+        issuer.send_credential(_send_message().unwrap()).unwrap();
+        assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn send_offer_fails_if_no_offer_was_set() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert!(res.is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn send_offer_fails_if_no_offer_was_set_after_previous_offer() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_unrevokable().to_offer_sent_state();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert!(res.is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn exchange_credential_from_proposal_with_negotiation() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_revokable_from_proposal();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        let values = _credential_proposal().credential_proposal.clone();
+        let cred_def_id = _credential_proposal().cred_def_id.clone();
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+
+        issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).unwrap();
+        assert_eq!(IssuerState::RequestReceived, issuer.get_state());
+
+        issuer.send_credential(_send_message().unwrap()).unwrap();
+        assert_eq!(IssuerState::Finished, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn issuer_cant_send_offer_twice() {
+        let _setup = SetupMocks::init();
+        let mut issuer = _issuer_unrevokable().to_offer_sent_state();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+
+        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap(), Some("comment"));
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        assert!(res.is_ok());
     }
 }

@@ -91,6 +91,7 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
+    use aries_vcx::handlers::issuance::issuer::get_credential_proposal_messages;
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
@@ -103,9 +104,11 @@ mod tests {
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::messages::connection::service::ServiceResolvable;
+    use aries_vcx::messages::mime_type::MimeType;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
@@ -219,9 +222,9 @@ mod tests {
             rev_reg_id: cred_def.get_rev_reg_id(),
             tails_file: cred_def.get_tails_file(),
         };
-        let mut issuer = Issuer::create(&issuer_config, &credential_data, "1").unwrap();
+        let mut issuer = Issuer::create("1", &issuer_config, &credential_data).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment.map(|s| String::from(s))).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -246,7 +249,7 @@ mod tests {
         let offer = serde_json::to_string(&offers[0]).unwrap();
         info!("send_cred_req :: creating credential from offer");
         let cred_offer: CredentialOffer = serde_json::from_str(&offer).unwrap();
-        let mut holder = Holder::create(cred_offer, "TEST_CREDENTIAL").unwrap();
+        let mut holder = Holder::create_from_offer("TEST_CREDENTIAL", cred_offer).unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
@@ -255,11 +258,97 @@ mod tests {
         holder
     }
 
+    fn send_cred_proposal(alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) -> Holder {
+        alice.activate().unwrap();
+        let (address1, address2, city, state, zip) = attr_names();
+        let proposal = CredentialProposalData::create()
+            .set_schema_id(schema_id.to_string())
+            .set_cred_def_id(cred_def_id.to_string())
+            .set_comment(comment.to_string())
+            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&city, "Draper", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&state, "UT", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&zip, "84000", MimeType::Plain).unwrap();
+        let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
+        assert_eq!(HolderState::Initial, holder.get_state());
+        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        thread::sleep(Duration::from_millis(1000));
+        holder
+    }
+
+    fn send_cred_proposal_1(holder: &mut Holder, alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) {
+        alice.activate().unwrap();
+        holder.update_state(connection).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+        assert!(holder.get_offer().is_ok());
+        let (address1, address2, city, state, zip) = attr_names();
+        let proposal = CredentialProposalData::create()
+            .set_schema_id(schema_id.to_string())
+            .set_cred_def_id(cred_def_id.to_string())
+            .set_comment(comment.to_string())
+            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&city, "Austin", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&state, "TX", MimeType::Plain).unwrap()
+            .add_credential_preview_data(&zip, "42000", MimeType::Plain).unwrap();
+        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::ProposalSent, holder.get_state());
+        thread::sleep(Duration::from_millis(1000));
+    }
+
+    fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
+        faber.activate().unwrap();
+        let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
+        let proposal = proposals.last().unwrap();
+        let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
+        issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        thread::sleep(Duration::from_millis(1000));
+        issuer
+    }
+
+    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) {
+        faber.activate().unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        issuer.update_state(connection).unwrap();
+        assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
+        let proposal = issuer.get_proposal().unwrap();
+        issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        thread::sleep(Duration::from_millis(1000));
+    }
+
+    fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+        alice.activate().unwrap();
+        holder.update_state(connection).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+        assert!(holder.get_offer().is_ok());
+        let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::RequestSent, holder.get_state());
+    }
+
+    fn reject_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+        alice.activate().unwrap();
+        holder.update_state(connection).unwrap();
+        assert_eq!(HolderState::OfferReceived, holder.get_state());
+        let my_pw_did = connection.pairwise_info().pw_did.to_string();
+        holder.reject_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(HolderState::Failed, holder.get_state());
+    }
+
     fn send_credential(consumer: &mut Alice, institution: &mut Faber, issuer_credential: &mut Issuer, issuer_to_consumer: &Connection, consumer_to_issuer: &Connection, holder_credential: &mut Holder, revokable: bool) {
         institution.activate().unwrap();
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
+        assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         issuer_credential.update_state(issuer_to_consumer).unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
@@ -394,6 +483,14 @@ mod tests {
         info!("AS INSTITUTION SEND CREDENTIAL");
         send_credential(consumer, institution, &mut issuer_credential, issuer_to_consumer, consumer_to_issuer, &mut holder_credential, true);
         issuer_credential
+    }
+
+    fn _exchange_credential_with_proposal(consumer: &mut Alice, institution: &mut Faber, consumer_to_issuer: &Connection, issuer_to_consumer: &Connection, schema_id: &str, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>, comment: &str) -> (Holder, Issuer) {
+        let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment);
+        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, cred_def_id, rev_reg_id, tails_file);
+        accept_offer(consumer, consumer_to_issuer, &mut holder);
+        send_credential(consumer, institution, &mut issuer, issuer_to_consumer, consumer_to_issuer, &mut holder, true);
+        (holder, issuer)
     }
 
     fn _issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &Connection, institution_to_consumer: &Connection) -> (String, String, Option<String>, CredentialDef, Issuer) {
@@ -1145,6 +1242,59 @@ mod tests {
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution);
     }
 
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_credential_exchange_via_proposal() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_credential_exchange_via_proposal_failed() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id, Some(tails_file));
+        reject_offer(&mut consumer, &consumer_to_institution, &mut holder);
+        institution.activate().unwrap();
+        assert_eq!(IssuerState::OfferSent, issuer.get_state());
+        issuer.update_state(&institution_to_consumer).unwrap();
+        assert_eq!(IssuerState::Failed, issuer.get_state());
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_credential_exchange_via_proposal_with_negotiation() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id.clone(), Some(tails_file.clone()));
+        send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
+        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id, Some(tails_file));
+        accept_offer(&mut consumer, &consumer_to_institution, &mut holder);
+        send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true);
+    }
+
     pub struct PaymentPlugin {}
 
     impl PaymentPlugin {
@@ -1287,7 +1437,7 @@ mod tests {
         {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
             let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).unwrap();
-            alice.credential = Holder::create(cred_offer, "test").unwrap();
+            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
             let pw_did = alice.connection.pairwise_info().pw_did.to_string();
             alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap());
@@ -1355,7 +1505,7 @@ mod tests {
             let message = alice.download_message(PayloadKinds::CredOffer).unwrap();
 
             let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
-            alice.credential = Holder::create(cred_offer, "test").unwrap();
+            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
             alice.connection.update_message_status(message.uid).unwrap();
 

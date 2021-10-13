@@ -2,11 +2,11 @@ use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::a2a::MessageId;
 use crate::messages::status::Status;
+use crate::handlers::issuance::issuer::states::OfferInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct InitialState {
-    pub cred_def_id: String,
-    pub credential_json: String,
+    pub offer_info: OfferInfo,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
 }
@@ -14,8 +14,10 @@ pub struct InitialState {
 impl InitialState {
     pub fn new(cred_def_id: &str, credential_json: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
         InitialState {
-            cred_def_id: cred_def_id.to_string(),
-            credential_json: credential_json.to_string(),
+            offer_info: OfferInfo {
+                cred_def_id: cred_def_id.to_string(),
+                credential_json: credential_json.to_string(),
+            },
             rev_reg_id,
             tails_file,
         }
@@ -39,7 +41,7 @@ impl From<(InitialState, String, MessageId)> for OfferSentState {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,
-            cred_data: state.credential_json,
+            cred_data: state.offer_info.credential_json,
             rev_reg_id: state.rev_reg_id,
             tails_file: state.tails_file,
             thread_id: sent_id.0,
