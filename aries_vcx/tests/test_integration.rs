@@ -109,8 +109,6 @@ mod tests {
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::messages::connection::service::FullService;
-    use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::messages::mime_type::MimeType;
     use aries_vcx::settings;
     use aries_vcx::utils::{
