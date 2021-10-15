@@ -384,7 +384,7 @@ jobs:
       - name: Run integration tests
         uses: ./.github/actions/code-coverage
         with:
-          test-features: 'pool_tests agency_pool_tests agency_v2'
+          test-features: 'pool_tests agency_pool_tests agency_tests'
           test-path: aries-vcx/aries_vcx
           run-services: true
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
@@ -520,7 +520,7 @@ jobs:
                                 cd $HOME/libvcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
 
-  test-libvcx-image-pool_tests:
+  test-libvcx-image-pool_and_agency_tests:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
@@ -819,7 +819,7 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper demo 
+      - name: Run wrapper demo
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
@@ -1035,7 +1035,7 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_and_agency_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
@@ -1083,7 +1083,7 @@ jobs:
 
   publish-agent-core:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_and_agency_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
@@ -1130,7 +1130,7 @@ jobs:
 
   make-release:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_and_agency_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
