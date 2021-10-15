@@ -7,14 +7,6 @@ export CARGO_INCREMENTAL=1
 export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
-# OpenSSL path changes with version number, so export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2n would not work correctly
-OPENSSL_PATH=/usr/local/Cellar/openssl@1.1
-for i in $(ls -t $OPENSSL_PATH); do
-    export OPENSSL_VERSION=$i
-    export OPENSSL_DIR=$OPENSSL_PATH/$OPENSSL_VERSION
-    break
-done
-
 INDY_VERSION="efb7215" # indy-1.16.0-post-59 - "v1.16.0" + rusql update fix + (number of other commits on master branch)
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
@@ -87,7 +79,8 @@ build_crypto() {
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
-        ./build-libssl.sh --version=$OPENSSL_VERSION
+        OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]')
+        ./build-libssl.sh --version="$OPENSSL_VERSION_STRIPPED"
     popd
 }
 
