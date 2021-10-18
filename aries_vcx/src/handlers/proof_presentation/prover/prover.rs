@@ -18,6 +18,7 @@ pub struct Prover {
 #[derive(Debug, PartialEq)]
 pub enum ProverState {
     Initial,
+    PresentationRequestReceived,
     PresentationPrepared,
     PresentationPreparationFailed,
     PresentationSent,
@@ -26,10 +27,17 @@ pub enum ProverState {
 }
 
 impl Prover {
-    pub fn create(source_id: &str, presentation_request: PresentationRequest) -> VcxResult<Prover> {
-        trace!("Prover::create >>> source_id: {}, presentation_request: {:?}", source_id, presentation_request);
+    pub fn create(source_id: &str) -> VcxResult<Prover> {
+        trace!("Prover::create >>> source_id: {}", source_id);
         Ok(Prover {
-            prover_sm: ProverSM::new(presentation_request, source_id.to_string()),
+            prover_sm: ProverSM::new(source_id.to_string()),
+        })
+    }
+
+    pub fn create_from_request(source_id: &str, presentation_request: PresentationRequest) -> VcxResult<Prover> {
+        trace!("Prover::create_from_request >>> source_id: {}, presentation_request: {:?}", source_id, presentation_request);
+        Ok(Prover {
+            prover_sm: ProverSM::from_request(presentation_request, source_id.to_string()),
         })
     }
 
@@ -81,11 +89,11 @@ impl Prover {
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
-        self.prover_sm.presentation_request().request_presentations_attach.content()
+        self.prover_sm.presentation_request()?.request_presentations_attach.content()
     }
 
     pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
-        let data = self.prover_sm.presentation_request().request_presentations_attach.content()?;
+        let data = self.prover_sm.presentation_request()?.request_presentations_attach.content()?;
         let proof_request_data: serde_json::Value = serde_json::from_str(&data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err)))?;
         Ok(proof_request_data.to_string())
@@ -161,7 +169,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let retrieved_creds = proof.retrieve_credentials().unwrap();
         assert!(retrieved_creds.len() > 500);
@@ -182,7 +190,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let retrieved_creds = proof.retrieve_credentials().unwrap();
         assert_eq!(retrieved_creds, "{}".to_string());
@@ -190,7 +198,7 @@ mod tests {
         req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("2", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
         let retrieved_creds = proof.retrieve_credentials().unwrap();
         assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
@@ -217,7 +225,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         // All lower case
         let retrieved_creds = proof.retrieve_credentials().unwrap();
@@ -229,7 +237,7 @@ mod tests {
         req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("2", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof.retrieve_credentials().unwrap();
         assert!(retrieved_creds2.contains(r#""zip":"84000""#));
 
@@ -237,7 +245,7 @@ mod tests {
         req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let proof: Prover = Prover::create("1", proof_req).unwrap();
+        let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof.retrieve_credentials().unwrap();
         assert!(retrieved_creds3.contains(r#""zip":"84000""#));
     }
@@ -248,7 +256,7 @@ mod tests {
         let _setup = SetupLibraryWallet::init();
 
         let proof_req = PresentationRequest::create();
-        let proof = Prover::create("1", proof_req).unwrap();
+        let proof = Prover::create_from_request("1", proof_req).unwrap();
         assert_eq!(proof.retrieve_credentials().unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
@@ -280,7 +288,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+        let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
         let selected_credentials: serde_json::Value = json!({
@@ -326,7 +334,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+        let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let selected_credentials: serde_json::Value = json!({});
         let self_attested: serde_json::Value = json!({
@@ -367,7 +375,7 @@ mod tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
-        let mut proof: Prover = Prover::create("1", proof_req).unwrap();
+        let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
         let selected_credentials: serde_json::Value = json!({

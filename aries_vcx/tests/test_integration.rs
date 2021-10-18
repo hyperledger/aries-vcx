@@ -417,7 +417,7 @@ mod tests {
         assert_eq!(requests.len(), 1);
         let request = serde_json::to_string(&requests[0]).unwrap();
         let presentation_request: PresentationRequest = serde_json::from_str(&request).unwrap();
-        Prover::create(utils::constants::DEFAULT_PROOF_NAME, presentation_request).unwrap()
+        Prover::create_from_request(utils::constants::DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
     fn generate_and_send_proof(alice: &mut Alice, prover: &mut Prover, connection: &Connection, selected_credentials: &str) {
@@ -1560,7 +1560,7 @@ mod tests {
         {
             let message = alice.download_message(PayloadKinds::ProofRequest).unwrap();
             let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).unwrap();
-            alice.prover = Prover::create("test", presentation_request).unwrap();
+            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 
             let credentials = alice.get_credentials_for_presentation();
 
@@ -1631,7 +1631,7 @@ mod tests {
             let agency_msg = alice.download_message(PayloadKinds::ProofRequest).unwrap();
 
             let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
-            alice.prover = Prover::create("test", presentation_request).unwrap();
+            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 
             alice.connection.update_message_status(agency_msg.uid).unwrap();
 

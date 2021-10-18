@@ -66,12 +66,13 @@ impl From<IssuerState> for u32 {
 impl From<ProverState> for u32 {
     fn from(state: ProverState) -> u32 {
         match state {
-            ProverState::Initial => 0,
-            ProverState::PresentationPrepared => 1,
-            ProverState::PresentationPreparationFailed => 2,
-            ProverState::PresentationSent => 3,
-            ProverState::Finished => 4,
-            ProverState::Failed => 5
+            ProverState::Initial => 1,
+            ProverState::PresentationRequestReceived => 1,
+            ProverState::PresentationPrepared => 2,
+            ProverState::PresentationPreparationFailed => 3,
+            ProverState::PresentationSent => 4,
+            ProverState::Finished => 5,
+            ProverState::Failed => 6
         }
     }
 }

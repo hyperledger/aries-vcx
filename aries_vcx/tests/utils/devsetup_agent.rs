@@ -476,7 +476,7 @@ pub mod test {
             self.activate().unwrap();
             let presentation_request = self.get_proof_request_messages();
 
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
 
@@ -491,7 +491,7 @@ pub mod test {
             self.activate().unwrap();
 
             let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
         }
@@ -500,7 +500,7 @@ pub mod test {
             self.activate().unwrap();
 
             let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             let proposal_data = json!({
                 "attributes": [

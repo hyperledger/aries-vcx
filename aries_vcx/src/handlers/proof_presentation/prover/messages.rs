@@ -7,6 +7,7 @@ use crate::messages::proof_presentation::presentation_request::PresentationReque
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
+    PresentationProposalSend(PresentationRequestData),
     PresentationRequestReceived(PresentationRequestData),
     RejectPresentationRequest(String),
     SetPresentation(Presentation),
