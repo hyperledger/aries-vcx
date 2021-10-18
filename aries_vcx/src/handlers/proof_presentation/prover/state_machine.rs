@@ -61,14 +61,20 @@ impl ProverSM {
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Prover::find_message_to_handle >>> messages: {:?}", messages);
-
         for (uid, message) in messages {
             match self.state {
                 ProverFullState::Initial(_) => {
                     // do not process messages
                 }
                 ProverFullState::PresentationProposalSent(_) => {
-                    // do not process messages
+                    match message {
+                        A2AMessage::PresentationRequest(request) => {
+                            // if request.from_thread(&self.thread_id) {
+                                return Some((uid, A2AMessage::PresentationRequest(request)));
+                            // }
+                        }
+                        _ => {}
+                    }
                 }
                 ProverFullState::PresentationRequestReceived(_) => {
                     match message {
@@ -104,7 +110,6 @@ impl ProverSM {
                 }
             };
         }
-
         None
     }
 
@@ -133,7 +138,15 @@ impl ProverSM {
                 }
             }
             ProverFullState::PresentationProposalSent(state) => {
-                ProverFullState::PresentationProposalSent(state)
+                match message {
+                    ProverMessages::PresentationRequestReceived(request) => {
+                        ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request))
+                    }
+                    _ => {
+                        warn!("Unable to process received message in this state");
+                        ProverFullState::PresentationProposalSent(state)
+                    }
+                }
             }
             ProverFullState::PresentationRequestReceived(state) => {
                 match message {
@@ -178,6 +191,7 @@ impl ProverSM {
                         }
                     }
                     _ => {
+                        warn!("Unable to process received message in this state");
                         ProverFullState::PresentationRequestReceived(state)
                     }
                 }
@@ -209,6 +223,7 @@ impl ProverSM {
                         }
                     }
                     _ => {
+                        warn!("Unable to process received message in this state");
                         ProverFullState::PresentationPrepared(state)
                     }
                 }
@@ -224,6 +239,7 @@ impl ProverSM {
                         }
                     }
                     _ => {
+                        warn!("Unable to process received message in this state");
                         ProverFullState::PresentationPreparationFailed(state)
                     }
                 }
@@ -240,6 +256,7 @@ impl ProverSM {
                         return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Presentation is already sent"));
                     }
                     _ => {
+                        warn!("Unable to process received message in this state");
                         ProverFullState::PresentationSent(state)
                     }
                 }

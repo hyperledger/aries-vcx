@@ -13,6 +13,10 @@ pub struct PresentationRequestReceived {
 
 
 impl PresentationRequestReceived {
+    pub fn new(presentation_request: PresentationRequest) -> Self {
+        Self { presentation_request }
+    }
+
     pub fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
         generate_indy_proof(credentials,
                             self_attested_attrs,

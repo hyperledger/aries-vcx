@@ -4,12 +4,12 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_proposal::PresentationPreview;
-use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
     PresentationProposalSend(PresentationProposalData),
-    PresentationRequestReceived(PresentationRequestData),
+    PresentationRequestReceived(PresentationRequest),
     RejectPresentationRequest(String),
     SetPresentation(Presentation),
     PreparePresentation((String, String)),
@@ -39,6 +39,9 @@ impl From<A2AMessage> for ProverMessages {
             }
             A2AMessage::CommonProblemReport(report) => {
                 ProverMessages::PresentationRejectReceived(report)
+            }
+            A2AMessage::PresentationRequest(request) => {
+                ProverMessages::PresentationRequestReceived(request)
             }
             _ => {
                 ProverMessages::Unknown
