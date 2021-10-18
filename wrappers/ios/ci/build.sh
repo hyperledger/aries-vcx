@@ -54,7 +54,10 @@ setup() {
     mkdir -p $OUTPUT_DIR
 
     # Figure out which OPENSSL we have available
+    ls -lah /usr/local/Cellar/
     export OPENSSL_BASE_DIR=$(brew --cellar openssl)
+    echo "OPENSSL_BASE_DIR=$OPENSSL_BASE_DIR"
+    ls -laht "$OPENSSL_BASE_DIR"
     for f in $(ls -t "$OPENSSL_BASE_DIR"); do
       local ABSOLUTE_FILE_PATH="${OPENSSL_BASE_DIR}/${f}"
       if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -d "$ABSOLUTE_FILE_PATH/lib" ]; then
