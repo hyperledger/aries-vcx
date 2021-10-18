@@ -7,7 +7,7 @@ use crate::handlers::proof_presentation::prover::state_machine::ProverSM;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_proposal::PresentationPreview;
+use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -18,6 +18,7 @@ pub struct Prover {
 #[derive(Debug, PartialEq)]
 pub enum ProverState {
     Initial,
+    PresentationProposalSent,
     PresentationRequestReceived,
     PresentationPrepared,
     PresentationPreparationFailed,
@@ -68,6 +69,11 @@ impl Prover {
     pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
         self.step(ProverMessages::SetPresentation(presentation), None::<&fn(&A2AMessage) -> _>)
+    }
+
+    pub fn send_proposal(&mut self, proposal_data: PresentationProposalData, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        trace!("Prover::send_proposal >>>");
+        self.step(ProverMessages::PresentationProposalSend(proposal_data), Some(&send_message))
     }
 
     pub fn send_presentation(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {

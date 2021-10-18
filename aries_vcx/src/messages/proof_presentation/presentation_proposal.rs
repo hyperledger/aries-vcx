@@ -52,6 +52,11 @@ impl PresentationProposal {
         PresentationProposal::default()
     }
 
+    pub fn set_id(mut self, id: &str) -> Self {
+        self.id = MessageId(id.to_string());
+        self
+    }
+
     pub fn set_comment(mut self, comment: String) -> Self {
         self.comment = Some(comment);
         self
@@ -65,6 +70,48 @@ impl PresentationProposal {
 
 threadlike!(PresentationProposal);
 a2a_message!(PresentationProposal);
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
+pub struct PresentationProposalData {
+    pub attributes: Vec<Attribute>,
+    pub predicates: Vec<Predicate>,
+    pub comment: Option<String>,
+}
+
+impl PresentationProposalData {
+    pub fn create() -> Self {
+        Self::default()
+    }
+
+    pub fn add_attribute(mut self, attr: Attribute) -> Self {
+        self.attributes.push(attr);
+        self
+    }
+
+    pub fn set_comment(mut self, comment: String) -> Self {
+        self.comment = Some(comment);
+        self
+    }
+
+    pub fn add_predicate(mut self, pred: Predicate) -> Self {
+        self.predicates.push(pred);
+        self
+    }
+}
+
+impl From<PresentationProposalData> for PresentationProposal {
+    fn from(data: PresentationProposalData) -> Self {
+        Self {
+            comment: data.comment,
+            presentation_proposal: PresentationPreview {
+                attributes: data.attributes,
+                predicates: data.predicates,
+                ..PresentationPreview::default()
+            },
+            ..Self::default()
+        }
+    }
+}
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {

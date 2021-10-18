@@ -4,13 +4,14 @@ use crate::error::prelude::*;
 use crate::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::handlers::proof_presentation::prover::prover::ProverState;
 use crate::handlers::proof_presentation::prover::states::initial::InitialProverState;
+use crate::handlers::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
 use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
 use crate::handlers::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
 use crate::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::handlers::proof_presentation::prover::verify_thread_id;
-use crate::messages::a2a::A2AMessage;
+use crate::messages::a2a::{MessageId, A2AMessage};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
@@ -35,6 +36,7 @@ pub struct ProverSM {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ProverFullState {
     Initial(InitialProverState),
+    PresentationProposalSent(PresentationProposalSent),
     PresentationRequestReceived(PresentationRequestReceived),
     PresentationPrepared(PresentationPreparedState),
     PresentationPreparationFailed(PresentationPreparationFailedState),
@@ -50,7 +52,7 @@ impl Default for ProverFullState {
 
 impl ProverSM {
     pub fn new(source_id: String) -> ProverSM {
-        ProverSM { source_id, thread_id: String::new(), state: ProverFullState::Initial(InitialProverState {}) }
+        ProverSM { source_id, thread_id: MessageId::new().0, state: ProverFullState::Initial(InitialProverState {}) }
     }
 
     pub fn from_request(presentation_request: PresentationRequest, source_id: String) -> ProverSM {
@@ -63,6 +65,9 @@ impl ProverSM {
         for (uid, message) in messages {
             match self.state {
                 ProverFullState::Initial(_) => {
+                    // do not process messages
+                }
+                ProverFullState::PresentationProposalSent(_) => {
                     // do not process messages
                 }
                 ProverFullState::PresentationRequestReceived(_) => {
@@ -112,7 +117,23 @@ impl ProverSM {
         verify_thread_id(&thread_id, &message)?;
         let state = match state {
             ProverFullState::Initial(state) => {
-                ProverFullState::Initial(state)
+                match message {
+                    ProverMessages::PresentationProposalSend(proposal_data) => {
+                        let proposal = PresentationProposal::from(proposal_data)
+                            .set_id(&thread_id);
+                        send_message.ok_or(
+                            VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                        )?(&proposal.to_a2a_message())?;
+                        ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
+                    }
+                    _ => {
+                        warn!("Unable to process received message in this state");
+                        ProverFullState::Initial(state)
+                    }
+                }
+            }
+            ProverFullState::PresentationProposalSent(state) => {
+                ProverFullState::PresentationProposalSent(state)
             }
             ProverFullState::PresentationRequestReceived(state) => {
                 match message {
@@ -260,6 +281,7 @@ impl ProverSM {
     pub fn get_state(&self) -> ProverState {
         match self.state {
             ProverFullState::Initial(_) => ProverState::Initial,
+            ProverFullState::PresentationProposalSent(_) => ProverState::PresentationProposalSent,
             ProverFullState::PresentationRequestReceived(_) => ProverState::PresentationRequestReceived,
             ProverFullState::PresentationPrepared(_) => ProverState::PresentationPrepared,
             ProverFullState::PresentationPreparationFailed(_) => ProverState::PresentationPreparationFailed,
@@ -276,7 +298,8 @@ impl ProverSM {
     pub fn has_transitions(&self) -> bool {
         trace!("Prover::states::has_transitions >> state: {:?}", self.state);
         match self.state {
-            ProverFullState::Initial(_) => true,
+            ProverFullState::Initial(_) => false,
+            ProverFullState::PresentationProposalSent(_) => true,
             ProverFullState::PresentationRequestReceived(_) => false,
             ProverFullState::PresentationPrepared(_) => true,
             ProverFullState::PresentationPreparationFailed(_) => true,
@@ -295,6 +318,7 @@ impl ProverSM {
     pub fn presentation_request(&self) -> VcxResult<&PresentationRequest> {
         match self.state {
             ProverFullState::Initial(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation request is not available")),
+            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation request is not available")),
             ProverFullState::PresentationRequestReceived(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationPreparationFailed(ref state) => Ok(&state.presentation_request),
@@ -306,6 +330,7 @@ impl ProverSM {
     pub fn presentation(&self) -> VcxResult<&Presentation> {
         match self.state {
             ProverFullState::Initial(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not created yet")),
+            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not created yet")),
             ProverFullState::PresentationRequestReceived(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not created yet")),
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation),
             ProverFullState::PresentationPreparationFailed(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not created yet")),

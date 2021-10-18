@@ -1,13 +1,14 @@
 use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
+use crate::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_proposal::PresentationPreview;
 use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverMessages {
-    PresentationProposalSend(PresentationRequestData),
+    PresentationProposalSend(PresentationProposalData),
     PresentationRequestReceived(PresentationRequestData),
     RejectPresentationRequest(String),
     SetPresentation(Presentation),
