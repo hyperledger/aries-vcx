@@ -2,6 +2,6 @@ use crate::handlers::proof_presentation::verifier::states::presentation_request_
 use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct InitialState {
+pub struct PresentationRequestSet {
     pub presentation_request_data: PresentationRequestData,
 }
