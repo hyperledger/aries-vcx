@@ -54,10 +54,7 @@ setup() {
     mkdir -p $OUTPUT_DIR
 
     # Figure out which OPENSSL we have available
-    ls -lah /usr/local/Cellar/
-    export OPENSSL_BASE_DIR=$(brew --cellar openssl)
-    echo "OPENSSL_BASE_DIR=$OPENSSL_BASE_DIR"
-    ls -laht "$OPENSSL_BASE_DIR"
+    export OPENSSL_BASE_DIR="/usr/local/Cellar/openssl@1.1"
     for f in $(ls -t "$OPENSSL_BASE_DIR"); do
       local ABSOLUTE_FILE_PATH="${OPENSSL_BASE_DIR}/${f}"
       if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -d "$ABSOLUTE_FILE_PATH/lib" ]; then
@@ -82,7 +79,7 @@ build_crypto() {
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
-        OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]')
+        OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]') # example: 1.1.1l_1a ---> 1.1.1l
         ./build-libssl.sh --version="$OPENSSL_VERSION_STRIPPED"
     popd
 }
