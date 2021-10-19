@@ -99,6 +99,9 @@ impl VerifierSM {
         let state = match state {
             VerifierFullState::Initiated(state) => {
                 match message {
+                    VerifierMessages::PresentationProposalReceived(proposal) => {
+                        VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal))
+                    }
                     VerifierMessages::SendPresentationRequest(comment) => {
                         let presentation_request =
                             PresentationRequest::create()
@@ -165,15 +168,8 @@ impl VerifierSM {
                     VerifierMessages::PresentationRejectReceived(problem_report) => {
                         VerifierFullState::Finished((state, problem_report).into())
                     }
-                    VerifierMessages::PresentationProposalReceived(_) => { // TODO: handle Presentation Proposal
-                        let problem_report =
-                            ProblemReport::create()
-                                .set_comment(Some(String::from("PresentationProposal is not supported")))
-                                .set_thread_id(&state.presentation_request.id.0);
-                        send_message.ok_or(
-                            VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&problem_report.to_a2a_message())?;
-                        VerifierFullState::Finished((state, problem_report).into())
+                    VerifierMessages::PresentationProposalReceived(proposal) => {
+                        VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal))
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
