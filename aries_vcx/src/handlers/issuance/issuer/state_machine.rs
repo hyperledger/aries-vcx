@@ -68,14 +68,14 @@ pub struct IssuerSM {
 
 impl IssuerSM {
     pub fn new(source_id: &str, cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
-        IssuerSM {
+        Self {
             state: IssuerFullState::Initial(InitialState::new(cred_def_id, credential_data, rev_reg_id, tails_file)),
             source_id: source_id.to_string(),
         }
     }
 
     pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> Self {
-        IssuerSM {
+        Self {
             state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None, None, None)),
             source_id: source_id.to_string(),
         }
@@ -86,7 +86,7 @@ impl IssuerSM {
     }
 
     pub fn step(state: IssuerFullState, source_id: String) -> Self {
-        IssuerSM {
+        Self {
             state,
             source_id,
         }
@@ -227,8 +227,8 @@ impl IssuerSM {
         }
     }
 
-    pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<IssuerSM> {
-        let IssuerSM { state, source_id } = self;
+    pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Self> {
+        let Self { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state) => {
                 IssuerFullState::Initial(InitialState {
@@ -247,13 +247,13 @@ impl IssuerSM {
             }
             _ => { state }
         };
-        Ok(IssuerSM::step(state, source_id))
+        Ok(Self::step(state, source_id))
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
+    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.get_thread_id()?, &cim)?;
-        let IssuerSM { state, source_id } = self;
+        let Self { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
@@ -359,7 +359,7 @@ impl IssuerSM {
             }
         };
 
-        Ok(IssuerSM::step(state, source_id))
+        Ok(Self::step(state, source_id))
     }
 
     pub fn credential_status(&self) -> u32 {

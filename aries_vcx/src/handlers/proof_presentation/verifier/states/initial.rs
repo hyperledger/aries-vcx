@@ -5,10 +5,3 @@ use crate::messages::proof_presentation::presentation_request::{PresentationRequ
 pub struct InitialState {
     pub presentation_request_data: PresentationRequestData,
 }
-
-impl From<(InitialState, PresentationRequest)> for PresentationRequestSentState {
-    fn from((_state, presentation_request): (InitialState, PresentationRequest)) -> Self {
-        trace!("transit state from InitialState to PresentationRequestSentState");
-        PresentationRequestSentState { presentation_request }
-    }
-}

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::handlers::proof_presentation::verifier::state_machine::VerifierSM;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_request::*;
@@ -15,6 +16,7 @@ pub struct Verifier {
 #[derive(Debug, PartialEq)]
 pub enum VerifierState {
     Initial,
+    PresentationProposalReceived,
     PresentationRequestSent,
     Finished,
     Failed,
@@ -25,7 +27,7 @@ impl Verifier {
                   requested_attrs: String,
                   requested_predicates: String,
                   revocation_details: String,
-                  name: String) -> VcxResult<Verifier> {
+                  name: String) -> VcxResult<Self> {
         trace!("Verifier::create >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
                source_id, requested_attrs, requested_predicates, revocation_details, name);
 
@@ -37,10 +39,15 @@ impl Verifier {
                 .set_not_revoked_interval(revocation_details)?
                 .set_nonce()?;
 
-        Ok(Verifier {
-            verifier_sm: VerifierSM::new(presentation_request, source_id),
+        Ok(Self {
+            verifier_sm: VerifierSM::new(source_id, presentation_request),
         })
     }
+
+    // pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
+    //     trace!("Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}", source_id, presentation_proposal);
+    //     Ok(Self { issuer_sm: VerifierSM::from_proposal(source_id, presentation_proposal) })
+    // }
 
     pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }
 
@@ -62,6 +69,11 @@ impl Verifier {
     pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
         trace!("Verifier::send_presentation_request >>>");
         self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
+    }
+
+    pub fn set_request(&mut self, requested_attrs: String, requested_predicates: String, revocation_details: String, name: String) -> VcxResult<()> {
+        self.verifier_sm = self.verifier_sm.clone().set_request(requested_attrs, requested_predicates, revocation_details, name)?;
+        Ok(())
     }
 
     pub fn generate_presentation_request_msg(&self) -> VcxResult<String> {

@@ -82,9 +82,10 @@ impl From<VerifierState> for u32 {
     fn from(state: VerifierState) -> u32 {
         match state {
             VerifierState::Initial => 0,
-            VerifierState::PresentationRequestSent => 1,
-            VerifierState::Finished => 2,
-            VerifierState::Failed => 3
+            VerifierState::PresentationProposalReceived => 1,
+            VerifierState::PresentationRequestSent => 2,
+            VerifierState::Finished => 3,
+            VerifierState::Failed => 4
         }
     }
 }
