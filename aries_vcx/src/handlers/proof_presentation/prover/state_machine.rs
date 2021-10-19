@@ -63,9 +63,6 @@ impl ProverSM {
         trace!("Prover::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
             match self.state {
-                ProverFullState::Initial(_) => {
-                    // do not process messages
-                }
                 ProverFullState::PresentationProposalSent(_) => {
                     match message {
                         A2AMessage::PresentationRequest(request) => {
@@ -75,20 +72,6 @@ impl ProverSM {
                         }
                         _ => {}
                     }
-                }
-                ProverFullState::PresentationRequestReceived(_) => {
-                    match message {
-                        A2AMessage::PresentationRequest(_) => {
-                            // ignore it here??
-                        }
-                        _ => {}
-                    }
-                }
-                ProverFullState::PresentationPrepared(_) => {
-                    // do not process messages
-                }
-                ProverFullState::PresentationPreparationFailed(_) => {
-                    // do not process messages
                 }
                 ProverFullState::PresentationSent(_) => {
                     match message {
@@ -105,7 +88,7 @@ impl ProverSM {
                         _ => {}
                     }
                 }
-                ProverFullState::Finished(_) => {
+                _ => {
                     // do not process messages
                 }
             };

@@ -52,7 +52,6 @@ impl VerifierSM {
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
-
         for (uid, message) in messages {
             match self.state {
                 VerifierFullState::Initiated(_) => {
@@ -64,9 +63,6 @@ impl VerifierSM {
                         }
                         _ => {}
                     }
-                }
-                VerifierFullState::PresentationProposalReceived(_) => {
-                    // do not process message
                 }
                 VerifierFullState::PresentationRequestSent(_) => {
                     match message {
@@ -88,12 +84,11 @@ impl VerifierSM {
                         _ => {}
                     }
                 }
-                VerifierFullState::Finished(_) => {
+                _ => {
                     // do not process message
                 }
             };
         }
-
         None
     }
 

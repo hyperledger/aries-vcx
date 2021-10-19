@@ -149,12 +149,6 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
-                IssuerFullState::Initial(_) => {
-                    // do not process messages
-                }
-                IssuerFullState::ProposalReceived(_) => {
-                    // do not process messages
-                }
                 IssuerFullState::OfferSent(_) => {
                     match message {
                         A2AMessage::CredentialRequest(credential) => {
@@ -177,9 +171,6 @@ impl IssuerSM {
                         _ => {}
                     }
                 }
-                IssuerFullState::RequestReceived(_) => {
-                    // do not process messages
-                }
                 IssuerFullState::CredentialSent(_) => {
                     match message {
                         A2AMessage::Ack(ack) | A2AMessage::CredentialAck(ack) => {
@@ -195,7 +186,7 @@ impl IssuerSM {
                         _ => {}
                     }
                 }
-                IssuerFullState::Finished(_) => {
+                _ => {
                     // do not process messages
                 }
             };
@@ -268,7 +259,7 @@ impl IssuerSM {
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
                 }
                 _ => {
-                    warn!("Unable to process this message in this state, ignoring...");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::Initial(state_data)
                 }
             }
@@ -291,7 +282,7 @@ impl IssuerSM {
                     IssuerFullState::OfferSent((credential_json, cred_offer, thread_id, state_data.rev_reg_id, state_data.tails_file).into())
                 }
                 _ => {
-                    warn!("Unable to process this message in this state, ignoring...");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::ProposalReceived(state_data)
                 }
             }
@@ -306,7 +297,7 @@ impl IssuerSM {
                     IssuerFullState::Finished((state_data, problem_report).into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Request, Proposal and Problem Report");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::OfferSent(state_data)
                 }
             },
@@ -349,12 +340,12 @@ impl IssuerSM {
                     IssuerFullState::Finished(state_data.into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Ack and Problem Report");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::CredentialSent(state_data)
                 }
             }
             IssuerFullState::Finished(state_data) => {
-                warn!("Exchange is finished, no messages can be sent or received");
+                warn!("Unable to process received message in this state");
                 IssuerFullState::Finished(state_data)
             }
         };
