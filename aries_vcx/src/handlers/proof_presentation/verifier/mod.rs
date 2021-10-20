@@ -1,8 +1,5 @@
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use crate::handlers::connection::connection::Connection;
-use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::a2a::A2AMessage;
 use crate::settings;
 
 pub mod verifier;
@@ -15,18 +12,4 @@ pub fn verify_thread_id(thread_id: &str, message: &VerifierMessages) -> VcxResul
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle message {:?}: thread id does not match, expected {:?}", message, thread_id)));
     };
     Ok(())
-}
-
-pub fn get_presentation_proposal_messages(connection: &Connection) -> VcxResult<String> {
-    let presentation_proposals: Vec<PresentationProposal> = connection.get_messages()?
-        .into_iter()
-        .filter_map(|(_, message)| {
-            match message {
-                A2AMessage::PresentationProposal(proposal) => Some(proposal),
-                _ => None
-            }
-        })
-        .collect();
-
-    Ok(json!(presentation_proposals).to_string())
 }

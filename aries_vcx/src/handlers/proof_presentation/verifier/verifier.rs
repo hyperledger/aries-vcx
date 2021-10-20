@@ -25,7 +25,7 @@ pub enum VerifierState {
 }
 
 impl Verifier {
-    pub fn create(source_id: String) -> VcxResult<Self> {
+    pub fn create(source_id: &str) -> VcxResult<Self> {
         trace!("Verifier::create >>> source_id: {:?}", source_id);
 
         Ok(Self {
@@ -48,13 +48,13 @@ impl Verifier {
                 .set_not_revoked_interval(revocation_details)?;
 
         Ok(Self {
-            verifier_sm: VerifierSM::from_request(source_id, presentation_request),
+            verifier_sm: VerifierSM::from_request(&source_id, presentation_request),
         })
     }
 
     pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
         trace!("Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}", source_id, presentation_proposal);
-        Ok(Self { verifier_sm: VerifierSM::from_proposal(source_id.to_string(), presentation_proposal) })
+        Ok(Self { verifier_sm: VerifierSM::from_proposal(source_id, presentation_proposal) })
     }
 
     pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }

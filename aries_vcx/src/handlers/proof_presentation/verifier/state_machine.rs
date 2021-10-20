@@ -44,16 +44,16 @@ pub enum RevocationStatus {
 }
 
 impl VerifierSM {
-    pub fn new(source_id: String) -> Self {
-        Self { source_id, state: VerifierFullState::Initial(InitialVerifierState {}) }
+    pub fn new(source_id: &str) -> Self {
+        Self { source_id: source_id.to_string(), state: VerifierFullState::Initial(InitialVerifierState {}) }
     }
 
-    pub fn from_request(source_id: String, presentation_request: PresentationRequestData) -> Self {
-        Self { source_id, state: VerifierFullState::PresentationRequestSet(PresentationRequestSet { presentation_request_data: presentation_request }) }
+    pub fn from_request(source_id: &str, presentation_request: PresentationRequestData) -> Self {
+        Self { source_id: source_id.to_string(), state: VerifierFullState::PresentationRequestSet(PresentationRequestSet { presentation_request_data: presentation_request }) }
     }
 
-    pub fn from_proposal(source_id: String, presentation_proposal: &PresentationProposal) -> Self {
-        Self { source_id, state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(presentation_proposal.clone())) }
+    pub fn from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> Self {
+        Self { source_id: source_id.to_string(), state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(presentation_proposal.clone())) }
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
@@ -63,9 +63,9 @@ impl VerifierSM {
                 VerifierFullState::Initial(_) => {
                     match message {
                         A2AMessage::PresentationProposal(proposal) => {
-                            if proposal.from_thread(&self.thread_id()) {
+                            // if proposal.from_thread(&self.thread_id()) {
                                 return Some((uid, A2AMessage::PresentationProposal(proposal)));
-                            }
+                            // }
                         }
                         A2AMessage::PresentationRequest(request) => {
                             // if request.from_thread(&self.thread_id()) {
@@ -343,7 +343,7 @@ pub mod test {
     use super::*;
 
     pub fn _verifier_sm() -> VerifierSM {
-        VerifierSM::from_request(source_id(), _presentation_request_data())
+        VerifierSM::from_request(&source_id(), _presentation_request_data())
     }
 
     impl VerifierSM {

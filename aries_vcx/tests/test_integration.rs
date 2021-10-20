@@ -93,7 +93,6 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::issuer::get_credential_proposal_messages;
-    use aries_vcx::handlers::proof_presentation::verifier::get_presentation_proposal_messages;
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
     use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
@@ -403,13 +402,10 @@ mod tests {
 
     fn accept_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
         faber.activate().unwrap();
-        // TODO: This should be possible via update state
-        let mut proposals: Vec<PresentationProposal> = serde_json::from_str(&get_presentation_proposal_messages(connection).unwrap()).unwrap();
-        let received_proposal = proposals.pop().unwrap();
-        let mut verifier = Verifier::create_from_proposal("1", &received_proposal).unwrap();
+        let mut verifier = Verifier::create("1").unwrap();
+        verifier.update_state(connection).unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
-        assert_eq!(proposal, received_proposal);
         let attrs = proposal.presentation_proposal.attributes.into_iter().map(|attr| {
             AttrInfo {
                 name: Some(attr.name.clone()),
