@@ -24,23 +24,56 @@ pub struct PresentationPreview {
     pub predicates: Vec<Predicate>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Attribute {
     pub name: String,
     pub cred_def_id: Option<String>,
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
     pub value: Option<String>,
-    pub filter: Option<Vec<::serde_json::Value>>,
+    pub referent: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+impl Attribute {
+    pub fn create(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Self::default()
+        }
+    }
+
+    pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
+        self.cred_def_id = Some(cred_def_id.to_string());
+        self 
+    }
+
+    pub fn set_value(mut self, value: &str) -> Self {
+        self.value = Some(value.to_string());
+        self 
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Predicate {
     pub name: String,
     pub cred_def_id: Option<String>,
     pub predicate: String,
     pub threshold: i64,
-    pub filter: Option<Vec<::serde_json::Value>>,
+    pub referent: Option<String>,
+}
+
+impl Predicate {
+    pub fn create(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Self::default()
+        }
+    }
+
+    pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
+        self.cred_def_id = Some(cred_def_id.to_string());
+        self 
+    }
 }
 
 fn default_presentation_preview_type() -> MessageType {
@@ -134,7 +167,7 @@ pub mod test_utils {
                 cred_def_id: None,
                 mime_type: None,
                 value: None,
-                filter: None,
+                referent: None,
             }],
             predicates: vec![],
             ..Default::default()

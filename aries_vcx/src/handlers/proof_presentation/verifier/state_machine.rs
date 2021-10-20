@@ -46,8 +46,8 @@ impl VerifierSM {
         Self { source_id, state: VerifierFullState::PresentationRequestSet(PresentationRequestSet { presentation_request_data: presentation_request }) }
     }
 
-    pub fn from_proposal(source_id: String, presentation_proposal: PresentationProposal) -> Self {
-        Self { source_id, state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(presentation_proposal)) }
+    pub fn from_proposal(source_id: String, presentation_proposal: &PresentationProposal) -> Self {
+        Self { source_id, state: VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(presentation_proposal.clone())) }
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
@@ -250,21 +250,23 @@ impl VerifierSM {
                 state.presentation.clone()
                     .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle))
             }
-            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not received yet"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation not received yet"))
         }
     }
 
-    pub fn set_request(self, requested_attrs: String, requested_predicates: String, revocation_details: String, name: String) -> VcxResult<Self> {
+    pub fn presentation_proposal(&self) -> VcxResult<PresentationProposal> {
+        match self.state {
+            VerifierFullState::PresentationProposalReceived(ref state) => {
+                Ok(state.presentation_proposal.clone())
+            }
+            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation proposal not received yet"))
+        }
+    }
+
+    pub fn set_request(self, presentation_request_data: PresentationRequestData) -> VcxResult<Self> {
         let Self { source_id, state } = self;
-        let presentation_request_data =
-            PresentationRequestData::create()
-                .set_name(name)
-                .set_requested_attributes(requested_attrs)?
-                .set_requested_predicates(requested_predicates)?
-                .set_not_revoked_interval(revocation_details)?
-                .set_nonce()?;
         let state = match state {
-            VerifierFullState::PresentationRequestSet(state) => {
+            VerifierFullState::PresentationRequestSet(_) => {
                 VerifierFullState::PresentationRequestSet(PresentationRequestSet {
                     presentation_request_data
                 })

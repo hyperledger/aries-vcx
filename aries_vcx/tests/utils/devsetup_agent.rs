@@ -12,7 +12,6 @@ pub mod test {
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::libindy::utils::anoncreds;
-    use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};

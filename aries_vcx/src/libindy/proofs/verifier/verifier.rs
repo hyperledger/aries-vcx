@@ -63,12 +63,10 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":false}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = ProofRequestData::create()
-            .set_name(name)
-            .set_requested_attributes(requested_attrs).unwrap()
-            .set_requested_predicates(requested_predicates).unwrap()
-            .set_not_revoked_interval(revocation_details).unwrap()
-            .set_nonce().unwrap();
+        let proof_req_json = ProofRequestData::create(&name).unwrap()
+            .set_requested_attributes_as_string(requested_attrs).unwrap()
+            .set_requested_predicates_as_string(requested_predicates).unwrap()
+            .set_not_revoked_interval(revocation_details).unwrap();
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
@@ -112,12 +110,10 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":true}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = ProofRequestData::create()
-            .set_name(name)
-            .set_requested_attributes(requested_attrs).unwrap()
-            .set_requested_predicates(requested_predicates).unwrap()
-            .set_not_revoked_interval(revocation_details).unwrap()
-            .set_nonce().unwrap();
+        let proof_req_json = ProofRequestData::create(&name).unwrap()
+            .set_requested_attributes_as_string(requested_attrs).unwrap()
+            .set_requested_predicates_as_string(requested_predicates).unwrap()
+            .set_not_revoked_interval(revocation_details).unwrap();
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
@@ -173,12 +169,10 @@ pub mod tests {
         let revocation_details = r#"{"support_revocation":true}"#.to_string();
         let name = "Optional".to_owned();
 
-        let proof_req_json = ProofRequestData::create()
-            .set_name(name)
-            .set_requested_attributes(requested_attrs).unwrap()
-            .set_requested_predicates(requested_predicates).unwrap()
-            .set_not_revoked_interval(revocation_details).unwrap()
-            .set_nonce().unwrap();
+        let proof_req_json = ProofRequestData::create(&name).unwrap()
+            .set_requested_attributes_as_string(requested_attrs).unwrap()
+            .set_requested_predicates_as_string(requested_predicates).unwrap()
+            .set_not_revoked_interval(revocation_details).unwrap();
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 

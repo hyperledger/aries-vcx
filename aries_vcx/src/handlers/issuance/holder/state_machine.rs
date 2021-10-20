@@ -114,9 +114,7 @@ impl HolderSM {
                         _ => {}
                     }
                 }
-                _ => {
-                    // do not process messages
-                }
+                _ => {}
             };
         }
         None

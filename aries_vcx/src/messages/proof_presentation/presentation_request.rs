@@ -58,7 +58,7 @@ pub mod test_utils {
 
     pub fn _presentation_request_data() -> PresentationRequestData {
         PresentationRequestData::default()
-            .set_requested_attributes(json!([{"name": "name"}]).to_string()).unwrap()
+            .set_requested_attributes_as_string(json!([{"name": "name"}]).to_string()).unwrap()
     }
 
     fn _attachment() -> Attachments {
