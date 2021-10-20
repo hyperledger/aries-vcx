@@ -63,9 +63,9 @@ impl VerifierSM {
                 VerifierFullState::Initial(_) => {
                     match message {
                         A2AMessage::PresentationProposal(proposal) => {
-                            // if proposal.from_thread(&self.thread_id()) {
+                            if proposal.from_thread(&self.thread_id()) {
                                 return Some((uid, A2AMessage::PresentationProposal(proposal)));
-                            // }
+                            }
                         }
                         A2AMessage::PresentationRequest(request) => {
                             // if request.from_thread(&self.thread_id()) {
@@ -173,7 +173,7 @@ impl VerifierSM {
                     VerifierMessages::RejectPresentationProposal(reason) => {
                         let problem_report = ProblemReport::create()
                             .set_comment(Some(reason.to_string()))
-                            .set_thread_id(&self.thread_id());
+                            .set_thread_id(&state.presentation_proposal.id.0);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&problem_report.to_a2a_message())?;
@@ -229,6 +229,7 @@ impl VerifierSM {
 
     pub fn source_id(&self) -> String { self.source_id.clone() }
 
+    // TODO: This approach is not reliable
     pub fn thread_id(&self) -> String { self.presentation_request().map(|request| request.id.0.clone()).unwrap_or_default() }
 
     pub fn get_state(&self) -> VerifierState {

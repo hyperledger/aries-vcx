@@ -65,6 +65,11 @@ impl ProverSM {
             match self.state {
                 ProverFullState::PresentationProposalSent(_) => {
                     match message {
+                        A2AMessage::CommonProblemReport(problem_report) => {
+                            if problem_report.from_thread(&self.thread_id) {
+                                return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
+                            }
+                        }
                         A2AMessage::PresentationRequest(request) => {
                             // if request.from_thread(&self.thread_id) {
                                 return Some((uid, A2AMessage::PresentationRequest(request)));
@@ -124,6 +129,9 @@ impl ProverSM {
                 match message {
                     ProverMessages::PresentationRequestReceived(request) => {
                         ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request))
+                    }
+                    ProverMessages::PresentationRejectReceived(problem_report) => {
+                        ProverFullState::Finished(problem_report.into())
                     }
                     _ => {
                         warn!("Unable to process received message in this state");

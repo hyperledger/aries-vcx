@@ -420,8 +420,22 @@ mod tests {
         verifier
     }
 
-    // fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
-    // }
+    fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
+        faber.activate().unwrap();
+        let mut verifier = Verifier::create("1").unwrap();
+        verifier.update_state(connection).unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
+        verifier.decline_presentation_proposal(&connection.send_message_closure().unwrap(), "I don't like Alices").unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Failed);
+        verifier
+    }
+
+    fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
+        alice.activate().unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        prover.update_state(connection).unwrap();
+        assert_eq!(prover.get_state(), ProverState::Failed);
+    }
 
     fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> Verifier {
         faber.activate().unwrap();
@@ -1467,6 +1481,23 @@ mod tests {
         let mut verifier = accept_proof_proposal(&mut institution, &institution_to_consumer);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_presentation_via_proposal_with_rejection() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id);
+        let mut verifier = reject_proof_proposal(&mut institution, &institution_to_consumer);
+        receive_proof_proposal_rejection(&mut consumer, &mut prover, &consumer_to_institution);
     }
 
     pub struct PaymentPlugin {}
