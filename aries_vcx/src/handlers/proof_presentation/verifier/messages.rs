@@ -4,11 +4,13 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 
 type Comment = Option<String>;
+type Reason = String;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum VerifierMessages {
     SendPresentationRequest(Comment),
     VerifyPresentation(Presentation),
+    RejectPresentationProposal(Reason),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),
     Unknown,

@@ -120,6 +120,11 @@ impl Verifier {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
+    pub fn decline_presentation_proposal(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>, reason: &str) -> VcxResult<()> {
+        trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
+        self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message))
+    }
+
     pub fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
         if !self.has_transitions() { return Ok(self.get_state()); }

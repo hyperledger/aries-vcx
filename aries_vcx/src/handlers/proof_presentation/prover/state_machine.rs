@@ -258,7 +258,6 @@ impl ProverSM {
         let problem_report = ProblemReport::create()
             .set_comment(Some(reason.to_string()))
             .set_thread_id(thread_id);
-
         send_message(&problem_report.to_a2a_message())
     }
 
@@ -270,7 +269,6 @@ impl ProverSM {
         let proposal = PresentationProposal::create()
             .set_presentation_preview(preview)
             .set_thread_id(thread_id);
-
         send_message(&proposal.to_a2a_message())
     }
 

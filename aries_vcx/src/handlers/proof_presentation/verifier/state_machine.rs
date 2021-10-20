@@ -135,6 +135,15 @@ impl VerifierSM {
                         )?(&presentation_request.to_a2a_message())?;
                         VerifierFullState::PresentationRequestSent(PresentationRequestSentState { presentation_request })
                     }
+                    VerifierMessages::RejectPresentationProposal(reason) => {
+                        let problem_report = ProblemReport::create()
+                            .set_comment(Some(reason.to_string()))
+                            .set_thread_id(&self.thread_id());
+                        send_message.ok_or(
+                            VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                        )?(&problem_report.to_a2a_message())?;
+                        VerifierFullState::Finished(problem_report.into())
+                    }
                     _ => {
                         warn!("Unable to process received message in this state");
                         VerifierFullState::PresentationProposalReceived(state)
@@ -240,7 +249,7 @@ impl VerifierSM {
                 PresentationRequest::create().set_request_presentations_attach(state.presentation_request_data.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No presentation request set"))?)
             }
             VerifierFullState::PresentationRequestSent(ref state) => Ok(state.presentation_request.clone()),
-            VerifierFullState::Finished(ref state) => Ok(state.presentation_request.clone()),
+            VerifierFullState::Finished(ref state) => Ok(state.presentation_request.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No presentation request set"))?.clone()),
         }
     }
 
