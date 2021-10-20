@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::handlers::proof_presentation::verifier::states::initial::InitialVerifierState;
 use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 use crate::handlers::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSet;
 use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
@@ -23,6 +24,7 @@ pub struct VerifierSM {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VerifierFullState {
+    Initial(InitialVerifierState),
     PresentationRequestSet(PresentationRequestSet),
     PresentationProposalReceived(PresentationProposalReceivedState),
     PresentationRequestSent(PresentationRequestSentState),
@@ -42,7 +44,11 @@ pub enum RevocationStatus {
 }
 
 impl VerifierSM {
-    pub fn new(source_id: String, presentation_request: PresentationRequestData) -> Self {
+    pub fn new(source_id: String) -> Self {
+        Self { source_id, state: VerifierFullState::Initial(InitialVerifierState {}) }
+    }
+
+    pub fn from_request(source_id: String, presentation_request: PresentationRequestData) -> Self {
         Self { source_id, state: VerifierFullState::PresentationRequestSet(PresentationRequestSet { presentation_request_data: presentation_request }) }
     }
 
@@ -54,6 +60,21 @@ impl VerifierSM {
         trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
             match self.state {
+                VerifierFullState::Initial(_) => {
+                    match message {
+                        A2AMessage::PresentationProposal(proposal) => {
+                            if proposal.from_thread(&self.thread_id()) {
+                                return Some((uid, A2AMessage::PresentationProposal(proposal)));
+                            }
+                        }
+                        A2AMessage::PresentationRequest(request) => {
+                            // if request.from_thread(&self.thread_id()) {
+                                return Some((uid, A2AMessage::PresentationRequest(request)));
+                            // }
+                        }
+                        _ => {}
+                    }
+                }
                 VerifierFullState::PresentationRequestSet(_) => {
                     match message {
                         A2AMessage::PresentationProposal(proposal) => {
@@ -97,6 +118,20 @@ impl VerifierSM {
         let Self { source_id, state } = self.clone();
         verify_thread_id(&self.thread_id(), &message)?;
         let state = match state {
+            VerifierFullState::Initial(state) => {
+                match message {
+                    VerifierMessages::SetPresentationRequest(request) => {
+                        VerifierFullState::PresentationRequestSet(PresentationRequestSet::new(request))
+                    }
+                    VerifierMessages::PresentationProposalReceived(proposal) => {
+                        VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal))
+                    }
+                    _ => {
+                        warn!("Unable to process received message in this state");
+                        VerifierFullState::Initial(state)
+                    }
+                }
+            }
             VerifierFullState::PresentationRequestSet(state) => {
                 match message {
                     VerifierMessages::PresentationProposalReceived(proposal) => {
@@ -198,7 +233,8 @@ impl VerifierSM {
 
     pub fn get_state(&self) -> VerifierState {
         match self.state {
-            VerifierFullState::PresentationRequestSet(_) => VerifierState::Initial,
+            VerifierFullState::Initial(_) => VerifierState::Initial,
+            VerifierFullState::PresentationRequestSet(_) => VerifierState::PresentationRequestSet,
             VerifierFullState::PresentationProposalReceived(_) => VerifierState::PresentationProposalReceived,
             VerifierFullState::PresentationRequestSent(_) => VerifierState::PresentationRequestSent,
             VerifierFullState::Finished(ref status) => {
@@ -212,6 +248,7 @@ impl VerifierSM {
 
     pub fn has_transitions(&self) -> bool {
         match self.state {
+            VerifierFullState::Initial(_) => true,
             VerifierFullState::PresentationRequestSet(_) => false,
             VerifierFullState::PresentationProposalReceived(_) => false,
             VerifierFullState::PresentationRequestSent(_) => true,
@@ -242,6 +279,7 @@ impl VerifierSM {
 
     pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
         match self.state {
+            VerifierFullState::Initial(_) => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Presentation request not set yet")),
             VerifierFullState::PresentationRequestSet(ref state) => {
                 PresentationRequest::create().set_request_presentations_attach(&state.presentation_request_data)
             }
@@ -259,7 +297,7 @@ impl VerifierSM {
                 state.presentation.clone()
                     .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle))
             }
-            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation not received yet"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Presentation not received yet"))
         }
     }
 
@@ -268,7 +306,7 @@ impl VerifierSM {
             VerifierFullState::PresentationProposalReceived(ref state) => {
                 Ok(state.presentation_proposal.clone())
             }
-            _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation proposal not received yet"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Presentation proposal not received yet"))
         }
     }
 
@@ -305,7 +343,7 @@ pub mod test {
     use super::*;
 
     pub fn _verifier_sm() -> VerifierSM {
-        VerifierSM::new(source_id(), _presentation_request_data())
+        VerifierSM::from_request(source_id(), _presentation_request_data())
     }
 
     impl VerifierSM {

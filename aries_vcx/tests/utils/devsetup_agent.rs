@@ -221,7 +221,7 @@ pub mod test {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
 
-            Verifier::create(String::from("alice_degree"),
+            Verifier::create_from_request(String::from("alice_degree"),
                              requested_attrs,
                              json!([]).to_string(),
                              json!({}).to_string(),

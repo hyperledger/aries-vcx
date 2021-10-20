@@ -18,18 +18,27 @@ pub struct Verifier {
 pub enum VerifierState {
     Initial,
     PresentationProposalReceived,
+    PresentationRequestSet,
     PresentationRequestSent,
     Finished,
     Failed,
 }
 
 impl Verifier {
-    pub fn create(source_id: String,
+    pub fn create(source_id: String) -> VcxResult<Self> {
+        trace!("Verifier::create >>> source_id: {:?}", source_id);
+
+        Ok(Self {
+            verifier_sm: VerifierSM::new(source_id),
+        })
+    }
+
+    pub fn create_from_request(source_id: String,
                   requested_attrs: String,
                   requested_predicates: String,
                   revocation_details: String,
                   name: String) -> VcxResult<Self> {
-        trace!("Verifier::create >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
+        trace!("Verifier::create_from_request >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
                source_id, requested_attrs, requested_predicates, revocation_details, name);
 
         let presentation_request =
@@ -39,7 +48,7 @@ impl Verifier {
                 .set_not_revoked_interval(revocation_details)?;
 
         Ok(Self {
-            verifier_sm: VerifierSM::new(source_id, presentation_request),
+            verifier_sm: VerifierSM::from_request(source_id, presentation_request),
         })
     }
 
@@ -155,7 +164,7 @@ mod tests {
     use super::*;
 
     fn _verifier() -> Verifier {
-        Verifier::create("1".to_string(),
+        Verifier::create_from_request("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
                      REQUESTED_PREDICATES.to_owned(),
                      r#"{"support_revocation":false}"#.to_string(),

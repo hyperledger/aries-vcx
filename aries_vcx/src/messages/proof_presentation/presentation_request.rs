@@ -11,6 +11,7 @@ pub struct PresentationRequest {
     pub comment: Option<String>,
     #[serde(rename = "request_presentations~attach")]
     pub request_presentations_attach: Attachments,
+    // TODO: Add thread id
 }
 
 impl PresentationRequest {

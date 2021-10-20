@@ -2,6 +2,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
+use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
 
 type Comment = Option<String>;
 type Reason = String;
@@ -11,6 +12,7 @@ pub enum VerifierMessages {
     SendPresentationRequest(Comment),
     VerifyPresentation(Presentation),
     RejectPresentationProposal(Reason),
+    SetPresentationRequest(PresentationRequestData),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),
     Unknown,

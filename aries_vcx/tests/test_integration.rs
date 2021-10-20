@@ -403,9 +403,11 @@ mod tests {
 
     fn accept_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
         faber.activate().unwrap();
+        // TODO: This should be possible via update state
         let mut proposals: Vec<PresentationProposal> = serde_json::from_str(&get_presentation_proposal_messages(connection).unwrap()).unwrap();
         let received_proposal = proposals.pop().unwrap();
         let mut verifier = Verifier::create_from_proposal("1", &received_proposal).unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
         assert_eq!(proposal, received_proposal);
         let attrs = proposal.presentation_proposal.attributes.into_iter().map(|attr| {
@@ -422,9 +424,12 @@ mod tests {
         verifier
     }
 
+    // fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
+    // }
+
     fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> Verifier {
         faber.activate().unwrap();
-        let mut verifier = Verifier::create("1".to_string(),
+        let mut verifier = Verifier::create_from_request("1".to_string(),
                                             requested_attrs.to_string(),
                                             requested_preds.to_string(),
                                             revocation_interval.to_string(),
@@ -436,7 +441,7 @@ mod tests {
 
     fn create_proof_request(faber: &mut Faber, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> PresentationRequest {
         faber.activate().unwrap();
-        let mut verifier = Verifier::create("1".to_string(),
+        let mut verifier = Verifier::create_from_request("1".to_string(),
                                             requested_attrs.to_string(),
                                             requested_preds.to_string(),
                                             revocation_interval.to_string(),

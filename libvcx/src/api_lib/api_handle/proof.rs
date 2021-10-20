@@ -24,7 +24,7 @@ pub fn create_proof(source_id: String,
                     requested_predicates: String,
                     revocation_details: String,
                     name: String) -> VcxResult<u32> {
-    let verifier = Verifier::create(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
+    let verifier = Verifier::create_from_request(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
     PROOF_MAP.add(verifier)
         .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
 }
