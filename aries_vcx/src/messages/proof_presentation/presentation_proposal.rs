@@ -139,7 +139,7 @@ impl From<PresentationProposalData> for PresentationProposal {
             presentation_proposal: PresentationPreview {
                 attributes: data.attributes,
                 predicates: data.predicates,
-                ..PresentationPreview::default()
+                _type: default_presentation_preview_type()
             },
             ..Self::default()
         }
