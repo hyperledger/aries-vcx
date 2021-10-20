@@ -71,9 +71,9 @@ impl ProverSM {
                             }
                         }
                         A2AMessage::PresentationRequest(request) => {
-                            // if request.from_thread(&self.thread_id) {
+                            if request.from_thread(&self.thread_id) {
                                 return Some((uid, A2AMessage::PresentationRequest(request)));
-                            // }
+                            }
                         }
                         _ => {}
                     }

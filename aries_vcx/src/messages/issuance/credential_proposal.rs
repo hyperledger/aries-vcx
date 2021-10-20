@@ -47,28 +47,9 @@ impl CredentialProposal {
         self.id = MessageId(id.to_string());
         self
     }
-
-    pub fn set_thread_id(mut self, id: &str) -> Self {
-        self.thread = Some(Thread::new().set_thid(id.to_string()));
-        self
-    }
-
-    pub fn get_thread_id(&self) -> Option<String> {
-        if let Some(thread) = &self.thread {
-            thread.thid.clone()
-        } else {
-            None
-        }
-    }
-
-    pub fn from_thread(&self, thread_id: &str) -> bool {
-        match &self.thread {
-            Some(thread) => thread.is_reply(thread_id),
-            None => true
-        }
-    }
 }
 
+threadlike_optional!(CredentialProposal);
 a2a_message!(CredentialProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]

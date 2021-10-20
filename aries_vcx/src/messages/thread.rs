@@ -67,3 +67,28 @@ macro_rules! threadlike (($type:ident) => (
         }
     }
 ));
+
+#[macro_export]
+macro_rules! threadlike_optional (($type:ident) => (
+    impl $type {
+        pub fn set_thread_id(mut self, id: &str) -> $type {
+            self.thread = Some(Thread::new().set_thid(id.to_string()));
+            self
+        }
+
+        pub fn get_thread_id(&self) -> Option<String> {
+            if let Some(thread) = &self.thread {
+                thread.thid.clone()
+            } else {
+                None
+            }
+        }
+
+        pub fn from_thread(&self, thread_id: &str) -> bool {
+            match &self.thread {
+                Some(thread) => thread.is_reply(thread_id),
+                None => true
+            }
+        }
+    }
+));

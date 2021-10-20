@@ -68,18 +68,8 @@ impl VerifierSM {
                             }
                         }
                         A2AMessage::PresentationRequest(request) => {
-                            // if request.from_thread(&self.thread_id()) {
+                            if request.from_thread(&self.thread_id()) {
                                 return Some((uid, A2AMessage::PresentationRequest(request)));
-                            // }
-                        }
-                        _ => {}
-                    }
-                }
-                VerifierFullState::PresentationRequestSet(_) => {
-                    match message {
-                        A2AMessage::PresentationProposal(proposal) => {
-                            if proposal.from_thread(&self.thread_id()) {
-                                return Some((uid, A2AMessage::PresentationProposal(proposal)));
                             }
                         }
                         _ => {}

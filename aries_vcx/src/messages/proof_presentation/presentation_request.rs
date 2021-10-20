@@ -2,6 +2,7 @@ use crate::error::prelude::*;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -11,7 +12,8 @@ pub struct PresentationRequest {
     pub comment: Option<String>,
     #[serde(rename = "request_presentations~attach")]
     pub request_presentations_attach: Attachments,
-    // TODO: Add thread id
+    #[serde(rename = "~thread")]
+    pub thread: Option<Thread>,
 }
 
 impl PresentationRequest {
@@ -47,6 +49,7 @@ impl PresentationRequest {
     }
 }
 
+threadlike_optional!(PresentationRequest);
 a2a_message!(PresentationRequest);
 
 pub type PresentationRequestData = ProofRequestData;
@@ -85,6 +88,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: _comment(),
             request_presentations_attach: _attachment(),
+            thread: None
         }
     }
 }

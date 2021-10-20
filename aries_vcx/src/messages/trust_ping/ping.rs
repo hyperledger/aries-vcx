@@ -19,11 +19,6 @@ impl Ping {
         Ping::default()
     }
 
-    pub fn set_thread_id(mut self, id: String) -> Self {
-        self.thread = Some(Thread::new().set_thid(id));
-        self
-    }
-
     pub fn set_comment(mut self, comment: Option<String>) -> Ping {
         self.comment = comment;
         self
@@ -35,6 +30,7 @@ impl Ping {
     }
 }
 
+threadlike_optional!(Ping);
 a2a_message!(Ping);
 
 #[cfg(test)]
@@ -70,7 +66,7 @@ pub mod tests {
     fn test_ping_build_works() {
         let ping: Ping = Ping::default()
             .set_comment(Some(_comment()))
-            .set_thread_id(_thread_id());
+            .set_thread_id(&_thread_id());
 
         assert_eq!(_ping(), ping);
     }
