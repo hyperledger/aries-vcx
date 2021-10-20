@@ -219,11 +219,21 @@ mod tests {
 
     fn requested_attr_objects(cred_def_id: &str) -> Vec<Attribute> {
         let (address1, address2, city, state, zip) = attr_names();
-        let address1_attr = Attribute::create(&address1).set_cred_def_id(cred_def_id);
-        let address2_attr = Attribute::create(&address2).set_cred_def_id(cred_def_id);
-        let city_attr = Attribute::create(&city).set_cred_def_id(cred_def_id);
-        let state_attr = Attribute::create(&state).set_cred_def_id(cred_def_id);
-        let zip_attr = Attribute::create(&zip).set_cred_def_id(cred_def_id);
+        let address1_attr = Attribute::create(&address1).set_cred_def_id(cred_def_id).set_value("123 Main St");
+        let address2_attr = Attribute::create(&address2).set_cred_def_id(cred_def_id).set_value("Suite 3");
+        let city_attr = Attribute::create(&city).set_cred_def_id(cred_def_id).set_value("Draper");
+        let state_attr = Attribute::create(&state).set_cred_def_id(cred_def_id).set_value("UT");
+        let zip_attr = Attribute::create(&zip).set_cred_def_id(cred_def_id).set_value("84000");
+        vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
+    }
+
+    fn requested_attr_objects_1(cred_def_id: &str) -> Vec<Attribute> {
+        let (address1, address2, city, state, zip) = attr_names();
+        let address1_attr = Attribute::create(&address1).set_cred_def_id(cred_def_id).set_value("456 Side St");
+        let address2_attr = Attribute::create(&address2).set_cred_def_id(cred_def_id).set_value("Suite 666");
+        let city_attr = Attribute::create(&city).set_cred_def_id(cred_def_id).set_value("Austin");
+        let state_attr = Attribute::create(&state).set_cred_def_id(cred_def_id).set_value("TC");
+        let zip_attr = Attribute::create(&zip).set_cred_def_id(cred_def_id).set_value("42000");
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
@@ -396,13 +406,28 @@ mod tests {
         }
         let mut prover = Prover::create("1").unwrap();
         prover.send_proposal(proposal_data, &connection.send_message_closure().unwrap()).unwrap();
-        thread::sleep(Duration::from_millis(2000));
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        thread::sleep(Duration::from_millis(1000));
         prover
     }
 
-    fn accept_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
+    fn send_proof_proposal_1(alice: &mut Alice, prover: &mut Prover, connection: &Connection, cred_def_id: &str) {
+        alice.activate().unwrap();
+        prover.update_state(connection).unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
+        let attrs = requested_attr_objects_1(cred_def_id);
+        let mut proposal_data = PresentationProposalData::create();
+        for attr in attrs.into_iter() {
+            proposal_data = proposal_data.add_attribute(attr);
+        }
+        prover.send_proposal(proposal_data, &connection.send_message_closure().unwrap()).unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
+        thread::sleep(Duration::from_millis(1000));
+    }
+
+
+    fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         faber.activate().unwrap();
-        let mut verifier = Verifier::create("1").unwrap();
         verifier.update_state(connection).unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
@@ -417,7 +442,6 @@ mod tests {
             .set_requested_attributes_as_vec(attrs).unwrap();
         verifier.set_request(presentation_request_data).unwrap();
         verifier.send_presentation_request(&connection.send_message_closure().unwrap(), None).unwrap();
-        verifier
     }
 
     fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
@@ -1478,7 +1502,8 @@ mod tests {
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id);
-        let mut verifier = accept_proof_proposal(&mut institution, &institution_to_consumer);
+        let mut verifier = Verifier::create("1").unwrap();
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
     }
@@ -1498,6 +1523,26 @@ mod tests {
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id);
         let mut verifier = reject_proof_proposal(&mut institution, &institution_to_consumer);
         receive_proof_proposal_rejection(&mut consumer, &mut prover, &consumer_to_institution);
+    }
+
+    #[test]
+    #[cfg(feature = "agency_pool_tests")]
+    pub fn test_presentation_via_proposal_with_negotiation() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup();
+        let mut consumer = Alice::setup();
+
+        let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution);
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
+        let tails_file = cred_def.get_tails_file().unwrap();
+
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id);
+        let mut verifier = Verifier::create("1").unwrap();
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
+        send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id);
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
     }
 
     pub struct PaymentPlugin {}

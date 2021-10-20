@@ -141,6 +141,14 @@ impl ProverSM {
             }
             ProverFullState::PresentationRequestReceived(state) => {
                 match message {
+                    ProverMessages::PresentationProposalSend(proposal_data) => {
+                        let proposal = PresentationProposal::from(proposal_data)
+                            .set_thread_id(&thread_id);
+                        send_message.ok_or(
+                            VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                        )?(&proposal.to_a2a_message())?;
+                        ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
+                    }
                     ProverMessages::SetPresentation(presentation) => {
                         let presentation = presentation.set_thread_id(&thread_id);
                         ProverFullState::PresentationPrepared((state, presentation).into())
