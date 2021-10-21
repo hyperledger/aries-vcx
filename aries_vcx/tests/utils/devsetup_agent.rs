@@ -300,7 +300,7 @@ pub mod test {
         pub fn request_presentation(&mut self) {
             self.activate().unwrap();
             self.verifier = self.create_presentation_request();
-            assert_eq!(VerifierState::Initial, self.verifier.get_state());
+            assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap(), None).unwrap();
             self.verifier.update_state(&self.connection).unwrap();
