@@ -1028,7 +1028,7 @@ jobs:
             REMOTE_DOCKER_IMG_NAME_LIBVCX="ghcr.io/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_NAME_TAGLESS}:${PUBLISH_VERSION}"
             echo "Releasing libvcx docker image version $PUBLISH_VERSION, tagged $REMOTE_DOCKER_IMG_NAME_LIBVCX"
             docker tag "$DOCKER_IMG_NAME_LIBVCX" "$REMOTE_DOCKER_IMG_NAME_LIBVCX"
-            docker push "$REMOTE_DOCKER_IMG_NAME_LIBVCX" || true
+            docker push "$REMOTE_DOCKER_IMG_NAME_LIBVCX"
           else
              echo "New version was not defined, skipping release."
           fi
