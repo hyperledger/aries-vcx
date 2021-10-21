@@ -95,9 +95,7 @@ impl VerifierSM {
                         _ => {}
                     }
                 }
-                _ => {
-                    // do not process message
-                }
+                _ => {}
             };
         }
         None
@@ -124,9 +122,6 @@ impl VerifierSM {
             }
             VerifierFullState::PresentationRequestSet(state) => {
                 match message {
-                    VerifierMessages::PresentationProposalReceived(proposal) => {
-                        VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal))
-                    }
                     VerifierMessages::SendPresentationRequest(comment) => {
                         let presentation_request =
                             PresentationRequest::create()
@@ -167,7 +162,7 @@ impl VerifierSM {
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&problem_report.to_a2a_message())?;
-                        VerifierFullState::Finished(problem_report.into())
+                        VerifierFullState::Finished(FinishedState::declined())
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
@@ -334,20 +329,46 @@ pub mod test {
     use super::*;
 
     pub fn _verifier_sm() -> VerifierSM {
+        VerifierSM::new(&source_id())
+    }
+
+    pub fn _verifier_sm_from_request() -> VerifierSM {
         VerifierSM::from_request(&source_id(), _presentation_request_data())
     }
 
+    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
+        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    }
+
+    pub fn _reason() -> String {
+        String::from("Unqualified")
+    }
+
     impl VerifierSM {
+        fn to_presentation_proposal_received_state(mut self) -> VerifierSM {
+            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
+            self
+        }
+
+        fn to_presentation_proposal_received_state_with_request(mut self) -> VerifierSM {
+            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
+            self = self.set_request(_presentation_request_data()).unwrap();
+            self
+        }
+
+        fn to_presentation_request_set_state(mut self) -> VerifierSM {
+            self = self.step(VerifierMessages::SetPresentationRequest(_presentation_request_data()), None::<&fn(&A2AMessage) -> _>).unwrap();
+            self
+        }
+
         fn to_presentation_request_sent_state(mut self) -> VerifierSM {
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            self = self.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
+            self = self.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state(mut self) -> VerifierSM {
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            self = self.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), send_message).unwrap();
+            self = self.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
             self
         }
     }
@@ -357,12 +378,23 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
+        fn test_verifier_from_request() {
+            let _setup = SetupMocks::init();
+
+            let verifier_sm = _verifier_sm_from_request();
+
+            assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+            assert_eq!(source_id(), verifier_sm.source_id());
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
         fn test_verifier_new() {
             let _setup = SetupMocks::init();
 
             let verifier_sm = _verifier_sm();
 
-            assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+            assert_match!(VerifierFullState::Initial(_), verifier_sm.state);
             assert_eq!(source_id(), verifier_sm.source_id());
         }
     }
@@ -377,35 +409,107 @@ pub mod test {
         fn test_verifier_init() {
             let _setup = SetupMocks::init();
 
-            let verifier_sm = _verifier_sm();
+            let verifier_sm = _verifier_sm_from_request();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
         }
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_message_from_initiated_state() {
+        fn test_prover_handle_set_presentation_request_message_from_initial_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SetPresentationRequest(_presentation_request_data()), _send_message()).unwrap();
+
+            assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_set_presentation_proposal_received_from_initial_state() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+
+            assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_request_message_from_PresentationRequestSet_state() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::PresentationRequestSent(_), verifier_sm.state);
         }
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_initiated_state() {
+        fn test_prover_handle_other_messages_from_PresentationRequestSet_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
+            let mut verifier_sm = _verifier_sm_from_request();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+
+            assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_request_message_from_PresentationProposalReceived_state() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state_with_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+
+            assert_match!(VerifierFullState::PresentationRequestSent(_), verifier_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_send_presentation_request_from_PresentationProposalReceived_state_fails_without_request() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+            let res = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message());
+
+            assert!(res.is_err());
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_reject_presentation_proposal_message_from_PresentationProposalReceived_state() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+            verifier_sm = verifier_sm.step(VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).unwrap();
+
+            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
+            assert_eq!(Status::Declined.code(), verifier_sm.presentation_status());
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_handle_other_messages_from_PresentationProposalReceived_state() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
+
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
+            assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
 
         #[test]
@@ -415,10 +519,9 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
@@ -431,10 +534,9 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
@@ -448,10 +550,9 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), send_message);
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), _send_message());
             assert!(res.is_err());
         }
 
@@ -459,7 +560,7 @@ pub mod test {
         //    fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state_for_invalid_presentation() {
         //        let _setup = Setup::init();
         //
-        //        let mut verifier_sm = _verifier_sm();
+        //        let mut verifier_sm = _verifier_sm_from_request();
         //        verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment())(mock_connection())).unwrap();
         //        verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation())).unwrap();
         //
@@ -472,10 +573,9 @@ pub mod test {
         fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
@@ -485,10 +585,9 @@ pub mod test {
         fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
@@ -499,10 +598,9 @@ pub mod test {
         fn test_prover_handle_other_messages_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::PresentationRequestSent(_), verifier_sm.state);
         }
@@ -512,15 +610,14 @@ pub mod test {
         fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupMocks::init();
 
-            let send_message = Some(&|_: &A2AMessage| VcxResult::Ok(()));
-            let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), send_message).unwrap();
+            let mut verifier_sm = _verifier_sm_from_request();
+            verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), send_message).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
         }
     }
@@ -530,10 +627,10 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_verifier_find_message_to_handle_from_initiated_state() {
+        fn test_verifier_find_message_to_handle_from_initial_state() {
             let _setup = SetupMocks::init();
 
-            let verifier = _verifier_sm();
+            let verifier = _verifier_sm_from_request();
 
             // No messages
             {
@@ -554,7 +651,7 @@ pub mod test {
         fn test_verifier_find_message_to_handle_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
-            let verifier = _verifier_sm().to_presentation_request_sent_state();
+            let verifier = _verifier_sm_from_request().to_presentation_request_sent_state();
 
             // Presentation
             {
@@ -622,7 +719,7 @@ pub mod test {
         fn test_verifier_find_message_to_handle_from_finished_state() {
             let _setup = SetupMocks::init();
 
-            let verifier = _verifier_sm().to_finished_state();
+            let verifier = _verifier_sm_from_request().to_finished_state();
 
             // No messages
             {
@@ -651,9 +748,9 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
-            assert_eq!(VerifierState::PresentationRequestSet, _verifier_sm().get_state());
-            assert_eq!(VerifierState::PresentationRequestSent, _verifier_sm().to_presentation_request_sent_state().get_state());
-            assert_eq!(VerifierState::Finished, _verifier_sm().to_finished_state().get_state());
+            assert_eq!(VerifierState::PresentationRequestSet, _verifier_sm_from_request().get_state());
+            assert_eq!(VerifierState::PresentationRequestSent, _verifier_sm_from_request().to_presentation_request_sent_state().get_state());
+            assert_eq!(VerifierState::Finished, _verifier_sm_from_request().to_finished_state().get_state());
         }
     }
 }
