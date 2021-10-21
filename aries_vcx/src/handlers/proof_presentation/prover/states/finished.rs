@@ -11,23 +11,22 @@ pub struct FinishedState {
     pub status: Status,
 }
 
-
-impl From<PresentationRequestReceived> for FinishedState {
-    fn from(state: PresentationRequestReceived) -> Self {
-        trace!("Prover: transit state from PresentationRequestReceived to FinishedState");
+impl FinishedState {
+    pub fn declined() -> Self {
+        trace!("transit state to FinishedState due to a rejection");
         FinishedState {
-            presentation_request: state.presentation_request,
+            presentation_request: Default::default(),
             presentation: Default::default(),
             status: Status::Declined,
         }
     }
 }
 
-impl From<ProblemReport> for FinishedState {
-    fn from(_: ProblemReport) -> Self {
-        trace!("Prover: transit state from to FinishedState due to a problem");
+impl From<PresentationRequestReceived> for FinishedState {
+    fn from(state: PresentationRequestReceived) -> Self {
+        trace!("Prover: transit state from PresentationRequestReceived to FinishedState");
         FinishedState {
-            presentation_request: Default::default(),
+            presentation_request: state.presentation_request,
             presentation: Default::default(),
             status: Status::Declined,
         }

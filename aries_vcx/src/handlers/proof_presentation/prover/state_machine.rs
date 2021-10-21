@@ -124,7 +124,7 @@ impl ProverSM {
                     }
                     // TODO: Perhaps use a different message type?
                     ProverMessages::PresentationRejectReceived(problem_report) => {
-                        ProverFullState::Finished(problem_report.into())
+                        ProverFullState::Finished(FinishedState::declined())
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
@@ -201,7 +201,7 @@ impl ProverSM {
                     ProverMessages::RejectPresentationRequest(reason) => {
                         if let Some(send_message) = send_message {
                             Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
-                            ProverFullState::Finished(state.into())
+                            ProverFullState::Finished(FinishedState::declined())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
                         }
