@@ -146,9 +146,10 @@ export enum ProverStateType {
 export enum VerifierStateType {
   Initial = 0,
   PresentationRequestSet = 1,
-  PresentationRequestSent = 2,
-  Finished = 3,
-  Failed = 4,
+  PresentationProposalReceived = 2,
+  PresentationRequestSent = 3,
+  Finished = 4,
+  Failed = 5
 }
 
 export interface IInitVCXOptions {
