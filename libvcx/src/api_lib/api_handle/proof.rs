@@ -359,11 +359,11 @@ pub mod tests {
         let handle_proof = create_default_proof();
 
         let _request = generate_proof_request_msg(handle_proof).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::IOError);
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         // Retry sending proof request
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap(), 0);

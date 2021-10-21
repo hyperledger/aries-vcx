@@ -1113,7 +1113,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle_proof = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(disclosed_proof::get_state(handle_proof).unwrap(), ProverState::Initial as u32);
+        assert_eq!(disclosed_proof::get_state(handle_proof).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let handle_conn = connection::tests::build_test_connection_inviter_requested();
 
@@ -1128,7 +1128,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::Initial as u32);
+        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let connection_handle = connection::tests::build_test_connection_inviter_requested();
 
@@ -1145,7 +1145,7 @@ mod tests {
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
-        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::Initial as u32);
+        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let _connection_handle = connection::tests::build_test_connection_inviter_requested();
 
@@ -1179,7 +1179,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_disclosed_proof_get_state(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, ProverState::Initial as u32);
+        assert_eq!(state, ProverState::PresentationRequestReceived as u32);
     }
 
     #[test]

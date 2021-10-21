@@ -143,14 +143,14 @@ pub static REQUESTED_ATTRIBUTES: &str = r#"
 ]
 "#;
 
-pub static SERIALIZIED_PROOF_INITIATED: &str = r#"
+pub static SERIALIZIED_PROOF_INITIAL: &str = r#"
 {
   "version": "2.0",
   "data": {
     "verifier_sm": {
       "source_id": "PROOF_NAME",
       "state": {
-        "Initiated": {
+        "Initial": {
           "presentation_request_data": {
             "nonce": "953886567052794155092952",
             "name": "optional",

@@ -313,7 +313,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle_proof).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle_proof).unwrap());
 
         let _mock_builder = MockBuilder::init().
             set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
@@ -339,7 +339,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_handle);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string()).unwrap();
         assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).unwrap());
@@ -370,7 +370,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         reject_proof(handle, connection_h).unwrap();
         assert_eq!(ProverState::Failed as u32, get_state(handle).unwrap());
@@ -382,7 +382,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap())
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap())
     }
 
     #[test]
@@ -443,7 +443,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         let attrs = get_proof_request_attachment(handle).unwrap();
         let _attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
