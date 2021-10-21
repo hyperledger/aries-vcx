@@ -134,20 +134,22 @@ export enum IssuerStateType {
 
 export enum ProverStateType {
   Initial = 0,
-  PresentationPrepared = 1,
-  PresentationPreparationFailed = 2,
-  PresentationSent = 3,
-  Finished = 4,
-  Failed = 5,
+  PresentationProposalSent = 1,
+  PresentationRequestReceived = 2,
+  PresentationPrepared = 3,
+  PresentationPreparationFailed = 4,
+  PresentationSent = 5,
+  Finished = 6,
+  Failed = 7,
 }
 
 export enum VerifierStateType {
   Initial = 0,
-  PresentationRequestSent = 1,
-  Finished = 2,
-  Failed = 3,
+  PresentationRequestSet = 1,
+  PresentationRequestSent = 2,
+  Finished = 3,
+  Failed = 4,
 }
-
 
 export interface IInitVCXOptions {
   libVCXPath?: string;
