@@ -160,6 +160,20 @@ pub mod test_utils {
         String::from("comment")
     }
 
+    pub fn _presentation_proposal_data() -> PresentationProposalData {
+        PresentationProposalData {
+            attributes: vec![Attribute {
+                name: String::from("name"),
+                cred_def_id: None,
+                mime_type: None,
+                value: None,
+                referent: None,
+            }],
+            predicates: vec![],
+            comment: Some(String::from("comment"))
+        }
+    }
+
     pub fn _presentation_preview() -> PresentationPreview {
         PresentationPreview {
             attributes: vec![Attribute {
