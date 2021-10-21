@@ -127,7 +127,7 @@ describe('Proof:', () => {
       const connection = await createConnectionInviterRequested();
       const proof = await proofCreate();
       await proof.requestProof(connection);
-      assert.equal(await proof.getState(), VerifierStateType.Finished);
+      assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSent);
     });
 
     it('successfully get request message', async () => {
