@@ -477,8 +477,7 @@ pub mod test {
             verifier_sm = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), send_message).unwrap();
             verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), send_message).unwrap();
 
-            assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
+            assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
 
         #[test]
@@ -652,7 +651,7 @@ pub mod test {
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
-            assert_eq!(VerifierState::Initial, _verifier_sm().get_state());
+            assert_eq!(VerifierState::PresentationRequestSet, _verifier_sm().get_state());
             assert_eq!(VerifierState::PresentationRequestSent, _verifier_sm().to_presentation_request_sent_state().get_state());
             assert_eq!(VerifierState::Finished, _verifier_sm().to_finished_state().get_state());
         }

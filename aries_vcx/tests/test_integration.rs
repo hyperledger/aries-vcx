@@ -425,7 +425,6 @@ mod tests {
         thread::sleep(Duration::from_millis(1000));
     }
 
-
     fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         faber.activate().unwrap();
         verifier.update_state(connection).unwrap();
