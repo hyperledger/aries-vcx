@@ -14,8 +14,8 @@ impl From<PresentationPreparationFailedState> for FinishedState {
     fn from(state: PresentationPreparationFailedState) -> Self {
         trace!("transit state from PresentationPreparationFailedState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
-            presentation: Presentation::create(),
+            presentation_request: Some(state.presentation_request),
+            presentation: None,
             status: Status::Failed(state.problem_report),
         }
     }

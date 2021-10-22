@@ -24,7 +24,7 @@ impl From<PresentationPreparedState> for FinishedState {
     fn from(state: PresentationPreparedState) -> Self {
         trace!("transit state from PresentationPreparedState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
+            presentation_request: Some(state.presentation_request),
             presentation: Default::default(),
             status: Status::Declined,
         }

@@ -8,7 +8,7 @@ use crate::handlers::proof_presentation::prover::states::presentation_proposal_s
 use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
 use crate::handlers::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::handlers::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::handlers::proof_presentation::prover::verify_thread_id;
 use crate::messages::a2a::{MessageId, A2AMessage};
@@ -330,7 +330,7 @@ impl ProverSM {
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationPreparationFailed(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation_request),
-            ProverFullState::Finished(ref state) => Ok(&state.presentation_request),
+            ProverFullState::Finished(ref state) => Ok(state.presentation_request.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation request is not available"))?)
         }
     }
 
@@ -342,7 +342,7 @@ impl ProverSM {
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation),
             ProverFullState::PresentationPreparationFailed(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not created yet")),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation),
-            ProverFullState::Finished(ref state) => Ok(&state.presentation),
+            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Presentation is not available"))?)
         }
     }
 }

@@ -15,8 +15,8 @@ impl From<(PresentationSentState, PresentationAck)> for FinishedState {
     fn from((state, _ack): (PresentationSentState, PresentationAck)) -> Self {
         trace!("transit state from PresentationSentState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
-            presentation: state.presentation,
+            presentation_request: Some(state.presentation_request),
+            presentation: Some(state.presentation),
             status: Status::Success,
         }
     }
@@ -26,8 +26,8 @@ impl From<(PresentationSentState, ProblemReport)> for FinishedState {
     fn from((state, problem_report): (PresentationSentState, ProblemReport)) -> Self {
         trace!("transit state from PresentationSentState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
-            presentation: state.presentation,
+            presentation_request: Some(state.presentation_request),
+            presentation: Some(state.presentation),
             status: Status::Failed(problem_report),
         }
     }

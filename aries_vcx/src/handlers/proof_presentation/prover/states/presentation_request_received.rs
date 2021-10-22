@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::handlers::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
 use crate::messages::error::ProblemReport;
@@ -50,8 +50,8 @@ impl From<PresentationRequestReceived> for FinishedState {
     fn from(state: PresentationRequestReceived) -> Self {
         trace!("Prover: transit state from PresentationRequestReceived to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
-            presentation: Default::default(),
+            presentation_request: Some(state.presentation_request),
+            presentation: None,
             status: Status::Declined,
         }
     }
