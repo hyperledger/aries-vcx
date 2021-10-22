@@ -523,6 +523,7 @@ mod tests {
     fn verify_proof(institution: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         institution.activate().unwrap();
         verifier.update_state(&connection).unwrap();
+        assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -603,6 +604,27 @@ mod tests {
         send_proof_request(institution, institution_to_consumer, &requested_attrs_string, "[]", "{}", request_name)
     }
 
+    fn prover_select_credentials(
+        prover: &mut Prover,
+        consumer: &mut Alice,
+        connection: &Connection,
+        request_name: Option<&str>,
+        requested_values: Option<&str>) -> String {
+        consumer.activate().unwrap();
+        prover.update_state(connection).unwrap();
+        assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
+        let retrieved_credentials = prover.retrieve_credentials().unwrap();
+        let selected_credentials_value = match requested_values {
+            Some(requested_values) => {
+                let credential_data = prover.presentation_request_data().unwrap();
+                retrieved_to_selected_credentials_specific(&retrieved_credentials, requested_values, &credential_data, true)
+            }
+            _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true)
+        };
+        serde_json::to_string(&selected_credentials_value).unwrap()
+        
+    }
+
     fn prover_select_credentials_and_send_proof_and_assert(
         consumer: &mut Alice,
         consumer_to_institution: &Connection,
@@ -611,19 +633,8 @@ mod tests {
         expected_prover_state: ProverState
     ) {
         consumer.activate().unwrap();
-        info!("Prover :: Going to create proof");
         let mut prover = create_proof(consumer, consumer_to_institution, request_name);
-        info!("Prover :: Retrieving matching credentials");
-        let retrieved_credentials = prover.retrieve_credentials().unwrap();
-        info!("Prover :: Based on proof, retrieved credentials: {}", &retrieved_credentials);
-        let selected_credentials_value = match requested_values {
-            Some(requested_values) => {
-                let credential_data = prover.presentation_request_data().unwrap();
-                retrieved_to_selected_credentials_specific(&retrieved_credentials, requested_values, &credential_data, true)
-            }
-            _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true)
-        };
-        let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
+        let selected_credentials_str = prover_select_credentials(&mut prover, consumer, consumer_to_institution, request_name, requested_values);
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
         let prover_state = generate_and_send_proof(consumer, &mut prover, consumer_to_institution, &selected_credentials_str);
         assert_eq!(expected_prover_state, prover.get_state());
@@ -1503,7 +1514,8 @@ mod tests {
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id);
         let mut verifier = Verifier::create("1").unwrap();
         accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
+        let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None, None);
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str);
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
     }
 
@@ -1541,7 +1553,9 @@ mod tests {
         accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
         send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id);
         accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None);
+        let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None, None);
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str);
+        verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
     }
 
     pub struct PaymentPlugin {}

@@ -63,14 +63,10 @@ impl VerifierSM {
                 VerifierFullState::Initial(_) => {
                     match message {
                         A2AMessage::PresentationProposal(proposal) => {
-                            if proposal.from_thread(&self.thread_id()) {
-                                return Some((uid, A2AMessage::PresentationProposal(proposal)));
-                            }
+                            return Some((uid, A2AMessage::PresentationProposal(proposal)));
                         }
                         A2AMessage::PresentationRequest(request) => {
-                            if request.from_thread(&self.thread_id()) {
-                                return Some((uid, A2AMessage::PresentationRequest(request)));
-                            }
+                            return Some((uid, A2AMessage::PresentationRequest(request)));
                         }
                         _ => {}
                     }
@@ -145,20 +141,28 @@ impl VerifierSM {
                             None => return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "`set_request()` must be called before sending presentation request after receiving proposal")),
                             Some(request_data) => request_data
                         };
+                        let thread_id = match state.presentation_proposal.thread {
+                            Some(thread) => thread.thid.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
+                            None => state.presentation_proposal.id.0
+                        };
                         let presentation_request =
                             PresentationRequest::create()
                                 .set_request_presentations_attach(&presentation_request_data)?
                                 .set_comment(comment)
-                                .set_thread_id(&state.presentation_proposal.id.0);
+                                .set_thread_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&presentation_request.to_a2a_message())?;
                         VerifierFullState::PresentationRequestSent(PresentationRequestSentState { presentation_request })
                     }
                     VerifierMessages::RejectPresentationProposal(reason) => {
+                        let thread_id = match state.presentation_proposal.thread {
+                            Some(thread) => thread.thid.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
+                            None => state.presentation_proposal.id.0
+                        };
                         let problem_report = ProblemReport::create()
                             .set_comment(Some(reason.to_string()))
-                            .set_thread_id(&state.presentation_proposal.id.0);
+                            .set_thread_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&problem_report.to_a2a_message())?;
@@ -223,7 +227,7 @@ impl VerifierSM {
                 } else {
                     request.id.0.clone()
                 }
-            }).unwrap_or_default()
+            }).unwrap_or_default(), // TODO: Store thread id differently, this is dangerous!
         }
     }
 
