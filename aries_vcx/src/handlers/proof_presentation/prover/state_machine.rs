@@ -124,7 +124,7 @@ impl ProverSM {
                     }
                     // TODO: Perhaps use a different message type?
                     ProverMessages::PresentationRejectReceived(problem_report) => {
-                        ProverFullState::Finished(FinishedState::declined())
+                        ProverFullState::Finished(FinishedState::declined(problem_report))
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
@@ -168,8 +168,8 @@ impl ProverSM {
                     }
                     ProverMessages::RejectPresentationRequest(reason) => {
                         if let Some(send_message) = send_message {
-                            Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
-                            ProverFullState::Finished(state.into())
+                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
+                            ProverFullState::Finished((state, problem_report).into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
                         }
@@ -200,8 +200,8 @@ impl ProverSM {
                     }
                     ProverMessages::RejectPresentationRequest(reason) => {
                         if let Some(send_message) = send_message {
-                            Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
-                            ProverFullState::Finished(FinishedState::declined())
+                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
+                            ProverFullState::Finished(FinishedState::declined(problem_report))
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
                         }
@@ -263,11 +263,12 @@ impl ProverSM {
         send_message: &impl Fn(&A2AMessage) -> VcxResult<()>,
         reason: &str,
         thread_id: &str,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<ProblemReport> {
         let problem_report = ProblemReport::create()
             .set_comment(Some(reason.to_string()))
             .set_thread_id(thread_id);
-        send_message(&problem_report.to_a2a_message())
+        send_message(&problem_report.to_a2a_message())?;
+        Ok(problem_report)
     }
 
     fn _handle_presentation_proposal(
@@ -488,7 +489,7 @@ pub mod test {
             prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
-            assert_eq!(Status::Declined.code(), prover_sm.presentation_status());
+            assert_eq!(Status::Declined(ProblemReport::default()).code(), prover_sm.presentation_status());
         }
 
         #[test]

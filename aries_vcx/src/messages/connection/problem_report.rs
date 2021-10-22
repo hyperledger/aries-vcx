@@ -32,12 +32,10 @@ pub enum ProblemCode {
 }
 
 impl ProblemReport {
-    pub fn create() -> ProblemReport {
+    pub fn create() -> Self {
         ProblemReport::default()
     }
-}
 
-impl ProblemReport {
     pub fn set_problem_code(mut self, problem_code: ProblemCode) -> ProblemReport {
         self.problem_code = Some(problem_code);
         self

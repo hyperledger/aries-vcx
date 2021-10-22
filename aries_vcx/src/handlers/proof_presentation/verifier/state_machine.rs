@@ -162,7 +162,7 @@ impl VerifierSM {
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&problem_report.to_a2a_message())?;
-                        VerifierFullState::Finished(FinishedState::declined())
+                        VerifierFullState::Finished(FinishedState::declined(problem_report))
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
@@ -495,7 +495,7 @@ pub mod test {
             verifier_sm = verifier_sm.step(VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Declined.code(), verifier_sm.presentation_status());
+            assert_eq!(Status::Declined(ProblemReport::default()).code(), verifier_sm.presentation_status());
         }
 
         #[test]

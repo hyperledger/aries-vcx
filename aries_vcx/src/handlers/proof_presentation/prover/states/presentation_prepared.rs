@@ -26,7 +26,7 @@ impl From<PresentationPreparedState> for FinishedState {
         FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: Default::default(),
-            status: Status::Declined,
+            status: Status::Undefined,
         }
     }
 }

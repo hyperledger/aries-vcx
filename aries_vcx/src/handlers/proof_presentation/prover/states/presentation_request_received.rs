@@ -52,7 +52,18 @@ impl From<PresentationRequestReceived> for FinishedState {
         FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: None,
-            status: Status::Declined,
+            status: Status::Success
+        }
+    }
+}
+
+impl From<(PresentationRequestReceived, ProblemReport)> for FinishedState {
+    fn from((state, problem_report): (PresentationRequestReceived, ProblemReport)) -> Self {
+        trace!("Prover: transit state from PresentationRequestReceived to FinishedState");
+        FinishedState {
+            presentation_request: Some(state.presentation_request),
+            presentation: None,
+            status: Status::Declined(problem_report),
         }
     }
 }

@@ -13,12 +13,12 @@ pub struct FinishedState {
 }
 
 impl FinishedState {
-    pub fn declined() -> Self {
+    pub fn declined(problem_report: ProblemReport) -> Self {
         trace!("transit state to FinishedState due to a rejection");
         FinishedState {
             presentation_request: None,
             presentation: None,
-            status: Status::Declined,
+            status: Status::Declined(problem_report),
             revocation_status: None,
         }
     }
