@@ -121,8 +121,8 @@ impl Verifier {
         Ok(())
     }
 
-    pub fn has_transitions(&self) -> bool {
-        self.verifier_sm.has_transitions()
+    pub fn progressable_by_message(&self) -> bool {
+        self.verifier_sm.progressable_by_message()
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
@@ -136,7 +136,7 @@ impl Verifier {
 
     pub fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
-        if !self.has_transitions() { return Ok(self.get_state()); }
+        if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
         let messages = connection.get_messages()?;

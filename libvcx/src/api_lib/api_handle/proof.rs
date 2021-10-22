@@ -36,7 +36,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
         trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
-        if !proof.has_transitions() { return Ok(proof.get_state().into()); }
+        if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
         let send_message = connection::send_message_closure(connection_handle)?;
 
         if let Some(message) = message {

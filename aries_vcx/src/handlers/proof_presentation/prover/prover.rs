@@ -81,8 +81,8 @@ impl Prover {
         self.step(ProverMessages::SendPresentation, Some(&send_message))
     }
 
-    pub fn has_transitions(&self) -> bool {
-        self.prover_sm.has_transitions()
+    pub fn progressable_by_message(&self) -> bool {
+        self.prover_sm.progressable_by_message()
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
@@ -141,7 +141,7 @@ impl Prover {
 
     pub fn update_state(&mut self, connection: &Connection) -> VcxResult<ProverState> {
         trace!("Prover::update_state >>> ");
-        if !self.has_transitions() { return Ok(self.get_state()); }
+        if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
         let messages = connection.get_messages()?;

@@ -303,8 +303,8 @@ impl ProverSM {
         }
     }
 
-    pub fn has_transitions(&self) -> bool {
-        trace!("Prover::states::has_transitions >> state: {:?}", self.state);
+    pub fn progressable_by_message(&self) -> bool {
+        trace!("Prover::states::progressable_by_message >> state: {:?}", self.state);
         match self.state {
             ProverFullState::Initial(_) => false,
             ProverFullState::PresentationProposalSent(_) => true,

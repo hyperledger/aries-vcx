@@ -232,7 +232,7 @@ impl VerifierSM {
         }
     }
 
-    pub fn has_transitions(&self) -> bool {
+    pub fn progressable_by_message(&self) -> bool {
         match self.state {
             VerifierFullState::Initial(_) => true,
             VerifierFullState::PresentationRequestSet(_) => false,

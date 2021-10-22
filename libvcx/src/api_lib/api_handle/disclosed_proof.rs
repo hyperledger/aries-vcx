@@ -74,7 +74,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
-        if !proof.has_transitions() {
+        if !proof.progressable_by_message() {
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.get_state().into());
         }
