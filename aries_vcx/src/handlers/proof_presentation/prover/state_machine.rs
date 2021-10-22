@@ -459,7 +459,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_proposal_send_from_Initial_state() {
+        fn test_prover_handle_presentation_proposal_send_from_initial_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm();
@@ -470,7 +470,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_request_received_from_PresentationProposalSent_state() {
+        fn test_prover_handle_presentation_request_received_from_presentation_proposal_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state();
@@ -481,7 +481,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_reject_received_from_PresentationProposalSent_state() {
+        fn test_prover_handle_presentation_reject_received_from_presentation_proposal_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state();
@@ -493,7 +493,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_proposal_send_from_PresentationRequestReceived_state() {
+        fn test_prover_handle_presentation_proposal_send_from_presentation_proposal_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
@@ -504,7 +504,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_set_presentation_from_PresentationRequestReceived_state() {
+        fn test_prover_handle_set_presentation_from_presentation_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
@@ -515,7 +515,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_prepare_presentation_message_from_PresentationRequestReceived_state_for_invalid_credentials() {
+        fn test_prover_handle_prepare_presentation_message_from_presentation_request_received_state_for_invalid_credentials() {
             let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
@@ -528,7 +528,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_reject_presentation_request_message_from_PresentationRequestReceived_state() {
+        fn test_prover_handle_reject_presentation_request_message_from_presentation_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
@@ -550,7 +550,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_PresentationRequestReceived_state() {
+        fn test_prover_handle_other_messages_from_presentation_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
@@ -720,23 +720,23 @@ pub mod test {
     mod find_message_to_handle {
         use super::*;
 
-//         #[test]
-//         #[cfg(feature = "general_test")]
-//         fn test_prover_find_message_to_handle_from_intial_state() {
-//             let _setup = SetupMocks::init();
-//             let prover = _prover_sm();
-//             {
-//                 let messages = map!(
-//                     "key_1".to_string() => A2AMessage::PresentationProposal(_presentation_proposal()),
-//                     "key_2".to_string() => A2AMessage::Presentation(_presentation()),
-//                     "key_3".to_string() => A2AMessage::PresentationRequest(_presentation_request()),
-//                     "key_4".to_string() => A2AMessage::PresentationAck(_ack()),
-//                     "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
-//                 );
-// 
-//                 assert!(prover.find_message_to_handle(messages).is_none());
-//             }
-//         }
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_find_message_to_handle_from_intial_state() {
+            let _setup = SetupMocks::init();
+            let prover = _prover_sm();
+            {
+                let messages = map!(
+                    "key_1".to_string() => A2AMessage::PresentationProposal(_presentation_proposal()),
+                    "key_2".to_string() => A2AMessage::Presentation(_presentation()),
+                    "key_3".to_string() => A2AMessage::PresentationRequest(_presentation_request()),
+                    "key_4".to_string() => A2AMessage::PresentationAck(_ack()),
+                    "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+                );
+
+                assert!(prover.find_message_to_handle(messages).is_none());
+            }
+        }
 
         #[test]
         #[cfg(feature = "general_test")]

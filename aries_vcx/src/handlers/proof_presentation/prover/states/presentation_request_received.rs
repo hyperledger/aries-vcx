@@ -1,10 +1,12 @@
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use crate::handlers::proof_presentation::prover::states::presentation_prepared_failed::PresentationPreparationFailedState;
+use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationRequestReceived {
@@ -40,6 +42,17 @@ impl From<(PresentationRequestReceived, Presentation)> for PresentationPreparedS
         PresentationPreparedState {
             presentation_request: state.presentation_request,
             presentation,
+        }
+    }
+}
+
+impl From<PresentationRequestReceived> for FinishedState {
+    fn from(state: PresentationRequestReceived) -> Self {
+        trace!("Prover: transit state from PresentationRequestReceived to FinishedState");
+        FinishedState {
+            presentation_request: state.presentation_request,
+            presentation: Default::default(),
+            status: Status::Declined,
         }
     }
 }

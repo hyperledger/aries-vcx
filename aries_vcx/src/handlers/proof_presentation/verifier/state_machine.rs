@@ -33,7 +33,7 @@ pub enum VerifierFullState {
 
 impl Default for VerifierFullState {
     fn default() -> Self {
-        Self::PresentationRequestSet(PresentationRequestSet::default())
+        Self::Initial(InitialVerifierState::default())
     }
 }
 
@@ -147,9 +147,9 @@ impl VerifierSM {
                         };
                         let presentation_request =
                             PresentationRequest::create()
-                                .set_id(state.presentation_proposal.id.0)
+                                .set_request_presentations_attach(&presentation_request_data)?
                                 .set_comment(comment)
-                                .set_request_presentations_attach(&presentation_request_data)?;
+                                .set_thread_id(&state.presentation_proposal.id.0);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                         )?(&presentation_request.to_a2a_message())?;
@@ -357,7 +357,7 @@ pub mod test {
         }
 
         fn to_presentation_request_set_state(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::SetPresentationRequest(_presentation_request_data()), None::<&fn(&A2AMessage) -> _>).unwrap();
+            self = self.set_request(_presentation_request_data()).unwrap();
             self
         }
 
@@ -437,7 +437,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_message_from_PresentationRequestSet_state() {
+        fn test_prover_handle_send_presentation_request_message_from_presentation_request_set_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
@@ -448,7 +448,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_PresentationRequestSet_state() {
+        fn test_prover_handle_other_messages_from_presentation_request_set_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
@@ -466,7 +466,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_message_from_PresentationProposalReceived_state() {
+        fn test_prover_handle_send_presentation_request_message_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state_with_request();
@@ -477,7 +477,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_from_PresentationProposalReceived_state_fails_without_request() {
+        fn test_prover_handle_send_presentation_request_from_presentation_proposal_received_state_fails_without_request() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
@@ -488,7 +488,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_reject_presentation_proposal_message_from_PresentationProposalReceived_state() {
+        fn test_prover_handle_reject_presentation_proposal_message_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
@@ -500,7 +500,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_PresentationProposalReceived_state() {
+        fn test_prover_handle_other_messages_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
