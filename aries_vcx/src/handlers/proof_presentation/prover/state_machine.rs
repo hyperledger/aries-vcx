@@ -494,7 +494,7 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_proposal_send_from_presentation_proposal_sent_state() {
+        fn test_prover_handle_presentation_proposal_send_from_presentation_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();

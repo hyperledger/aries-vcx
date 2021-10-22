@@ -59,7 +59,7 @@ impl VerifierSM {
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
-            match self.state {
+            match &self.state {
                 VerifierFullState::Initial(_) => {
                     match message {
                         A2AMessage::PresentationProposal(proposal) => {
@@ -75,7 +75,7 @@ impl VerifierSM {
                         _ => {}
                     }
                 }
-                VerifierFullState::PresentationRequestSent(_) => {
+                VerifierFullState::PresentationRequestSent(state) => {
                     match message {
                         A2AMessage::Presentation(presentation) => {
                             if presentation.from_thread(&self.thread_id()) {
@@ -214,8 +214,18 @@ impl VerifierSM {
 
     pub fn source_id(&self) -> String { self.source_id.clone() }
 
-    // TODO: This approach is not reliable
-    pub fn thread_id(&self) -> String { self.presentation_request().map(|request| request.id.0.clone()).unwrap_or_default() }
+    pub fn thread_id(&self) -> String {
+        match &self.state {
+            VerifierFullState::PresentationProposalReceived(state) => state.presentation_proposal.id.0.clone(),
+            _ => self.presentation_request().map(|request| {
+                if let Some(thread) = request.thread {
+                    thread.thid.unwrap_or(request.id.0.clone())
+                } else {
+                    request.id.0.clone()
+                }
+            }).unwrap_or_default()
+        }
+    }
 
     pub fn get_state(&self) -> VerifierState {
         match self.state {
