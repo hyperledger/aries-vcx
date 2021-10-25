@@ -12,7 +12,6 @@ pub mod test {
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::libindy::utils::anoncreds;
-    use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
@@ -222,7 +221,7 @@ pub mod test {
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
 
-            Verifier::create(String::from("alice_degree"),
+            Verifier::create_from_request(String::from("alice_degree"),
                              requested_attrs,
                              json!([]).to_string(),
                              json!({}).to_string(),
@@ -301,7 +300,7 @@ pub mod test {
         pub fn request_presentation(&mut self) {
             self.activate().unwrap();
             self.verifier = self.create_presentation_request();
-            assert_eq!(VerifierState::Initial, self.verifier.get_state());
+            assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap(), None).unwrap();
             self.verifier.update_state(&self.connection).unwrap();
@@ -476,7 +475,7 @@ pub mod test {
             self.activate().unwrap();
             let presentation_request = self.get_proof_request_messages();
 
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
 
@@ -491,7 +490,7 @@ pub mod test {
             self.activate().unwrap();
 
             let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
         }
@@ -500,7 +499,7 @@ pub mod test {
             self.activate().unwrap();
 
             let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create("degree", presentation_request).unwrap();
+            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             let proposal_data = json!({
                 "attributes": [

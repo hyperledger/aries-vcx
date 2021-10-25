@@ -49,21 +49,6 @@ impl CredentialOffer {
         Ok(self)
     }
 
-    pub fn set_thread_id(mut self, id: &str) -> Self {
-        self.thread = match self.thread {
-            Some(thread) => Some(thread.set_thid(id.to_string())),
-            None => Some(Thread::new().set_thid(id.to_string()))
-        };
-        self
-    }
-
-    pub fn from_thread(&self, thread_id: &str) -> bool {
-        match &self.thread {
-            Some(thread) => thread.is_reply(thread_id),
-            None => true
-        }
-    }
-
     pub fn set_parent_thread_id(mut self, id: &str) -> Self {
         self.thread = match self.thread {
             Some(thread) => Some(thread.set_pthid(id.to_string())),
@@ -73,6 +58,7 @@ impl CredentialOffer {
     }
 }
 
+threadlike_optional!(CredentialOffer);
 a2a_message!(CredentialOffer);
 
 #[cfg(feature = "test_utils")]

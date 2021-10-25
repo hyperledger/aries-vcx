@@ -42,7 +42,7 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                           format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
-    let proof = Prover::create(source_id, presentation_request)?;
+    let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
 }
 
@@ -57,7 +57,7 @@ pub fn create_proof_with_msgid(source_id: &str, connection_handle: u32, msg_id: 
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
                                           format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
 
-    let proof = Prover::create(source_id, presentation_request)?;
+    let proof = Prover::create_from_request(source_id, presentation_request)?;
 
     let handle = HANDLE_MAP.add(proof)?;
 
@@ -74,7 +74,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
         trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
-        if !proof.has_transitions() {
+        if !proof.progressable_by_message() {
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.get_state().into());
         }
@@ -313,7 +313,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle_proof).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle_proof).unwrap());
 
         let _mock_builder = MockBuilder::init().
             set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
@@ -339,7 +339,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_handle);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string()).unwrap();
         assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).unwrap());
@@ -370,7 +370,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         reject_proof(handle, connection_h).unwrap();
         assert_eq!(ProverState::Failed as u32, get_state(handle).unwrap());
@@ -382,7 +382,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap())
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap())
     }
 
     #[test]
@@ -443,7 +443,7 @@ mod tests {
         let request = _get_proof_request_messages(connection_h);
 
         let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::Initial as u32, get_state(handle).unwrap());
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
 
         let attrs = get_proof_request_attachment(handle).unwrap();
         let _attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();

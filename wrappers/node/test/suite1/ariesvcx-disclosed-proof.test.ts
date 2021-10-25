@@ -136,7 +136,7 @@ describe('DisclosedProof', () => {
       const disclosedProof = await disclosedProofCreateWithRequest();
       const connection = await createConnectionInviterRequested();
       await disclosedProof.updateStateV2(connection);
-      assert.equal(await disclosedProof.getState(), ProverStateType.Initial);
+      assert.equal(await disclosedProof.getState(), ProverStateType.PresentationRequestReceived);
     });
   });
 

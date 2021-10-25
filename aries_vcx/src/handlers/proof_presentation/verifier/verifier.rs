@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
+use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
+use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
 use crate::handlers::proof_presentation::verifier::state_machine::VerifierSM;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_request::*;
@@ -15,31 +17,44 @@ pub struct Verifier {
 #[derive(Debug, PartialEq)]
 pub enum VerifierState {
     Initial,
+    PresentationProposalReceived,
+    PresentationRequestSet,
     PresentationRequestSent,
     Finished,
     Failed,
 }
 
 impl Verifier {
-    pub fn create(source_id: String,
+    pub fn create(source_id: &str) -> VcxResult<Self> {
+        trace!("Verifier::create >>> source_id: {:?}", source_id);
+
+        Ok(Self {
+            verifier_sm: VerifierSM::new(source_id),
+        })
+    }
+
+    pub fn create_from_request(source_id: String,
                   requested_attrs: String,
                   requested_predicates: String,
                   revocation_details: String,
-                  name: String) -> VcxResult<Verifier> {
-        trace!("Verifier::create >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
+                  name: String) -> VcxResult<Self> {
+        trace!("Verifier::create_from_request >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
                source_id, requested_attrs, requested_predicates, revocation_details, name);
 
         let presentation_request =
-            PresentationRequestData::create()
-                .set_name(name)
-                .set_requested_attributes(requested_attrs)?
-                .set_requested_predicates(requested_predicates)?
-                .set_not_revoked_interval(revocation_details)?
-                .set_nonce()?;
+            PresentationRequestData::create(&name)?
+                .set_requested_attributes_as_string(requested_attrs)?
+                .set_requested_predicates_as_string(requested_predicates)?
+                .set_not_revoked_interval(revocation_details)?;
 
-        Ok(Verifier {
-            verifier_sm: VerifierSM::new(presentation_request, source_id),
+        Ok(Self {
+            verifier_sm: VerifierSM::from_request(&source_id, presentation_request),
         })
+    }
+
+    pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
+        trace!("Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}", source_id, presentation_proposal);
+        Ok(Self { verifier_sm: VerifierSM::from_proposal(source_id, presentation_proposal) })
     }
 
     pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }
@@ -64,25 +79,25 @@ impl Verifier {
         self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
     }
 
+    pub fn set_request(&mut self, presentation_request_data: PresentationRequestData) -> VcxResult<()> {
+        self.verifier_sm = self.verifier_sm.clone().set_request(presentation_request_data)?;
+        Ok(())
+    }
+
     pub fn generate_presentation_request_msg(&self) -> VcxResult<String> {
         trace!("Verifier::generate_presentation_request_msg >>>");
-
         let proof_request = self.verifier_sm.presentation_request()?;
-
         Ok(json!(proof_request).to_string())
     }
 
     pub fn generate_presentation_request(&self) -> VcxResult<PresentationRequest> {
         trace!("Verifier::generate_presentation_request >>>");
-
         let proof_request = self.verifier_sm.presentation_request()?;
-
         Ok(proof_request)
     }
 
     pub fn get_presentation(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
-
         let proof = self.verifier_sm.presentation()?.to_a2a_message();
         Ok(json!(proof).to_string())
     }
@@ -91,28 +106,37 @@ impl Verifier {
         self.verifier_sm.presentation()?.presentations_attach.content()
     }
 
+    pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
+        trace!("Verifier::get_presentation_proposal >>>");
+        self.verifier_sm.presentation_proposal()
+    }
+
     pub fn get_thread_id(&self) -> VcxResult<String> {
         Ok(self.verifier_sm.thread_id())
     }
 
     pub fn step(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
-                -> VcxResult<()>
-    {
+                -> VcxResult<()> {
         self.verifier_sm = self.verifier_sm.clone().step(message, send_message)?;
         Ok(())
     }
 
-    pub fn has_transitions(&self) -> bool {
-        self.verifier_sm.has_transitions()
+    pub fn progressable_by_message(&self) -> bool {
+        self.verifier_sm.progressable_by_message()
     }
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
+    pub fn decline_presentation_proposal(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>, reason: &str) -> VcxResult<()> {
+        trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
+        self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message))
+    }
+
     pub fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
-        if !self.has_transitions() { return Ok(self.get_state()); }
+        if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
         let messages = connection.get_messages()?;
@@ -140,7 +164,7 @@ mod tests {
     use super::*;
 
     fn _verifier() -> Verifier {
-        Verifier::create("1".to_string(),
+        Verifier::create_from_request("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
                      REQUESTED_PREDICATES.to_owned(),
                      r#"{"support_revocation":false}"#.to_string(),

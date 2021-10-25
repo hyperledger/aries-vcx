@@ -5,7 +5,7 @@ pub enum Status {
     Undefined,
     Success,
     Failed(ProblemReport),
-    Declined,
+    Declined(ProblemReport),
 }
 
 impl Status {
@@ -17,7 +17,10 @@ impl Status {
                 error!("Process Failed: {:?}", err);
                 2
             }
-            Status::Declined => 3
+            Status::Declined(err) => {
+                error!("Declined: {:?}", err);
+                3
+            }
         }
     }
 
@@ -25,7 +28,7 @@ impl Status {
         match state {
             1 => Self::Success,
             2 => Self::Failed(ProblemReport::create()),
-            3 => Self::Declined,
+            3 => Self::Declined(ProblemReport::create()),
             _ => Self::Undefined,
         }
     }

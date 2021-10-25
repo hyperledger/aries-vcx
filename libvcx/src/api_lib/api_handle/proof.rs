@@ -24,7 +24,7 @@ pub fn create_proof(source_id: String,
                     requested_predicates: String,
                     revocation_details: String,
                     name: String) -> VcxResult<u32> {
-    let verifier = Verifier::create(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
+    let verifier = Verifier::create_from_request(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
     PROOF_MAP.add(verifier)
         .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
 }
@@ -36,7 +36,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
         trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
-        if !proof.has_transitions() { return Ok(proof.get_state().into()); }
+        if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
         let send_message = connection::send_message_closure(connection_handle)?;
 
         if let Some(message) = message {
@@ -359,11 +359,11 @@ pub mod tests {
         let handle_proof = create_default_proof();
 
         let _request = generate_proof_request_msg(handle_proof).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::IOError);
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Initial as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         // Retry sending proof request
         assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap(), 0);

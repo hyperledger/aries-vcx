@@ -87,12 +87,8 @@ impl HolderSM {
 
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("Holder::find_message_to_handle >>> messages: {:?}, state: {:?}", messages, self.state);
-
         for (uid, message) in messages {
             match self.state {
-                HolderFullState::Initial(_) => {
-                    // do not process messages
-                }
                 HolderFullState::ProposalSent(_) => {
                     match message {
                         A2AMessage::CredentialOffer(offer) => {
@@ -102,9 +98,6 @@ impl HolderSM {
                         }
                         _ => {}
                     }
-                }
-                HolderFullState::OfferReceived(_) => {
-                    // do not process messages
                 }
                 HolderFullState::RequestSent(_) => {
                     match message {
@@ -121,12 +114,9 @@ impl HolderSM {
                         _ => {}
                     }
                 }
-                HolderFullState::Finished(_) => {
-                    // do not process messages
-                }
+                _ => {}
             };
         }
-
         None
     }
 
@@ -160,7 +150,7 @@ impl HolderSM {
                     HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Credential Offer or Problem Report");
+                    warn!("Unable to process received message in this state");
                     HolderFullState::ProposalSent(state_data)
                 }
             },
@@ -205,7 +195,7 @@ impl HolderSM {
                         HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
-                    warn!("Credential Issuance can only start on holder side with Credential Offer");
+                    warn!("Unable to process received message in this state");
                     HolderFullState::OfferReceived(state_data)
                 }
             },
@@ -238,12 +228,12 @@ impl HolderSM {
                     HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Credential and Problem Report");
+                    warn!("Unable to process received message in this state");
                     HolderFullState::RequestSent(state_data)
                 }
             },
             HolderFullState::Finished(state_data) => {
-                warn!("Exchange is finished, no messages can be sent or received");
+                warn!("Unable to process received message in this state");
                 HolderFullState::Finished(state_data)
             }
         };

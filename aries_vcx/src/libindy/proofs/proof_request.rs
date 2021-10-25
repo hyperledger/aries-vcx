@@ -20,24 +20,19 @@ pub struct ProofRequestData {
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
+
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
-    pub fn create() -> ProofRequestData {
-        ProofRequestData::default()
+    pub fn create(name: &str) -> VcxResult<Self> {
+        Ok(Self {
+            name: name.to_string(),
+            nonce: anoncreds::generate_nonce()?,
+                ..Self::default()
+        })
     }
 
-    pub fn set_name(mut self, name: String) -> ProofRequestData {
-        self.name = name;
-        self
-    }
-
-    pub fn set_nonce(mut self) -> VcxResult<ProofRequestData> {
-        self.nonce = anoncreds::generate_nonce()?;
-        Ok(self)
-    }
-
-    pub fn set_requested_attributes(mut self, requested_attrs: String) -> VcxResult<ProofRequestData> {
+    pub fn set_requested_attributes_as_string(mut self, requested_attrs: String) -> VcxResult<Self> {
         match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(_err) => {
@@ -49,17 +44,23 @@ impl ProofRequestData {
                                                       format!("Requested attribute can contain either 'name' or 'names'. Not both.")));
                     };
                 }
-                self.requested_attributes = requested_attributes
-                    .into_iter()
-                    .enumerate()
-                    .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
-                    .collect();
+                self = self.set_requested_attributes_as_vec(requested_attributes)?;
             }
         }
         Ok(self)
     }
 
-    pub fn set_requested_predicates(mut self, requested_predicates: String) -> VcxResult<ProofRequestData> {
+    pub fn set_requested_attributes_as_vec(mut self, requested_attrs: Vec<AttrInfo>) -> VcxResult<Self> {
+        self.requested_attributes = requested_attrs
+            .into_iter()
+            .enumerate()
+            .map(|(index, attribute)| (format!("attribute_{}", index), attribute))
+            .collect();
+        Ok(self)
+    }
+
+
+    pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
         let requested_predicates: Vec<PredicateInfo> = ::serde_json::from_str(&requested_predicates)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Predicates: {:?}, err: {:?}", requested_predicates, err)))?;
 
@@ -71,7 +72,7 @@ impl ProofRequestData {
         Ok(self)
     }
 
-    pub fn set_not_revoked_interval(mut self, non_revoc_interval: String) -> VcxResult<ProofRequestData> {
+    pub fn set_not_revoked_interval(mut self, non_revoc_interval: String) -> VcxResult<Self> {
         let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval)
             .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Revocation Interval: {:?}", non_revoc_interval)))?;
 
@@ -85,8 +86,8 @@ impl ProofRequestData {
 }
 
 impl Default for ProofRequestData {
-    fn default() -> ProofRequestData {
-        ProofRequestData {
+    fn default() -> Self {
+        Self {
             nonce: String::new(),
             name: String::new(),
             data_version: String::from(ProofRequestData::DEFAULT_VERSION),
@@ -125,12 +126,10 @@ mod tests {
     fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create()
-            .set_name("Test".into())
-            .set_nonce().unwrap()
+        let request = ProofRequestData::create("Test").unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
-            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap()
-            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
 
         let serialized_msg = serde_json::to_string(&request).unwrap();
         warn!("serialized_msg: {}", serialized_msg);
@@ -148,9 +147,8 @@ mod tests {
     fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create()
-            .set_nonce().unwrap()
-            .set_requested_attributes(REQUESTED_ATTRS.into()).unwrap();
+        let request = ProofRequestData::create("").unwrap()
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap();
         assert_eq!(request.requested_attributes, _expected_req_attrs());
     }
 
@@ -162,9 +160,8 @@ mod tests {
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
-        let request = ProofRequestData::create()
-            .set_nonce().unwrap()
-            .set_requested_attributes(req_attrs_string).unwrap();
+        let request = ProofRequestData::create("").unwrap()
+            .set_requested_attributes_as_string(req_attrs_string).unwrap();
         assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
@@ -199,9 +196,8 @@ mod tests {
         }"#).unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let request = ProofRequestData::create()
-            .set_nonce().unwrap()
-            .set_requested_predicates(REQUESTED_PREDICATES.into()).unwrap();
+        let request = ProofRequestData::create("").unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
         assert_eq!(request.requested_predicates, check_predicates);
     }
 
@@ -221,9 +217,8 @@ mod tests {
 
         let requested_attrs = json!([ attr_info, attr_info_2 ]).to_string();
 
-        let request = ProofRequestData::create()
-            .set_nonce().unwrap()
-            .set_requested_attributes(requested_attrs.into()).unwrap();
+        let request = ProofRequestData::create("").unwrap()
+            .set_requested_attributes_as_string(requested_attrs.into()).unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
         expected_req_attrs.insert("attribute_0".to_string(), serde_json::from_value(attr_info).unwrap());
@@ -244,9 +239,8 @@ mod tests {
 
         let requested_attrs = json!([ attr_info ]).to_string();
 
-        let err = ProofRequestData::create()
-            .set_nonce().unwrap()
-            .set_requested_attributes(requested_attrs.into()).unwrap_err();
+        let err = ProofRequestData::create("").unwrap()
+            .set_requested_attributes_as_string(requested_attrs.into()).unwrap_err();
 
         assert_eq!(VcxErrorKind::InvalidProofRequest, err.kind());
     }

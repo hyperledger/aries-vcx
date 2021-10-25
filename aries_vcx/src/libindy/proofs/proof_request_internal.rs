@@ -27,7 +27,7 @@ pub struct PredicateInfo {
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct AttrInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,

@@ -12,7 +12,7 @@ pub struct PresentationProposal {
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -24,23 +24,56 @@ pub struct PresentationPreview {
     pub predicates: Vec<Predicate>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Attribute {
     pub name: String,
     pub cred_def_id: Option<String>,
     #[serde(rename = "mime-type")]
     pub mime_type: Option<MimeType>,
     pub value: Option<String>,
-    pub filter: Option<Vec<::serde_json::Value>>,
+    pub referent: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+impl Attribute {
+    pub fn create(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Self::default()
+        }
+    }
+
+    pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
+        self.cred_def_id = Some(cred_def_id.to_string());
+        self 
+    }
+
+    pub fn set_value(mut self, value: &str) -> Self {
+        self.value = Some(value.to_string());
+        self 
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Predicate {
     pub name: String,
     pub cred_def_id: Option<String>,
     pub predicate: String,
     pub threshold: i64,
-    pub filter: Option<Vec<::serde_json::Value>>,
+    pub referent: Option<String>,
+}
+
+impl Predicate {
+    pub fn create(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            ..Self::default()
+        }
+    }
+
+    pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
+        self.cred_def_id = Some(cred_def_id.to_string());
+        self 
+    }
 }
 
 fn default_presentation_preview_type() -> MessageType {
@@ -50,6 +83,11 @@ fn default_presentation_preview_type() -> MessageType {
 impl PresentationProposal {
     pub fn create() -> Self {
         PresentationProposal::default()
+    }
+
+    pub fn set_id(mut self, id: &str) -> Self {
+        self.id = MessageId(id.to_string());
+        self
     }
 
     pub fn set_comment(mut self, comment: String) -> Self {
@@ -63,8 +101,50 @@ impl PresentationProposal {
     }
 }
 
-threadlike!(PresentationProposal);
+threadlike_optional!(PresentationProposal);
 a2a_message!(PresentationProposal);
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
+pub struct PresentationProposalData {
+    pub attributes: Vec<Attribute>,
+    pub predicates: Vec<Predicate>,
+    pub comment: Option<String>,
+}
+
+impl PresentationProposalData {
+    pub fn create() -> Self {
+        Self::default()
+    }
+
+    pub fn add_attribute(mut self, attr: Attribute) -> Self {
+        self.attributes.push(attr);
+        self
+    }
+
+    pub fn set_comment(mut self, comment: String) -> Self {
+        self.comment = Some(comment);
+        self
+    }
+
+    pub fn add_predicate(mut self, pred: Predicate) -> Self {
+        self.predicates.push(pred);
+        self
+    }
+}
+
+impl From<PresentationProposalData> for PresentationProposal {
+    fn from(data: PresentationProposalData) -> Self {
+        Self {
+            comment: data.comment,
+            presentation_proposal: PresentationPreview {
+                attributes: data.attributes,
+                predicates: data.predicates,
+                _type: default_presentation_preview_type()
+            },
+            ..Self::default()
+        }
+    }
+}
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -80,6 +160,20 @@ pub mod test_utils {
         String::from("comment")
     }
 
+    pub fn _presentation_proposal_data() -> PresentationProposalData {
+        PresentationProposalData {
+            attributes: vec![Attribute {
+                name: String::from("name"),
+                cred_def_id: None,
+                mime_type: None,
+                value: None,
+                referent: None,
+            }],
+            predicates: vec![],
+            comment: Some(String::from("comment"))
+        }
+    }
+
     pub fn _presentation_preview() -> PresentationPreview {
         PresentationPreview {
             attributes: vec![Attribute {
@@ -87,7 +181,7 @@ pub mod test_utils {
                 cred_def_id: None,
                 mime_type: None,
                 value: None,
-                filter: None,
+                referent: None,
             }],
             predicates: vec![],
             ..Default::default()
@@ -98,7 +192,7 @@ pub mod test_utils {
         PresentationProposal {
             id: MessageId::id(),
             comment: Some(_comment()),
-            thread: thread(),
+            thread: Some(thread()),
             presentation_proposal: _presentation_preview(),
         }
     }

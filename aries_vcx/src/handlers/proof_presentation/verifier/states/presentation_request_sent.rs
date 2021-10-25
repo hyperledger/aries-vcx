@@ -44,7 +44,7 @@ impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for Fi
     fn from((state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus)) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
+            presentation_request: Some(state.presentation_request),
             presentation: Some(presentation),
             status: Status::Success,
             revocation_status: Some(was_revoked),
@@ -56,7 +56,7 @@ impl From<(PresentationRequestSentState, ProblemReport)> for FinishedState {
     fn from((state, problem_report): (PresentationRequestSentState, ProblemReport)) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
-            presentation_request: state.presentation_request,
+            presentation_request: Some(state.presentation_request),
             presentation: None,
             status: Status::Failed(problem_report),
             revocation_status: None,

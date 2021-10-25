@@ -68,14 +68,14 @@ pub struct IssuerSM {
 
 impl IssuerSM {
     pub fn new(source_id: &str, cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
-        IssuerSM {
+        Self {
             state: IssuerFullState::Initial(InitialState::new(cred_def_id, credential_data, rev_reg_id, tails_file)),
             source_id: source_id.to_string(),
         }
     }
 
     pub fn from_proposal(source_id: &str, credential_proposal: &CredentialProposal) -> Self {
-        IssuerSM {
+        Self {
             state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None, None, None)),
             source_id: source_id.to_string(),
         }
@@ -86,7 +86,7 @@ impl IssuerSM {
     }
 
     pub fn step(state: IssuerFullState, source_id: String) -> Self {
-        IssuerSM {
+        Self {
             state,
             source_id,
         }
@@ -149,12 +149,6 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
-                IssuerFullState::Initial(_) => {
-                    // do not process messages
-                }
-                IssuerFullState::ProposalReceived(_) => {
-                    // do not process messages
-                }
                 IssuerFullState::OfferSent(_) => {
                     match message {
                         A2AMessage::CredentialRequest(credential) => {
@@ -177,9 +171,6 @@ impl IssuerSM {
                         _ => {}
                     }
                 }
-                IssuerFullState::RequestReceived(_) => {
-                    // do not process messages
-                }
                 IssuerFullState::CredentialSent(_) => {
                     match message {
                         A2AMessage::Ack(ack) | A2AMessage::CredentialAck(ack) => {
@@ -195,7 +186,7 @@ impl IssuerSM {
                         _ => {}
                     }
                 }
-                IssuerFullState::Finished(_) => {
+                _ => {
                     // do not process messages
                 }
             };
@@ -227,8 +218,8 @@ impl IssuerSM {
         }
     }
 
-    pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<IssuerSM> {
-        let IssuerSM { state, source_id } = self;
+    pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Self> {
+        let Self { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state) => {
                 IssuerFullState::Initial(InitialState {
@@ -247,13 +238,13 @@ impl IssuerSM {
             }
             _ => { state }
         };
-        Ok(IssuerSM::step(state, source_id))
+        Ok(Self::step(state, source_id))
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<IssuerSM> {
+    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.get_thread_id()?, &cim)?;
-        let IssuerSM { state, source_id } = self;
+        let Self { state, source_id } = self;
         let state = match state {
             IssuerFullState::Initial(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
@@ -268,7 +259,7 @@ impl IssuerSM {
                     IssuerFullState::OfferSent((state_data, cred_offer, cred_offer_msg.id).into())
                 }
                 _ => {
-                    warn!("Unable to process this message in this state, ignoring...");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::Initial(state_data)
                 }
             }
@@ -291,7 +282,7 @@ impl IssuerSM {
                     IssuerFullState::OfferSent((credential_json, cred_offer, thread_id, state_data.rev_reg_id, state_data.tails_file).into())
                 }
                 _ => {
-                    warn!("Unable to process this message in this state, ignoring...");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::ProposalReceived(state_data)
                 }
             }
@@ -306,7 +297,7 @@ impl IssuerSM {
                     IssuerFullState::Finished((state_data, problem_report).into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Request, Proposal and Problem Report");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::OfferSent(state_data)
                 }
             },
@@ -349,17 +340,17 @@ impl IssuerSM {
                     IssuerFullState::Finished(state_data.into())
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only Ack and Problem Report");
+                    warn!("Unable to process received message in this state");
                     IssuerFullState::CredentialSent(state_data)
                 }
             }
             IssuerFullState::Finished(state_data) => {
-                warn!("Exchange is finished, no messages can be sent or received");
+                warn!("Unable to process received message in this state");
                 IssuerFullState::Finished(state_data)
             }
         };
 
-        Ok(IssuerSM::step(state, source_id))
+        Ok(Self::step(state, source_id))
     }
 
     pub fn credential_status(&self) -> u32 {

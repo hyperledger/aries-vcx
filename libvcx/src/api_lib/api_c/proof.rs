@@ -742,7 +742,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_proof_deserialize(cb.command_handle,
-                                         CString::new(mockdata_proof::SERIALIZIED_PROOF_INITIATED).unwrap().into_raw(),
+                                         CString::new(mockdata_proof::SERIALIZIED_PROOF_INITIAL).unwrap().into_raw(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -764,7 +764,7 @@ mod tests {
                                              Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, VerifierState::Initial as u32);
+        assert_eq!(state, 1);
     }
 
     #[test]
@@ -776,7 +776,7 @@ mod tests {
 
         let proof_handle = create_proof_util().unwrap();
 
-        assert_eq!(proof::get_state(proof_handle).unwrap(), VerifierState::Initial as u32);
+        assert_eq!(proof::get_state(proof_handle).unwrap(), 1);
 
         let connection_handle = build_test_connection_inviter_requested();
 

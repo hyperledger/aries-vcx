@@ -1,4 +1,4 @@
 pub mod prover;
 pub mod verifier;
 pub mod proof_request;
-mod proof_request_internal;
+pub mod proof_request_internal; // TODO: Should stay private
