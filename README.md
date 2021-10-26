@@ -1,7 +1,7 @@
 # <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> AriesVCX
 
 ![CI build](https://github.com/hyperledger/aries-vcx/workflows/CI/badge.svg)
-[![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
+[![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/main/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
 [![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://chat.hyperledger.org/channel/aries-vcx)
 
 
