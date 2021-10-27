@@ -243,16 +243,6 @@ jobs:
         if: steps.cache-image-libvcx.outputs.cache-hit != 'true'
         run: |
           set -x
-          echo "aries_vcx/src/handlers/mod.rs :::::"
-          cat aries_vcx/src/handlers/mod.rs
-
-          echo "ariesvcx src hash"
-          find aries_vcx/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
-          echo "libvcx src hash"
-          find libvcx/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
-          echo "agency_client src hash"
-          find agency_client/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
-
           docker build --build-arg "ALPINE_CORE_IMAGE=$DOCKER_IMG_NAME_ALPINE_CORE" \
                        -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
