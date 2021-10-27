@@ -525,7 +525,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::wallet::get_wallet_handle;
     use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::{configure_trustee_did, setup_libnullpay_nofees, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, setup_libnullpay_nofees, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -540,6 +540,8 @@ mod tests {
     use super::*;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::libindy::utils::pool::test_utils::{delete_named_test_pool, create_tmp_genesis_txn_file, delete_test_pool};
+    use aries_vcx::utils::provision::AgentProvisionConfig;
+    use crate::api_lib::api_c::utils::vcx_provision_cloud_agent;
 
     fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -966,6 +968,44 @@ mod tests {
         // Assert pool was initialized
         // assert_ne!(get_pool_handle().unwrap(), 0);
     }
+
+    #[cfg(feature = "agency_tests")]
+    #[test]
+    fn test_provision_cloud_agent() {
+        let _setup_defaults = SetupDefaults::init();
+        let setup_wallet = SetupWallet::init();
+        let setup_pool = SetupPoolConfig::init();
+
+        let config_wallet: &str = &json!(setup_wallet.wallet_config).to_string();
+
+        let rc = vcx_init_threadpool(CString::new("{}").unwrap().into_raw());
+        assert_eq!(rc, error::SUCCESS.code_num);
+
+        let cb = return_types_u32::Return_U32_I32::new().unwrap();
+        let rc = vcx_open_main_wallet(cb.command_handle, CString::new(config_wallet).unwrap().into_raw(), Some(cb.get_callback()));
+        assert_eq!(rc, error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+
+        let config_provision_agent = AgentProvisionConfig {
+            agency_did: AGENCY_DID.to_string(),
+            agency_verkey: AGENCY_VERKEY.to_string(),
+            agency_endpoint: AGENCY_ENDPOINT.to_string(),
+            agent_seed: None
+        };
+        let config_provision_agent: &str = &json!(config_provision_agent).to_string();
+        let cb = return_types_u32::Return_U32_STR::new().unwrap();
+        let rc = vcx_provision_cloud_agent(cb.command_handle, CString::new(config_provision_agent).unwrap().into_raw(), Some(cb.get_callback()));
+        assert_eq!(rc, error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+
+        let webhook_url = "https://example.com";
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        assert_eq!(error::SUCCESS.code_num, vcx_update_webhook_url(cb.command_handle,
+                                                                   CString::new(webhook_url.to_string()).unwrap().into_raw(),
+                                                                   Some(cb.get_callback())));
+        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+    }
+
 
     #[test]
     #[cfg(feature = "pool_tests")]

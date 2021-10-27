@@ -577,7 +577,7 @@ jobs:
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(cd $HOME/libvcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests" && \
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests" && \
                               cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
 
