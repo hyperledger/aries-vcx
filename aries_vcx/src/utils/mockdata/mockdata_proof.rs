@@ -149,6 +149,7 @@ pub static SERIALIZIED_PROOF_INITIAL: &str = r#"
   "data": {
     "verifier_sm": {
       "source_id": "PROOF_NAME",
+      "thread_id": "0a794e24-c6b4-46bc-93b6-642b6dc98c98",
       "state": {
         "Initial": {
           "presentation_request_data": {
@@ -240,6 +241,7 @@ pub static SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT: &str = r#"
   "data": {
     "verifier_sm": {
       "source_id": "1",
+      "thread_id": "0a794e24-c6b4-46bc-93b6-642b6dc98c98",
       "state": {
         "PresentationRequestSent": {
           "connection_handle": 3330318696,
@@ -269,6 +271,7 @@ pub static SERIALIZIED_PROOF_REVOKED: &str = r#"
   "data": {
     "verifier_sm": {
       "source_id": "213",
+      "thread_id": "0a794e24-c6b4-46bc-93b6-642b6dc98c98",
       "state": {
         "Finished": {
           "connection_handle": 1402366303,

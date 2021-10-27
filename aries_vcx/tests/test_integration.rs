@@ -1585,6 +1585,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo() {
+        let _setup = SetupEmpty::init();
         PaymentPlugin::load();
         let _pool = Pool::open();
 
@@ -1622,6 +1623,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn aries_demo_handle_connection_related_messages() {
+        let _setup = SetupEmpty::init();
         PaymentPlugin::load();
         let _pool = Pool::open();
 

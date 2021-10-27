@@ -3,6 +3,7 @@ use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
+use crate::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -121,6 +122,13 @@ impl PresentationProposalData {
         self
     }
 
+    pub fn add_attribute_string(mut self, attr: &str) -> VcxResult<Self> {
+        let attr: Attribute = serde_json::from_str(attr)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied attribute: {:?}", err)))?;
+        self.attributes.push(attr);
+        Ok(self)
+    }
+
     pub fn set_comment(mut self, comment: String) -> Self {
         self.comment = Some(comment);
         self
@@ -129,6 +137,13 @@ impl PresentationProposalData {
     pub fn add_predicate(mut self, pred: Predicate) -> Self {
         self.predicates.push(pred);
         self
+    }
+
+    pub fn add_predicate_string(mut self, pred: &str) -> VcxResult<Self> {
+        let pred: Predicate = serde_json::from_str(pred)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied predicate: {:?}", err)))?;
+        self.predicates.push(pred);
+        Ok(self)
     }
 }
 

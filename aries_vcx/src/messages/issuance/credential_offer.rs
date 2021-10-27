@@ -24,8 +24,8 @@ impl CredentialOffer {
         CredentialOffer::default()
     }
 
-    pub fn set_id(mut self, id: String) -> Self {
-        self.id = MessageId(id);
+    pub fn set_id(mut self, id: &str) -> Self {
+        self.id = MessageId(id.to_string());
         self
     }
 
