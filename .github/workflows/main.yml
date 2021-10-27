@@ -110,7 +110,7 @@ jobs:
 
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
 
-          REBUILD_SEED_LIBVCX="1"
+          REBUILD_SEED_LIBVCX="2"
 
           LIBVCX_HASH=${REBUILD_SEED_LIBVCX}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${ARIESVCX_SOURCE_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
@@ -243,6 +243,16 @@ jobs:
         if: steps.cache-image-libvcx.outputs.cache-hit != 'true'
         run: |
           set -x
+          echo "aries_vcx/src/handlers/mod.rs :::::"
+          cat aries_vcx/src/handlers/mod.rs
+
+          echo "ariesvcx src hash"
+          find aries_vcx/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
+          echo "libvcx src hash"
+          find libvcx/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
+          echo "agency_client src hash"
+          find agency_client/src -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
+
           docker build --build-arg "ALPINE_CORE_IMAGE=$DOCKER_IMG_NAME_ALPINE_CORE" \
                        -f ci/libvcx.dockerfile \
                        -t "$DOCKER_IMG_NAME_LIBVCX" \
