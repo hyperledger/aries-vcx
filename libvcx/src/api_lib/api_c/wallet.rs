@@ -1592,9 +1592,11 @@ pub mod tests {
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
+        let cstr_file = CString::new(export_file.path.clone()).unwrap();
+        let cstr_backup_key = CString::new(backup_key.clone()).unwrap();
         assert_eq!(vcx_wallet_export(cb.command_handle,
-                                     CString::new(export_file.path.clone()).unwrap().as_ptr(),
-                                     CString::new(backup_key.clone()).unwrap().as_ptr(),
+                                     cstr_file.as_ptr(),
+                                     cstr_backup_key.as_ptr(),
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
@@ -1610,8 +1612,9 @@ pub mod tests {
         }).to_string();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
+        let cstr_config = CString::new(import_config).unwrap();
         assert_eq!(vcx_wallet_import(cb.command_handle,
-                                     CString::new(import_config).unwrap().as_ptr(),
+                                     cstr_config.as_ptr(),
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 

@@ -553,7 +553,7 @@ pub mod test_utils {
     }
 }
 
-#[cfg(any(feature = "general_test", feature = "pool_tests"))]
+#[cfg(test)]
 pub mod tests {
     use crate::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use crate::libindy::utils::payments::test_utils::get_my_balance;

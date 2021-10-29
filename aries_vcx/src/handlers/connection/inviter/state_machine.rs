@@ -517,7 +517,7 @@ pub mod test {
     pub mod inviter {
         use super::*;
 
-        fn _send_message(pv_wk: &str, did_doc: &DidDoc, a2a_message: &A2AMessage) -> VcxResult<()> {
+        fn _send_message(_pv_wk: &str, _did_doc: &DidDoc, _a2a_message: &A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 

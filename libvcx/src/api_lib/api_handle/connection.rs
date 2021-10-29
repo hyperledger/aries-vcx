@@ -278,8 +278,6 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
 pub mod tests {
     use aries_vcx;
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};

@@ -424,7 +424,6 @@ pub mod test {
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;
     use crate::messages::trust_ping::ping_response::tests::_ping_response;
-    use crate::messages::connection::invite::PairwiseInvitation;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -436,7 +435,7 @@ pub mod test {
 
         use super::*;
 
-        fn _send_message(pv_wk: &str, did_doc: &DidDoc, a2a_message: &A2AMessage) -> VcxResult<()> {
+        fn _send_message(_pv_wk: &str, _did_doc: &DidDoc, _a2a_message: &A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 
@@ -461,11 +460,10 @@ pub mod test {
 
             pub fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
 
                 self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let routing_keys: Vec<String> = vec!(key.clone());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint).unwrap();
                 self = self.handle_connection_response(_response(&key)).unwrap();
@@ -514,7 +512,6 @@ pub mod test {
             fn handle_response_fails_with_incorrect_thread_id() {
                 let _setup = SetupMocks::init();
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
                 let mut invitee = invitee_sm();
 
                 invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();

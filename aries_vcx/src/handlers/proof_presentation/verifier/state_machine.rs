@@ -374,11 +374,6 @@ pub mod test {
             self
         }
 
-        fn to_presentation_request_set_state(mut self) -> VerifierSM {
-            self = self.set_request(_presentation_request_data()).unwrap();
-            self
-        }
-
         fn to_presentation_request_sent_state(mut self) -> VerifierSM {
             self = self.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message()).unwrap();
             self
@@ -498,7 +493,7 @@ pub mod test {
         fn test_prover_handle_send_presentation_request_from_presentation_proposal_received_state_fails_without_request() {
             let _setup = SetupMocks::init();
 
-            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+            let verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
             let res = verifier_sm.step(VerifierMessages::SendPresentationRequest(_comment()), _send_message());
 
             assert!(res.is_err());

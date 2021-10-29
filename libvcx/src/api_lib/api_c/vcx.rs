@@ -974,7 +974,7 @@ mod tests {
     fn test_provision_cloud_agent() {
         let _setup_defaults = SetupDefaults::init();
         let setup_wallet = SetupWallet::init();
-        let setup_pool = SetupPoolConfig::init();
+        let _setup_pool = SetupPoolConfig::init();
 
         let config_wallet: &str = &json!(setup_wallet.wallet_config).to_string();
 
@@ -1034,11 +1034,6 @@ mod tests {
     #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let config = json!({
-            "institution_did": "44x8p4HubxzUK1dwxcc5FU",
-            "institution_verkey": "444MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE"
-        }).to_string();
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());

@@ -150,24 +150,6 @@ pub mod test {
     }
 
     impl Holder {
-        fn to_proposal_sent_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
-            self
-        }
-
-        fn to_offer_received_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
-            self
-        }
-
-        fn to_request_sent_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
-            self
-        }
-
         fn to_finished_state(mut self) -> Holder {
             self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
@@ -182,6 +164,7 @@ pub mod test {
     fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
         let holder = _holder().to_finished_state();
+        assert_eq!(HolderState::Finished, holder.get_state());
     }
 
     #[test]

@@ -4,7 +4,6 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
-use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::a2a::A2AMessage;
@@ -34,8 +33,14 @@ pub enum IssuerState {
 }
 
 impl Issuer {
-    pub fn create(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
-        trace!("Issuer::create >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
+    pub fn create(source_id: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::create >>> source_id: {:?}", source_id);
+        let issuer_sm = IssuerSM::new(source_id);
+        Ok(Issuer { issuer_sm })
+    }
+
+    pub fn create_from_offer(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
+        trace!("Issuer::create_from_offer >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
         let issuer_sm = IssuerSM::from_offer(source_id, &issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone());
         Ok(Issuer { issuer_sm })
     }
@@ -120,15 +125,10 @@ impl Issuer {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::issuance::credential::test_utils::_credential;
-    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::{_credential_proposal, _cred_def_id};
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::messages::issuance::test::{_ack, _problem_report};
-    use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
     use crate::handlers::issuance::issuer::state_machine::test::{_send_message, _tails_file, _rev_reg_id};
-    use agency_client::mocking::HttpClientMockResponse;
 
     use super::*;
 
@@ -142,7 +142,7 @@ pub mod test {
             rev_reg_id: Some(_rev_reg_id()),
             tails_file: Some(_tails_file())
         };
-        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
+        Issuer::create_from_offer("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
     fn _issuer_revokable_from_proposal() -> Issuer {
@@ -155,7 +155,7 @@ pub mod test {
             rev_reg_id: None,
             tails_file: None
         };
-        Issuer::create("test_source_id", &issuer_config, &_cred_data()).unwrap()
+        Issuer::create_from_offer("test_source_id", &issuer_config, &_cred_data()).unwrap()
     }
 
     fn _send_message_but_fail() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {

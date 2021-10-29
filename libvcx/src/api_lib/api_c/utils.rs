@@ -610,6 +610,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
+    #[allow(deprecated)]
     fn test_messages_download() {
         let _setup = SetupMocks::init();
 

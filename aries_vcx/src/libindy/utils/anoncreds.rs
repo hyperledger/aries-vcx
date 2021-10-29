@@ -865,10 +865,10 @@ pub mod test_utils {
     }
 }
 
-#[cfg(feature = "pool_tests")]
+#[cfg(test)]
 pub mod tests {
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
-    use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
+    use crate::utils::constants::TEST_TAILS_FILE;
     use crate::utils::constants::SCHEMAS_JSON;
     use crate::utils::devsetup::{SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks};
     use crate::utils::get_temp_dir_path;
@@ -893,7 +893,7 @@ pub mod tests {
             "{}",
         ).unwrap();
 
-        assert!(proof_validation, true);
+        assert!(proof_validation);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -912,7 +912,7 @@ pub mod tests {
             "{}",
         ).unwrap();
 
-        assert!(proof_validation, true);
+        assert!(proof_validation);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1126,7 +1126,7 @@ pub mod tests {
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        let (payment, _revoked_rev_reg_delta) = revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
+        revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();

@@ -23,7 +23,6 @@ use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
-use crate::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -119,7 +118,7 @@ impl IssuerSM {
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
-            IssuerFullState::Initial(state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
             IssuerFullState::OfferSet(state) => state.rev_reg_id.clone(),
             IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
@@ -136,7 +135,7 @@ impl IssuerSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
-            IssuerFullState::Initial(state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
             IssuerFullState::OfferSet(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
@@ -463,7 +462,6 @@ pub mod test {
     use crate::messages::a2a::A2AMessage;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
-    use agency_client::mocking::HttpClientMockResponse;
 
     use super::*;
 
@@ -492,7 +490,7 @@ pub mod test {
     }
 
     impl IssuerSM {
-        fn to_proposal_received_state(mut self) -> IssuerSM {
+        fn to_proposal_received_state(self) -> IssuerSM {
             let values = _credential_proposal().credential_proposal.clone();
             let cred_def_id = _credential_proposal().cred_def_id.clone();
             Self::from_proposal(&source_id(), &_credential_proposal())
