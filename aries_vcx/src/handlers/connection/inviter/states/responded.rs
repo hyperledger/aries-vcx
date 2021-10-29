@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
 use crate::handlers::connection::inviter::states::complete::CompleteState;
-use crate::handlers::connection::inviter::states::null::NullState;
+use crate::handlers::connection::inviter::states::initial::InitialState;
 use crate::handlers::connection::util::handle_ping;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::ack::Ack;
@@ -17,10 +17,10 @@ pub struct RespondedState {
 }
 
 
-impl From<(RespondedState, ProblemReport)> for NullState {
-    fn from((_state, _error): (RespondedState, ProblemReport)) -> NullState {
-        trace!("ConnectionInviter: transit state from RespondedState to NullState");
-        NullState {}
+impl From<(RespondedState, ProblemReport)> for InitialState {
+    fn from((_state, _error): (RespondedState, ProblemReport)) -> InitialState {
+        trace!("ConnectionInviter: transit state from RespondedState to InitialState");
+        InitialState {}
     }
 }
 

@@ -16,7 +16,7 @@ impl From<ConnectionState> for u32 {
         match state {
             ConnectionState::Inviter(inviter_state) => {
                 match inviter_state {
-                    InviterState::Null => 0,
+                    InviterState::Initial => 0,
                     InviterState::Invited => 1,
                     InviterState::Requested => 2,
                     InviterState::Responded => 3,
@@ -25,7 +25,7 @@ impl From<ConnectionState> for u32 {
             }
             ConnectionState::Invitee(invitee_state) => {
                 match invitee_state {
-                    InviteeState::Null => 0,
+                    InviteeState::Initial => 0,
                     InviteeState::Invited => 1,
                     InviteeState::Requested => 2,
                     InviteeState::Responded => 3,

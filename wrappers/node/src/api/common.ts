@@ -106,7 +106,7 @@ export enum VCXCode {
   NO_AGENT_INFO = 1106,
 }
 export enum ConnectionStateType {
-  Null = 0,
+  Initial = 0,
   Invited = 1,
   Requested = 2,
   Responded = 3,
