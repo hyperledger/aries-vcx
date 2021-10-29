@@ -367,7 +367,7 @@ pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
   },
   "state": {
     "Inviter": {
-      "Null": {}
+      "Initial": {}
     }
   }
 }"#;
