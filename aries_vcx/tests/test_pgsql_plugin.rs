@@ -1,24 +1,22 @@
 mod pgwallet;
 
+#[macro_use]
 extern crate log;
 extern crate serde;
+#[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
 #[cfg(test)]
 #[cfg(feature = "plugin_test")]
 mod test {
-    use serde_json::Value;
-
-    use aries_vcx::handlers::connection::connection::Connection;
     use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_wallet, WalletConfig};
-    use aries_vcx::{settings, libindy};
+    use aries_vcx::settings;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 
     use crate::pgwallet::wallet_plugin_loader::{PluginInitConfig, init_wallet_plugin};
-    use std::env;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
 
     #[test]

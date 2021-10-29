@@ -1,7 +1,6 @@
 use std::ffi::CString;
 
 use libc::c_char;
-use serde_json::Value;
 
 use aries_vcx::indy::ErrorCode;
 
