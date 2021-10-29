@@ -24,6 +24,7 @@ use crate::messages::trust_ping::ping_response::PingResponse;
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
     source_id: String,
+    thread_id: String,
     pairwise_info: PairwiseInfo,
     state: InviteeFullState,
     send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
@@ -71,6 +72,7 @@ impl SmConnectionInvitee {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
+            thread_id: String::new(),
             state: InviteeFullState::Initial(InitialState {}),
             pairwise_info,
             send_message,
@@ -81,9 +83,10 @@ impl SmConnectionInvitee {
         return InviteeState::from(self.state.clone()) == InviteeState::Initial;
     }
 
-    pub fn from(source_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
+    pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
         SmConnectionInvitee {
             source_id,
+            thread_id,
             pairwise_info,
             state,
             send_message,
@@ -231,7 +234,8 @@ impl SmConnectionInvitee {
 
         let response = response.clone().decode(&remote_vk)?;
 
-        if !response.from_thread(&request.id.0) {
+        if !response.from_thread(&request.get_thread_id()
+                                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in response"))?) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
         }
 
@@ -246,14 +250,14 @@ impl SmConnectionInvitee {
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { state, .. } = self;
         let state = match state {
-            InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation).into()),
+            InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
             _ => state.clone()
         };
-        Ok(Self { state, ..self })
+        Ok(Self { state, thread_id: invitation.get_id()?, ..self })
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info, state, send_message, thread_id, .. } = self;
         let state = match state {
             InviteeFullState::Invited(state) => {
                 let recipient_keys = vec!(pairwise_info.pw_vk.clone());
@@ -261,6 +265,7 @@ impl SmConnectionInvitee {
                     .set_label(source_id.to_string())
                     .set_did(pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint)
+                    .set_thread_id(&thread_id)
                     .set_keys(recipient_keys, routing_keys);
 
                 let ddo = DidDoc::from(state.invitation.clone());
@@ -271,7 +276,7 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { state, pairwise_info, source_id, ..self })
+        Ok(Self { state, pairwise_info, source_id, thread_id, ..self })
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
@@ -403,13 +408,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
-        match &self.state {
-            InviteeFullState::Invited(_) => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Thread ID not yet available in this state")),
-            InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
-            InviteeFullState::Responded(state) => Ok(state.request.id.0.clone()),
-            InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
-            InviteeFullState::Initial(_) => Ok(String::new())
-        }
+        Ok(self.thread_id.clone())
     }
 }
 

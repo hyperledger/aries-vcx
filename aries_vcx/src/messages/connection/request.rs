@@ -1,5 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did_doc::*;
+use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Request {
@@ -7,6 +8,7 @@ pub struct Request {
     pub id: MessageId,
     pub label: String,
     pub connection: ConnectionData,
+    pub thread: Option<Thread>
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -45,6 +47,7 @@ impl Request {
 }
 
 a2a_message!(Request, ConnectionRequest);
+threadlike_optional!(Request);
 
 #[cfg(test)]
 pub mod tests {
@@ -64,6 +67,7 @@ pub mod tests {
                 did: _did(),
                 did_doc: _did_doc(),
             },
+            thread: None
         }
     }
 

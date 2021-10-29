@@ -240,8 +240,7 @@ impl SmConnectionInviter {
         new_pw_vk: &str,
         send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
     ) -> VcxResult<()> {
-        send_message(&new_pw_vk, &state.did_doc, &state.signed_response.to_a2a_message())?;
-        Ok(())
+        send_message(&new_pw_vk, &state.did_doc, &state.signed_response.to_a2a_message())
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
@@ -493,7 +492,7 @@ impl SmConnectionInviter {
             .set_service_endpoint(new_service_endpoint)
             .set_keys(new_recipient_keys, new_routing_keys)
             .ask_for_ack()
-            .set_thread_id(&request.id.0)
+            .set_thread_id(&request.get_thread_id().ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?)
             .encode(&bootstrap_pairwise_info.pw_vk)
     }
 

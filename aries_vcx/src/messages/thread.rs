@@ -80,7 +80,7 @@ macro_rules! threadlike_optional (($type:ident) => (
             if let Some(thread) = &self.thread {
                 thread.thid.clone()
             } else {
-                None
+                None // TODO: Perhaps return id instead of None?
             }
         }
 

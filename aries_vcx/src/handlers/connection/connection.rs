@@ -74,9 +74,6 @@ pub enum Actor {
 }
 
 impl Connection {
-    /**
-    Create Inviter connection state machine
-     */
     pub fn create(source_id: &str, autohop: bool) -> VcxResult<Connection> {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
@@ -88,9 +85,6 @@ impl Connection {
         })
     }
 
-    /**
-    Create Invitee connection state machine
-     */
     pub fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("Connection::create_with_invite >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create()?;
@@ -115,7 +109,7 @@ impl Connection {
         connection.process_request(request)
     }
 
-    pub fn from_parts(source_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Connection {
+    pub fn from_parts(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Connection {
         match state {
             SmConnectionState::Inviter(state) => {
                 Connection {
@@ -127,7 +121,7 @@ impl Connection {
             SmConnectionState::Invitee(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, pairwise_info, state, send_message)),
+                    connection_sm: SmConnection::Invitee(SmConnectionInvitee::from(source_id, thread_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }
@@ -286,9 +280,6 @@ impl Connection {
         }
     }
 
-    /**
-    Invitee operation
-     */
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
@@ -323,10 +314,6 @@ impl Connection {
         })
     }
 
-    /**
-    If called on Inviter in Invited state returns invitation to connect with him. Returns error in other states.
-    If called on Invitee, returns error
-     */
     pub fn get_invite_details(&self) -> Option<&Invitation> {
         trace!("Connection::get_invite_details >>>");
         match &self.connection_sm {
@@ -428,9 +415,6 @@ impl Connection {
         Ok(())
     }
 
-    /**
-    Perform state machine transition using supplied message.
-     */
     pub fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection: update_state_with_message: {:?}", message);
         if self.is_in_null_state() {
@@ -555,10 +539,6 @@ impl Connection {
         }
     }
 
-    /**
-    If called on Inviter, creates initial connection agent and generates invitation
-    If called on Invitee, creates connection agent and send connection request using info from connection invitation
-     */
     pub fn connect(&mut self) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
@@ -572,17 +552,11 @@ impl Connection {
         Ok(())
     }
 
-    /**
-    Updates status of a message (received from connection counterparty) in agency.
-     */
     pub fn update_message_status(&self, uid: String) -> VcxResult<()> {
         trace!("Connection::update_message_status >>> uid: {:?}", uid);
         self.cloud_agent_info().update_message_status(self.pairwise_info(), uid)
     }
 
-    /**
-    Get messages received from connection counterparty.
-     */
     pub fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -596,9 +570,6 @@ impl Connection {
         }
     }
 
-    /**
-    Get messages received from connection counterparty.
-     */
     pub fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         let expected_sender_vk = self.get_expected_sender_vk()?;
         match &self.connection_sm {
@@ -621,9 +592,6 @@ impl Connection {
             )
     }
 
-    /**
-    Get messages received from connection counterparty by id.
-     */
     pub fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk()?;
@@ -753,14 +721,14 @@ impl Serialize for Connection
         where
             S: Serializer,
     {
-        let (state, pairwise_info, cloud_agent_info, source_id) = self.to_owned().into();
+        let (state, pairwise_info, cloud_agent_info, source_id, thread_id) = self.to_owned().into();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
             pw_vk: pairwise_info.pw_vk,
             agent_did: cloud_agent_info.agent_did,
             agent_vk: cloud_agent_info.agent_vk,
         };
-        let object = SerializableObjectWithState::V1 { data, state, source_id };
+        let object = SerializableObjectWithState::V1 { data, state, source_id, thread_id };
         serializer.serialize_some(&object)
     }
 }
@@ -786,10 +754,10 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
         let ver: SerializableObjectWithState<LegacyAgentInfo, SmConnectionState> = serde_json::from_value(obj)
             .map_err(|err| A::Error::custom(err.to_string()))?;
         match ver {
-            SerializableObjectWithState::V1 { data, state, source_id } => {
+            SerializableObjectWithState::V1 { data, state, source_id, thread_id } => {
                 let pairwise_info = PairwiseInfo { pw_did: data.pw_did, pw_vk: data.pw_vk };
                 let cloud_agent_info = CloudAgentInfo { agent_did: data.agent_did, agent_vk: data.agent_vk };
-                Ok((state, pairwise_info, cloud_agent_info, source_id).into())
+                Ok((state, pairwise_info, cloud_agent_info, source_id, thread_id).into())
             }
         }
     }
@@ -804,15 +772,15 @@ impl<'de> Deserialize<'de> for Connection {
     }
 }
 
-impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
-    fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String) {
-        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id())
+impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
+    fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String) {
+        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id(), self.get_thread_id().unwrap()) // TODO: Use TryInto instead
     }
 }
 
-impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String)> for Connection {
-    fn from((state, pairwise_info, cloud_agent_info, source_id): (SmConnectionState, PairwiseInfo, CloudAgentInfo, String)) -> Connection {
-        Connection::from_parts(source_id, pairwise_info, cloud_agent_info, state, true)
+impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
+    fn from((state, pairwise_info, cloud_agent_info, source_id, thread_id): (SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)) -> Connection {
+        Connection::from_parts(source_id, thread_id, pairwise_info, cloud_agent_info, state, true)
     }
 }
 
