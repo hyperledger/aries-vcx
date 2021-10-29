@@ -243,7 +243,7 @@ pub mod tests {
         let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
     #[cfg(feature = "pool_tests")]
@@ -264,17 +264,17 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested();
 
         let handle = _issuer_credential_create();
-        assert_eq!(get_state(handle).unwrap(), IssuerState::Initial as u32);
+        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSet));
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
         let res = send_credential_offer(handle, connection_handle, None).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidState);
-        assert_eq!(get_state(handle).unwrap(), IssuerState::Initial as u32);
+        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSet));
 
         // Can retry after initial failure
         assert_eq!(send_credential_offer(handle, connection_handle, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle).unwrap(), IssuerState::OfferSent as u32);
+        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
     #[test]
@@ -306,10 +306,10 @@ pub mod tests {
         let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::RequestReceived as u32);
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::RequestReceived));
     }
 
     #[test]
@@ -321,12 +321,12 @@ pub mod tests {
         let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message
         let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn);
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(get_state(handle_cred).unwrap(), IssuerState::OfferSent as u32);
+        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
     #[test]

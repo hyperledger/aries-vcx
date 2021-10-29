@@ -1050,7 +1050,7 @@ pub mod tests {
                                                                       CString::new(ARIES_CREDENTIAL_REQUEST).unwrap().into_raw(),
                                                                       Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, IssuerState::RequestReceived as u32);
+        assert_eq!(state, u32::from(IssuerState::RequestReceived));
     }
 
     #[test]
@@ -1085,7 +1085,7 @@ pub mod tests {
                                                          connection_handle,
                                                          Some(cb.get_callback())), error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, IssuerState::OfferSent as u32);
+        assert_eq!(state, u32::from(IssuerState::OfferSent));
     }
 
 
@@ -1180,7 +1180,7 @@ pub mod tests {
                                                    Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, IssuerState::Initial as u32);
+        assert_eq!(state, u32::from(IssuerState::OfferSet));
     }
 
     #[test]

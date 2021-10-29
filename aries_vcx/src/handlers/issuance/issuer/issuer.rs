@@ -24,6 +24,7 @@ pub struct IssuerConfig {
 #[derive(Debug, PartialEq)]
 pub enum IssuerState {
     Initial,
+    OfferSet,
     ProposalReceived,
     OfferSent,
     RequestReceived,
@@ -35,7 +36,7 @@ pub enum IssuerState {
 impl Issuer {
     pub fn create(source_id: &str, issuer_config: &IssuerConfig, credential_data: &str) -> VcxResult<Issuer> {
         trace!("Issuer::create >>> source_id: {:?}, issuer_config: {:?}, credential_data: {:?}", source_id, issuer_config, credential_data);
-        let issuer_sm = IssuerSM::new(source_id, &issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone());
+        let issuer_sm = IssuerSM::from_offer(source_id, &issuer_config.cred_def_id.to_string(), credential_data, issuer_config.rev_reg_id.clone(), issuer_config.tails_file.clone());
         Ok(Issuer { issuer_sm })
     }
 

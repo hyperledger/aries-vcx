@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::issuance::issuer::issuer::IssuerState;
-use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
-use crate::handlers::issuance::issuer::states::finished::FinishedState;
-use crate::handlers::issuance::issuer::states::initial::InitialState;
+use crate::handlers::issuance::issuer::states::initial::InitialIssuerState;
+use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
+use crate::handlers::issuance::issuer::states::offer_set::OfferSetState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
+use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::OfferInfo;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
@@ -26,7 +27,8 @@ use crate::settings;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
-    Initial(InitialState),
+    Initial(InitialIssuerState),
+    OfferSet(OfferSetState),
     ProposalReceived(ProposalReceivedState),
     OfferSent(OfferSentState),
     RequestReceived(RequestReceivedState),
@@ -43,7 +45,7 @@ pub struct RevocationInfoV1 {
 
 impl Default for IssuerFullState {
     fn default() -> Self {
-        Self::Initial(InitialState::default())
+        Self::Initial(InitialIssuerState::default())
     }
 }
 
@@ -55,12 +57,19 @@ pub struct IssuerSM {
 }
 
 impl IssuerSM {
-    // TODO: Make initial state really initial
-    pub fn new(source_id: &str, cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+    pub fn new(source_id: &str) -> Self {
+        Self {
+            source_id: source_id.to_string(),
+            thread_id: String::new(),
+            state: IssuerFullState::Initial(InitialIssuerState {}),
+        }
+    }
+
+    pub fn from_offer(source_id: &str, cred_def_id: &str, credential_data: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
         Self {
             source_id: source_id.to_string(),
             thread_id: MessageId::new().0,
-            state: IssuerFullState::Initial(InitialState::new(cred_def_id, credential_data, rev_reg_id, tails_file)),
+            state: IssuerFullState::OfferSet(OfferSetState::new(cred_def_id, credential_data, rev_reg_id, tails_file)),
         }
     }
 
@@ -110,7 +119,8 @@ impl IssuerSM {
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
-            IssuerFullState::Initial(state) => state.rev_reg_id.clone(),
+            IssuerFullState::Initial(state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::OfferSet(state) => state.rev_reg_id.clone(),
             IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
@@ -126,7 +136,8 @@ impl IssuerSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
-            IssuerFullState::Initial(state) => Ok(state.rev_reg_id.is_some()),
+            IssuerFullState::Initial(state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::OfferSet(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::RequestReceived(state) => Ok(state.rev_reg_id.is_some()),
@@ -140,6 +151,14 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
+                IssuerFullState::Initial(_) => {
+                    match message {
+                        A2AMessage::CredentialProposal(credential_proposal) => {
+                            return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
+                        }
+                        _ => {}
+                    }
+                }
                 IssuerFullState::OfferSent(_) => {
                     match message {
                         A2AMessage::CredentialRequest(credential) => {
@@ -187,6 +206,7 @@ impl IssuerSM {
     pub fn get_state(&self) -> IssuerState {
         match self.state {
             IssuerFullState::Initial(_) => IssuerState::Initial,
+            IssuerFullState::OfferSet(_) => IssuerState::OfferSet,
             IssuerFullState::ProposalReceived(_) => IssuerState::ProposalReceived,
             IssuerFullState::OfferSent(_) => IssuerState::OfferSent,
             IssuerFullState::RequestReceived(_) => IssuerState::RequestReceived,
@@ -210,8 +230,15 @@ impl IssuerSM {
     pub fn set_offer(self, values: &CredentialPreviewData, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Self> {
         let Self { state, source_id, thread_id } = self;
         let state = match state {
-            IssuerFullState::Initial(state) => {
-                IssuerFullState::Initial(InitialState {
+            IssuerFullState::Initial(_) => {
+                IssuerFullState::OfferSet(OfferSetState {
+                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string()),
+                    rev_reg_id,
+                    tails_file
+                })
+            }
+            IssuerFullState::OfferSet(_) => {
+                IssuerFullState::OfferSet(OfferSetState {
                     offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string()),
                     rev_reg_id,
                     tails_file
@@ -236,6 +263,16 @@ impl IssuerSM {
         let Self { state, source_id, thread_id } = self;
         let (state, thread_id) = match state {
             IssuerFullState::Initial(state_data) => match cim {
+                CredentialIssuanceMessage::CredentialProposal(proposal) => {
+                    let thread_id = proposal.id.0.to_string();
+                    (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None, None, None)), thread_id)
+                }
+                _ => {
+                    warn!("Unable to process received message in this state");
+                    (IssuerFullState::Initial(state_data), thread_id)
+                }
+            }
+            IssuerFullState::OfferSet(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&state_data.offer_info.cred_def_id)?;
                     let cred_offer_msg = CredentialOffer::create()
@@ -250,7 +287,7 @@ impl IssuerSM {
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    (IssuerFullState::Initial(state_data), thread_id)
+                    (IssuerFullState::OfferSet(state_data), thread_id)
                 }
             }
             IssuerFullState::ProposalReceived(state_data) => match cim {
@@ -316,7 +353,7 @@ impl IssuerSM {
                     }
                 }
                 _ => {
-                    warn!("In this state Credential Issuance can accept only CredentialSend");
+                    warn!("Unable to process received message in this state");
                     (IssuerFullState::RequestReceived(state_data), thread_id)
                 }
             }
@@ -443,7 +480,11 @@ pub mod test {
     }
 
     fn _issuer_sm() -> IssuerSM {
-        IssuerSM::new(&source_id(), "test", &json!({"name": "alice"}).to_string(), Some(_rev_reg_id()), Some(_tails_file()))
+        IssuerSM::new(&source_id())
+    }
+
+    fn _issuer_sm_from_offer() -> IssuerSM {
+        IssuerSM::from_offer(&source_id(), "test", &json!({"name": "alice"}).to_string(), Some(_rev_reg_id()), Some(_tails_file()))
     }
 
     fn _issuer_sm_from_proposal() -> IssuerSM {
@@ -490,6 +531,28 @@ pub mod test {
             assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
             assert_eq!(source_id(), issuer_sm.get_source_id());
         }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_issuer_from_offer() {
+            let _setup = SetupMocks::init();
+
+            let issuer_sm = _issuer_sm_from_offer();
+
+            assert_match!(IssuerFullState::OfferSet(_), issuer_sm.state);
+            assert_eq!(source_id(), issuer_sm.get_source_id());
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_issuer_from_proposal() {
+            let _setup = SetupMocks::init();
+
+            let issuer_sm = _issuer_sm_from_proposal();
+
+            assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
+            assert_eq!(source_id(), issuer_sm.get_source_id());
+        }
     }
 
     mod handle_message {
@@ -497,20 +560,21 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_init() {
+        fn test_issuer_handle_credential_proposal_message_from_initial_state() {
             let _setup = SetupMocks::init();
 
-            let issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
 
-            assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
+            assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_init_message_from_initial_state() {
+        fn test_issuer_handle_credential_offer_message_from_offer_set_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
@@ -546,16 +610,16 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_other_messages_from_initial_state() {
+        fn test_issuer_handle_other_messages_from_offer_set_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
 
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
-            assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
+            assert_match!(IssuerFullState::OfferSet(_), issuer_sm.state);
 
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
+            assert_match!(IssuerFullState::OfferSet(_), issuer_sm.state);
         }
 
         #[test]
@@ -563,7 +627,7 @@ pub mod test {
         fn test_issuer_handle_credential_request_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
 
@@ -575,7 +639,7 @@ pub mod test {
         fn test_issuer_handle_credential_proposal_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
 
@@ -587,7 +651,7 @@ pub mod test {
         fn test_issuer_handle_problem_report_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), _send_message()).unwrap();
 
@@ -600,7 +664,7 @@ pub mod test {
         fn test_issuer_handle_other_messages_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
 
@@ -612,7 +676,7 @@ pub mod test {
         fn test_issuer_handle_credential_send_message_from_request_received_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
@@ -626,7 +690,7 @@ pub mod test {
         fn test_issuer_handle_credential_send_message_from_request_received_state_with_invalid_request() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(CredentialRequest::create()), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
@@ -640,7 +704,7 @@ pub mod test {
         fn test_issuer_handle_other_messages_from_request_received_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
@@ -657,7 +721,7 @@ pub mod test {
         fn test_issuer_credential_send_fails_with_incorrect_thread_id() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request_1()), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
@@ -665,14 +729,12 @@ pub mod test {
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
-        // TRANSITIONS TO/FROM CREDENTIAL SENT STATE AREN'T POSSIBLE NOW
-
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issuer_handle_messages_from_finished_state() {
             let _setup = SetupMocks::init();
 
-            let mut issuer_sm = _issuer_sm();
+            let mut issuer_sm = _issuer_sm_from_offer();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialOfferSend(None), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
@@ -699,6 +761,26 @@ pub mod test {
             let issuer = _issuer_sm();
 
             let messages = map!(
+                "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
+                "key_2".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
+                "key_3".to_string() => A2AMessage::CredentialRequest(_credential_request()),
+                "key_4".to_string() => A2AMessage::Credential(_credential()),
+                "key_5".to_string() => A2AMessage::CredentialAck(_ack()),
+                "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
+            );
+            let (uid, message) = issuer.find_message_to_handle(messages).unwrap();
+            assert_eq!("key_1", uid);
+            assert_match!(A2AMessage::CredentialProposal(_), message);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_issuer_find_message_to_handle_from_offer_set_state() {
+            let _setup = SetupMocks::init();
+
+            let issuer = _issuer_sm_from_offer();
+
+            let messages = map!(
                 "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
                 "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
                 "key_3".to_string() => A2AMessage::Credential(_credential()),
@@ -713,7 +795,7 @@ pub mod test {
         fn test_issuer_find_message_to_handle_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
-            let issuer = _issuer_sm().to_offer_sent_state();
+            let issuer = _issuer_sm_from_offer().to_offer_sent_state();
 
             // CredentialRequest
             {
@@ -785,7 +867,7 @@ pub mod test {
         fn test_issuer_find_message_to_handle_from_request_state() {
             let _setup = SetupMocks::init();
 
-            let issuer = _issuer_sm().to_finished_state();
+            let issuer = _issuer_sm_from_offer().to_finished_state();
 
             // No messages
             {
@@ -807,7 +889,7 @@ pub mod test {
         fn test_issuer_find_message_to_handle_from_credential_sent_state() {
             let _setup = SetupMocks::init();
 
-            let issuer = _issuer_sm().to_finished_state();
+            let issuer = _issuer_sm_from_offer().to_finished_state();
 
             // No messages
             {
@@ -833,11 +915,11 @@ pub mod test {
         fn test_get_state() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(IssuerState::Initial, _issuer_sm().get_state());
-            assert_eq!(IssuerState::ProposalReceived, _issuer_sm().to_proposal_received_state().get_state());
-            assert_eq!(IssuerState::OfferSent, _issuer_sm().to_offer_sent_state().get_state());
-            assert_eq!(IssuerState::RequestReceived, _issuer_sm().to_request_received_state().get_state());
-            assert_eq!(IssuerState::Finished, _issuer_sm().to_finished_state().get_state());
+            assert_eq!(IssuerState::OfferSet, _issuer_sm_from_offer().get_state());
+            assert_eq!(IssuerState::ProposalReceived, _issuer_sm_from_offer().to_proposal_received_state().get_state());
+            assert_eq!(IssuerState::OfferSent, _issuer_sm_from_offer().to_offer_sent_state().get_state());
+            assert_eq!(IssuerState::RequestReceived, _issuer_sm_from_offer().to_request_received_state().get_state());
+            assert_eq!(IssuerState::Finished, _issuer_sm_from_offer().to_finished_state().get_state());
         }
     }
 
@@ -849,11 +931,11 @@ pub mod test {
         fn test_get_rev_reg_id() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(_rev_reg_id(), _issuer_sm().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_proposal_received_state().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_offer_sent_state().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm_from_offer().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm_from_offer().to_proposal_received_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm_from_offer().to_offer_sent_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm_from_offer().to_request_received_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm_from_offer().to_finished_state().get_rev_reg_id().unwrap());
         }
     }
 
@@ -865,11 +947,11 @@ pub mod test {
         fn test_is_revokable() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(true, _issuer_sm().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_proposal_received_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_offer_sent_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_request_received_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_finished_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm_from_offer().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm_from_offer().to_proposal_received_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm_from_offer().to_offer_sent_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm_from_offer().to_request_received_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm_from_offer().to_finished_state().is_revokable().unwrap());
         }
     }
 }
