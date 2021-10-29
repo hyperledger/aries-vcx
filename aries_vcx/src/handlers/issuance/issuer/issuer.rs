@@ -78,7 +78,7 @@ impl Issuer {
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
-        self.issuer_sm.get_thread_id()
+        self.issuer_sm.thread_id()
     }
 
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {

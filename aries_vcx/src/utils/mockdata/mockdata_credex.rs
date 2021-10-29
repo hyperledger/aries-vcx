@@ -409,7 +409,8 @@ pub const CREDENTIAL_ISSUER_SM_FINISHED: &str = r#"
                     "status": "Success"
                 }
             },
-            "source_id": "alice_degree"
+            "source_id": "alice_degree",
+            "thread_id": "0a794e24-c6b4-46bc-93b6-642b6dc98c98"
         }
     }
 }
