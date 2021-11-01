@@ -225,7 +225,6 @@ impl SmConnectionInvitee {
     }
 
     fn _send_ack(did_doc: &DidDoc,
-                 request: &Request,
                  response: &SignedResponse,
                  pairwise_info: &PairwiseInfo,
                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> VcxResult<Response> {
@@ -233,11 +232,6 @@ impl SmConnectionInvitee {
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
 
         let response = response.clone().decode(&remote_vk)?;
-
-        if !response.from_thread(&request.get_thread_id()
-                                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in response"))?) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
-        }
 
         let message = Ack::create()
             .set_thread_id(&response.thread.thid.clone().unwrap_or_default())
@@ -349,7 +343,7 @@ impl SmConnectionInvitee {
     pub fn handle_send_ack(self) -> VcxResult<Self> {
         let state = match self.state {
             InviteeFullState::Responded(state) => {
-                match Self::_send_ack(&state.did_doc, &state.request, &state.response, &self.pairwise_info, self.send_message) {
+                match Self::_send_ack(&state.did_doc, &state.response, &self.pairwise_info, self.send_message) {
                     Ok(response) => InviteeFullState::Completed((state, response).into()),
                     Err(err) => {
                         let problem_report = ProblemReport::create()

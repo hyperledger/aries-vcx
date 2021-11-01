@@ -114,7 +114,7 @@ impl Connection {
             SmConnectionState::Inviter(state) => {
                 Connection {
                     cloud_agent_info,
-                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, pairwise_info, state, send_message)),
+                    connection_sm: SmConnection::Inviter(SmConnectionInviter::from(source_id, thread_id, pairwise_info, state, send_message)),
                     autohop_enabled,
                 }
             }

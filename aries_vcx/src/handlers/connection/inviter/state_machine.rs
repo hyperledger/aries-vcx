@@ -8,7 +8,7 @@ use crate::handlers::connection::inviter::states::requested::RequestedState;
 use crate::handlers::connection::inviter::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::handlers::connection::util::verify_thread_id;
-use crate::messages::a2a::A2AMessage;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
 use crate::messages::connection::did_doc::DidDoc;
@@ -24,6 +24,7 @@ use crate::messages::trust_ping::ping_response::PingResponse;
 #[derive(Clone)]
 pub struct SmConnectionInviter {
     pub source_id: String,
+    thread_id: String,
     pub pairwise_info: PairwiseInfo,
     pub state: InviterFullState,
     send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
@@ -71,6 +72,7 @@ impl SmConnectionInviter {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
         Self {
             source_id: source_id.to_string(),
+            thread_id: MessageId::new().0,
             state: InviterFullState::Initial(InitialState {}),
             pairwise_info,
             send_message,
@@ -81,9 +83,10 @@ impl SmConnectionInviter {
         return InviterState::from(self.state.clone()) == InviterState::Initial;
     }
 
-    pub fn from(source_id: String, pairwise_info: PairwiseInfo, state: InviterFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
+    pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviterFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
         Self {
             source_id,
+            thread_id,
             pairwise_info,
             state,
             send_message,
@@ -244,12 +247,12 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Initial(state) => {
                 let invite: PairwiseInvitation = PairwiseInvitation::create()
-                    .set_label(source_id.to_string())
-                    .set_recipient_keys(vec!(pairwise_info.pw_vk.clone()))
+                    .set_id(&self.thread_id)
+                    .set_label(&self.source_id)
+                    .set_recipient_keys(vec!(self.pairwise_info.pw_vk.clone()))
                     .set_routing_keys(routing_keys)
                     .set_service_endpoint(service_endpoint);
 
@@ -257,11 +260,9 @@ impl SmConnectionInviter {
                     (state, Invitation::Pairwise(invite)).into()
                 )
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state.clone()
         };
-        Ok(Self { source_id, pairwise_info, state, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_connection_request(self,
@@ -295,9 +296,7 @@ impl SmConnectionInviter {
                     }
                 }
             }
-            _ => {
-                state.clone()
-            }
+            _ => state.clone()
         };
         Ok(Self { pairwise_info: new_pairwise_info.clone(), state, ..self })
     }
@@ -371,7 +370,7 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { source_id, pairwise_info, state, send_message, .. } = self;
         let state = match state {
             InviterFullState::Completed(state) => {
                 state.handle_discovery_query(query, &pairwise_info.pw_vk, send_message)?;
@@ -381,7 +380,7 @@ impl SmConnectionInviter {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { source_id, pairwise_info, state, send_message, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
@@ -427,7 +426,7 @@ impl SmConnectionInviter {
                         let problem_report = ProblemReport::create()
                             .set_problem_code(ProblemCode::RequestProcessingError)
                             .set_explain(err.to_string())
-                            .set_thread_id(&state.thread_id);
+                            .set_thread_id(&self.thread_id);
 
                         send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
                         InviterFullState::Initial((state, problem_report).into())
@@ -440,22 +439,9 @@ impl SmConnectionInviter {
     }
 
     pub fn handle_ack(self, ack: Ack) -> VcxResult<Self> {
-        let Self { state, pairwise_info, send_message, .. } = self.clone();
+        let Self { state, pairwise_info, .. } = self.clone();
         let state = match state {
-            InviterFullState::Responded(state) => {
-                let thread_id = self.get_thread_id()?;
-                if !ack.from_thread(&thread_id) {
-                    let problem_report = ProblemReport::create()
-                        .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(format!("Cannot handle Response: thread id does not match: {:?}", ack.thread))
-                        .set_thread_id(&thread_id); // TODO: Maybe set sender's thread id?
-
-                    send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
-                    InviterFullState::Initial((state, problem_report).into())
-                } else {
-                    InviterFullState::Completed((state, ack).into())
-                }
-            }
+            InviterFullState::Responded(state) => InviterFullState::Completed((state, ack).into()),
             _ => {
                 state.clone()
             }
@@ -464,13 +450,7 @@ impl SmConnectionInviter {
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
-        match &self.state {
-            InviterFullState::Invited(state) => state.invitation.get_id(), 
-            InviterFullState::Requested(state) => Ok(state.thread_id.clone()),
-            InviterFullState::Responded(state) => state.signed_response.thread.thid.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
-            InviterFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
-            InviterFullState::Initial(_) => Ok(String::new())
-        }
+        Ok(self.thread_id.clone())
     }
 
     fn build_response(
@@ -495,7 +475,6 @@ impl SmConnectionInviter {
             .set_thread_id(&request.get_thread_id().ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?)
             .encode(&bootstrap_pairwise_info.pw_vk)
     }
-
 }
 
 #[cfg(test)]
