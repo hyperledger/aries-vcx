@@ -20,7 +20,7 @@ pub fn create_and_publish_credentialdef(source_id: String,
                                         tag: String,
                                         revocation_details: String) -> VcxResult<u32> {
     let cred_def = CredentialDef::create(source_id, name, issuer_did, schema_id, tag, revocation_details)?;
-    let handle = CREDENTIALDEF_MAP.add(cred_def).or(Err(VcxError::from(VcxErrorKind::CreateCredDef)))?;
+    let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }
 

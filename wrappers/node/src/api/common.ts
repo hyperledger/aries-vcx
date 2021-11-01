@@ -106,7 +106,7 @@ export enum VCXCode {
   NO_AGENT_INFO = 1106,
 }
 export enum ConnectionStateType {
-  Null = 0,
+  Initial = 0,
   Invited = 1,
   Requested = 2,
   Responded = 3,
@@ -124,12 +124,13 @@ export enum HolderStateType {
 
 export enum IssuerStateType {
   Initial = 0,
-  ProposalReceived = 1,
-  OfferSent = 2,
-  RequestReceived = 3,
-  CredentialSent = 4,
-  Finished = 5,
-  Failed = 6,
+  OfferSet = 1,
+  ProposalReceived = 2,
+  OfferSent = 3,
+  RequestReceived = 4,
+  CredentialSent = 5,
+  Finished = 6,
+  Failed = 7,
 }
 
 export enum ProverStateType {

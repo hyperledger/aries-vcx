@@ -75,7 +75,7 @@ mod test {
     #[cfg(feature = "general_test")]
     fn test_oob_serialize_deserialize() {
         let _setup = SetupMocks::init();
-        let mut oob_sender = OutOfBandSender::create()
+        let oob_sender = OutOfBandSender::create()
             .set_label("test")
             .set_goal("test")
             .set_goal_code(&GoalCode::P2PMessaging)

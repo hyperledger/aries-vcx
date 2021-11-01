@@ -155,8 +155,7 @@ impl Prover {
 
 #[cfg(test)]
 mod tests {
-    use crate::{libindy, utils};
-    use crate::handlers::proof_presentation::verifier::verifier::Verifier;
+    use crate::utils;
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use crate::utils::constants::TEST_TAILS_FILE;

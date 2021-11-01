@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::error::prelude::*;
 use crate::handlers::connection::invitee::states::complete::CompleteState;
 use crate::handlers::connection::invitee::states::invited::InvitedState;
-use crate::handlers::connection::invitee::states::null::NullState;
+use crate::handlers::connection::invitee::states::initial::InitialState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
@@ -31,7 +31,7 @@ pub struct SmConnectionInvitee {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviteeFullState {
-    Null(NullState),
+    Initial(InitialState),
     Invited(InvitedState),
     Requested(RequestedState),
     Responded(RespondedState),
@@ -40,7 +40,7 @@ pub enum InviteeFullState {
 
 #[derive(Debug, PartialEq)]
 pub enum InviteeState {
-    Null,
+    Initial,
     Invited,
     Requested,
     Responded,
@@ -58,7 +58,7 @@ impl PartialEq for SmConnectionInvitee {
 impl From<InviteeFullState> for InviteeState {
     fn from(state: InviteeFullState) -> InviteeState {
         match state {
-            InviteeFullState::Null(_) => InviteeState::Null,
+            InviteeFullState::Initial(_) => InviteeState::Initial,
             InviteeFullState::Invited(_) => InviteeState::Invited,
             InviteeFullState::Requested(_) => InviteeState::Requested,
             InviteeFullState::Responded(_) => InviteeState::Responded,
@@ -71,14 +71,14 @@ impl SmConnectionInvitee {
     pub fn new(source_id: &str, pairwise_info: PairwiseInfo, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
-            state: InviteeFullState::Null(NullState {}),
+            state: InviteeFullState::Initial(InitialState {}),
             pairwise_info,
             send_message,
         }
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        return InviteeState::from(self.state.clone()) == InviteeState::Null;
+        return InviteeState::from(self.state.clone()) == InviteeState::Initial;
     }
 
     pub fn from(source_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState, send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> Self {
@@ -115,7 +115,7 @@ impl SmConnectionInvitee {
 
     pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
-            InviteeFullState::Null(_) => None,
+            InviteeFullState::Initial(_) => None,
             InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
@@ -125,7 +125,7 @@ impl SmConnectionInvitee {
 
     pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
         match self.state {
-            InviteeFullState::Null(_) => None,
+            InviteeFullState::Initial(_) => None,
             InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
@@ -244,12 +244,12 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, .. } = self;
         let state = match state {
-            InviteeFullState::Null(state) => InviteeFullState::Invited((state, invitation).into()),
+            InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation).into()),
             _ => state.clone()
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
@@ -271,12 +271,12 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, source_id, ..self })
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Requested(state) => {
                 InviteeFullState::Responded((state, response).into())
@@ -285,11 +285,11 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, pairwise_info, send_message, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
                 state.handle_ping(&ping, &pairwise_info.pw_vk, send_message)?;
@@ -299,11 +299,11 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, pairwise_info, send_message, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
                 state.handle_send_ping(comment, &pairwise_info.pw_vk, send_message)?;
@@ -313,7 +313,7 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self> {
@@ -321,7 +321,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, pairwise_info, send_message, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
                 state.handle_discover_features(query_, comment, &pairwise_info.pw_vk, send_message)?;
@@ -331,11 +331,11 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, pairwise_info, send_message, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
                 state.handle_discovery_query(query, &pairwise_info.pw_vk, send_message)?;
@@ -345,11 +345,11 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
                 InviteeFullState::Completed((state.clone(), disclose.protocols).into())
@@ -358,11 +358,11 @@ impl SmConnectionInvitee {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_send_ack(self) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, pairwise_info, send_message, .. } = self;
         let state = match state {
             InviteeFullState::Responded(state) => {
                 match Self::_send_ack(&state.did_doc, &state.request, &state.response, &pairwise_info, send_message) {
@@ -373,29 +373,29 @@ impl SmConnectionInvitee {
                             .set_explain(err.to_string())
                             .set_thread_id(&state.request.id.0);
                         send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
-                        InviteeFullState::Null((state, problem_report).into())
+                        InviteeFullState::Initial((state, problem_report).into())
                     }
                 }
             }
             _ => state.clone()
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message } = self;
+        let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Requested(state) => {
-                InviteeFullState::Null((state, problem_report).into())
+                InviteeFullState::Initial((state, problem_report).into())
             }
             InviteeFullState::Invited(state) => {
-                InviteeFullState::Null((state, problem_report).into())
+                InviteeFullState::Initial((state, problem_report).into())
             }
             _ => {
                 state.clone()
             }
         };
-        Ok(Self { source_id, pairwise_info, state, send_message })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self> {
@@ -408,7 +408,7 @@ impl SmConnectionInvitee {
             InviteeFullState::Requested(state) => Ok(state.request.id.0.clone()),
             InviteeFullState::Responded(state) => Ok(state.request.id.0.clone()),
             InviteeFullState::Completed(state) => state.thread_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Thread ID missing on connection")),
-            InviteeFullState::Null(_) => Ok(String::new())
+            InviteeFullState::Initial(_) => Ok(String::new())
         }
     }
 }
@@ -424,7 +424,6 @@ pub mod test {
     use crate::messages::discovery::query::tests::_query;
     use crate::messages::trust_ping::ping::tests::_ping;
     use crate::messages::trust_ping::ping_response::tests::_ping_response;
-    use crate::messages::connection::invite::PairwiseInvitation;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -436,7 +435,7 @@ pub mod test {
 
         use super::*;
 
-        fn _send_message(pv_wk: &str, did_doc: &DidDoc, a2a_message: &A2AMessage) -> VcxResult<()> {
+        fn _send_message(_pv_wk: &str, _did_doc: &DidDoc, _a2a_message: &A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 
@@ -461,11 +460,10 @@ pub mod test {
 
             pub fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
 
                 self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let routing_keys: Vec<String> = vec!(key.clone());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint).unwrap();
                 self = self.handle_connection_response(_response(&key)).unwrap();
@@ -501,7 +499,7 @@ pub mod test {
 
                 let invitee_sm = invitee_sm();
 
-                assert_match!(InviteeFullState::Null(_), invitee_sm.state);
+                assert_match!(InviteeFullState::Initial(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
             }
         }
@@ -514,7 +512,6 @@ pub mod test {
             fn handle_response_fails_with_incorrect_thread_id() {
                 let _setup = SetupMocks::init();
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let invitation = PairwiseInvitation::default().set_recipient_keys(vec![key.clone()]);
                 let mut invitee = invitee_sm();
 
                 invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
@@ -524,7 +521,7 @@ pub mod test {
                 invitee = invitee.handle_connect(routing_keys, service_endpoint).unwrap();
                 invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
                 invitee = invitee.handle_send_ack().unwrap();
-                assert_match!(InviteeState::Null, invitee.get_state());
+                assert_match!(InviteeState::Initial, invitee.get_state());
             }
         }
 
@@ -540,7 +537,7 @@ pub mod test {
 
                 let did_exchange_sm = invitee_sm();
 
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -565,10 +562,10 @@ pub mod test {
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -594,7 +591,7 @@ pub mod test {
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -640,7 +637,7 @@ pub mod test {
                 did_exchange_sm = did_exchange_sm.handle_connection_response(signed_response).unwrap();
                 did_exchange_sm = did_exchange_sm.handle_send_ack().unwrap();
 
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -652,7 +649,7 @@ pub mod test {
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
-                assert_match!(InviteeFullState::Null(_), did_exchange_sm.state);
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[test]
@@ -858,7 +855,7 @@ pub mod test {
             fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(InviteeState::Null, invitee_sm().get_state());
+                assert_eq!(InviteeState::Initial, invitee_sm().get_state());
                 assert_eq!(InviteeState::Invited, invitee_sm().to_invitee_invited_state().get_state());
                 assert_eq!(InviteeState::Requested, invitee_sm().to_invitee_requested_state().get_state());
             }

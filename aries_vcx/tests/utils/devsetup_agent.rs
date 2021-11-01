@@ -1,5 +1,3 @@
-pub const SERIALIZE_VERSION: &'static str = "2.0";
-
 #[cfg(test)]
 pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
@@ -22,7 +20,7 @@ pub mod test {
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
+    use aries_vcx::handlers::issuance::schema::schema::Schema;
     use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
@@ -76,20 +74,6 @@ pub mod test {
         None
     }
 
-    fn download_a2a_message(filter_msg_type: PayloadKinds) -> Option<A2AMessage> {
-        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(None, Some(vec![String::from("MS-103")]), None).unwrap();
-        let messages = messages.pop().unwrap();
-
-        for message in messages.msgs.into_iter() {
-            let decrypted_msg = &message.decrypted_msg.unwrap();
-            let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
-            if filter_msg_type == msg_type {
-                return Some(str_message_to_a2a_message(decrypted_msg).unwrap());
-            }
-        }
-        None
-    }
-
     pub trait TestAgent {
         fn activate(&mut self) -> VcxResult<()>;
     }
@@ -110,7 +94,7 @@ pub mod test {
     impl TestAgent for Faber {
         fn activate(&mut self) -> VcxResult<()> {
             close_main_wallet()
-                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
+                .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Faber opening main wallet");
@@ -127,7 +111,7 @@ pub mod test {
     impl TestAgent for Alice {
         fn activate(&mut self) -> VcxResult<()> {
             close_main_wallet()
-                .unwrap_or_else(|e| warn!("Failed to close main wallet (perhaps none was open?)"));
+                .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::clear_config();
 
             info!("activate >>> Alice opening main wallet");
@@ -183,7 +167,6 @@ pub mod test {
 
         pub fn create_schema(&mut self) {
             self.activate().unwrap();
-            let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let data = r#"["name","date","degree", "empty_param"]"#.to_string();
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
@@ -267,7 +250,6 @@ pub mod test {
         pub fn offer_credential(&mut self) {
             self.activate().unwrap();
 
-            let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
             let credential_data = json!({
                 "name": "alice",
                 "date": "05-2018",
@@ -280,7 +262,7 @@ pub mod test {
                 rev_reg_id: self.cred_def.get_rev_reg_id(),
                 tails_file: self.cred_def.get_tails_file(),
             };
-            self.issuer_credential = Issuer::create("alice_degree", &issuer_config, &credential_data).unwrap();
+            self.issuer_credential = Issuer::create_from_offer("alice_degree", &issuer_config, &credential_data).unwrap();
             self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
@@ -319,18 +301,6 @@ pub mod test {
             self.verifier.update_state(&self.connection).unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.presentation_status());
-        }
-
-        pub fn download_a2a_message(&mut self, message_type: PayloadKinds) -> VcxResult<A2AMessage> {
-            self.activate()?;
-            download_a2a_message(message_type)
-                .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
-        }
-
-        pub fn teardown(&mut self) {
-            self.activate().unwrap();
-            close_main_wallet().unwrap();
-            delete_wallet(&self.config_wallet).unwrap();
         }
     }
 
@@ -486,38 +456,6 @@ pub mod test {
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
-        pub fn decline_presentation_request(&mut self) {
-            self.activate().unwrap();
-
-            let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
-
-            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, None).unwrap();
-        }
-
-        pub fn propose_presentation(&mut self) {
-            self.activate().unwrap();
-
-            let presentation_request = self.get_proof_request_messages();
-            self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
-
-            let proposal_data = json!({
-                "attributes": [
-                    {
-                        "name": "first name"
-                    }
-                ],
-                "predicates": [
-                    {
-                        "name": "age",
-                        "predicate": ">",
-                        "threshold": 18
-                    }
-                ]
-            }).to_string();
-            self.prover.decline_presentation_request(&self.connection.send_message_closure().unwrap(), None, Some(proposal_data)).unwrap();
-        }
-
         pub fn ensure_presentation_verified(&mut self) {
             self.activate().unwrap();
             self.prover.update_state(&self.connection).unwrap();
@@ -527,17 +465,17 @@ pub mod test {
 
     impl Drop for Faber {
         fn drop(&mut self) {
-            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Faber"));
-            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Faber's wallet while dropping"));
+            self.activate().unwrap_or_else(|_| error!("Failed to close main wallet while dropping Faber"));
+            close_main_wallet().unwrap_or_else(|_| error!("Failed to close main wallet while dropping Faber"));
+            delete_wallet(&self.config_wallet).unwrap_or_else(|_| error!("Failed to delete Faber's wallet while dropping"));
         }
     }
 
     impl Drop for Alice {
         fn drop(&mut self) {
-            self.activate().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
-            close_main_wallet().unwrap_or_else(|e| error!("Failed to close main wallet while dropping Alice"));
-            delete_wallet(&self.config_wallet).unwrap_or_else(|e| error!("Failed to delete Alice's wallet while dropping"));
+            self.activate().unwrap_or_else(|_| error!("Failed to close main wallet while dropping Alice"));
+            close_main_wallet().unwrap_or_else(|_| error!("Failed to close main wallet while dropping Alice"));
+            delete_wallet(&self.config_wallet).unwrap_or_else(|_| error!("Failed to delete Alice's wallet while dropping"));
         }
     }
 }

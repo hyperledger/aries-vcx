@@ -93,7 +93,6 @@ pub mod test_utils {
 pub mod tests {
     use crate::messages::issuance::credential::test_utils::*;
     use crate::messages::issuance::credential_offer::test_utils::thread_id;
-    use crate::utils::constants;
 
     use super::*;
 

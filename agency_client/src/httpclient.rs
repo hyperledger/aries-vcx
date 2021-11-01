@@ -1,6 +1,5 @@
 use std::env;
 use std::io::Read;
-use futures::Future;
 
 use reqwest;
 use reqwest::header::CONTENT_TYPE;

@@ -1,5 +1,3 @@
-use serde::Deserialize;
-
 use agency_client::agent_utils;
 
 use crate::error::prelude::*;

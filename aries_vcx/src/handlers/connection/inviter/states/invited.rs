@@ -1,4 +1,4 @@
-use crate::handlers::connection::inviter::states::null::NullState;
+use crate::handlers::connection::inviter::states::initial::InitialState;
 use crate::handlers::connection::inviter::states::requested::RequestedState;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::problem_report::ProblemReport;
@@ -11,10 +11,10 @@ pub struct InvitedState {
 }
 
 // TODO: These have no justification for being here anymore
-impl From<ProblemReport> for NullState {
-    fn from(_error: ProblemReport) -> NullState {
-        trace!("ConnectionInviter: transit state to NullState");
-        NullState {}
+impl From<ProblemReport> for InitialState {
+    fn from(_error: ProblemReport) -> InitialState {
+        trace!("ConnectionInviter: transit state to InitialState");
+        InitialState {}
     }
 }
 

@@ -159,7 +159,6 @@ mod tests {
     use crate::messages::proof_presentation::presentation::test_utils::_comment;
     use crate::utils::send_message;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
-    use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
 

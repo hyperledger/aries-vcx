@@ -1,4 +1,4 @@
-use crate::handlers::connection::invitee::states::null::NullState;
+use crate::handlers::connection::invitee::states::initial::InitialState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::problem_report::ProblemReport;
@@ -11,10 +11,10 @@ pub struct RequestedState {
     pub did_doc: DidDoc,
 }
 
-impl From<(RequestedState, ProblemReport)> for NullState {
-    fn from((_state, _error): (RequestedState, ProblemReport)) -> NullState {
-        trace!("ConnectionInvitee: transit state from RequestedState to NullState");
-        NullState {}
+impl From<(RequestedState, ProblemReport)> for InitialState {
+    fn from((_state, _error): (RequestedState, ProblemReport)) -> InitialState {
+        trace!("ConnectionInvitee: transit state from RequestedState to InitialState");
+        InitialState {}
     }
 }
 

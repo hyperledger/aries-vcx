@@ -134,7 +134,6 @@ pub mod tests {
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::did_doc::test_utils::*;
-    use crate::messages::connection::did_doc::tests::*;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

@@ -1593,9 +1593,10 @@ mod tests {
         let msg_len = msg.len();
 
         let cb = return_types_u32::Return_U32_BIN::new().unwrap();
+        let cstr_msg = CString::new(msg).unwrap();
         assert_eq!(vcx_connection_sign_data(cb.command_handle,
                                             connection_handle,
-                                            CString::new(msg).unwrap().as_ptr() as *const u8,
+                                            cstr_msg.as_ptr() as *const u8,
                                             msg_len as u32,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         let _sig = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -1614,12 +1615,14 @@ mod tests {
         let signature = format!("signature");
         let signature_length = signature.len();
 
+        let cstr_msg = CString::new(msg).unwrap();
+        let cstr_sig = CString::new(signature).unwrap();
         let cb = return_types_u32::Return_U32_BOOL::new().unwrap();
         assert_eq!(vcx_connection_verify_signature(cb.command_handle,
                                                    connection_handle,
-                                                   CString::new(msg).unwrap().as_ptr() as *const u8,
+                                                   cstr_msg.as_ptr() as *const u8,
                                                    msg_len as u32,
-                                                   CString::new(signature).unwrap().as_ptr() as *const u8,
+                                                   cstr_sig.as_ptr() as *const u8,
                                                    signature_length as u32,
                                                    Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();

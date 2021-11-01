@@ -164,7 +164,7 @@ pub mod test_utils {
     }
 }
 
-#[cfg(feature = "pool_tests")]
+#[cfg(test)]
 pub mod tests {
     use crate::libindy::utils::pool::get_pool_handle;
     use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;

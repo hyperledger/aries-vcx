@@ -540,11 +540,11 @@ pub mod test {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_propose_presentation_message_from_PresentationRequestReceived_state() {
+        fn test_prover_handle_propose_presentation_message_from_presentation_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation((_presentation_preview())), _send_message()).unwrap();
+            prover_sm = prover_sm.step(ProverMessages::ProposePresentation(_presentation_preview()), _send_message()).unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
