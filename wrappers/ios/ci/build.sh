@@ -7,11 +7,11 @@ export CARGO_INCREMENTAL=1
 export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
-INDY_VERSION="efb7215" # indy-1.16.0-post-59 - "v1.16.0" + rusql update fix + (number of other commits on master branch)
+INDY_VERSION="59e1ecc21c9a067" # in vdr-tools repo
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
-INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
+INDY_SDK_DIR=$OUTPUT_DIR/vdr-tools
 
 setup() {
     echo "Setup rustup"
@@ -133,7 +133,7 @@ extract_architectures() {
 
 checkout_indy_sdk() {
     if [ ! -d $INDY_SDK_DIR ]; then
-        git clone https://github.com/hyperledger/indy-sdk $INDY_SDK_DIR
+        git clone https://gitlab.com/evernym/verity/vdr-tools $INDY_SDK_DIR
     fi
 
     pushd $INDY_SDK_DIR
