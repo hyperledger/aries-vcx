@@ -1900,7 +1900,7 @@ mod tests {
         thread::sleep(Duration::from_millis(500));
         let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
         assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_connection_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
+        let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());

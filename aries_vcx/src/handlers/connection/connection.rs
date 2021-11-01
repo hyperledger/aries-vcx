@@ -98,8 +98,8 @@ impl Connection {
         Ok(connection)
     }
 
-    pub fn create_with_connection_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Connection> {
-        trace!("Connection::create_with_connection_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
+    pub fn create_with_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Connection> {
+        trace!("Connection::create_with_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
         let pairwise_info: PairwiseInfo = public_agent.into();
         let mut connection = Connection {
             cloud_agent_info: public_agent.cloud_agent_info(),
@@ -813,7 +813,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_with_request() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_with_connection_request(_request(), &_public_agent()).unwrap();
+        let connection = Connection::create_with_request(_request(), &_public_agent()).unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
     }
 }

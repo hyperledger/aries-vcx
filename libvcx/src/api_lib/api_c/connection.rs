@@ -259,7 +259,7 @@ pub extern fn vcx_connection_create_with_connection_request(command_handle: Comm
     trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
 
     execute(move || {
-        match create_connection_with_connection_request(&request, agent_handle) {
+        match create_with_request(&request, agent_handle) {
             Ok(handle) => {
                 trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}",
                        command_handle, error::SUCCESS.message, handle, source_id);

@@ -8,6 +8,7 @@ pub struct Request {
     pub id: MessageId,
     pub label: String,
     pub connection: ConnectionData,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>
 }
 

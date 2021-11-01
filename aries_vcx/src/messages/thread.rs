@@ -76,11 +76,12 @@ macro_rules! threadlike_optional (($type:ident) => (
             self
         }
 
+        // TODO: Remove option
         pub fn get_thread_id(&self) -> Option<String> {
             if let Some(thread) = &self.thread {
                 thread.thid.clone()
             } else {
-                None // TODO: Perhaps return id instead of None?
+                Some(self.id.0.clone())
             }
         }
 

@@ -363,6 +363,7 @@ pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
 {
   "version": "1.0",
   "source_id": "test_serialize_deserialize",
+  "thread_id": "",
   "data": {
     "pw_did": "",
     "pw_vk": "",
