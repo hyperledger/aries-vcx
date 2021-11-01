@@ -270,8 +270,8 @@ impl SmConnectionInviter {
                                      new_pairwise_info: &PairwiseInfo,
                                      new_routing_keys: Vec<String>,
                                      new_service_endpoint: String) -> VcxResult<Self> {
-        let Self { pairwise_info: bootstrap_pairwise_info, state, send_message, .. } = self.clone();
-        let state = match state {
+        let bootstrap_pairwise_info = self.pairwise_info.clone();
+        let state = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 match &self.build_response(
                     &request,
@@ -288,7 +288,7 @@ impl SmConnectionInviter {
                             .set_explain(err.to_string())
                             .set_thread_id(&request.id.0);
 
-                        send_message(
+                        (self.send_message)(
                             &bootstrap_pairwise_info.pw_vk,
                             &request.connection.did_doc,
                             &problem_report.to_a2a_message()).ok();
@@ -296,9 +296,9 @@ impl SmConnectionInviter {
                     }
                 }
             }
-            _ => state.clone()
+            _ => self.state
         };
-        Ok(Self { pairwise_info: new_pairwise_info.clone(), state, ..self })
+        Ok(Self { pairwise_info: new_pairwise_info.to_owned(), state, ..self })
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
@@ -312,114 +312,91 @@ impl SmConnectionInviter {
                 state.handle_ping(&ping, &pairwise_info.pw_vk, send_message)?;
                 InviterFullState::Completed(state)
             }
-            _ => {
-                state.clone()
-            }
+            _ => state
         };
         Ok(Self { state, pairwise_info, ..self })
     }
 
     pub fn handle_send_ping(self, comment: Option<String>) -> VcxResult<Self> {
-        let Self { state, pairwise_info, send_message, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Responded(state) => {
                 let ping =
                     Ping::create()
                         .request_response()
                         .set_comment(comment);
 
-                send_message(&pairwise_info.pw_vk, &state.did_doc, &ping.to_a2a_message()).ok();
+                (self.send_message)(&self.pairwise_info.pw_vk, &state.did_doc, &ping.to_a2a_message()).ok();
                 InviterFullState::Responded(state)
             }
             InviterFullState::Completed(state) => {
-                state.handle_send_ping(comment, &pairwise_info.pw_vk, send_message)?;
+                state.handle_send_ping(comment, &self.pairwise_info.pw_vk, self.send_message)?;
                 InviterFullState::Completed(state)
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
-        Ok(Self { state, pairwise_info, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
-        let Self { state, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Responded(state) => {
                 InviterFullState::Completed((state, ping_response).into())
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
         Ok(Self { state, ..self })
     }
 
     pub fn handle_discover_features(self, query_: Option<String>, comment: Option<String>) -> VcxResult<Self> {
-        let Self { state, pairwise_info, send_message, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Completed(state) => {
-                state.handle_discover_features(query_, comment, &pairwise_info.pw_vk, send_message)?;
+                state.handle_discover_features(query_, comment, &self.pairwise_info.pw_vk, self.send_message)?;
                 InviterFullState::Completed(state)
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
-        Ok(Self { state, pairwise_info, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_discovery_query(self, query: Query) -> VcxResult<Self> {
-        let Self { source_id, pairwise_info, state, send_message, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Completed(state) => {
-                state.handle_discovery_query(query, &pairwise_info.pw_vk, send_message)?;
+                state.handle_discovery_query(query, &self.pairwise_info.pw_vk, self.send_message)?;
                 InviterFullState::Completed(state)
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
-        Ok(Self { source_id, pairwise_info, state, send_message, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
-        let Self { state, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Completed(state) => {
                 InviterFullState::Completed((state.clone(), disclose.protocols).into())
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
         Ok(Self { state, ..self })
     }
 
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        let Self { state, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Responded(_) => {
                 InviterFullState::Initial((problem_report).into())
             }
             InviterFullState::Invited(_) => {
                 InviterFullState::Initial((problem_report).into())
             }
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
         Ok(Self { state, ..self })
     }
 
     pub fn handle_send_response(self) -> VcxResult<Self> {
-        let Self { state, pairwise_info, send_message, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Requested(state) => {
-                match Self::_send_response(&state, &pairwise_info.pw_vk.clone(), send_message) {
-                    Ok(_) => {
-                        InviterFullState::Responded(state.into())
-                    }
+                match Self::_send_response(&state, &self.pairwise_info.pw_vk.clone(), self.send_message) {
+                    Ok(_) => InviterFullState::Responded(state.into()),
                     Err(err) => {
                         // todo: we should distinguish errors - probably should not send problem report
                         //       if we just lost internet connectivity
@@ -428,25 +405,22 @@ impl SmConnectionInviter {
                             .set_explain(err.to_string())
                             .set_thread_id(&self.thread_id);
 
-                        send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
+                        (self.send_message)(&self.pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
                         InviterFullState::Initial((state, problem_report).into())
                     }
                 }
             }
-            _ => state.clone()
+            _ => self.state
         };
-        Ok(Self { state, pairwise_info, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_ack(self, ack: Ack) -> VcxResult<Self> {
-        let Self { state, pairwise_info, .. } = self.clone();
-        let state = match state {
+        let state = match self.state {
             InviterFullState::Responded(state) => InviterFullState::Completed((state, ack).into()),
-            _ => {
-                state.clone()
-            }
+            _ => self.state
         };
-        Ok(Self { state, pairwise_info, ..self })
+        Ok(Self { state, ..self })
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
@@ -537,28 +511,6 @@ pub mod test {
                 self = self.handle_send_response().unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
-            }
-        }
-
-        mod get_thread_id {
-            use super::*;
-
-            #[test]
-            #[cfg(feature = "general_test")]
-            fn ack_fails_with_incorrect_thread_id() {
-                let _setup = SetupMocks::init();
-                let routing_keys: Vec<String> = vec!("verkey123".into());
-                let service_endpoint = String::from("https://example.org/agent");
-                let mut inviter = inviter_sm();
-                inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
-
-                let new_pairwise_info = PairwiseInfo { pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(), pw_vk: "verkey456".to_string() };
-                let new_routing_keys: Vec<String> = vec!("AC3Gx1RoAz8iYVcfY47gjJ".into());
-                let new_service_endpoint = String::from("https://example.org/agent");
-                inviter = inviter.handle_connection_request(_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint).unwrap();
-                inviter = inviter.handle_send_response().unwrap();
-                inviter = inviter.handle_ack(_ack_1()).unwrap();
-                assert_match!(InviterState::Initial, inviter.get_state());
             }
         }
 

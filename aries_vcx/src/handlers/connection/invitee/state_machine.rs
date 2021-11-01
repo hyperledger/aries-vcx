@@ -7,7 +7,6 @@ use crate::handlers::connection::invitee::states::initial::InitialState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -271,7 +270,6 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
                 InviteeFullState::Responded((state, response).into())
@@ -470,27 +468,6 @@ pub mod test {
 
                 assert_match!(InviteeFullState::Initial(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
-            }
-        }
-
-        mod get_thread_id {
-            use super::*;
-
-            #[test]
-            #[cfg(feature = "general_test")]
-            fn handle_response_fails_with_incorrect_thread_id() {
-                let _setup = SetupMocks::init();
-                let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let mut invitee = invitee_sm();
-
-                invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
-
-                let routing_keys: Vec<String> = vec!("verkey123".into());
-                let service_endpoint = String::from("https://example.org/agent");
-                invitee = invitee.handle_connect(routing_keys, service_endpoint).unwrap();
-                invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
-                invitee = invitee.handle_send_ack().unwrap();
-                assert_match!(InviteeState::Initial, invitee.get_state());
             }
         }
 
