@@ -271,6 +271,7 @@ impl SmConnectionInviter {
                                      new_routing_keys: Vec<String>,
                                      new_service_endpoint: String) -> VcxResult<Self> {
         let bootstrap_pairwise_info = self.pairwise_info.clone();
+        let thread_id = request.get_thread_id().ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?;
         let state = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 match &self.build_response(
@@ -286,7 +287,7 @@ impl SmConnectionInviter {
                         let problem_report = ProblemReport::create()
                             .set_problem_code(ProblemCode::RequestProcessingError)
                             .set_explain(err.to_string())
-                            .set_thread_id(&request.id.0);
+                            .set_thread_id(&thread_id);
 
                         (self.send_message)(
                             &bootstrap_pairwise_info.pw_vk,
@@ -298,7 +299,7 @@ impl SmConnectionInviter {
             }
             _ => self.state
         };
-        Ok(Self { pairwise_info: new_pairwise_info.to_owned(), state, ..self })
+        Ok(Self { pairwise_info: new_pairwise_info.to_owned(), thread_id, state, ..self })
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
@@ -453,7 +454,7 @@ impl SmConnectionInviter {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::ack::test_utils::{_ack, _ack_1};
+    use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::problem_report::tests::_problem_report;
     use crate::messages::connection::request::tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;

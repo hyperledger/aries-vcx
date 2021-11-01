@@ -223,7 +223,8 @@ impl SmConnectionInvitee {
         }
     }
 
-    fn _send_ack(did_doc: &DidDoc,
+    fn _send_ack(&self,
+                 did_doc: &DidDoc,
                  response: &SignedResponse,
                  pairwise_info: &PairwiseInfo,
                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> VcxResult<Response> {
@@ -233,7 +234,7 @@ impl SmConnectionInvitee {
         let response = response.clone().decode(&remote_vk)?;
 
         let message = Ack::create()
-            .set_thread_id(&response.thread.thid.clone().unwrap_or_default())
+            .set_thread_id(&self.thread_id)
             .to_a2a_message();
 
         send_message(&pairwise_info.pw_vk, &response.connection.did_doc, &message)?;
@@ -340,16 +341,16 @@ impl SmConnectionInvitee {
 
     pub fn handle_send_ack(self) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Responded(state) => {
-                match Self::_send_ack(&state.did_doc, &state.response, &self.pairwise_info, self.send_message) {
-                    Ok(response) => InviteeFullState::Completed((state, response).into()),
+            InviteeFullState::Responded(ref state) => {
+                match self._send_ack(&state.did_doc, &state.response, &self.pairwise_info, self.send_message) {
+                    Ok(response) => InviteeFullState::Completed((state.clone(), response).into()),
                     Err(err) => {
                         let problem_report = ProblemReport::create()
                             .set_problem_code(ProblemCode::ResponseProcessingError)
                             .set_explain(err.to_string())
-                            .set_thread_id(&state.request.id.0);
+                            .set_thread_id(&self.thread_id);
                         (self.send_message)(&self.pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
-                        InviteeFullState::Initial((state, problem_report).into())
+                        InviteeFullState::Initial((state.clone(), problem_report).into())
                     }
                 }
             }
