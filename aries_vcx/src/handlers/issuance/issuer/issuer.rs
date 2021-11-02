@@ -113,11 +113,11 @@ impl Issuer {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::issuance::credential_proposal::test_utils::{_credential_proposal, _cred_def_id};
+    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::utils::devsetup::SetupMocks;
-    use crate::handlers::issuance::issuer::state_machine::test::{_send_message, _tails_file, _rev_reg_id};
+    use crate::handlers::issuance::issuer::state_machine::test::_send_message;
 
     use super::*;
 
@@ -138,11 +138,6 @@ pub mod test {
     }
 
     impl Issuer {
-        fn to_offer_sent_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), None), _send_message()).unwrap();
-            self
-        }
-
         fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
             self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), None), _send_message()).unwrap();
             self
@@ -151,13 +146,6 @@ pub mod test {
         fn to_request_received_state(mut self) -> Issuer {
             self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            self
-        }
-
-        fn to_finished_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), None), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
             self
         }
 
@@ -202,9 +190,6 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        let values = _credential_proposal().credential_proposal.clone();
-        let cred_def_id = _credential_proposal().cred_def_id.clone();
-        // issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
         issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -226,9 +211,6 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        let values = _credential_proposal().credential_proposal.clone();
-        let cred_def_id = _credential_proposal().cred_def_id.clone();
-        // issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
         issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -239,7 +221,6 @@ pub mod test {
         issuer.step(msg.into(), _send_message()).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        // issuer.set_offer(&values, &cred_def_id, Some(_rev_reg_id()), Some(_tails_file())).unwrap();
         issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 

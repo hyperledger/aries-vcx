@@ -15,10 +15,9 @@ use crate::libindy::utils::anoncreds::{self, libindy_issuer_create_credential_of
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
 
@@ -433,8 +432,6 @@ pub mod test {
 
     impl IssuerSM {
         fn to_proposal_received_state(self) -> IssuerSM {
-            let values = _credential_proposal().credential_proposal.clone();
-            let cred_def_id = _credential_proposal().cred_def_id.clone();
             Self::from_proposal(&source_id(), &_credential_proposal())
         }
 

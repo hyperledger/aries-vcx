@@ -321,7 +321,7 @@ mod tests {
         thread::sleep(Duration::from_millis(1000));
     }
 
-    fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
+    fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
         faber.activate().unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).unwrap()).unwrap();
         let proposal = proposals.last().unwrap();
@@ -340,7 +340,7 @@ mod tests {
         issuer
     }
 
-    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) {
+    fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
         faber.activate().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(connection).unwrap();
@@ -588,7 +588,7 @@ mod tests {
 
     fn _exchange_credential_with_proposal(consumer: &mut Alice, institution: &mut Faber, consumer_to_issuer: &Connection, issuer_to_consumer: &Connection, schema_id: &str, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>, comment: &str) -> (Holder, Issuer) {
         let mut holder = send_cred_proposal(consumer, consumer_to_issuer, schema_id, cred_def_id, comment);
-        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, cred_def_id, rev_reg_id, tails_file);
+        let mut issuer = accept_cred_proposal(institution, issuer_to_consumer, rev_reg_id, tails_file);
         accept_offer(consumer, consumer_to_issuer, &mut holder);
         send_credential(consumer, institution, &mut issuer, issuer_to_consumer, consumer_to_issuer, &mut holder, true);
         (holder, issuer)
@@ -1471,7 +1471,7 @@ mod tests {
         let tails_file = cred_def.get_tails_file().unwrap();
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
-        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id, Some(tails_file));
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
         reject_offer(&mut consumer, &consumer_to_institution, &mut holder);
         institution.activate().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
@@ -1491,9 +1491,9 @@ mod tests {
         let tails_file = cred_def.get_tails_file().unwrap();
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
-        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id.clone(), Some(tails_file.clone()));
+        let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id.clone(), Some(tails_file.clone()));
         send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
-        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, &cred_def_id, rev_reg_id, Some(tails_file));
+        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
         accept_offer(&mut consumer, &consumer_to_institution, &mut holder);
         send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true);
     }
