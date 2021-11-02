@@ -8,6 +8,7 @@ pub mod test {
 
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::issuance::credential_offer::test_utils::_offer_info;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::utils::devsetup::*;
@@ -263,7 +264,7 @@ pub mod test {
                 tails_file: self.cred_def.get_tails_file(),
             };
             self.issuer_credential = Issuer::create_from_offer("alice_degree", &issuer_config, &credential_data).unwrap();
-            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.issuer_credential.send_credential_offer(_offer_info(), None, self.connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
             self.issuer_credential.update_state(&self.connection).unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }

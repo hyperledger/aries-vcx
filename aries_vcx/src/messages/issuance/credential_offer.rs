@@ -58,6 +58,25 @@ impl CredentialOffer {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct OfferInfo {
+    pub credential_json: String,
+    pub cred_def_id: String,
+    pub rev_reg_id: Option<String>,
+    pub tails_file: Option<String>
+}
+
+impl OfferInfo {
+    pub fn new(credential_json: String, cred_def_id: String, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+        Self {
+            credential_json,
+            cred_def_id,
+            rev_reg_id,
+            tails_file
+        }
+    }
+}
+
 threadlike_optional!(CredentialOffer);
 a2a_message!(CredentialOffer);
 
@@ -100,6 +119,16 @@ pub mod test_utils {
         thread().thid.unwrap()
     }
 
+    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+
+    pub fn _rev_reg_id() -> String {
+        String::from("TEST_REV_REG_ID")
+    }
+
+    pub fn _tails_file() -> String {
+        String::from("TEST_TAILS_FILE")
+    }
+    
     pub fn _credential_offer() -> CredentialOffer {
         let mut attachment = Attachments::new();
         attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment()).unwrap();
@@ -112,6 +141,16 @@ pub mod test_utils {
             thread: Some(_thread()),
         }
     }
+
+    pub fn _offer_info() -> OfferInfo {
+        OfferInfo {
+            credential_json: _preview_data().to_string().unwrap(),
+            cred_def_id: _cred_def_id(),
+            rev_reg_id: Some(_rev_reg_id()),
+            tails_file: Some(_tails_file())
+        }
+    }
+
 }
 
 #[cfg(test)]

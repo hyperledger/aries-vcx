@@ -2,7 +2,7 @@ use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::a2a::MessageId;
 use crate::messages::status::Status;
-use crate::handlers::issuance::issuer::states::OfferInfo;
+use crate::messages::issuance::credential_offer::OfferInfo;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferSetState {

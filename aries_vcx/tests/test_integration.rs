@@ -108,6 +108,7 @@ mod tests {
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::issuance::credential_offer::test_utils::_offer_info;
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use aries_vcx::messages::mime_type::MimeType;
@@ -246,7 +247,7 @@ mod tests {
         };
         let mut issuer = Issuer::create_from_offer("1", &issuer_config, &credential_data).unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), comment).unwrap();
+        issuer.send_credential_offer(_offer_info(), comment, connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -328,7 +329,7 @@ mod tests {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
         issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
+        issuer.send_credential_offer(_offer_info(), Some("comment"), connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -341,7 +342,7 @@ mod tests {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         issuer.set_offer(&proposal.credential_proposal, cred_def_id, rev_reg_id, tails_file).unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap(), Some("comment")).unwrap();
+        issuer.send_credential_offer(_offer_info(), Some("comment"), connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
