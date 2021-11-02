@@ -7,8 +7,6 @@ use crate::handlers::issuance::issuer::states::OfferInfo;
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferSetState {
     pub offer_info: OfferInfo,
-    pub rev_reg_id: Option<String>,
-    pub tails_file: Option<String>,
 }
 
 impl OfferSetState {
@@ -17,9 +15,9 @@ impl OfferSetState {
             offer_info: OfferInfo {
                 cred_def_id: cred_def_id.to_string(),
                 credential_json: credential_json.to_string(),
-            },
-            rev_reg_id,
-            tails_file,
+                rev_reg_id,
+                tails_file
+            }
         }
     }
 }
@@ -42,8 +40,8 @@ impl From<(OfferSetState, String, MessageId)> for OfferSentState {
         OfferSentState {
             offer,
             cred_data: state.offer_info.credential_json,
-            rev_reg_id: state.rev_reg_id,
-            tails_file: state.tails_file,
+            rev_reg_id: state.offer_info.rev_reg_id,
+            tails_file: state.offer_info.tails_file,
             thread_id: sent_id.0,
         }
     }

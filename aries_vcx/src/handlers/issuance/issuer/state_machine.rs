@@ -119,7 +119,7 @@ impl IssuerSM {
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
-            IssuerFullState::OfferSet(state) => state.rev_reg_id.clone(),
+            IssuerFullState::OfferSet(state) => state.offer_info.rev_reg_id.clone(),
             IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
@@ -136,7 +136,7 @@ impl IssuerSM {
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
-            IssuerFullState::OfferSet(state) => Ok(state.rev_reg_id.is_some()),
+            IssuerFullState::OfferSet(state) => Ok(state.offer_info.rev_reg_id.is_some()),
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::RequestReceived(state) => Ok(state.rev_reg_id.is_some()),
@@ -231,21 +231,17 @@ impl IssuerSM {
         let state = match state {
             IssuerFullState::Initial(_) => {
                 IssuerFullState::OfferSet(OfferSetState {
-                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string()),
-                    rev_reg_id,
-                    tails_file
+                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string(), rev_reg_id, tails_file),
                 })
             }
             IssuerFullState::OfferSet(_) => {
                 IssuerFullState::OfferSet(OfferSetState {
-                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string()),
-                    rev_reg_id,
-                    tails_file
+                    offer_info: OfferInfo::new(values.to_string()?, cred_def_id.to_string(), rev_reg_id, tails_file),
                 })
             }
             IssuerFullState::ProposalReceived(state) => {
                 IssuerFullState::ProposalReceived(ProposalReceivedState {
-                    offer_info: Some(OfferInfo::new(values.to_string()?, cred_def_id.to_string())),
+                    offer_info: Some(OfferInfo::new(values.to_string()?, cred_def_id.to_string(), None, None)),
                     rev_reg_id,
                     tails_file,
                     ..state

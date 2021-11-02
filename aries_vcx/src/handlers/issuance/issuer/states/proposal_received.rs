@@ -27,15 +27,6 @@ impl ProposalReceivedState {
     }
 }
 
-impl OfferInfo {
-    pub fn new(credential_json: String, cred_def_id: String) -> Self {
-        Self {
-            credential_json,
-            cred_def_id
-        }
-    }
-}
-
 impl From<(String, String, String, Option<String>, Option<String>)> for OfferSentState {
     fn from((cred_data, offer, thread_id, rev_reg_id, tails_file): (String, String, String, Option<String>, Option<String>)) -> Self {
         trace!("SM is now in OfferSent state");
