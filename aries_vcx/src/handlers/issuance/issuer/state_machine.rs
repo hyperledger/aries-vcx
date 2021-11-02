@@ -4,7 +4,6 @@ use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::states::initial::InitialIssuerState;
 use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
-use crate::handlers::issuance::issuer::states::offer_set::OfferSetState;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
@@ -26,7 +25,6 @@ use crate::messages::status::Status;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
     Initial(InitialIssuerState),
-    OfferSet(OfferSetState),
     ProposalReceived(ProposalReceivedState),
     OfferSent(OfferSentState),
     RequestReceived(RequestReceivedState),
@@ -109,8 +107,8 @@ impl IssuerSM {
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
+            _ => None,
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
-            IssuerFullState::OfferSet(state) => state.offer_info.rev_reg_id.clone(),
             IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
@@ -126,8 +124,8 @@ impl IssuerSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
+            _ => { Ok(true) },
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
-            IssuerFullState::OfferSet(state) => Ok(state.offer_info.rev_reg_id.is_some()),
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::RequestReceived(state) => Ok(state.rev_reg_id.is_some()),
@@ -195,8 +193,8 @@ impl IssuerSM {
 
     pub fn get_state(&self) -> IssuerState {
         match self.state {
+            _ => IssuerState::Initial,
             IssuerFullState::Initial(_) => IssuerState::Initial,
-            IssuerFullState::OfferSet(_) => IssuerState::OfferSet,
             IssuerFullState::ProposalReceived(_) => IssuerState::ProposalReceived,
             IssuerFullState::OfferSent(_) => IssuerState::OfferSent,
             IssuerFullState::RequestReceived(_) => IssuerState::RequestReceived,
@@ -831,7 +829,7 @@ pub mod test {
         fn test_get_state() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(IssuerState::OfferSet, _issuer_sm().get_state());
+            assert_eq!(IssuerState::Initial, _issuer_sm().get_state());
             assert_eq!(IssuerState::ProposalReceived, _issuer_sm().to_proposal_received_state().get_state());
             assert_eq!(IssuerState::OfferSent, _issuer_sm().to_offer_sent_state().get_state());
             assert_eq!(IssuerState::RequestReceived, _issuer_sm().to_request_received_state().get_state());

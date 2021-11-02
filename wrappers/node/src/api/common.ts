@@ -124,13 +124,12 @@ export enum HolderStateType {
 
 export enum IssuerStateType {
   Initial = 0,
-  OfferSet = 1,
-  ProposalReceived = 2,
-  OfferSent = 3,
-  RequestReceived = 4,
-  CredentialSent = 5,
-  Finished = 6,
-  Failed = 7,
+  ProposalReceived = 1,
+  OfferSent = 2,
+  RequestReceived = 3,
+  CredentialSent = 4,
+  Finished = 5,
+  Failed = 6,
 }
 
 export enum ProverStateType {

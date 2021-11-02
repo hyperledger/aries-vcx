@@ -23,7 +23,6 @@ pub struct IssuerConfig {
 #[derive(Debug, PartialEq)]
 pub enum IssuerState {
     Initial,
-    OfferSet,
     ProposalReceived,
     OfferSent,
     RequestReceived,
