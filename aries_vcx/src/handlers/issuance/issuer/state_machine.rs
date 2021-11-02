@@ -56,7 +56,7 @@ impl IssuerSM {
     pub fn new(source_id: &str) -> Self {
         Self {
             source_id: source_id.to_string(),
-            thread_id: String::new(),
+            thread_id: MessageId::new().0,
             state: IssuerFullState::Initial(InitialIssuerState {}),
         }
     }
@@ -107,7 +107,6 @@ impl IssuerSM {
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
-            _ => None,
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
             IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
@@ -124,7 +123,6 @@ impl IssuerSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
-            _ => { Ok(true) },
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
@@ -193,7 +191,6 @@ impl IssuerSM {
 
     pub fn get_state(&self) -> IssuerState {
         match self.state {
-            _ => IssuerState::Initial,
             IssuerFullState::Initial(_) => IssuerState::Initial,
             IssuerFullState::ProposalReceived(_) => IssuerState::ProposalReceived,
             IssuerFullState::OfferSent(_) => IssuerState::OfferSent,
@@ -322,9 +319,6 @@ impl IssuerSM {
             IssuerFullState::Finished(state_data) => {
                 warn!("Unable to process received message in this state");
                 (IssuerFullState::Finished(state_data), thread_id)
-            }
-            a @ _ => {
-                (a, thread_id)
             }
         };
 
@@ -845,8 +839,8 @@ pub mod test {
         fn test_get_rev_reg_id() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(_rev_reg_id(), _issuer_sm().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_proposal_received_state().get_rev_reg_id().unwrap());
+            assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().get_rev_reg_id().unwrap_err().kind());
+            assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().to_proposal_received_state().get_rev_reg_id().unwrap_err().kind());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_offer_sent_state().get_rev_reg_id().unwrap());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().get_rev_reg_id().unwrap());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().get_rev_reg_id().unwrap());
@@ -861,7 +855,7 @@ pub mod test {
         fn test_is_revokable() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(true, _issuer_sm().is_revokable().unwrap());
+            assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().is_revokable().unwrap_err().kind());
             assert_eq!(true, _issuer_sm().to_proposal_received_state().is_revokable().unwrap());
             assert_eq!(true, _issuer_sm().to_offer_sent_state().is_revokable().unwrap());
             assert_eq!(true, _issuer_sm().to_request_received_state().is_revokable().unwrap());

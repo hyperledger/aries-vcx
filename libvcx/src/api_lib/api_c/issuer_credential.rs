@@ -967,9 +967,9 @@ pub mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_issuer_create_credential(cb.command_handle,
-                                                CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
+                                                ptr::null(),
                                                 Some(cb.get_callback())),
-                   error::INVALID_OPTION.code_num);
+                  error::INVALID_OPTION.code_num);
         // todo: Timeouting 15 seconds in test, could we do this better?
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
