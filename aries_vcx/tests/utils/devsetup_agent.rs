@@ -8,7 +8,6 @@ pub mod test {
 
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::issuance::credential_offer::test_utils::_offer_info;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::utils::devsetup::*;
@@ -23,6 +22,7 @@ pub mod test {
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::schema::schema::Schema;
     use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+    use aries_vcx::messages::issuance::credential_offer::OfferInfo;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
@@ -251,20 +251,21 @@ pub mod test {
         pub fn offer_credential(&mut self) {
             self.activate().unwrap();
 
-            let credential_data = json!({
+            let credential_json = json!({
                 "name": "alice",
                 "date": "05-2018",
                 "degree": "maths",
                 "empty_param": ""
             }).to_string();
 
-            let issuer_config = AriesIssuerConfig {
+            let offer_info = OfferInfo {
+                credential_json,
                 cred_def_id: self.cred_def.get_cred_def_id(),
                 rev_reg_id: self.cred_def.get_rev_reg_id(),
                 tails_file: self.cred_def.get_tails_file(),
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
-            self.issuer_credential.send_credential_offer(_offer_info(), None, self.connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
+            self.issuer_credential.send_credential_offer(offer_info, None, self.connection.send_message_closure().unwrap()).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }

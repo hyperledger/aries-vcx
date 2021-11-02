@@ -107,8 +107,7 @@ mod tests {
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::messages::connection::service::ServiceResolvable;
-    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::issuance::credential_offer::test_utils::_offer_info;
+    use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use aries_vcx::messages::mime_type::MimeType;
@@ -237,17 +236,18 @@ mod tests {
         vec![address1_attr, address2_attr, city_attr, state_attr, zip_attr]
     }
 
-    fn create_and_send_cred_offer(faber: &mut Faber, cred_def: &CredentialDef, connection: &Connection, credential_data: &str, comment: Option<&str>) -> Issuer {
+    fn create_and_send_cred_offer(faber: &mut Faber, cred_def: &CredentialDef, connection: &Connection, credential_json: &str, comment: Option<&str>) -> Issuer {
         faber.activate().unwrap();
         info!("create_and_send_cred_offer >> creating issuer credential");
-        let issuer_config = IssuerConfig {
+        let offer_info = OfferInfo {
+            credential_json: credential_json.to_string(),
             cred_def_id: cred_def.get_cred_def_id(),
             rev_reg_id: cred_def.get_rev_reg_id(),
             tails_file: cred_def.get_tails_file(),
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(_offer_info(), comment, connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
+        issuer.send_credential_offer(offer_info, comment, connection.send_message_closure().unwrap()).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -328,7 +328,13 @@ mod tests {
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         assert_eq!(proposal.clone(), issuer.get_proposal().unwrap());
-        issuer.send_credential_offer(_offer_info(), Some("comment"), connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
+        let offer_info = OfferInfo {
+            credential_json: proposal.credential_proposal.to_string().unwrap(),
+            cred_def_id: proposal.cred_def_id.clone(),
+            rev_reg_id,
+            tails_file
+        };
+        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -340,7 +346,13 @@ mod tests {
         issuer.update_state(connection).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
-        issuer.send_credential_offer(_offer_info(), Some("comment"), connection.send_message_closure().unwrap()).unwrap(); // TODO: FIX
+        let offer_info = OfferInfo {
+            credential_json: proposal.credential_proposal.to_string().unwrap(),
+            cred_def_id: proposal.cred_def_id.clone(),
+            rev_reg_id,
+            tails_file
+        };
+        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
