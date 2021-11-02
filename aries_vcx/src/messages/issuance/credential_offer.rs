@@ -151,6 +151,14 @@ pub mod test_utils {
         }
     }
 
+    pub fn _offer_info_unrevokable() -> OfferInfo {
+        OfferInfo {
+            credential_json: _preview_data().to_string().unwrap(),
+            cred_def_id: _cred_def_id(),
+            rev_reg_id: None,
+            tails_file: None
+        }
+    }
 }
 
 #[cfg(test)]
