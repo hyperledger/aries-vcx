@@ -5,13 +5,13 @@ use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
 
+// TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {
     pub offer: String,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-    pub thread_id: String,
 }
 
 impl From<OfferSentState> for FinishedState {
@@ -19,7 +19,6 @@ impl From<OfferSentState> for FinishedState {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,
-            thread_id: state.thread_id,
             revocation_info_v1: Some(RevocationInfoV1 {
                 cred_rev_id: None,
                 rev_reg_id: state.rev_reg_id,
@@ -39,7 +38,6 @@ impl From<(OfferSentState, CredentialRequest)> for RequestReceivedState {
             rev_reg_id: state.rev_reg_id,
             tails_file: state.tails_file,
             request,
-            thread_id: state.thread_id,
         }
     }
 }
@@ -49,7 +47,6 @@ impl From<(OfferSentState, ProblemReport)> for FinishedState {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,
-            thread_id: state.thread_id,
             revocation_info_v1: Some(RevocationInfoV1 {
                 cred_rev_id: None,
                 rev_reg_id: state.rev_reg_id,

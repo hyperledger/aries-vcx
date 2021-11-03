@@ -5,7 +5,6 @@ use crate::messages::status::Status;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {
     pub revocation_info_v1: Option<RevocationInfoV1>,
-    pub thread_id: String,
 }
 
 
@@ -14,7 +13,6 @@ impl From<CredentialSentState> for FinishedState {
         trace!("SM is now in Finished state");
         FinishedState {
             cred_id: None,
-            thread_id: state.thread_id,
             revocation_info_v1: state.revocation_info_v1,
             status: Status::Success,
         }

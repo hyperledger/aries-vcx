@@ -7,17 +7,13 @@ use crate::messages::issuance::credential_offer::OfferInfo;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {
     pub credential_proposal: CredentialProposal,
-    pub rev_reg_id: Option<String>,
-    pub tails_file: Option<String>,
     pub offer_info: Option<OfferInfo>
 }
 
 impl ProposalReceivedState {
-    pub fn new(credential_proposal: CredentialProposal, rev_reg_id: Option<String>, tails_file: Option<String>, offer_info: Option<OfferInfo>) -> Self {
+    pub fn new(credential_proposal: CredentialProposal, offer_info: Option<OfferInfo>) -> Self {
         Self {
             credential_proposal,
-            rev_reg_id,
-            tails_file,
             offer_info
         }
     }
@@ -27,15 +23,14 @@ impl ProposalReceivedState {
     }
 }
 
-impl From<(String, String, String, Option<String>, Option<String>)> for OfferSentState {
-    fn from((cred_data, offer, thread_id, rev_reg_id, tails_file): (String, String, String, Option<String>, Option<String>)) -> Self {
+impl From<(String, String, Option<String>, Option<String>)> for OfferSentState {
+    fn from((cred_data, offer, rev_reg_id, tails_file): (String, String, Option<String>, Option<String>)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,
             cred_data,
             rev_reg_id,
             tails_file,
-            thread_id,
         }
     }
 }

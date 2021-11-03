@@ -64,7 +64,7 @@ impl IssuerSM {
         Self {
             thread_id: credential_proposal.id.0.clone(),
             source_id: source_id.to_string(),
-            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None, None, None)),
+            state: IssuerFullState::ProposalReceived(ProposalReceivedState::new(credential_proposal.clone(), None)),
         }
     }
 
@@ -107,7 +107,10 @@ impl IssuerSM {
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
             IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
-            IssuerFullState::ProposalReceived(state) => state.rev_reg_id.clone(),
+            IssuerFullState::ProposalReceived(state) => match &state.offer_info {
+                Some(offer_info) => offer_info.rev_reg_id.clone(),
+                _ => None
+            }
             IssuerFullState::OfferSent(state) => state.rev_reg_id.clone(),
             IssuerFullState::RequestReceived(state) => state.rev_reg_id.clone(),
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.clone()
@@ -219,7 +222,7 @@ impl IssuerSM {
             IssuerFullState::Initial(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialProposal(proposal) => {
                     let thread_id = proposal.id.0.to_string();
-                    (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None, None, None)), thread_id)
+                    (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None)), thread_id)
                 }
                 CredentialIssuanceMessage::CredentialOfferSend(offer_info, comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
@@ -231,7 +234,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    (IssuerFullState::OfferSent((offer_info, cred_offer, cred_offer_msg.id).into()), thread_id)
+                    (IssuerFullState::OfferSent((offer_info, cred_offer).into()), thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
@@ -250,7 +253,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    (IssuerFullState::OfferSent((offer_info.credential_json, cred_offer, thread_id.clone(), offer_info.rev_reg_id, offer_info.tails_file).into()), thread_id)
+                    (IssuerFullState::OfferSent((offer_info.credential_json, cred_offer, offer_info.rev_reg_id, offer_info.tails_file).into()), thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
@@ -262,7 +265,7 @@ impl IssuerSM {
                     (IssuerFullState::RequestReceived((state_data, request).into()), thread_id)
                 }
                 CredentialIssuanceMessage::CredentialProposal(proposal) => {
-                    (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None, None, None)), thread_id)
+                    (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None)), thread_id)
                 }
                 CredentialIssuanceMessage::ProblemReport(problem_report) => {
                     (IssuerFullState::Finished((state_data, problem_report).into()), thread_id)
@@ -274,10 +277,10 @@ impl IssuerSM {
             },
             IssuerFullState::RequestReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialSend() => {
-                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &state_data.thread_id);
+                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &thread_id);
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
-                            let credential_msg = credential_msg.set_thread_id(&state_data.thread_id);
+                            let credential_msg = credential_msg.set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                             )?(&credential_msg.to_a2a_message())?;
@@ -286,7 +289,7 @@ impl IssuerSM {
                         Err(err) => {
                             let problem_report = ProblemReport::create()
                                 .set_comment(Some(err.to_string()))
-                                .set_thread_id(&state_data.thread_id);
+                                .set_thread_id(&thread_id);
 
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
