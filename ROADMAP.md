@@ -46,6 +46,3 @@ AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this
 
 # Future vision architecture diagram
 # <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_180821.png"/>
-
-
-
