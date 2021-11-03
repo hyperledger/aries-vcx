@@ -235,7 +235,8 @@ impl SmConnectionInvitee {
 
         let response = response.clone().decode(&remote_vk)?;
 
-        if !response.from_thread(&request.id.0) {
+        if !response.from_thread(&request.get_thread_id()
+                                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
         }
 
