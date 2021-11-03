@@ -379,8 +379,8 @@ mod tests {
         institution.activate().unwrap();
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
-        assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
+        assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
         issuer_credential.update_state(issuer_to_consumer).unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
