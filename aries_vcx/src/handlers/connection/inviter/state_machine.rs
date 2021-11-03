@@ -420,7 +420,7 @@ impl SmConnectionInviter {
         let Self { state, pairwise_info, send_message, .. } = self.clone();
         let state = match state {
             InviterFullState::Responded(state) => {
-                let thread_id = self.get_thread_id()?;
+                let thread_id = self.get_thread_id();
                 if !ack.from_thread(&thread_id) {
                     let problem_report = ProblemReport::create()
                         .set_problem_code(ProblemCode::RequestProcessingError)
@@ -438,8 +438,8 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub fn get_thread_id(&self) -> VcxResult<String> {
-        Ok(self.thread_id.clone())
+    pub fn get_thread_id(&self) -> String {
+        self.thread_id.clone()
     }
 
     fn build_response(

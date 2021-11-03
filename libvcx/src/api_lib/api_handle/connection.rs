@@ -60,7 +60,7 @@ pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
 
 pub fn get_thread_id(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.get_thread_id().map_err(|err| err.into())
+        Ok(connection.get_thread_id())
     })
 }
 

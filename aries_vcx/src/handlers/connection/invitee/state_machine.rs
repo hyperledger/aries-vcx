@@ -277,7 +277,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
+        verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
                 InviteeFullState::Responded((state, response).into())
@@ -288,7 +288,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id()?, &A2AMessage::Ping(ping.clone()))?;
+        verify_thread_id(&self.get_thread_id(), &A2AMessage::Ping(ping.clone()))?;
         let state = match self.state {
             InviteeFullState::Completed(state) => {
                 state.handle_ping(&ping, &self.pairwise_info.pw_vk, self.send_message)?;
@@ -311,7 +311,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id()?, &A2AMessage::PingResponse(ping_response))?;
+        verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
         Ok(self)
     }
 
@@ -385,8 +385,8 @@ impl SmConnectionInvitee {
         Ok(self)
     }
 
-    pub fn get_thread_id(&self) -> VcxResult<String> {
-        Ok(self.thread_id.clone())
+    pub fn get_thread_id(&self) -> String {
+        self.thread_id.clone()
     }
 }
 

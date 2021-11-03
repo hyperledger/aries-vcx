@@ -138,7 +138,7 @@ impl Connection {
         }.into()
     }
 
-    pub fn get_thread_id(&self) -> VcxResult<String> {
+    pub fn get_thread_id(&self) -> String {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 sm_inviter.get_thread_id()
@@ -769,7 +769,7 @@ impl<'de> Deserialize<'de> for Connection {
 
 impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
     fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String) {
-        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id(), self.get_thread_id().unwrap()) // TODO: Use TryInto instead
+        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id(), self.get_thread_id())
     }
 }
 
