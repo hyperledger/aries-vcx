@@ -7,6 +7,7 @@ use crate::handlers::connection::invitee::states::initial::InitialState;
 use crate::handlers::connection::invitee::states::requested::RequestedState;
 use crate::handlers::connection::invitee::states::responded::RespondedState;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -225,6 +226,7 @@ impl SmConnectionInvitee {
 
     fn _send_ack(&self,
                  did_doc: &DidDoc,
+                 request: &Request,
                  response: &SignedResponse,
                  pairwise_info: &PairwiseInfo,
                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> VcxResult<Response> {
@@ -232,6 +234,10 @@ impl SmConnectionInvitee {
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
 
         let response = response.clone().decode(&remote_vk)?;
+
+        if !response.from_thread(&request.id.0) {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
+        }
 
         let message = Ack::create()
             .set_thread_id(&self.thread_id)
@@ -271,6 +277,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id()?, &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
                 InviteeFullState::Responded((state, response).into())
@@ -281,6 +288,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_ping(self, ping: Ping) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id()?, &A2AMessage::Ping(ping.clone()))?;
         let state = match self.state {
             InviteeFullState::Completed(state) => {
                 state.handle_ping(&ping, &self.pairwise_info.pw_vk, self.send_message)?;
@@ -302,7 +310,8 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-    pub fn handle_ping_response(self, _ping_response: PingResponse) -> VcxResult<Self> {
+    pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id()?, &A2AMessage::PingResponse(ping_response))?;
         Ok(self)
     }
 
@@ -342,7 +351,7 @@ impl SmConnectionInvitee {
     pub fn handle_send_ack(self) -> VcxResult<Self> {
         let state = match self.state {
             InviteeFullState::Responded(ref state) => {
-                match self._send_ack(&state.did_doc, &state.response, &self.pairwise_info, self.send_message) {
+                match self._send_ack(&state.did_doc, &state.request, &state.response, &self.pairwise_info, self.send_message) {
                     Ok(response) => InviteeFullState::Completed((state.clone(), response).into()),
                     Err(err) => {
                         let problem_report = ProblemReport::create()
@@ -469,6 +478,29 @@ pub mod test {
 
                 assert_match!(InviteeFullState::Initial(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
+            }
+        }
+
+        mod get_thread_id {
+            use super::*;
+
+            #[test]
+            #[cfg(feature = "general_test")]
+            fn handle_response_fails_with_incorrect_thread_id() {
+                let _setup = SetupMocks::init();
+                let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
+                let mut invitee = invitee_sm();
+
+                invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+
+                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let service_endpoint = String::from("https://example.org/agent");
+                invitee = invitee.handle_connect(routing_keys, service_endpoint).unwrap();
+                assert_match!(InviteeState::Requested, invitee.get_state());
+                invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
+                assert_match!(InviteeState::Responded, invitee.get_state());
+                invitee = invitee.handle_send_ack().unwrap();
+                assert_match!(InviteeState::Initial, invitee.get_state());
             }
         }
 
