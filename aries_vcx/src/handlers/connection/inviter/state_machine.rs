@@ -451,17 +451,15 @@ impl SmConnectionInviter {
         new_service_endpoint: String,
     ) -> VcxResult<SignedResponse> {
         request.connection.did_doc.validate()?;
-        match self.get_invitation() {
-            Some(invite) => verify_thread_id(&invite.get_id()?, &A2AMessage::ConnectionRequest(request.clone()))?,
-            _ => {}
-        };
+        let thread_id = &request.get_thread_id().ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?;
+        verify_thread_id(&thread_id, &A2AMessage::ConnectionRequest(request.clone()))?;
         let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
         Response::create()
             .set_did(new_pairwise_info.pw_did.to_string())
             .set_service_endpoint(new_service_endpoint)
             .set_keys(new_recipient_keys, new_routing_keys)
             .ask_for_ack()
-            .set_thread_id(&request.get_thread_id().ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?)
+            .set_thread_id(&thread_id)
             .encode(&bootstrap_pairwise_info.pw_vk)
     }
 }

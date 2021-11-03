@@ -33,7 +33,7 @@ pub struct SmConnectionInvitee {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviteeFullState {
     Initial(InitialState),
-    Invited(InvitedState),
+    Invited(InvitedState), // TODO: Remove this state
     Requested(RequestedState),
     Responded(RespondedState),
     Completed(CompleteState),
