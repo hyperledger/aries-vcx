@@ -116,6 +116,22 @@ describe('IssuerCredential:', () => {
       const message = await issuerCredential.getCredentialOfferMsg();
       assert(message.length > 0);
     });
+
+    it('throws: missing attr', async () => {
+      const connection = await createConnectionInviterRequested();
+      const [issuerCredential, _data] = await issuerCredentialCreate();
+      const { attr, ...data } = _data;
+      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data as any));
+      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
+    });
+
+    it('throws: invalid credDefHandle', async () => {
+      const connection = await createConnectionInviterRequested();
+      const [issuerCredential, data] = await issuerCredentialCreate();
+      data.credDefHandle = 0;
+      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data));
+      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_DEF_HANDLE);
+    });
   });
 
   describe('sendCredential:', () => {
