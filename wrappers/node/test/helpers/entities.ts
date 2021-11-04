@@ -15,6 +15,7 @@ import {
   IDisclosedProofCreateData,
   IDisclosedProofCreateWithMsgIdData,
   IIssuerCredentialCreateData,
+  IIssuerCredentialOfferSendData,
   IProofCreateData,
   ISchemaCreateData,
   ISchemaLookupData,
@@ -234,15 +235,15 @@ export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialCre
 
 export const issuerCredentialCreate = async (
   _data = dataIssuerCredentialCreate(),
-): Promise<IssuerCredential> => {
+): Promise<[IssuerCredential, IIssuerCredentialOfferSendData]> => {
   const data = await _data;
-  const issuerCredential = await IssuerCredential.create(data);
+  const issuerCredential = await IssuerCredential.create(data.sourceId);
   assert.notEqual(issuerCredential.handle, undefined);
-  assert.equal(issuerCredential.sourceId, data.sourceId);
-  assert.equal(issuerCredential.credDefHandle, data.credDefHandle);
-  assert.equal(issuerCredential.credentialName, data.credentialName);
-  assert.equal(issuerCredential.price, data.price);
-  return issuerCredential;
+  const offer_send_data = {
+    credDefHandle: data.credDefHandle,
+    attr: data.attr
+  }
+  return [issuerCredential, offer_send_data];
 };
 
 export const dataProofCreate = (): IProofCreateData => ({
