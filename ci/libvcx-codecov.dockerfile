@@ -67,4 +67,4 @@ RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so \
 
 USER indy
 
-RUN cargo install grcov
+RUN cargo install grcov --version 0.8.4

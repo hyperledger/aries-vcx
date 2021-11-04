@@ -84,6 +84,7 @@ impl A2AMessage {
             Self::Presentation(presentation) => presentation.from_thread(thread_id),
             // Self::PingResponse(ping_response) => ping_response.from_thread(thread_id),
             Self::ConnectionProblemReport(connection_problem_report) => connection_problem_report.from_thread(thread_id),
+            Self::ConnectionRequest(request) => request.from_thread(thread_id),
             Self::CommonProblemReport(common_problem_report) => common_problem_report.from_thread(thread_id),
             Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
             Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
@@ -339,6 +340,7 @@ pub mod test_a2a_serialization {
             id: Default::default(),
             label: "foobar".to_string(),
             connection: Default::default(),
+            thread: None
         });
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 

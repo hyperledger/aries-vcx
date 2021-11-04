@@ -19,6 +19,7 @@ pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
 {
     "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+    "thread_id": "b5517062-303f-4267-9a29-09bc89497c06",
     "data": {
         "pw_did": "",
         "pw_vk": "",
@@ -95,6 +96,7 @@ pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
 {
     "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+    "thread_id": "b5517062-303f-4267-9a29-09bc89497c06",
     "data": {
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
         "pw_vk": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
@@ -206,6 +208,7 @@ pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
 {
     "version": "1.0",
     "source_id": "alice-670c6360-5c0e-4495-bd25-2ee58c39fc7e",
+    "thread_id": "b5517062-303f-4267-9a29-09bc89497c06",
     "data": {
         "pw_did": "KC6NKcpXcpVnpjL8uKH3tV",
         "pw_vk": "Av4ZDAKgpniTnxLukLQFZ2DbdNqPub8MBxxynCZ5VuFi",
@@ -306,6 +309,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
 {
     "version": "1.0",
     "source_id": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
+    "thread_id": "b5517062-303f-4267-9a29-09bc89497c06",
     "data": {
         "pw_did": "2ZHFFhzA2XtTD6hJqzL7ux",
         "pw_vk": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj",
@@ -359,6 +363,7 @@ pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
 {
   "version": "1.0",
   "source_id": "test_serialize_deserialize",
+  "thread_id": "",
   "data": {
     "pw_did": "",
     "pw_vk": "",

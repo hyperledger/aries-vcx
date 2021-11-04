@@ -48,13 +48,13 @@ impl PairwiseInvitation {
         Self::default()
     }
 
-    pub fn set_label(mut self, label: String) -> Self {
-        self.label = label;
+    pub fn set_label(mut self, label: &str) -> Self {
+        self.label = label.to_string();
         self
     }
 
-    pub fn set_id(mut self, id: String) -> Self {
-        self.id = MessageId(id);
+    pub fn set_id(mut self, id: &str) -> Self {
+        self.id = MessageId(id.to_string());
         self
     }
 
@@ -153,7 +153,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_pairwise_invite_build_works() {
         let invitation: PairwiseInvitation = PairwiseInvitation::default()
-            .set_label(_label())
+            .set_label(&_label())
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());

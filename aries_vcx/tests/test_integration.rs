@@ -1870,27 +1870,27 @@ mod tests {
         consumer_to_institution.connect().unwrap();
         consumer_to_institution.update_state().unwrap();
 
-        let thread_id = consumer_to_institution.get_thread_id().unwrap();
+        let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
-        assert_eq!(thread_id, institution_to_consumer.get_thread_id().unwrap());
+        assert_eq!(thread_id, institution_to_consumer.get_thread_id());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().unwrap();
         consumer_to_institution.update_state().unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
-        assert_eq!(thread_id, consumer_to_institution.get_thread_id().unwrap());
+        assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().unwrap();
         thread::sleep(Duration::from_millis(500));
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
-        assert_eq!(thread_id, consumer_to_institution.get_thread_id().unwrap());
+        assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         (consumer_to_institution, institution_to_consumer)
     }
@@ -1900,7 +1900,7 @@ mod tests {
         thread::sleep(Duration::from_millis(500));
         let mut conn_requests = institution.agent.download_connection_requests(None).unwrap();
         assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_connection_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
+        let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent).unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());

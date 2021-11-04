@@ -302,7 +302,7 @@ impl From<DidDoc> for PairwiseInvitation {
         let (recipient_keys, routing_keys) = did_doc.resolve_keys();
 
         PairwiseInvitation::create()
-            .set_id(did_doc.id.clone())
+            .set_id(&did_doc.id)
             .set_service_endpoint(did_doc.get_endpoint())
             .set_recipient_keys(recipient_keys)
             .set_routing_keys(routing_keys)
