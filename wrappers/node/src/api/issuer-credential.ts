@@ -4,6 +4,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, IssuerStateType } from './common';
 import { Connection } from './connection';
+import { CredentialDef } from './credential-def';
 import { VCXBaseWithState } from './vcx-base-with-state';
 import { PaymentManager } from './vcx-payment-txn';
 
@@ -70,7 +71,8 @@ export interface IIssuerCredentialCreateData {
 }
 
 export interface IIssuerCredentialOfferSendData {
-  credDefHandle: number;
+  connection: Connection;
+  credDef: CredentialDef;
   attr: {
     [index: string]: string;
   };
@@ -188,16 +190,16 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
    * await issuerCredential.sendOffer(connection)
    * ```
    */
-  public async sendOffer(connection: Connection, data: IIssuerCredentialOfferSendData): Promise<void> {
+  public async sendOffer({ connection, credDef, attr }: IIssuerCredentialOfferSendData): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_issuer_send_credential_offer(
             0,
             this.handle,
-            data.credDefHandle,
+            credDef.handle,
             connection.handle,
-            JSON.stringify(data.attr),
+            JSON.stringify(attr),
             cb,
           );
           if (rc) {

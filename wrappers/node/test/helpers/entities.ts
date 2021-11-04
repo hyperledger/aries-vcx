@@ -205,45 +205,27 @@ export const disclosedProofCreateWithMsgId = async (
   return disclousedProof;
 };
 
-export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialCreateData> => {
+export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialOfferSendData> => {
+  const connection = await createConnectionInviterRequested();
   const credDef = await credentialDefCreate();
   return {
+    connection,
     attr: {
       key1: 'value1',
       key2: 'value2',
       key3: 'value3',
     },
-    credDefHandle: Number(credDef.handle),
-    credentialName: 'Credential Name',
-    issuerDid: 'V4SGRU86Z58d6TV7PBUe6f',
-    price: '1',
-    sourceId: 'testCredentialSourceId',
+    credDef,
   };
 };
-
-// export const dataIssuerCredentialCreate = (): IIssuerCredentialCreateData => ({
-//   attr: {
-//     key1: 'value1',
-//     key2: 'value2',
-//     key3: 'value3'
-//   },
-//   credDefHandle: 1,
-//   credentialName: 'Credential Name',
-//   price: '1',
-//   sourceId: 'testCredentialSourceId'
-// })
 
 export const issuerCredentialCreate = async (
   _data = dataIssuerCredentialCreate(),
 ): Promise<[IssuerCredential, IIssuerCredentialOfferSendData]> => {
   const data = await _data;
-  const issuerCredential = await IssuerCredential.create(data.sourceId);
+  const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
   assert.notEqual(issuerCredential.handle, undefined);
-  const offer_send_data = {
-    credDefHandle: data.credDefHandle,
-    attr: data.attr
-  }
-  return [issuerCredential, offer_send_data];
+  return [issuerCredential, data];
 };
 
 export const dataProofCreate = (): IProofCreateData => ({

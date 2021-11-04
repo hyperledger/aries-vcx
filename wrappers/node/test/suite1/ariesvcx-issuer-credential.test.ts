@@ -80,57 +80,52 @@ describe('IssuerCredential:', () => {
   describe('updateState:', () => {
     it(`returns state offer sent`, async () => {
       const [issuerCredential, data] = await issuerCredentialCreate();
-      const connection = await createConnectionInviterRequested();
-      await issuerCredential.sendOffer(connection, data);
+      await issuerCredential.sendOffer(data);
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
   });
 
   describe('sendOffer:', () => {
     it('success', async () => {
-      const connection = await createConnectionInviterRequested();
       const [issuerCredential, data] = await issuerCredentialCreate();
-      await issuerCredential.sendOffer(connection, data);
+      await issuerCredential.sendOffer(data);
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
     it('throws: not initialized', async () => {
-      const connection = await createConnectionInviterRequested();
       const [_issuerCredential, data] = await issuerCredentialCreate();
       const issuerCredential = new IssuerCredential('');
-      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data));
+      const error = await shouldThrow(() => issuerCredential.sendOffer(data));
       assert.equal(error.vcxCode, VCXCode.INVALID_ISSUER_CREDENTIAL_HANDLE);
     });
 
     it('throws: connection not initialized', async () => {
       const connection = new (Connection as any)();
       const [issuerCredential, data] = await issuerCredentialCreate();
-      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data));
+      data.connection = connection;
+      const error = await shouldThrow(() => issuerCredential.sendOffer(data));
       assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
     });
 
     // "vcx_issuer_get_credential_offer_msg" not implemented for Aries
     it.skip('can generate the offer message', async () => {
-      await createConnectionInviterRequested();
       const [issuerCredential, data] = await issuerCredentialCreate();
       const message = await issuerCredential.getCredentialOfferMsg();
       assert(message.length > 0);
     });
 
     it('throws: missing attr', async () => {
-      const connection = await createConnectionInviterRequested();
       const [issuerCredential, _data] = await issuerCredentialCreate();
       const { attr, ...data } = _data;
-      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data as any));
+      const error = await shouldThrow(() => issuerCredential.sendOffer(data as any));
       assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
     });
 
     it('throws: invalid credDefHandle', async () => {
-      const connection = await createConnectionInviterRequested();
-      const [issuerCredential, data] = await issuerCredentialCreate();
-      data.credDefHandle = 0;
-      const error = await shouldThrow(() => issuerCredential.sendOffer(connection, data));
-      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_DEF_HANDLE);
+      const [issuerCredential, _data] = await issuerCredentialCreate();
+      const { credDef, ...data } = _data;
+      const error = await shouldThrow(() => issuerCredential.sendOffer(data as any));
+      assert.equal(error.vcxCode, VCXCode.UNKNOWN_ERROR);
     });
   });
 
@@ -152,10 +147,9 @@ describe('IssuerCredential:', () => {
 
     // todo: recorder this test/behaviour in 4.0, issuerCredential is not throwing, only prints warning
     it.skip('throws: no request', async () => {
-      const connection = await createConnectionInviterRequested();
       const [issuerCredential, data] = await issuerCredentialCreate();
-      await issuerCredential.sendOffer(connection, data);
-      const error = await shouldThrow(() => issuerCredential.sendCredential(connection));
+      await issuerCredential.sendOffer(data);
+      const error = await shouldThrow(() => issuerCredential.sendCredential(data.connection));
       assert.equal(error.vcxCode, VCXCode.NOT_READY);
     });
   });
