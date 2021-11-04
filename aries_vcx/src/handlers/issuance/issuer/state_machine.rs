@@ -253,7 +253,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    (IssuerFullState::OfferSent((offer_info.credential_json, cred_offer, offer_info.rev_reg_id, offer_info.tails_file).into()), thread_id)
+                    (IssuerFullState::OfferSent((cred_offer, offer_info).into()), thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in this state");

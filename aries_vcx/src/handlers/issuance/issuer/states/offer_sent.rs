@@ -5,7 +5,6 @@ use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
 
-// TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {
     pub offer: String,

@@ -23,14 +23,14 @@ impl ProposalReceivedState {
     }
 }
 
-impl From<(String, String, Option<String>, Option<String>)> for OfferSentState {
-    fn from((cred_data, offer, rev_reg_id, tails_file): (String, String, Option<String>, Option<String>)) -> Self {
+impl From<(String, OfferInfo)> for OfferSentState {
+    fn from((offer, offer_info): (String, OfferInfo)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,
-            cred_data,
-            rev_reg_id,
-            tails_file,
+            cred_data: offer_info.credential_json,
+            rev_reg_id: offer_info.rev_reg_id,
+            tails_file: offer_info.tails_file,
         }
     }
 }
