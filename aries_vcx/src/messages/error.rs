@@ -55,7 +55,7 @@ impl ProblemReport {
     }
 }
 
-threadlike!(ProblemReport);
+threadlike_optional!(ProblemReport);
 a2a_message!(ProblemReport, CommonProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -116,7 +116,7 @@ pub mod tests {
     pub fn _problem_report() -> ProblemReport {
         ProblemReport {
             id: MessageId::id(),
-            thread: _thread(),
+            thread: Some(_thread()),
             description: Some(Description { en: None, code: _code() }),
             who_retries: None,
             tracking_uri: None,

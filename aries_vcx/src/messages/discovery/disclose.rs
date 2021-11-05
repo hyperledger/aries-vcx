@@ -19,7 +19,7 @@ pub struct ProtocolDescriptor {
 }
 
 
-threadlike!(Disclose);
+threadlike_optional!(Disclose);
 
 impl Disclose {
     pub fn create() -> Disclose {
@@ -54,7 +54,7 @@ pub mod tests {
         Disclose {
             id: MessageId::id(),
             protocols: vec![_protocol_descriptor()],
-            thread: _thread(),
+            thread: Some(_thread()),
         }
     }
 

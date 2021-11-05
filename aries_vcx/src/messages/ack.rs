@@ -7,7 +7,7 @@ pub struct Ack {
     pub id: MessageId,
     status: AckStatus,
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>,
+    pub thread: Thread,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

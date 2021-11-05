@@ -9,6 +9,7 @@ pub struct Request {
     pub label: String,
     pub connection: ConnectionData,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "~thread")]
     pub thread: Option<Thread>
 }
 
@@ -48,7 +49,7 @@ impl Request {
 }
 
 a2a_message!(Request, ConnectionRequest);
-threadlike!(Request);
+threadlike_optional!(Request);
 
 #[cfg(test)]
 pub mod tests {

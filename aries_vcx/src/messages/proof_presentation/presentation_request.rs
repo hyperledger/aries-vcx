@@ -49,7 +49,7 @@ impl PresentationRequest {
     }
 }
 
-threadlike!(PresentationRequest);
+threadlike_optional!(PresentationRequest);
 a2a_message!(PresentationRequest);
 
 pub type PresentationRequestData = ProofRequestData;
@@ -79,8 +79,8 @@ pub mod test_utils {
         _presentation_request().id.0
     }
 
-    pub fn _thread() -> Option<Thread> {
-        Some(Thread::new().set_thid(_presentation_request().id.0))
+    pub fn _thread() -> Thread {
+        Thread::new().set_thid(_presentation_request().id.0)
     }
 
     pub fn _presentation_request() -> PresentationRequest {

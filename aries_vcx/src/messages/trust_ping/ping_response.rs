@@ -8,7 +8,7 @@ pub struct PingResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>,
+    pub thread: Thread,
 }
 
 impl PingResponse {

@@ -49,7 +49,7 @@ impl CredentialProposal {
     }
 }
 
-threadlike!(CredentialProposal);
+threadlike_optional!(CredentialProposal);
 a2a_message!(CredentialProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -130,7 +130,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             credential_proposal: _credential_preview_data(),
             schema_id: _schema_id(),
-            thread: thread(),
+            thread: Some(thread()),
             cred_def_id: _cred_def_id(),
         }
     }

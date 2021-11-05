@@ -380,7 +380,7 @@ pub mod test_a2a_serialization {
         let a2a_msg: A2AMessage = serde_json::from_str(&serialized).unwrap();
         if let A2AMessage::Ack(ack) = &a2a_msg {
             assert_eq!(ack.id, MessageId("testid".into()));
-            assert_eq!(ack.thread.as_ref().unwrap().sender_order, 0);
+            assert_eq!(ack.thread.sender_order, 0);
         } else {
             panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
         }
@@ -416,7 +416,7 @@ pub mod test_a2a_serialization {
         let a2a_msg: A2AMessage = serde_json::from_str(msg).unwrap();
         if let A2AMessage::Ack(ack) = &a2a_msg {
             assert_eq!(ack.id, MessageId("testid".into()));
-            assert_eq!(ack.thread.as_ref().unwrap().sender_order, 0);
+            assert_eq!(ack.thread.sender_order, 0);
         } else {
             panic!("The message was expected to be deserialized as Ack, but was not.")
         }

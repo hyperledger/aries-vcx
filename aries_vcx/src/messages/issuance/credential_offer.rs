@@ -69,7 +69,7 @@ impl OfferInfo {
     }
 }
 
-threadlike!(CredentialOffer);
+threadlike_optional!(CredentialOffer);
 a2a_message!(CredentialOffer);
 
 #[cfg(feature = "test_utils")]
@@ -99,16 +99,16 @@ pub mod test_utils {
             .add_value(name, value, MimeType::Plain).unwrap()
     }
 
-    pub fn thread() -> Option<Thread> {
-        Some(Thread::new().set_thid(_credential_offer().id.0))
+    pub fn thread() -> Thread {
+        Thread::new().set_thid(_credential_offer().id.0)
     }
 
-    pub fn thread_1() -> Option<Thread> {
-        Some(Thread::new().set_thid("testid_1".into()))
+    pub fn thread_1() -> Thread {
+        Thread::new().set_thid("testid_1".into())
     }
 
     pub fn thread_id() -> String {
-        thread().unwrap().thid.unwrap()
+        thread().thid.unwrap()
     }
 
     pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
@@ -130,7 +130,7 @@ pub mod test_utils {
             comment: _comment(),
             credential_preview: _preview_data(),
             offers_attach: attachment,
-            thread: _thread(),
+            thread: Some(_thread()),
         }
     }
 

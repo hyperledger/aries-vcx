@@ -13,7 +13,7 @@ pub struct Presentation {
     #[serde(rename = "presentations~attach")]
     pub presentations_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>,
+    pub thread: Thread,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,

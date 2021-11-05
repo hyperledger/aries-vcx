@@ -12,6 +12,7 @@ pub struct PresentationProposal {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
 }
@@ -102,7 +103,7 @@ impl PresentationProposal {
     }
 }
 
-threadlike!(PresentationProposal);
+threadlike_optional!(PresentationProposal);
 a2a_message!(PresentationProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -207,7 +208,7 @@ pub mod test_utils {
         PresentationProposal {
             id: MessageId::id(),
             comment: Some(_comment()),
-            thread: _thread(),
+            thread: Some(_thread()),
             presentation_proposal: _presentation_preview(),
         }
     }
