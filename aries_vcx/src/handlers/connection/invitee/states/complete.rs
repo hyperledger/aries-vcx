@@ -15,27 +15,26 @@ pub struct CompleteState {
     pub did_doc: DidDoc,
     pub bootstrap_did_doc: DidDoc,
     pub protocols: Option<Vec<ProtocolDescriptor>>,
-    pub thread_id: Option<String>
 }
 
 impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
     fn from((state, protocols): (CompleteState, Vec<ProtocolDescriptor>)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from CompleteState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.bootstrap_did_doc, did_doc: state.did_doc, thread_id: state.thread_id, protocols: Some(protocols) }
+        CompleteState { bootstrap_did_doc: state.bootstrap_did_doc, did_doc: state.did_doc, protocols: Some(protocols) }
     }
 }
 
 impl From<(RequestedState, Response)> for CompleteState {
     fn from((state, response): (RequestedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, thread_id: Some(response.get_thread_id()), protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, protocols: None }
     }
 }
 
 impl From<(RespondedState, Response)> for CompleteState {
     fn from((state, response): (RespondedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, thread_id: Some(response.get_thread_id()), protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, protocols: None }
     }
 }
 

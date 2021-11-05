@@ -284,8 +284,7 @@ pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
                         }
                     ]
                 },
-                "protocols": null,
-                "thread_id": "b5517062-303f-4267-9a29-09bc89497c06"
+                "protocols": null
             }
         }
     }

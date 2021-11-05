@@ -33,7 +33,7 @@ pub struct SmConnectionInvitee {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviteeFullState {
     Initial(InitialState),
-    Invited(InvitedState), // TODO: Remove this state
+    Invited(InvitedState),
     Requested(RequestedState),
     Responded(RespondedState),
     Completed(CompleteState),
@@ -368,13 +368,13 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+    pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(state) => {
-                InviteeFullState::Initial((state, problem_report).into())
+            InviteeFullState::Requested(_state) => {
+                InviteeFullState::Initial(InitialState {})
             }
-            InviteeFullState::Invited(state) => {
-                InviteeFullState::Initial((state, problem_report).into())
+            InviteeFullState::Invited(_state) => {
+                InviteeFullState::Initial(InitialState {})
             }
             _ => self.state.clone() 
         };
