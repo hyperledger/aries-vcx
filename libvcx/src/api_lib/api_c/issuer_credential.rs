@@ -81,44 +81,16 @@ use crate::error::prelude::*;
 #[allow(unused_variables, unused_mut)]
 pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
                                            source_id: *const c_char,
-                                           cred_def_handle: u32,
-                                           issuer_did: *const c_char,
-                                           credential_data: *const c_char,
-                                           credential_name: *const c_char,
-                                           price: *const c_char,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credential_handle: u32)>) -> u32 {
     info!("vcx_issuer_create_credential >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credential_data, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credential_name, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(price, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(issuer_did, VcxErrorKind::InvalidOption);
 
-    let price: u64 = match price.parse::<u64>() {
-        Ok(x) => x,
-        Err(err) => return VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot parse price: {}", err)).into(),
-    };
-
-    if !credential_def::is_valid_handle(cred_def_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
-    }
-
-    if !credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
-        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the Published State yet").into();
-    }
-
-    trace!("vcx_issuer_create_credential(command_handle: {}, source_id: {}, cred_def_handle: {}, issuer_did: {}, credential_data: {}, credential_name: {})",
-           command_handle,
-           source_id,
-           cred_def_handle,
-           issuer_did,
-           secret!(&credential_data),
-           credential_name);
+    trace!("vcx_issuer_create_credential(command_handle: {}, source_id: {})", command_handle, source_id);
 
     execute(move || {
-        let (rc, handle) = match issuer_credential::issuer_credential_create(cred_def_handle, source_id, issuer_did, credential_name, credential_data, price) {
+        let (rc, handle) = match issuer_credential::issuer_credential_create(source_id) {
             Ok(x) => {
                 trace!("vcx_issuer_create_credential_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, issuer_credential::get_source_id(x).unwrap_or_default());
@@ -155,11 +127,14 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
                                                credential_handle: u32,
+                                               cred_def_handle: u32,
                                                connection_handle: u32,
+                                               credential_data: *const c_char,
                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     info!("vcx_issuer_send_credential_offer >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(credential_data, VcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_send_credential_offer(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
@@ -173,8 +148,16 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
+    if !credential_def::is_valid_handle(cred_def_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+    }
+
+    if !credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the published state").into();
+    }
+
     execute(move || {
-        let err = match issuer_credential::send_credential_offer(credential_handle, connection_handle, None) {
+        let err = match issuer_credential::send_credential_offer(credential_handle, cred_def_handle, connection_handle, credential_data, None) {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -961,11 +944,6 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_issuer_create_credential(cb.command_handle,
                                               CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                              credential_def::tests::create_cred_def_fake(),
-                                              CString::new(DEFAULT_DID).unwrap().into_raw(),
-                                              CString::new(DEFAULT_ATTR).unwrap().into_raw(),
-                                              CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                              CString::new("1").unwrap().into_raw(),
                                               Some(cb.get_callback()));
         if rc != error::SUCCESS.code_num {
             return Err(rc);
@@ -989,14 +967,9 @@ pub mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_issuer_create_credential(cb.command_handle,
-                                                CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                                credential_def::tests::create_cred_def_fake(),
                                                 ptr::null(),
-                                                ptr::null(),
-                                                CString::new(DEFAULT_CREDENTIAL_NAME).unwrap().into_raw(),
-                                                CString::new("1").unwrap().into_raw(),
                                                 Some(cb.get_callback())),
-                   error::INVALID_OPTION.code_num);
+                  error::INVALID_OPTION.code_num);
         // todo: Timeouting 15 seconds in test, could we do this better?
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
@@ -1038,9 +1011,11 @@ pub mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
                                                     credential_handle,
+                                                    credential_def::tests::create_cred_def_fake(),
                                                     connection_handle,
+                                                    CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
+                                                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1064,9 +1039,11 @@ pub mod tests {
 
         assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
                                                     handle,
+                                                    credential_def::tests::create_cred_def_fake(),
                                                     connection_handle,
+                                                    CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
+                                                    error::SUCCESS.code_num);
 
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1180,7 +1157,7 @@ pub mod tests {
                                                    Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, u32::from(IssuerState::OfferSet));
+        assert_eq!(state, u32::from(IssuerState::Initial));
     }
 
     #[test]

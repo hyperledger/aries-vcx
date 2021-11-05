@@ -314,11 +314,6 @@ export interface IFFIEntryPoint {
   vcx_issuer_create_credential: (
     commandId: number,
     sourceId: string,
-    credDefHandle: number,
-    issuerDid: string | null,
-    attr: string,
-    credentialName: string,
-    price: string,
     cb: ICbRef,
   ) => number;
   vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -338,7 +333,9 @@ export interface IFFIEntryPoint {
   vcx_issuer_send_credential_offer: (
     commandId: number,
     credentialHandle: number,
+    credentialDefHandle: number,
     connectionHandle: number,
+    credentialData: string,
     cb: ICbRef,
   ) => number;
   vcx_issuer_get_credential_offer_msg: (
@@ -839,11 +836,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [
       FFI_COMMAND_HANDLE,
       FFI_SOURCE_ID,
-      FFI_CREDENTIALDEF_HANDLE,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
-      FFI_STRING_DATA,
       FFI_CALLBACK_PTR,
     ],
   ],
@@ -865,7 +857,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   ],
   vcx_issuer_send_credential_offer: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_issuer_get_credential_offer_msg: [
     FFI_ERROR_CODE,

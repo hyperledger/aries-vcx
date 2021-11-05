@@ -15,6 +15,7 @@ import {
   IDisclosedProofCreateData,
   IDisclosedProofCreateWithMsgIdData,
   IIssuerCredentialCreateData,
+  IIssuerCredentialOfferSendData,
   IProofCreateData,
   ISchemaCreateData,
   ISchemaLookupData,
@@ -204,45 +205,27 @@ export const disclosedProofCreateWithMsgId = async (
   return disclousedProof;
 };
 
-export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialCreateData> => {
+export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialOfferSendData> => {
+  const connection = await createConnectionInviterRequested();
   const credDef = await credentialDefCreate();
   return {
+    connection,
     attr: {
       key1: 'value1',
       key2: 'value2',
       key3: 'value3',
     },
-    credDefHandle: Number(credDef.handle),
-    credentialName: 'Credential Name',
-    issuerDid: 'V4SGRU86Z58d6TV7PBUe6f',
-    price: '1',
-    sourceId: 'testCredentialSourceId',
+    credDef,
   };
 };
 
-// export const dataIssuerCredentialCreate = (): IIssuerCredentialCreateData => ({
-//   attr: {
-//     key1: 'value1',
-//     key2: 'value2',
-//     key3: 'value3'
-//   },
-//   credDefHandle: 1,
-//   credentialName: 'Credential Name',
-//   price: '1',
-//   sourceId: 'testCredentialSourceId'
-// })
-
 export const issuerCredentialCreate = async (
   _data = dataIssuerCredentialCreate(),
-): Promise<IssuerCredential> => {
+): Promise<[IssuerCredential, IIssuerCredentialOfferSendData]> => {
   const data = await _data;
-  const issuerCredential = await IssuerCredential.create(data);
+  const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
   assert.notEqual(issuerCredential.handle, undefined);
-  assert.equal(issuerCredential.sourceId, data.sourceId);
-  assert.equal(issuerCredential.credDefHandle, data.credDefHandle);
-  assert.equal(issuerCredential.credentialName, data.credentialName);
-  assert.equal(issuerCredential.price, data.price);
-  return issuerCredential;
+  return [issuerCredential, data];
 };
 
 export const dataProofCreate = (): IProofCreateData => ({

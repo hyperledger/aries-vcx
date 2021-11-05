@@ -263,11 +263,11 @@ public abstract class LibVcx {
          * Used for offering and managing a credential with an identity owner.
          */
 
-        /** Creates a credential object from the specified credentialdef handle. Populates a handle the new credential. */
-        public int vcx_issuer_create_credential(int command_handle, String source_id, int cred_def_handle, String issuer_did, String credential_data, String credential_name, String price, Callback cb);
+        /** Creates a credential objec. */
+        public int vcx_issuer_create_credential(int command_handle, String source_id, Callback cb);
 
         /** Asynchronously sends the credential offer to the connection. */
-        public int vcx_issuer_send_credential_offer(int command_handle, int credential_handle, int connection_handle, Callback cb);
+        public int vcx_issuer_send_credential_offer(int command_handle, int credential_handle, int credential_def_handle, int connection_handle, String credential_data, Callback cb);
 
         /** Get the credential offer message that can be sent to the specified connection */
         public int vcx_issuer_get_credential_offer_msg(int command_handle, int credential_handle, Callback cb);

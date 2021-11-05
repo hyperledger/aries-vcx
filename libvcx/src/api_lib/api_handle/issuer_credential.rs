@@ -5,8 +5,9 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig};
+use crate::aries_vcx::handlers::issuance::issuer::issuer::Issuer;
 use crate::aries_vcx::messages::a2a::A2AMessage;
+use crate::aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use crate::error::prelude::*;
 
 lazy_static! {
@@ -20,21 +21,8 @@ enum IssuerCredentials {
     V3(Issuer),
 }
 
-pub fn issuer_credential_create(cred_def_handle: u32,
-                                source_id: String,
-                                issuer_did: String,
-                                credential_name: String,
-                                credential_data: String,
-                                price: u64) -> VcxResult<u32> {
-    trace!("issuer_credential_create >>> cred_def_handle: {}, source_id: {}, issuer_did: {}, credential_name: {}, credential_data: {}, price: {}",
-           cred_def_handle, source_id, issuer_did, credential_name, secret!(&credential_data), price);
-    let issuer_config = IssuerConfig {
-        cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
-        rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
-        tails_file: credential_def::get_tails_file(cred_def_handle)?,
-    };
-    let issuer = Issuer::create_from_offer(&source_id, &issuer_config, &credential_data)?;
-    ISSUER_CREDENTIAL_MAP.add(issuer)
+pub fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
+    ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
 pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
@@ -105,9 +93,19 @@ pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)>
     })
 }
 
-pub fn send_credential_offer(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
+pub fn send_credential_offer(handle: u32,
+                             cred_def_handle: u32,
+                             connection_handle: u32,
+                             credential_json: String,
+                             comment: Option<String>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
-        credential.send_credential_offer(connection::send_message_closure(connection_handle)?, comment.as_deref())?;
+        let offer_info = OfferInfo {
+            credential_json: credential_json.clone(),
+            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+            rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
+            tails_file: credential_def::get_tails_file(cred_def_handle)?,
+        };
+        credential.send_credential_offer(offer_info, comment.as_deref(), connection::send_message_closure(connection_handle)?)?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
@@ -206,12 +204,11 @@ pub mod tests {
     }
 
     fn _issuer_credential_create() -> u32 {
-        issuer_credential_create(create_cred_def_fake(),
-                                 "1".to_string(),
-                                 "8XFh8yBzrpJQmNyZzgoTqB".to_owned(),
-                                 "credential_name".to_string(),
-                                 "{\"attr\":\"value\"}".to_owned(),
-                                 1).unwrap()
+        issuer_credential_create("1".to_string()).unwrap()
+    }
+
+    fn _cred_json() -> String {
+        "{\"attr\":\"value\"}".to_string()
     }
 
     #[test]
@@ -242,7 +239,7 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -264,16 +261,16 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested();
 
         let handle = _issuer_credential_create();
-        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSet));
+        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let res = send_credential_offer(handle, connection_handle, None).unwrap_err();
+        let res = send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidState);
-        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSet));
+        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        assert_eq!(send_credential_offer(handle, connection_handle, None).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -305,7 +302,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).unwrap();
@@ -320,7 +317,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, handle_conn, None).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message

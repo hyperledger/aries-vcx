@@ -27,30 +27,15 @@ public class IssuerApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> issuerCreateCredential(String sourceId,
-                                                                    int credentialDefHandle,
-                                                                    String issuerId,
-                                                                    String credentialData,
-                                                                    String credentialName,
-                                                                    long price) throws VcxException {
+    public static CompletableFuture<Integer> issuerCreateCredential(String sourceId) throws VcxException {
         ParamGuard.notNullOrWhiteSpace(sourceId, "sourceId");
-        ParamGuard.notNullOrWhiteSpace(credentialData, "credentialData");
-        ParamGuard.notNullOrWhiteSpace(credentialName, "credentialName");
 
-        logger.debug("issuerCreateCredential() called with: sourceId = [" + sourceId + "], credentialDefHandle = [" + credentialDefHandle + "], issuerId = [" + issuerId + "], credentialData = [" + credentialData + "], credentialName = [" + credentialName + "], price = [" + price + "]");
-        //TODO: Check for more mandatory params in vcx to add in PamaGuard
+        logger.debug("issuerCreateCredential() called with: sourceId = [" + sourceId + "]");
         CompletableFuture<Integer> future = new CompletableFuture<>();
         int issue = addFuture(future);
 
-        int result = LibVcx.api.vcx_issuer_create_credential(
-                issue,
-                sourceId,
-                credentialDefHandle,
-                issuerId,
-                credentialData,
-                credentialName,
-                String.valueOf(price),
-                issuerCreateCredentialCB);
+        int result = LibVcx.api.vcx_issuer_create_credential(issue, sourceId, issuerCreateCredentialCB);
+
         checkResult(result);
         return future;
     }
@@ -72,17 +57,23 @@ public class IssuerApi extends VcxJava.API {
     };
 
     public static CompletableFuture<Integer> issuerSendCredentialOffer(int credentialHandle,
-                                                                       int connectionHandle) throws VcxException {
+                                                                       int credentialDefHandle,
+                                                                       int connectionHandle,
+                                                                       String credentialData) throws VcxException {
         ParamGuard.notNull(credentialHandle, "credentialHandle");
+        ParamGuard.notNull(credentialDefHandle, "credentialDefHandle");
         ParamGuard.notNull(connectionHandle, "connectionHandle");
-        logger.debug("issuerSendcredentialOffer() called with: credentialOffer = [" + credentialHandle + "], connectionHandle = [" + connectionHandle + "]");
+        ParamGuard.notNull(connectionHandle, "credentialData");
+        logger.debug("issuerSendcredentialOffer() called with: credentialOffer = [" + credentialHandle + "], credentialDefHandle = [" + credentialDefHandle + "], connectionHandle = [" + connectionHandle + "], credentialData = [***]");
         CompletableFuture<Integer> future = new CompletableFuture<>();
         int issue = addFuture(future);
 
         int result = LibVcx.api.vcx_issuer_send_credential_offer(
                 issue,
                 credentialHandle,
+                credentialDefHandle,
                 connectionHandle,
+                credentialData,
                 issuerSendCredentialOfferCB
         );
         checkResult(result);

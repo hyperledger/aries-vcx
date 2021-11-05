@@ -17,11 +17,12 @@ pub mod test {
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::credential_def::CredentialDef;
-    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig as AriesIssuerConfig, IssuerState};
+    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::schema::schema::Schema;
     use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+    use aries_vcx::messages::issuance::credential_offer::OfferInfo;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
@@ -250,20 +251,21 @@ pub mod test {
         pub fn offer_credential(&mut self) {
             self.activate().unwrap();
 
-            let credential_data = json!({
+            let credential_json = json!({
                 "name": "alice",
                 "date": "05-2018",
                 "degree": "maths",
                 "empty_param": ""
             }).to_string();
 
-            let issuer_config = AriesIssuerConfig {
+            let offer_info = OfferInfo {
+                credential_json,
                 cred_def_id: self.cred_def.get_cred_def_id(),
                 rev_reg_id: self.cred_def.get_rev_reg_id(),
                 tails_file: self.cred_def.get_tails_file(),
             };
-            self.issuer_credential = Issuer::create_from_offer("alice_degree", &issuer_config, &credential_data).unwrap();
-            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.issuer_credential = Issuer::create("alice_degree").unwrap();
+            self.issuer_credential.send_credential_offer(offer_info, None, self.connection.send_message_closure().unwrap()).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }

@@ -9,16 +9,13 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     const connection = await loadConnection(connectionId)
     const credDef = await loadCredDef(credDefId)
     logger.debug('Building issuer credential')
-    const issuerCred = await IssuerCredential.create({
-      attr: schemaAttrs,
-      sourceId: 'alice_degree',
-      credDefHandle: credDef.handle,
-      credentialName: 'cred',
-      price: '0',
-      issuerDid
-    })
+    const issuerCred = await IssuerCredential.create('alice_degree')
     logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
-    await issuerCred.sendOffer(connection)
+    await issuerCred.sendOffer({
+      connection,
+      credDef,
+      attr: schemaAttrs
+    })
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
