@@ -28,14 +28,14 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
 impl From<(RequestedState, Response)> for CompleteState {
     fn from((state, response): (RequestedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.connection.did_doc, thread_id: response.thread.thid, protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, thread_id: Some(response.get_thread_id()), protocols: None }
     }
 }
 
 impl From<(RespondedState, Response)> for CompleteState {
     fn from((state, response): (RespondedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.connection.did_doc, thread_id: response.thread.thid, protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, thread_id: Some(response.get_thread_id()), protocols: None }
     }
 }
 
@@ -84,7 +84,7 @@ impl CompleteState {
 
         let disclose = Disclose::create()
             .set_protocols(protocols)
-            .set_thread_id(query.id.0.clone());
+            .set_thread_id(&query.id.0.clone());
 
         send_message(pw_vk, &self.did_doc, &disclose.to_a2a_message())
     }

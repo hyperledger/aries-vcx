@@ -16,7 +16,7 @@ pub struct CredentialOffer {
     pub offers_attach: Attachments,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>, // TODO: Make mandatory
+    pub thread: Option<Thread>,
 }
 
 impl CredentialOffer {
@@ -48,14 +48,6 @@ impl CredentialOffer {
         self.credential_preview = self.credential_preview.add_value(name, value, mime_type)?;
         Ok(self)
     }
-
-    pub fn set_parent_thread_id(mut self, id: &str) -> Self {
-        self.thread = match self.thread {
-            Some(thread) => Some(thread.set_pthid(id.to_string())),
-            None => Some(Thread::new().set_pthid(id.to_string()))
-        };
-        self
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -77,7 +69,7 @@ impl OfferInfo {
     }
 }
 
-threadlike_optional!(CredentialOffer);
+threadlike!(CredentialOffer);
 a2a_message!(CredentialOffer);
 
 #[cfg(feature = "test_utils")]
@@ -107,16 +99,16 @@ pub mod test_utils {
             .add_value(name, value, MimeType::Plain).unwrap()
     }
 
-    pub fn thread() -> Thread {
-        Thread::new().set_thid(_credential_offer().id.0)
+    pub fn thread() -> Option<Thread> {
+        Some(Thread::new().set_thid(_credential_offer().id.0))
     }
 
-    pub fn thread_1() -> Thread {
-        Thread::new().set_thid("testid_1".into())
+    pub fn thread_1() -> Option<Thread> {
+        Some(Thread::new().set_thid("testid_1".into()))
     }
 
     pub fn thread_id() -> String {
-        thread().thid.unwrap()
+        thread().unwrap().thid.unwrap()
     }
 
     pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
@@ -138,7 +130,7 @@ pub mod test_utils {
             comment: _comment(),
             credential_preview: _preview_data(),
             offers_attach: attachment,
-            thread: Some(_thread()),
+            thread: _thread(),
         }
     }
 

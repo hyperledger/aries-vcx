@@ -15,7 +15,7 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub localization: Option<Localization>,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

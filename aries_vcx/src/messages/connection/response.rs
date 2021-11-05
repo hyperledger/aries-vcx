@@ -14,12 +14,12 @@ use crate::messages::thread::Thread;
 pub struct Response {
     #[serde(rename = "@id")]
     pub id: MessageId,
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
     pub connection: ConnectionData,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~thread")]
+    pub thread: Option<Thread>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -35,7 +35,7 @@ pub struct SignedResponse {
     #[serde(rename = "@id")]
     pub id: MessageId,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
     #[serde(rename = "connection~sig")]
     pub connection_sig: ConnectionSignature,
     #[serde(rename = "~please_ack")]
@@ -108,6 +108,7 @@ impl Response {
 
 please_ack!(Response);
 threadlike!(Response);
+threadlike!(SignedResponse);
 
 impl SignedResponse {
     pub fn decode(self, key: &str) -> VcxResult<Response> {
@@ -164,16 +165,16 @@ pub mod test_utils {
         String::from("CnEDk9HrMnmiHXEV1WFgbVCRteYnPqsJwrTdcZaNhFVW")
     }
 
-    pub fn _thread() -> Thread {
-        Thread::new().set_thid(String::from("testid"))
+    pub fn _thread() -> Option<Thread> {
+        Some(Thread::new().set_thid(String::from("testid")))
     }
 
-    pub fn _thread_1() -> Thread {
-        Thread::new().set_thid(String::from("testid_1"))
+    pub fn _thread_1() -> Option<Thread> {
+        Some(Thread::new().set_thid(String::from("testid_1")))
     }
 
     pub fn _thread_id() -> String {
-        _thread().thid.unwrap()
+        _thread().unwrap().thid.unwrap()
     }
 
     pub fn _response() -> Response {

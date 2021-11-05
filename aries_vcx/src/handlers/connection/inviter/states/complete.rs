@@ -67,7 +67,7 @@ impl CompleteState {
 
         let disclose = Disclose::create()
             .set_protocols(protocols)
-            .set_thread_id(query.id.0.clone());
+            .set_thread_id(&query.id.0.clone());
 
         send_message(pw_vk, &self.did_doc, &disclose.to_a2a_message())
     }

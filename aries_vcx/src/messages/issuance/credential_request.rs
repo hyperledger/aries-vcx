@@ -12,7 +12,7 @@ pub struct CredentialRequest {
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
 }
 
 impl CredentialRequest {

@@ -13,7 +13,7 @@ pub struct Credential {
     #[serde(rename = "credentials~attach")]
     pub credentials_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,

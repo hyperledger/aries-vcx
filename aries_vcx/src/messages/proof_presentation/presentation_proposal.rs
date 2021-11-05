@@ -102,7 +102,7 @@ impl PresentationProposal {
     }
 }
 
-threadlike_optional!(PresentationProposal);
+threadlike!(PresentationProposal);
 a2a_message!(PresentationProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -163,7 +163,7 @@ impl From<PresentationProposalData> for PresentationProposal {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_thread;
 
     use super::*;
 
@@ -207,7 +207,7 @@ pub mod test_utils {
         PresentationProposal {
             id: MessageId::id(),
             comment: Some(_comment()),
-            thread: Some(thread()),
+            thread: _thread(),
             presentation_proposal: _presentation_preview(),
         }
     }

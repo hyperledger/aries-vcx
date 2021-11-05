@@ -7,8 +7,9 @@ use crate::messages::thread::Thread;
 pub struct ProblemReport {
     #[serde(rename = "@id")]
     id: MessageId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<Description>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -13,7 +13,7 @@ pub struct Presentation {
     #[serde(rename = "presentations~attach")]
     pub presentations_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
@@ -41,7 +41,7 @@ a2a_message!(Presentation);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_thread;
     use crate::messages::connection::response::test_utils::_thread_1;
 
     use super::*;
@@ -62,7 +62,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: _comment(),
             presentations_attach: attachment,
-            thread: thread(),
+            thread: _thread(),
             please_ack: Some(PleaseAck {}),
         }
     }

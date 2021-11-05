@@ -48,7 +48,7 @@ impl Request {
 }
 
 a2a_message!(Request, ConnectionRequest);
-threadlike_optional!(Request);
+threadlike!(Request);
 
 #[cfg(test)]
 pub mod tests {

@@ -30,7 +30,7 @@ impl Ping {
     }
 }
 
-threadlike_optional!(Ping);
+threadlike!(Ping);
 a2a_message!(Ping);
 
 #[cfg(test)]
@@ -47,7 +47,7 @@ pub mod tests {
         Ping {
             id: MessageId::id(),
             response_requested: false,
-            thread: Some(_thread()),
+            thread: _thread(),
             comment: Some(_comment()),
         }
     }
