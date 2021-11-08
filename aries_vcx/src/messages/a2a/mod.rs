@@ -366,7 +366,7 @@ pub mod test_a2a_serialization {
     #[cfg(feature = "general_test")]
     fn test_serialize_deserialize_connection_ack() {
         let _setup = SetupDefaults::init();
-        let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok));
+        let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok).set_thread_id("threadid"));
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
         // serialization

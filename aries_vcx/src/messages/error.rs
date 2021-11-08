@@ -7,8 +7,9 @@ use crate::messages::thread::Thread;
 pub struct ProblemReport {
     #[serde(rename = "@id")]
     id: MessageId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<Description>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -54,7 +55,7 @@ impl ProblemReport {
     }
 }
 
-threadlike!(ProblemReport);
+threadlike_optional!(ProblemReport);
 a2a_message!(ProblemReport, CommonProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -115,7 +116,7 @@ pub mod tests {
     pub fn _problem_report() -> ProblemReport {
         ProblemReport {
             id: MessageId::id(),
-            thread: _thread(),
+            thread: Some(_thread()),
             description: Some(Description { en: None, code: _code() }),
             who_retries: None,
             tracking_uri: None,

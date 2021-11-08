@@ -12,7 +12,7 @@ pub struct CredentialRequest {
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
 }
 
 impl CredentialRequest {
@@ -31,7 +31,7 @@ impl CredentialRequest {
     }
 }
 
-threadlike!(CredentialRequest);
+threadlike_optional!(CredentialRequest);
 a2a_message!(CredentialRequest);
 
 #[cfg(feature = "test_utils")]
@@ -63,7 +63,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: Some(_comment()),
             requests_attach: attachment,
-            thread: thread(),
+            thread: Some(thread()),
         }
     }
 
@@ -75,7 +75,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: Some(_comment()),
             requests_attach: attachment,
-            thread: thread_1(),
+            thread: Some(thread_1()),
         }
     }
 }

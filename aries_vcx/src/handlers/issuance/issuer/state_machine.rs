@@ -244,7 +244,7 @@ impl IssuerSM {
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 CredentialIssuanceMessage::CredentialOfferSend(offer_info, comment) => {
                     let cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
-                    let thread_id = state_data.credential_proposal.get_thread_id().unwrap_or(state_data.credential_proposal.id.0.clone());
+                    let thread_id = state_data.credential_proposal.get_thread_id();
                     let cred_offer_msg = CredentialOffer::create()
                         .set_thread_id(&thread_id)
                         .set_offers_attach(&cred_offer)?

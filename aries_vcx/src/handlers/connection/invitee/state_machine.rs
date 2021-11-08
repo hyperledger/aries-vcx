@@ -33,7 +33,7 @@ pub struct SmConnectionInvitee {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum InviteeFullState {
     Initial(InitialState),
-    Invited(InvitedState), // TODO: Remove this state
+    Invited(InvitedState),
     Requested(RequestedState),
     Responded(RespondedState),
     Completed(CompleteState),
@@ -231,13 +231,12 @@ impl SmConnectionInvitee {
                  pairwise_info: &PairwiseInfo,
                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> VcxResult<Response> {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle response: remote verkey not found"))?;
 
         let response = response.clone().decode(&remote_vk)?;
 
-        if !response.from_thread(&request.get_thread_id()
-                                 .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Missing ~thread decorator field in request"))?) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
+        if !response.from_thread(&request.get_thread_id()) {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle response: thread id does not match: {:?}", response.thread)));
         }
 
         let message = Ack::create()
@@ -369,13 +368,13 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+    pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(state) => {
-                InviteeFullState::Initial((state, problem_report).into())
+            InviteeFullState::Requested(_state) => {
+                InviteeFullState::Initial(InitialState {})
             }
-            InviteeFullState::Invited(state) => {
-                InviteeFullState::Initial((state, problem_report).into())
+            InviteeFullState::Invited(_state) => {
+                InviteeFullState::Initial(InitialState {})
             }
             _ => self.state.clone() 
         };

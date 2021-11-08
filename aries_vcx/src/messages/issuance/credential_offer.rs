@@ -16,7 +16,7 @@ pub struct CredentialOffer {
     pub offers_attach: Attachments,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>, // TODO: Make mandatory
+    pub thread: Option<Thread>,
 }
 
 impl CredentialOffer {
@@ -47,14 +47,6 @@ impl CredentialOffer {
     pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> VcxResult<CredentialOffer> {
         self.credential_preview = self.credential_preview.add_value(name, value, mime_type)?;
         Ok(self)
-    }
-
-    pub fn set_parent_thread_id(mut self, id: &str) -> Self {
-        self.thread = match self.thread {
-            Some(thread) => Some(thread.set_pthid(id.to_string())),
-            None => Some(Thread::new().set_pthid(id.to_string()))
-        };
-        self
     }
 }
 

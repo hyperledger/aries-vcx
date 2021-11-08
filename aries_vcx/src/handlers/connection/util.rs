@@ -38,8 +38,8 @@ pub mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_build_ping_response_works() {
-        assert_eq!(_build_ping_response(&_ping()).thread.thid, _ping_response().thread.thid);
-        assert_eq!(_build_ping_response(&_ping_no_thread()).thread.thid, _ping_response().thread.thid);
-        assert_eq!(_build_ping_response(&_ping_no_thread()).thread.thid, Some(_ping_no_thread().id.0));
+        assert_eq!(_build_ping_response(&_ping()).get_thread_id(), _ping_response().get_thread_id());
+        assert_eq!(_build_ping_response(&_ping_no_thread()).get_thread_id(), _ping_response().get_thread_id());
+        assert_eq!(_build_ping_response(&_ping_no_thread()).get_thread_id(), _ping_no_thread().id.0);
     }
 }

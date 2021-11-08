@@ -12,6 +12,7 @@ pub struct PresentationProposal {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
 }
@@ -163,7 +164,7 @@ impl From<PresentationProposalData> for PresentationProposal {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
+    use crate::messages::proof_presentation::presentation_request::test_utils::_thread;
 
     use super::*;
 
@@ -207,7 +208,7 @@ pub mod test_utils {
         PresentationProposal {
             id: MessageId::id(),
             comment: Some(_comment()),
-            thread: Some(thread()),
+            thread: Some(_thread()),
             presentation_proposal: _presentation_preview(),
         }
     }

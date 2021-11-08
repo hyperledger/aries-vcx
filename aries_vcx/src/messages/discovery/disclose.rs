@@ -8,7 +8,7 @@ pub struct Disclose {
     pub id: MessageId,
     pub protocols: Vec<ProtocolDescriptor>,
     #[serde(rename = "~thread")]
-    pub thread: Thread,
+    pub thread: Option<Thread>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -17,6 +17,9 @@ pub struct ProtocolDescriptor {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<Actors>>,
 }
+
+
+threadlike_optional!(Disclose);
 
 impl Disclose {
     pub fn create() -> Disclose {
@@ -30,11 +33,6 @@ impl Disclose {
 
     pub fn add_protocol(&mut self, protocol: ProtocolDescriptor) {
         self.protocols.push(protocol);
-    }
-
-    pub fn set_thread_id(mut self, id: String) -> Self {
-        self.thread.thid = Some(id);
-        self
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
@@ -56,7 +54,7 @@ pub mod tests {
         Disclose {
             id: MessageId::id(),
             protocols: vec![_protocol_descriptor()],
-            thread: _thread(),
+            thread: Some(_thread()),
         }
     }
 
@@ -64,7 +62,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_disclose_build_works() {
         let mut disclose: Disclose = Disclose::default()
-            .set_thread_id(_thread_id());
+            .set_thread_id(&_thread_id());
 
         disclose.add_protocol(_protocol_descriptor());
 

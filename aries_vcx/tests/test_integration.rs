@@ -1925,6 +1925,8 @@ mod tests {
         institution_to_consumer.update_state().unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
+        assert_eq!(institution_to_consumer.get_thread_id(), consumer_to_institution.get_thread_id());
+
         institution_to_consumer
     }
 

@@ -14,12 +14,12 @@ use crate::messages::thread::Thread;
 pub struct Response {
     #[serde(rename = "@id")]
     pub id: MessageId,
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
     pub connection: ConnectionData,
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~thread")]
+    pub thread: Thread
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -108,6 +108,7 @@ impl Response {
 
 please_ack!(Response);
 threadlike!(Response);
+threadlike!(SignedResponse);
 
 impl SignedResponse {
     pub fn decode(self, key: &str) -> VcxResult<Response> {
