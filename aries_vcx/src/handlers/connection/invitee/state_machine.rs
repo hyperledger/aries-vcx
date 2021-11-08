@@ -231,12 +231,12 @@ impl SmConnectionInvitee {
                  pairwise_info: &PairwiseInfo,
                  send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>) -> VcxResult<Response> {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle Response: Remote Verkey not found"))?;
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle response: remote verkey not found"))?;
 
         let response = response.clone().decode(&remote_vk)?;
 
         if !response.from_thread(&request.get_thread_id()) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle Response: thread id does not match: {:?}", response.thread)));
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle response: thread id does not match: {:?}", response.thread)));
         }
 
         let message = Ack::create()

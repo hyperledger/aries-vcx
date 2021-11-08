@@ -272,6 +272,9 @@ impl SmConnectionInviter {
                                      new_service_endpoint: String) -> VcxResult<Self> {
         let bootstrap_pairwise_info = self.pairwise_info.clone();
         let thread_id = request.get_thread_id();
+        if !matches!(self.state, InviterFullState::Initial(_)) {
+            verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
+        };
         let state = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 match &self.build_response(
@@ -423,7 +426,7 @@ impl SmConnectionInviter {
                 if !ack.from_thread(&self.get_thread_id()) {
                     let problem_report = ProblemReport::create()
                         .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(format!("Cannot handle Response: thread id does not match: {:?}", ack.thread))
+                        .set_explain(format!("Cannot handle ack: thread id does not match: {:?}", ack.thread))
                         .set_thread_id(&self.get_thread_id()); // TODO: Maybe set sender's thread id?
 
                     send_message(&pairwise_info.pw_vk, &state.did_doc, &problem_report.to_a2a_message()).ok();
@@ -450,7 +453,6 @@ impl SmConnectionInviter {
         new_service_endpoint: String,
     ) -> VcxResult<SignedResponse> {
         request.connection.did_doc.validate()?;
-        verify_thread_id(&request.get_thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
         let new_recipient_keys = vec!(new_pairwise_info.pw_vk.clone());
         Response::create()
             .set_did(new_pairwise_info.pw_did.to_string())
