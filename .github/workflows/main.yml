@@ -864,24 +864,24 @@ jobs:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
     steps:
-    - name: Git checkout
-      uses: actions/checkout@v2
-    - name: Switch to xcode version 11
-      run: |
-        ls /Applications | grep Xcode
-        sudo xcode-select --switch /Applications/Xcode_11.7.app/Contents/Developer
-        xcodebuild -version
-    - name: Build iOS wrapper
-      run: |
-        ./wrappers/ios/ci/build.sh
-    - uses: actions/upload-artifact@v2
-      with:
-        name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
-        path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
-    - uses: actions/upload-artifact@v2
-      with:
-        name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
-        path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Switch to xcode version 12.4
+        run: |
+          ls /Applications | grep Xcode
+          sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
+          xcodebuild -version
+      - name: Build iOS wrapper
+        run: |
+          ./wrappers/ios/ci/build.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
+          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
+      - uses: actions/upload-artifact@v2
+        with:
+          name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
+          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
 
   # test-android-wrapper:
