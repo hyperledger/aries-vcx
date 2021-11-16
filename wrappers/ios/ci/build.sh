@@ -14,6 +14,7 @@ OUTPUT_DIR=/tmp/artifacts
 INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
 
 setup() {
+    echo "ios/ci/build.sh: running setup()"
     echo "Setup rustup"
     rustup default 1.55.0
     rustup component add rls-preview rust-analysis rust-src
@@ -74,6 +75,7 @@ setup() {
 # NOTE: Each built archive must be a fat file, i.e support all required architectures
 # Can be checked via e.g. `lipo -info $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a`
 build_crypto() {
+    echo "ios/ci/build.sh: running build_crypto()"
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
     fi
@@ -85,6 +87,7 @@ build_crypto() {
 }
 
 build_libsodium() {
+    echo "ios/ci/build.sh: running build_libsodium()"
     if [ ! -d $OUTPUT_DIR/libsodium-ios ]; then
         git clone https://github.com/evernym/libsodium-ios.git $OUTPUT_DIR/libsodium-ios
     fi
@@ -95,9 +98,14 @@ build_libsodium() {
 }
 
 build_libzmq() {
+    echo "ios/ci/build.sh: running build_libzmq()"
     if [ ! -d $OUTPUT_DIR/libzmq-ios ]; then
         git clone https://github.com/evernym/libzmq-ios.git $OUTPUT_DIR/libzmq-ios
     fi
+    pushd $OUTPUT_DIR/libzmq-ios
+    pwd
+    git restore .
+    popd
 
     pushd $OUTPUT_DIR/libzmq-ios
         git apply $SCRIPT_DIR/patches/libzmq.rb.patch
@@ -111,6 +119,7 @@ extract_architectures() {
     FILE_PATH=$1
     LIB_FILE_NAME=$2
     LIB_NAME=$3
+    echo "ios/ci/build.sh: running extract_architectures() FILE_PATH=${FILE_PATH} LIB_FILE_NAME=${LIB_FILE_NAME} LIB_NAME=${LIB_NAME}"
 
     echo FILE_PATH=$FILE_PATH
     echo LIB_FILE_NAME=$LIB_FILE_NAME
@@ -132,6 +141,7 @@ extract_architectures() {
 }
 
 checkout_indy_sdk() {
+    echo "ios/ci/build.sh: running checkout_indy_sdk()"
     if [ ! -d $INDY_SDK_DIR ]; then
         git clone https://github.com/hyperledger/indy-sdk $INDY_SDK_DIR
     fi
@@ -144,6 +154,7 @@ checkout_indy_sdk() {
 
 # NOTE: $INDY_SDK_DIR/libindy/target/$TRIPLET/release/libindy.a should be a non-fat file
 build_libindy() {
+    echo "ios/ci/build.sh: running build_libindy()"
     # OpenSSL-for-iPhone currently provides libs only for aarch64-apple-ios and x86_64-apple-ios, so we select only them.
     TRIPLETS="aarch64-apple-ios,x86_64-apple-ios"
 
@@ -153,6 +164,7 @@ build_libindy() {
 }
 
 copy_libindy_architectures() {
+    echo "ios/ci/build.sh: running copy_libindy_architectures()"
     ARCHS="arm64 x86_64"
     LIB_NAME="indy"
 
@@ -170,6 +182,7 @@ copy_libindy_architectures() {
 
 # NOTE: $INDY_SDK_DIR/vcx/libvcx/target/$TRIPLET/release/libindy.a should be a non-fat file
 build_libvcx() {
+    echo "ios/ci/build.sh: running build_libvcx()"
     WORK_DIR=$(abspath "$OUTPUT_DIR")
     ARCHS="arm64 x86_64"
 
@@ -193,6 +206,7 @@ build_libvcx() {
 }
 
 copy_libvcx_architectures() {
+    echo "ios/ci/build.sh: running copy_libvcx_architectures()"
     ARCHS="arm64 x86_64"
     LIB_NAME="vcx"
 
@@ -212,6 +226,7 @@ copy_libvcx_architectures() {
 }
 
 copy_libs_to_combine() {
+    echo "ios/ci/build.sh: running copy_libs_to_combine()"
     mkdir -p $OUTPUT_DIR/cache/arch_libs
 
     copy_lib_tocombine openssl libssl
@@ -234,6 +249,7 @@ copy_lib_tocombine() {
 }
 
 combine_libs() {
+    echo "ios/ci/build.sh: running combine_libs()"
     COMBINED_LIB=$1
 
     BUILD_CACHE=$(abspath "$OUTPUT_DIR/cache")
@@ -305,6 +321,7 @@ combine_libs() {
 }
 
 build_vcx_framework() {
+    echo "ios/ci/build.sh: running build_vcx_framework()"
     COMBINED_LIB=$1
     ARCHS="arm64 x86_64"
 
@@ -407,7 +424,7 @@ abspath() {
 
 # Setup environment
 setup
- 
+
 # Build 3rd party libraries
 build_crypto
 build_libsodium
