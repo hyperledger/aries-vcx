@@ -183,8 +183,6 @@ build_libvcx() {
             echo TRIPLET=$TRIPLET
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
-            export IOS_SODIUM_LIB=$WORK_DIR/libs/sodium/${ARCH}
-            export IOS_ZMQ_LIB=$WORK_DIR/libs/zmq/${ARCH}
             export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH}
 
             cargo build --target "${TRIPLET}" --release --no-default-features
