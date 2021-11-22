@@ -4,8 +4,8 @@ use crate::error::prelude::*;
 use crate::libindy::utils::signus;
 use crate::settings;
 
-#[derive(Serialize, Deserialize, Builder, Clone)]
-#[builder(setter(into))]
+#[derive(Serialize, Deserialize, Default, Builder, Clone)]
+#[builder(setter(into, strip_option), default)]
 pub struct AgentProvisionConfig {
     pub agency_did: String,
     pub agency_verkey: String,
