@@ -2,10 +2,11 @@ use indy;
 use indy::ErrorCode;
 use indy::future::Future;
 use indy_sys::WalletHandle;
+use indy_facade::wallet::{build_wallet_config, build_wallet_credentials, WalletConfig};
 
 use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
-use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
+use crate::libindy::utils::wallet::{IssuerConfig, set_wallet_handle};
 use crate::settings;
 use crate::utils::provision::AgencyClientConfig;
 

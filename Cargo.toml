@@ -3,7 +3,9 @@
 members = [
     "aries_vcx",
     "libvcx",
-    "agency_client"
+    "agency_client",
+    "agency_client_async",
+    "indy_facade"
 ]
 
 [profile.release]

@@ -298,6 +298,13 @@ impl From<agency_client::error::AgencyClientError> for VcxError {
     }
 }
 
+impl From<indy_facade::error::IndyFacadeError> for VcxError {
+    fn from(indy_facade_err: indy_facade::error::IndyFacadeError) -> VcxError {
+        let kind_num: u32 = indy_facade_err.kind().into();
+        VcxError::from_msg(kind_num.into(), utils::error::error_message(&indy_facade_err.kind().clone().into()))
+    }
+}
+
 impl<T> From<sync::PoisonError<T>> for VcxError {
     fn from(_: sync::PoisonError<T>) -> Self {
         VcxError { inner: Context::new(Backtrace::new()).context(VcxErrorKind::PoisonedLock) }

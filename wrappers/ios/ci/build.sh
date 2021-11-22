@@ -407,6 +407,7 @@ build_libvcx
 copy_libvcx_architectures
 
 # Copy libraries to combine
+
 copy_libs_to_combine
 
 # Combine libs by arch and merge libs to single fat binary
