@@ -7,7 +7,7 @@ use serde_json;
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::libindy::utils::payments;
+use aries_vcx::libindy::utils::ledger_tokens;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::utils::provision::AgentProvisionConfig;
@@ -104,35 +104,10 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_ledger_get_fees(command_handle: CommandHandle,
-                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, fees: *const c_char)>) -> u32 {
+pub extern fn vcx_ledger_get_fees(_command_handle: CommandHandle,
+                                  _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, fees: *const c_char)>) -> u32 {
     info!("vcx_ledger_get_fees >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_ledger_get_fees(command_handle: {})",
-           command_handle);
-
-    execute(move || {
-        match aries_vcx::libindy::utils::payments::get_ledger_fees() {
-            Ok(x) => {
-                trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
-                       command_handle, error::SUCCESS.message, x);
-
-                let msg = CStringUtils::string_to_cstring(x);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            }
-            Err(e) => {
-                warn!("vcx_ledget_get_fees_cb(command_handle: {}, rc: {}, fees: {})",
-                      command_handle, e, "null");
-
-                cb(command_handle, e.into(), ptr::null_mut());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 #[no_mangle]
@@ -467,37 +442,12 @@ pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
 /// # Return
 /// "price": u64 - tokens amount required for action performing
 #[no_mangle]
-pub extern fn vcx_get_request_price(command_handle: CommandHandle,
-                                    action_json: *const c_char,
-                                    requester_info_json: *const c_char,
-                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, price: u64)>) -> u32 {
+pub extern fn vcx_get_request_price(_command_handle: CommandHandle,
+                                    _action_json: *const c_char,
+                                    _requester_info_json: *const c_char,
+                                    _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, price: u64)>) -> u32 {
     info!("vcx_get_request_price >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(action_json, VcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(requester_info_json, VcxErrorKind::InvalidOption);
-
-    trace!(target: "vcx", "vcx_get_request_price(command_handle: {}, action_json: {}, requester_info_json: {:?})",
-           command_handle, action_json, requester_info_json);
-
-    execute(move || {
-        match payments::get_request_price(action_json, requester_info_json) {
-            Ok(x) => {
-                trace!(target: "vcx", "vcx_get_request_price(command_handle: {}, rc: {}, handle: {})",
-                       command_handle, error::SUCCESS.message, x);
-                cb(command_handle, error::SUCCESS.code_num, x);
-            }
-            Err(x) => {
-                warn!("vcx_get_request_price(command_handle: {}, rc: {}, handle: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Endorse transaction to the ledger preserving an original author

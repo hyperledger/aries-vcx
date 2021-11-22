@@ -1,8 +1,7 @@
 # Building LibVCX
 
 ### 1. Build dependencies
-In order to build and call LibVCX code, you need to first build Libindy and Libnullpay. To 
-build these them follow instructions for your platform [here](https://github.com/hyperledger/indy-sdk/tree/master/docs/build-guides).
+In order to build and call LibVCX code, you need to first build [VdrTools](https://gitlab.com/evernym/verity/vdr-tools).
 
 ## 2. Build LibVCX
 Lets build LibVCX itself now. Enter into [libvcx directory](../libvcx) of this repo and run

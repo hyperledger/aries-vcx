@@ -4,7 +4,6 @@ use aries_vcx::handlers::issuance::credential_def::CredentialDef;
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
-use aries_vcx::libindy::utils::payments::PaymentTxn;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::error::prelude::*;
@@ -80,19 +79,6 @@ pub fn get_rev_reg_def(handle: u32) -> VcxResult<Option<String>> {
     })
 }
 
-pub fn get_rev_reg_def_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_rev_reg_def_payment_txn())
-    })
-}
-
-
-pub fn get_rev_reg_delta_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_rev_reg_delta_payment_txn())
-    })
-}
-
 pub fn release(handle: u32) -> VcxResult<()> {
     CREDENTIALDEF_MAP.release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle)))
@@ -159,8 +145,6 @@ pub mod tests {
 
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::payments::add_new_did;
     use aries_vcx::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{

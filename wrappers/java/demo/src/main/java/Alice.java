@@ -28,9 +28,6 @@ public class Alice {
         CommandLine options = Common.getCommandLine(args);
         if (options == null) System.exit(0);
 
-        logger.info("#0 Initialize");
-        Common.loadNullPayPlugin();
-
         // static configuration
         long utime = System.currentTimeMillis() / 1000;
         String provisionConfig = JsonPath.parse("{" +
@@ -42,17 +39,6 @@ public class Alice {
                 "  payment_method: 'null'," +
                 "  enterprise_seed: '000000000000000000000000000User1'" + // SEED of alice's DID that does not need to be registered in the ledger
                 "}").jsonString();
-
-        if (options.hasOption("postgres")) {
-            Common.loadPostgresPlugin();
-            provisionConfig = JsonPath.parse(provisionConfig).put("$", "wallet_type", "postgres_storage")
-                    .put("$", "storage_config", "{\"url\":\"localhost:5432\"}")
-                    .put("$", "storage_credentials", "{\"account\":\"postgres\",\"password\":\"mysecretpassword\"," +
-                            "\"admin_account\":\"postgres\",\"admin_password\":\"mysecretpassword\"}").jsonString();
-            logger.info("Running with PostreSQL wallet enabled! Config = " + JsonPath.read(provisionConfig, "$.storage_config"));
-        } else {
-            logger.info("Running with builtin wallet.");
-        }
 
         logger.info("#8 Provision an agent and wallet, get back configuration details: \n" + prettyJson(provisionConfig));
         String vcxConfig = UtilsApi.vcxProvisionAgent(provisionConfig);

@@ -6,7 +6,6 @@ use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
-use aries_vcx::libindy::utils::payments::PaymentTxn;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::error::prelude::*;
@@ -24,11 +23,11 @@ pub fn create_and_publish_schema(source_id: &str,
     debug!("creating schema with source_id: {}, name: {}, issuer_did: {}", source_id, name, issuer_did);
 
     let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
-    let payment_txn = anoncreds::publish_schema(&schema)?;
+    anoncreds::publish_schema(&schema)?;
 
     debug!("created schema on ledger with id: {}", schema_id);
 
-    let schema_handle = _store_schema(source_id, name, version, schema_id, data, payment_txn, PublicEntityStateType::Published)?;
+    let schema_handle = _store_schema(source_id, name, version, schema_id, data, PublicEntityStateType::Published)?;
 
     Ok(schema_handle)
 }
@@ -48,7 +47,7 @@ pub fn prepare_schema_for_endorser(source_id: &str,
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
-    let schema_handle = _store_schema(source_id, name, version, schema_id, data, None, PublicEntityStateType::Built)?;
+    let schema_handle = _store_schema(source_id, name, version, schema_id, data, PublicEntityStateType::Built)?;
 
     Ok((schema_handle, schema_request))
 }
@@ -58,7 +57,6 @@ fn _store_schema(source_id: &str,
                  version: String,
                  schema_id: String,
                  data: String,
-                 payment_txn: Option<PaymentTxn>,
                  state: PublicEntityStateType) -> VcxResult<u32> {
     let schema = Schema {
         source_id: source_id.to_string(),
@@ -66,7 +64,6 @@ fn _store_schema(source_id: &str,
         data: serde_json::from_str(&data).unwrap_or_default(),
         version,
         schema_id,
-        payment_txn,
         state,
     };
 
@@ -89,7 +86,6 @@ pub fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32,
         name: schema_data.name,
         version: schema_data.version,
         data: schema_data.attr_names,
-        payment_txn: None,
         state: PublicEntityStateType::Published,
     };
 
@@ -120,12 +116,6 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 pub fn get_schema_id(handle: u32) -> VcxResult<String> {
     SCHEMA_MAP.get(handle, |s| {
         Ok(s.get_schema_id().to_string())
-    })
-}
-
-pub fn get_payment_txn(handle: u32) -> VcxResult<PaymentTxn> {
-    SCHEMA_MAP.get(handle, |s| {
-        s.get_payment_txn().map_err(|err| err.into())
     })
 }
 
@@ -163,7 +153,7 @@ pub mod tests {
     use rand::Rng;
 
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::payments::add_new_did;
+    use aries_vcx::libindy::utils::ledger_tokens::add_new_did;
     use aries_vcx::settings;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
@@ -295,9 +285,6 @@ pub mod tests {
         let _source_id = get_source_id(handle).unwrap();
         let _schema_id = get_schema_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
-
-        // No Payment performed
-        let _payment = get_payment_txn(handle).unwrap_err();
     }
 
     #[cfg(feature = "pool_tests")]

@@ -13,7 +13,6 @@ use crate::settings::set_testing_defaults;
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
-use crate::utils::plugins::init_plugin;
 use crate::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
@@ -356,15 +355,12 @@ pub fn configure_trustee_did() {
 }
 
 pub fn setup_libnullpay_nofees() {
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    libindy::utils::payments::test_utils::token_setup(None, None, true);
+    libindy::utils::ledger_tokens::test_utils::token_setup(None, None, true);
 }
 
 pub fn setup_indy_env(use_zero_fees: bool) -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
-
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
@@ -395,7 +391,7 @@ pub fn setup_indy_env(use_zero_fees: bool) -> String {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    libindy::utils::payments::test_utils::token_setup(None, None, use_zero_fees);
+    libindy::utils::ledger_tokens::test_utils::token_setup(None, None, use_zero_fees);
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did
@@ -412,8 +408,6 @@ pub fn cleanup_agency_env() {
 pub fn setup_agency_env() {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
-
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();

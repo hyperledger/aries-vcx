@@ -387,45 +387,11 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
 ///         ]
 ///     }
 #[no_mangle]
-pub extern fn vcx_schema_get_payment_txn(command_handle: CommandHandle,
-                                         handle: u32,
-                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
+pub extern fn vcx_schema_get_payment_txn(_command_handle: CommandHandle,
+                                         _handle: u32,
+                                         _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
     info!("vcx_schema_get_payment_txn >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    trace!("vcx_schema_get_payment_txn(command_handle: {})", command_handle);
-
-    execute(move || {
-        match schema::get_payment_txn(handle) {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_schema_get_payment_txn_cb(command_handle: {}, rc: {}, : {}), source_id: {:?}",
-                               command_handle, error::SUCCESS.message, x, schema::get_source_id(handle).unwrap_or_default());
-
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, 0, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize payment txn: {}", e));
-                        error!("vcx_schema_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}), source_id: {:?}",
-                               command_handle, err, "null", schema::get_source_id(handle).unwrap_or_default());
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                }
-            }
-            Err(x) => {
-                error!("vcx_schema_get_payment_txn_cb(command_handle: {}, rc: {}, txn: {}), source_id: {:?}",
-                       command_handle, x, "null", schema::get_source_id(handle).unwrap_or_default());
-                cb(command_handle, x.into(), ptr::null());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Checks if schema is published on the Ledger and updates the  state
@@ -668,21 +634,6 @@ mod tests {
         let schema_data_as_string = schema_data_as_string.unwrap();
         let schema_as_json: serde_json::Value = serde_json::from_str(&schema_data_as_string).unwrap();
         assert_eq!(schema_as_json["data"].to_string(), data);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_payment_txn() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-
-        let (_, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-
-        let _rc = vcx_schema_get_payment_txn(cb.command_handle, handle, Some(cb.get_callback()));
-        let txn = cb.receive(TimeoutUtils::some_short()).unwrap();
-        assert!(txn.is_some());
     }
 
     #[cfg(feature = "pool_tests")]

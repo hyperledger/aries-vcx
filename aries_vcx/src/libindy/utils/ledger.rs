@@ -517,7 +517,7 @@ mod test {
     fn test_endorse_transaction() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        use crate::libindy::utils::payments::add_new_did;
+        use crate::libindy::utils::ledger_tokens::add_new_did;
 
         let (author_did, _) = add_new_did(None);
         let (endorser_did, _) = add_new_did(Some("ENDORSER"));

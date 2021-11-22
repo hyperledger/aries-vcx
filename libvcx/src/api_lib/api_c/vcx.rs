@@ -459,30 +459,8 @@ pub extern fn vcx_set_active_txn_author_agreement_meta(text: *const c_char,
 }
 
 #[no_mangle]
-pub extern fn vcx_mint_tokens(seed: *const c_char, fees: *const c_char) {
-    info!("vcx_mint_tokens >>>");
-
-    // TODO: CHEC
-    let seed = if !seed.is_null() {
-        match CStringUtils::c_str_to_string(seed) {
-            Ok(opt_val) => opt_val.map(String::from),
-            Err(_) => return ()
-        }
-    } else {
-        None
-    };
-
-    let fees = if !fees.is_null() {
-        match CStringUtils::c_str_to_string(fees) {
-            Ok(opt_val) => opt_val.map(String::from),
-            Err(_) => return ()
-        }
-    } else {
-        None
-    };
-    trace!("vcx_mint_tokens(seed: {:?}, fees: {:?})", seed, fees);
-
-    libindy::utils::payments::mint_tokens_and_set_fees(None, None, fees, seed).unwrap_or_default();
+pub extern fn vcx_mint_tokens(_seed: *const c_char, _fees: *const c_char) {
+    trace!("vcx_get_current_error >>> Not supported operation.");
 }
 
 /// Get details for last occurred error.

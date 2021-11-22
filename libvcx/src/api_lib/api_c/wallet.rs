@@ -5,7 +5,6 @@ use libc::c_char;
 
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::init::open_as_main_wallet;
-use aries_vcx::libindy::utils::payments::{create_address, get_wallet_token_info, pay_a_payee, sign_with_address, verify_with_address};
 use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
@@ -216,37 +215,11 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_wallet_get_token_info(command_handle: CommandHandle,
-                                        payment_handle: u32,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
+pub extern fn vcx_wallet_get_token_info(_command_handle: CommandHandle,
+                                        _payment_handle: u32,
+                                        _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
     info!("vcx_wallet_get_token_info >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_wallet_get_token_info(command_handle: {}, payment_handle: {})",
-           command_handle, payment_handle);
-
-    execute(move || {
-        match get_wallet_token_info() {
-            Ok(x) => {
-                trace!("vcx_wallet_get_token_info_cb(command_handle: {}, rc: {}, info: {})",
-                       command_handle, 0, x);
-
-                let msg = CStringUtils::string_to_cstring(x.to_string());
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            }
-            Err(x) => {
-                warn!("vcx_wallet_get_token_info_cb(command_handle: {}, rc: {}, info: {})",
-                      command_handle, x, "null");
-
-                let msg = CStringUtils::string_to_cstring("".to_string());
-                cb(command_handle, x.into(), msg.as_ptr());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Add a payment address to the wallet
@@ -264,40 +237,7 @@ pub extern fn vcx_wallet_create_payment_address(command_handle: CommandHandle,
                                                 seed: *const c_char,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, address: *const c_char)>) -> u32 {
     info!("vcx_wallet_create_payment_address >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    let seed = if !seed.is_null() {
-        check_useful_opt_c_str!(seed, VcxErrorKind::InvalidOption);
-        seed
-    } else {
-        None
-    };
-
-    trace!("vcx_wallet_create_payment_address(command_handle: {})",
-           command_handle);
-
-    execute(move || {
-        match create_address(seed) {
-            Ok(x) => {
-                trace!("vcx_wallet_create_payment_address_cb(command_handle: {}, rc: {}, address: {})",
-                       command_handle, error::SUCCESS.message, x);
-
-                let msg = CStringUtils::string_to_cstring(x);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            }
-            Err(x) => {
-                warn!("vcx_wallet_create_payment_address_cb(command_handle: {}, rc: {}, address: {})",
-                      command_handle, x, "null");
-
-                let msg = CStringUtils::string_to_cstring("".to_string());
-                cb(command_handle, x.into(), msg.as_ptr());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 
@@ -313,42 +253,14 @@ pub extern fn vcx_wallet_create_payment_address(command_handle: CommandHandle,
 /// # Returns:
 /// a signature string
 #[no_mangle]
-pub extern fn vcx_wallet_sign_with_address(command_handle: CommandHandle,
-                                           payment_address: *const c_char,
-                                           message_raw: *const u8,
-                                           message_len: u32,
-                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
+pub extern fn vcx_wallet_sign_with_address(_command_handle: CommandHandle,
+                                           _payment_address: *const c_char,
+                                           _message_raw: *const u8,
+                                           _message_len: u32,
+                                           _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
                                                                 signature: *const u8, signature_len: u32)>) -> u32 {
     info!("vcx_wallet_sign_with_address >>>");
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(payment_address, VcxErrorKind::InvalidOption);
-    check_useful_c_byte_array!(message_raw, message_len, VcxErrorKind::InvalidOption, VcxErrorKind::InvalidOption);
-
-    trace!("vcx_wallet_sign_with_address(command_handle: {}, payment_address: {}, message_raw: {:?})",
-           command_handle, payment_address, message_raw);
-
-    execute(move || {
-        match sign_with_address(&payment_address, message_raw.as_slice()) {
-            Ok(signature) => {
-                trace!("vcx_wallet_sign_with_address_cb(command_handle: {}, rc: {}, signature: {:?})",
-                       command_handle, error::SUCCESS.message, signature);
-
-                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&signature);
-
-                cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
-            }
-            Err(error) => {
-                warn!("vcx_wallet_sign_with_address_cb(command_handle: {}, error: {})",
-                      command_handle, error);
-
-                cb(command_handle, error.into(), null(), 0);
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 
@@ -366,43 +278,16 @@ pub extern fn vcx_wallet_sign_with_address(command_handle: CommandHandle,
 /// #Returns
 /// valid: true - if signature is valid, false - otherwise
 #[no_mangle]
-pub extern fn vcx_wallet_verify_with_address(command_handle: CommandHandle,
-                                             payment_address: *const c_char,
-                                             message_raw: *const u8,
-                                             message_len: u32,
-                                             signature_raw: *const u8,
-                                             signature_len: u32,
-                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
+pub extern fn vcx_wallet_verify_with_address(_command_handle: CommandHandle,
+                                             _payment_address: *const c_char,
+                                             _message_raw: *const u8,
+                                             _message_len: u32,
+                                             _signature_raw: *const u8,
+                                             _signature_len: u32,
+                                             _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
                                                                   result: bool)>) -> u32 {
     info!("vcx_wallet_sign_with_address >>>");
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(payment_address, VcxErrorKind::InvalidOption);
-    check_useful_c_byte_array!(message_raw, message_len, VcxErrorKind::InvalidOption, VcxErrorKind::InvalidOption);
-    check_useful_c_byte_array!(signature_raw, signature_len, VcxErrorKind::InvalidOption, VcxErrorKind::InvalidOption);
-
-    trace!("vcx_wallet_verify_with_address(command_handle: {}, payment_address: {}, message_raw: {:?}, signature_raw: {:?})",
-           command_handle, payment_address, message_raw, signature_raw);
-
-    execute(move || {
-        match verify_with_address(&payment_address, message_raw.as_slice(), signature_raw.as_slice()) {
-            Ok(valid) => {
-                trace!("vcx_wallet_verify_with_address_cb(command_handle: {}, rc: {}, valid: {})",
-                       command_handle, error::SUCCESS.message, valid);
-
-                cb(command_handle, error::SUCCESS.code_num, valid);
-            }
-            Err(error) => {
-                warn!("vcx_wallet_verify_with_address_cb(command_handle: {}, error: {})",
-                      command_handle, error);
-
-                cb(command_handle, error.into(), false);
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Adds a record to the wallet
@@ -819,44 +704,13 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_wallet_send_tokens(command_handle: CommandHandle,
-                                     payment_handle: u32,
-                                     tokens: *const c_char,
-                                     recipient: *const c_char,
-                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, receipt: *const c_char)>) -> u32 {
+pub extern fn vcx_wallet_send_tokens(_command_handle: CommandHandle,
+                                     _payment_handle: u32,
+                                     _tokens: *const c_char,
+                                     _recipient: *const c_char,
+                                     _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, receipt: *const c_char)>) -> u32 {
     info!("vcx_wallet_send_tokens >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(recipient, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tokens, VcxErrorKind::InvalidOption);
-
-    let tokens: u64 = match tokens.parse::<u64>() {
-        Ok(x) => x,
-        Err(e) => return VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot parse tokens: {}", e)).into(),
-    };
-    trace!("vcx_wallet_send_tokens(command_handle: {}, payment_handle: {}, tokens: {}, recipient: {})",
-           command_handle, payment_handle, tokens, recipient);
-
-    execute(move || {
-        match pay_a_payee(tokens, &recipient) {
-            Ok((_payment, msg)) => {
-                trace!("vcx_wallet_send_tokens_cb(command_handle: {}, rc: {}, receipt: {})",
-                       command_handle, error::SUCCESS.message, msg);
-                let msg = CStringUtils::string_to_cstring(msg);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            }
-            Err(e) => {
-                let msg = "Failed to send tokens".to_string();
-                trace!("vcx_wallet_send_tokens_cb(command_handle: {}, rc: {}, reciept: {})", command_handle, e, msg);
-                let msg = CStringUtils::string_to_cstring("".to_string());
-                cb(command_handle, e.into(), msg.as_ptr());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Opens a storage search handle
@@ -1146,23 +1000,11 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_wallet_validate_payment_address(command_handle: i32,
-                                                  payment_address: *const c_char,
-                                                  cb: Option<extern fn(command_handle_: i32, err: u32)>) -> u32 {
+pub extern fn vcx_wallet_validate_payment_address(_command_handle: i32,
+                                                  _payment_address: *const c_char,
+                                                  _cb: Option<extern fn(command_handle_: i32, err: u32)>) -> u32 {
     info!("vcx_wallet_validate_payment_address >>>");
-
-    check_useful_c_str!(payment_address,  VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    trace!("vcx_wallet_validate_payment_address(command_handle: {}, payment_address: {})",
-           command_handle, payment_address);
-
-    execute(move || {
-        cb(command_handle, error::SUCCESS.code_num);
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Set the wallet handle before calling vcx_init_minimal
@@ -1186,8 +1028,6 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::payments::build_test_address;
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
     use aries_vcx::settings;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks, TempFile};
@@ -1196,153 +1036,6 @@ pub mod tests {
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
     use super::*;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_get_token_info() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_wallet_get_token_info(cb.command_handle,
-                                             0,
-                                             Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_send_tokens() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
-                                          0,
-                                          CString::new("1").unwrap().into_raw(),
-                                          CString::new("address").unwrap().into_raw(),
-                                          Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_create_address() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_wallet_create_payment_address(cb.command_handle,
-                                                     ptr::null_mut(),
-                                                     Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_sign_with_address_api() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_BIN::new().unwrap();
-        let msg = "message";
-        let msg_len = msg.len();
-        let msg_raw = CString::new(msg).unwrap();
-        assert_eq!(vcx_wallet_sign_with_address(cb.command_handle,
-                                                CString::new("address").unwrap().into_raw(),
-                                                msg_raw.as_ptr() as *const u8,
-                                                msg_len as u32,
-                                                Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        let res = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(msg.as_bytes(), res.as_slice());
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_verify_with_address_api() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_BOOL::new().unwrap();
-        let msg = "message";
-        let msg_len = msg.len();
-        let msg_raw = CString::new(msg).unwrap();
-        let sig = "signature";
-        let sig_len = sig.len();
-        let sig_raw = CString::new(sig).unwrap();
-        assert_eq!(vcx_wallet_verify_with_address(cb.command_handle,
-                                                  CString::new("address").unwrap().into_raw(),
-                                                  msg_raw.as_ptr() as *const u8,
-                                                  msg_len as u32,
-                                                  sig_raw.as_ptr() as *const u8,
-                                                  sig_len as u32,
-                                                  Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        let res = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert!(res);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_sign_verify_with_address() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let cb_sign = return_types_u32::Return_U32_BIN::new().unwrap();
-        let cb_verify = return_types_u32::Return_U32_BOOL::new().unwrap();
-        let cb_addr = return_types_u32::Return_U32_STR::new().unwrap();
-
-        let msg = "message";
-        let msg_len = msg.len();
-        let msg_raw = CString::new(msg).unwrap();
-
-        vcx_wallet_create_payment_address(cb_addr.command_handle,
-                                          ptr::null_mut(),
-                                          Some(cb_addr.get_callback()));
-        let addr = cb_addr.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
-        let addr_raw = CString::new(addr.clone()).unwrap();
-
-        let res_sign = vcx_wallet_sign_with_address(cb_sign.command_handle,
-                                                    addr_raw.into_raw(),
-                                                    msg_raw.as_ptr() as *const u8,
-                                                    msg_len as u32,
-                                                    Some(cb_sign.get_callback()));
-        assert_eq!(res_sign, error::SUCCESS.code_num);
-
-        let addr_raw = CString::new(addr).unwrap();
-        let sig = cb_sign.receive(TimeoutUtils::some_medium()).unwrap();
-
-        let res_verify = vcx_wallet_verify_with_address(cb_verify.command_handle,
-                                                        addr_raw.into_raw(),
-                                                        msg_raw.as_ptr() as *const u8,
-                                                        msg_len as u32,
-                                                        sig.as_ptr(),
-                                                        sig.len() as u32,
-                                                        Some(cb_verify.get_callback()));
-        assert_eq!(res_verify, error::SUCCESS.code_num);
-        let valid = cb_verify.receive(TimeoutUtils::some_medium()).unwrap();
-        assert!(valid);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_send_payment() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let recipient = CStringUtils::string_to_cstring(build_test_address("2ZrAm5Jc3sP4NAXMQbaWzDxEa12xxJW3VgWjbbPtMPQCoznJyS"));
-        debug!("sending payment to {:?}", recipient);
-        let balance = get_wallet_token_info().unwrap().get_balance();
-        let tokens = 5;
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_wallet_send_tokens(cb.command_handle,
-                                          0,
-                                          CString::new(format!("{}", tokens)).unwrap().into_raw(),
-                                          recipient.as_ptr(),
-                                          Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-        let new_balance = get_wallet_token_info().unwrap().get_balance();
-        assert_eq!(balance - tokens, new_balance);
-    }
-
 
     #[test]
     #[cfg(feature = "general_test")]

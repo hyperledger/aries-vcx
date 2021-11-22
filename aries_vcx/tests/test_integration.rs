@@ -121,7 +121,6 @@ mod tests {
     use aries_vcx::utils::filters;
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use aries_vcx::utils::plugins::init_plugin;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
@@ -1559,14 +1558,6 @@ mod tests {
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
     }
 
-    pub struct PaymentPlugin {}
-
-    impl PaymentPlugin {
-        pub fn load() {
-            init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-        }
-    }
-
     pub struct Pool {}
 
     impl Pool {
@@ -1587,7 +1578,6 @@ mod tests {
     #[test]
     fn aries_demo() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1625,7 +1615,6 @@ mod tests {
     #[test]
     fn aries_demo_handle_connection_related_messages() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1671,7 +1660,6 @@ mod tests {
     #[test]
     fn aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1738,7 +1726,6 @@ mod tests {
     #[test]
     fn aries_demo_download_message_flow() {
         SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();

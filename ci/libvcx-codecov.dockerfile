@@ -54,14 +54,10 @@ RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
 
 # Build indy binaries and move to system library
 USER indy
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libnullpay/Cargo.toml
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
 RUN cargo build --release --manifest-path=/home/indy/aries-vcx/Cargo.toml
 
 USER root
-RUN mv /home/indy/indy-sdk/libnullpay/target/release/*.so \
-    /home/indy/indy-sdk/experimental/plugins/postgres_storage/target/release/*.so \
-    /usr/local/lib/libsodium.* \
+RUN mv /usr/local/lib/libsodium.* \
     /usr/lib/x86_64-linux-gnu/libssl* \
     /usr/lib
 

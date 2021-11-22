@@ -51,12 +51,6 @@ pub static WALLET_KDF_RAW: &str = "RAW";
 pub static WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
 pub static WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
 pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
-#[cfg(not(target_os = "macos"))]
-pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.so";
-#[cfg(target_os = "macos")]
-pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
-pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
-pub static DEFAULT_PAYMENT_METHOD: &str = "null";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
@@ -95,7 +89,6 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
     settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
-    settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
 
     get_agency_client_mut().unwrap().set_testing_defaults_agency();
@@ -147,10 +140,6 @@ pub fn get_protocol_version() -> usize {
     } else {
         protocol_version
     }
-}
-
-pub fn get_payment_method() -> String {
-    get_config_value(CONFIG_PAYMENT_METHOD).unwrap_or(DEFAULT_PAYMENT_METHOD.to_string())
 }
 
 pub fn get_actors() -> Vec<Actors> {

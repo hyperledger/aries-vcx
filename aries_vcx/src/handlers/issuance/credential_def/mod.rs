@@ -4,7 +4,6 @@ use serde_json;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -16,8 +15,6 @@ pub struct RevocationRegistry {
     tails_file: String,
     max_creds: u32,
     tag: u32,
-    rev_reg_def_payment_txn: Option<PaymentTxn>,
-    rev_reg_delta_payment_txn: Option<PaymentTxn>,
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
@@ -27,7 +24,6 @@ pub struct CredentialDef {
     name: String,
     source_id: String,
     pub issuer_did: Option<String>,
-    cred_def_payment_txn: Option<PaymentTxn>,
     rev_reg: Option<RevocationRegistry>,
     #[serde(default)]
     pub state: PublicEntityStateType,
@@ -222,24 +218,23 @@ impl CredentialDef {
 
         let (cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry) = _create_credentialdef(&issuer_did, &schema_id, &tag, &revocation_details)?;
 
-        let (rev_def_payment, rev_delta_payment, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
+        match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
             Ok(Some(ledger_cred_def_json)) => {
                 return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", cred_def_id, ledger_cred_def_json)));
             }
             Ok(None) => {
-                let cred_def_payment_txn = anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;
+                anoncreds::publish_cred_def(&issuer_did, &cred_def_json)?;
 
                 match (&rev_reg_id, &rev_reg_def, &rev_reg_entry) {
                     (Some(ref rev_reg_id), Some(ref rev_reg_def), Some(ref rev_reg_entry)) => {
-                        let rev_def_payment = anoncreds::publish_rev_reg_def(&issuer_did, &rev_reg_def)
+                        anoncreds::publish_rev_reg_def(&issuer_did, &rev_reg_def)
                             .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
 
-                        let (rev_delta_payment, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
+                        anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
                             .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
-                        (rev_def_payment, rev_delta_payment, cred_def_payment_txn)
                     }
-                    _ => (None, None, None)
+                    _ => ()
                 }
             }
             Err(err) => return Err(err)
@@ -253,9 +248,7 @@ impl CredentialDef {
                     rev_reg_entry,
                     tails_file,
                     max_creds,
-                    tag: 1,
-                    rev_reg_def_payment_txn: rev_def_payment,
-                    rev_reg_delta_payment_txn: rev_delta_payment,
+                    tag: 1
                 })
             }
             _ => None
@@ -268,7 +261,6 @@ impl CredentialDef {
                 tag,
                 id: cred_def_id,
                 issuer_did: Some(issuer_did),
-                cred_def_payment_txn,
                 rev_reg,
                 state: PublicEntityStateType::Published,
             }
@@ -325,22 +317,6 @@ impl CredentialDef {
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
-    pub fn get_rev_reg_def_payment_txn(&self) -> Option<PaymentTxn> {
-        match &self.rev_reg {
-            Some(rev_reg) => rev_reg.rev_reg_def_payment_txn.clone(),
-            None => None
-        }
-        // self.rev_reg_def_payment_txn.clone();
-    }
-
-    pub fn get_rev_reg_delta_payment_txn(&self) -> Option<PaymentTxn> {
-        match &self.rev_reg {
-            Some(rev_reg) => rev_reg.rev_reg_delta_payment_txn.clone(),
-            None => None
-        }
-        // self.rev_reg_delta_payment_txn.clone();
-    }
-
     pub fn update_state(&mut self) -> VcxResult<u32> {
         if let Some(ref rev_reg_id) = self.get_rev_reg_id() {
             if let (Ok(_), Ok(_), Ok(_)) = (anoncreds::get_cred_def_json(&self.id),
@@ -376,10 +352,10 @@ impl CredentialDef {
 
                 let new_rev_reg_def = _replace_tails_location(&rev_reg_def, &revocation_details)?;
 
-                let rev_reg_def_payment_txn = anoncreds::publish_rev_reg_def(&issuer_did, &new_rev_reg_def)
+                anoncreds::publish_rev_reg_def(&issuer_did, &new_rev_reg_def)
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
 
-                let (rev_reg_delta_payment_txn, _) = anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
+                anoncreds::publish_rev_reg_delta(&issuer_did, &rev_reg_id, &rev_reg_entry)
                     .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
                 let new_rev_reg = RevocationRegistry {
@@ -389,8 +365,6 @@ impl CredentialDef {
                     tails_file: tails_file.to_string(),
                     max_creds: *max_creds,
                     tag: rev_reg.tag + 1,
-                    rev_reg_delta_payment_txn,
-                    rev_reg_def_payment_txn,
                 };
                 self.rev_reg = Some(new_rev_reg.clone());
 
