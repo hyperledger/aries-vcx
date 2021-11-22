@@ -22,7 +22,7 @@ essentially any platform. Officially we support:
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
 - Although the API is mostly stable, breaking changes still occur in our releases. See our
   [releases](https://github.com/hyperledger/aries-vcx/releases) page for our change history.
-- See our [roadmap](./roadmap.md).
+- See our [roadmap](./ROADMAP.md).
 
 # Get started
 The best way to get your hands on.  
