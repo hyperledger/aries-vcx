@@ -7,7 +7,7 @@ use crate::init::open_as_main_wallet;
 use crate::libindy::utils::{anoncreds, signus};
 use crate::settings;
 
-#[derive(Clone, Debug, Builder, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into))]
 pub struct WalletConfig {
     pub wallet_name: String,
@@ -25,7 +25,8 @@ pub struct WalletConfig {
     pub rekey_derivation_method: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
+#[builder(setter(into))]
 pub struct IssuerConfig {
     pub institution_did: String,
     pub institution_verkey: String,
