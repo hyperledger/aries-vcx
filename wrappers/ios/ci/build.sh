@@ -7,13 +7,14 @@ export CARGO_INCREMENTAL=1
 export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
-INDY_VERSION="efb7215" # indy-1.16.0-post-59 - "v1.16.0" + rusql update fix + (number of other commits on master branch)
+INDY_VERSION="59e1ecc21c9a067" # in vdr-tools repo
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
-INDY_SDK_DIR=$OUTPUT_DIR/indy-sdk
+INDY_SDK_DIR=$OUTPUT_DIR/vdr-tools
 
 setup() {
+    echo "ios/ci/build.sh: running setup()"
     echo "Setup rustup"
     rustup default 1.55.0
     rustup component add rls-preview rust-analysis rust-src
@@ -74,6 +75,7 @@ setup() {
 # NOTE: Each built archive must be a fat file, i.e support all required architectures
 # Can be checked via e.g. `lipo -info $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a`
 build_crypto() {
+    echo "ios/ci/build.sh: running build_crypto()"
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
     fi
@@ -85,6 +87,7 @@ build_crypto() {
 }
 
 build_libsodium() {
+    echo "ios/ci/build.sh: running build_libsodium()"
     if [ ! -d $OUTPUT_DIR/libsodium-ios ]; then
         git clone https://github.com/evernym/libsodium-ios.git $OUTPUT_DIR/libsodium-ios
     fi
@@ -95,9 +98,14 @@ build_libsodium() {
 }
 
 build_libzmq() {
+    echo "ios/ci/build.sh: running build_libzmq()"
     if [ ! -d $OUTPUT_DIR/libzmq-ios ]; then
         git clone https://github.com/evernym/libzmq-ios.git $OUTPUT_DIR/libzmq-ios
     fi
+    pushd $OUTPUT_DIR/libzmq-ios
+    pwd
+    git restore .
+    popd
 
     pushd $OUTPUT_DIR/libzmq-ios
         git apply $SCRIPT_DIR/patches/libzmq.rb.patch
@@ -107,10 +115,12 @@ build_libzmq() {
 
 # NOTE: $OUTPUT_DIR/libs/{arm64,x86_64}/$LIB_NAME.a should be a non-fat file with arm64 / x86_64 architecture
 extract_architectures() {
+
     ARCHS="arm64 x86_64"
     FILE_PATH=$1
     LIB_FILE_NAME=$2
     LIB_NAME=$3
+    echo "ios/ci/build.sh: running extract_architectures() FILE_PATH=${FILE_PATH} LIB_FILE_NAME=${LIB_FILE_NAME} LIB_NAME=${LIB_NAME}"
 
     echo FILE_PATH=$FILE_PATH
     echo LIB_FILE_NAME=$LIB_FILE_NAME
@@ -118,6 +128,7 @@ extract_architectures() {
     mkdir -p $OUTPUT_DIR/libs
     pushd $OUTPUT_DIR/libs
         echo "Extracting architectures for $LIB_FILE_NAME..."
+        lipo -info $FILE_PATH
         for ARCH in ${ARCHS[*]}; do
             DESTINATION=${LIB_NAME}/${ARCH}
 
@@ -132,8 +143,9 @@ extract_architectures() {
 }
 
 checkout_indy_sdk() {
+    echo "ios/ci/build.sh: running checkout_indy_sdk(), $INDY_SDK_DIR=${INDY_SDK_DIR}"
     if [ ! -d $INDY_SDK_DIR ]; then
-        git clone https://github.com/hyperledger/indy-sdk $INDY_SDK_DIR
+        git clone https://gitlab.com/evernym/verity/vdr-tools $INDY_SDK_DIR
     fi
 
     pushd $INDY_SDK_DIR
@@ -144,21 +156,24 @@ checkout_indy_sdk() {
 
 # NOTE: $INDY_SDK_DIR/libindy/target/$TRIPLET/release/libindy.a should be a non-fat file
 build_libindy() {
+    echo "ios/ci/build.sh: running build_libindy()"
     # OpenSSL-for-iPhone currently provides libs only for aarch64-apple-ios and x86_64-apple-ios, so we select only them.
     TRIPLETS="aarch64-apple-ios,x86_64-apple-ios"
 
     pushd $INDY_SDK_DIR/libindy
+        # TODO: we use lipo to build fat lib, but then we only used this libs in copy_libindy_architectures step
         cargo lipo --release --targets="${TRIPLETS}"
     popd
 }
 
 copy_libindy_architectures() {
+    echo "ios/ci/build.sh: running copy_libindy_architectures()"
     ARCHS="arm64 x86_64"
     LIB_NAME="indy"
 
     echo "Copying architectures for $LIB_NAME..."
     for ARCH in ${ARCHS[*]}; do
-        generate_flags $ARCH
+        generate_flags $ARCH # TODO: refactor, generate_flags is etting up value of TRIPLET
 
         echo ARCH=$ARCH
         echo TRIPLET=$TRIPLET
@@ -170,6 +185,8 @@ copy_libindy_architectures() {
 
 # NOTE: $INDY_SDK_DIR/vcx/libvcx/target/$TRIPLET/release/libindy.a should be a non-fat file
 build_libvcx() {
+    # TODO: ??? in this step we statically link much of libs - zmq, sodium, ssl, libindy - but then we still have som sort of "combine libs" step???? why
+    echo "ios/ci/build.sh: running build_libvcx()"
     WORK_DIR=$(abspath "$OUTPUT_DIR")
     ARCHS="arm64 x86_64"
 
@@ -182,15 +199,20 @@ build_libvcx() {
             echo ARCH=$ARCH
             echo TRIPLET=$TRIPLET
 
-            export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
-            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH}
+            # TODO: is this correct? some of these are "DIR", some of these are "LIB"
+            export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH} # OPENSSL_LIB_DIR seem to be used in mobile builds, ios+android?
+            # however, the libvcx buildscript seems to append /lib to end of OPENSSL_LIB_DIR, which seem not to match our path.
+            # is it trully effectively used, or just misconfigured and left unused?
+            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH} # LIBINDY_DIR seem not used (unless LIBINDY_STATIC is stet, which it is not)
 
-            cargo build --target "${TRIPLET}" --release --no-default-features
+            echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR} LIBINDY_DIR=${LIBINDY_DIR}"
+            cargo build -vv --target "${TRIPLET}" --release --no-default-features
         done
     popd
 }
 
 copy_libvcx_architectures() {
+    echo "ios/ci/build.sh: running copy_libvcx_architectures()"
     ARCHS="arm64 x86_64"
     LIB_NAME="vcx"
 
@@ -210,6 +232,7 @@ copy_libvcx_architectures() {
 }
 
 copy_libs_to_combine() {
+    echo "ios/ci/build.sh: running copy_libs_to_combine()"
     mkdir -p $OUTPUT_DIR/cache/arch_libs
 
     copy_lib_tocombine sodium libsodium
@@ -249,6 +272,7 @@ strip_libs() {
 }
 
 combine_libs() {
+    echo "ios/ci/build.sh: running combine_libs()"
     COMBINED_LIB=$1
 
     BUILD_CACHE=$(abspath "$OUTPUT_DIR/cache")
@@ -285,6 +309,7 @@ combine_libs() {
 }
 
 build_vcx_framework() {
+    echo "ios/ci/build.sh: running build_vcx_framework() COMBINED_LIB=${COMBINED_LIB}"
     COMBINED_LIB=$1
     ARCHS="arm64 x86_64"
 
@@ -389,9 +414,13 @@ abspath() {
 setup
 
 # Build 3rd party libraries
-build_crypto
-build_libsodium
-build_libzmq
+build_crypto   # builds into:  $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
+build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
+# TODO: also remove excesivelly building non-ios platform artifacts:
+# Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
+# Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386
+# Architectures in the fat file: ./libsodium-ios/dist/ios/lib/libsodium.a are: armv7 armv7s i386 x86_64 arm64
+build_libzmq   # builds into:  $OUTPUT_DIR/libzmq-ios # builds: x86_64 arm64
 
 # Extract architectures from fat files into non-fat files
 extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
