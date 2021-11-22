@@ -1,3 +1,5 @@
 .idea/
 **/target
 **/.DS_Store
+wrappers/ios/vcx/vcx.framework
+wrappers/ios/vcx/vcx.framework.dSYM

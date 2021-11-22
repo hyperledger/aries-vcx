@@ -50,6 +50,7 @@ setup() {
     brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
+    brew list tree &>/dev/null || brew install tree
 
     mkdir -p $OUTPUT_DIR
 
@@ -212,11 +213,8 @@ copy_libvcx_architectures() {
 copy_libs_to_combine() {
     mkdir -p $OUTPUT_DIR/cache/arch_libs
 
-    copy_lib_tocombine openssl libssl
-    copy_lib_tocombine openssl libcrypto
     copy_lib_tocombine sodium libsodium
     copy_lib_tocombine zmq libzmq
-    copy_lib_tocombine indy libindy
     copy_lib_tocombine vcx libvcx
 }
 
@@ -227,7 +225,7 @@ copy_lib_tocombine() {
     ARCHS="arm64 x86_64"
 
     for ARCH in ${ARCHS[*]}; do
-        cp -v $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/$LIB_FILE_NAME.a $OUTPUT_DIR/cache/arch_libs/${LIB_FILE_NAME}_$ARCH.a
+        cp -v "$OUTPUT_DIR/libs/$LIB_NAME/$ARCH/$LIB_FILE_NAME.a" "$OUTPUT_DIR/cache/arch_libs/${LIB_FILE_NAME}_$ARCH.a"
     done
 }
 
@@ -235,71 +233,36 @@ combine_libs() {
     COMBINED_LIB=$1
 
     BUILD_CACHE=$(abspath "$OUTPUT_DIR/cache")
-    libtool="/usr/bin/libtool"
 
     ARCHS="arm64 x86_64"
-
-    # Combine results of the same architecture into a library for that architecture
-    source_combined=""
+    combined_libs_paths=""
     for arch in ${ARCHS[*]}; do
-        libraries="libssl libcrypto libsodium libzmq libindy libvcx"
+        libraries="libsodium libzmq libvcx" # libssl libcrypto libindy were already statically linked into libvcx during its build (see libvcx/build.rs)
 
-        echo libraries
-        echo $libraries
-
-        source_libraries=""
-
+        libs_to_combine_paths=""
         for library in ${libraries[*]}; do
-            echo "Stripping library"
-            echo $library
-            if [ "$DEBUG_SYMBOLS" = "nodebug" ]; then
-                if [ "${library}" = "libvcx.a.tocombine" ]; then
-                    rm -rf ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a
-                    strip -S -x -o ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a -r ${BUILD_CACHE}/arch_libs/${library}_${arch}.a
-                elif [ ! -f ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a ]; then
-                    strip -S -x -o ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a -r ${BUILD_CACHE}/arch_libs/${library}_${arch}.a
-                fi
-                source_libraries="${source_libraries} ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a"
-            else
-                source_libraries="${source_libraries} ${BUILD_CACHE}/arch_libs/${library}_${arch}.a"
-            fi
+          libs_to_combine_paths="${libs_to_combine_paths} ${BUILD_CACHE}/arch_libs/${library}_${arch}.a"
         done
 
-        echo "Using source_libraries: ${source_libraries} to create ${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a"
-        rm -rf "${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a"
-        $libtool -static ${source_libraries} -o "${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a"
-        source_combined="${source_combined} ${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a"
-
-        lipo -info ${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a
-
-        # TEMPORARY HACK (build libvcx without duplicate .o object files):
-        # There are duplicate .o object files inside the libvcx.a file and these
-        # lines of logic remove those duplicate .o object files
-        rm -rf ${BUILD_CACHE}/arch_libs/tmpobjs
-        mkdir ${BUILD_CACHE}/arch_libs/tmpobjs
-        pushd ${BUILD_CACHE}/arch_libs/tmpobjs
-        ar -x ../${COMBINED_LIB}_${arch}.a
-        ls >../objfiles
-        xargs ar cr ../${COMBINED_LIB}_${arch}.a.new <../objfiles
-        if [ "$DEBUG_SYMBOLS" = "nodebug" ]; then
-            strip -S -x -o ../${COMBINED_LIB}_${arch}.a.stripped -r ../${COMBINED_LIB}_${arch}.a.new
-            mv ../${COMBINED_LIB}_${arch}.a.stripped ../${COMBINED_LIB}_${arch}.a
-        else
-            mv ../${COMBINED_LIB}_${arch}.a.new ../${COMBINED_LIB}_${arch}.a
-        fi
-        popd
+        COMBINED_LIB_PATH=${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a
+        echo "Going to combine following libraries: '${libs_to_combine_paths}' to create combined library: '$COMBINED_LIB_PATH'"
+        rm -rf "$COMBINED_LIB_PATH"
+        libtool -static ${libs_to_combine_paths} -o "$COMBINED_LIB_PATH"
+        combined_libs_paths="${combined_libs_paths} $COMBINED_LIB_PATH"
     done
 
-    echo "Using source_combined: ${source_combined} to create ${COMBINED_LIB}.a"
-    # Merge the combined library for each architecture into a single fat binary
-    lipo -create $source_combined -o $OUTPUT_DIR/${COMBINED_LIB}.a
+    for arch in ${ARCHS[*]}; do
+        COMBINED_LIB_PATH=${BUILD_CACHE}/arch_libs/${COMBINED_LIB}_${arch}.a
+        echo "Lipo info about combined library ${COMBINED_LIB_PATH}:"
+        lipo -info "$COMBINED_LIB_PATH"
+    done
 
-    # Delete intermediate files
-    rm -rf ${source_combined}
+    FAT_COMBINED_LIB_PATH="$OUTPUT_DIR/${COMBINED_LIB}.a"
+    echo "Using combined_libs_paths: ${combined_libs_paths} to combine them into single fat library: ${FAT_COMBINED_LIB_PATH}"
+    lipo -create ${combined_libs_paths} -o "${FAT_COMBINED_LIB_PATH}"
 
-    # Show info on the output library as confirmation
-    echo "Combination complete."
-    lipo -info $OUTPUT_DIR/${COMBINED_LIB}.a
+    echo "Lipo info about combined library ${FAT_COMBINED_LIB_PATH}:"
+    lipo -info "${FAT_COMBINED_LIB_PATH}"
 }
 
 build_vcx_framework() {
@@ -405,7 +368,7 @@ abspath() {
 
 # Setup environment
 setup
- 
+
 # Build 3rd party libraries
 build_crypto
 build_libsodium
@@ -427,7 +390,10 @@ build_libvcx
 copy_libvcx_architectures
 
 # Copy libraries to combine
+
+tree "$OUTPUT_DIR/libs/"
 copy_libs_to_combine
+tree "$OUTPUT_DIR/cache/arch_libs"
 
 # Combine libs by arch and merge libs to single fat binary
 combine_libs libvcx_all
