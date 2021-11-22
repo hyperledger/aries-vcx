@@ -9,11 +9,29 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 use crate::settings;
 use crate::utils::provision::AgencyClientConfig;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PoolConfig {
     pub genesis_path: String,
     pub pool_name: Option<String>,
     pub pool_config: Option<String>,
+}
+
+impl PoolConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn set_genesis_path(self, path: &str) -> Self {
+        Self { genesis_path: path.to_string(), ..self }
+    }
+
+    pub fn set_pool_name(self, name: &str) -> Self {
+        Self { pool_name: Some(name.to_string()), ..self }
+    }
+
+    pub fn set_pool_config(self, config: &str) -> Self {
+        Self { pool_config: Some(config.to_string()), ..self }
+    }
 }
 
 pub fn enable_vcx_mocks() -> VcxResult<()> {

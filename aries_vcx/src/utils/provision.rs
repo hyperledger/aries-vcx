@@ -4,12 +4,34 @@ use crate::error::prelude::*;
 use crate::libindy::utils::signus;
 use crate::settings;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct AgentProvisionConfig {
     pub agency_did: String,
     pub agency_verkey: String,
     pub agency_endpoint: String,
     pub agent_seed: Option<String>,
+}
+
+impl AgentProvisionConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn set_agency_did(self, did: &str) -> Self {
+        Self { agency_did: did.to_string(), ..self }
+    }
+
+    pub fn set_agency_verkey(self, key: &str) -> Self {
+        Self { agency_verkey: key.to_string(), ..self }
+    }
+
+    pub fn set_agency_endpoint(self, url: &str) -> Self {
+        Self { agency_endpoint: url.to_string(), ..self }
+    }
+
+    pub fn set_agent_seed(self, seed: &str) -> Self {
+        Self { agent_seed: Some(seed.to_string()), ..self }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
