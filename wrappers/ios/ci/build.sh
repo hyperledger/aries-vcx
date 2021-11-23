@@ -228,6 +228,26 @@ copy_lib_tocombine() {
     done
 }
 
+strip_libs() {
+  echo "TODO, this was copy-pasted as formerly optional step of combine_libs function"
+  #   TODO: restore this, not sure if we have ever set $DEBUG_SYMBOLS="nodebug", if works well, perhaps we can just strip the final combined library?
+#        for library in ${libraries[*]}; do
+#            echo "Stripping library"
+#            echo $library
+#            if [ "$DEBUG_SYMBOLS" = "nodebug" ]; then
+#                if [ "${library}" = "libvcx.a.tocombine" ]; then
+#                    rm -rf ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a
+#                    strip -S -x -o ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a -r ${BUILD_CACHE}/arch_libs/${library}_${arch}.a
+#                elif [ ! -f ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a ]; then
+#                    strip -S -x -o ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a -r ${BUILD_CACHE}/arch_libs/${library}_${arch}.a
+#                fi
+#                libs_to_combine_paths="${libs_to_combine_paths} ${BUILD_CACHE}/arch_libs/${library}-$arch-stripped.a"
+#            else
+#                libs_to_combine_paths="${libs_to_combine_paths} ${BUILD_CACHE}/arch_libs/${library}_${arch}.a"
+#            fi
+#        done
+}
+
 combine_libs() {
     COMBINED_LIB=$1
 
@@ -389,7 +409,10 @@ build_libvcx
 copy_libvcx_architectures
 
 # Copy libraries to combine
+
+tree "$OUTPUT_DIR/libs/"
 copy_libs_to_combine
+tree "$OUTPUT_DIR/cache/arch_libs"
 
 # Combine libs by arch and merge libs to single fat binary
 combine_libs libvcx_all
