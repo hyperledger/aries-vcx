@@ -48,6 +48,7 @@ failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
 agency_client = { version = "0.1.0", path = "../agency_client" }
+derive_builder = "0.10.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

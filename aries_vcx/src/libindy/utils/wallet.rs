@@ -7,7 +7,8 @@ use crate::init::open_as_main_wallet;
 use crate::libindy::utils::{anoncreds, signus};
 use crate::settings;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Builder, Serialize, Deserialize)]
+#[builder(setter(into))]
 pub struct WalletConfig {
     pub wallet_name: String,
     pub wallet_key: String,

@@ -9,7 +9,8 @@ use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credential
 use crate::settings;
 use crate::utils::provision::AgencyClientConfig;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Builder, Serialize, Deserialize)]
+#[builder(setter(into))]
 pub struct PoolConfig {
     pub genesis_path: String,
     pub pool_name: Option<String>,
