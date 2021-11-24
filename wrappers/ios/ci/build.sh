@@ -51,6 +51,7 @@ setup() {
     brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
+    brew list tree &>/dev/null || brew install tree
 
     mkdir -p $OUTPUT_DIR
 
