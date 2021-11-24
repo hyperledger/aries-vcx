@@ -7,7 +7,8 @@ use crate::init::open_as_main_wallet;
 use crate::libindy::utils::{anoncreds, signus};
 use crate::settings;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Builder, Serialize, Deserialize)]
+#[builder(setter(into))]
 pub struct WalletConfig {
     pub wallet_name: String,
     pub wallet_key: String,
@@ -22,44 +23,6 @@ pub struct WalletConfig {
     pub rekey: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey_derivation_method: Option<String>,
-}
-
-impl WalletConfig {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn set_wallet_name(self, name: &str) -> Self {
-        Self { wallet_name: name.to_string(), ..self }
-    }
-
-    pub fn set_wallet_key(self, key: &str) -> Self {
-        Self { wallet_key: key.to_string(), ..self }
-    }
-
-    pub fn set_wallet_key_derivation(self, wkf: &str) -> Self {
-        Self { wallet_key_derivation: wkf.to_string(), ..self }
-    }
-
-    pub fn set_wallet_type(self, wallet_type: &str) -> Self {
-        Self { wallet_type: Some(wallet_type.to_string()), ..self }
-    }
-
-    pub fn set_storage_config(self, config: &str) -> Self {
-        Self { storage_config: Some(config.to_string()), ..self }
-    }
-
-    pub fn set_storage_credentials(self, creds: &str) -> Self {
-        Self { storage_credentials: Some(creds.to_string()), ..self }
-    }
-
-    pub fn set_rekey(self, rekey: &str) -> Self {
-        Self { rekey: Some(rekey.to_string()), ..self }
-    }
-
-    pub fn set_rekey_derivation_method(self, rekey_kdf: &str) -> Self {
-        Self { rekey_derivation_method: Some(rekey_kdf.to_string()), ..self }
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
