@@ -819,7 +819,7 @@ jobs:
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run wrapper demo 
+      - name: Run wrapper demo
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
@@ -1139,7 +1139,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        uses: heinrichreimer/github-changelog-generator-action@v2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
