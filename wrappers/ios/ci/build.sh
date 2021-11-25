@@ -50,7 +50,6 @@ setup() {
     brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
-    brew list tree &>/dev/null || brew install tree
 
     mkdir -p $OUTPUT_DIR
 
@@ -390,10 +389,7 @@ build_libvcx
 copy_libvcx_architectures
 
 # Copy libraries to combine
-
-tree "$OUTPUT_DIR/libs/"
 copy_libs_to_combine
-tree "$OUTPUT_DIR/cache/arch_libs"
 
 # Combine libs by arch and merge libs to single fat binary
 combine_libs libvcx_all
