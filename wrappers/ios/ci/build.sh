@@ -47,28 +47,10 @@ setup() {
     which cmake &>/dev/null || brew install cmake
     which wget &>/dev/null || brew install wget
     which truncate &>/dev/null || brew install truncate
-    brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
 
     mkdir -p $OUTPUT_DIR
-
-    # Figure out which OPENSSL we have available
-    export OPENSSL_BASE_DIR="/usr/local/Cellar/openssl@1.1"
-    for f in $(ls -t "$OPENSSL_BASE_DIR"); do
-      local ABSOLUTE_FILE_PATH="${OPENSSL_BASE_DIR}/${f}"
-      if [ -d "$ABSOLUTE_FILE_PATH" ] && [ -d "$ABSOLUTE_FILE_PATH/lib" ]; then
-        export OPENSSL_VERSION=$f
-        export OPENSSL_DIR=$ABSOLUTE_FILE_PATH # Used later by cyclone
-        break
-      fi
-    done
-    if [ -z "$OPENSSL_VERSION" ]; then
-      echo >&2 "Error: Failed to find an OpenSSL installation in $OPENSSL_BASE_DIR"
-      exit 1
-    else
-      echo "Found OpenSSL version $OPENSSL_VERSION"
-    fi
 }
 
 # NOTE: Each built archive must be a fat file, i.e support all required architectures
@@ -79,8 +61,7 @@ build_crypto() {
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
-        OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]') # example: 1.1.1l_1a ---> 1.1.1l
-        ./build-libssl.sh --version="$OPENSSL_VERSION_STRIPPED"
+        ./build-libssl.sh --version="1.1.1l"
     popd
 }
 
