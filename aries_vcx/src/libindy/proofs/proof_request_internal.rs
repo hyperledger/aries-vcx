@@ -1,10 +1,16 @@
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Filter {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_issuer_did: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub schema_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub issuer_did: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cred_def_id: Option<String>,
 }
 
