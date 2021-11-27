@@ -10,73 +10,6 @@
 #define init_h
 #import "libvcx.h"
 
-extern void VcxWrapperCommonCallback(vcx_command_handle_t xcommand_handle,
-                                     vcx_error_t err);
-
-extern void VcxWrapperCommonHandleCallback(vcx_command_handle_t xcommand_handle,
-                                           vcx_error_t err,
-                                           vcx_command_handle_t pool_handle);
-
-extern void VcxWrapperCommonSignedHandleCallback(vcx_command_handle_t xcommand_handle,
-                                           vcx_error_t err,
-                                           vcx_i32_t handle);
-
-extern void VcxWrapperCommonStringCallback(vcx_command_handle_t xcommand_handle,
-                                           vcx_error_t err,
-                                           const char *const arg1);
-
-extern void VcxWrapperCommonBoolCallback(vcx_command_handle_t xcommand_handle,
-                                         vcx_error_t err,
-                                         unsigned int arg1);
-
-extern void VcxWrapperCommonStringStringCallback(vcx_command_handle_t xcommand_handle,
-                                                 vcx_error_t err,
-                                                 const char *const arg1,
-                                                 const char *const arg2);
-
-extern void VcxWrapperCommonStringOptStringCallback(vcx_command_handle_t xcommand_handle,
-                                                    vcx_error_t err,
-                                                    const char *const arg1,
-                                                    const char *const arg2);
-
-extern void VcxWrapperCommonDataCallback(vcx_command_handle_t xcommand_handle,
-                                         vcx_error_t err,
-                                         const uint8_t *const arg1,
-                                         uint32_t arg2);
-
-extern void VcxWrapperCommonStringStringStringCallback(vcx_command_handle_t xcommand_handle,
-                                                       vcx_error_t err,
-                                                       const char *const arg1,
-                                                       const char *const arg2,
-                                                       const char *const arg3);
-
-extern void VcxWrapperCommonStringDataCallback(vcx_command_handle_t xcommand_handle,
-                                               vcx_error_t err,
-                                               const char *const arg1,
-                                               const uint8_t *const arg2,
-                                               uint32_t arg3);
-
-extern void VcxWrapperCommonNumberCallback(vcx_command_handle_t xcommand_handle,
-                                           vcx_error_t err,
-                                           vcx_command_handle_t handle);
-
-extern void VcxWrapperCommonStringOptStringOptStringCallback(vcx_command_handle_t xcommand_handle,
-                                                             vcx_error_t err,
-                                                             const char *const arg1,
-                                                             const char *const arg2,
-                                                             const char *const arg3);
-
-extern void VcxWrapperCommonStringStringLongCallback(vcx_command_handle_t xcommand_handle,
-                                                     vcx_error_t err,
-                                                     const char *arg1,
-                                                     const char *arg2,
-                                                     unsigned long long arg3);
-
-extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
-                                                 vcx_error_t err,
-                                                 vcx_command_handle_t handle,
-                                                 const char *const arg2);
-
 @interface ConnectMeVcx : NSObject
 
 - (vcx_error_t) vcxInitCore:(NSString *)config;
@@ -85,7 +18,7 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void) createWallet:(NSString *)config
                  completion:(void (^)(NSError *error))completion;
 - (void) openMainWallet:(NSString *)config
-                 completion:(void (^)(NSError *error, NSInteger handle))completion;
+                 completion:(void (^)(NSError *error, NSNumber *handle))completion;
 - (void) closeMainWallet:(void (^)(NSError *error)) completion;
 - (void) vcxOpenPool:(void (^)(NSError *error)) completion;
 - (void) vcxOpenMainPool:(NSString *)config
@@ -106,50 +39,50 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 
 - (void)connectionCreateWithInvite:(NSString *)invitationId
                      inviteDetails:(NSString *)inviteDetails
-                        completion:(void (^)(NSError *error, NSInteger connectionHandle))completion;
+                        completion:(void (^)(NSError *error, NSNumber *connectionHandle))completion;
 
-- (void)connectionConnect:(VcxHandle)connectionHandle
+- (void)connectionConnect:(NSNumber *)connectionHandle
            connectionType:(NSString *)connectionType
-               completion:(void (^)(NSError *error, NSString *inviteDetails))completion;
+               completion:(void (^)(NSError *error))completion;
 
-- (void)connectionGetState:(NSInteger)connectionHandle
-                completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)connectionGetState:(NSNumber *)connectionHandle
+                completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)connectionUpdateState:(NSInteger) connectionHandle
-                   completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)connectionUpdateState:(NSNumber *)connectionHandle
+                   completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)connectionSerialize:(NSInteger)connectionHandle
+- (void)connectionSerialize:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *error, NSString *serializedConnection))completion;
 
 - (void)connectionDeserialize:(NSString *)serializedConnection
-                   completion:(void (^)(NSError *error, NSInteger connectionHandle))completion;
+                   completion:(void (^)(NSError *error, NSNumber *connectionHandle))completion;
 
-- (int)connectionRelease:(NSInteger) connectionHandle;
+- (int)connectionRelease:(NSNumber *)connectionHandle;
 
-- (void)deleteConnection:(VcxHandle)connectionHandle
+- (void)deleteConnection:(NSNumber *)connectionHandle
           withCompletion:(void (^)(NSError *error))completion;
 
-- (void)connectionGetPwDid:(NSInteger)connectionHandle
+- (void)connectionGetPwDid:(NSNumber *)connectionHandle
                 completion:(void (^)(NSError *error, NSString *pwDid))completion;
 
-- (void)connectionGetTheirPwDid:(NSInteger)connectionHandle
+- (void)connectionGetTheirPwDid:(NSNumber *)connectionHandle
                      completion:(void (^)(NSError *error, NSString *theirPwDid))completion;
 
-- (void)connectionSendMessage:(VcxHandle)connectionHandle
+- (void)connectionSendMessage:(NSNumber *)connectionHandle
                   withMessage:(NSString *)message
        withSendMessageOptions:(NSString *)sendMessageOptions
                withCompletion:(void (^)(NSError *error, NSString *msg_id))completion;
 
-- (void)connectionSignData:(VcxHandle)connectionHandle
+- (void)connectionSignData:(NSNumber *)connectionHandle
                   withData:(NSData *)dataRaw
-            withCompletion:(void (^)(NSError *error, NSData *signature_raw, vcx_u32_t signature_len))completion;
+            withCompletion:(void (^)(NSError *error, NSData *signature_raw))completion;
 
-- (void)connectionVerifySignature:(VcxHandle)connectionHandle
+- (void)connectionVerifySignature:(NSNumber *)connectionHandle
                          withData:(NSData *)dataRaw
                 withSignatureData:(NSData *)signatureRaw
                    withCompletion:(void (^)(NSError *error, vcx_bool_t valid))completion;
 
-- (void)connectionDownloadMessages:(VcxHandle)connectionHandle
+- (void)connectionDownloadMessages:(NSNumber *)connectionHandle
                     messageStatus:(NSString *)messageStatus
                             uid_s:(NSString *)uid_s
                       completion:(void (^)(NSError *error, NSString* messages))completion;
@@ -157,68 +90,68 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)agentUpdateInfo:(NSString *)config
              completion:(void (^)(NSError *error))completion;
 
-- (void)getCredential:(NSInteger )credentialHandle
+- (void)getCredential:(NSNumber *)credentialHandle
            completion:(void (^)(NSError *error, NSString *credential))completion;
 
 - (void)credentialCreateWithOffer:(NSString *)sourceId
                             offer:(NSString *)credentialOffer
-                       completion:(void (^)(NSError *error, NSInteger credentialHandle))completion;
+                       completion:(void (^)(NSError *error, NSNumber *credentialHandle))completion;
 
 - (void)credentialCreateWithMsgid:(NSString *)sourceId
-                 connectionHandle:(VcxHandle)connectionHandle
+                 connectionHandle:(NSNumber *)connectionHandle
                             msgId:(NSString *)msgId
-                       completion:(void (^)(NSError *error, NSInteger credentialHandle, NSString *credentialOffer))completion;
+                       completion:(void (^)(NSError *error, NSNumber *credentialHandle, NSString *credentialOffer))completion;
 
-- (void)credentialSendRequest:(NSInteger)credentialHandle
-             connectionHandle:(VcxHandle)connectionHandle
-                paymentHandle:(vcx_payment_handle_t)paymentHandle
+- (void)credentialSendRequest:(NSNumber *)credentialHandle
+             connectionHandle:(NSNumber *)connectionHandle
+                paymentHandle:(NSNumber *)paymentHandle
                    completion:(void (^)(NSError *error))completion;
 
-- (void)credentialGetState:(NSInteger )credentialHandle
-                completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)credentialGetState:(NSNumber *)credentialHandle
+                completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)credentialUpdateState:(NSInteger )credentialHandle
-                completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)credentialUpdateState:(NSNumber *)credentialHandle
+                completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)credentialUpdateStateV2:(NSInteger )credentailHandle
-                connectionHandle:(VcxHandle)connectionHandle
-                completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)credentialUpdateStateV2:(NSNumber *)credentailHandle
+                connectionHandle:(NSNumber *)connectionHandle
+                completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)credentialGetOffers:(VcxHandle)connectionHandle
+- (void)credentialGetOffers:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *error, NSString *offers))completion;
 
-- (void)credentialGetAttributes:(VcxHandle)credentialHandle
+- (void)credentialGetAttributes:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *attributes))completion;
 
-- (void)credentialGetAttachment:(VcxHandle)credentialHandle
+- (void)credentialGetAttachment:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *attach))completion;
 
-- (void)credentialGetTailsLocation:(VcxHandle)credentialHandle
+- (void)credentialGetTailsLocation:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *tailsLocation))completion;
 
-- (void)credentialGetTailsHash:(VcxHandle)credentialHandle
+- (void)credentialGetTailsHash:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *tailsHash))completion;
 
-- (void)credentialGetRevRegId:(VcxHandle)credentialHandle
+- (void)credentialGetRevRegId:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *revRegId))completion;
 
-- (void)credentialIsRevokable:(VcxHandle)credentialHandle
-                 completion:(void (^)(NSError *error, vcx_bool_t revokable))completion;
+- (void)credentialIsRevokable:(NSNumber *)credentialHandle
+                 completion:(void (^)(NSError *error, BOOL revokable))completion;
 
-- (void)credentialSerialize:(NSInteger)credentialHandle
+- (void)credentialSerialize:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *state))completion;
 
 - (void)credentialDeserialize:(NSString *)serializedCredential
-                   completion:(void (^)(NSError *error, NSInteger credentialHandle))completion;
+                   completion:(void (^)(NSError *error, NSNumber *credentialHandle))completion;
 
-- (int)credentialRelease:(NSInteger) credentialHandle;
+- (int)credentialRelease:(NSNumber *) credentialHandle;
 
-- (void)deleteCredential:(NSInteger)credentialHandle
+- (void)deleteCredential:(NSNumber *)credentialHandle
                   completion:(void (^)(NSError *error))completion;
 
 - (void)exportWallet:(NSString *)exportPath
          encryptWith:(NSString *)encryptionKey
-          completion:(void (^)(NSError *error, NSInteger exportHandle))completion;
+          completion:(void (^)(NSError *error))completion;
 
 - (void)importWallet:(NSString *)config
            completion:(void (^)(NSError *error))completion;
@@ -261,86 +194,86 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
 - (void)openSearchWallet:(NSString *)recordType
                queryJson:(NSString *)queryJson
              optionsJson:(NSString *)optionsJson
-              completion:(void (^)(NSError *error, NSInteger searchHandle))completion;
+              completion:(void (^)(NSError *error, NSNumber *searchHandle))completion;
 
-- (void)searchNextRecordsWallet:(NSInteger)searchHandle
-                          count:(int)count
+- (void)searchNextRecordsWallet:(NSNumber *)searchHandle
+                          count:(NSNumber *)count
                      completion:(void (^)(NSError *error, NSString* records))completion;
 
-- (void)closeSearchWallet:(NSInteger)searchHandle
+- (void)closeSearchWallet:(NSNumber *)searchHandle
                completion:(void (^)(NSError *error))completion;
 
-- (void) proofGetRequests:(NSInteger)connectionHandle
+- (void) proofGetRequests:(NSNumber *)connectionHandle
               completion:(void (^)(NSError *error, NSString *requests))completion;
 
-- (void) proofGetProofRequestAttachment:(NSInteger)proofHandle
+- (void) proofGetProofRequestAttachment:(NSNumber *)proofHandle
               completion:(void (^)(NSError *error, NSString *attach))completion;
 
-- (void) proofRetrieveCredentials:(vcx_proof_handle_t)proofHandle
+- (void) proofRetrieveCredentials:(NSNumber *)proofHandle
                    withCompletion:(void (^)(NSError *error, NSString *matchingCredentials))completion;
 
-- (void) proofGenerate:(vcx_proof_handle_t)proofHandle
+- (void) proofGenerate:(NSNumber *)proofHandle
 withSelectedCredentials:(NSString *)selectedCredentials
  withSelfAttestedAttrs:(NSString *)selfAttestedAttributes
         withCompletion:(void (^)(NSError *error))completion;
 
 - (void) proofCreateWithMsgId:(NSString *)source_id
-         withConnectionHandle:(vcx_connection_handle_t)connectionHandle
+         withConnectionHandle:(NSNumber *)connectionHandle
                     withMsgId:(NSString *)msgId
-               withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle, NSString *proofRequest))completion;
+               withCompletion:(void (^)(NSError *error, NSNumber *proofHandle, NSString *proofRequest))completion;
 
 - (void) proofSend:(vcx_proof_handle_t)proof_handle
 withConnectionHandle:(vcx_connection_handle_t)connection_handle
     withCompletion:(void (^)(NSError *error))completion;
 
-- (void)proofGetState:(NSInteger)proofHandle
-           completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)proofGetState:(NSNumber *)proofHandle
+           completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)proofUpdateState:(NSInteger) proofHandle
-              completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)proofUpdateState:(NSNumber *) proofHandle
+              completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void)proofUpdateStateV2:(NSInteger) proofHandle
-              connectionHandle:(vcx_connection_handle_t)connectionHandle
-              completion:(void (^)(NSError *error, NSInteger state))completion;
+- (void)proofUpdateStateV2:(NSNumber *) proofHandle
+              connectionHandle:(NSNumber *)connectionHandle
+              completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void) proofReject: (vcx_proof_handle_t)proof_handle
-      withConnectionHandle:(vcx_connection_handle_t)connection_handle
-      withCompletion: (void (^)(NSError *error))completion;
+- (void) proofReject:(NSNumber *)proof_handle
+      withConnectionHandle:(NSNumber *)connection_handle
+      withCompletion:(void (^)(NSError *error))completion;
 
-- (void) getProofMsg:(vcx_proof_handle_t) proofHandle
+- (void) getProofMsg:(NSNumber *) proofHandle
       withCompletion:(void (^)(NSError *error, NSString *proofMsg))completion;
 
-- (void) getRejectMsg:(vcx_proof_handle_t) proofHandle
+- (void) getRejectMsg:(NSNumber *) proofHandle
        withCompletion:(void (^)(NSError *error, NSString *rejectMsg))completion;
 
-- (void)connectionRedirect:(vcx_connection_handle_t)redirect_connection_handle
-      withConnectionHandle:(vcx_connection_handle_t)connection_handle
+- (void)connectionRedirect:(NSNumber *)redirect_connection_handle
+      withConnectionHandle:(NSNumber *)connection_handle
             withCompletion:(void (^)(NSError *error))completion;
 
-- (void)getRedirectDetails:(vcx_connection_handle_t)connection_handle
+- (void)getRedirectDetails:(NSNumber *)connection_handle
       withCompletion:(void (^)(NSError *error, NSString *redirectDetails))completion;
 
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
-                 withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle))completion;
+                 withCompletion:(void (^)(NSError *error, NSNumber *proofHandle))completion;
 
-- (void) proofSerialize:(vcx_proof_handle_t) proofHandle
+- (void) proofSerialize:(NSNumber *) proofHandle
          withCompletion:(void (^)(NSError *error, NSString *proof_request))completion;
 
 - (void) proofDeserialize:(NSString *) serializedProof
-           withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle)) completion;
+           withCompletion:(void (^)(NSError *error, NSNumber *proofHandle)) completion;
 
-- (int)proofRelease:(NSInteger) proofHandle;
+- (int)proofRelease:(NSNumber *) proofHandle;
 
 - (int)vcxShutdown:(BOOL *)deleteWallet;
 
 - (void)createPaymentAddress:(NSString *)seed
               withCompletion:(void (^)(NSError *error, NSString *address))completion;
 
-- (void)getTokenInfo:(vcx_payment_handle_t)payment_handle
+- (void)getTokenInfo:(NSNumber *)payment_handle
       withCompletion:(void (^)(NSError *error, NSString *tokenInfo))completion;
 
-- (void)sendTokens:(vcx_payment_handle_t)payment_handle
+- (void)sendTokens:(NSNumber *)payment_handle
         withTokens:(NSString *)tokens
      withRecipient:(NSString *)recipient
     withCompletion:(void (^)(NSError *error, NSString *recipient))completion;
