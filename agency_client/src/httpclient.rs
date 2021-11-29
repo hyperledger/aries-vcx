@@ -30,7 +30,7 @@ pub fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec
         set_ssl_cert_location();
     }
 
-    let client = reqwest::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
+    let client = reqwest::blocking::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
         error!("error: {}", err);
         AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
     })?;
