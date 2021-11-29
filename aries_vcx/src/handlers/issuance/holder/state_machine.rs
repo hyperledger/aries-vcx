@@ -210,7 +210,6 @@ impl HolderSM {
                                     VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                                 )?(&A2AMessage::CredentialAck(ack))?;
                             }
-
                             HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
                         }
                         Err(err) => {
