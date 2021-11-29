@@ -17,6 +17,7 @@ pub struct ProofRequestData {
     pub requested_attributes: HashMap<String, AttrInfo>,
     #[serde(default)]
     pub requested_predicates: HashMap<String, PredicateInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
