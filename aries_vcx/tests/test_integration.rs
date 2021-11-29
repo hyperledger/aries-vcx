@@ -471,11 +471,12 @@ mod tests {
 
     fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> Verifier {
         faber.activate().unwrap();
-        let mut verifier = Verifier::create_from_request("1".to_string(),
-                                            requested_attrs.to_string(),
-                                            requested_preds.to_string(),
-                                            revocation_interval.to_string(),
-                                            String::from(request_name.unwrap_or("name"))).unwrap();
+        let presentation_request =
+            PresentationRequestData::create(request_name.unwrap_or("name")).unwrap()
+                .set_requested_attributes_as_string(requested_attrs.to_string()).unwrap()
+                .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
+                .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
+        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
         verifier.send_presentation_request(connection.send_message_closure().unwrap(), None).unwrap();
         thread::sleep(Duration::from_millis(2000));
         verifier
@@ -483,11 +484,12 @@ mod tests {
 
     fn create_proof_request(faber: &mut Faber, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> PresentationRequest {
         faber.activate().unwrap();
-        let verifier = Verifier::create_from_request("1".to_string(),
-                                            requested_attrs.to_string(),
-                                            requested_preds.to_string(),
-                                            revocation_interval.to_string(),
-                                            String::from(request_name.unwrap_or("name"))).unwrap();
+        let presentation_request =
+            PresentationRequestData::create(request_name.unwrap_or("name")).unwrap()
+                .set_requested_attributes_as_string(requested_attrs.to_string()).unwrap()
+                .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
+                .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
+        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
         verifier.generate_presentation_request().unwrap()
     }
 

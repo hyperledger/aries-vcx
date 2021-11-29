@@ -54,12 +54,11 @@ impl VerifierSM {
         }
     }
 
-    pub fn from_request(source_id: &str, presentation_request: PresentationRequestData) -> Self {
+    pub fn from_request(source_id: &str, presentation_request: &PresentationRequestData) -> Self {
         Self {
             source_id: source_id.to_string(),
             thread_id: MessageId::new().0,
-            state: VerifierFullState::PresentationRequestSet(PresentationRequestSet { presentation_request_data: presentation_request }),
-
+            state: VerifierFullState::PresentationRequestSet(PresentationRequestSet::new(presentation_request.clone())),
         }
     }
 
@@ -360,7 +359,7 @@ pub mod test {
     }
 
     pub fn _verifier_sm_from_request() -> VerifierSM {
-        VerifierSM::from_request(&source_id(), _presentation_request_data())
+        VerifierSM::from_request(&source_id(), &_presentation_request_data())
     }
 
     pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {

@@ -5,6 +5,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
 
@@ -24,7 +25,12 @@ pub fn create_proof(source_id: String,
                     requested_predicates: String,
                     revocation_details: String,
                     name: String) -> VcxResult<u32> {
-    let verifier = Verifier::create_from_request(source_id, requested_attrs, requested_predicates, revocation_details, name)?;
+    let presentation_request =
+        PresentationRequestData::create(&name)?
+            .set_requested_attributes_as_string(requested_attrs)?
+            .set_requested_predicates_as_string(requested_predicates)?
+            .set_not_revoked_interval(revocation_details)?;
+    let verifier = Verifier::create_from_request(source_id, &presentation_request)?;
     PROOF_MAP.add(verifier)
         .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
 }

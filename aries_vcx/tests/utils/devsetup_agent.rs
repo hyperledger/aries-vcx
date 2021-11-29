@@ -26,7 +26,7 @@ pub mod test {
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
-    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -204,12 +204,10 @@ pub mod test {
                 {"name": "degree"},
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
-
-            Verifier::create_from_request(String::from("alice_degree"),
-                             requested_attrs,
-                             json!([]).to_string(),
-                             json!({}).to_string(),
-                             String::from("proof_from_alice")).unwrap()
+            let presentation_request =
+                PresentationRequestData::create("1").unwrap()
+                    .set_requested_attributes_as_string(requested_attrs).unwrap();
+            Verifier::create_from_request(String::from("alice_degree"), &presentation_request).unwrap()
         }
 
         pub fn create_invite(&mut self) -> String {
