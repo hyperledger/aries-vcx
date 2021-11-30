@@ -79,6 +79,11 @@ impl Verifier {
         self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
     }
 
+    pub fn send_ack(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        trace!("Verifier::send_ack >>>");
+        self.step(VerifierMessages::SendPresentationAck(), Some(&send_message))
+    }
+
     pub fn set_request(&mut self, presentation_request_data: PresentationRequestData) -> VcxResult<()> {
         self.verifier_sm = self.verifier_sm.clone().set_request(presentation_request_data)?;
         Ok(())

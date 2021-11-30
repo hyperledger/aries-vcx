@@ -15,6 +15,7 @@ pub enum VerifierMessages {
     SetPresentationRequest(PresentationRequestData),
     PresentationProposalReceived(PresentationProposal),
     PresentationRejectReceived(ProblemReport),
+    SendPresentationAck(),
     Unknown,
 }
 

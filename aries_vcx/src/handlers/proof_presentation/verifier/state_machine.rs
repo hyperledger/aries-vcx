@@ -14,6 +14,7 @@ use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -225,7 +226,15 @@ impl VerifierSM {
                     }
                 }
             }
-            VerifierFullState::Finished(state) => (VerifierFullState::Finished(state), thread_id)
+            VerifierFullState::Finished(state) => {
+                if matches!(message, VerifierMessages::SendPresentationAck()) {
+                    let ack = PresentationAck::create().set_thread_id(&thread_id);
+                    send_message.ok_or(
+                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                    )?(&A2AMessage::PresentationAck(ack))?;
+                }
+                (VerifierFullState::Finished(state), thread_id)
+            }
         };
 
         Ok(Self { source_id, state, thread_id })
