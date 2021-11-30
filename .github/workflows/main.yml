@@ -855,7 +855,7 @@ jobs:
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
-    needs: [workflow-setup, build-image-libvcx]
+    needs: workflow-setup
     runs-on: macos-10.15
     env:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
