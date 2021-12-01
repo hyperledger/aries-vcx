@@ -33,23 +33,9 @@ impl Verifier {
         })
     }
 
-    pub fn create_from_request(source_id: String,
-                  requested_attrs: String,
-                  requested_predicates: String,
-                  revocation_details: String,
-                  name: String) -> VcxResult<Self> {
-        trace!("Verifier::create_from_request >>> source_id: {:?}, requested_attrs: {:?}, requested_predicates: {:?}, revocation_details: {:?}, name: {:?}",
-               source_id, requested_attrs, requested_predicates, revocation_details, name);
-
-        let presentation_request =
-            PresentationRequestData::create(&name)?
-                .set_requested_attributes_as_string(requested_attrs)?
-                .set_requested_predicates_as_string(requested_predicates)?
-                .set_not_revoked_interval(revocation_details)?;
-
-        Ok(Self {
-            verifier_sm: VerifierSM::from_request(&source_id, presentation_request),
-        })
+    pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
+        trace!("Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}", source_id, presentation_request);
+        Ok(Self { verifier_sm: VerifierSM::from_request(&source_id, presentation_request) })
     }
 
     pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
@@ -168,11 +154,12 @@ mod tests {
     use super::*;
 
     fn _verifier() -> Verifier {
-        Verifier::create_from_request("1".to_string(),
-                     REQUESTED_ATTRS.to_owned(),
-                     REQUESTED_PREDICATES.to_owned(),
-                     r#"{"support_revocation":false}"#.to_string(),
-                     "Optional".to_owned()).unwrap()
+    let presentation_request =
+        PresentationRequestData::create("1").unwrap()
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
+            .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
+        Verifier::create_from_request("1".to_string(), &presentation_request).unwrap()
 
     }
 
