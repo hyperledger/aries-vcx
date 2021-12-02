@@ -60,7 +60,7 @@
     "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-prettier": "^3.4.1",
     "jsdoc": "^3.6.7",
-    "mocha": "^9.1.3",
+    "mocha": "9.0.3",
     "prettier": "^2.5.0",
     "ts-node": "^6.1.2",
     "typedoc": "^0.22.10",
@@ -84,10 +84,10 @@
     "test:schema": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite1/ariesvcx-schema.test.ts",
     "test:utils": "           TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite1/ariesvcx-utils.test.ts",
     "test:wallet": "          TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite1/ariesvcx-wallet.test.ts",
-    "test:ffi": "                   TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite2/ffi.test.ts",
-    "test:logging": "               TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test find ./test/suite3 -name '*.test.ts' -exec ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register \\{} \\;",
-    "test:logging1": "              TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite3/logging.1.test.ts",
-    "test:logging2": "              TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite3/logging.2.test.ts"
+    "test:ffi": "             TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite2/ffi.test.ts",
+    "test:logging": "         TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test find ./test/suite3 -name '*.test.ts' -exec ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register \\{} \\;",
+    "test:logging1": "        TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite3/logging.1.test.ts",
+    "test:logging2": "        TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite3/logging.2.test.ts"
   },
   "main": "dist/index.js",
   "typings": "dist/index.d.ts"
