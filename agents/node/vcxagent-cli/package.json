@@ -8,13 +8,13 @@
     "lint:fix": "standard --fix"
   },
   "dependencies": {
+    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
+    "@hyperledger/vcxagent-core": "file:../vcxagent-core",
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
     "readline-sync": "^1.4.10",
-    "@hyperledger/vcxagent-core": "file:../vcxagent-core",
-    "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
-    "winston": "^3.3.3",
-    "standard": "^14.3.1"
+    "standard": "^16.0.4",
+    "winston": "^3.3.3"
   },
   "author": "Absa Group Limited",
   "license": "Apache-2.0"
