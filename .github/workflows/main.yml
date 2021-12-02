@@ -1015,8 +1015,8 @@ jobs:
         uses: azure/docker-login@v1
         with:
           login-server: ghcr.io
-          username: Patrik-Stas
-          password: ${{ secrets.PUBLISH_PKG_GITHUB_PATRIK }}
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish image
         run: |
