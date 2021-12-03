@@ -1,4 +1,3 @@
-// error in rust compiler.  Bugfix has been submitted in Sept. 2017
 #[allow(unused_imports)]
 #[macro_use]
 extern crate serde;
@@ -65,7 +64,6 @@ fn main() {
         target.contains("x86_64-linux-android") || target.contains("aarch64-apple-ios") ||
         target.contains("armv7-apple-ios") || target.contains("armv7s-apple-ios") ||
         target.contains("i386-apple-ios") || target.contains("x86_64-apple-ios") {
-        println!("This is ios build branch; target={}", target);
         let libindy_lib_path = match env::var("LIBINDY_DIR") {
             Ok(val) => val,
             Err(..) => panic!("Missing required environment variable LIBINDY_DIR")

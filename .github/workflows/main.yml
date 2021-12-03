@@ -110,9 +110,7 @@ jobs:
 
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
 
-          REBUILD_SEED_LIBVCX="2"
-
-          LIBVCX_HASH=${REBUILD_SEED_LIBVCX}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
+          LIBVCX_HASH=${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}-${LIBVCX_DOCKERFILE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${ARIESVCX_SOURCE_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${ARIESVCX_SOURCE_HASH:0:11}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
@@ -868,7 +866,6 @@ jobs:
       uses: actions/checkout@v2
     - name: Switch to xcode version 11
       run: |
-        ls /Applications | grep Xcode
         sudo xcode-select --switch /Applications/Xcode_11.7.app/Contents/Developer
         xcodebuild -version
     - name: Build iOS wrapper
