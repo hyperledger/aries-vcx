@@ -1,6 +1,6 @@
 use serde_json;
 
-use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, parse_revocation_details};
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
@@ -14,12 +14,19 @@ lazy_static! {
 }
 
 pub fn create_and_publish_credentialdef(source_id: String,
-                                        name: String,
+                                        _name: String,
                                         issuer_did: String,
                                         schema_id: String,
                                         tag: String,
                                         revocation_details: String) -> VcxResult<u32> {
-    let cred_def = CredentialDef::create(source_id, name, issuer_did, schema_id, tag, revocation_details)?;
+    let config = CredentialDefConfigBuilder::default()
+        .issuer_did(issuer_did)
+        .schema_id(schema_id)
+        .tag(tag)
+        .build()
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
+    let revocation_details = parse_revocation_details(&revocation_details)?;
+    let cred_def = CredentialDef::create(source_id, config, revocation_details)?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }

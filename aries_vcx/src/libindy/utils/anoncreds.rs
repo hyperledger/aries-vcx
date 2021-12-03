@@ -645,7 +645,7 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::{libindy, settings};
-    use crate::handlers::issuance::credential_def::CredentialDef;
+    use crate::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use crate::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
@@ -678,26 +678,22 @@ pub mod test_utils {
     }
 
     pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, Option<String>) {
-        /* create schema */
         let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
-
-        let name: String = crate::utils::random::generate_random_name();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-
-        /* create cred-def */
-        let mut revocation_details = json!({"support_revocation":support_rev});
-        if support_rev {
-            revocation_details["tails_file"] = json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string());
-            revocation_details["tails_url"] = json!(TEST_TAILS_URL);
-            revocation_details["max_creds"] = json!(10);
-        }
+        let config = CredentialDefConfigBuilder::default()
+            .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
+            .schema_id(&schema_id)
+            .build()
+            .unwrap();
+        let revocation_details = RevocationDetailsBuilder::default()
+            .support_revocation(support_rev)
+            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+            .tails_url(TEST_TAILS_URL)
+            .max_creds(10 as u32)
+            .build()
+            .unwrap();
         let cred_def = CredentialDef::create("1".to_string(),
-                                             name,
-                                             institution_did.clone(),
-                                             schema_id.clone(),
-                                             "tag1".to_string(),
-                                             revocation_details.to_string()).unwrap();
-
+                                             config,
+                                             revocation_details).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));

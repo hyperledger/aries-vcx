@@ -24,7 +24,6 @@ pub struct RevocationRegistry {
 pub struct CredentialDef {
     pub id: String,
     tag: String,
-    name: String,
     source_id: String,
     pub issuer_did: Option<String>,
     cred_def_payment_txn: Option<PaymentTxn>,
@@ -33,7 +32,16 @@ pub struct CredentialDef {
     pub state: PublicEntityStateType,
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Builder, Default)]
+#[builder(setter(into), default)]
+pub struct CredentialDefConfig {
+    issuer_did: String,
+    schema_id: String,
+    tag: String,
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize, Builder, Default)]
+#[builder(setter(into, strip_option), default)]
 pub struct RevocationDetails {
     pub support_revocation: Option<bool>,
     pub tails_file: Option<String>,
@@ -184,7 +192,7 @@ fn _maybe_set_url(rev_reg_def_json: &str, revocation_details: &RevocationDetails
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize RevocationRegistryDefinition: {:?}, err: {:?}", rev_reg_def, err)))
 }
 
-fn _parse_revocation_details(revocation_details: &str) -> VcxResult<RevocationDetails> {
+pub fn parse_revocation_details(revocation_details: &str) -> VcxResult<RevocationDetails> {
     let revoc_details = serde_json::from_str::<RevocationDetails>(&revocation_details)
         .to_vcx(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails")?;
 
@@ -214,12 +222,11 @@ fn _replace_tails_location(new_rev_reg_def: &str, revocation_details: &Revocatio
 }
 
 impl CredentialDef {
-    pub fn create(source_id: String, name: String, issuer_did: String, schema_id: String, tag: String, revocation_details: String) -> VcxResult<Self> {
-        trace!("CredentialDef::create >>> source_id: {}, name: {}, issuer_did: {}, schema_id: {}, revocation_details: {}",
-               source_id, name, issuer_did, schema_id, revocation_details);
+    pub fn create(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails) -> VcxResult<Self> {
+        trace!("CredentialDef::create >>> source_id: {}, config: {:?}, revocation_details: {:?}",
+               source_id, config, revocation_details);
 
-        let revocation_details: RevocationDetails = _parse_revocation_details(&revocation_details)?;
-
+        let CredentialDefConfig { issuer_did, schema_id, tag } = config;
         let (cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry) = _create_credentialdef(&issuer_did, &schema_id, &tag, &revocation_details)?;
 
         let (rev_def_payment, rev_delta_payment, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&issuer_did, &cred_def_id) {
@@ -264,7 +271,6 @@ impl CredentialDef {
         Ok(
             Self {
                 source_id,
-                name,
                 tag,
                 id: cred_def_id,
                 issuer_did: Some(issuer_did),
@@ -321,8 +327,6 @@ impl CredentialDef {
 
     pub fn get_cred_def_id(&self) -> String { self.id.clone() }
 
-    pub fn set_name(&mut self, name: String) { self.name = name.clone(); }
-
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
     pub fn get_rev_reg_def_payment_txn(&self) -> Option<PaymentTxn> {
@@ -361,7 +365,7 @@ impl CredentialDef {
 
     pub fn rotate_rev_reg(&mut self, revocation_details: &str) -> VcxResult<RevocationRegistry> {
         debug!("CredentialDef::rotate_rev_reg >>> revocation_details: {}", revocation_details);
-        let revocation_details = _parse_revocation_details(revocation_details)?;
+        let revocation_details = parse_revocation_details(revocation_details)?;
         let (tails_file, max_creds, issuer_did) = (
             revocation_details.clone().tails_file.or(self.get_tails_file()),
             revocation_details.max_creds.or(self.get_max_creds()),
