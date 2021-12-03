@@ -114,7 +114,6 @@ build_libzmq() {
 
 # NOTE: $OUTPUT_DIR/libs/{arm64,x86_64}/$LIB_NAME.a should be a non-fat file with arm64 / x86_64 architecture
 extract_architectures() {
-
     ARCHS="arm64 x86_64"
     FILE_PATH=$1
     LIB_FILE_NAME=$2
@@ -153,14 +152,11 @@ checkout_indy_sdk() {
     popd
 }
 
-# NOTE: $INDY_SDK_DIR/libindy/target/$TRIPLET/release/libindy.a should be a non-fat file
 build_libindy() {
     echo "ios/ci/build.sh: running build_libindy()"
-    # OpenSSL-for-iPhone currently provides libs only for aarch64-apple-ios and x86_64-apple-ios, so we select only them.
     TRIPLETS="aarch64-apple-ios,x86_64-apple-ios"
 
     pushd $INDY_SDK_DIR/libindy
-        # TODO: we use lipo to build fat lib, but then we only used this libs in copy_libindy_architectures step
         cargo lipo --release --targets="${TRIPLETS}"
     popd
 }
@@ -183,7 +179,6 @@ copy_libindy_architectures() {
 }
 
 build_libvcx() {
-    # TODO: ??? in this step we statically link much of libs - zmq, sodium, ssl, libindy - but then we still have som sort of "combine libs" step???? why
     echo "ios/ci/build.sh: running build_libvcx()"
     WORK_DIR=$(abspath "$OUTPUT_DIR")
     ARCHS="arm64 x86_64"
@@ -193,16 +188,11 @@ build_libvcx() {
     pushd $REPO_DIR/libvcx
         for ARCH in ${ARCHS[*]}; do
             generate_flags $ARCH
-
             echo ARCH=$ARCH
             echo TRIPLET=$TRIPLET
 
-            # TODO: is this correct? some of these are "DIR", some of these are "LIB"
-            export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH} # OPENSSL_LIB_DIR seem to be used in mobile builds, ios+android?
-            # however, the libvcx buildscript seems to append /lib to end of OPENSSL_LIB_DIR, which seem not to match our path.
-            # is it trully effectively used, or just misconfigured and left unused?
-            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH} # LIBINDY_DIR seem not used (unless LIBINDY_STATIC is stet, which it is not)
-
+            export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
+            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH}
             echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR} LIBINDY_DIR=${LIBINDY_DIR}"
             cargo build -vv --target "${TRIPLET}" --release --no-default-features
         done
@@ -258,7 +248,7 @@ combine_libs() {
     ARCHS="arm64 x86_64"
     combined_libs_paths=""
     for arch in ${ARCHS[*]}; do
-        libraries="libsodium libzmq libvcx" # libssl libcrypto libindy were already statically linked into libvcx during its build (see libvcx/build.rs)
+        libraries="libsodium libzmq libvcx" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
 
         libs_to_combine_paths=""
         for library in ${libraries[*]}; do
@@ -394,7 +384,7 @@ setup
 # Build 3rd party libraries
 build_crypto   # builds into:  $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
 build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
-# TODO: also remove excesivelly building non-ios platform artifacts:
+# TODO: also remove excessively building non-ios platform artifacts:
 # Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
 # Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386
 # Architectures in the fat file: ./libsodium-ios/dist/ios/lib/libsodium.a are: armv7 armv7s i386 x86_64 arm64

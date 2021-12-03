@@ -880,7 +880,6 @@ jobs:
         name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
         path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
-
   # test-android-wrapper:
   #   runs-on: ubuntu-20.04
   #   needs: [workflow-setup, build-image-android]
