@@ -864,9 +864,9 @@ jobs:
     steps:
     - name: Git checkout
       uses: actions/checkout@v2
-    - name: Switch to xcode version 11
+    - name: Switch to xcode version 12.4
       run: |
-        sudo xcode-select --switch /Applications/Xcode_11.7.app/Contents/Developer
+        sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
         xcodebuild -version
     - name: Build iOS wrapper
       run: |
