@@ -581,7 +581,7 @@ jobs:
                               cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
 
-  test-libvcx-pgsql-integration:
+  test-libvcx-mysql-integration:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
@@ -630,15 +630,16 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
-      - name: Run pgsql integration tests
+      - name: Run mysql integration tests
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "plugin_test")'
+                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "mysql_test")'
 
   test-libvcx-image-agency_pool_tests:
     runs-on: ubuntu-20.04
@@ -869,7 +870,7 @@ jobs:
         xcodebuild -version
     - name: Build iOS wrapper
       run: |
-          ./wrappers/ios/ci/build.sh
+        ./wrappers/ios/ci/build.sh
     - uses: actions/upload-artifact@v2
       with:
         name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
