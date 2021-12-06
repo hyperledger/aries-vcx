@@ -4,7 +4,6 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData } from './common';
 import { VCXBase } from './vcx-base';
-import { PaymentManager } from './vcx-payment-txn';
 
 /**
  * @interface Interface that represents the parameters for `Schema.create` function.
@@ -16,7 +15,6 @@ export interface ISchemaCreateData {
   // list of attributes that will make up the schema (the number of attributes should be less or equal than 125)
   data: ISchemaAttrs;
   // future use (currently uses any address in the wallet)
-  paymentHandle: number;
 }
 
 /**
@@ -83,10 +81,6 @@ export enum SchemaState {
   Published = 1,
 }
 
-export class SchemaPaymentManager extends PaymentManager {
-  protected _getPaymentTxnFn = rustAPI().vcx_schema_get_payment_txn;
-}
-
 export class Schema extends VCXBase<ISchemaSerializedData> {
   get schemaAttrs(): ISchemaAttrs {
     return this._schemaAttrs;
@@ -116,14 +110,12 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
    *     name: 'Schema',
    *     version: '1.0.0'
    *   },
-   *   paymentHandle: 0,
    *   sourceId: 'testSchemaSourceId'
    * }
    * schema1 = await Schema.create(data)
    * ```
    */
   public static async create({
-    paymentHandle,
     data,
     sourceId,
   }: ISchemaCreateData): Promise<Schema> {
@@ -137,7 +129,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
           schema._name,
           data.version,
           JSON.stringify(data.attrNames),
-          paymentHandle,
+          0,
           cb,
         ),
       );
@@ -234,7 +226,6 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
    *     name: 'Schema',
    *     version: '1.0.0'
    *   },
-   *   paymentHandle: 0,
    *   sourceId: sourceId
    * }
    * schema1 = await Schema.create(data)
@@ -267,7 +258,6 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
    *     name: 'Schema',
    *     version: '1.0.0'
    *   },
-   *   paymentHandle: 0,
    *   sourceId: sourceId
    * }
    * schema1 = await Schema.create(data)
@@ -319,7 +309,6 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
     }
   }
 
-  public paymentManager!: SchemaPaymentManager;
   protected _releaseFn = rustAPI().vcx_schema_release;
   protected _serializeFn = rustAPI().vcx_schema_serialize;
   protected _deserializeFn = rustAPI().vcx_schema_deserialize;
@@ -420,7 +409,6 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
    *     name: 'Schema',
    *     version: '1.0.0'
    *   },
-   *   paymentHandle: 0,
    *   sourceId: 'testSchemaSourceId'
    * }
    * schema1 = await Schema.create(data)
@@ -458,6 +446,5 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
 
   protected _setHandle(handle: number): void {
     super._setHandle(handle);
-    this.paymentManager = new SchemaPaymentManager({ handle });
   }
 }

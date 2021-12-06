@@ -1,7 +1,5 @@
 import '../module-resolver-helper';
-
 import { assert } from 'chai';
-import { validateUTXO } from 'helpers/asserts';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import { shutdownVcx, VCXCode, Wallet } from 'src';
 
@@ -32,43 +30,8 @@ const UPDATE_WALLET_TAGS = {
   value: '',
 };
 
-const PAYMENT_ADDRESS_SEED = {
-  seed: '0000000000000000000WHATEVER00000',
-};
-
 describe('Wallet:', () => {
   before(() => initVcxTestMode());
-
-
-  describe('createPaymentAddress:', () => {
-    it('success', async () => {
-      const address = await Wallet.createPaymentAddress(PAYMENT_ADDRESS_SEED);
-      assert.ok(address);
-    });
-  });
-
-  describe('validatePaymentAddress:', () => {
-    it('success', async () => {
-      await Wallet.validatePaymentAddress('sov:1:1234');
-    });
-  });
-
-  describe('signWithAddress:', () => {
-    it('success', async () => {
-      const msg = Buffer.from('random string');
-      const sig = await Wallet.signWithAddress('pay:sov:1234', msg);
-      assert.ok(sig);
-    });
-  });
-
-  describe('verifyWithAddress:', () => {
-    it('success', async () => {
-      const msg = Buffer.from('random string');
-      const sig = Buffer.from('random string');
-      const valid = await Wallet.verifyWithAddress('pay:sov:1234', msg, sig);
-      assert.ok(valid);
-    });
-  });
 
   describe('records:', () => {
     it('success', async () => {

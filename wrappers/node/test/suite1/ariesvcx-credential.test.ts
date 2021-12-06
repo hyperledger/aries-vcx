@@ -1,9 +1,7 @@
 import '../module-resolver-helper';
 
 import { assert } from 'chai';
-import { validatePaymentTxn } from 'helpers/asserts';
 import {
-  connectionCreateInviterNull,
   createConnectionInviterRequested,
   credentialCreateWithMsgId,
   credentialCreateWithOffer,
@@ -13,7 +11,6 @@ import {
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import {
   Credential,
-  CredentialPaymentManager,
   HolderStateType,
   VCXCode,
   VCXMock,
@@ -95,7 +92,7 @@ describe('Credential:', () => {
       const data = await dataCredentialCreateWithOffer();
       const credential = await Credential.create(data);
       assert.equal(await credential.getState(), HolderStateType.OfferReceived);
-      credential.sendRequest({ connection, payment: 0 });
+      credential.sendRequest({ connection });
       assert.equal(await credential.getState(), HolderStateType.RequestSent);
     });
   });
@@ -104,14 +101,14 @@ describe('Credential:', () => {
     it('success: with offer', async () => {
       const data = await dataCredentialCreateWithOffer();
       const credential = await credentialCreateWithOffer(data);
-      await credential.sendRequest({ connection: data.connection, payment: 0 });
+      await credential.sendRequest({ connection: data.connection });
       assert.equal(await credential.getState(), HolderStateType.RequestSent);
     });
 
     it('success: with message id', async () => {
       const data = await dataCredentialCreateWithMsgId();
       const credential = await credentialCreateWithMsgId(data);
-      await credential.sendRequest({ connection: data.connection, payment: 0 });
+      await credential.sendRequest({ connection: data.connection });
       assert.equal(await credential.getState(), HolderStateType.RequestSent);
     });
   });
@@ -165,14 +162,6 @@ describe('Credential:', () => {
       });
       const attach = JSON.parse(await credential.getAttachment());
       assert.deepEqual(attach.schema_id, 'V4SGRU86Z58d6TV7PBUe6f:2:FaberVcx:83.23.62');
-    });
-  });
-
-  describe('getPaymentInfo:', () => {
-    it.skip('success', async () => {
-      const credential = await credentialCreateWithOffer();
-      const paymentInfo = await credential.getPaymentInfo();
-      assert.ok(paymentInfo);
     });
   });
 

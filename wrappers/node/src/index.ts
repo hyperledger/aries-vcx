@@ -13,7 +13,6 @@ export * from './api/wallet';
 export * from './api/agent';
 export * from './api/out-of-band-sender';
 export * from './api/out-of-band-receiver';
-export * from './api/vcx-payment-txn';
 export * from './vcx';
 export * from './rustlib';
 export * from './errors';

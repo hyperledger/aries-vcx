@@ -549,17 +549,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_get_ledger_fees() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_ledger_get_fees(cb.command_handle,
-                                       Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     #[allow(deprecated)]
     fn test_messages_download() {
         let _setup = SetupMocks::init();

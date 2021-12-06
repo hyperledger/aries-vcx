@@ -2,9 +2,9 @@ FROM ubuntu:18.04 as BASE
 
 ARG UID=1000
 
-ARG INDYSDK_PATH=/home/indy/indy-sdk
-ARG INDYSDK_REVISION=efb7215
-ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk
+ARG INDYSDK_PATH=/home/indy/vdr-tools
+ARG INDYSDK_REVISION=b5fd711a
+ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
 ARG RUST_VER=nightly-2021-07-26
 
 # Install dependencies
@@ -45,12 +45,11 @@ ENV PATH /home/indy/.cargo/bin:$PATH
 
 # Clone and build indy-sdk
 WORKDIR /home/indy
-RUN git clone $INDYSDK_REPO && \
-    cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
+RUN git clone $INDYSDK_REPO && cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 
 USER root
-RUN mv /home/indy/indy-sdk/libindy/target/release/*.so /usr/lib
+RUN mv $INDYSDK_PATH/libindy/target/release/*.so /usr/lib
 
 # Build indy binaries and move to system library
 USER indy

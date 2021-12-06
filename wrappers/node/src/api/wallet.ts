@@ -4,13 +4,7 @@ import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { IUTXO } from './common';
-import { voidPtrToUint8Array } from './connection';
-import { PtrBuffer } from './utils';
 
-export type PaymentAddress = string;
-export type PaymentAmount = number;
-export type PaymentHandle = number;
 /**
  * @interface An interface representing a record that can be added to the wallet
  */
@@ -25,12 +19,6 @@ export interface IRecordUpdate {
   type_: string;
   id: string;
   value: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-}
-
-export interface ISendTokens {
-  payment: PaymentHandle;
-  tokens: PaymentAmount;
-  recipient: PaymentAddress;
 }
 
 export interface IDeleteRecordTagsOptions {
@@ -62,21 +50,6 @@ export interface IOpenSearchData {
 
 export interface ISearchNextRecordsOptions {
   count: number;
-}
-
-export interface IPaymentAddress {
-  address: string;
-  balance: number;
-  utxo: IUTXO[];
-}
-
-export interface IWalletTokenInfo {
-  balance: number;
-  addresses: IPaymentAddress[];
-}
-
-export interface IPaymentAddressSeed {
-  seed?: string;
 }
 
 export async function createWallet (config: object): Promise<void> {
@@ -184,245 +157,7 @@ export async function closeMainWallet (): Promise<void> {
  * @class Class representing a Wallet
  */
 export class Wallet {
-  /**
-   * Gets wallet token info
-   *
-   * Example:
-   * ```
-   * info = await Wallet.getTokenInfo()
-   * ```
-   */
-  public static async getTokenInfo(handle?: PaymentHandle): Promise<IWalletTokenInfo> {
-    try {
-      const walletInfoStr = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_get_token_info(0, handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xhandle: number, err: number, info: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(info);
-            },
-          ),
-      );
-      const walletInfo = JSON.parse(walletInfoStr);
-      return walletInfo;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Creates payment address inside wallet
-   *
-   * Example:
-   * ```
-   * address = await Wallet.createPaymentAddress('00000000000000000000000001234567')
-   * ```
-   */
-  public static async createPaymentAddress(seed: IPaymentAddressSeed): Promise<string> {
-    const cSeed = seed.seed ? seed.seed : null;
-    try {
-      return await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_create_payment_address(0, cSeed, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xhandle: number, err: number, info: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(info);
-            },
-          ),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Validates Payment Address
-   *
-   * Example:
-   * ```
-   * address = await Wallet.createPaymentAddress('00000000000000000000000001234567')
-   * await Wallet.validatePaymentAddress(address)
-   * ```
-   */
-  public static async validatePaymentAddress(paymentAddress: string): Promise<void> {
-    try {
-      return await createFFICallbackPromise<void>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_validate_payment_address(0, paymentAddress, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback('void', ['int32', 'uint32'], (xhandle: number, err: number) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve();
-          }),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Sign with Address
-   *
-   * Example:
-   * ```
-   * address = await Wallet.signWithAddress('pay:null:addr', bufferOfMsg)
-   * await Wallet.signWithAddress('pay:null:addr', bufferOfMsg)
-   * ```
-   */
-  public static async signWithAddress(paymentAddress: string, message: Buffer): Promise<Buffer> {
-    try {
-      return await createFFICallbackPromise<Buffer>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_sign_with_address(
-            0,
-            paymentAddress,
-            ref.address(message),
-            message.length,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, detailsPtr: PtrBuffer, length: number) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!detailsPtr) {
-                reject(`Empty buffer returned`);
-                return;
-              }
-              const newBuffer = voidPtrToUint8Array(detailsPtr, length);
-              resolve(newBuffer);
-            },
-          ),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Verify with address
-   *
-   * Example:
-   * ```
-   * valid = await connection.verifyWithAddress("pay:null:addr", bufferWithMsg, bufferWithSig)
-   * ```
-   * @returns {Promise<boolean>}
-   */
-  public static async verifyWithAddress(
-    paymentAddress: string,
-    message: Buffer,
-    signature: Buffer,
-  ): Promise<boolean> {
-    try {
-      return await createFFICallbackPromise<boolean>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_verify_with_address(
-            0,
-            paymentAddress,
-            ref.address(message),
-            message.length,
-            ref.address(signature),
-            signature.length,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'bool'],
-            (xHandle: number, err: number, valid: boolean) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(valid);
-            },
-          ),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-  /**
-   * Sends token to a specified address
-   *
-   * Example:
-   * ```
-   * address = await Wallet.createPaymentAddress('00000000000000000000000001234567')
-   * await Wallet.sendTokens({
-   *     payment: 0,
-   *     recipient: address,
-   *     tokens: 1
-   * })
-   */
-  public static async sendTokens({ payment, tokens, recipient }: ISendTokens): Promise<string> {
-    try {
-      return await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_wallet_send_tokens(0, payment, tokens.toString(), recipient, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xhandle: number, err: number, receipt: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(receipt);
-            },
-          ),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
+   /**
    * Adds a record to the wallet for storage
    * Example:
    * ```

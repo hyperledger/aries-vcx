@@ -1,7 +1,6 @@
 import '../module-resolver-helper';
 
 import { assert } from 'chai';
-import { validatePaymentTxn } from 'helpers/asserts';
 import {
   dataSchemaCreate,
   dataSchemaLookup,
@@ -10,7 +9,7 @@ import {
   schemaPrepareForEndorser,
 } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
-import { Schema, SchemaPaymentManager, SchemaState, VCXCode } from 'src';
+import { Schema, SchemaState, VCXCode } from 'src';
 
 describe('Schema:', () => {
   before(() => initVcxTestMode());
@@ -22,13 +21,6 @@ describe('Schema:', () => {
 
     it('throws: missing sourceId', async () => {
       const { sourceId, ...data } = dataSchemaCreate();
-      const error = await shouldThrow(() => Schema.create(data as any));
-      assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
-    });
-
-    // TODO: Enable once https://evernym.atlassian.net/browse/EN-667 is resolved
-    it.skip('throws: missing paymentHandle', async () => {
-      const { paymentHandle, ...data } = dataSchemaCreate();
       const error = await shouldThrow(() => Schema.create(data as any));
       assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
     });
@@ -137,22 +129,6 @@ describe('Schema:', () => {
         Schema.deserialize({ data: { source_id: 'Invalid' } } as any),
       );
       assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
-    });
-  });
-
-  describe('paymentManager:', () => {
-    it('exists', async () => {
-      const schema = await schemaCreate();
-      assert.instanceOf(schema.paymentManager, SchemaPaymentManager);
-      assert.equal(schema.paymentManager.handle, schema.handle);
-    });
-
-    describe('getPaymentTxn:', () => {
-      it('success', async () => {
-        const schema = await schemaCreate();
-        const paymentTxn = await schema.paymentManager.getPaymentTxn();
-        validatePaymentTxn(paymentTxn);
-      });
     });
   });
 
