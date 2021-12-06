@@ -1,4 +1,4 @@
-use crate::error::{VcxErrorKind, VcxResult, VcxResultExt};
+use crate::error::{VcxErrorKind, VcxError, VcxResult, VcxResultExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectWithVersion<'a, T> {
@@ -18,7 +18,7 @@ impl<'a, 'de, T> ObjectWithVersion<'a, T> where T: ::serde::Serialize + ::serde:
 
     pub fn deserialize(data: &str) -> VcxResult<ObjectWithVersion<T>> where T: ::serde::de::DeserializeOwned {
         ::serde_json::from_str(data)
-            .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize object")
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
     }
 }
 

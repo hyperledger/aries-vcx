@@ -86,7 +86,6 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
 
     execute(move || {
         let (rc, handle) = match credential_def::create_and_publish_credentialdef(source_id,
-                                                                                  credentialdef_name,
                                                                                   issuer_did,
                                                                                   schema_id,
                                                                                   tag,
@@ -593,7 +592,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
-        let original = r#"{"version":"1.0", "data": {"id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:1697","issuer_did":"2hoqvcwupRTUNkXn6ArYzs","tag":"tag","name":"Test Credential Definition","rev_ref_def":null,"rev_reg_entry":null,"rev_reg_id":null,"source_id":"SourceId"}}"#;
+        let original = r#"{{"version":"1.0", "data": {{"cred_def_id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:1697","issuer_did":"2hoqvcwupRTUNkXn6ArYzs","tag":"tag","rev_ref_def":null,"rev_reg_entry":null,"rev_reg_id":null,"source_id":"SourceId","cred_def_json":""}}}}"#;
         assert_eq!(vcx_credentialdef_deserialize(cb.command_handle,
                                                  CString::new(original).unwrap().into_raw(),
                                                  Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -609,7 +608,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
-        let original = r#"{"data":{"id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:912:tag1","name":"color","payment_txn":null,"source_id":"1","tag":"tag1"},"version":"1.0"}"#;
+        let original = r#"{{"data":{{"cred_def_id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:912:tag1","payment_txn":null,"source_id":"1","tag":"tag1","issuer_did":"66Fh8yBzrpJQmNyZzgoTqB","cred_def_json":""}},"version":"1.0"}}"#;
         assert_eq!(vcx_credentialdef_deserialize(cb.command_handle,
                                                  CString::new(original).unwrap().into_raw(),
                                                  Some(cb.get_callback())), error::SUCCESS.code_num);

@@ -17,6 +17,27 @@ use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_re
 const BLOB_STORAGE_TYPE: &str = "default";
 const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
 
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinitionValue {
+    pub issuance_type: String,
+    pub max_cred_num: u32,
+    pub public_keys: serde_json::Value,
+    pub tails_hash: String,
+    pub tails_location: String,
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinition {
+    pub id: String,
+    pub revoc_def_type: String,
+    pub tag: String,
+    pub cred_def_id: String,
+    pub value: RevocationRegistryDefinitionValue,
+    pub ver: String,
+}
+
 pub fn libindy_verifier_verify_proof(proof_req_json: &str,
                                      proof_json: &str,
                                      schemas_json: &str,
@@ -487,8 +508,8 @@ pub fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
 }
 
 pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, max_creds: u32, tag: &str)
-                        -> VcxResult<(String, String, String)> {
-    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), rev_def_json(), "".to_string())); }
+                        -> VcxResult<(String, RevocationRegistryDefinition, String)> {
+    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
         libindy_create_and_store_revoc_reg(issuer_did,
@@ -497,7 +518,10 @@ pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, m
                                            max_creds,
                                            tag)?;
 
-    Ok((rev_reg_id, rev_reg_def_json, rev_reg_entry_json))
+    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize rev_reg_def: {:?}, error: {:?}", rev_reg_def_json, err)))?;
+
+    Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
 }
 
 pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
@@ -508,10 +532,12 @@ pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxRes
     Ok(rev_reg_def_req)
 }
 
-pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<Option<PaymentTxn>> {
-    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def_json: ...", issuer_did);
+pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegistryDefinition) -> VcxResult<Option<PaymentTxn>> {
+    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() { return Ok(None); }
 
+    let rev_reg_def_json = serde_json::to_string(&rev_reg_def)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err)))?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json)?;
     let (payment, _) = pay_for_txn(&rev_reg_def_req, CREATE_REV_REG_DEF_ACTION)?;
     Ok(payment)

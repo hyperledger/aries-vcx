@@ -132,15 +132,25 @@ mod tests {
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
             .schema_id(&schema_id)
+            .tag("1")
             .build()
             .unwrap();
-        let revocation_details = RevocationDetailsBuilder::default()
-            .support_revocation(support_rev)
-            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
-            .tails_url(TEST_TAILS_URL)
-            .max_creds(10 as u32)
-            .build()
-            .unwrap();
+        let revocation_details = if support_rev {
+            RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .tails_url(TEST_TAILS_URL)
+                .max_creds(10 as u32)
+                .build()
+                .unwrap()
+        } else {
+            RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .build()
+                .unwrap()
+        };
+        trace!("Sedning revocation details: {:?}", revocation_details);
+        trace!("Sedning credential def config: {:?}", config);
         let cred_def = CredentialDef::create("1".to_string(),
                                              config,
                                              revocation_details).unwrap();

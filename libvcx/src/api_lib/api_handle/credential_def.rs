@@ -5,6 +5,7 @@ use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
 use aries_vcx::libindy::utils::payments::PaymentTxn;
+use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::error::prelude::*;
@@ -14,7 +15,6 @@ lazy_static! {
 }
 
 pub fn create_and_publish_credentialdef(source_id: String,
-                                        _name: String,
                                         issuer_did: String,
                                         schema_id: String,
                                         tag: String,
@@ -53,7 +53,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(data: &str) -> VcxResult<u32> {
-    let cred_def: CredentialDef = CredentialDef::from_str(data)?;
+    let cred_def: CredentialDef = CredentialDef::from_string(data)?;
     CREDENTIALDEF_MAP.add(cred_def)
 }
 
@@ -83,7 +83,7 @@ pub fn get_tails_file(handle: u32) -> VcxResult<Option<String>> {
 
 pub fn get_rev_reg_def(handle: u32) -> VcxResult<Option<String>> {
     CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_rev_reg_def())
+        c.get_rev_reg_def().map_err(|err| err.into())
     })
 }
 
@@ -92,7 +92,6 @@ pub fn get_rev_reg_def_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>>
         Ok(c.get_rev_reg_def_payment_txn())
     })
 }
-
 
 pub fn get_rev_reg_delta_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>> {
     CREDENTIALDEF_MAP.get(handle, |c| {
@@ -129,10 +128,10 @@ pub fn check_is_published(handle: u32) -> VcxResult<bool> {
 
 pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
-        match &s.issuer_did {
+        match &s.get_rev_reg_def()? {
             Some(_) => {
                 let new_rev_reg = s.rotate_rev_reg(revocation_details)?;
-                match update_rev_reg_ids_cache(&s.id, &new_rev_reg.rev_reg_id) {
+                match update_rev_reg_ids_cache(&s.cred_def_id, &new_rev_reg.rev_reg_id) {
                     Ok(()) => s.to_string().map_err(|err| err.into()),
                     Err(err) => Err(err.into())
                 }
@@ -145,9 +144,9 @@ pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<St
 
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
-        match &s.get_rev_reg_def() {
+        match &s.get_rev_reg_def()? {
             Some(rev_reg_def) => {
-                let rev_reg_def: aries_vcx::handlers::issuance::credential_def::RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)
+                let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize current rev_reg_def: {:?}, error: {:?}", rev_reg_def, err)))?;
                 Ok(rev_reg_def.value.tails_hash)
             }
@@ -180,7 +179,6 @@ pub mod tests {
 
     use super::*;
 
-    static CREDENTIAL_DEF_NAME: &str = "Test Credential Definition";
     static ISSUER_DID: &str = "4fUDR9R7fjwELRvH9JT6HH";
 
     pub fn revocation_details(revoc: bool) -> serde_json::Value {
@@ -205,7 +203,6 @@ pub mod tests {
         let (schema_handle, schema_id, did, revocation_details) = prepare_create_cred_def_data(revoc);
         sleep(Duration::from_secs(2));
         let cred_def_handle = create_and_publish_credentialdef("1".to_string(),
-                                                               CREDENTIAL_DEF_NAME.to_string(),
                                                                did,
                                                                schema_id,
                                                                "tag_1".to_string(),
@@ -218,7 +215,6 @@ pub mod tests {
         let rev_details = json!({"support_revocation": true, "tails_file": utils::constants::TEST_TAILS_FILE, "max_creds": 2, "tails_url": utils::constants::TEST_TAILS_URL}).to_string();
 
         create_and_publish_credentialdef("SourceId".to_string(),
-                                         CREDENTIAL_DEF_NAME.to_string(),
                                          ISSUER_DID.to_string(),
                                          SCHEMA_ID.to_string(),
                                          "tag".to_string(),
@@ -256,7 +252,6 @@ pub mod tests {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let rc = create_and_publish_credentialdef("1".to_string(),
-                                                  "test_create_revocable_fails_with_no_tails_file".to_string(),
                                                   did,
                                                   schema_id,
                                                   "tag_1".to_string(),
@@ -274,7 +269,6 @@ pub mod tests {
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_url": utils::constants::TEST_TAILS_URL.to_string()}).to_string();
         let handle = create_and_publish_credentialdef("1".to_string(),
-                                                      "test_tails_url_written_to_ledger".to_string(),
                                                       did,
                                                       schema_id,
                                                       "tag1".to_string(),
@@ -296,7 +290,6 @@ pub mod tests {
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2, "tails_base_url": tails_url}).to_string();
         let handle = create_and_publish_credentialdef("1".to_string(),
-                                                      "test_tails_url_written_to_ledger".to_string(),
                                                       did,
                                                       schema_id,
                                                       "tag1".to_string(),
@@ -317,7 +310,6 @@ pub mod tests {
 
         let revocation_details = json!({"support_revocation": true, "tails_file": get_temp_dir_path("tails.txt").to_str().unwrap(), "max_creds": 2}).to_string();
         let handle = create_and_publish_credentialdef("1".to_string(),
-                                                      "test_create_revocable_cred_def".to_string(),
                                                       did,
                                                       schema_id,
                                                       "tag_1".to_string(),
@@ -360,7 +352,6 @@ pub mod tests {
 
         let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
         create_and_publish_credentialdef("1".to_string(),
-                                         "name".to_string(),
                                          did.clone(),
                                          schema_id.clone(),
                                          "tag_1".to_string(),
@@ -368,7 +359,6 @@ pub mod tests {
 
         sleep(Duration::from_secs(1));
         let err = create_and_publish_credentialdef("1".to_string(),
-                                                   "name".to_string(),
                                                    did.clone(),
                                                    schema_id.clone(),
                                                    "tag_1".to_string(),
@@ -402,11 +392,11 @@ pub mod tests {
         let new_handle = from_string(&credentialdef_data).unwrap();
         let new_credentialdef_data = to_string(new_handle).unwrap();
 
-        let credentialdef1: CredentialDef = CredentialDef::from_str(&credentialdef_data).unwrap();
-        let credentialdef2: CredentialDef = CredentialDef::from_str(&new_credentialdef_data).unwrap();
+        let credentialdef1: CredentialDef = CredentialDef::from_string(&credentialdef_data).unwrap();
+        let credentialdef2: CredentialDef = CredentialDef::from_string(&new_credentialdef_data).unwrap();
 
         assert_eq!(credentialdef1, credentialdef2);
-        assert_eq!(CredentialDef::from_str("{}").unwrap_err().kind(), aries_vcx::error::VcxErrorKind::CreateCredDef);
+        assert_eq!(CredentialDef::from_string("{}").unwrap_err().kind(), aries_vcx::error::VcxErrorKind::CreateCredDef);
     }
 
     #[test]
@@ -414,11 +404,11 @@ pub mod tests {
     fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h2 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h3 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h4 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h5 = create_and_publish_credentialdef("SourceId".to_string(), CREDENTIAL_DEF_NAME.to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h1 = create_and_publish_credentialdef("SourceId".to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h2 = create_and_publish_credentialdef("SourceId".to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h3 = create_and_publish_credentialdef("SourceId".to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h4 = create_and_publish_credentialdef("SourceId".to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h5 = create_and_publish_credentialdef("SourceId".to_string(), ISSUER_DID.to_string(), SCHEMA_ID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
