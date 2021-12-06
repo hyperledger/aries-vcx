@@ -107,7 +107,7 @@ statically_link_dependencies_with_libindy(){
     echo "${BLUE}Statically linking libraries togather${RESET}"
     echo "${BLUE}Output will be available at ${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}/lib/libvdrtools.so${RESET}"
     $CC -v -shared -o${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}/lib/libvdrtools.so -Wl,--whole-archive \
-        ${WORKDIR}/target/${TRIPLET}/release/libindy.a \
+        ${WORKDIR}/target/${TRIPLET}/release/libvdrtools.a \
         ${TOOLCHAIN_DIR}/sysroot/usr/lib/${ANDROID_TRIPLET}/libm.a \
         ${OPENSSL_DIR}/lib/libssl.a \
         ${OPENSSL_DIR}/lib/libcrypto.a \

@@ -466,7 +466,7 @@ pub struct NumericalSuffixAscendingNoGapsData {
 /**
  Subtrie variant of `KeyValuesInSP`.
 
- In this case Client (libindy) should construct subtrie and append it into trie based on `proof_nodes`.
+ In this case Client (libvdrtools) should construct subtrie and append it into trie based on `proof_nodes`.
  After this preparation each kv pair can be checked.
 */
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]

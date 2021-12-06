@@ -1343,7 +1343,7 @@ mod high_cases {
         fn indy_build_pool_upgrade_request_works_for_start_action() {
             let expected_result = json!({
                 "type": constants::POOL_UPGRADE,
-                "name": "upgrade-libindy",
+                "name": "upgrade-libvdrtools",
                 "version": "2.0.0",
                 "action": "start",
                 "sha256": "f284b",
@@ -1354,7 +1354,7 @@ mod high_cases {
 
             let request = ledger::build_pool_upgrade_request(
                 DID_TRUSTEE,
-                "upgrade-libindy",
+                "upgrade-libvdrtools",
                 "2.0.0",
                 "start",
                 "f284b",
@@ -1375,7 +1375,7 @@ mod high_cases {
         fn indy_build_pool_upgrade_request_works_for_cancel_action() {
             let expected_result = json!({
                 "type": constants::POOL_UPGRADE,
-                "name": "upgrade-libindy",
+                "name": "upgrade-libvdrtools",
                 "version": "2.0.0",
                 "action": "cancel",
                 "sha256": "f284b",
@@ -1385,7 +1385,7 @@ mod high_cases {
 
             let request = ledger::build_pool_upgrade_request(
                 DID_TRUSTEE,
-                "upgrade-libindy",
+                "upgrade-libvdrtools",
                 "2.0.0",
                 "cancel",
                 "f284b",
@@ -1406,7 +1406,7 @@ mod high_cases {
         fn indy_build_pool_upgrade_request_works_for_package() {
             let expected_result = json!({
                 "type": constants::POOL_UPGRADE,
-                "name": "upgrade-libindy",
+                "name": "upgrade-libvdrtools",
                 "version": "2.0.0",
                 "action": "start",
                 "sha256": "f284b",
@@ -1418,7 +1418,7 @@ mod high_cases {
 
             let request = ledger::build_pool_upgrade_request(
                 DID_TRUSTEE,
-                "upgrade-libindy",
+                "upgrade-libvdrtools",
                 "2.0.0",
                 "start",
                 "f284b",
@@ -1455,7 +1455,7 @@ mod high_cases {
             //start
             let request = ledger::build_pool_upgrade_request(
                 &setup.did,
-                "upgrade-libindy",
+                "upgrade-libvdrtools",
                 "2.0.0",
                 "start",
                 "f284bdc3c1c9e24a494e285cb387c69510f28de51c15bb93179d9c7f28705398",
@@ -1479,7 +1479,7 @@ mod high_cases {
             //cancel
             let request = ledger::build_pool_upgrade_request(
                 &setup.did,
-                "upgrade-libindy",
+                "upgrade-libvdrtools",
                 "2.0.0",
                 "cancel",
                 "ac3eb2cc3ac9e24a494e285cb387c69510f28de51c15bb93179d9c7f28705398",

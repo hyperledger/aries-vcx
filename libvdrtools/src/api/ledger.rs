@@ -2512,7 +2512,7 @@ pub type CustomFree = extern "C" fn(data: *const c_char) -> ErrorCode;
 /// The important use case for this method is validation of Node's response freshens.
 ///
 /// Distributed Ledgers can reply with outdated information for consequence read request after write.
-/// To reduce pool load libindy sends read requests to one random node in the pool.
+/// To reduce pool load libvdrtools sends read requests to one random node in the pool.
 /// Consensus validation is performed based on validation of nodes multi signature for current ledger Merkle Trie root.
 /// This multi signature contains information about the latest ldeger's transaction ordering time and sequence number that this method returns.
 ///

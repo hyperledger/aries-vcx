@@ -24,7 +24,7 @@ use libc::c_char;
 
 use crate::domain::IndyConfig;
 
-/// Set libindy runtime configuration. Can be optionally called to change current params.
+/// Set libvdrtools runtime configuration. Can be optionally called to change current params.
 ///
 /// #Params
 /// config: {
