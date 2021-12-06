@@ -570,7 +570,39 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+
+      - name: Create Wallet DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_wallet \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_wallets \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
+
+      - name: Create Application DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_data \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_application \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
+
+      - name: Start services for integration tests
+        run: |
+          set -x
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
+          sleep 5
+          docker logs vcxagency
 
       - name: Run pool integration tests
         run: |
@@ -631,7 +663,39 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+
+      - name: Create Wallet DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_wallet \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_wallets \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
+
+      - name: Create Application DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_data \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_application \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
+
+      - name: Start services for integration tests
+        run: |
+          set -x
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
+          sleep 5
+          docker logs vcxagency
 
       - name: Run mysql integration tests
         run: |
@@ -689,8 +753,40 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword  mysql:5.7.35
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+
+      - name: Create Wallet DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_wallet \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_wallets \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
+
+      - name: Create Application DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_data \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_application \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
+
+      - name: Start services for integration tests
+        run: |
+          set -x
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
+          sleep 5
+          docker logs vcxagency
 
       - name: Run agency+pool integration tests
         run: |
@@ -817,7 +913,39 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+
+      - name: Create Wallet DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_wallet \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_wallets \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
+
+      - name: Create Application DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode_migrations_data \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_application \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=localhost \
+                          -e MYSQL_PORT=3306 \
+                         "$DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
+
+      - name: Start services for integration tests
+        run: |
+          set -x
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
+          sleep 5
+          docker logs vcxagency
 
       - name: Run wrapper demo
         run: |

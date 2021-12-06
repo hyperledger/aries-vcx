@@ -37,9 +37,31 @@ runs:
         set -x
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         if [[ ${{ inputs.run-services }} == true ]]; then
-          docker run --rm -d --name indypool --network host ${{ inputs.pool-img-name }}
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
-          if [[ -n "${{ inputs.agency-img-name }}" ]]; then docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}; fi
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          if [[ -n "${{ inputs.agency-img-name }}" ]]; then
+            docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+            docker run --rm --name vcxagencynode_migrations_wallet \
+                   --network host \
+                    -e MYSQL_DATABASE=agency_wallets \
+                    -e MYSQL_USER=root \
+                    -e MYSQL_PASSWORD=mysecretpassword \
+                    -e MYSQL_HOST=localhost \
+                    -e MYSQL_PORT=3306 \
+                   "$DOCKER_IMG_NAME_AGENCY" \
+                   bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
+            docker run --rm --name vcxagencynode_migrations_data \
+                   --network host \
+                    -e MYSQL_DATABASE=agency_application \
+                    -e MYSQL_USER=root \
+                    -e MYSQL_PASSWORD=mysecretpassword \
+                    -e MYSQL_HOST=localhost \
+                    -e MYSQL_PORT=3306 \
+                   "$DOCKER_IMG_NAME_AGENCY" \
+                   bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
+            docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env ${{ inputs.agency-img-name }}
+            sleep 5
+            docker logs vcxagency
+          fi
         fi
         docker run --name ${{ inputs.codecov-cont-name }} --network host \
           -e RUST_TEST_THREADS=1 \
