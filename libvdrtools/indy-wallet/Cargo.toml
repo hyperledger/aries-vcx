@@ -1,0 +1,39 @@
+[package]
+name = "indy-wallet"
+version = "0.1.0"
+authors = ["Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
+edition = "2018"
+
+[features]
+default = []
+benchmark = []
+mysql = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-std = { version="1.8.0", features = ["attributes"]}
+async-trait = "0.1.42"
+byteorder = "1.3.2"
+futures = { version = "0.3.8", features = ["thread-pool"] }
+indy-api-types = { path = "../indy-api-types"}
+indy-utils = { path = "../indy-utils"}
+libc = "*"
+log = "0.4.8"
+owning_ref = "0.4"
+rmp-serde = "0.13.7"
+#rusqlite = "0.20" # Make sure rusqlite for android is also bumped with this. Rusqlite for android is at the bottom of this document.
+rust-base58 = "0.0.4"
+serde = "1.0.99"
+serde_json = "1.0.40"
+serde_derive = "1.0.99"
+sqlx = { version = "0.4.2", git = "https://github.com/jovfer/sqlx", branch = "feature/json_no_preserve_order", features = [ "sqlite", "mysql", "json_no_preserve_order", "runtime-async-std-rustls" ] }
+zeroize = "~1.3.0"
+lru = "0.6.5"
+
+[dev-dependencies]
+rand = "0.7.0"
+lazy_static = "1.3"
+
+# [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+# rusqlite = { version = "0.20", features=["bundled"] }
