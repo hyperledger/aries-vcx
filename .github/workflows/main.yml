@@ -126,7 +126,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_DOCKERFILE_HASH"
 
           echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:0.1.2"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:1.0.1"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$LIBVCX_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_CODECOV::codecov:$CODECOV_HASH"
@@ -568,8 +568,8 @@ jobs:
         run: |
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
       - name: Run pool integration tests
@@ -629,9 +629,8 @@ jobs:
         run: |
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name mysql --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
       - name: Run mysql integration tests
@@ -689,8 +688,8 @@ jobs:
         run: |
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword  mysql:5.7.35
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
       - name: Run agency+pool integration tests
@@ -816,8 +815,8 @@ jobs:
         run: |
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -d --name indypool --network host $DOCKER_IMG_NAME_POOL
-          docker run --rm -d --name postgres --network host -e POSTGRES_PASSWORD=mysecretpassword postgres:12.1
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           docker run --rm -d --name vcxagency --network host --env-file ci/agency/localhost.env $DOCKER_IMG_NAME_AGENCY
 
       - name: Run wrapper demo
