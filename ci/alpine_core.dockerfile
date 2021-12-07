@@ -30,7 +30,7 @@ ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 
 RUN git clone $INDYSDK_REPO && cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
 
-RUN SKIP_PROTO_BUILD=true cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
+RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 
 USER root
 RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib

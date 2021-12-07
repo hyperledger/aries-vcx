@@ -7,12 +7,14 @@ use serde_json;
 
 use crate::{settings, utils};
 use crate::error::prelude::*;
+use crate::libindy;
 use crate::libindy::utils::pool::get_pool_handle;
+use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
-use crate::utils::random::generate_random_did;
-use crate::messages::connection::service::FullService;
 use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::service::FullService;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
+use crate::utils::random::generate_random_did;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -453,11 +455,12 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 
 #[cfg(test)]
 mod test {
+    use std::thread;
+    use std::time::Duration;
+
     use crate::utils::devsetup::*;
 
     use super::*;
-    use std::thread;
-    use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -561,23 +564,19 @@ pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
 
-pub fn publish_txn_on_ledger(req: &str, txn_action: (&str, &str, &str, Option<&str>, Option<&str>)) -> VcxResult<(String)> {
-    debug!("publish_txn_on_ledger(req: {}, txn_action: {:?})", req, txn_action);
+pub fn publish_txn_on_ledger(req: &str) -> VcxResult<String> {
+    debug!("publish_txn_on_ledger(req: {}", req);
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
     let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-    let txn_response = libindy_sign_and_submit_request(&did, req)?;
-    Ok((txn_response))
+    libindy_sign_and_submit_request(&did, req)
 }
 
 pub fn add_new_did(role: Option<&str>) -> (String, String) {
-    use indy::ledger;
-    use crate::libindy;
-
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-    let (did, verkey) = libindy::utils::signus::create_and_store_my_did(None, None).unwrap();
+    let (did, verkey) = create_and_store_my_did(None, None).unwrap();
     let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).wait().unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).unwrap();

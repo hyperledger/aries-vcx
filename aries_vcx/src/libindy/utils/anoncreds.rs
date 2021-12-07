@@ -414,7 +414,7 @@ pub fn publish_schema(schema: &str) -> VcxResult<()> {
 
     let request = build_schema_request(schema)?;
 
-    let (response) = publish_txn_on_ledger(&request, CREATE_SCHEMA_ACTION)?;
+    let response = publish_txn_on_ledger(&request)?;
 
     _check_schema_response(&response)?;
 
@@ -466,11 +466,8 @@ pub fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<()> 
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
-
     let cred_def_req = build_cred_def_request(issuer_did, &cred_def_json)?;
-
-    publish_txn_on_ledger(&cred_def_req, CREATE_CRED_DEF_ACTION)?;
-
+    publish_txn_on_ledger(&cred_def_req)?;
     Ok(())
 }
 
@@ -509,7 +506,7 @@ pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResul
     if settings::indy_mocks_enabled() { return Ok(()); }
 
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json)?;
-    publish_txn_on_ledger(&rev_reg_def_req, CREATE_REV_REG_DEF_ACTION)?;
+    publish_txn_on_ledger(&rev_reg_def_req)?;
     Ok(())
 }
 
@@ -532,10 +529,10 @@ pub fn build_rev_reg_delta_request(issuer_did: &str, rev_reg_id: &str, rev_reg_e
 }
 
 pub fn publish_rev_reg_delta(issuer_did: &str, rev_reg_id: &str, rev_reg_entry_json: &str)
-                             -> VcxResult<(String)> {
+                             -> VcxResult<String> {
     trace!("publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}", issuer_did, rev_reg_id, rev_reg_entry_json);
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json)?;
-    publish_txn_on_ledger(&request, CREATE_REV_REG_DELTA_ACTION)
+    publish_txn_on_ledger(&request)
 }
 
 pub fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Option<u64>)
@@ -659,14 +656,14 @@ pub mod test_utils {
 
     pub fn create_schema_req(schema_json: &str) -> String {
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let request = libindy::utils::ledger::libindy_build_schema_request(&institution_did, schema_json).unwrap();
+        let request = libindy_build_schema_request(&institution_did, schema_json).unwrap();
         append_txn_author_agreement_to_request(&request).unwrap()
     }
 
     pub fn create_and_write_test_schema(attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list);
         let req = create_schema_req(&schema_json);
-        libindy::utils::ledger::publish_txn_on_ledger(&req, CREATE_SCHEMA_ACTION).unwrap();
+        publish_txn_on_ledger(&req).unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
