@@ -14,6 +14,31 @@ lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
+pub fn generate_and_store(source_id: String,
+                          schema_id: String,
+                          issuer_did: String,
+                          tag: String,
+                          revocation_details: String) -> VcxResult<u32> {
+    let config = CredentialDefConfigBuilder::default()
+        .issuer_did(issuer_did)
+        .schema_id(schema_id)
+        .tag(tag)
+        .build()
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
+    let revocation_details = parse_revocation_details(&revocation_details)?;
+    let cred_def = CredentialDef::create_and_store(source_id, config, revocation_details)?;
+    let handle = CREDENTIALDEF_MAP.add(cred_def)?;
+    Ok(handle)
+}
+
+pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
+    CREDENTIALDEF_MAP.get_mut(handle, |cd| {
+        let new_cd = cd.clone().publish(tails_url.as_deref())?;
+        *cd = new_cd;
+        Ok(())
+    })
+}
+
 pub fn create_and_publish_credentialdef(source_id: String,
                                         issuer_did: String,
                                         schema_id: String,

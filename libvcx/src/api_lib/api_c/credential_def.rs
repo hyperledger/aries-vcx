@@ -47,6 +47,7 @@ use crate::error::prelude::*;
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.25.0", note = "This function was split into vcx_credentialdef_generate_and_store and vcx_credentialdef_publish to allow tails_url customization")]
 pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
                                        source_id: *const c_char,
                                        credentialdef_name: *const c_char,
@@ -106,6 +107,102 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
         };
         cb(command_handle, rc, handle);
 
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credentialdef_generate_and_store(command_handle: CommandHandle,
+                                                   source_id: *const c_char,
+                                                   schema_id: *const c_char,
+                                                   issuer_did: *const c_char,
+                                                   tag: *const c_char,
+                                                   revocation_details: *const c_char,
+                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
+    info!("vcx_credentialdef_generate_and_store >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(tag, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(revocation_details, VcxErrorKind::InvalidOption);
+
+    let issuer_did: String = if !issuer_did.is_null() {
+        check_useful_c_str!(issuer_did, VcxErrorKind::InvalidOption);
+        issuer_did.to_owned()
+    } else {
+        match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+            Ok(x) => x,
+            Err(x) => return x.into(),
+        }
+    };
+
+    trace!("vcx_credentialdef_generate_and_store(command_handle: {}, source_id: {}, schema_id: {}, issuer_did: {}, tag: {}, revocation_details: {:?})",
+           command_handle,
+           source_id,
+           schema_id,
+           issuer_did,
+           tag,
+           revocation_details);
+
+    execute(move || {
+        let (rc, handle) = match credential_def::generate_and_store(source_id,
+                                                                    schema_id,
+                                                                    issuer_did,
+                                                                    tag,
+                                                                    revocation_details) {
+            Ok(x) => {
+                trace!("vcx_credentialdef_generate_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                       command_handle, error::SUCCESS.message, x, credential_def::get_source_id(x).unwrap_or_default());
+                (error::SUCCESS.code_num, x)
+            }
+            Err(x) => {
+                warn!("vcx_credentialdef_generate_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                      command_handle, x, 0, "");
+                (x.into(), 0)
+            }
+        };
+        cb(command_handle, rc, handle);
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
+                                        credentialdef_handle: u32,
+                                        tails_url: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_credentialdef_publish >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(tails_url, VcxErrorKind::InvalidOption);
+
+    if !credential_def::is_valid_handle(credentialdef_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+    };
+
+    let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
+    trace!("vcx_credentialdef_publish(command_handle: {}, credentialdef_handle: {}, tails_url: {:?}), source_id: {:?}",
+           command_handle, credentialdef_handle, tails_url, source_id);
+
+    execute(move || {
+        match credential_def::publish(credentialdef_handle, tails_url) {
+            Ok(_) => {
+                trace!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                       command_handle, error::SUCCESS.message, credentialdef_handle, source_id);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                warn!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                      command_handle, err, credentialdef_handle, source_id);
+                cb(command_handle, err.into());
+            }
+        };
         Ok(())
     });
 
