@@ -31,7 +31,7 @@ function test() {
 
 set -eux
 
-test libindy --features sodium_static,only_high_cases,cheqd,fatal_warnings
-test libindy/indy-api-types
-test libindy/indy-utils
-test libindy/indy-wallet
+test libvdrtools --features sodium_static,only_high_cases,cheqd,fatal_warnings
+test libvdrtools/indy-api-types
+test libvdrtools/indy-utils
+test libvdrtools/indy-wallet

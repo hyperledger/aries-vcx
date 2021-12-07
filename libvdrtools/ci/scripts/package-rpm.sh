@@ -8,7 +8,7 @@ if [ $# -ne 2 ]
     exit 1
 fi
 
-pushd libindy
+pushd libvdrtools
 
 base_version=$1
 number=$2

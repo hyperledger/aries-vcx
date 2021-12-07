@@ -19,7 +19,7 @@ fi
 
 set -eux
 
-pushd libindy
+pushd libvdrtools
 # Build without cheqd feature enabled first
 cargo build $CARGO_FLAGS --features "fatal_warnings sodium_static"
 cargo build $CARGO_FLAGS --features "fatal_warnings sodium_static cheqd"
