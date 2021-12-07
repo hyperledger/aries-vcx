@@ -9,7 +9,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::{LibindyMock, wallet::get_wallet_handle};
 use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use crate::libindy::utils::ledger::*;
-use crate::libindy::utils::ledger_tokens::{publish_txn_on_ledger};
+use crate::libindy::utils::ledger::publish_txn_on_ledger;
 use crate::utils::constants::{ATTRS, LIBINDY_CRED_OFFER, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON};
 use crate::utils::constants::{CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
 use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
@@ -666,7 +666,7 @@ pub mod test_utils {
     pub fn create_and_write_test_schema(attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list);
         let req = create_schema_req(&schema_json);
-        libindy::utils::ledger_tokens::publish_txn_on_ledger(&req, CREATE_SCHEMA_ACTION).unwrap();
+        libindy::utils::ledger::publish_txn_on_ledger(&req, CREATE_SCHEMA_ACTION).unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }

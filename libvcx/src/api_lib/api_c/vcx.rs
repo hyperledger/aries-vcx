@@ -503,7 +503,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::wallet::get_wallet_handle;
     use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, setup_libnullpay_nofees, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -995,7 +995,6 @@ mod tests {
 
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
         configure_trustee_did();
-        setup_libnullpay_nofees();
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();

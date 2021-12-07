@@ -12,6 +12,7 @@ use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::utils::random::generate_random_did;
 use crate::messages::connection::service::FullService;
 use crate::messages::connection::did_doc::Did;
+use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -517,7 +518,7 @@ mod test {
     fn test_endorse_transaction() {
         let _setup = SetupLibraryWalletPoolZeroFees::init();
 
-        use crate::libindy::utils::ledger_tokens::add_new_did;
+        use crate::libindy::utils::ledger::add_new_did;
 
         let (author_did, _) = add_new_did(None);
         let (endorser_did, _) = add_new_did(Some("ENDORSER"));
@@ -594,4 +595,29 @@ pub struct ReplyV1 {
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1 {
     pub result: serde_json::Value,
+}
+
+pub fn publish_txn_on_ledger(req: &str, txn_action: (&str, &str, &str, Option<&str>, Option<&str>)) -> VcxResult<(String)> {
+    debug!("publish_txn_on_ledger(req: {}, txn_action: {:?})", req, txn_action);
+    if settings::indy_mocks_enabled() {
+        return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
+    }
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    let txn_response = libindy_sign_and_submit_request(&did, req)?;
+    Ok((txn_response))
+}
+
+pub fn add_new_did(role: Option<&str>) -> (String, String) {
+    use indy::ledger;
+    use crate::libindy;
+
+    let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+
+    let (did, verkey) = libindy::utils::signus::create_and_store_my_did(None, None).unwrap();
+    let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).wait().unwrap();
+
+    req_nym = append_txn_author_agreement_to_request(&req_nym).unwrap();
+
+    libindy_sign_and_submit_request(&institution_did, &req_nym).unwrap();
+    (did, verkey)
 }

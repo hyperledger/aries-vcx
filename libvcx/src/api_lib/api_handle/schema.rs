@@ -153,7 +153,7 @@ pub mod tests {
     use rand::Rng;
 
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::ledger_tokens::add_new_did;
+    use aries_vcx::libindy::utils::ledger::add_new_did;
     use aries_vcx::settings;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;

@@ -7,7 +7,6 @@ use serde_json;
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::libindy::utils::ledger_tokens;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::utils::provision::AgentProvisionConfig;

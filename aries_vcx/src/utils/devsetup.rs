@@ -234,7 +234,7 @@ impl Drop for SetupIndyMocks {
 impl SetupLibraryWalletPoolZeroFees {
     pub fn init() -> SetupLibraryWalletPoolZeroFees {
         setup();
-        let institution_did = setup_indy_env(true);
+        let institution_did = setup_indy_env();
         SetupLibraryWalletPoolZeroFees {
             institution_did
         }
@@ -354,11 +354,7 @@ pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
-pub fn setup_libnullpay_nofees() {
-    libindy::utils::ledger_tokens::test_utils::token_setup(None, None, true);
-}
-
-pub fn setup_indy_env(use_zero_fees: bool) -> String {
+pub fn setup_indy_env() -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
@@ -390,8 +386,6 @@ pub fn setup_indy_env(use_zero_fees: bool) -> String {
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
-
-    libindy::utils::ledger_tokens::test_utils::token_setup(None, None, use_zero_fees);
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did
