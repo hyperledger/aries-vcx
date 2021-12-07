@@ -105,7 +105,39 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           issuerDid,
           'tag1',
           JSON.stringify(revocation),
-          tailsUrl || '',
+          tailsUrl || null,
+          cb,
+        ),
+      );
+      return credentialDef;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public static async generateAndStore({
+    revocationDetails,
+    schemaId,
+    sourceId,
+  }: ICredentialDefCreateData): Promise<CredentialDef> {
+    const tailsFile = revocationDetails.tailsFile;
+    const credentialDef = new CredentialDef(sourceId, { schemaId, tailsFile });
+    const commandHandle = 0;
+    const issuerDid = null;
+    const revocation = {
+      max_creds: revocationDetails.maxCreds,
+      support_revocation: revocationDetails.supportRevocation,
+      tails_file: revocationDetails.tailsFile,
+    };
+    try {
+      await credentialDef._create((cb) =>
+        rustAPI().vcx_credentialdef_generate_and_store(
+          commandHandle,
+          sourceId,
+          schemaId,
+          issuerDid,
+          'tag1',
+          JSON.stringify(revocation),
           cb,
         ),
       );
@@ -167,6 +199,33 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     this._revocRegDefTransaction = null;
     this._revocRegEntryTransaction = null;
   }
+
+  public async publish(tailsUrl?: string): Promise<void> {
+    try {
+      await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credentialdef_publish(0, tailsUrl || null, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32'],
+            (handle: number, err: number) => {
+              if (err) {
+                reject(err);
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
 
   /**
    * Retrieves the credential definition id associated with the created cred def.

@@ -517,6 +517,16 @@ export interface IFFIEntryPoint {
     tailsUrl: string | null,
     cb: ICbRef,
   ) => number;
+  vcx_credentialdef_generate_and_store: (
+    commandId: number,
+    sourceId: string,
+    schemaId: string,
+    issuerDid: string | null,
+    tag: string,
+    revocationDetails: string,
+    cb: ICbRef,
+  ) => number;
+  vcx_credentialdef_publish: (commandId: number, tailsUrl: string | null, cb: ICbRef) => number;
   vcx_credentialdef_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_credentialdef_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_release: (handle: number) => number;
@@ -1081,6 +1091,26 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_STRING_DATA,
       FFI_STRING_DATA,
       FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_CALLBACK_PTR,
+    ],
+  ],
+  vcx_credentialdef_generate_and_store: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_SOURCE_ID,
+      FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_CALLBACK_PTR,
+    ],
+  ],
+  vcx_credentialdef_publish: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
       FFI_STRING_DATA,
       FFI_CALLBACK_PTR,
     ],
