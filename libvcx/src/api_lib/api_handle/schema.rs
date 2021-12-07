@@ -158,7 +158,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupWithWalletAndAgency, SetupMocks};
 
     use super::*;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
@@ -266,7 +266,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_schema_attrs_from_ledger() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(constants::DEFAULT_SCHEMA_ATTRS);
 
@@ -278,7 +278,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_schema_no_fees_with_pool() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let handle = create_schema_real();
 
@@ -290,7 +290,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_duplicate_fails_no_fees() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -334,7 +334,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_endorse_schema() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -357,7 +357,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_schema_get_state_with_ledger() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());

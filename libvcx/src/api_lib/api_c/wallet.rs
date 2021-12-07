@@ -1030,7 +1030,7 @@ pub mod tests {
 
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, delete_wallet, WalletConfig};
     use aries_vcx::settings;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks, TempFile};
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks, TempFile};
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;

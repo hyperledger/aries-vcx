@@ -503,7 +503,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::wallet::get_wallet_handle;
     use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupWithWalletAndAgency, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -1010,7 +1010,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());

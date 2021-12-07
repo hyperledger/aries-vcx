@@ -516,7 +516,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_endorse_transaction() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         use crate::libindy::utils::ledger::add_new_did;
 
@@ -535,7 +535,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_add_get_service() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();

@@ -38,7 +38,7 @@ pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig,
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPoolZeroFees {
+pub struct SetupWithWalletAndAgency {
     pub institution_did: String,
 }  // set default settings, init indy wallet, init pool, set zero fees
 
@@ -231,17 +231,17 @@ impl Drop for SetupIndyMocks {
     }
 }
 
-impl SetupLibraryWalletPoolZeroFees {
-    pub fn init() -> SetupLibraryWalletPoolZeroFees {
+impl SetupWithWalletAndAgency {
+    pub fn init() -> SetupWithWalletAndAgency {
         setup();
         let institution_did = setup_indy_env();
-        SetupLibraryWalletPoolZeroFees {
+        SetupWithWalletAndAgency {
             institution_did
         }
     }
 }
 
-impl Drop for SetupLibraryWalletPoolZeroFees {
+impl Drop for SetupWithWalletAndAgency {
     fn drop(&mut self) {
         cleanup_indy_env();
         tear_down()

@@ -510,7 +510,7 @@ mod tests {
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::{SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
 
     use crate::api_lib;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
@@ -556,7 +556,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_create_schema_with_pool() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -566,7 +566,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_schema_get_attrs_with_pool() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
 
@@ -639,7 +639,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_vcx_schema_serialize_contains_version() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
