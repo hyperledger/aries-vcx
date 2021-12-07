@@ -4,14 +4,14 @@ use serde_json;
 use serde_json::{map::Map, Value};
 use time;
 
-use crate::{libindy, settings, utils};
+use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::{LibindyMock, wallet::get_wallet_handle};
 use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use crate::libindy::utils::ledger::*;
 use crate::libindy::utils::ledger::publish_txn_on_ledger;
 use crate::utils::constants::{ATTRS, LIBINDY_CRED_OFFER, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON};
-use crate::utils::constants::{CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
+use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
 use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 
 const BLOB_STORAGE_TYPE: &str = "default";
@@ -575,9 +575,9 @@ pub fn is_cred_def_on_ledger(issuer_did: Option<&str>, cred_def_id: &str) -> Vcx
     }
 }
 
-pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<(String)> {
+pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
-        return Ok((REV_REG_DELTA_JSON.to_string()));
+        return Ok(REV_REG_DELTA_JSON.to_string());
     }
 
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -585,7 +585,7 @@ pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) 
     let delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
     publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
 
-    Ok((delta))
+    Ok(delta)
 }
 
 pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
@@ -597,11 +597,11 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
 }
 
 pub fn publish_local_revocations(rev_reg_id: &str)
-                                 -> VcxResult<(String)> {
+                                 -> VcxResult<String> {
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     if let Some(delta) = get_rev_reg_delta_cache(rev_reg_id) {
         match clear_rev_reg_delta_cache(rev_reg_id) {
-            Ok(_) => Ok(publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?),
+            Ok(_) => publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta),
             Err(err) => Err(err)
         }
     } else {
@@ -962,7 +962,7 @@ pub mod tests {
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
             = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let rc = libindy::utils::anoncreds::libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
 
         assert!(rc.is_ok());
     }

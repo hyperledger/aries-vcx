@@ -7,7 +7,6 @@ use serde_json;
 
 use crate::{settings, utils};
 use crate::error::prelude::*;
-use crate::libindy;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
@@ -130,7 +129,6 @@ pub fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> 
 }
 
 pub mod auth_rule {
-    use std::collections::HashMap;
     use std::sync::Mutex;
     use std::sync::Once;
 

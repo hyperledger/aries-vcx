@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use libc::c_char;
 
-use aries_vcx::{libindy, utils};
+use aries_vcx::utils;
 use aries_vcx::indy::CommandHandle;
 use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
 use aries_vcx::libindy::utils::{ledger, pool, wallet};

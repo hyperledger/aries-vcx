@@ -9,7 +9,6 @@ use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
 
-use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
@@ -233,9 +232,9 @@ pub extern fn vcx_wallet_get_token_info(_command_handle: CommandHandle,
 /// #Returns
 /// Error code as u32
 #[no_mangle]
-pub extern fn vcx_wallet_create_payment_address(command_handle: CommandHandle,
-                                                seed: *const c_char,
-                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, address: *const c_char)>) -> u32 {
+pub extern fn vcx_wallet_create_payment_address(_command_handle: CommandHandle,
+                                                _seed: *const c_char,
+                                                _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, address: *const c_char)>) -> u32 {
     info!("vcx_wallet_create_payment_address >>>");
     return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
