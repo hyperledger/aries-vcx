@@ -708,6 +708,7 @@ pub mod test_utils {
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
             .schema_id(&schema_id)
+            .tag("1")
             .build()
             .unwrap();
         let (revocation_details, tails_url) = if support_rev {
