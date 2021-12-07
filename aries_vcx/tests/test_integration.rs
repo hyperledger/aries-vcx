@@ -150,8 +150,6 @@ mod tests {
                 .unwrap(),
             None)
         };
-        trace!("Sedning revocation details: {:?}", revocation_details);
-        trace!("Sedning credential def config: {:?}", config);
         let cred_def = CredentialDef::create("1".to_string(),
                                              config,
                                              revocation_details,
