@@ -54,7 +54,7 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
                                        issuer_did: *const c_char,
                                        tag: *const c_char,
                                        revocation_details: *const c_char,
-                                       _payment_handle: u32,
+                                       tails_url: *const c_char,
                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
     info!("vcx_credentialdef_create >>>");
 
@@ -64,6 +64,7 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
     check_useful_c_str!(schema_id, VcxErrorKind::InvalidOption);
     check_useful_c_str!(tag, VcxErrorKind::InvalidOption);
     check_useful_c_str!(revocation_details, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(tails_url, VcxErrorKind::InvalidOption);
 
     let issuer_did: String = if !issuer_did.is_null() {
         check_useful_c_str!(issuer_did, VcxErrorKind::InvalidOption);
@@ -75,21 +76,23 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
         }
     };
 
-    trace!("vcx_credential_def_create(command_handle: {}, source_id: {}, credentialdef_name: {} schema_id: {}, issuer_did: {}, tag: {}, revocation_details: {:?})",
+    trace!("vcx_credential_def_create(command_handle: {}, source_id: {}, credentialdef_name: {} schema_id: {}, issuer_did: {}, tag: {}, revocation_details: {:?}, tails_url: {:?})",
            command_handle,
            source_id,
            credentialdef_name,
            schema_id,
            issuer_did,
            tag,
-           revocation_details);
+           revocation_details,
+           tails_url);
 
     execute(move || {
         let (rc, handle) = match credential_def::create_and_publish_credentialdef(source_id,
                                                                                   issuer_did,
                                                                                   schema_id,
                                                                                   tag,
-                                                                                  revocation_details) {
+                                                                                  revocation_details,
+                                                                                  tails_url) {
             Ok(x) => {
                 trace!("vcx_credential_def_create_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, x, credential_def::get_source_id(x).unwrap_or_default());
@@ -375,22 +378,24 @@ pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle,
                                                    credentialdef_handle: u32,
                                                    revocation_details: *const c_char,
+                                                   tails_url: *const c_char,
                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_state: *const c_char)>) -> u32 {
     info!("vcx_credentialdef_rotate_rev_reg_def >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(revocation_details, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(tails_url, VcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
-    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}) source_id: {}",
-           command_handle, credentialdef_handle, revocation_details, source_id);
+    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}, tails_url: {:?}) source_id: {}",
+           command_handle, credentialdef_handle, revocation_details, tails_url, source_id);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
     execute(move || {
-        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details) {
+        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details, tails_url) {
             Ok(x) => {
                 trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
                        command_handle, credentialdef_handle, error::SUCCESS.message, x, source_id);
@@ -539,7 +544,7 @@ mod tests {
                                             CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
+                                            ptr::null(),
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -557,7 +562,7 @@ mod tests {
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
+                                            ptr::null(),
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
     }
@@ -575,7 +580,7 @@ mod tests {
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
+                                            ptr::null(),
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -631,7 +636,7 @@ mod tests {
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
+                                            ptr::null(),
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -653,7 +658,7 @@ mod tests {
                                             CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
+                                            ptr::null(),
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

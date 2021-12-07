@@ -196,7 +196,7 @@ pub mod test {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(String::from("test_cred_def"), config, RevocationDetails::default()).unwrap();
+            self.cred_def = CredentialDef::create(String::from("test_cred_def"), config, RevocationDetails::default(), None).unwrap();
         }
 
         pub fn create_presentation_request(&self) -> Verifier {

@@ -135,25 +135,27 @@ mod tests {
             .tag("1")
             .build()
             .unwrap();
-        let revocation_details = if support_rev {
-            RevocationDetailsBuilder::default()
+        let (revocation_details, tails_url) = if support_rev {
+            (RevocationDetailsBuilder::default()
                 .support_revocation(support_rev)
                 .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
-                .tails_url(TEST_TAILS_URL)
                 .max_creds(10 as u32)
                 .build()
-                .unwrap()
+                .unwrap(),
+            Some(TEST_TAILS_URL))
         } else {
-            RevocationDetailsBuilder::default()
+            (RevocationDetailsBuilder::default()
                 .support_revocation(support_rev)
                 .build()
-                .unwrap()
+                .unwrap(),
+            None)
         };
         trace!("Sedning revocation details: {:?}", revocation_details);
         trace!("Sedning credential def config: {:?}", config);
         let cred_def = CredentialDef::create("1".to_string(),
                                              config,
-                                             revocation_details).unwrap();
+                                             revocation_details,
+                                             tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -567,10 +569,9 @@ mod tests {
         faber.activate().unwrap();
         let revocation_details = json!({
             "tails_file": json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            "tails_url": json!(TEST_TAILS_URL),
             "max_creds": json!(10)
         }).to_string();
-        cred_def.rotate_rev_reg(&revocation_details).unwrap();
+        cred_def.rotate_rev_reg(&revocation_details, Some(TEST_TAILS_URL)).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {

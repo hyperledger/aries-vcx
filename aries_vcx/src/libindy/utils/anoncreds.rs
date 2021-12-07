@@ -710,16 +710,25 @@ pub mod test_utils {
             .schema_id(&schema_id)
             .build()
             .unwrap();
-        let revocation_details = RevocationDetailsBuilder::default()
-            .support_revocation(support_rev)
-            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
-            .tails_url(TEST_TAILS_URL)
-            .max_creds(10 as u32)
-            .build()
-            .unwrap();
+        let (revocation_details, tails_url) = if support_rev {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .max_creds(10 as u32)
+                .build()
+                .unwrap(),
+            Some(TEST_TAILS_URL))
+        } else {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .build()
+                .unwrap(),
+            None)
+        };
         let cred_def = CredentialDef::create("1".to_string(),
                                              config,
-                                             revocation_details).unwrap();
+                                             revocation_details,
+                                             tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
