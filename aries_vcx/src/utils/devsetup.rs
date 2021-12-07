@@ -40,16 +40,13 @@ pub struct SetupLibraryWallet {
 
 pub struct SetupWithWalletAndAgency {
     pub institution_did: String,
-}  // set default settings, init indy wallet, init pool, set zero fees
+}  // set default settings, init indy wallet, init pool
 
 pub struct SetupAgencyMock {
     pub wallet_config: WalletConfig,
 } // set default settings and enable mock agency mode
 
 pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0
-
-pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
-
 
 fn setup() {
     init_test_logging();
@@ -289,21 +286,6 @@ impl SetupLibraryAgencyV2 {
 }
 
 impl Drop for SetupLibraryAgencyV2 {
-    fn drop(&mut self) {
-        cleanup_agency_env();
-        tear_down()
-    }
-}
-
-impl SetupLibraryAgencyV2ZeroFees {
-    pub fn init() -> SetupLibraryAgencyV2ZeroFees {
-        setup();
-        setup_agency_env();
-        SetupLibraryAgencyV2ZeroFees
-    }
-}
-
-impl Drop for SetupLibraryAgencyV2ZeroFees {
     fn drop(&mut self) {
         cleanup_agency_env();
         tear_down()

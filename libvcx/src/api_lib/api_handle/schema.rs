@@ -277,7 +277,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_schema_no_fees_with_pool() {
+    fn test_create_schema_with_pool() {
         let _setup = SetupWithWalletAndAgency::init();
 
         let handle = create_schema_real();
@@ -289,7 +289,7 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_duplicate_fails_no_fees() {
+    fn test_create_duplicate_fails() {
         let _setup = SetupWithWalletAndAgency::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();

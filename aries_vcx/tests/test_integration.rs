@@ -806,7 +806,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_double_issuance_separate_issuer_and_consumers() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer1 = Alice::setup();
@@ -841,7 +841,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_double_issuance_separate_issuer() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
@@ -897,7 +897,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_batch_revocation() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
@@ -1438,7 +1438,7 @@ mod tests {
     #[test]
     #[cfg(feature = "agency_pool_tests")]
     pub fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
 

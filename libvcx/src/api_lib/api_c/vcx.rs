@@ -378,18 +378,6 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Retrieve author agreement and acceptance mechanisms set on the Ledger
-///
-/// #params
-///
-/// command_handle: command handle to map callback to user context.
-///
-/// cb: Callback that provides array of matching messages retrieved
-///
-/// # Example author_agreement -> "{"text":"Default agreement", "version":"1.0.0", "aml": {"label1": "description"}}"
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, author_agreement: *const c_char)>) -> u32 {
@@ -403,7 +391,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     execute(move || {
         match ledger::libindy_get_txn_author_agreement() {
             Ok(x) => {
-                trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, author_agreement: {})",
+                trace!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
                        command_handle, error::SUCCESS.message, x);
 
                 let msg = CStringUtils::string_to_cstring(x);

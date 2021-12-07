@@ -91,17 +91,6 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Get ledger fees from the network
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// cb: Callback that provides the fee structure for the sovrin network
-///
-/// # Example fees -> "{ "txnType1": amount1, "txnType2": amount2, ..., "txnTypeN": amountN }"
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_ledger_get_fees(_command_handle: CommandHandle,
                                   _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, fees: *const c_char)>) -> u32 {

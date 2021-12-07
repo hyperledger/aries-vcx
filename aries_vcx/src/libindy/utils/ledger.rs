@@ -259,28 +259,6 @@ pub mod auth_rule {
         pub new_value: Option<String>,
     }
 
-    // Helpers to set fee alias for auth rules
-    pub fn set_actions_fee_aliases(submitter_did: &str, rules_fee: &str) -> VcxResult<()> {
-        _get_default_ledger_auth_rules();
-
-        let auth_rules = AUTH_RULES.lock().unwrap();
-
-        let fees: HashMap<String, String> = serde_json::from_str(rules_fee)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize fees: {:?}", err)))?;
-
-        let mut auth_rules: Vec<AuthRule> = auth_rules.clone();
-
-        auth_rules
-            .iter_mut()
-            .for_each(|auth_rule| {
-                if let Some(fee_alias) = fees.get(&auth_rule.auth_type) {
-                    _set_fee_to_constraint(&mut auth_rule.constraint, &fee_alias);
-                }
-            });
-
-        _send_auth_rules(submitter_did, &auth_rules)
-    }
-
     fn _send_auth_rules(submitter_did: &str, data: &Vec<AuthRule>) -> VcxResult<()> {
         let data = serde_json::to_string(&data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize auth rules: {:?}", err)))?;
@@ -315,20 +293,6 @@ pub mod auth_rule {
             let mut auth_rules = AUTH_RULES.lock().unwrap();
             *auth_rules = response.result.data;
         })
-    }
-
-    fn _set_fee_to_constraint(constraint: &mut Constraint, fee_alias: &str) {
-        match constraint {
-            Constraint::RoleConstraint(constraint) => {
-                constraint.metadata.as_mut().map(|meta| meta.fees = Some(fee_alias.to_string()));
-            }
-            Constraint::AndConstraint(constraint) | Constraint::OrConstraint(constraint) => {
-                for mut constraint in constraint.auth_constraints.iter_mut() {
-                    _set_fee_to_constraint(&mut constraint, fee_alias)
-                }
-            }
-            Constraint::ForbiddenConstraint(_) => {}
-        }
     }
 
     pub fn get_action_auth_rule(action: (&str, &str, &str, Option<&str>, Option<&str>)) -> VcxResult<String> {

@@ -320,18 +320,6 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[test]
-    fn test_create_credential_def_no_fees_real() {
-        let _setup = SetupWithWalletAndAgency::init();
-
-        let (_, handle) = create_cred_def_real(false);
-
-        let _source_id = get_source_id(handle).unwrap();
-        let _cred_def_id = get_cred_def_id(handle).unwrap();
-        let _schema_json = to_string(handle).unwrap();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
     fn test_create_credential_works_twice() {
         let _setup = SetupWithWalletAndAgency::init();
 

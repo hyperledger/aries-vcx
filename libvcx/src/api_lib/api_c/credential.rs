@@ -45,28 +45,6 @@ use crate::error::prelude::*;
         Ack - https://github.com/hyperledger/aries-rfcs/tree/master/features/0015-acks#explicit-acks
 */
 
-/// Retrieve Payment Transaction Information for this Credential. Typically this will include
-/// how much payment is requried by the issuer, which needs to be provided by the prover, before the issuer will
-/// issue the credential to the prover. Ideally a prover would want to know how much payment is being asked before
-/// submitting the credential request (which triggers the payment to be made).
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// credential_handle: credential handle that was provided during creation. Used to identify credential object
-///
-/// cb: Callback that provides Payment Info of a Credential
-///
-/// # Example:
-/// payment_info ->
-///     {
-///         "payment_required":"one-time",
-///         "payment_addr":"pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j",
-///         "price":1
-///     }
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 #[allow(unused_variables, unused_mut)]
 pub extern fn vcx_credential_get_payment_info(command_handle: CommandHandle,
