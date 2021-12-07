@@ -23,6 +23,7 @@ export interface ICredentialDefCreateData {
   schemaId: string;
   revocationDetails: IRevocationDetails;
   paymentHandle: number;
+  tailsUrl?: string;
 }
 
 export interface ICredentialDefData {
@@ -50,8 +51,6 @@ export interface IRevocationDetails {
   maxCreds?: number;
   supportRevocation?: boolean;
   tailsFile?: string;
-  tailsUrl?: string;
-  tailsBaseUrl?: string;
 }
 
 export enum CredentialDefState {
@@ -84,6 +83,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     revocationDetails,
     schemaId,
     sourceId,
+    tailsUrl
   }: ICredentialDefCreateData): Promise<CredentialDef> {
     // Todo: need to add params for tag and config
     const tailsFile = revocationDetails.tailsFile;
@@ -94,8 +94,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
       max_creds: revocationDetails.maxCreds,
       support_revocation: revocationDetails.supportRevocation,
       tails_file: revocationDetails.tailsFile,
-      tails_url: revocationDetails.tailsUrl,
-      tails_base_url: revocationDetails.tailsBaseUrl,
     };
     try {
       await credentialDef._create((cb) =>
@@ -107,7 +105,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           issuerDid,
           'tag1',
           JSON.stringify(revocation),
-          paymentHandle,
+          tailsUrl || '',
           cb,
         ),
       );
@@ -345,12 +343,11 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
 
   public async rotateRevRegDef(
     revocationDetails: IRevocationDetails,
+    tailsUrl?: string
   ): Promise<ISerializedData<ICredentialDefCreateData>> {
     const revocation = {
       max_creds: revocationDetails.maxCreds,
       tails_file: revocationDetails.tailsFile,
-      tails_url: revocationDetails.tailsUrl,
-      tails_base_url: revocationDetails.tailsBaseUrl,
     };
     try {
       const dataStr = await createFFICallbackPromise<string>(
@@ -359,6 +356,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
             0,
             this.handle,
             JSON.stringify(revocation),
+            tailsUrl || '',
             cb,
           );
           if (rc) {
