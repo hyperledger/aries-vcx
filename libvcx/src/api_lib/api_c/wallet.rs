@@ -198,97 +198,6 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-
-/// Get the total balance from all addresses contained in the configured wallet
-///
-/// #Params
-///
-/// command_handle: command handle to map callback to user context.
-///
-/// payment_handle: for future use
-///
-/// cb: Callback that provides wallet balance
-///
-/// # Example info -> "{"balance":6,"balance_str":"6","addresses":[{"address":"pay:null:9UFgyjuJxi1i1HD","balance":3,"utxo":[{"source":"pay:null:1","paymentAddress":"pay:null:zR3GN9lfbCVtHjp","amount":1,"extra":"yqeiv5SisTeUGkw"}]}]}"
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern fn vcx_wallet_get_token_info(_command_handle: CommandHandle,
-                                        _payment_handle: u32,
-                                        _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
-    info!("vcx_wallet_get_token_info >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
-/// Add a payment address to the wallet
-///
-/// #params
-///
-/// cb: Callback that provides payment address info
-///
-/// # Example payment_address -> "pay:null:9UFgyjuJxi1i1HD"
-///
-/// #Returns
-/// Error code as u32
-#[no_mangle]
-pub extern fn vcx_wallet_create_payment_address(_command_handle: CommandHandle,
-                                                _seed: *const c_char,
-                                                _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, address: *const c_char)>) -> u32 {
-    info!("vcx_wallet_create_payment_address >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
-
-/// Signs a message with a payment address.
-///
-/// # Params:
-/// command_handle: command handle to map callback to user context.
-/// payment_address: payment address of message signer. The key must be created by calling vcx_wallet_create_address
-/// message_raw: a pointer to first byte of message to be signed
-/// message_len: a message length
-/// cb: Callback that takes command result as parameter.
-///
-/// # Returns:
-/// a signature string
-#[no_mangle]
-pub extern fn vcx_wallet_sign_with_address(_command_handle: CommandHandle,
-                                           _payment_address: *const c_char,
-                                           _message_raw: *const u8,
-                                           _message_len: u32,
-                                           _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
-                                                                signature: *const u8, signature_len: u32)>) -> u32 {
-    info!("vcx_wallet_sign_with_address >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
-
-/// Verify a signature with a payment address.
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-/// payment_address: payment address of the message signer
-/// message_raw: a pointer to first byte of message that has been signed
-/// message_len: a message length
-/// signature_raw: a pointer to first byte of signature to be verified
-/// signature_len: a signature length
-/// cb: Callback that takes command result as parameter.
-///
-/// #Returns
-/// valid: true - if signature is valid, false - otherwise
-#[no_mangle]
-pub extern fn vcx_wallet_verify_with_address(_command_handle: CommandHandle,
-                                             _payment_address: *const c_char,
-                                             _message_raw: *const u8,
-                                             _message_len: u32,
-                                             _signature_raw: *const u8,
-                                             _signature_len: u32,
-                                             _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
-                                                                  result: bool)>) -> u32 {
-    info!("vcx_wallet_sign_with_address >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
 /// Adds a record to the wallet
 /// Assumes there is an open wallet.
 /// #Params
@@ -685,33 +594,6 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-
-/// Send tokens to a specific address
-///
-/// #Params
-///
-/// command_handle: command handle to map callback to user context.
-///
-/// payment_handle: for future use (currently uses any address in the wallet)
-///
-/// tokens: number of tokens to send
-///
-/// recipient: address of recipient
-///
-/// cb: Callback that any errors or a receipt of transfer
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern fn vcx_wallet_send_tokens(_command_handle: CommandHandle,
-                                     _payment_handle: u32,
-                                     _tokens: *const c_char,
-                                     _recipient: *const c_char,
-                                     _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, receipt: *const c_char)>) -> u32 {
-    info!("vcx_wallet_send_tokens >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
 /// Opens a storage search handle
 ///
 /// #Params
@@ -983,27 +865,6 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
     });
 
     error::SUCCESS.code_num
-}
-
-// Functionality in Libindy for validating an address in NOT there yet
-/// Validates a Payment address
-///
-/// #Params
-///
-/// command_handle: command handle to map callback to user context.
-///
-/// payment_address: value to be validated as a payment address
-///
-/// cb: Callback that any errors
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-pub extern fn vcx_wallet_validate_payment_address(_command_handle: i32,
-                                                  _payment_address: *const c_char,
-                                                  _cb: Option<extern fn(command_handle_: i32, err: u32)>) -> u32 {
-    info!("vcx_wallet_validate_payment_address >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Set the wallet handle before calling vcx_init_minimal

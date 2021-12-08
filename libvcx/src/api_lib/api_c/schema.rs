@@ -368,32 +368,6 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Retrieve the txn associated with paying for the schema
-///
-/// #param
-/// handle: schema handle that was provided during creation.  Used to access schema object.
-///
-/// #Callback returns
-/// PaymentTxn json
-/// example: {
-///         "amount":25,
-///         "inputs":[
-///             "pay:null:1_3FvPC7dzFbQKzfG",
-///             "pay:null:1_lWVGKc07Pyc40m6"
-///         ],
-///         "outputs":[
-///             {"recipient":"pay:null:FrSVC3IrirScyRh","amount":5,"extra":null},
-///             {"recipient":"pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j","amount":25,"extra":null}
-///         ]
-///     }
-#[no_mangle]
-pub extern fn vcx_schema_get_payment_txn(_command_handle: CommandHandle,
-                                         _handle: u32,
-                                         _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
-    info!("vcx_schema_get_payment_txn >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
 /// Checks if schema is published on the Ledger and updates the  state
 ///
 /// #Params
