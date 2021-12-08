@@ -3,9 +3,9 @@ FROM alpine:3.12 AS builder
 ARG UID=1000
 ARG GID=1000
 
-ARG INDYSDK_PATH=/home/indy/indy-sdk
-ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk.git
-ARG INDYSDK_REVISION=efb7215
+ARG INDYSDK_PATH=/home/indy/vdr-tools
+ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
+ARG INDYSDK_REVISION=b5fd711a
 
 ENV RUST_LOG=warning
 
@@ -28,17 +28,9 @@ ARG RUST_VER="1.55.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
 ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 
-RUN git clone $INDYSDK_REPO && cd indy-sdk && git checkout $INDYSDK_REVISION
+RUN git clone $INDYSDK_REPO && cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
 
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 
 USER root
 RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
-
-USER indy
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libnullpay/Cargo.toml
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
-
-USER root
-RUN mv $INDYSDK_PATH/libnullpay/target/release/libnullpay.so .
-RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so .

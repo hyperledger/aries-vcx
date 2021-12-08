@@ -22,7 +22,6 @@ export interface ICredentialDefCreateData {
   name: string;
   schemaId: string;
   revocationDetails: IRevocationDetails;
-  paymentHandle: number;
   tailsUrl?: string;
 }
 
@@ -69,7 +68,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * ```
    * data = {
    *   name: 'testCredentialDefName',
-   *   paymentHandle: 0,
    *   revocation: false,
    *   schemaId: 'testCredentialDefSchemaId',
    *   sourceId: 'testCredentialDefSourceId'
@@ -79,7 +77,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    */
   public static async create({
     name,
-    paymentHandle,
     revocationDetails,
     schemaId,
     sourceId,
@@ -154,7 +151,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * ```
    * data = {
    *   name: 'testCredentialDefName',
-   *   paymentHandle: 0,
    *   revocation: false,
    *   schemaId: 'testCredentialDefSchemaId',
    *   sourceId: 'testCredentialDefSourceId'
@@ -233,7 +229,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
    * ```
    * data = {
    *   name: 'testCredentialDefName',
-   *   paymentHandle: 0,
    *   revocation: false,
    *   schemaId: 'testCredentialDefSchemaId',
    *   sourceId: 'testCredentialDefSourceId'

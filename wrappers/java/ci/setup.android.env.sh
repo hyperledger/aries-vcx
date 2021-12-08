@@ -127,24 +127,24 @@ download_emulator() {
 }
 
 download_and_unzip_if_missed() {
-    target_dir=$1
-    url_pref=$2
-    fname=$3
-    url="${url_pref}${fname}"
-    if [ ! -d "${target_dir}" ] ; then
-        echo "${GREEN}Downloading ${fname}${RESET} from url ${url}"
-        wget -q ${url}
-        unzip -qqo ${fname}
-        rm ${fname}
+    expected_directory="$1"
+    url="$2"
+    fname="tmp_$(date +%s)_$expected_directory.zip"
+    if [ ! -d "${expected_directory}" ] ; then
+        echo "Downloading ${GREEN}${url}${RESET} as ${GREEN}${fname}${RESET}"
+        wget -q -O ${fname} "${url}"
+        echo "Unzipping ${GREEN}${fname}${RESET}"
+        unzip -qqo "${fname}"
+        rm "${fname}"
         echo "${GREEN}Done!${RESET}"
     else
-        echo "${BLUE}Skipping download ${fname}${RESET}"
+        echo "${BLUE}Skipping download ${url}${RESET}. Expected directory ${expected_directory} was found"
     fi
 }
 
 download_sdk(){
     pushd ${ANDROID_SDK}
-        download_and_unzip_if_missed "tools" "https://dl.google.com/android/repository/" "sdk-tools-linux-4333796.zip"
+        download_and_unzip_if_missed "tools" "https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip"
     popd
 }
 
@@ -199,11 +199,25 @@ generate_arch_flags(){
 }
 
 prepare_dependencies() {
-    pushd ${ANDROID_BUILD_FOLDER}
-        download_and_unzip_if_missed "openssl_$1" "https://repo.sovrin.org/android/libindy/deps-libc++/openssl/" "openssl_$1.zip"
-        download_and_unzip_if_missed "libsodium_$1" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/" "libsodium_$1.zip"
-        download_and_unzip_if_missed "libzmq_$1" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/" "libzmq_$1.zip"
-        download_and_unzip_if_missed "libindy_android_$1_$LIBINDY_VER" "https://repo.sovrin.org/android/libindy/stable/$LIBINDY_VER/" "libindy_android_$1_$LIBINDY_VER.zip"
+    TARGET_ARCH="$1"
+    echo "prepare_dependencies >> TARGET_ARCH=${TARGET_ARCH}"
+    pushd "${ANDROID_BUILD_FOLDER}"
+        download_and_unzip_if_missed "openssl_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/openssl/openssl_$TARGET_ARCH.zip"
+        download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/libsodium_$TARGET_ARCH.zip"
+        download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/libzmq_$TARGET_ARCH.zip"
+
+        # artifacts from build #06867bd9 / https://gitlab.com/evernym/verity/vdr-tools/-/packages/4038091
+        if [ "$TARGET_ARCH" == "arm" ]; then
+          download_and_unzip_if_missed "libindy_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121452/download"
+        elif [ "$TARGET_ARCH" == "arm64" ]; then
+          download_and_unzip_if_missed "libindy_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121443/download"
+        elif [ "$TARGET_ARCH" == "armv7" ]; then
+          download_and_unzip_if_missed "libindy_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121464/download"
+        elif [ "$TARGET_ARCH" == "x86_64" ]; then
+          download_and_unzip_if_missed "libindy_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121458/download"
+        elif [ "$TARGET_ARCH" == "x86" ]; then
+          download_and_unzip_if_missed "libindy_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121437/download"
+        fi
     popd
 }
 
@@ -233,14 +247,14 @@ download_and_setup_toolchain(){
         mkdir -p ${TOOLCHAIN_PREFIX}
         pushd $TOOLCHAIN_PREFIX
         echo "${GREEN}Resolving NDK for OSX${RESET}"
-        download_and_unzip_if_missed "android-ndk-r20" "https://dl.google.com/android/repository/" "android-ndk-r20-darwin-x86_64.zip"
+        download_and_unzip_if_missed "android-ndk-r20" "https://dl.google.com/android/repository/android-ndk-r20-darwin-x86_64.zip"
         popd
     elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
         export TOOLCHAIN_PREFIX=${ANDROID_BUILD_FOLDER}/toolchains/linux
         mkdir -p ${TOOLCHAIN_PREFIX}
         pushd $TOOLCHAIN_PREFIX
         echo "${GREEN}Resolving NDK for Linux${RESET}"
-        download_and_unzip_if_missed "android-ndk-r20" "https://dl.google.com/android/repository/" "android-ndk-r20-linux-x86_64.zip"
+        download_and_unzip_if_missed "android-ndk-r20" "https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip"
         popd
     fi
     export ANDROID_NDK_ROOT=${TOOLCHAIN_PREFIX}/android-ndk-r20

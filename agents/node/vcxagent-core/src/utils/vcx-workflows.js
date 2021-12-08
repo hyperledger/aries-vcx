@@ -21,11 +21,6 @@ async function loadPostgresPlugin () {
   await myffi.postgresstorage_init()
 }
 
-async function initLibNullPay () {
-  const myffi = ffi.Library(getLibraryPath('libnullpay'), { nullpay_init: ['void', []] })
-  await myffi.nullpay_init()
-}
-
 async function initRustApiAndLogger (logLevel) {
   const rustApi = initRustAPI()
   await rustApi.vcx_set_default_logger(logLevel)
@@ -36,7 +31,6 @@ async function initVcxWithProvisionedAgentConfig (config) {
 }
 
 async function initRustapi (logLevel = 'vcx=error') {
-  await initLibNullPay()
   await initRustApiAndLogger(logLevel)
 }
 
@@ -95,7 +89,6 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
 }
 
 module.exports.loadPostgresPlugin = loadPostgresPlugin
-module.exports.initLibNullPay = initLibNullPay
 module.exports.initRustApiAndLogger = initRustApiAndLogger
 module.exports.initVcxWithProvisionedAgentConfig = initVcxWithProvisionedAgentConfig
 module.exports.provisionAgentInAgency = provisionAgentInAgency

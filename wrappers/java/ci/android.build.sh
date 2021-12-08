@@ -8,6 +8,8 @@ LIBVCX_DIR="${REPO_DIR}/"
 JAVA_WRAPPER_DIR="${REPO_DIR}/wrappers/java"
 
 TARGET_ARCHS="$@"
+echo "android.build.sh >> TARGET_ARCHS=${TARGET_ARCHS}"
+
 
 source ${SCRIPT_DIR}/setup.android.env.sh
 

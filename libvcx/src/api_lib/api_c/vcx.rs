@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use libc::c_char;
 
-use aries_vcx::{libindy, utils};
+use aries_vcx::utils;
 use aries_vcx::indy::CommandHandle;
 use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
@@ -378,18 +378,6 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Retrieve author agreement and acceptance mechanisms set on the Ledger
-///
-/// #params
-///
-/// command_handle: command handle to map callback to user context.
-///
-/// cb: Callback that provides array of matching messages retrieved
-///
-/// # Example author_agreement -> "{"text":"Default agreement", "version":"1.0.0", "aml": {"label1": "description"}}"
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, author_agreement: *const c_char)>) -> u32 {
@@ -403,7 +391,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     execute(move || {
         match ledger::libindy_get_txn_author_agreement() {
             Ok(x) => {
-                trace!("vcx_ledger_get_fees_cb(command_handle: {}, rc: {}, author_agreement: {})",
+                trace!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
                        command_handle, error::SUCCESS.message, x);
 
                 let msg = CStringUtils::string_to_cstring(x);
@@ -459,30 +447,8 @@ pub extern fn vcx_set_active_txn_author_agreement_meta(text: *const c_char,
 }
 
 #[no_mangle]
-pub extern fn vcx_mint_tokens(seed: *const c_char, fees: *const c_char) {
-    info!("vcx_mint_tokens >>>");
-
-    // TODO: CHEC
-    let seed = if !seed.is_null() {
-        match CStringUtils::c_str_to_string(seed) {
-            Ok(opt_val) => opt_val.map(String::from),
-            Err(_) => return ()
-        }
-    } else {
-        None
-    };
-
-    let fees = if !fees.is_null() {
-        match CStringUtils::c_str_to_string(fees) {
-            Ok(opt_val) => opt_val.map(String::from),
-            Err(_) => return ()
-        }
-    } else {
-        None
-    };
-    trace!("vcx_mint_tokens(seed: {:?}, fees: {:?})", seed, fees);
-
-    libindy::utils::payments::mint_tokens_and_set_fees(None, None, fees, seed).unwrap_or_default();
+pub extern fn vcx_mint_tokens(_seed: *const c_char, _fees: *const c_char) {
+    trace!("vcx_get_current_error >>> Not supported operation.");
 }
 
 /// Get details for last occurred error.
@@ -525,7 +491,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::wallet::get_wallet_handle;
     use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, setup_libnullpay_nofees, SetupDefaults, SetupEmpty, SetupLibraryWalletPoolZeroFees, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupWithWalletAndAgency, SetupMocks, SetupPoolConfig, SetupWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -1017,7 +983,6 @@ mod tests {
 
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
         configure_trustee_did();
-        setup_libnullpay_nofees();
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
@@ -1033,7 +998,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());

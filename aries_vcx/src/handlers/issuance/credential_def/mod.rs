@@ -5,7 +5,6 @@ use serde_json;
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::RevocationRegistryDefinition;
-use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -17,8 +16,6 @@ pub struct RevocationRegistry {
     tails_file: String,
     max_creds: u32,
     tag: u32,
-    rev_reg_def_payment_txn: Option<PaymentTxn>,
-    rev_reg_delta_payment_txn: Option<PaymentTxn>,
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
@@ -28,7 +25,6 @@ pub struct CredentialDef {
     source_id: String,
     issuer_did: String,
     cred_def_json: String,
-    cred_def_payment_txn: Option<PaymentTxn>,
     rev_reg: Option<RevocationRegistry>,
     #[serde(default)]
     pub state: PublicEntityStateType,
@@ -186,8 +182,6 @@ impl CredentialDef {
                     tails_file,
                     max_creds,
                     tag: 1,
-                    rev_reg_def_payment_txn: None,
-                    rev_reg_delta_payment_txn: None,
                 })
             }
             _ => None
@@ -200,7 +194,6 @@ impl CredentialDef {
                 cred_def_id,
                 cred_def_json,
                 issuer_did,
-                cred_def_payment_txn: None,
                 rev_reg,
                 state: PublicEntityStateType::Built,
             }
@@ -210,12 +203,12 @@ impl CredentialDef {
     pub fn publish(mut self, tails_url: Option<&str>) -> VcxResult<Self> {
         trace!("CredentialDef::publish >>>");
 
-        let (rev_reg_def_payment_txn, rev_reg_delta_payment_txn, cred_def_payment_txn) = match _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id) {
+        match _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id) {
             Ok(Some(ledger_cred_def_json)) => {
                 return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", self.cred_def_id, ledger_cred_def_json)));
             }
             Ok(None) => {
-                let cred_def_payment_txn = anoncreds::publish_cred_def(&self.issuer_did, &self.cred_def_json)?;
+                anoncreds::publish_cred_def(&self.issuer_did, &self.cred_def_json)?;
 
                 match self.rev_reg {
                     Some(ref mut rev_reg) => {
@@ -223,15 +216,14 @@ impl CredentialDef {
                             rev_reg.rev_reg_def.value.tails_location = String::from(tails_url);
                         };
 
-                        let rev_def_payment = anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg.rev_reg_def)
+                        anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg.rev_reg_def)
                             .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
 
-                        let (rev_delta_payment, _) = anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg.rev_reg_id, &rev_reg.rev_reg_entry)
+                        anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg.rev_reg_id, &rev_reg.rev_reg_entry)
                             .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
-                        (rev_def_payment, rev_delta_payment, cred_def_payment_txn)
                     }
-                    _ => (None, None, None)
+                    _ => ()
                 }
             }
             Err(err) => return Err(err)
@@ -239,8 +231,6 @@ impl CredentialDef {
         let rev_reg = match self.rev_reg {
             Some(rev_reg) => {
                 Some(RevocationRegistry {
-                    rev_reg_def_payment_txn,
-                    rev_reg_delta_payment_txn,
                     ..rev_reg
                 })
             }
@@ -249,7 +239,6 @@ impl CredentialDef {
 
         Ok(
             Self {
-                cred_def_payment_txn,
                 rev_reg,
                 state: PublicEntityStateType::Published,
                 ..self
@@ -313,22 +302,6 @@ impl CredentialDef {
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
-    pub fn get_rev_reg_def_payment_txn(&self) -> Option<PaymentTxn> {
-        match &self.rev_reg {
-            Some(rev_reg) => rev_reg.rev_reg_def_payment_txn.clone(),
-            None => None
-        }
-        // self.rev_reg_def_payment_txn.clone();
-    }
-
-    pub fn get_rev_reg_delta_payment_txn(&self) -> Option<PaymentTxn> {
-        match &self.rev_reg {
-            Some(rev_reg) => rev_reg.rev_reg_delta_payment_txn.clone(),
-            None => None
-        }
-        // self.rev_reg_delta_payment_txn.clone();
-    }
-
     pub fn update_state(&mut self) -> VcxResult<u32> {
         if let Some(ref rev_reg_id) = self.get_rev_reg_id() {
             if let (Ok(_), Ok(_), Ok(_)) = (anoncreds::get_cred_def_json(&self.cred_def_id),
@@ -365,10 +338,10 @@ impl CredentialDef {
                     rev_reg_def.value.tails_location = String::from(new_tails_url);
                 };
 
-                let rev_reg_def_payment_txn = anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg_def)
+                anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg_def)
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
 
-                let (rev_reg_delta_payment_txn, _) = anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg_id, &rev_reg_entry)
+                anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg_id, &rev_reg_entry)
                     .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
 
                 let new_rev_reg = RevocationRegistry {
@@ -378,8 +351,6 @@ impl CredentialDef {
                     tails_file: tails_file.to_string(),
                     max_creds: *max_creds,
                     tag: rev_reg.tag + 1,
-                    rev_reg_delta_payment_txn,
-                    rev_reg_def_payment_txn,
                 };
                 self.rev_reg = Some(new_rev_reg.clone());
 

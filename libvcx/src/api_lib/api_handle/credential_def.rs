@@ -4,7 +4,6 @@ use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDef
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
-use aries_vcx::libindy::utils::payments::PaymentTxn;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -113,18 +112,6 @@ pub fn get_rev_reg_def(handle: u32) -> VcxResult<Option<String>> {
     })
 }
 
-pub fn get_rev_reg_def_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_rev_reg_def_payment_txn())
-    })
-}
-
-pub fn get_rev_reg_delta_payment_txn(handle: u32) -> VcxResult<Option<PaymentTxn>> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_rev_reg_delta_payment_txn())
-    })
-}
-
 pub fn release(handle: u32) -> VcxResult<()> {
     CREDENTIALDEF_MAP.release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle)))
@@ -191,15 +178,13 @@ pub mod tests {
 
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::payments::add_new_did;
     use aries_vcx::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use aries_vcx::utils::devsetup::{SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
 
     use crate::api_lib::api_handle::schema;
 
@@ -252,7 +237,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_cred_def_without_rev_will_have_no_rev_id() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, handle) = create_cred_def_real(false);
         let rev_reg_id = get_rev_reg_id(handle).ok();
@@ -274,7 +259,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_revocable_fails_with_no_tails_file() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -291,7 +276,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_tails_url_written_to_ledger() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -312,7 +297,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_revocable_cred_def() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -334,19 +319,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_credential_def_real() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
-
-        let (_, handle) = create_cred_def_real(false);
-
-        let _source_id = get_source_id(handle).unwrap();
-        let _cred_def_id = get_cred_def_id(handle).unwrap();
-        let _schema_json = to_string(handle).unwrap();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_credential_def_no_fees_real() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, handle) = create_cred_def_real(false);
 
@@ -358,7 +331,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_credential_works_twice() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, schema_id, did, revocation_details) = prepare_create_cred_def_data(false);
         create_and_publish_credentialdef("1".to_string(),

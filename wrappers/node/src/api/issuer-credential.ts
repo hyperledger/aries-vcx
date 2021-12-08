@@ -6,7 +6,6 @@ import { ISerializedData, IssuerStateType } from './common';
 import { Connection } from './connection';
 import { CredentialDef } from './credential-def';
 import { VCXBaseWithState } from './vcx-base-with-state';
-import { PaymentManager } from './vcx-payment-txn';
 
 /**
  *    The object of the VCX API representing an Issuer side in the credential issuance process.
@@ -98,10 +97,6 @@ export interface IIssuerCredentialData {
   source_id: string;
 }
 
-export class IssuerCredentialPaymentManager extends PaymentManager {
-  protected _getPaymentTxnFn = rustAPI().vcx_issuer_credential_get_payment_txn;
-}
-
 /**
  * A Credential created by the issuing party (institution)
  */
@@ -165,7 +160,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
     }
   }
 
-  public paymentManager!: IssuerCredentialPaymentManager;
   protected _releaseFn = rustAPI().vcx_issuer_credential_release;
   protected _updateStFnV2 = rustAPI().vcx_v2_issuer_credential_update_state;
   protected _getStFn = rustAPI().vcx_issuer_credential_get_state;
@@ -435,6 +429,5 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
 
   protected _setHandle(handle: number): void {
     super._setHandle(handle);
-    this.paymentManager = new IssuerCredentialPaymentManager({ handle });
   }
 }

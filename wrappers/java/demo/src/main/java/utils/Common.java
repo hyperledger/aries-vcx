@@ -50,24 +50,6 @@ public class Common {
         return gson.toJson(JsonParser.parseString(jsonString));
     }
 
-    private interface NullPayApi extends Library {
-        public int nullpay_init();
-    }
-
-    public static void loadNullPayPlugin(){
-        NullPayApi nullPayApi = Native.loadLibrary("nullpay", NullPayApi.class);
-        nullPayApi.nullpay_init();
-    }
-
-    private interface PostgresApi extends Library {
-        public int postgresstorage_init();
-    }
-
-    public static void loadPostgresPlugin(){
-        PostgresApi postgresApi = Native.loadLibrary("indystrgpostgres", PostgresApi.class);
-        postgresApi.postgresstorage_init();
-    }
-
     public static int getRandomInt(int min, int max) {
         if (min >= max)
             throw new IllegalArgumentException("max must be greater than min");
@@ -77,11 +59,9 @@ public class Common {
 
     public static CommandLine getCommandLine(String[] args) {
         Option help = new Option("h", "help", false, "Display this usage guide.");
-        Option postgres = new Option("p", "postgres", false,"If specified, postgres wallet will be used.");
 
         Options options = new Options();
         options.addOption(help);
-        options.addOption(postgres);
 
         CommandLineParser parser = new DefaultParser();
         try {

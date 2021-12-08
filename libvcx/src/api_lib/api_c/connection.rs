@@ -1349,6 +1349,7 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
     use std::ptr;

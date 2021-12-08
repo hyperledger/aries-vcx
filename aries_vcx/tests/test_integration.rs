@@ -121,7 +121,6 @@ mod tests {
     use aries_vcx::utils::filters;
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use aries_vcx::utils::plugins::init_plugin;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
 
@@ -812,7 +811,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_double_issuance_separate_issuer_and_consumers() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer1 = Alice::setup();
@@ -847,7 +846,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_double_issuance_separate_issuer() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut issuer = Faber::setup();
         let mut verifier = Faber::setup();
         let mut consumer = Alice::setup();
@@ -903,7 +902,7 @@ mod tests {
     #[cfg(feature = "agency_pool_tests")]
     #[test]
     fn test_batch_revocation() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
         let mut consumer2 = Alice::setup();
@@ -1444,7 +1443,7 @@ mod tests {
     #[test]
     #[cfg(feature = "agency_pool_tests")]
     pub fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV2ZeroFees::init();
+        let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup();
         let mut consumer1 = Alice::setup();
 
@@ -1564,14 +1563,6 @@ mod tests {
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
     }
 
-    pub struct PaymentPlugin {}
-
-    impl PaymentPlugin {
-        pub fn load() {
-            init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-        }
-    }
-
     pub struct Pool {}
 
     impl Pool {
@@ -1592,7 +1583,6 @@ mod tests {
     #[test]
     fn aries_demo() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1630,7 +1620,6 @@ mod tests {
     #[test]
     fn aries_demo_handle_connection_related_messages() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1676,7 +1665,6 @@ mod tests {
     #[test]
     fn aries_demo_create_with_message_id_flow() {
         let _setup = SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -1743,7 +1731,6 @@ mod tests {
     #[test]
     fn aries_demo_download_message_flow() {
         SetupEmpty::init();
-        PaymentPlugin::load();
         let _pool = Pool::open();
 
         let mut faber = Faber::setup();
@@ -2203,7 +2190,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_credential_def() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
         let (_, _, cred_def_id, cred_def_json, _, _) = create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let (id, r_cred_def_json) = libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();

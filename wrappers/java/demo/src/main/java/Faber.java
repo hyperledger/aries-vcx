@@ -33,9 +33,6 @@ public class Faber {
         CommandLine options = Common.getCommandLine(args);
         if (options == null) System.exit(0);
 
-        logger.info("#0 Initialize");
-        Common.loadNullPayPlugin();
-
         long utime = System.currentTimeMillis() / 1000;
         String provisionConfig  = JsonPath.parse("{" +
                 "  agency_url: 'http://localhost:8080'," +
@@ -50,17 +47,6 @@ public class Faber {
         // Communication method. aries.
         provisionConfig = JsonPath.parse(provisionConfig).put("$", "protocol_type", "4.0").jsonString();
         logger.info("Running with Aries VCX Enabled! Make sure VCX agency is configured to use protocol_type 4.0");
-
-        if (options.hasOption("postgres")) {
-            Common.loadPostgresPlugin();
-            provisionConfig = JsonPath.parse(provisionConfig).put("$", "wallet_type", "postgres_storage")
-                    .put("$", "storage_config", "{\"url\":\"localhost:5432\"}")
-                    .put("$", "storage_credentials", "{\"account\":\"postgres\",\"password\":\"mysecretpassword\"," +
-                            "\"admin_account\":\"postgres\",\"admin_password\":\"mysecretpassword\"}").jsonString();
-            logger.info("Running with PostreSQL wallet enabled! Config = " + JsonPath.read(provisionConfig, "$.storage_config"));
-        } else {
-            logger.info("Running with builtin wallet.");
-        }
 
         logger.info("#1 Config used to provision agent in agency: \n" + prettyJson(provisionConfig));
         String vcxConfig = UtilsApi.vcxProvisionAgent(provisionConfig);

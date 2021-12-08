@@ -74,8 +74,4 @@ export class VCXMock {
   public static setVcxMock(message: VCXMockMessage): void {
     rustAPI().vcx_set_next_agency_response(message);
   }
-
-  public static mintTokens(): void {
-    rustAPI().vcx_mint_tokens(null, null);
-  }
 }

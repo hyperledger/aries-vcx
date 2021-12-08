@@ -11,7 +11,6 @@ pub mod signus;
 pub mod wallet;
 pub mod pool;
 pub mod crypto;
-pub mod payments;
 pub mod cache;
 pub mod logger;
 

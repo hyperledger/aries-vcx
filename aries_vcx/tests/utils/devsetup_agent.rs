@@ -173,7 +173,7 @@ pub mod test {
             let version: String = String::from("1.0");
 
             let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).unwrap();
-            let payment_txn = anoncreds::publish_schema(&schema).unwrap();
+            anoncreds::publish_schema(&schema).unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),
@@ -181,7 +181,6 @@ pub mod test {
                 data: serde_json::from_str(&data).unwrap_or_default(),
                 version,
                 schema_id,
-                payment_txn,
                 state: PublicEntityStateType::Published,
             };
         }

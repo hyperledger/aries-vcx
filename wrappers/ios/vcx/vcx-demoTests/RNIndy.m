@@ -124,10 +124,6 @@
     [self setLastShutdownVcx:[[[ConnectMeVcx alloc] init] vcxShutdown: deletePool]];
 }
 
--(int)initNullPay {
-  return [[[ConnectMeVcx alloc] init] initNullPay];
-}
-
 -(void)credentialCreateWithMsgId: (NSString *) sourceId
                   withConnectionHandle: (VcxHandle) connectionHandle
                   withMessageId: (NSString *) messageId
