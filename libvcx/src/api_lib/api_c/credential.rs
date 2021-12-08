@@ -45,22 +45,6 @@ use crate::error::prelude::*;
         Ack - https://github.com/hyperledger/aries-rfcs/tree/master/features/0015-acks#explicit-acks
 */
 
-#[no_mangle]
-#[allow(unused_variables, unused_mut)]
-pub extern fn vcx_credential_get_payment_info(command_handle: CommandHandle,
-                                              credential_handle: u32,
-                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
-    info!("vcx_credential_get_payment_info >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    execute(move || {
-        error!("Payments not supported anymore");
-        cb(command_handle, 1, ptr::null());
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
 
 /// Create a Credential object that requests and receives a credential for an institution
 ///
@@ -980,26 +964,6 @@ pub extern fn vcx_credential_release(handle: u32) -> u32 {
             e.into()
         }
     }
-}
-
-#[no_mangle]
-pub extern fn vcx_credential_get_payment_txn(command_handle: CommandHandle,
-                                             handle: u32,
-                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
-    info!("vcx_credential_get_payment_txn >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    let source_id = credential::get_source_id(handle).unwrap_or_default();
-    trace!("vcx_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
-
-    execute(move || {
-        error!("Payments not supported yet");
-        cb(command_handle, 1, ptr::null());
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
 }
 
 #[cfg(test)]

@@ -58,18 +58,4 @@ public class WalletApiTest {
         int deleteRecordHandle = TestHelper.getResultFromFuture(WalletApi.deleteRecordWallet(type,id));
         assert (deleteRecordHandle != 0);
     }
-
-    @Test
-    @DisplayName("sign with address")
-    void signWithAddress() throws VcxException, ExecutionException, InterruptedException {
-        byte[] signature_made = TestHelper.getResultFromFuture(WalletApi.signWithAddress(address,message));
-        assert (Arrays.equals(signature_made, signature));
-    }
-
-    @Test
-    @DisplayName("verify with address")
-    void verifyWithAddress() throws VcxException, ExecutionException, InterruptedException {
-        boolean res = TestHelper.getResultFromFuture(WalletApi.verifyWithAddress(address,message,signature));
-        assert res;
-    }
 }

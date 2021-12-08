@@ -93,7 +93,4 @@
                  pwdids: (NSString *) pwdids
              completion:(void (^)(BOOL success))successful;
 
--(void)getTokenInfo: (vcx_payment_handle_t)paymentHandle
-                    completion:(void (^)(BOOL success))successful;
-
 @end

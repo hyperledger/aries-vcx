@@ -446,11 +446,6 @@ pub extern fn vcx_set_active_txn_author_agreement_meta(text: *const c_char,
     }
 }
 
-#[no_mangle]
-pub extern fn vcx_mint_tokens(_seed: *const c_char, _fees: *const c_char) {
-    trace!("vcx_get_current_error >>> Not supported operation.");
-}
-
 /// Get details for last occurred error.
 ///
 /// This function should be called in two places to handle both cases of error occurrence:

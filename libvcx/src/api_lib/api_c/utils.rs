@@ -92,13 +92,6 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_ledger_get_fees(_command_handle: CommandHandle,
-                                  _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, fees: *const c_char)>) -> u32 {
-    info!("vcx_ledger_get_fees >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
-}
-
-#[no_mangle]
 pub extern fn vcx_set_next_agency_response(message_index: u32) {
     info!("vcx_set_next_agency_response >>>");
 
@@ -409,33 +402,6 @@ pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
     if handle <= 0 { aries_vcx::libindy::utils::pool::set_pool_handle(None); } else { aries_vcx::libindy::utils::pool::set_pool_handle(Some(handle)); }
 
     handle
-}
-
-/// Gets minimal request price for performing an action in case the requester can perform this action.
-///
-/// # Params
-/// action_json: {
-///     "auth_type": ledger transaction alias or associated value,
-///     "auth_action": type of an action.,
-///     "field": transaction field,
-///     "old_value": (Optional) old value of a field, which can be changed to a new_value (mandatory for EDIT action),
-///     "new_value": (Optional) new value that can be used to fill the field,
-/// }
-/// requester_info_json: (Optional) {
-///     "role": string - role of a user which can sign transaction.
-///     "count": string - count of users.
-///     "is_owner": bool - if user is an owner of transaction.
-/// } otherwise context info will be used
-///
-/// # Return
-/// "price": u64 - tokens amount required for action performing
-#[no_mangle]
-pub extern fn vcx_get_request_price(_command_handle: CommandHandle,
-                                    _action_json: *const c_char,
-                                    _requester_info_json: *const c_char,
-                                    _cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, price: u64)>) -> u32 {
-    info!("vcx_get_request_price >>>");
-    return VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("Payment api not supported.")).into()
 }
 
 /// Endorse transaction to the ledger preserving an original author

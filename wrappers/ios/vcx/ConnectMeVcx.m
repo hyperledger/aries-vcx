@@ -1468,41 +1468,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     }
 }
 
-- (void) connectionRedirect: (vcx_connection_handle_t) redirect_connection_handle
-        withConnectionHandle: (vcx_connection_handle_t) connection_handle
-        withCompletion: (void (^)(NSError *error)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor: completion];
-
-    ret = vcx_connection_redirect(handle, connection_handle, redirect_connection_handle, VcxWrapperCommonCallback);
-
-    if (ret != 0)
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
-- (void) getRedirectDetails: (vcx_connection_handle_t) connection_handle
-        withCompletion: (void (^)(NSError *error, NSString *redirectDetails)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    ret = vcx_connection_get_redirect_details(handle, connection_handle, VcxWrapperCommonStringCallback);
-
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle))completion {
@@ -1559,66 +1524,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 
 - (int)proofRelease:(NSInteger) proofHandle {
     return vcx_disclosed_proof_release(proofHandle);
-}
-
-- (void)createPaymentAddress:(NSString *)seed
-              withCompletion:(void (^)(NSError *error, NSString *address))completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    const char *c_seed = [seed cStringUsingEncoding:NSUTF8StringEncoding];
-
-    ret = vcx_wallet_create_payment_address(handle, c_seed, VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
-- (void)getTokenInfo:(vcx_payment_handle_t)payment_handle
-      withCompletion:(void (^)(NSError *error, NSString *tokenInfo))completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    ret = vcx_wallet_get_token_info(handle, payment_handle, VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
-- (void)sendTokens:(vcx_payment_handle_t)payment_handle
-        withTokens:(NSString *)tokens
-     withRecipient:(NSString *)recipient
-    withCompletion:(void (^)(NSError *error, NSString *recipient))completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    const char* c_recipient = [recipient cStringUsingEncoding:NSUTF8StringEncoding];
-    const char* c_tokens = [tokens cStringUsingEncoding:NSUTF8StringEncoding];
-
-    ret = vcx_wallet_send_tokens(handle, payment_handle, c_tokens, c_recipient, VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
 }
 
 - (void)downloadMessages:(NSString *)messageStatus
@@ -1678,22 +1583,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 
         dispatch_async(dispatch_get_main_queue(), ^{
             completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
-- (void) getLedgerFees:(void(^)(NSError *error, NSString *fees)) completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    ret = vcx_ledger_get_fees(handle, VcxWrapperCommonStringCallback);
-
-    if (ret != 0)
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
         });
     }
 }
