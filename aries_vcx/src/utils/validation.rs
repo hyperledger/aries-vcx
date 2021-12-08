@@ -58,17 +58,6 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
 }
 
-pub fn validate_phone_number(p_num: &str) -> VcxResult<String> {
-    Ok(String::from(p_num))
-}
-
-pub fn validate_payment_method(payment_method: &str) -> VcxResult<()> {
-    if payment_method.is_empty() {
-        return Err(VcxError::from(VcxErrorKind::MissingPaymentMethod));
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use crate::utils::devsetup::SetupDefaults;
@@ -145,21 +134,5 @@ mod tests {
             Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid verkey"),
         }
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_payment_plugin_validation() {
-        let _setup = SetupDefaults::init();
-
-        validate_payment_method("null").unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_payment_plugin_validation_empty_string() {
-        let _setup = SetupDefaults::init();
-
-        assert_eq!(validate_payment_method("").unwrap_err().kind(), VcxErrorKind::MissingPaymentMethod);
     }
 }

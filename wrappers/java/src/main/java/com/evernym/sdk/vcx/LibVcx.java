@@ -109,16 +109,6 @@ public abstract class LibVcx {
         public int vcx_connection_connect(int command_handle, int connection_handle, String connection_type, Callback cb);
 
         /**
-         * Asynchronously request a connection to be redirected to old one.
-         */
-        public int vcx_connection_redirect(int command_handle, int connection_handle, int redirect_connection_handle, Callback cb);
-
-        /**
-         * Get the redirect details for the connection.
-         */
-        public int vcx_connection_get_redirect_details(int command_handle, int connection_handle, Callback cb);
-
-        /**
          * Returns the contents of the connection handle or null if the connection does not exist.
          */
         public int vcx_connection_serialize(int command_handle, int connection_handle, Callback cb);
@@ -452,15 +442,11 @@ public abstract class LibVcx {
          */
         public int vcx_disclosed_proof_decline_presentation_request(int command_handle, int proof_handle, int connection_handle, String reason, String proposal, Callback cb);
 
-        public int vcx_ledger_get_fees(int command_handle, Callback cb);
-
         public int vcx_get_ledger_author_agreement(int command_handle, Callback cb);
 
         public int vcx_set_active_txn_author_agreement_meta(String text, String version, String hash, String accMechType, long timeOfAcceptance);
 
         public int vcx_pool_set_handle(int handle);
-
-        public int vcx_get_request_price(int command_handle, String action_json, String requester_info_json, Callback cb);
 
         /** Endorse transaction to the ledger preserving an original author */
         public int vcx_endorse_transaction(int command_handle, String transaction, Callback cb);
@@ -568,30 +554,8 @@ public abstract class LibVcx {
         /** Close a search */
         public int vcx_wallet_close_search(int command_handle, int search_handle, Callback cb);
 
-
         /** Set wallet handle manually */
         public int vcx_wallet_set_handle(int handle);
-
-        /** Sign with payment address **/
-        public int vcx_wallet_sign_with_address(int command_handle, String address, byte[] message_raw, int message_len, Callback cb);
-
-        /** Verify with payment address **/
-        public int vcx_wallet_verify_with_address(int command_handle, String address, byte[] message_raw, int message_len, byte[] signature_raw, int signature_len, Callback cb);
-
-        /**
-         * token object
-         *
-         * Used for sending tokens and getting token related info
-         */
-
-        /** Gets token Balance and payment addresses info */
-        public int vcx_wallet_get_token_info(int command_handle, int payment_handle, Callback cb);
-
-        /** Sends token to recipient */
-        public int vcx_wallet_send_tokens(int command_handle, int payment_handle, String tokens, String recipient, Callback cb);
-
-        /** Create a payment address and returns it */
-        public int vcx_wallet_create_payment_address(int command_handle, String seed, Callback cb);
 
         /**
          * message object

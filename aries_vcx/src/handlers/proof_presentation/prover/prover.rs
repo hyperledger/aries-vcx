@@ -167,7 +167,7 @@ mod tests {
     #[test]
     #[cfg(feature = "pool_tests")]
     fn test_retrieve_credentials() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let (_, _, req, _) = create_proof();
@@ -183,7 +183,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_retrieve_credentials_empty() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -212,7 +212,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupWithWalletAndAgency::init();
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let mut req = json!({
@@ -268,7 +268,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_generate_proof() {
-        let setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupWithWalletAndAgency::init();
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
@@ -320,7 +320,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_generate_self_attested_proof() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let indy_proof_req = json!({
            "nonce":"123432421212",
@@ -353,7 +353,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_generate_proof_with_predicates() {
-        let setup = SetupLibraryWalletPoolZeroFees::init();
+        let setup = SetupWithWalletAndAgency::init();
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;

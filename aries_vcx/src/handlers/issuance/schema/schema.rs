@@ -1,7 +1,6 @@
 use crate::error::prelude::*;
 use crate::handlers::issuance::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::payments::PaymentTxn;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -20,7 +19,6 @@ pub struct Schema {
     pub schema_id: String,
     pub name: String,
     pub source_id: String,
-    pub payment_txn: Option<PaymentTxn>,
     #[serde(default)]
     pub state: PublicEntityStateType,
 }
@@ -29,12 +27,6 @@ impl Schema {
     pub fn get_source_id(&self) -> &String { &self.source_id }
 
     pub fn get_schema_id(&self) -> &String { &self.schema_id }
-
-    pub fn get_payment_txn(&self) -> VcxResult<PaymentTxn> {
-        trace!("Schema::get_payment_txn >>>");
-        self.payment_txn.clone()
-            .ok_or(VcxError::from(VcxErrorKind::NoPaymentInformation))
-    }
 
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())

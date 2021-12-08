@@ -7,7 +7,7 @@ export CARGO_INCREMENTAL=1
 export RUST_LOG=indy=trace
 export RUST_TEST_THREADS=1
 
-INDY_VERSION="59e1ecc21c9a067" # in vdr-tools repo
+INDY_VERSION="b5fd711a" # in vdr-tools repo
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
@@ -143,7 +143,7 @@ extract_architectures() {
 checkout_indy_sdk() {
     echo "ios/ci/build.sh: running checkout_indy_sdk(), $INDY_SDK_DIR=${INDY_SDK_DIR}"
     if [ ! -d $INDY_SDK_DIR ]; then
-        git clone https://gitlab.com/evernym/verity/vdr-tools $INDY_SDK_DIR
+        git clone https://gitlab.com/PatrikStas/vdr-tools $INDY_SDK_DIR
     fi
 
     pushd $INDY_SDK_DIR
@@ -406,7 +406,6 @@ build_libvcx
 copy_libvcx_architectures
 
 # Copy libraries to combine
-
 copy_libs_to_combine
 
 # Combine libs by arch and merge libs to single fat binary

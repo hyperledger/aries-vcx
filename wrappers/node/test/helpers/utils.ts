@@ -15,7 +15,6 @@ const configThreadpool = {
 const configWalletSample = {
   use_latest_protocols: 'false',
   enable_test_mode: 'true',
-  payment_method: 'null',
   wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
   wallet_key_derivation: 'RAW',
   wallet_type: 'default',

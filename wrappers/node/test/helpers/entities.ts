@@ -98,7 +98,6 @@ export const createConnectionInviterRequested = async (
 
 export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
   name: 'testCredentialDefName',
-  paymentHandle: 0,
   revocationDetails: {
     maxCreds: undefined,
     supportRevocation: false,
@@ -256,7 +255,6 @@ export const dataSchemaCreate = (): ISchemaCreateData => ({
     name: 'Schema',
     version: '1.0.0',
   },
-  paymentHandle: 0,
   sourceId: 'testSchemaSourceId',
 });
 

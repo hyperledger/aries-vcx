@@ -40,14 +40,14 @@ pub mod tests {
     use crate::{libindy, settings, utils};
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_credential;
-    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
+    use crate::utils::devsetup::SetupWithWalletAndAgency;
 
     use super::*;
 
     #[test]
     #[cfg(feature = "pool_tests")]
     fn test_proof_self_attested_proof_validation() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let requested_attrs = json!([
                                             json!({
@@ -91,7 +91,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "pool_tests")]
     fn test_proof_restrictions() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let requested_attrs = json!([
                                             json!({
@@ -148,7 +148,7 @@ pub mod tests {
     #[test]
     #[cfg(feature = "pool_tests")]
     fn test_proof_validate_attribute() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([

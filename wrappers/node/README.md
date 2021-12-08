@@ -48,9 +48,8 @@ unable to read the messages he's handling.
 ### Pre-requirements
 ##### Libraries
 Before you'll be able to run demo, you need to make sure you've compiled
-- [`libindy`](https://github.com/hyperledger/indy-sdk/tree/master/libindy)
-- [`libvcx`](https://github.com/hyperledger/indy-sdk/tree/master/vcx)
-- [`libnullpay`](https://github.com/hyperledger/indy-sdk/tree/master/libnullpay)
+- [`vdrtools`](https://gitlab.com/evernym/verity/vdr-tools)
+- [`libvcx`](https://github.com/hyperledger/aries-vcx)
 - Optionally [`libindystrgpostgres`](https://github.com/hyperledger/indy-sdk/tree/master/experimental/plugins/postgres_storage) if you want to run demo
 with postgres wallet.
 

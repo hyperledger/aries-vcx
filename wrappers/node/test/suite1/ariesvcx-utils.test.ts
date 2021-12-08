@@ -6,7 +6,6 @@ import {
   downloadMessagesV2,
   endorseTransaction,
   getLedgerAuthorAgreement,
-  getLedgerFees,
   getVersion,
   provisionCloudAgent,
   setActiveTxnAuthorAgreementMeta,
@@ -49,13 +48,6 @@ describe('utils:', () => {
     it('success', async () => {
       const version = getVersion();
       assert.ok(version);
-    });
-  });
-
-  describe('getLedgerFees:', () => {
-    it('success', async () => {
-      const fees = await getLedgerFees();
-      assert.ok(fees);
     });
   });
 

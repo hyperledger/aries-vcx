@@ -20,7 +20,7 @@ reqwest = "0.9.5"
 regex = "1.1.0"
 rmp-serde = "0.13.7"
 rust-base58 = "0.0.4"
-indy = { git = "https://gitlab.com/evernym/verity/vdr-tools.git", rev = "59e1ecc21c9a067" }
+indy = { git = "https://gitlab.com/PatrikStas/vdr-tools.git", rev = "b5fd711a" }
 futures = "0.1.23"
 url = "1.5.1"
 failure = "0.1.6"

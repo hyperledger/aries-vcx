@@ -291,11 +291,6 @@ vcx_error_t vcx_disclosed_proof_get_reject_msg(vcx_command_handle_t command_hand
 /** Get attributes specified in proof request*/
 vcx_error_t vcx_disclosed_proof_get_proof_request_attachment(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *attrs));
 
-/** Asynchronously redirect a connection. */
-vcx_error_t vcx_connection_redirect(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, vcx_connection_handle_t redirect_connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err));
-
-/** Get redirect details. */
-vcx_error_t vcx_connection_get_redirect_details(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *details));
 
 vcx_error_t vcx_v2_disclosed_proof_update_state(vcx_command_handle_t command_handle, vcx_proof_handle_t proof_handle, vcx_connection_handle_t connection_handle, void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_state_t state));
 
@@ -413,19 +408,6 @@ vcx_error_t vcx_wallet_search_next_records(vcx_command_handle_t command_handle, 
 /** Close a search */
 vcx_error_t vcx_wallet_close_search(vcx_command_handle_t commond_handle, vcx_search_handle_t search_handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
 
-/**
- * token object
- */
-
-/** Create payment address for using tokens */
-vcx_error_t vcx_wallet_create_payment_address(vcx_command_handle_t chandle, const char *seed, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *address));
-
-/** Get wallet token info which contains balance and addresses */
-vcx_error_t vcx_wallet_get_token_info(vcx_command_handle_t chandle, vcx_payment_handle_t payment_handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *token_info));
-
-/** Send tokens from wallet to a recipient address */
-vcx_error_t vcx_wallet_send_tokens(vcx_command_handle_t chandle, vcx_payment_handle_t payment_handle, const char* tokens, const char* recipient, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *recipient));
-
 /** Shutdown vcx wallet */
 vcx_error_t vcx_shutdown(vcx_bool_t deleteWallet);
 
@@ -436,11 +418,6 @@ vcx_error_t vcx_v2_messages_download(vcx_command_handle_t command_handle, const 
 
 /** Update Message status */
 vcx_error_t vcx_messages_update_status( vcx_command_handle_t command_handle, const char *message_status, const char *msg_json, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
-
-/**
- * utils object
- */
-vcx_error_t vcx_ledger_get_fees(vcx_command_handle_t command_handle, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t error, const char *fees));
 
 /**
  * logging

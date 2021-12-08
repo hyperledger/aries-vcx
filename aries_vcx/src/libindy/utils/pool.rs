@@ -167,12 +167,12 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use crate::libindy::utils::pool::get_pool_handle;
-    use crate::utils::devsetup::SetupLibraryWalletPoolZeroFees;
+    use crate::utils::devsetup::SetupWithWalletAndAgency;
 
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_open_close_pool() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         assert!(get_pool_handle().unwrap() > 0);
     }

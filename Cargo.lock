@@ -252,6 +252,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e91831deabf0d6d7ec49552e489aed63b7456a7a3c46cff62adad428110b0af0"
 
 [[package]]
+name = "async-trait"
+version = "0.1.51"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44318e776df68115a881de9a8fd1b9e53368d7a4a5ce4cc48517da3393233a5e"
+dependencies = [
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.73",
+]
+
+[[package]]
 name = "atoi"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1189,9 +1200,11 @@ dependencies = [
 
 [[package]]
 name = "indy"
-version = "1.15.0"
-source = "git+https://gitlab.com/evernym/verity/vdr-tools.git?rev=59e1ecc21c9a067#59e1ecc21c9a0674067c6ffb97f69a650143651a"
+version = "0.8.1"
+source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
 dependencies = [
+ "async-std",
+ "async-trait",
  "failure",
  "futures 0.1.31",
  "indy-sys",
@@ -1207,8 +1220,8 @@ dependencies = [
 
 [[package]]
 name = "indy-sys"
-version = "1.15.0"
-source = "git+https://gitlab.com/evernym/verity/vdr-tools.git?rev=59e1ecc21c9a067#59e1ecc21c9a0674067c6ffb97f69a650143651a"
+version = "0.8.0"
+source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
 dependencies = [
  "libc",
  "pkg-config",
