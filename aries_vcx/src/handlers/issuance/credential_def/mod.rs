@@ -167,7 +167,7 @@ impl CredentialDef {
                     rev_reg_entry,
                     tails_file,
                     max_creds,
-                    tag: 1,
+                    tag: 1
                 })
             }
             _ => None
