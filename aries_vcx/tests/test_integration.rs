@@ -494,7 +494,7 @@ mod tests {
                 .set_requested_attributes_as_string(requested_attrs.to_string()).unwrap()
                 .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
-        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
+        let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
         verifier.generate_presentation_request().unwrap()
     }
 
@@ -564,11 +564,13 @@ mod tests {
 
     fn rotate_rev_reg(faber: &mut Faber, cred_def: &mut CredentialDef) {
         faber.activate().unwrap();
-        let revocation_details = json!({
-            "tails_file": json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            "max_creds": json!(10)
-        }).to_string();
-        cred_def.rotate_rev_reg(&revocation_details, Some(TEST_TAILS_URL)).unwrap();
+        let revocation_details = RevocationDetailsBuilder::default()
+            .support_revocation(true)
+            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+            .max_creds(10 as u32)
+            .build()
+            .unwrap();
+        cred_def.rotate_rev_reg(revocation_details, Some(TEST_TAILS_URL)).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {

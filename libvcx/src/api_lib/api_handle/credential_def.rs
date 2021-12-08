@@ -1,6 +1,6 @@
 use serde_json;
 
-use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, parse_revocation_details};
+use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
@@ -24,7 +24,8 @@ pub fn generate_and_store(source_id: String,
         .tag(tag)
         .build()
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
-    let revocation_details = parse_revocation_details(&revocation_details)?;
+    let revocation_details = serde_json::from_str::<RevocationDetails>(&revocation_details)
+        .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails"))?;
     let cred_def = CredentialDef::create_and_store(source_id, config, revocation_details)?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
@@ -50,7 +51,8 @@ pub fn create_and_publish_credentialdef(source_id: String,
         .tag(tag)
         .build()
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
-    let revocation_details = parse_revocation_details(&revocation_details)?;
+    let revocation_details = serde_json::from_str::<RevocationDetails>(&revocation_details)
+        .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails"))?;
     let cred_def = CredentialDef::create(source_id, config, revocation_details, tails_url.as_deref())?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
@@ -143,6 +145,8 @@ pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str, new_tails_url: 
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
         match &s.get_rev_reg_def()? {
             Some(_) => {
+                let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
+                    .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
                 let new_rev_reg = s.rotate_rev_reg(revocation_details, new_tails_url.as_deref())?;
                 match update_rev_reg_ids_cache(&s.cred_def_id, &new_rev_reg.rev_reg_id) {
                     Ok(()) => s.to_string().map_err(|err| err.into()),
