@@ -17,7 +17,10 @@ fn main() {
         println!("cargo:rustc-link-lib=static=sodium");
     }
 
-    build_proto();
+    #[cfg(feature = "cheqd")]
+    {
+        build_proto()
+    }
 
     if target.find("-windows-").is_some() {
         // do not build c-code on windows, use binaries
@@ -75,6 +78,7 @@ fn main() {
 const COSMOS_SDK_DIR: &str = "cosmos-sdk-go";
 const CHEQDCOSMOS_DIR: &str = "cheqd-node";
 
+#[cfg(feature = "cheqd")]
 fn build_proto() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let proto_dir: PathBuf = format!("{}/prost", out_dir).parse().unwrap();
@@ -88,6 +92,7 @@ fn build_proto() {
     compile_protos(&proto_dir);
 }
 
+#[cfg(feature = "cheqd")]
 fn compile_protos(out_dir: &Path) {
     let sdk_dir = Path::new(COSMOS_SDK_DIR);
     let cheqdcosmos_dir = Path::new(CHEQDCOSMOS_DIR);

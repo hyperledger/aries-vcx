@@ -24,7 +24,7 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "indy/cheqd", "indy-utils/cheqd", "cosmrs"]
+cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "indy/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -145,10 +145,10 @@ assets = [
 
 [build-dependencies]
 regex = "1.2.1"
-prost = "0.7"
-prost-build = "0.7"
-tonic = "0.4"
-tonic-build = "0.4"
+prost = { version = "0.7", optional = true }
+prost-build = { version = "0.7", optional = true }
+tonic = { version = "0.4", optional = true }
+tonic-build = { version = "0.4", optional = true }
 tempdir = "0.3"
 walkdir = "2"
 

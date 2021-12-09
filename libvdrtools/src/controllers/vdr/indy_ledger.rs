@@ -1,8 +1,6 @@
 use std::{
-    fs,
     str::from_utf8,
     collections::HashMap,
-    io::Write,
 };
 
 use indy_api_types::{errors::*, PoolHandle};
@@ -12,7 +10,10 @@ use async_std::sync::Arc;
 use rust_base58::ToBase58;
 
 use crate::domain::{
-    pool::PoolConfig as IndyPoolConfig,
+    pool::{
+        PoolOpenConfig,
+        PoolMode,
+    },
     crypto::did::DidValue,
     anoncreds::schema::{
         SchemaId,
@@ -36,7 +37,6 @@ use crate::domain::{
     },
 };
 use crate::controllers::vdr::Ledger;
-use crate::utils::environment;
 use crate::services::{
     PoolService,
     LedgerService,
@@ -44,6 +44,7 @@ use crate::services::{
 
 pub(crate) struct IndyLedger {
     name: String,
+    genesis_txn: String,
     handle: PoolHandle,
     taa_config: Option<TAAConfig>,
     ledger_service: Arc<LedgerService>,
@@ -60,12 +61,10 @@ impl IndyLedger {
             genesis_txn, taa_config,
         );
         let name = uuid::Uuid::new_v4().to_string();
-        let path = write_genesis_file(&name, &genesis_txn)?; // FIXME: DO NOT WRITE DATA ON THE DISC
-        let config = IndyPoolConfig { genesis_txn: path };
         let handle = next_pool_handle();
-        pool_service.create(&name, Some(config))?;
         Ok(IndyLedger {
             name,
+            genesis_txn,
             taa_config,
             handle,
             ledger_service,
@@ -95,7 +94,14 @@ impl Ledger for IndyLedger {
                 Err(err) => Ok(PingStatus::fail(err))
             }
         } else {
-            match self.pool_service.open(self.name.to_string(), None, Some(self.handle)).await {
+            let config = PoolOpenConfig {
+                pool_mode: PoolMode::InMemory,
+                transactions: Some(
+                    self.genesis_txn.clone()
+                ),
+                ..PoolOpenConfig::default()
+            };
+            match self.pool_service.open(self.name.to_string(), Some(config), Some(self.handle)).await {
                 Ok((_, transactions)) => Ok(PingStatus::success(transactions)),
                 Err(err) => Ok(PingStatus::fail(err))
             }
@@ -140,7 +146,7 @@ impl Ledger for IndyLedger {
         if self.pool_service.is_pool_opened(self.handle).await {
             self.pool_service.close(self.handle).await?;
         }
-        self.pool_service.delete(&self.name).await
+        Ok(())
     }
 
 
@@ -354,29 +360,4 @@ impl IndyLedger {
         }
         Ok(())
     }
-}
-
-fn write_genesis_file(name: &str, gen_txn: &str) -> IndyResult<String> {
-    let mut pool_path = environment::tmp_file_path(name);
-
-    fs::create_dir_all(pool_path.as_path())
-        .to_indy(IndyErrorKind::IOError, "Can't create pool config directory")?;
-
-    pool_path.push(name);
-    pool_path.set_extension("txn");
-
-    let mut file = fs::File::create(pool_path.as_path())
-        .to_indy(IndyErrorKind::IOError, "Can't open genesis txn file")?;
-
-    file.write_all(&gen_txn.as_bytes())
-        .to_indy(IndyErrorKind::IOError, "Can't write genesis txn file")?;
-
-    file.flush()
-        .to_indy(IndyErrorKind::IOError, "Can't write genesis txn file")?;
-
-    file.sync_all()
-        .to_indy(IndyErrorKind::IOError, "Can't write genesis txn file")?;
-
-    let out_path = pool_path.to_string_lossy().to_string();
-    Ok(out_path)
 }
