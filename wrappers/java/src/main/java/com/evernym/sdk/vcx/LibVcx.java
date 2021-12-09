@@ -578,9 +578,6 @@ public abstract class LibVcx {
          * For creating, validating and committing a credential definition to the sovrin ledger.
          */
 
-        /** Creates a credential definition from the given schema.  Populates a handle to the new credentialdef. */
-        int vcx_credentialdef_create(int command_handle, String source_id, String credentialdef_name, String schema_id, String issuer_did, String tag,  String config, int payment_handle, Callback cb);
-
         /** Create a credential definition from the given schema that will be published by Endorser later. */
         int vcx_credentialdef_prepare_for_endorser(int command_handle, String source_id, String credentialdef_name, String schema_id, String issuer_did, String tag,  String config, String endorser, Callback cb);
 

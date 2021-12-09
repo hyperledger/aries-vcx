@@ -453,17 +453,16 @@ export interface IFFIEntryPoint {
   vcx_set_next_agency_response: (messageIndex: number) => void;
 
   // credentialdef
-  vcx_credentialdef_create: (
+  vcx_credentialdef_create_and_store: (
     commandId: number,
     sourceId: string,
-    credentialDefName: string,
     schemaId: string,
     issuerDid: string | null,
     tag: string,
-    config: string,
-    payment: number,
+    revocationDetails: string,
     cb: ICbRef,
   ) => number;
+  vcx_credentialdef_publish: (commandId: number, handle: number, tailsUrl: string | null, cb: ICbRef) => number;
   vcx_credentialdef_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_credentialdef_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_release: (handle: number) => number;
@@ -474,6 +473,7 @@ export interface IFFIEntryPoint {
     commandId: number,
     handle: number,
     details: string,
+    tailsUrl: string,
     cb: ICbRef,
   ) => string;
   vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -970,7 +970,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   ],
 
   // credentialDef
-  vcx_credentialdef_create: [
+  vcx_credentialdef_create_and_store: [
     FFI_ERROR_CODE,
     [
       FFI_COMMAND_HANDLE,
@@ -979,8 +979,15 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_STRING_DATA,
       FFI_STRING_DATA,
       FFI_STRING_DATA,
+      FFI_CALLBACK_PTR,
+    ],
+  ],
+  vcx_credentialdef_publish: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_CREDENTIALDEF_HANDLE,
       FFI_STRING_DATA,
-      FFI_PAYMENT_HANDLE,
       FFI_CALLBACK_PTR,
     ],
   ],
@@ -1007,7 +1014,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   ],
   vcx_credentialdef_rotate_rev_reg_def: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_credentialdef_publish_revocations: [
     FFI_ERROR_CODE,

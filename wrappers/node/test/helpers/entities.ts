@@ -97,7 +97,6 @@ export const createConnectionInviterRequested = async (
 };
 
 export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
-  name: 'testCredentialDefName',
   revocationDetails: {
     maxCreds: undefined,
     supportRevocation: false,
@@ -110,11 +109,11 @@ export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
 export const credentialDefCreate = async (
   data = dataCredentialDefCreate(),
 ): Promise<CredentialDef> => {
-  const credentialDef = await CredentialDef.create(data);
+  const credentialDef = await CredentialDef.createAndStore(data);
+  await credentialDef.publish();
   assert.notEqual(credentialDef.handle, undefined);
   assert.equal(credentialDef.sourceId, data.sourceId);
   assert.equal(credentialDef.schemaId, data.schemaId);
-  assert.equal(credentialDef.name, data.name);
   return credentialDef;
 };
 

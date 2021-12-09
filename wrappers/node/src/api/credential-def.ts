@@ -19,9 +19,9 @@ import { VCXBase } from './vcx-base';
  */
 export interface ICredentialDefCreateData {
   sourceId: string;
-  name: string;
   schemaId: string;
   revocationDetails: IRevocationDetails;
+  tailsUrl?: string;
 }
 
 export interface ICredentialDefData {
@@ -49,8 +49,6 @@ export interface IRevocationDetails {
   maxCreds?: number;
   supportRevocation?: boolean;
   tailsFile?: string;
-  tailsUrl?: string;
-  tailsBaseUrl?: string;
 }
 
 export enum CredentialDefState {
@@ -62,49 +60,29 @@ export enum CredentialDefState {
  * @class Class representing a credential Definition
  */
 export class CredentialDef extends VCXBase<ICredentialDefData> {
-  /**
-   * Creates a new CredentialDef object that is written to the ledger
-   *
-   * Example:
-   * ```
-   * data = {
-   *   name: 'testCredentialDefName',
-   *   revocation: false,
-   *   schemaId: 'testCredentialDefSchemaId',
-   *   sourceId: 'testCredentialDefSourceId'
-   * }
-   * credentialDef = await CredentialDef.create(data)
-   * ```
-   */
-  public static async create({
-    name,
+  public static async createAndStore({
     revocationDetails,
     schemaId,
     sourceId,
   }: ICredentialDefCreateData): Promise<CredentialDef> {
-    // Todo: need to add params for tag and config
     const tailsFile = revocationDetails.tailsFile;
-    const credentialDef = new CredentialDef(sourceId, { name, schemaId, tailsFile });
+    const credentialDef = new CredentialDef(sourceId, { schemaId, tailsFile });
     const commandHandle = 0;
     const issuerDid = null;
     const revocation = {
       max_creds: revocationDetails.maxCreds,
       support_revocation: revocationDetails.supportRevocation,
       tails_file: revocationDetails.tailsFile,
-      tails_url: revocationDetails.tailsUrl,
-      tails_base_url: revocationDetails.tailsBaseUrl,
     };
     try {
       await credentialDef._create((cb) =>
-        rustAPI().vcx_credentialdef_create(
+        rustAPI().vcx_credentialdef_create_and_store(
           commandHandle,
           sourceId,
-          name,
           schemaId,
           issuerDid,
           'tag1',
           JSON.stringify(revocation),
-          0,
           cb,
         ),
       );
@@ -114,22 +92,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  /**
-   * Builds a credentialDef object with defined attributes.
-   * Attributes are provided by a previous call to the serialize function.
-   * Example:
-   * ```
-   * data = {
-   *   name: 'testCredentialDefName',
-   *   revocation: false,
-   *   schemaId: 'testCredentialDefSchemaId',
-   *   sourceId: 'testCredentialDefSourceId'
-   * }
-   * credentialDef = await CredentialDef.create(data)
-   * data1 = await credentialDef.serialize()
-   * credentialDef2 = await CredentialDef.deserialzie(data1)
-   * ```
-   */
   public static async deserialize(
     credentialDef: ISerializedData<ICredentialDefData>,
   ): Promise<CredentialDef> {
@@ -165,6 +127,33 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     this._revocRegDefTransaction = null;
     this._revocRegEntryTransaction = null;
   }
+
+  public async publish(tailsUrl?: string): Promise<void> {
+    try {
+      await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credentialdef_publish(0, this.handle, tailsUrl || null, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32'],
+            (handle: number, err: number) => {
+              if (err) {
+                reject(err);
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
 
   /**
    * Retrieves the credential definition id associated with the created cred def.
@@ -340,12 +329,11 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
 
   public async rotateRevRegDef(
     revocationDetails: IRevocationDetails,
+    tailsUrl?: string
   ): Promise<ISerializedData<ICredentialDefCreateData>> {
     const revocation = {
       max_creds: revocationDetails.maxCreds,
       tails_file: revocationDetails.tailsFile,
-      tails_url: revocationDetails.tailsUrl,
-      tails_base_url: revocationDetails.tailsBaseUrl,
     };
     try {
       const dataStr = await createFFICallbackPromise<string>(
@@ -354,6 +342,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
             0,
             this.handle,
             JSON.stringify(revocation),
+            tailsUrl || '',
             cb,
           );
           if (rc) {

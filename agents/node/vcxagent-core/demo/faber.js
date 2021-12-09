@@ -41,7 +41,7 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, tailsUrl: testTailsUrl, maxCreds: 5 }))
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }), testTailsUrl)
 
     await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')

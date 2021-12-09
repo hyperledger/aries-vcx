@@ -87,7 +87,7 @@ mod tests {
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
-    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
@@ -127,26 +127,31 @@ mod tests {
     use super::*;
 
     pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, CredentialDef, Option<String>) {
-        /* create schema */
         let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
-
-        let name: String = aries_vcx::utils::random::generate_random_name();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-
-        /* create cred-def */
-        let mut revocation_details = json!({"support_revocation":support_rev});
-        if support_rev {
-            revocation_details["tails_file"] = json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string());
-            revocation_details["tails_url"] = json!(TEST_TAILS_URL);
-            revocation_details["max_creds"] = json!(10);
-        }
-        let cred_def = CredentialDef::create("1".to_string(),
-                                             name,
-                                             institution_did.clone(),
-                                             schema_id.clone(),
-                                             "tag1".to_string(),
-                                             revocation_details.to_string()).unwrap();
-
+        let config = CredentialDefConfigBuilder::default()
+            .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
+            .schema_id(&schema_id)
+            .tag("1")
+            .build()
+            .unwrap();
+        let (revocation_details, tails_url) = if support_rev {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .max_creds(10 as u32)
+                .build()
+                .unwrap(),
+            Some(TEST_TAILS_URL))
+        } else {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .build()
+                .unwrap(),
+            None)
+        };
+        let cred_def = CredentialDef::create_and_store("1".to_string(),
+                                                         config,
+                                                         revocation_details).unwrap().publish(tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -488,7 +493,7 @@ mod tests {
                 .set_requested_attributes_as_string(requested_attrs.to_string()).unwrap()
                 .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
-        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
+        let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
         verifier.generate_presentation_request().unwrap()
     }
 
@@ -558,12 +563,13 @@ mod tests {
 
     fn rotate_rev_reg(faber: &mut Faber, cred_def: &mut CredentialDef) {
         faber.activate().unwrap();
-        let revocation_details = json!({
-            "tails_file": json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
-            "tails_url": json!(TEST_TAILS_URL),
-            "max_creds": json!(10)
-        }).to_string();
-        cred_def.rotate_rev_reg(&revocation_details).unwrap();
+        let revocation_details = RevocationDetailsBuilder::default()
+            .support_revocation(true)
+            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+            .max_creds(10 as u32)
+            .build()
+            .unwrap();
+        cred_def.rotate_rev_reg(revocation_details, TEST_TAILS_URL).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {

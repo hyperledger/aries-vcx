@@ -17,6 +17,27 @@ use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_re
 const BLOB_STORAGE_TYPE: &str = "default";
 const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
 
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinitionValue {
+    pub issuance_type: String,
+    pub max_cred_num: u32,
+    pub public_keys: serde_json::Value,
+    pub tails_hash: String,
+    pub tails_location: String,
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinition {
+    pub id: String,
+    pub revoc_def_type: String,
+    pub tag: String,
+    pub cred_def_id: String,
+    pub value: RevocationRegistryDefinitionValue,
+    pub ver: String,
+}
+
 pub fn libindy_verifier_verify_proof(proof_req_json: &str,
                                      proof_json: &str,
                                      schemas_json: &str,
@@ -422,6 +443,7 @@ pub fn publish_schema(schema: &str) -> VcxResult<()> {
 }
 
 pub fn get_schema_json(schema_id: &str) -> VcxResult<(String, String)> {
+    trace!("get_schema_json >>> schema_id: {}", schema_id);
     if settings::indy_mocks_enabled() { return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string())); }
 
     let submitter_did = crate::utils::random::generate_random_did();
@@ -436,6 +458,8 @@ pub fn generate_cred_def(issuer_did: &str,
                          tag: &str,
                          sig_type: Option<&str>,
                          support_revocation: Option<bool>) -> VcxResult<(String, String)> {
+    trace!("generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
+           issuer_did, schema_json, tag, sig_type, support_revocation);
     if settings::indy_mocks_enabled() {
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
     }
@@ -480,8 +504,9 @@ pub fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
 }
 
 pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, max_creds: u32, tag: &str)
-                        -> VcxResult<(String, String, String)> {
-    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), rev_def_json(), "".to_string())); }
+                        -> VcxResult<(String, RevocationRegistryDefinition, String)> {
+    trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_file, max_creds, tag);
+    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
         libindy_create_and_store_revoc_reg(issuer_did,
@@ -490,7 +515,10 @@ pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, m
                                            max_creds,
                                            tag)?;
 
-    Ok((rev_reg_id, rev_reg_def_json, rev_reg_entry_json))
+    let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize rev_reg_def: {:?}, error: {:?}", rev_reg_def_json, err)))?;
+
+    Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
 }
 
 pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
@@ -501,10 +529,12 @@ pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxRes
     Ok(rev_reg_def_req)
 }
 
-pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<()> {
-    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def_json: ...", issuer_did);
+pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegistryDefinition) -> VcxResult<()> {
+    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() { return Ok(()); }
 
+    let rev_reg_def_json = serde_json::to_string(&rev_reg_def)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err)))?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json)?;
     publish_txn_on_ledger(&rev_reg_def_req)?;
     Ok(())
@@ -636,7 +666,7 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::{libindy, settings};
-    use crate::handlers::issuance::credential_def::CredentialDef;
+    use crate::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use crate::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
@@ -669,26 +699,31 @@ pub mod test_utils {
     }
 
     pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, Option<String>) {
-        /* create schema */
         let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
-
-        let name: String = crate::utils::random::generate_random_name();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-
-        /* create cred-def */
-        let mut revocation_details = json!({"support_revocation":support_rev});
-        if support_rev {
-            revocation_details["tails_file"] = json!(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string());
-            revocation_details["tails_url"] = json!(TEST_TAILS_URL);
-            revocation_details["max_creds"] = json!(10);
-        }
-        let cred_def = CredentialDef::create("1".to_string(),
-                                             name,
-                                             institution_did.clone(),
-                                             schema_id.clone(),
-                                             "tag1".to_string(),
-                                             revocation_details.to_string()).unwrap();
-
+        let config = CredentialDefConfigBuilder::default()
+            .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
+            .schema_id(&schema_id)
+            .tag("1")
+            .build()
+            .unwrap();
+        let (revocation_details, tails_url) = if support_rev {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .max_creds(10 as u32)
+                .build()
+                .unwrap(),
+            Some(TEST_TAILS_URL))
+        } else {
+            (RevocationDetailsBuilder::default()
+                .support_revocation(support_rev)
+                .build()
+                .unwrap(),
+            None)
+        };
+        let cred_def = CredentialDef::create_and_store("1".to_string(),
+                                                         config,
+                                                         revocation_details).unwrap().publish(tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));

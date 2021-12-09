@@ -27,37 +27,6 @@ public class CredentialDefApi extends VcxJava.API {
         }
     };
 
-    public static CompletableFuture<Integer> credentialDefCreate(String sourceId,
-                                                                 String credentialName,
-                                                                 String schemaId,
-                                                                 String issuerId,
-                                                                 String tag,
-                                                                 String config,
-                                                                 int paymentHandle
-    ) throws VcxException {
-        ParamGuard.notNullOrWhiteSpace(sourceId, "sourceId");
-        ParamGuard.notNullOrWhiteSpace(credentialName, "credentialName");
-        ParamGuard.notNullOrWhiteSpace(schemaId, "schemaId");
-        logger.debug("credentialDefCreate() called with: sourceId = [" + sourceId + "], credentialName = [" + credentialName + "], schemaId = [" + schemaId + "], issuerId = [****], tag = [" + tag + "], config = [" + config + "], paymentHandle = [" + paymentHandle + "]");
-        //TODO: Check for more mandatory params in vcx to add in PamaGuard
-        CompletableFuture<Integer> future = new CompletableFuture<>();
-        int commandHandle = addFuture(future);
-
-        int result = LibVcx.api.vcx_credentialdef_create(
-                commandHandle,
-                sourceId,
-                credentialName,
-                schemaId,
-                issuerId,
-                tag,
-                config,
-                paymentHandle,
-                credentialDefCreateCB
-        );
-        checkResult(result);
-        return future;
-    }
-
     private static Callback credentialDefSerializeCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int commandHandle, int err, String serializedData) {

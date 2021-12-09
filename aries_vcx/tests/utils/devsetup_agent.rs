@@ -16,7 +16,7 @@ pub mod test {
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
-    use aries_vcx::handlers::issuance::credential_def::CredentialDef;
+    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
@@ -188,12 +188,14 @@ pub mod test {
         pub fn create_credential_definition(&mut self) {
             self.activate().unwrap();
 
-            let schema_id = self.schema.get_schema_id().to_string();
-            let did = String::from("V4SGRU86Z58d6TV7PBUe6f");
-            let name = String::from("degree");
-            let tag = String::from("tag");
+            let config = CredentialDefConfigBuilder::default()
+                .issuer_did("V4SGRU86Z58d6TV7PBUe6f")
+                .schema_id(self.schema.get_schema_id())
+                .tag("tag")
+                .build()
+                .unwrap();
 
-            self.cred_def = CredentialDef::create(String::from("test_cred_def"), name, did.clone(), schema_id, tag, String::from("{}")).unwrap();
+            self.cred_def = CredentialDef::create_and_store(String::from("test_cred_def"), config, RevocationDetails::default()).unwrap().publish(None).unwrap();
         }
 
         pub fn create_presentation_request(&self) -> Verifier {

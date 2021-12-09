@@ -11,55 +11,17 @@ use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
 use crate::error::prelude::*;
 
-/// Create a new CredentialDef object and publish correspondent record on the ledger
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// source_id: Enterprise's personal identification for the user.
-///
-/// credentialdef_name: Name of credential definition
-///
-/// schema_id: The schema id given during the creation of the schema
-///
-/// issuer_did: did corresponding to entity issuing a credential. Needs to have Trust Anchor permissions on ledger
-///
-/// tag: way to create a unique credential def with the same schema and issuer did.
-///
-/// revocation details: type-specific configuration of credential definition revocation
-///     TODO: Currently supports ISSUANCE BY DEFAULT, support for ISSUANCE ON DEMAND will be added as part of ticket: IS-1074
-///     support_revocation: true|false - Optional, by default its false
-///     tails_file: path to tails file - Optional if support_revocation is false
-///     tails_url: URL where the holder can download the tails file - Optional if support_revocation is false
-///     tails_base_url: incomplete URL where the holder can download the tails file - Optional if support_revocation is false
-///     max_creds: size of tails file - Optional if support_revocation is false
-/// If tails_location is specified, the exact value is written to the ledger and obtainable via vcx_credential_get_tails_location.
-/// If tails_base_location in specified, the value written to the ledger and obtainable via vcx_credential_get_tails_location is "{tails_base_location}/{tails_hash}".
-/// It is not allowed to specify both tails_location and tails_base_location.
-/// # Examples config -> "{}" 
-///    | "{"support_revocation":false}" 
-///    | "{"support_revocation":true, "tails_file": "/tmp/tailsfile.txt", "max_creds": 1, "tails_url": "https://dummy.faber.org/DvVhi9j4a3RYdZoQxBerhUUHnyBf8k4j8a5Zp2vgLHpW"}"
-///    | "{"support_revocation":true, "tails_file": "/tmp/tailsfile.txt", "max_creds": 1, "tails_base_url": "https://dummy.faber.org"}"
-/// cb: Callback that provides CredentialDef handle and error status of request.
-///
-/// payment_handle: future use (currently uses any address in wallet)
-///
-/// #Returns
-/// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
-                                       source_id: *const c_char,
-                                       credentialdef_name: *const c_char,
-                                       schema_id: *const c_char,
-                                       issuer_did: *const c_char,
-                                       tag: *const c_char,
-                                       revocation_details: *const c_char,
-                                       _payment_handle: u32,
-                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
-    info!("vcx_credentialdef_create >>>");
+pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
+                                                 source_id: *const c_char,
+                                                 schema_id: *const c_char,
+                                                 issuer_did: *const c_char,
+                                                 tag: *const c_char,
+                                                 revocation_details: *const c_char,
+                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
+    info!("vcx_credentialdef_create_and_store >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credentialdef_name, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
     check_useful_c_str!(schema_id, VcxErrorKind::InvalidOption);
     check_useful_c_str!(tag, VcxErrorKind::InvalidOption);
@@ -75,35 +37,70 @@ pub extern fn vcx_credentialdef_create(command_handle: CommandHandle,
         }
     };
 
-    trace!("vcx_credential_def_create(command_handle: {}, source_id: {}, credentialdef_name: {} schema_id: {}, issuer_did: {}, tag: {}, revocation_details: {:?})",
+    trace!("vcx_credentialdef_create_and_store(command_handle: {}, source_id: {}, schema_id: {}, issuer_did: {}, tag: {}, revocation_details: {:?})",
            command_handle,
            source_id,
-           credentialdef_name,
            schema_id,
            issuer_did,
            tag,
            revocation_details);
 
     execute(move || {
-        let (rc, handle) = match credential_def::create_and_publish_credentialdef(source_id,
-                                                                                  credentialdef_name,
-                                                                                  issuer_did,
-                                                                                  schema_id,
-                                                                                  tag,
-                                                                                  revocation_details) {
+        let (rc, handle) = match credential_def::create_and_store(source_id,
+                                                                    schema_id,
+                                                                    issuer_did,
+                                                                    tag,
+                                                                    revocation_details) {
             Ok(x) => {
-                trace!("vcx_credential_def_create_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                trace!("vcx_credentialdef_create_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, x, credential_def::get_source_id(x).unwrap_or_default());
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
-                warn!("vcx_credential_def_create_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                warn!("vcx_credentialdef_create_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                       command_handle, x, 0, "");
                 (x.into(), 0)
             }
         };
         cb(command_handle, rc, handle);
 
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
+                                        credentialdef_handle: u32,
+                                        tails_url: *const c_char,
+                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_credentialdef_publish >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(tails_url, VcxErrorKind::InvalidOption);
+
+    if !credential_def::is_valid_handle(credentialdef_handle) {
+        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+    };
+
+    let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
+    trace!("vcx_credentialdef_publish(command_handle: {}, credentialdef_handle: {}, tails_url: {:?}), source_id: {:?}",
+           command_handle, credentialdef_handle, tails_url, source_id);
+
+    execute(move || {
+        match credential_def::publish(credentialdef_handle, tails_url) {
+            Ok(_) => {
+                trace!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                       command_handle, error::SUCCESS.message, credentialdef_handle, source_id);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                warn!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                      command_handle, err, credentialdef_handle, source_id);
+                cb(command_handle, err.into());
+            }
+        };
         Ok(())
     });
 
@@ -376,22 +373,24 @@ pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle,
                                                    credentialdef_handle: u32,
                                                    revocation_details: *const c_char,
+                                                   tails_url: *const c_char,
                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_state: *const c_char)>) -> u32 {
     info!("vcx_credentialdef_rotate_rev_reg_def >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(revocation_details, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(tails_url, VcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
-    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}) source_id: {}",
-           command_handle, credentialdef_handle, revocation_details, source_id);
+    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}, tails_url: {:?}) source_id: {}",
+           command_handle, credentialdef_handle, revocation_details, tails_url, source_id);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
     execute(move || {
-        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details) {
+        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details, &tails_url) {
             Ok(x) => {
                 trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
                        command_handle, credentialdef_handle, error::SUCCESS.message, x, source_id);
@@ -520,7 +519,6 @@ mod tests {
 
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupMocks};
-    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -533,14 +531,12 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credentialdef_create(cb.command_handle,
+        assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new("Test Credential Def").unwrap().into_raw(),
                                             CString::new(SCHEMA_ID).unwrap().into_raw(),
                                             CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -551,14 +547,12 @@ mod tests {
         let _setup = SetupLibraryWallet::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credentialdef_create(cb.command_handle,
+        assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new("Test Credential Def").unwrap().into_raw(),
                                             CString::new(SCHEMA_ID).unwrap().into_raw(),
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
     }
@@ -569,14 +563,12 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credentialdef_create(cb.command_handle,
+        assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new("Test Credential Def").unwrap().into_raw(),
                                             CString::new(SCHEMA_ID).unwrap().into_raw(),
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -593,7 +585,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
-        let original = r#"{"version":"1.0", "data": {"id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:1697","issuer_did":"2hoqvcwupRTUNkXn6ArYzs","tag":"tag","name":"Test Credential Definition","rev_ref_def":null,"rev_reg_entry":null,"rev_reg_id":null,"source_id":"SourceId"}}"#;
+        let original = r#"{"version":"1.0", "data": {"cred_def_id":"2hoqvcwupRTUNkXn6ArYzs:3:CL:1697","issuer_did":"2hoqvcwupRTUNkXn6ArYzs","tag":"tag","rev_ref_def":null,"rev_reg_entry":null,"rev_reg_id":null,"source_id":"SourceId","cred_def_json":""}}"#;
         assert_eq!(vcx_credentialdef_deserialize(cb.command_handle,
                                                  CString::new(original).unwrap().into_raw(),
                                                  Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -609,7 +601,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
 
-        let original = r#"{"data":{"id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:912:tag1","name":"color","payment_txn":null,"source_id":"1","tag":"tag1"},"version":"1.0"}"#;
+        let original = r#"{"data":{"cred_def_id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:912:tag1","payment_txn":null,"source_id":"1","tag":"tag1","issuer_did":"66Fh8yBzrpJQmNyZzgoTqB","cred_def_json":""},"version":"1.0"}"#;
         assert_eq!(vcx_credentialdef_deserialize(cb.command_handle,
                                                  CString::new(original).unwrap().into_raw(),
                                                  Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -625,14 +617,12 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credentialdef_create(cb.command_handle,
+        assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
                                             CString::new("Test Source ID Release Test").unwrap().into_raw(),
-                                            CString::new("Test Credential Def Release").unwrap().into_raw(),
                                             CString::new(SCHEMA_ID).unwrap().into_raw(),
                                             ptr::null(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
@@ -647,14 +637,12 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_credentialdef_create(cb.command_handle,
+        assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
                                             CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new("Test Credential Def").unwrap().into_raw(),
                                             CString::new(SCHEMA_ID).unwrap().into_raw(),
                                             CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                                             CString::new("tag").unwrap().into_raw(),
                                             CString::new("{}").unwrap().into_raw(),
-                                            0,
                                             Some(cb.get_callback())), error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

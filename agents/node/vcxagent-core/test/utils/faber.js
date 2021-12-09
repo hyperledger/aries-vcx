@@ -81,7 +81,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOffer (_revocationDetails) {
+  async function sendCredentialOffer (_revocationDetails, tailsUrl) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
@@ -92,7 +92,8 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
       schemaId,
       getFaberCredDefName(),
-      revocationDetails
+      revocationDetails,
+      tailsUrl
     )
 
     logger.info('Faber sending credential to Alice')
