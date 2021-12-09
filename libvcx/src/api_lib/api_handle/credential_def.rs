@@ -220,13 +220,21 @@ pub mod tests {
     }
 
     pub fn create_cred_def_fake() -> u32 {
-        let rev_details = json!({"support_revocation": true, "tails_file": utils::constants::TEST_TAILS_FILE, "max_creds": 2}).to_string();
+        let revocation_details = RevocationDetailsBuilder::default()
+            .support_revocation(true)
+            .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+            .max_creds(2 as u32)
+            .build()
+            .unwrap();
+        let revocation_details = serde_json::to_string(&revocation_details).unwrap();
 
-        create_and_store("SourceId".to_string(),
+        let handle = create_and_store("SourceId".to_string(),
                            SCHEMA_ID.to_string(),
                            ISSUER_DID.to_string(),
                            "tag".to_string(),
-                           rev_details).unwrap()
+                           revocation_details).unwrap();
+        publish(handle, Some("dummy.org".to_string())).unwrap();
+        handle
     }
 
     #[cfg(feature = "pool_tests")]
