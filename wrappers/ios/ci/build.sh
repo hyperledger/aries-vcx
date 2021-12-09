@@ -107,7 +107,8 @@ build_libzmq() {
     popd
 
     pushd $OUTPUT_DIR/libzmq-ios
-        git apply $SCRIPT_DIR/patches/libzmq.rb.patch
+        git checkout -- libzmq.rb
+        git apply --ignore-space-change --ignore-whitespace $SCRIPT_DIR/patches/libzmq.rb.patch
         ./libzmq.rb
     popd
 }
