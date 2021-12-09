@@ -712,26 +712,6 @@ pub extern fn vcx_issuer_credential_release(credential_handle: u32) -> u32 {
     }
 }
 
-#[no_mangle]
-pub extern fn vcx_issuer_credential_get_payment_txn(command_handle: CommandHandle,
-                                                    handle: u32,
-                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
-    info!("vcx_issuer_credential_get_payment_txn >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    let source_id = issuer_credential::get_source_id(handle).unwrap_or_default();
-    trace!("vcx_issuer_credential_get_payment_txn(command_handle: {}) source_id: {}", command_handle, source_id);
-
-    execute(move || {
-        error!("Payments not supported yet");
-        cb(command_handle, 1, ptr::null());
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
 /// Revoke Credential
 ///
 /// #Params

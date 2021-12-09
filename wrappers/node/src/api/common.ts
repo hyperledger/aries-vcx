@@ -156,20 +156,6 @@ export interface IInitVCXOptions {
   libVCXPath?: string;
 }
 
-export interface IUTXO {
-  paymentAddress: string;
-  amount: number;
-  extra?: string;
-  txo?: string;
-}
-
-export interface IPaymentOutput {
-  recipient: string;
-  amount: number;
-  extra?: string;
-  source?: string;
-}
-
 export interface ISerializedData<T> {
   version: string;
   data: T;

@@ -6,7 +6,6 @@ import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, HolderStateType } from './common';
 import { Connection } from './connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
-import { PaymentManager } from './vcx-payment-txn';
 
 /**
  *    The object of the VCX API representing a Holder side in the credential issuance process.
@@ -84,8 +83,6 @@ export interface ICredentialCreateWithMsgId {
 export interface ICredentialSendData {
   // Connection to send credential request
   connection: Connection;
-  // Fee amount
-  payment: number;
 }
 
 export interface ICredentialGetRequestMessageData {
@@ -93,12 +90,6 @@ export interface ICredentialGetRequestMessageData {
   myPwDid: string;
   // Use Connection api (vcx_connection_get_their_pw_did) with specified connection_handle to retrieve their pw_did
   theirPwDid?: string;
-  // Fee amount
-  payment: number;
-}
-
-export class CredentialPaymentManager extends PaymentManager {
-  protected _getPaymentTxnFn = rustAPI().vcx_credential_get_payment_txn;
 }
 
 /**
@@ -130,11 +121,6 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
    *   schema_seq_no: 1487,
    *   to_did: '8XFh8yBzrpJQmNyZzgoTqB',
    *   version: '0.1'
-   * },
-   * {
-   *   payment_addr: 'pov:null:OsdjtGKavZDBuG2xFw2QunVwwGs5IB3j',
-   *   payment_required: 'one-time',
-   *   price: 5
    * }]
    *
    * {
@@ -260,7 +246,6 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
     }
   }
 
-  public paymentManager!: CredentialPaymentManager;
   protected _releaseFn = rustAPI().vcx_credential_release;
   protected _updateStFnV2 = rustAPI().vcx_v2_credential_update_state;
   protected _getStFn = rustAPI().vcx_credential_get_state;
@@ -280,7 +265,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
    * ```
    *
    */
-  public async sendRequest({ connection, payment }: ICredentialSendData): Promise<void> {
+  public async sendRequest({ connection }: ICredentialSendData): Promise<void> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
@@ -288,7 +273,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             0,
             this.handle,
             connection.handle,
-            payment,
+            0,
             cb,
           );
           if (rc) {
@@ -322,7 +307,6 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
   public async getRequestMessage({
     myPwDid,
     theirPwDid,
-    payment,
   }: ICredentialGetRequestMessageData): Promise<string> {
     try {
       return await createFFICallbackPromise<string>(
@@ -332,7 +316,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             this.handle,
             myPwDid,
             theirPwDid,
-            payment,
+            0,
             cb,
           );
           if (rc) {
@@ -532,45 +516,8 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
   get credOffer(): string {
     return this._credOffer;
   }
-  /**
-   * Retrieve Payment Transaction Information for this Credential. Typically this will include
-   * how much payment is requried by the issuer, which needs to be provided by the prover, before
-   * the issuer will issue the credential to the prover. Ideally a prover would want to know
-   * how much payment is being asked before submitting the credential request (which triggers
-   * the payment to be made).
-   * ```
-   * EXAMPLE HERE
-   * ```
-   */
-  public async getPaymentInfo(): Promise<string> {
-    try {
-      return await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credential_get_payment_info(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xcommandHandle: number, err: number, info: string) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve(info);
-              }
-            },
-          ),
-      );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
 
   protected _setHandle(handle: number): void {
     super._setHandle(handle);
-    this.paymentManager = new CredentialPaymentManager({ handle });
   }
 }

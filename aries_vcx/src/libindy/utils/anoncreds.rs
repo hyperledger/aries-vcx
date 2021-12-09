@@ -4,14 +4,14 @@ use serde_json;
 use serde_json::{map::Map, Value};
 use time;
 
-use crate::{libindy, settings, utils};
+use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::{LibindyMock, wallet::get_wallet_handle};
 use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use crate::libindy::utils::ledger::*;
-use crate::libindy::utils::payments::{pay_for_txn, PaymentTxn};
+use crate::libindy::utils::ledger::publish_txn_on_ledger;
 use crate::utils::constants::{ATTRS, LIBINDY_CRED_OFFER, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON};
-use crate::utils::constants::{CREATE_CRED_DEF_ACTION, CREATE_REV_REG_DEF_ACTION, CREATE_REV_REG_DELTA_ACTION, CREATE_SCHEMA_ACTION, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
+use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN};
 use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 
 const BLOB_STORAGE_TYPE: &str = "default";
@@ -405,22 +405,20 @@ pub fn build_schema_request(schema: &str) -> VcxResult<String> {
     Ok(request)
 }
 
-pub fn publish_schema(schema: &str) -> VcxResult<Option<PaymentTxn>> {
+pub fn publish_schema(schema: &str) -> VcxResult<()> {
     trace!("publish_schema >>> schema: {}", schema);
 
     if settings::indy_mocks_enabled() {
-        let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
-        let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
-        return Ok(Some(PaymentTxn::from_parts(inputs, outputs, 1, false)));
+        return Ok(());
     }
 
     let request = build_schema_request(schema)?;
 
-    let (payment, response) = pay_for_txn(&request, CREATE_SCHEMA_ACTION)?;
+    let response = publish_txn_on_ledger(&request)?;
 
     _check_schema_response(&response)?;
 
-    Ok(payment)
+    Ok(())
 }
 
 pub fn get_schema_json(schema_id: &str) -> VcxResult<(String, String)> {
@@ -463,19 +461,14 @@ pub fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> VcxResul
     Ok(cred_def_req)
 }
 
-pub fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<Option<PaymentTxn>> {
+pub fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
     trace!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
     if settings::indy_mocks_enabled() {
-        let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
-        let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
-        return Ok(Some(PaymentTxn::from_parts(inputs, outputs, 1, false)));
+        return Ok(());
     }
-
     let cred_def_req = build_cred_def_request(issuer_did, &cred_def_json)?;
-
-    let (payment, _) = pay_for_txn(&cred_def_req, CREATE_CRED_DEF_ACTION)?;
-
-    Ok(payment)
+    publish_txn_on_ledger(&cred_def_req)?;
+    Ok(())
 }
 
 pub fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
@@ -508,13 +501,13 @@ pub fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxRes
     Ok(rev_reg_def_req)
 }
 
-pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<Option<PaymentTxn>> {
+pub fn publish_rev_reg_def(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<()> {
     trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def_json: ...", issuer_did);
-    if settings::indy_mocks_enabled() { return Ok(None); }
+    if settings::indy_mocks_enabled() { return Ok(()); }
 
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json)?;
-    let (payment, _) = pay_for_txn(&rev_reg_def_req, CREATE_REV_REG_DEF_ACTION)?;
-    Ok(payment)
+    publish_txn_on_ledger(&rev_reg_def_req)?;
+    Ok(())
 }
 
 pub fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
@@ -536,10 +529,10 @@ pub fn build_rev_reg_delta_request(issuer_did: &str, rev_reg_id: &str, rev_reg_e
 }
 
 pub fn publish_rev_reg_delta(issuer_did: &str, rev_reg_id: &str, rev_reg_entry_json: &str)
-                             -> VcxResult<(Option<PaymentTxn>, String)> {
+                             -> VcxResult<String> {
     trace!("publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}", issuer_did, rev_reg_id, rev_reg_entry_json);
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json)?;
-    pay_for_txn(&request, CREATE_REV_REG_DELTA_ACTION)
+    publish_txn_on_ledger(&request)
 }
 
 pub fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Option<u64>)
@@ -582,19 +575,17 @@ pub fn is_cred_def_on_ledger(issuer_did: Option<&str>, cred_def_id: &str) -> Vcx
     }
 }
 
-pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<(Option<PaymentTxn>, String)> {
+pub fn revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
-        let inputs = vec!["pay:null:9UFgyjuJxi1i1HD".to_string()];
-        let outputs = serde_json::from_str::<Vec<libindy::utils::payments::Output>>(r#"[{"amount":4,"extra":null,"recipient":"pay:null:xkIsxem0YNtHrRO"}]"#).unwrap();
-        return Ok((Some(PaymentTxn::from_parts(inputs, outputs, 1, false)), REV_REG_DELTA_JSON.to_string()));
+        return Ok(REV_REG_DELTA_JSON.to_string());
     }
 
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let delta = libindy_issuer_revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
-    let (payment, _) = publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
+    publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?;
 
-    Ok((payment, delta))
+    Ok(delta)
 }
 
 pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
@@ -606,11 +597,11 @@ pub fn revoke_credential_local(tails_file: &str, rev_reg_id: &str, cred_rev_id: 
 }
 
 pub fn publish_local_revocations(rev_reg_id: &str)
-                                 -> VcxResult<(Option<PaymentTxn>, String)> {
+                                 -> VcxResult<String> {
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     if let Some(delta) = get_rev_reg_delta_cache(rev_reg_id) {
         match clear_rev_reg_delta_cache(rev_reg_id) {
-            Ok(_) => Ok(publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta)?),
+            Ok(_) => publish_rev_reg_delta(&submitter_did, rev_reg_id, &delta),
             Err(err) => Err(err)
         }
     } else {
@@ -665,14 +656,14 @@ pub mod test_utils {
 
     pub fn create_schema_req(schema_json: &str) -> String {
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let request = libindy::utils::ledger::libindy_build_schema_request(&institution_did, schema_json).unwrap();
+        let request = libindy_build_schema_request(&institution_did, schema_json).unwrap();
         append_txn_author_agreement_to_request(&request).unwrap()
     }
 
     pub fn create_and_write_test_schema(attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list);
         let req = create_schema_req(&schema_json);
-        libindy::utils::payments::pay_for_txn(&req, CREATE_SCHEMA_ACTION).unwrap();
+        publish_txn_on_ledger(&req).unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
@@ -870,7 +861,7 @@ pub mod tests {
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
     use crate::utils::constants::TEST_TAILS_FILE;
     use crate::utils::constants::SCHEMAS_JSON;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
@@ -880,7 +871,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_prover_verify_proof() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schemas, cred_defs, proof_req, proof) = create_proof();
 
@@ -899,7 +890,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_prover_verify_proof_with_predicate_success_case() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(true);
 
@@ -918,7 +909,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_prover_verify_proof_with_predicate_fail_case() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(false);
 
@@ -964,14 +955,14 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_issuer_revoke_credential() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), "", "");
         assert!(rc.is_err());
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
             = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let rc = libindy::utils::anoncreds::libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
 
         assert!(rc.is_ok());
     }
@@ -988,7 +979,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_cred_def_real() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let (_, schema_json) = get_schema_json(&schema_id).unwrap();
@@ -1001,7 +992,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
@@ -1015,7 +1006,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_create_rev_reg_def() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let (_, schema_json) = get_schema_json(&schema_id).unwrap();
@@ -1031,7 +1022,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_rev_reg_def_json() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
@@ -1044,7 +1035,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_rev_reg_delta_json() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
@@ -1057,7 +1048,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_rev_reg() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
@@ -1070,7 +1061,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_get_cred_def() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, cred_def_id, cred_def_json, _) = create_and_store_credential_def(attrs, true);
@@ -1083,7 +1074,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_is_cred_def_on_ledger() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").unwrap(), false);
     }
@@ -1091,7 +1082,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn from_pool_ledger_with_id() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (schema_id, _schema_json) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
 
@@ -1114,7 +1105,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_revoke_credential() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
             = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);

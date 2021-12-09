@@ -32,22 +32,9 @@ task faber(type:JavaExec) {
     classpath sourceSets.main.runtimeClasspath
     main = 'Faber'
 }
-task faber_pg(type:JavaExec) {
-    group 'application'
-    classpath sourceSets.main.runtimeClasspath
-    main = 'Faber'
-    args(['--postgres'])
-}
 task alice(type:JavaExec) {
     group 'application'
     classpath sourceSets.main.runtimeClasspath
     main = 'Alice'
     standardInput = System.in
-}
-task alice_pg(type:JavaExec) {
-    group 'application'
-    classpath sourceSets.main.runtimeClasspath
-    main = 'Alice'
-    standardInput = System.in
-    args(['--postgres'])
 }

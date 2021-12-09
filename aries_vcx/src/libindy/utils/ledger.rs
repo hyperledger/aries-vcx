@@ -8,10 +8,12 @@ use serde_json;
 use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
+use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
-use crate::utils::random::generate_random_did;
-use crate::messages::connection::service::FullService;
 use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::service::FullService;
+use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
+use crate::utils::random::generate_random_did;
 
 pub fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
@@ -127,7 +129,6 @@ pub fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> 
 }
 
 pub mod auth_rule {
-    use std::collections::HashMap;
     use std::sync::Mutex;
     use std::sync::Once;
 
@@ -258,28 +259,6 @@ pub mod auth_rule {
         pub new_value: Option<String>,
     }
 
-    // Helpers to set fee alias for auth rules
-    pub fn set_actions_fee_aliases(submitter_did: &str, rules_fee: &str) -> VcxResult<()> {
-        _get_default_ledger_auth_rules();
-
-        let auth_rules = AUTH_RULES.lock().unwrap();
-
-        let fees: HashMap<String, String> = serde_json::from_str(rules_fee)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize fees: {:?}", err)))?;
-
-        let mut auth_rules: Vec<AuthRule> = auth_rules.clone();
-
-        auth_rules
-            .iter_mut()
-            .for_each(|auth_rule| {
-                if let Some(fee_alias) = fees.get(&auth_rule.auth_type) {
-                    _set_fee_to_constraint(&mut auth_rule.constraint, &fee_alias);
-                }
-            });
-
-        _send_auth_rules(submitter_did, &auth_rules)
-    }
-
     fn _send_auth_rules(submitter_did: &str, data: &Vec<AuthRule>) -> VcxResult<()> {
         let data = serde_json::to_string(&data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize auth rules: {:?}", err)))?;
@@ -314,20 +293,6 @@ pub mod auth_rule {
             let mut auth_rules = AUTH_RULES.lock().unwrap();
             *auth_rules = response.result.data;
         })
-    }
-
-    fn _set_fee_to_constraint(constraint: &mut Constraint, fee_alias: &str) {
-        match constraint {
-            Constraint::RoleConstraint(constraint) => {
-                constraint.metadata.as_mut().map(|meta| meta.fees = Some(fee_alias.to_string()));
-            }
-            Constraint::AndConstraint(constraint) | Constraint::OrConstraint(constraint) => {
-                for mut constraint in constraint.auth_constraints.iter_mut() {
-                    _set_fee_to_constraint(&mut constraint, fee_alias)
-                }
-            }
-            Constraint::ForbiddenConstraint(_) => {}
-        }
     }
 
     pub fn get_action_auth_rule(action: (&str, &str, &str, Option<&str>, Option<&str>)) -> VcxResult<String> {
@@ -488,11 +453,12 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 
 #[cfg(test)]
 mod test {
+    use std::thread;
+    use std::time::Duration;
+
     use crate::utils::devsetup::*;
 
     use super::*;
-    use std::thread;
-    use std::time::Duration;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -515,9 +481,9 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_endorse_transaction() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
-        use crate::libindy::utils::payments::add_new_did;
+        use crate::libindy::utils::ledger::add_new_did;
 
         let (author_did, _) = add_new_did(None);
         let (endorser_did, _) = add_new_did(Some("ENDORSER"));
@@ -534,7 +500,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_add_get_service() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();
@@ -594,4 +560,25 @@ pub struct ReplyV1 {
 #[derive(Debug, Deserialize)]
 pub struct ReplyDataV1 {
     pub result: serde_json::Value,
+}
+
+pub fn publish_txn_on_ledger(req: &str) -> VcxResult<String> {
+    debug!("publish_txn_on_ledger(req: {}", req);
+    if settings::indy_mocks_enabled() {
+        return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
+    }
+    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    libindy_sign_and_submit_request(&did, req)
+}
+
+pub fn add_new_did(role: Option<&str>) -> (String, String) {
+    let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+
+    let (did, verkey) = create_and_store_my_did(None, None).unwrap();
+    let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).wait().unwrap();
+
+    req_nym = append_txn_author_agreement_to_request(&req_nym).unwrap();
+
+    libindy_sign_and_submit_request(&institution_did, &req_nym).unwrap();
+    (did, verkey)
 }

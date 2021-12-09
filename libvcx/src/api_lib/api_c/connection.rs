@@ -344,64 +344,6 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_connection_redirect(command_handle: CommandHandle,
-                                      connection_handle: u32,
-                                      redirect_connection_handle: u32,
-                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_connection_redirect >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !is_valid_handle(connection_handle) {
-        error!("vcx_connection_redirect - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
-    if !is_valid_handle(redirect_connection_handle) {
-        error!("vcx_connection_redirect - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
-    let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_redirect(command_handle: {}, connection_handle: {}, redirect_connection_handle: {}), source_id: {:?}",
-           command_handle, connection_handle, redirect_connection_handle, source_id);
-
-    execute(move || {
-        error!("Action not supported");
-        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num);
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
-pub extern fn vcx_connection_get_redirect_details(command_handle: CommandHandle,
-                                                  connection_handle: u32,
-                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, details: *const c_char)>) -> u32 {
-    info!("vcx_connection_get_redirect_details >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    let source_id = get_source_id(connection_handle).unwrap_or_default();
-    trace!("vcx_connection_get_redirect_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
-           command_handle, connection_handle, source_id);
-
-    if !is_valid_handle(connection_handle) {
-        error!("vcx_connection_get_redirect_details - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
-    execute(move || {
-        error!("Action not supported");
-        cb(command_handle, error::ACTION_NOT_SUPPORTED.code_num, ptr::null_mut());
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
 pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
                                            connection_handle: u32,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thread_id: *const c_char)>) -> u32 {
@@ -1349,6 +1291,7 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::ffi::CString;
     use std::ptr;

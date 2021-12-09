@@ -10,9 +10,6 @@ including the operation of the cloud agent.
 Before you'll be able to run demo, you need to make sure you've compiled 
 - [`libindy`](https://github.com/hyperledger/indy-sdk/tree/master/libindy)
 - [`libvcx`](https://github.com/hyperledger/indy-sdk/tree/master/vcx)
-- [`libnullpay`](https://github.com/hyperledger/indy-sdk/tree/master/libnullpay)
-- Optionally [`libindystrgpostgres`](https://github.com/hyperledger/indy-sdk/tree/master/experimental/plugins/postgres_storage) if you want to run demo
-with postgres wallet.
 
 Library binaries must be located `/usr/local/lib` on OSX, `/usr/lib` on Linux. 
 
@@ -33,17 +30,4 @@ which encapsulates multiple interconnected Indy nodes.
 - Give it a few seconds, then run Alice's agent which will connect with Faber's agent
 ```
 ./gradlew alice
-```
-
-### Demo with Posgres wallet
-You can also run demo in mode where both Faber and Alice are using Postgres wallets. Follow 
-[instructions](https://github.com/hyperledger/indy-sdk/tree/master/experimental/plugins/postgres_storage) to 
-compile postgres wallet plugin and startup local postgres docker container. 
-
-Once you have that ready, use these commands to start demo in postgres mode.
-```
-./gradlew faber_pg
-```
-```
-./gradlew alice_pg
 ```

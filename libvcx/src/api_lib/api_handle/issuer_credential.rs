@@ -184,7 +184,7 @@ pub mod tests {
     use aries_vcx::libindy::utils::LibindyMock;
     use aries_vcx::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
-    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupLibraryWalletPoolZeroFees, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
@@ -247,7 +247,7 @@ pub mod tests {
     #[cfg(feature = "to_restore")]
     #[test]
     fn test_generate_cred_offer() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         let _issuer = create_full_issuer_credential().0
             .generate_credential_offer().unwrap();

@@ -124,10 +124,6 @@
     [self setLastShutdownVcx:[[[ConnectMeVcx alloc] init] vcxShutdown: deletePool]];
 }
 
--(int)initNullPay {
-  return [[[ConnectMeVcx alloc] init] initNullPay];
-}
-
 -(void)credentialCreateWithMsgId: (NSString *) sourceId
                   withConnectionHandle: (VcxHandle) connectionHandle
                   withMessageId: (NSString *) messageId
@@ -794,35 +790,6 @@
         NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
         return nil;
     }
-}
-
--(void)getTokenInfo: (vcx_payment_handle_t)paymentHandle
-                    completion:(void (^)(BOOL success))successful
-{
-    // TODO call vcx_connection_serialize and pass connectionHandle
-    // it would return a string
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-        [[[ConnectMeVcx alloc] init] getTokenInfo:paymentHandle withCompletion:^(NSError *error, NSString *tokenInfo) {
-
-            if (error != nil && error.code != 0)
-            {
-                NSString *indyErrorCode = [NSString stringWithFormat:@"%ld", (long)error.code];
-                //reject(indyErrorCode, @"Error occurred while getting token info", error);
-                NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(NO);
-                });
-            } else {
-                //resolve(tokenInfo);
-                NSLog(@"getTokenInfo was successful!");
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    successful(YES);
-                });
-            }
-        }];
-
-    });
-
 }
 
 @end

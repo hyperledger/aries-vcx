@@ -40,37 +40,6 @@ export function getVersion(): string {
   return rustAPI().vcx_version();
 }
 
-export async function getLedgerFees(): Promise<string> {
-  /**
-   * Get ledger fees from the sovrin network
-   */
-  try {
-    const ledgerFees = await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_ledger_get_fees(0, cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (xhandle: number, err: number, fees: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(fees);
-          },
-        ),
-    );
-    return ledgerFees;
-  } catch (err) {
-    throw new VCXInternalError(err);
-  }
-}
-
 export async function getLedgerAuthorAgreement(): Promise<string> {
   /**
    * Retrieve author agreement set on the sovrin network

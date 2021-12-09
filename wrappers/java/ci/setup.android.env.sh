@@ -206,16 +206,17 @@ prepare_dependencies() {
         download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/libsodium_$TARGET_ARCH.zip"
         download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/libzmq_$TARGET_ARCH.zip"
 
+        # artifacts from build #06867bd9 / https://gitlab.com/evernym/verity/vdr-tools/-/packages/4038091
         if [ "$TARGET_ARCH" == "arm" ]; then
-          download_and_unzip_if_missed "libindy_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/16384051/download"
+          download_and_unzip_if_missed "libindy_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121452/download"
         elif [ "$TARGET_ARCH" == "arm64" ]; then
-          download_and_unzip_if_missed "libindy_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/16384046/download"
+          download_and_unzip_if_missed "libindy_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121443/download"
         elif [ "$TARGET_ARCH" == "armv7" ]; then
-          download_and_unzip_if_missed "libindy_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/16384064/download"
+          download_and_unzip_if_missed "libindy_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121464/download"
         elif [ "$TARGET_ARCH" == "x86_64" ]; then
-          download_and_unzip_if_missed "libindy_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/16384056/download"
+          download_and_unzip_if_missed "libindy_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121458/download"
         elif [ "$TARGET_ARCH" == "x86" ]; then
-          download_and_unzip_if_missed "libindy_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/16384034/download"
+          download_and_unzip_if_missed "libindy_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121437/download"
         fi
     popd
 }

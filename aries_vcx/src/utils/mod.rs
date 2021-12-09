@@ -50,8 +50,6 @@ pub mod mockdata;
 pub mod provision;
 pub mod random;
 
-pub mod plugins;
-
 #[macro_use]
 pub mod test_logger;
 pub mod validation;

@@ -13,7 +13,6 @@ use crate::settings::set_testing_defaults;
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
-use crate::utils::plugins::init_plugin;
 use crate::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
@@ -39,18 +38,15 @@ pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig,
 } // set default settings and init indy wallet
 
-pub struct SetupLibraryWalletPoolZeroFees {
+pub struct SetupWithWalletAndAgency {
     pub institution_did: String,
-}  // set default settings, init indy wallet, init pool, set zero fees
+}  // set default settings, init indy wallet, init pool
 
 pub struct SetupAgencyMock {
     pub wallet_config: WalletConfig,
 } // set default settings and enable mock agency mode
 
 pub struct SetupLibraryAgencyV2; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0
-
-pub struct SetupLibraryAgencyV2ZeroFees; // init indy wallet, init pool, provision 2 agents. use protocol type 2.0, set zero fees
-
 
 fn setup() {
     init_test_logging();
@@ -232,17 +228,17 @@ impl Drop for SetupIndyMocks {
     }
 }
 
-impl SetupLibraryWalletPoolZeroFees {
-    pub fn init() -> SetupLibraryWalletPoolZeroFees {
+impl SetupWithWalletAndAgency {
+    pub fn init() -> SetupWithWalletAndAgency {
         setup();
-        let institution_did = setup_indy_env(true);
-        SetupLibraryWalletPoolZeroFees {
+        let institution_did = setup_indy_env();
+        SetupWithWalletAndAgency {
             institution_did
         }
     }
 }
 
-impl Drop for SetupLibraryWalletPoolZeroFees {
+impl Drop for SetupWithWalletAndAgency {
     fn drop(&mut self) {
         cleanup_indy_env();
         tear_down()
@@ -296,21 +292,6 @@ impl Drop for SetupLibraryAgencyV2 {
     }
 }
 
-impl SetupLibraryAgencyV2ZeroFees {
-    pub fn init() -> SetupLibraryAgencyV2ZeroFees {
-        setup();
-        setup_agency_env();
-        SetupLibraryAgencyV2ZeroFees
-    }
-}
-
-impl Drop for SetupLibraryAgencyV2ZeroFees {
-    fn drop(&mut self) {
-        cleanup_agency_env();
-        tear_down()
-    }
-}
-
 #[macro_export]
 macro_rules! assert_match {
     ($pattern:pat, $var:expr) => (
@@ -355,16 +336,9 @@ pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
-pub fn setup_libnullpay_nofees() {
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
-    libindy::utils::payments::test_utils::token_setup(None, None, true);
-}
-
-pub fn setup_indy_env(use_zero_fees: bool) -> String {
+pub fn setup_indy_env() -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
-
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
@@ -395,8 +369,6 @@ pub fn setup_indy_env(use_zero_fees: bool) -> String {
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();
 
-    libindy::utils::payments::test_utils::token_setup(None, None, use_zero_fees);
-
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did
 }
@@ -412,8 +384,6 @@ pub fn cleanup_agency_env() {
 pub fn setup_agency_env() {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
-
-    init_plugin(settings::DEFAULT_PAYMENT_PLUGIN, settings::DEFAULT_PAYMENT_INIT_FUNCTION);
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
     open_test_pool();

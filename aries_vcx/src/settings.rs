@@ -28,7 +28,6 @@ pub static CONFIG_WALLET_NAME: &'static str = "wallet_name";
 pub static CONFIG_WALLET_TYPE: &'static str = "wallet_type";
 pub static CONFIG_WALLET_KEY_DERIVATION: &'static str = "wallet_key_derivation";
 pub static CONFIG_PROTOCOL_VERSION: &'static str = "protocol_version";
-pub static CONFIG_PAYMENT_METHOD: &'static str = "payment_method";
 pub static CONFIG_TXN_AUTHOR_AGREEMENT: &'static str = "author_agreement";
 pub static CONFIG_POOL_CONFIG: &'static str = "pool_config";
 pub static CONFIG_DID_METHOD: &str = "did_method";
@@ -51,12 +50,6 @@ pub static WALLET_KDF_RAW: &str = "RAW";
 pub static WALLET_KDF_ARGON2I_INT: &str = "ARGON2I_INT";
 pub static WALLET_KDF_ARGON2I_MOD: &str = "ARGON2I_MOD";
 pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
-#[cfg(not(target_os = "macos"))]
-pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.so";
-#[cfg(target_os = "macos")]
-pub static DEFAULT_PAYMENT_PLUGIN: &str = "libnullpay.dylib";
-pub static DEFAULT_PAYMENT_INIT_FUNCTION: &str = "nullpay_init";
-pub static DEFAULT_PAYMENT_METHOD: &str = "null";
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
@@ -95,7 +88,6 @@ pub fn set_testing_defaults() -> u32 {
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
     settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
-    settings.insert(CONFIG_PAYMENT_METHOD.to_string(), DEFAULT_PAYMENT_METHOD.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
 
     get_agency_client_mut().unwrap().set_testing_defaults_agency();
@@ -149,10 +141,6 @@ pub fn get_protocol_version() -> usize {
     }
 }
 
-pub fn get_payment_method() -> String {
-    get_config_value(CONFIG_PAYMENT_METHOD).unwrap_or(DEFAULT_PAYMENT_METHOD.to_string())
-}
-
 pub fn get_actors() -> Vec<Actors> {
     get_config_value(CONFIG_ACTORS)
         .and_then(|actors|
@@ -193,36 +181,19 @@ pub mod tests {
         r#"{"timeout":40}"#.to_string()
     }
 
-    fn base_config() -> serde_json::Value {
-        json!({
-            "pool_name" : "pool1",
-            "config_name":"config1",
-            "wallet_name":"test_read_config_file",
-            "remote_to_sdk_did" : "UJGjM6Cea2YVixjWwHN9wq",
-            "sdk_to_remote_did" : "AB3JM851T4EQmhh8CdagSP",
-            "sdk_to_remote_verkey" : "888MFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "agency_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "remote_to_sdk_verkey" : "91qMFrZjXDoi2Vc8Mm14Ys112tEZdDegBZZoembFEATE",
-            "genesis_path":"/tmp/pool1.txn",
-            "wallet_key":"key",
-            "pool_config": _pool_config(),
-            "payment_method": "null"
-        })
-    }
-
-    fn config_json() -> String {
-        base_config().to_string()
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_read_config_file() {
+        let config_json = json!({
+            "foo" : "value1",
+            "bar":"value2",
+        }).to_string();
         let _setup = SetupDefaults::init();
 
         let mut config_file: TempFile = TempFile::create("test_init.json");
-        config_file.write(&config_json());
+        config_file.write(&config_json);
 
-        assert_eq!(read_file(&config_file.path).unwrap(), config_json());
+        assert_eq!(read_file(&config_file.path).unwrap(), config_json);
     }
 
     fn _mandatory_config() -> HashMap<String, String> {

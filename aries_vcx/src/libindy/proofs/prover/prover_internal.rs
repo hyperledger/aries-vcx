@@ -606,7 +606,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[test]
     fn test_build_rev_states_json_empty() {
-        let _setup = SetupLibraryWalletPoolZeroFees::init();
+        let _setup = SetupWithWalletAndAgency::init();
 
         // empty vector
         assert_eq!(build_rev_states_json(Vec::new().as_mut()).unwrap(), "{}".to_string());

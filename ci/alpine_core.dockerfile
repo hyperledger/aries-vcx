@@ -4,8 +4,8 @@ ARG UID=1000
 ARG GID=1000
 
 ARG INDYSDK_PATH=/home/indy/vdr-tools
-ARG INDYSDK_REPO=https://gitlab.com/evernym/verity/vdr-tools.git
-ARG INDYSDK_REVISION=59e1ecc21c9a067
+ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
+ARG INDYSDK_REVISION=b5fd711a
 
 ENV RUST_LOG=warning
 
@@ -34,11 +34,3 @@ RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 
 USER root
 RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
-
-USER indy
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libnullpay/Cargo.toml
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
-
-USER root
-RUN mv $INDYSDK_PATH/libnullpay/target/release/libnullpay.so .
-RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so .

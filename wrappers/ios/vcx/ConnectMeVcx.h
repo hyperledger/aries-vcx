@@ -313,13 +313,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (void) getRejectMsg:(vcx_proof_handle_t) proofHandle
        withCompletion:(void (^)(NSError *error, NSString *rejectMsg))completion;
 
-- (void)connectionRedirect:(vcx_connection_handle_t)redirect_connection_handle
-      withConnectionHandle:(vcx_connection_handle_t)connection_handle
-            withCompletion:(void (^)(NSError *error))completion;
-
-- (void)getRedirectDetails:(vcx_connection_handle_t)connection_handle
-      withCompletion:(void (^)(NSError *error, NSString *redirectDetails))completion;
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, vcx_proof_handle_t proofHandle))completion;
@@ -333,17 +326,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (int)proofRelease:(NSInteger) proofHandle;
 
 - (int)vcxShutdown:(BOOL *)deleteWallet;
-
-- (void)createPaymentAddress:(NSString *)seed
-              withCompletion:(void (^)(NSError *error, NSString *address))completion;
-
-- (void)getTokenInfo:(vcx_payment_handle_t)payment_handle
-      withCompletion:(void (^)(NSError *error, NSString *tokenInfo))completion;
-
-- (void)sendTokens:(vcx_payment_handle_t)payment_handle
-        withTokens:(NSString *)tokens
-     withRecipient:(NSString *)recipient
-    withCompletion:(void (^)(NSError *error, NSString *recipient))completion;
 
 - (void)downloadMessages:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
@@ -362,8 +344,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (void)downloadAgentMessages:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
                     completion:(void (^)(NSError *error, NSString* messages))completion;
-
-- (void) getLedgerFees:(void(^)(NSError *error, NSString *fees)) completion;
 
 - (void) getTxnAuthorAgreement:(void(^)(NSError *error, NSString *authorAgreement)) completion;
 
