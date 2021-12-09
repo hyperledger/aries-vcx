@@ -149,10 +149,9 @@ mod tests {
                 .unwrap(),
             None)
         };
-        let cred_def = CredentialDef::create("1".to_string(),
-                                             config,
-                                             revocation_details,
-                                             tails_url).unwrap();
+        let cred_def = CredentialDef::create_and_store("1".to_string(),
+                                                         config,
+                                                         revocation_details).unwrap().publish(tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -570,7 +569,7 @@ mod tests {
             .max_creds(10 as u32)
             .build()
             .unwrap();
-        cred_def.rotate_rev_reg(revocation_details, Some(TEST_TAILS_URL)).unwrap();
+        cred_def.rotate_rev_reg(revocation_details, TEST_TAILS_URL).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {

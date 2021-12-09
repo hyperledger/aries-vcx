@@ -19,7 +19,6 @@ import { VCXBase } from './vcx-base';
  */
 export interface ICredentialDefCreateData {
   sourceId: string;
-  name: string;
   schemaId: string;
   revocationDetails: IRevocationDetails;
   tailsUrl?: string;
@@ -61,58 +60,7 @@ export enum CredentialDefState {
  * @class Class representing a credential Definition
  */
 export class CredentialDef extends VCXBase<ICredentialDefData> {
-  /**
-   * Creates a new CredentialDef object that is written to the ledger
-   *
-   * Example:
-   * ```
-   * data = {
-   *   name: 'testCredentialDefName',
-   *   revocation: false,
-   *   schemaId: 'testCredentialDefSchemaId',
-   *   sourceId: 'testCredentialDefSourceId'
-   * }
-   * credentialDef = await CredentialDef.create(data)
-   * ```
-   */
-  public static async create({
-    name,
-    revocationDetails,
-    schemaId,
-    sourceId,
-    tailsUrl
-  }: ICredentialDefCreateData): Promise<CredentialDef> {
-    // Todo: need to add params for tag and config
-    const tailsFile = revocationDetails.tailsFile;
-    const credentialDef = new CredentialDef(sourceId, { name, schemaId, tailsFile });
-    const commandHandle = 0;
-    const issuerDid = null;
-    const revocation = {
-      max_creds: revocationDetails.maxCreds,
-      support_revocation: revocationDetails.supportRevocation,
-      tails_file: revocationDetails.tailsFile,
-    };
-    try {
-      await credentialDef._create((cb) =>
-        rustAPI().vcx_credentialdef_create(
-          commandHandle,
-          sourceId,
-          name,
-          schemaId,
-          issuerDid,
-          'tag1',
-          JSON.stringify(revocation),
-          tailsUrl || null,
-          cb,
-        ),
-      );
-      return credentialDef;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public static async generateAndStore({
+  public static async createAndStore({
     revocationDetails,
     schemaId,
     sourceId,
@@ -128,7 +76,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     };
     try {
       await credentialDef._create((cb) =>
-        rustAPI().vcx_credentialdef_generate_and_store(
+        rustAPI().vcx_credentialdef_create_and_store(
           commandHandle,
           sourceId,
           schemaId,
@@ -144,22 +92,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  /**
-   * Builds a credentialDef object with defined attributes.
-   * Attributes are provided by a previous call to the serialize function.
-   * Example:
-   * ```
-   * data = {
-   *   name: 'testCredentialDefName',
-   *   revocation: false,
-   *   schemaId: 'testCredentialDefSchemaId',
-   *   sourceId: 'testCredentialDefSourceId'
-   * }
-   * credentialDef = await CredentialDef.create(data)
-   * data1 = await credentialDef.serialize()
-   * credentialDef2 = await CredentialDef.deserialzie(data1)
-   * ```
-   */
   public static async deserialize(
     credentialDef: ISerializedData<ICredentialDefData>,
   ): Promise<CredentialDef> {
@@ -200,7 +132,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     try {
       await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_publish(0, tailsUrl || null, cb);
+          const rc = rustAPI().vcx_credentialdef_publish(0, this.handle, tailsUrl || null, cb);
           if (rc) {
             reject(rc);
           }

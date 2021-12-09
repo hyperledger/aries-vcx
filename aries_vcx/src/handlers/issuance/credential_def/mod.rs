@@ -200,6 +200,8 @@ impl CredentialDef {
                     Some(ref mut rev_reg) => {
                         if let Some(tails_url) = tails_url {
                             rev_reg.rev_reg_def.value.tails_location = String::from(tails_url);
+                        } else {
+                            return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "tails_url must be specified if credential is revokable"));
                         };
 
                         anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg.rev_reg_def)
@@ -221,11 +223,6 @@ impl CredentialDef {
                 ..self
             }
         )
-    }
-
-    pub fn create(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails, tails_url: Option<&str>) -> VcxResult<Self> {
-        trace!("CredentialDef::create >>> source_id: {}, config: {:?}, revocation_details: {:?}", source_id, config, revocation_details);
-        Self::create_and_store(source_id, config, revocation_details)?.publish(tails_url)
     }
 
     pub fn from_string(data: &str) -> VcxResult<Self> {
@@ -297,7 +294,7 @@ impl CredentialDef {
 
     pub fn get_state(&self) -> u32 { self.state as u32 }
 
-    pub fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails, new_tails_url: Option<&str>) -> VcxResult<RevocationRegistry> {
+    pub fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails, new_tails_url: &str) -> VcxResult<RevocationRegistry> {
         debug!("CredentialDef::rotate_rev_reg >>> revocation_details: {:?}", revocation_details);
         let (tails_file, max_creds) = (
             revocation_details.clone().tails_file.or(self.get_tails_file()),
@@ -310,9 +307,7 @@ impl CredentialDef {
                     anoncreds::generate_rev_reg(&self.issuer_did, &self.cred_def_id, &tails_file, *max_creds, tag.as_str())
                         .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create revocation registry defintion"))?;
 
-                if let Some(new_tails_url) = new_tails_url {
-                    rev_reg_def.value.tails_location = String::from(new_tails_url);
-                };
+                rev_reg_def.value.tails_location = String::from(new_tails_url);
 
                 anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg_def)
                     .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;

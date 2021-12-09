@@ -443,6 +443,7 @@ pub fn publish_schema(schema: &str) -> VcxResult<()> {
 }
 
 pub fn get_schema_json(schema_id: &str) -> VcxResult<(String, String)> {
+    trace!("get_schema_json >>> schema_id: {}", schema_id);
     if settings::indy_mocks_enabled() { return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string())); }
 
     let submitter_did = crate::utils::random::generate_random_did();
@@ -457,6 +458,8 @@ pub fn generate_cred_def(issuer_did: &str,
                          tag: &str,
                          sig_type: Option<&str>,
                          support_revocation: Option<bool>) -> VcxResult<(String, String)> {
+    trace!("generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
+           issuer_did, schema_json, tag, sig_type, support_revocation);
     if settings::indy_mocks_enabled() {
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
     }
@@ -502,6 +505,7 @@ pub fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
 
 pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, max_creds: u32, tag: &str)
                         -> VcxResult<(String, RevocationRegistryDefinition, String)> {
+    trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_file, max_creds, tag);
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
@@ -717,10 +721,9 @@ pub mod test_utils {
                 .unwrap(),
             None)
         };
-        let cred_def = CredentialDef::create("1".to_string(),
-                                             config,
-                                             revocation_details,
-                                             tails_url).unwrap();
+        let cred_def = CredentialDef::create_and_store("1".to_string(),
+                                                         config,
+                                                         revocation_details).unwrap().publish(tails_url).unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
