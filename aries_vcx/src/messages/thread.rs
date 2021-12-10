@@ -34,7 +34,7 @@ impl Thread {
     }
 
     pub fn is_reply(&self, id: &str) -> bool {
-        self.thid.clone().unwrap_or_default() == id.to_string()
+        [self.thid.clone(), self.pthid.clone()].contains(&Some(id.to_string()))
     }
 }
 
