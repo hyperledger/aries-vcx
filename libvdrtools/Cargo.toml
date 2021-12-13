@@ -24,7 +24,7 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "indy/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
+cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "vdrtools/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -130,8 +130,8 @@ provides = "libvdrtools-dev (= 0.0.1)"
 name = "libvdrtools-dev"
 depends = "libvdrtools (= 0.0.1)"
 assets = [
-    ["include/*.h", "usr/include/indy/", "644"],
-    ["target/release/libindy.a", "usr/lib/", "644"],
+    ["include/*.h", "usr/include/vdrtools/", "644"],
+    ["target/release/libvdrtools.a", "usr/lib/", "644"],
 ]
 
 [package.metadata.deb.variants.libvdrtools-dev-bionic]
@@ -139,8 +139,8 @@ provides = "libvdrtools-dev (= 0.0.1)"
 name = "libvdrtools-dev"
 depends = "libvdrtools (= 0.0.1)"
 assets = [
-    ["include/*.h", "usr/include/indy/", "644"],
-    ["target/release/libindy.a", "usr/lib/", "644"],
+    ["include/*.h", "usr/include/vdrtools/", "644"],
+    ["target/release/libvdrtoolss.a", "usr/lib/", "644"],
 ]
 
 [build-dependencies]
