@@ -17,7 +17,7 @@ mod utils;
 
 use std::collections::HashMap;
 
-use indyrs::{ErrorCode, SearchHandle, WalletHandle};
+use vdrtoolsrs::{ErrorCode, SearchHandle, WalletHandle};
 
 use utils::{
     constants::WALLET_CREDENTIALS,
@@ -1066,7 +1066,7 @@ mod high_cases {
 #[cfg(not(feature = "only_high_cases"))]
 mod medium_cases {
     use super::*;
-    use indyrs::INVALID_WALLET_HANDLE;
+    use vdrtoolsrs::INVALID_WALLET_HANDLE;
 
     mod add_record {
         use super::*;

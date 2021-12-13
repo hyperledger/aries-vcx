@@ -17,7 +17,7 @@ mod utils;
 #[cfg(feature = "local_nodes_pool")]
 use std::thread;
 
-use indyrs::{ErrorCode, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
+use vdrtoolsrs::{ErrorCode, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
 
 use utils::{constants::*, did, ledger, pool, types::ResponseType, Setup};
 

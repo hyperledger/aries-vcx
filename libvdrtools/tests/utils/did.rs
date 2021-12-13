@@ -1,4 +1,4 @@
-use indyrs::{did, future::Future, IndyError, PoolHandle, WalletHandle};
+use vdrtoolsrs::{did, future::Future, IndyError, PoolHandle, WalletHandle};
 
 use crate::utils::{constants::DEFAULT_METHOD_NAME, ledger, pool, types::ResponseType};
 

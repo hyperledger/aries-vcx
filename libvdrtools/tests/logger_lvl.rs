@@ -18,7 +18,7 @@ mod utils;
 use std::sync::Mutex;
 
 use indy_api_types::PoolHandle;
-use indyrs::{future::Future, logger, pool};
+use vdrtoolsrs::{future::Future, logger, pool};
 use lazy_static::lazy_static;
 use log::{LevelFilter, Log, Metadata, Record};
 

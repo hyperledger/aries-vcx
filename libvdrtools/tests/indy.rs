@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
-use indyrs as indy;
+use vdrtoolsrs as vdrtools;
 
 #[test]
 fn set_runtime_config_works() {

@@ -17,7 +17,7 @@ mod utils;
 
 use std::thread::sleep;
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 use utils::{
     cache::*,

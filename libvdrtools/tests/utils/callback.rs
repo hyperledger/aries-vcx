@@ -10,7 +10,7 @@ use std::{
 };
 
 use indy_sys::Error as ErrorCode;
-use indyrs::{CommandHandle, WalletHandle};
+use vdrtoolsrs::{CommandHandle, WalletHandle};
 use lazy_static::lazy_static;
 use libc::c_char;
 

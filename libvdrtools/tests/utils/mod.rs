@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_macros)]
 
-use indyrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
+use vdrtoolsrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
 
 pub mod callback;
 

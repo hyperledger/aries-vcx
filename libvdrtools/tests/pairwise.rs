@@ -15,7 +15,7 @@ extern crate log;
 #[macro_use]
 mod utils;
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 use utils::{constants::*, did, pairwise, Setup};
 
@@ -200,7 +200,7 @@ mod high_cases {
 #[cfg(not(feature = "only_high_cases"))]
 mod medium_cases {
     use super::*;
-    use indyrs::INVALID_WALLET_HANDLE;
+    use vdrtoolsrs::INVALID_WALLET_HANDLE;
 
     mod create_pairwise {
         use super::*;

@@ -5,7 +5,7 @@ use std::{
 };
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use indyrs::{future::Future, pool, ErrorCode, IndyError, PoolHandle};
+use vdrtoolsrs::{future::Future, pool, ErrorCode, IndyError, PoolHandle};
 use serde_json;
 
 use crate::utils::{

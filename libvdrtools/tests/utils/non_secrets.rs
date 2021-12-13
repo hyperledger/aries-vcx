@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Once};
 
-use indyrs::{future::Future, wallet, IndyError, WalletHandle};
+use vdrtoolsrs::{future::Future, wallet, IndyError, WalletHandle};
 use lazy_static::lazy_static;
 use serde_json;
 

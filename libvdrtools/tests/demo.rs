@@ -22,7 +22,7 @@ use std::{ffi::CString, ptr::null};
 use std::thread;
 
 use indy_sys::*;
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 use utils::{
     constants::{PROTOCOL_VERSION, WALLET_CREDENTIALS},

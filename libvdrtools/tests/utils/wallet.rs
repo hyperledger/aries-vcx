@@ -5,7 +5,7 @@ use std::{
     sync::Mutex,
 };
 
-use indyrs::{future::Future, wallet, CommandHandle, ErrorCode, IndyError, WalletHandle};
+use vdrtoolsrs::{future::Future, wallet, CommandHandle, ErrorCode, IndyError, WalletHandle};
 use lazy_static::lazy_static;
 use libc::c_char;
 use serde_json;

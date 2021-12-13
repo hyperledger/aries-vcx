@@ -15,7 +15,7 @@ extern crate log;
 #[macro_use]
 mod utils;
 
-use indyrs::{ErrorCode, INVALID_WALLET_HANDLE};
+use vdrtoolsrs::{ErrorCode, INVALID_WALLET_HANDLE};
 
 use utils::{
     anoncreds::{self, ANONCREDS_WALLET_CONFIG, COMMON_MASTER_SECRET, CREDENTIAL1_ID},

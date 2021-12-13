@@ -1,4 +1,4 @@
-use indyrs::{cheqd_keys, future::Future, IndyError, WalletHandle};
+use vdrtoolsrs::{cheqd_keys, future::Future, IndyError, WalletHandle};
 
 pub fn add_random(wallet_handle: WalletHandle, alias: &str) -> Result<String, IndyError> {
     cheqd_keys::add_random(wallet_handle, alias).wait()

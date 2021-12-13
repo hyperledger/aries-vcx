@@ -1,4 +1,4 @@
-use indyrs::{future::Future, IndyError, cheqd_ledger, WalletHandle};
+use vdrtoolsrs::{future::Future, IndyError, cheqd_ledger, WalletHandle};
 
 pub fn build_tx(
     pool_alias: &str,

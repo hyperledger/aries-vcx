@@ -19,7 +19,7 @@ mod utils;
 mod demos {
     use super::*;
 
-    use indyrs::ErrorCode;
+    use vdrtoolsrs::ErrorCode;
 
     use utils::{
         anoncreds::{self, COMMON_MASTER_SECRET, CREDENTIAL1_ID, CREDENTIAL2_ID, CREDENTIAL3_ID},

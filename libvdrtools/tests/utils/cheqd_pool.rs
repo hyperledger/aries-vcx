@@ -1,4 +1,4 @@
-use indyrs::{cheqd_pool, future::Future, IndyError};
+use vdrtoolsrs::{cheqd_pool, future::Future, IndyError};
 
 pub fn add(alias: &str, rpc_address: &str, chain_id: &str, mode: Option<&str>) -> Result<String, IndyError> {
     let config = json!({

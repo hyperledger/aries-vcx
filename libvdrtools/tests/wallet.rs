@@ -17,7 +17,7 @@ mod utils;
 
 use std::{fs, path::PathBuf};
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 use utils::{constants::*, did, environment, inmem_wallet::InmemWallet, test, wallet, Setup};
 
@@ -352,7 +352,7 @@ mod high_cases {
 #[cfg(not(feature = "only_high_cases"))]
 mod medium_cases {
     use super::*;
-    use indyrs::INVALID_WALLET_HANDLE;
+    use vdrtoolsrs::INVALID_WALLET_HANDLE;
     use std::ffi::CString;
 
     mod register_wallet_type {

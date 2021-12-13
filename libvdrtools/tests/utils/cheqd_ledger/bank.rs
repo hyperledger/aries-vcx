@@ -1,4 +1,4 @@
-use indyrs::{future::Future, cheqd_ledger, IndyError};
+use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError};
 
 pub fn build_msg_send(
     from: &str,

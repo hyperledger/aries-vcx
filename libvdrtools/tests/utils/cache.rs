@@ -1,4 +1,4 @@
-use indyrs::{cache, future::Future, IndyError, PoolHandle, WalletHandle};
+use vdrtoolsrs::{cache, future::Future, IndyError, PoolHandle, WalletHandle};
 
 pub fn get_schema_cache(
     pool_handle: PoolHandle,

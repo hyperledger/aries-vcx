@@ -19,7 +19,7 @@ mod utils;
 
 use std::{collections::HashMap, thread};
 
-use indyrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
+use vdrtoolsrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
 use lazy_static::lazy_static;
 
 #[cfg(feature = "local_nodes_pool")]

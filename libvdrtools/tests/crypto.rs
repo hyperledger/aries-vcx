@@ -15,7 +15,7 @@ extern crate log;
 #[macro_use]
 mod utils;
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 use utils::{constants::*, crypto, Setup};
 
@@ -406,7 +406,7 @@ mod high_cases {
 mod medium_cases {
     use super::*;
 
-    use indyrs::INVALID_WALLET_HANDLE;
+    use vdrtoolsrs::INVALID_WALLET_HANDLE;
 
     use utils::did;
 

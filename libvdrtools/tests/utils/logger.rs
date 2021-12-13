@@ -1,4 +1,4 @@
-use indyrs::logger;
+use vdrtoolsrs::logger;
 
 pub struct SimpleLogger;
 

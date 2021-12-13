@@ -4,7 +4,7 @@ use std::{
     sync::Once,
 };
 
-use indyrs::{anoncreds, future::Future, IndyError, WalletHandle};
+use vdrtoolsrs::{anoncreds, future::Future, IndyError, WalletHandle};
 use lazy_static::lazy_static;
 use serde_json;
 

@@ -1,4 +1,4 @@
-use indyrs::{future::Future, pairwise, IndyError, WalletHandle};
+use vdrtoolsrs::{future::Future, pairwise, IndyError, WalletHandle};
 
 pub fn pairwise_exists(wallet_handle: WalletHandle, their_did: &str) -> Result<bool, IndyError> {
     pairwise::is_pairwise_exists(wallet_handle, their_did).wait()

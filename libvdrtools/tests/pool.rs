@@ -15,7 +15,7 @@ extern crate log;
 #[macro_use]
 mod utils;
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 
 #[cfg(not(feature = "only_high_cases"))]
 use utils::constants::*;
@@ -452,7 +452,7 @@ mod medium_cases {
         #[cfg(feature = "local_nodes_pool")]
         //FIXME: test
         fn indy_close_pool_ledger_works_for_pending_request() {
-            use indyrs::{future::Future, self as indy};
+            use vdrtoolsrs::{future::Future, self as indy};
 
             let setup = Setup::empty();
 

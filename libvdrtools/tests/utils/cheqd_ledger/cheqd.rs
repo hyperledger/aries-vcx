@@ -1,4 +1,4 @@
-use indyrs::{future::Future, cheqd_ledger, IndyError, WalletHandle};
+use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError, WalletHandle};
 
 use crate::utils::{cheqd_ledger as u_cheqd_ledger, cheqd_pool, cheqd_setup};
 

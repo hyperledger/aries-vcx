@@ -4,7 +4,7 @@ use std::{
     sync::{Mutex, Once},
 };
 
-use indyrs::{future::Future, payments, CommandHandle, ErrorCode, IndyError, WalletHandle};
+use vdrtoolsrs::{future::Future, payments, CommandHandle, ErrorCode, IndyError, WalletHandle};
 use libc::c_char;
 //use indy_sys::payments as payments_sys;
 

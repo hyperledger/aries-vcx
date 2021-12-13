@@ -1,7 +1,7 @@
 use std::{mem, sync::Once};
 
 use indy_utils::crypto::hash::hash;
-use indyrs::{future::Future, ledger, IndyError, PoolHandle, WalletHandle};
+use vdrtoolsrs::{future::Future, ledger, IndyError, PoolHandle, WalletHandle};
 use lazy_static::lazy_static;
 
 use crate::utils::{anoncreds, blob_storage, constants::*, did, pool, timeout, wallet, types::*};

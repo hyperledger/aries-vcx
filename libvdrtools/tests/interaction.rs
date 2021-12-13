@@ -20,7 +20,7 @@ mod utils;
 use std::thread;
 
 use core::borrow::Borrow;
-use indyrs::{PoolHandle, WalletHandle};
+use vdrtoolsrs::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
 use utils::{

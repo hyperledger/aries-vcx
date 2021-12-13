@@ -1,7 +1,7 @@
-use indyrs::vdr;
-use indyrs::{future::Future, IndyError, WalletHandle};
+use vdrtoolsrs::vdr;
+use vdrtoolsrs::{future::Future, IndyError, WalletHandle};
 
-pub use indyrs::vdr::{
+pub use vdrtoolsrs::vdr::{
     VDR, VDRBuilder
 };
 

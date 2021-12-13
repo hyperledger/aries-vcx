@@ -1,4 +1,4 @@
-use indyrs::{future::Future, cheqd_ledger, IndyError};
+use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError};
 
 pub fn build_query_get_tx_by_hash(hash: &str) -> Result<String, IndyError> {
     cheqd_ledger::tx::build_query_get_tx_by_hash(hash).wait()

@@ -1,4 +1,4 @@
-use indyrs::{crypto, future::Future, IndyError, WalletHandle};
+use vdrtoolsrs::{crypto, future::Future, IndyError, WalletHandle};
 
 pub fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> Result<String, IndyError> {
     let key_json = json!({ "seed": seed }).to_string();

@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use indyrs::CommandHandle;
+use vdrtoolsrs::CommandHandle;
 use libc::c_char;
 
 #[test]

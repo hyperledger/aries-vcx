@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_macros)]
 
-use indyrs::IndyError;
+use vdrtoolsrs::IndyError;
 use serde_json::Value;
 
 use crate::utils::{cheqd_keys, cheqd_ledger, cheqd_ledger::auth, cheqd_pool, environment};

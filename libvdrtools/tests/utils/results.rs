@@ -1,6 +1,6 @@
 use std::sync::mpsc::Receiver;
 
-use indyrs::ErrorCode;
+use vdrtoolsrs::ErrorCode;
 use indy_sys::Error;
 
 pub fn result_to_empty(err: Error, receiver: Receiver<Error>) -> Result<(), ErrorCode> {
