@@ -12,7 +12,7 @@ error_report() {
 }
 trap 'error_report $LINENO' ERR
 
-echo -e "${onyellow}Installing libindy...$endcolor"
+echo -e "${onyellow}Installing libvdrtools...$endcolor"
 
 function brew_install {
     if brew ls --versions $1 >/dev/null; then
@@ -48,7 +48,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cargo build
     echo 'export DYLD_LIBRARY_PATH='$LIBRARY_PATH'
 export LD_LIBRARY_PATH='$LIBRARY_PATH >> ~/.bash_profile
-    echo -e "${ongreen}Libindy installed.$endcolor"
+    echo -e "${ongreen}libvdrtools installed.$endcolor"
 else
     echo -e "${onred}You are not running MacOS. This is a MacOS installer.$endcolor"
 fi

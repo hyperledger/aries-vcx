@@ -58,7 +58,7 @@ fn indy_set_log_max_lvl_works() {
         indy_sys::logger::indy_set_log_max_lvl(LevelFilter::Trace as usize as u32);
     }
 
-    LOG_IGNORE_IN_STAT.lock().unwrap().push("indy::api::logger");
+    LOG_IGNORE_IN_STAT.lock().unwrap().push("vdrtools::api::logger");
 
     pool::close_pool_ledger(1 as PoolHandle).wait().unwrap_err();
 

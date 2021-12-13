@@ -64,7 +64,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files devel
 %defattr(755,root,root)
-%{_libdir}/libindy.a
-%{_includedir}/indy/*.h
+%{_libdir}/libvdrtools.a
+%{_includedir}/vdrtools/*.h
 
 %changelog

@@ -1,4 +1,4 @@
-Source: libindy
+Source: libvdrtools
 Section: devel
 Priority: optional
 Maintainer: Hyperledger <info@hyperledger.org>
@@ -8,7 +8,7 @@ Vcs-Git: https://github.com/hyperledger/indy-sdk/
 Vcs-Browser: https://github.com/hyperledger/indy-sdk/
 
 
-Package: libindy
+Package: libvdrtools
 Architecture: amd64
 Depends: libssl1.0.0, libsqlite0, libzmq5
 Suggests: build-essential
@@ -18,9 +18,9 @@ identity by abstracting the operations for interacting with
 a verifiable data registry as defined by Hyperledger Aries.
 
 
-Package: libindy-dev
+Package: libvdrtools-dev
 Architecture: amd64
-Depends: libindy
+Depends: libvdrtools
 Suggests: build-essential
 Description: A library that facilitates building standards
 compliant and interoperable solutions for self-sovereign

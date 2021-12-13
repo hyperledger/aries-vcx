@@ -402,7 +402,7 @@ impl PoolService {
 
     pub(crate) fn parse_response_metadata(response: &str) -> IndyResult<ResponseMetadata> {
         trace!(
-            "indy::services::pool::parse_response_metadata << response: {}",
+            "vdrtools::services::pool::parse_response_metadata << response: {}",
             response
         );
         let message: Message<serde_json::Value> = serde_json::from_str(response).to_indy(
@@ -425,7 +425,7 @@ impl PoolService {
         };
 
         trace!(
-            "indy::services::pool::parse_response_metadata >> response_metadata: {:?}",
+            "vdrtools::services::pool::parse_response_metadata >> response_metadata: {:?}",
             response_metadata
         );
 

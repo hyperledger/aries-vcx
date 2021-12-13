@@ -25,7 +25,7 @@ function test() {
 
   pushd $MODULE_DIR
   RUST_BACKTRACE=1 cargo test --no-run ${CARGO_FLAGS} ${FEATURE_FLAGS}
-  RUST_BACKTRACE=1 RUST_LOG=indy::=debug,zmq=trace RUST_TEST_THREADS=1 cargo test ${CARGO_FLAGS} ${FEATURE_FLAGS}
+  RUST_BACKTRACE=1 RUST_LOG=vdrtools::=debug,zmq=trace RUST_TEST_THREADS=1 cargo test ${CARGO_FLAGS} ${FEATURE_FLAGS}
   popd
 }
 

@@ -28,7 +28,7 @@ extern crate serde;
 extern crate rand;
 
 // Workaround to share some utils code based on indy sdk types between tests and indy sdk
-use indy::api as api;
+use vdrtools::api as api;
 
 #[path = "../tests/utils/mod.rs"]
 #[macro_use]

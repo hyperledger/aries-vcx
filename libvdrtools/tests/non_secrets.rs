@@ -27,7 +27,7 @@ use utils::{
     wallet, Setup,
 };
 
-pub const FORBIDDEN_TYPE: &'static str = "Indy::Test";
+pub const FORBIDDEN_TYPE: &'static str = "Vdrtools::Test";
 
 mod high_cases {
     use super::*;

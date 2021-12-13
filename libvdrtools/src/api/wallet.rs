@@ -256,7 +256,7 @@ pub extern "C" fn indy_create_wallet(
 ///       "cache": optional<object>, Cache configuration json. If omitted the cache is disabled (default).
 ///       {
 ///           "size": optional<int>, Number of items in cache,
-///           "entities": List<string>, Types of items being cached. eg. ["Indy::Did", "Indy::Key"]
+///           "entities": List<string>, Types of items being cached. eg. ["vdrtools::Did", "vdrtools::Key"]
 ///           "algorithm" optional<string>, cache algorithm, defaults to lru, which is the only one supported for now.
 ///       }
 ///   }

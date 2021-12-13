@@ -460,7 +460,7 @@ mod medium_cases {
 
             let get_nym_req = ledger::build_get_nym_request(Some(DID_MY1), DID_MY1).unwrap();
 
-            let submit_fut = indy::ledger::submit_request(pool_handle, &get_nym_req);
+            let submit_fut = vdrtools::ledger::submit_request(pool_handle, &get_nym_req);
 
             thread::sleep(Duration::from_millis(1));
 
