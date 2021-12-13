@@ -90,7 +90,7 @@ android_logger = "0.5"
 
 [dev-dependencies]
 criterion = "0.2"
-indy = { path = "../wrappers/rust" }
+vdrtools = { path = "../wrappers/rust" }
 indy-sys = { path = "../wrappers/rust/indy-sys" }
 sodiumoxide = {version = "0.0.16"}
 openssl = "0.10"
