@@ -4,6 +4,7 @@ use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did_doc::Did;
 use crate::messages::connection::service::ServiceResolvable;
+use crate::utils::uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -130,6 +131,20 @@ pub mod test_utils {
             id: MessageId::id(),
             label: _label(),
             did: _did(),
+        }
+    }
+
+    pub fn _pairwise_invitation_random_id() -> PairwiseInvitation {
+        PairwiseInvitation {
+            id: MessageId(uuid::uuid()),
+            .._pairwise_invitation()
+        }
+    }
+
+    pub fn _public_invitation_random_id() -> PublicInvitation {
+        PublicInvitation {
+            id: MessageId(uuid::uuid()),
+            .._public_invitation()
         }
     }
 

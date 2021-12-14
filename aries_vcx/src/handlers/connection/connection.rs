@@ -783,7 +783,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 mod tests {
     use crate::messages::connection::request::tests::_request;
     use crate::handlers::connection::public_agent::tests::_public_agent;
-    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
+    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
@@ -802,6 +802,24 @@ mod tests {
         let _setup = SetupMocks::init();
         let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true).unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
+        let _setup = SetupMocks::init();
+
+        let pub_inv = _public_invitation_random_id();
+        let mut connection = Connection::create_with_invite("abcd", Invitation::Public(pub_inv.clone()), true).unwrap();
+        connection.connect().unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+        assert_ne!(connection.get_thread_id(), pub_inv.id.0);
+
+        let pw_inv = _pairwise_invitation_random_id();
+        let mut connection = Connection::create_with_invite("dcba", Invitation::Pairwise(pw_inv.clone()), true).unwrap();
+        connection.connect().unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+        assert_eq!(connection.get_thread_id(), pw_inv.id.0);
     }
 
     #[test]

@@ -251,29 +251,41 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
-            _ => state.clone()
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))) }
         };
         Ok(Self { state, thread_id: invitation.get_id()?, ..self })
     }
 
     pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
-        let state = match self.state {
-            InviteeFullState::Invited(state) => {
+        let (state, thread_id) = match self.state {
+            InviteeFullState::Invited(ref state) => {
                 let recipient_keys = vec!(self.pairwise_info.pw_vk.clone());
                 let request = Request::create()
                     .set_label(self.source_id.to_string())
                     .set_did(self.pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint)
-                    .set_thread_id(&self.thread_id)
                     .set_keys(recipient_keys, routing_keys);
-
+                let (request, thread_id) = match state.invitation {
+                    Invitation::Public(_) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&self.thread_id)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone()
+                    ),
+                    Invitation::Pairwise(_) => (
+                        request
+                            .set_thread_id(&self.thread_id),
+                        self.get_thread_id()
+                    )
+                };
                 let ddo = DidDoc::from(state.invitation.clone());
                 (self.send_message)(&self.pairwise_info.pw_vk, &ddo, &request.to_a2a_message())?;
-                InviteeFullState::Requested((state, request).into())
+                (InviteeFullState::Requested((state.clone(), request).into()), thread_id)
             }
-            _ => self.state.clone()
+            _ => (self.state.clone(), self.get_thread_id())
         };
-        Ok(Self { state, ..self })
+        Ok(Self { state, thread_id, ..self })
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
