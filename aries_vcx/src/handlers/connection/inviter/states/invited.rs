@@ -13,7 +13,7 @@ pub struct InvitedState {
 // TODO: These have no justification for being here anymore
 impl From<ProblemReport> for InitialState {
     fn from(problem_report: ProblemReport) -> InitialState {
-        trace!("ConnectionInviter: transit state to InitialState");
+        trace!("ConnectionInviter: transit state to InitialState, problem_report: {:?}", problem_report);
         InitialState::new(Some(problem_report))
     }
 }
