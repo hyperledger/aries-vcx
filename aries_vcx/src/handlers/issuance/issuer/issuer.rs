@@ -7,7 +7,6 @@ use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_offer::OfferInfo;
 use crate::messages::a2a::A2AMessage;
-use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -46,8 +45,7 @@ impl Issuer {
     }
 
     pub fn send_credential_offer(&mut self, offer_info: OfferInfo, comment: Option<&str>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        let cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
-        self.step(CredentialIssuanceMessage::CredentialOfferSend(offer_info, cred_offer, comment.map(String::from)), Some(&send_message))
+        self.step(CredentialIssuanceMessage::CredentialOfferSend(offer_info, comment.map(String::from)), Some(&send_message))
     }
 
     pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -120,7 +118,6 @@ pub mod test {
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::utils::devsetup::SetupMocks;
     use crate::handlers::issuance::issuer::state_machine::test::_send_message;
-    use crate::utils::constants::LIBINDY_CRED_OFFER;
 
     use super::*;
 
@@ -142,18 +139,18 @@ pub mod test {
 
     impl Issuer {
         fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), None), _send_message()).unwrap();
             self
         }
 
         fn to_request_received_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state_unrevokable(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), None), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
             self
