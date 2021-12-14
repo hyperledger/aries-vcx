@@ -73,7 +73,7 @@ impl SmConnectionInviter {
         Self {
             source_id: source_id.to_string(),
             thread_id: MessageId::new().0,
-            state: InviterFullState::Initial(InitialState {}),
+            state: InviterFullState::Initial(InitialState::new(None)),
             pairwise_info,
             send_message,
         }

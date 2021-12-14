@@ -12,9 +12,9 @@ pub struct RequestedState {
 }
 
 impl From<(RequestedState, ProblemReport)> for InitialState {
-    fn from((_state, _error): (RequestedState, ProblemReport)) -> InitialState {
-        trace!("ConnectionInvitee: transit state from RequestedState to InitialState");
-        InitialState {}
+    fn from((_state, problem_report): (RequestedState, ProblemReport)) -> InitialState {
+        trace!("ConnectionInvitee: transit state from RequestedState to InitialState, problem_report: {:?}", problem_report);
+        InitialState::new(Some(problem_report))
     }
 }
 
