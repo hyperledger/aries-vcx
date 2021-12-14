@@ -73,7 +73,7 @@ impl SmConnectionInvitee {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             thread_id: String::new(),
-            state: InviteeFullState::Initial(InitialState {}),
+            state: InviteeFullState::Initial(InitialState::new(None)),
             pairwise_info,
             send_message,
         }
@@ -371,10 +371,10 @@ impl SmConnectionInvitee {
     pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
             InviteeFullState::Requested(_state) => {
-                InviteeFullState::Initial(InitialState {})
+                InviteeFullState::Initial(InitialState::new(None))
             }
             InviteeFullState::Invited(_state) => {
-                InviteeFullState::Initial(InitialState {})
+                InviteeFullState::Initial(InitialState::new(None))
             }
             _ => self.state.clone() 
         };
