@@ -1955,36 +1955,40 @@ mod tests {
         consumer.activate().unwrap();
         alice_to_faber.send_generic_message("Hello Faber").unwrap();
 
+        let alice_pw_did = alice_to_faber.pairwise_info().pw_did.clone();
+        let faber_remote_did = faber_to_alice.remote_did().unwrap();
+        assert_eq!(alice_pw_did, faber_remote_did);
+
         thread::sleep(Duration::from_millis(1000));
 
-        let all_messages = download_messages_noauth(None, None, None).unwrap();
-        assert_eq!(all_messages.len(), 2);
-        assert_eq!(all_messages[1].msgs.len(), 3);
-        assert!(all_messages[1].msgs[0].decrypted_msg.is_some());
-        assert!(all_messages[1].msgs[1].decrypted_msg.is_some());
+        let all_messages = download_messages_noauth(Some(vec![alice_pw_did.clone()]), None, None).unwrap();
+        assert_eq!(all_messages.len(), 1);
+        assert_eq!(all_messages[0].msgs.len(), 3);
+        assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
+        assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
 
-        let received = download_messages_noauth(None, Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
-        assert_eq!(received.len(), 2);
-        assert_eq!(received[1].msgs.len(), 2);
-        assert!(received[1].msgs[0].decrypted_msg.is_some());
-        assert_eq!(received[1].msgs[0].status_code, MessageStatusCode::Received);
-        assert!(received[1].msgs[1].decrypted_msg.is_some());
+        let received = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Received.to_string()]), None).unwrap();
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].msgs.len(), 2);
+        assert!(received[0].msgs[0].decrypted_msg.is_some());
+        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
+        assert!(received[0].msgs[1].decrypted_msg.is_some());
 
         // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
-        let reviewed = download_messages_noauth(None, Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
-        assert_eq!(reviewed.len(), 2);
-        assert_eq!(reviewed[1].msgs.len(), 1);
-        assert!(reviewed[1].msgs[0].decrypted_msg.is_some());
-        assert_eq!(reviewed[1].msgs[0].status_code, MessageStatusCode::Reviewed);
+        let reviewed = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).unwrap();
+        assert_eq!(reviewed.len(), 1);
+        assert_eq!(reviewed[0].msgs.len(), 1);
+        assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
+        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
 
-        let rejected = download_messages_noauth(None, Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
-        assert_eq!(rejected.len(), 2);
-        assert_eq!(rejected[1].msgs.len(), 0);
+        let rejected = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Rejected.to_string()]), None).unwrap();
+        assert_eq!(rejected.len(), 1);
+        assert_eq!(rejected[0].msgs.len(), 0);
 
-        let specific = download_messages_noauth(None, None, Some(vec![received[1].msgs[0].uid.clone()])).unwrap();
-        assert_eq!(specific.len(), 2);
-        assert_eq!(specific[1].msgs.len(), 1);
-        let msg = specific[1].msgs[0].decrypted_msg.clone().unwrap();
+        let specific = download_messages_noauth(Some(vec![alice_pw_did.clone()]), None, Some(vec![received[0].msgs[0].uid.clone()])).unwrap();
+        assert_eq!(specific.len(), 1);
+        assert_eq!(specific[0].msgs.len(), 1);
+        let msg = specific[0].msgs[0].decrypted_msg.clone().unwrap();
         let msg_aries_value: Value = serde_json::from_str(&msg).unwrap();
         assert!(msg_aries_value.is_object());
         assert!(msg_aries_value["@id"].is_string());
