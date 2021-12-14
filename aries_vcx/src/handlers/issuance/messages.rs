@@ -7,10 +7,11 @@ use crate::messages::issuance::credential_proposal::{CredentialProposal, Credent
 use crate::messages::issuance::credential_request::CredentialRequest;
 
 type OptionalComment = Option<String>;
+type CredentialOfferJson = String;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialOfferSend(OfferInfo, OptionalComment),
+    CredentialOfferSend(OfferInfo, CredentialOfferJson, OptionalComment),
     CredentialSend(),
     CredentialProposalSend(CredentialProposalData),
     CredentialProposal(CredentialProposal),
