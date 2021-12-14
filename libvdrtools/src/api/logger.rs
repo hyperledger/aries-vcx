@@ -4,7 +4,7 @@ use libc::{c_char, c_void};
 use log::LevelFilter;
 
 use crate::utils::logger::{
-    EnabledCB, FlushCB, LibindyDefaultLogger, LibindyLogger, LogCB, LOGGER_STATE,
+    EnabledCB, FlushCB, LibvdrtoolsDefaultLogger, LibvdrtoolsLogger, LogCB, LOGGER_STATE,
 };
 
 /// Set custom logger implementation.
@@ -33,7 +33,7 @@ pub extern "C" fn indy_set_logger(
 
     check_useful_c_callback!(log, ErrorCode::CommonInvalidParam3);
 
-    let res = LibindyLogger::init(context, enabled, log, flush, None);
+    let res = LibvdrtoolsLogger::init(context, enabled, log, flush, None);
 
     let err = prepare_result!(res);
     debug!("indy_set_logger < {:?}", err);
@@ -78,7 +78,7 @@ pub extern "C" fn indy_set_logger_with_max_lvl(
         ErrorCode::CommonInvalidParam5
     );
 
-    let res = LibindyLogger::init(context, enabled, log, flush, Some(max_lvl));
+    let res = LibvdrtoolsLogger::init(context, enabled, log, flush, Some(max_lvl));
 
     let err = prepare_result!(res);
     debug!("indy_set_logger < {:?}", err);
@@ -105,7 +105,7 @@ pub extern "C" fn indy_set_log_max_lvl(max_lvl: u32) -> ErrorCode {
         ErrorCode::CommonInvalidParam1
     );
 
-    let res = LibindyLogger::set_max_level(max_lvl);
+    let res = LibvdrtoolsLogger::set_max_level(max_lvl);
 
     let err = prepare_result!(res);
     debug!("indy_set_log_max_lvl < {:?}", err);
@@ -132,7 +132,7 @@ pub extern "C" fn indy_set_default_logger(pattern: *const c_char) -> ErrorCode {
 
     debug!("indy_set_default_logger ? pattern {:?}", pattern);
 
-    let res = LibindyDefaultLogger::init(pattern);
+    let res = LibvdrtoolsDefaultLogger::init(pattern);
 
     let err = prepare_result!(res);
     debug!("indy_set_default_logger < {:?}", err);

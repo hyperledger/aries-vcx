@@ -3,8 +3,8 @@
 
 
 WORKDIR=${PWD}
-LIBINDY_WORKDIR=${WORKDIR}
-CI_DIR="${LIBINDY_WORKDIR}/ci"
+LIBVDRTOOLS_WORKDIR=${WORKDIR}
+CI_DIR="${LIBVDRTOOLS_WORKDIR}/ci"
 BUILD_TYPE="--release"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 
@@ -52,8 +52,8 @@ build_test_artifacts(){
 }
 
 create_cargo_config(){
-mkdir -p ${LIBINDY_WORKDIR}/.cargo
-cat << EOF > ${LIBINDY_WORKDIR}/.cargo/config
+mkdir -p ${LIBVDRTOOLS_WORKDIR}/.cargo
+cat << EOF > ${LIBVDRTOOLS_WORKDIR}/.cargo/config
 [target.${TRIPLET}]
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
@@ -74,7 +74,7 @@ execute_on_device(){
     "${LIBZMQ_LIB_DIR}/libzmq.so" "/data/local/tmp/libzmq.so"
 
     adb -e push \
-    "${LIBINDY_WORKDIR}/target/${TRIPLET}/release/libvdrtools.so" "/data/local/tmp/libvdrtools.so"
+    "${LIBVDRTOOLS_WORKDIR}/target/${TRIPLET}/release/libvdrtools.so" "/data/local/tmp/libvdrtools.so"
 
     adb -e logcat | grep indy &
 

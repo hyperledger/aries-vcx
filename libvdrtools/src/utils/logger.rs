@@ -30,7 +30,7 @@ pub enum LoggerState {
 impl LoggerState {
     pub fn get(&self) -> (*const c_void, Option<EnabledCB>, Option<LogCB>, Option<FlushCB>) {
         match self {
-            LoggerState::Default => (ptr::null(), Some(LibindyDefaultLogger::enabled), Some(LibindyDefaultLogger::log), Some(LibindyDefaultLogger::flush)),
+            LoggerState::Default => (ptr::null(), Some(LibvdrtoolsDefaultLogger::enabled), Some(LibvdrtoolsDefaultLogger::log), Some(LibvdrtoolsDefaultLogger::flush)),
             LoggerState::Custom => unsafe { (CONTEXT, ENABLED_CB, LOG_CB, FLUSH_CB) },
         }
     }
@@ -61,20 +61,20 @@ const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Trace;
 #[cfg(not(debug_assertions))]
 const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Info;
 
-pub struct LibindyLogger {
+pub struct LibvdrtoolsLogger {
     context: *const c_void,
     enabled: Option<EnabledCB>,
     log: LogCB,
     flush: Option<FlushCB>,
 }
 
-impl LibindyLogger {
+impl LibvdrtoolsLogger {
     fn new(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>) -> Self {
-        LibindyLogger { context, enabled, log, flush }
+        LibvdrtoolsLogger { context, enabled, log, flush }
     }
 }
 
-impl log::Log for LibindyLogger {
+impl log::Log for LibvdrtoolsLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         if let Some(enabled_cb) = self.enabled {
             let level = metadata.level() as u32;
@@ -115,17 +115,17 @@ impl log::Log for LibindyLogger {
     }
 }
 
-unsafe impl Sync for LibindyLogger {}
+unsafe impl Sync for LibvdrtoolsLogger {}
 
-unsafe impl Send for LibindyLogger {}
+unsafe impl Send for LibvdrtoolsLogger {}
 
-impl LibindyLogger {
+impl LibvdrtoolsLogger {
     pub fn init(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>, max_lvl: Option<u32>) -> Result<(), IndyError> {
-        let logger = LibindyLogger::new(context, enabled, log, flush);
+        let logger = LibvdrtoolsLogger::new(context, enabled, log, flush);
 
         log::set_boxed_logger(Box::new(logger))?;
         let max_lvl = match max_lvl {
-            Some(max_lvl) => LibindyLogger::map_u32_lvl_to_filter(max_lvl)?,
+            Some(max_lvl) => LibvdrtoolsLogger::map_u32_lvl_to_filter(max_lvl)?,
             None => DEFAULT_MAX_LEVEL,
         };
         log::set_max_level(max_lvl);
@@ -155,7 +155,7 @@ impl LibindyLogger {
     }
 
     pub fn set_max_level(max_level: u32) -> IndyResult<LevelFilter> {
-        let max_level_filter = LibindyLogger::map_u32_lvl_to_filter(max_level)?;
+        let max_level_filter = LibvdrtoolsLogger::map_u32_lvl_to_filter(max_level)?;
 
         log::set_max_level(max_level_filter);
 
@@ -163,9 +163,9 @@ impl LibindyLogger {
     }
 }
 
-pub struct LibindyDefaultLogger;
+pub struct LibvdrtoolsDefaultLogger;
 
-impl LibindyDefaultLogger {
+impl LibvdrtoolsDefaultLogger {
     pub fn init(pattern: Option<String>) -> Result<(), IndyError> {
         let pattern = pattern.or_else(|| env::var("RUST_LOG").ok());
 

@@ -14,8 +14,8 @@ export RESET=`tput sgr0`
 set -e
 set -o pipefail
 WORKDIR=${PWD}
-LIBINDY_WORKDIR=${WORKDIR}
-CI_DIR="${LIBINDY_WORKDIR}/ci"
+LIBVDRTOOLS_WORKDIR=${WORKDIR}
+CI_DIR="${LIBVDRTOOLS_WORKDIR}/ci"
 export ANDROID_BUILD_FOLDER="/tmp/android_build"
 DOWNLOAD_PREBUILTS="0"
 
@@ -38,8 +38,8 @@ fi
 source ${CI_DIR}/setup.android.env.sh
 
 create_cargo_config(){
-mkdir -p ${LIBINDY_WORKDIR}/.cargo
-cat << EOF > ${LIBINDY_WORKDIR}/.cargo/config
+mkdir -p ${LIBVDRTOOLS_WORKDIR}/.cargo
+cat << EOF > ${LIBVDRTOOLS_WORKDIR}/.cargo/config
 [target.${TRIPLET}]
 ar = "$(realpath ${AR})"
 linker = "$(realpath ${CC})"
@@ -103,10 +103,10 @@ setup_dependencies(){
     fi
 }
 
-statically_link_dependencies_with_libindy(){
+statically_link_dependencies_with_libvdrtools(){
     echo "${BLUE}Statically linking libraries togather${RESET}"
-    echo "${BLUE}Output will be available at ${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}/lib/libvdrtools.so${RESET}"
-    $CC -v -shared -o${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}/lib/libvdrtools.so -Wl,--whole-archive \
+    echo "${BLUE}Output will be available at ${ANDROID_BUILD_FOLDER}/libvdrtools_${ABSOLUTE_ARCH}/lib/libvdrtools.so${RESET}"
+    $CC -v -shared -o${ANDROID_BUILD_FOLDER}/libvdrtools_${ABSOLUTE_ARCH}/lib/libvdrtools.so -Wl,--whole-archive \
         ${WORKDIR}/target/${TRIPLET}/release/libvdrtools.a \
         ${TOOLCHAIN_DIR}/sysroot/usr/lib/${ANDROID_TRIPLET}/libm.a \
         ${OPENSSL_DIR}/lib/libssl.a \
@@ -118,7 +118,7 @@ statically_link_dependencies_with_libindy(){
 
 package_library(){
 
-   export PACKAGE_DIR=${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}
+   export PACKAGE_DIR=${ANDROID_BUILD_FOLDER}/libvdrtools_${ABSOLUTE_ARCH}
 
     mkdir -p ${PACKAGE_DIR}/lib
 
@@ -126,18 +126,18 @@ package_library(){
     cp "${WORKDIR}/target/${TRIPLET}/release/libvdrtools.a" ${PACKAGE_DIR}/lib
     cp "${WORKDIR}/target/${TRIPLET}/release/libvdrtools.so" ${PACKAGE_DIR}/lib
     if [ "${TARGET_ARCH}" != "x86_64" ]; then
-        mv "${PACKAGE_DIR}/lib/libindy.so" "${PACKAGE_DIR}/lib/libvdrtools_shared.so" &&
-        statically_link_dependencies_with_libindy
+        mv "${PACKAGE_DIR}/lib/libvdrtools.so" "${PACKAGE_DIR}/lib/libvdrtools_shared.so" &&
+        statically_link_dependencies_with_libvdrtools
     fi
-    pushd ${LIBINDY_WORKDIR}
-        rm -f libindy_android_${ABSOLUTE_ARCH}.zip
+    pushd ${LIBVDRTOOLS_WORKDIR}
+        rm -f libvdrtools_android_${ABSOLUTE_ARCH}.zip
         cp -rf ${PACKAGE_DIR} .
-        if [ -z "${LIBINDY_VERSION}" ]; then
-            zip -r libindy_android_${ABSOLUTE_ARCH}.zip libindy_${ABSOLUTE_ARCH} &&
-            echo "${BLUE}Zip file available at ${PWD}/libindy_android_${ABSOLUTE_ARCH}.zip ${RESET}"
+        if [ -z "${LIBVDRTOOLS_VERSION}" ]; then
+            zip -r libvdrtools_android_${ABSOLUTE_ARCH}.zip libvdrtools_${ABSOLUTE_ARCH} &&
+            echo "${BLUE}Zip file available at ${PWD}/libvdrtools_android_${ABSOLUTE_ARCH}.zip ${RESET}"
         else
-            zip -r libindy_android_${ABSOLUTE_ARCH}_${LIBINDY_VERSION}.zip libindy_${ABSOLUTE_ARCH} &&
-            echo "${BLUE}Zip file available at ${PWD}/libindy_android_${ABSOLUTE_ARCH}_${LIBINDY_VERSION}.zip ${RESET}"
+            zip -r libvdrtools_android_${ABSOLUTE_ARCH}_${LIBVDRTOOLS_VERSION}.zip libvdrtools_${ABSOLUTE_ARCH} &&
+            echo "${BLUE}Zip file available at ${PWD}/libvdrtools_android_${ABSOLUTE_ARCH}_${LIBVDRTOOLS_VERSION}.zip ${RESET}"
         fi
 
     popd
@@ -150,7 +150,7 @@ build(){
     echo "ZMQ path ${BOLD}${YELLOW}${LIBZMQ_DIR}${RESET}"
     echo "Sodium path ${BOLD}${YELLOW}${SODIUM_DIR}${RESET}"
     echo "Openssl path ${BOLD}${YELLOW}${OPENSSL_DIR}${RESET}"
-    echo "Artifacts will be in ${YELLOW}${GREEN}${ANDROID_BUILD_FOLDER}/libindy_${ABSOLUTE_ARCH}${RESET}"
+    echo "Artifacts will be in ${YELLOW}${GREEN}${ANDROID_BUILD_FOLDER}/libvdrtools_${ABSOLUTE_ARCH}${RESET}"
     echo "**************************************************"
     pushd ${WORKDIR}
         rm -rf target/${TRIPLET}
