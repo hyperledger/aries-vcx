@@ -2024,7 +2024,7 @@ dependencies = [
 
 [[package]]
 name = "indy"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "async-std",
  "async-trait",
@@ -2262,7 +2262,7 @@ dependencies = [
 
 [[package]]
 name = "libvdrtools"
-version = "0.0.1"
+version = "0.8.2"
 dependencies = [
  "android_logger",
  "async-std",
