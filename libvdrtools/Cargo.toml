@@ -140,7 +140,7 @@ name = "libvdrtools-dev"
 depends = "libvdrtools (= 0.0.1)"
 assets = [
     ["include/*.h", "usr/include/vdrtools/", "644"],
-    ["target/release/libvdrtoolss.a", "usr/lib/", "644"],
+    ["target/release/libvdrtools.a", "usr/lib/", "644"],
 ]
 
 [build-dependencies]
