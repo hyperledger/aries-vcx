@@ -241,15 +241,17 @@ impl IssuerSM {
 
     pub fn get_credential_offer_msg(&self) -> VcxResult<CredentialOffer> {
         match &self.state {
-            IssuerFullState::OfferSet(state) => Ok(state.cred_offer_msg.clone()),
+            IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
+            IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Can not get cred_offer_msg in current state."))
         }
     }
 
-    pub fn mark_credential_offer_sent(self) -> VcxResult<Self> {
+    pub fn mark_credential_offer_msg_sent(self) -> VcxResult<Self> {
         let Self { state, source_id, thread_id } = self;
         let state = match state {
             IssuerFullState::OfferSet(state) => IssuerFullState::OfferSent(state.into()),
+            IssuerFullState::OfferSent(state) => IssuerFullState::OfferSent(state),
             _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Can not mark_as_offer_sent in current state."))
         };
         Ok(Self::step(source_id, thread_id, state))
@@ -425,10 +427,11 @@ pub mod test {
         }
 
         fn to_offer_sent_state(mut self) -> IssuerSM {
-            let cred_offer = serde_json::from_str(LIBINDY_CRED_OFFER).unwrap();
+            let cred_offer = CredentialOffer::create()
+                .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
             self = self.set_offer(cred_offer, &cred_info.credential_json, &cred_info.cred_def_id, cred_info.rev_reg_id, cred_info.tails_file).unwrap();
-            self = self.mark_credential_offer_sent().unwrap();
+            self = self.mark_credential_offer_msg_sent().unwrap();
             self
         }
 
@@ -494,7 +497,7 @@ pub mod test {
             let cred_offer = serde_json::from_str(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
             issuer_sm = issuer_sm.set_offer(cred_offer, &cred_info.credential_json, &cred_info.cred_def_id, cred_info.rev_reg_id, cred_info.tails_file).unwrap();
-            issuer_sm = issuer_sm.mark_credential_offer_sent().unwrap();
+            issuer_sm = issuer_sm.mark_credential_offer_msg_sent().unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
         }

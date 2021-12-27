@@ -107,16 +107,18 @@ impl Issuer {
     }
 
     // todo: include in tests
-    pub fn mark_credential_offer_sent(&mut self) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_sent()?;
+    pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
         Ok(())
     }
 
     // todo: Not needed, consumer should build and sent the offer himself, then call mark_credential_offer_sent
     pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        let cred_offer_msg = self.get_credential_offer_msg()?;
-        send_message(&cred_offer_msg.to_a2a_message())?;
-        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_sent()?;
+        if self.issuer_sm.get_state() == IssuerState::OfferSet {
+            let cred_offer_msg = self.get_credential_offer_msg()?;
+            send_message(&cred_offer_msg.to_a2a_message())?;
+            self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
+        }
         Ok(())
     }
 
@@ -213,7 +215,7 @@ pub mod test {
     impl Issuer {
         fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
             self.build_credential_offer_msg(_offer_info_unrevokable(), None);
-            self.mark_credential_offer_sent();
+            self.mark_credential_offer_msg_sent();
             self
         }
 
@@ -318,7 +320,6 @@ pub mod test {
         let mut issuer = _issuer().to_offer_sent_state_unrevokable();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
         let res = issuer.send_credential_offer(_send_message_but_fail().unwrap());
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         assert!(res.is_ok());

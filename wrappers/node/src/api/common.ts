@@ -125,6 +125,7 @@ export enum HolderStateType {
 export enum IssuerStateType {
   Initial = 0,
   ProposalReceived = 1,
+  OfferSet = 12,
   OfferSent = 2,
   RequestReceived = 3,
   CredentialSent = 4,

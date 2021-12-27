@@ -3,6 +3,7 @@ use std::ptr;
 use libc::c_char;
 
 use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
@@ -226,6 +227,94 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
+
+
+#[no_mangle]
+pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandle,
+                                                    credential_handle: u32,
+                                                    cred_def_handle: u32,
+                                                    credential_data: *const c_char,
+                                                    comment: *const c_char,
+                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
+    info!("vcx_issuer_build_credential_offer_msg >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(credential_data, VcxErrorKind::InvalidOption);
+    let comment = if !comment.is_null() {
+        check_useful_opt_c_str!(comment, VcxErrorKind::InvalidOption);
+        comment.to_owned()
+    } else {
+        None
+    };
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_issuer_build_credential_offer_msg(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, credential_handle, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    execute(move || {
+        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, credential_data, comment) {
+            Ok(offer_msg) => {
+                let offer_msg = json!(offer_msg).to_string();
+                let offer_msg = CStringUtils::string_to_cstring(offer_msg);
+                trace!("vcx_issuer_build_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, source_id);
+                cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_issuer_build_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
+                      command_handle, credential_handle, x, source_id);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_mark_credential_offer_msg_sent(command_handle: CommandHandle,
+                                                 credential_handle: u32,
+                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
+    info!("vcx_mark_credential_offer_msg_sent >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_mark_credential_offer_msg_sent(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, credential_handle, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    execute(move || {
+        match issuer_credential::mark_credential_offer_msg_sent(credential_handle) {
+            Ok(offer_msg) => {
+                let offer_msg = json!(offer_msg).to_string();
+                let offer_msg = CStringUtils::string_to_cstring(offer_msg);
+                trace!("vcx_mark_credential_offer_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, source_id);
+                cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_mark_credential_offer_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
+                      command_handle, credential_handle, x, source_id);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the object and updates the state attribute.
