@@ -206,12 +206,13 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
     }
 
     execute(move || {
-        match issuer_credential::generate_credential_offer_msg(credential_handle) {
-            Ok((msg, _)) => {
-                let msg = CStringUtils::string_to_cstring(msg);
+        match issuer_credential::get_credential_offer_msg(credential_handle) {
+            Ok(offer_msg) => {
+                let offer_msg = json!(offer_msg).to_string();
+                let offer_msg = CStringUtils::string_to_cstring(offer_msg);
                 trace!("vcx_issuer_get_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
             }
             Err(x) => {
                 warn!("vcx_issuer_get_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",

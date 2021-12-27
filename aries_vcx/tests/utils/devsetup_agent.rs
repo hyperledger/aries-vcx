@@ -264,7 +264,8 @@ pub mod test {
                 tails_file: self.cred_def.get_tails_file(),
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
-            self.issuer_credential.send_credential_offer(offer_info, None, self.connection.send_message_closure().unwrap()).unwrap();
+            self.issuer_credential.build_credential_offer_msg(offer_info, None).unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap()).unwrap();
             self.issuer_credential.update_state(&self.connection).unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }

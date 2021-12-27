@@ -251,7 +251,8 @@ mod tests {
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(offer_info, comment, connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, comment.map(String::from)).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -338,7 +339,8 @@ mod tests {
             rev_reg_id,
             tails_file
         };
-        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -356,7 +358,8 @@ mod tests {
             rev_reg_id,
             tails_file
         };
-        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }

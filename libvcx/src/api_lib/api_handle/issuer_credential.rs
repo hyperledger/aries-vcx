@@ -1,4 +1,5 @@
 use serde_json;
+use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 
 use aries_vcx::utils::error;
 
@@ -87,9 +88,9 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |_| {
-        Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet"))
+pub fn get_credential_offer_msg(handle: u32) -> VcxResult<CredentialOffer> {
+    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
+        Ok(credential.get_credential_offer_msg()?)
     })
 }
 
@@ -105,7 +106,9 @@ pub fn send_credential_offer(handle: u32,
             rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
             tails_file: credential_def::get_tails_file(cred_def_handle)?,
         };
-        credential.send_credential_offer(offer_info, comment.as_deref(), connection::send_message_closure(connection_handle)?)?;
+        credential.build_credential_offer_msg(offer_info, comment.clone())?;
+        let send_message = connection::send_message_closure(connection_handle)?;
+        credential.send_credential_offer(send_message)?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)

@@ -11,7 +11,6 @@ type CredentialOfferJson = String;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {
-    CredentialOfferSend(OfferInfo, CredentialOfferJson, OptionalComment),
     CredentialSend(),
     CredentialProposalSend(CredentialProposalData),
     CredentialProposal(CredentialProposal),
