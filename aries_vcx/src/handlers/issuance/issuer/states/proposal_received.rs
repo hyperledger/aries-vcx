@@ -2,7 +2,7 @@ use crate::error::prelude::*;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::handlers::issuance::is_cred_def_revokable;
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-use crate::messages::issuance::credential_offer::OfferInfo;
+use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {
@@ -23,8 +23,8 @@ impl ProposalReceivedState {
     }
 }
 
-impl From<(String, OfferInfo)> for OfferSentState {
-    fn from((offer, offer_info): (String, OfferInfo)) -> Self {
+impl From<(CredentialOffer, OfferInfo)> for OfferSentState {
+    fn from((offer, offer_info): (CredentialOffer, OfferInfo)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,

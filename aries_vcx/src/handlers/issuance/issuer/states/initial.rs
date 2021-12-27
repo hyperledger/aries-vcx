@@ -1,11 +1,11 @@
 use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-use crate::messages::issuance::credential_offer::OfferInfo;
+use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq)]
 pub struct InitialIssuerState {}
 
-impl From<(OfferInfo, String)> for OfferSentState {
-    fn from((offer_info, offer): (OfferInfo, String)) -> Self {
+impl From<(OfferInfo, CredentialOffer)> for OfferSentState {
+    fn from((offer_info, offer): (OfferInfo, CredentialOffer)) -> Self {
         trace!("SM is now in OfferSent state");
         OfferSentState {
             offer,

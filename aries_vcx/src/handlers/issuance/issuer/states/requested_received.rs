@@ -3,13 +3,14 @@ use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentSt
 use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::messages::a2a::MessageId;
 use crate::messages::error::ProblemReport;
+use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
 
 // TODO: Use OfferInfo instead of ind. fields
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestReceivedState {
-    pub offer: String,
+    pub offer: CredentialOffer,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
