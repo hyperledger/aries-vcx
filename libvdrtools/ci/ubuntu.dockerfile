@@ -37,7 +37,7 @@ RUN apt-get install -y nodejs
 
 RUN pip3 install -U \
 	pip \
-	setuptools \
+	setuptools==59.6.0 \
 	virtualenv \
 	twine==1.15.0 \
 	plumbum==1.6.7 six==1.12.0 \

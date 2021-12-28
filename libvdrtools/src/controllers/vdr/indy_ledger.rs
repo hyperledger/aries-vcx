@@ -284,7 +284,8 @@ impl IndyLedger {
     }
 
     async fn _submit_txn(&self, transaction: &str) -> IndyResult<String> {
-        self.pool_service.send_tx(self.handle, &transaction).await
+        let result = self.pool_service.send_tx(self.handle, &transaction).await?;
+        validate_txn_response(result)
     }
 
     fn set_txn_signatures(&self, transaction: &str, signature: &[u8], endorsement: Option<&str>) -> IndyResult<String> {
@@ -359,5 +360,22 @@ impl IndyLedger {
                                                                                   taa_config.time)?;
         }
         Ok(())
+    }
+}
+
+fn validate_txn_response(response: String) -> IndyResult<String> {
+    let message: serde_json::Value = serde_json::from_str(&response).to_indy(
+        IndyErrorKind::InvalidTransaction,
+        "Response is invalid json",
+    )?;
+
+    if message["op"].as_str() == Some("REPLY") {
+        Ok(response)
+    } else {
+        let reason = message["data"]["reason"].as_str().unwrap_or("no failure reason provided");
+        Err(err_msg(
+            IndyErrorKind::InvalidTransaction,
+            format!("Transaction has been failed: {:?}", reason),
+        ))
     }
 }
