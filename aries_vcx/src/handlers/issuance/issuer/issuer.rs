@@ -102,8 +102,9 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn get_credential_offer_msg(&self) -> VcxResult<CredentialOffer> {
-        self.issuer_sm.get_credential_offer_msg()
+    pub fn get_credential_offer_msg(&self) -> VcxResult<A2AMessage> {
+        let offer = self.issuer_sm.get_credential_offer()?;
+        Ok(offer.to_a2a_message())
     }
 
     // todo: include in tests
@@ -116,7 +117,7 @@ impl Issuer {
     pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         if self.issuer_sm.get_state() == IssuerState::OfferSet {
             let cred_offer_msg = self.get_credential_offer_msg()?;
-            send_message(&cred_offer_msg.to_a2a_message())?;
+            send_message(&cred_offer_msg)?;
             self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
         }
         Ok(())

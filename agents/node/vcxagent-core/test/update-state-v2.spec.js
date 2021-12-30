@@ -7,14 +7,14 @@ const sleep = require('sleep-promise')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=warn')
 })
 
 describe('test update state', () => {
   it('Faber should send credential to Alice', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
-
+      await faber.buildLedgerPrimitives()
       await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
 

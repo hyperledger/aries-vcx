@@ -5,6 +5,27 @@ const {
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds, issuerDid }) {
+
+  async function buildOfferAndMarkAsSent (issuerCredId, credDefId, schemaAttrs) {
+    const credDef = await loadCredDef(credDefId)
+    logger.debug('Building issuer credential')
+    const issuerCred = await IssuerCredential.create('alice_degree')
+    logger.info(`Per issuer credential ${issuerCredId}, building cred offer.`)
+    await issuerCred.buildCredentialOfferMsg({
+      credDef,
+      attr: schemaAttrs
+    })
+    const state1 = await issuerCred.getState()
+    expect(state1).toBe(IssuerStateType.OfferSet)
+    const credOfferMsg = await issuerCred.getCredentialOfferMsg()
+    await issuerCred.markCredentialOfferMsgSent()
+    const state2 = await issuerCred.getState()
+    expect(state2).toBe(IssuerStateType.OfferSent)
+    await saveIssuerCredential(issuerCredId, issuerCred)
+
+    return credOfferMsg
+  }
+
   async function sendOffer (issuerCredId, connectionId, credDefId, schemaAttrs) {
     const connection = await loadConnection(connectionId)
     const credDef = await loadCredDef(credDefId)
@@ -111,6 +132,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
   return {
     sendOffer,
+    buildOfferAndMarkAsSent,
     sendOfferAndWaitForCredRequest,
     sendCredential,
     sendCredentialAndProgress,

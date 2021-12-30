@@ -54,33 +54,18 @@ impl OutOfBandSender {
 
     pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
-            A2AMessage::CredentialRequest(request) => {
-                (AttachmentId::CredentialRequest,
-                serde_json::to_string(&request)
-                    .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize request: {:?}", request)))?)
-            }
             A2AMessage::PresentationRequest(request) => {
-                (AttachmentId::PresentationRequest,
-                serde_json::to_string(&request)
-                    .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize request: {:?}", request)))?)
+                (AttachmentId::PresentationRequest, json!(&request).to_string())
             }
             A2AMessage::CredentialOffer(offer) => {
-                (AttachmentId::CredentialOffer,
-                serde_json::to_string(&offer)
-                    .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize offer: {:?}", offer)))?)
-            }
-            A2AMessage::Credential(credential) => {
-                (AttachmentId::Credential,
-                serde_json::to_string(&credential)
-                    .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize credential: {:?}", credential)))?)
-            }
-            A2AMessage::Presentation(presentation) => {
-                (AttachmentId::Presentation,
-                serde_json::to_string(&presentation)
-                    .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize presentation: {:?}", presentation)))?)
+                 (AttachmentId::CredentialOffer, json!(&offer).to_string())
             }
             _ => {
-                return Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
+                error!("Appended message type {:?} is not allowed.", msg);
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidMessageFormat,
+                    format!("Appended message type {:?} is not allowed.", msg))
+                )
             }
         };
         self.oob.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;

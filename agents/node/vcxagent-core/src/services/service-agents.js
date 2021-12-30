@@ -7,6 +7,7 @@ module.exports.createServiceAgents = function createServiceAgents ({ logger, sav
     logger.info(`Creating public agent with id ${agentId} for institution did ${institutionDid}`)
     const agent = await Agent.create(agentId, institutionDid)
     await saveAgent(agentId, agent)
+    logger.info(`Created public agent with id ${agentId} for institution did ${institutionDid}`)
     return agent
   }
 

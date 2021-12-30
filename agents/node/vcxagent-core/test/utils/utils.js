@@ -28,10 +28,25 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
   const alice = await createAlice()
   const faber = await createFaber()
   const msg = await faber.createOobMsg()
-  await alice.acceptOobMsg(msg)
+  await alice.createConnectionUsingOobMessage(msg)
   await alice.updateConnection(ConnectionStateType.Requested)
   await faber.createConnectionFromReceivedRequest()
   await alice.updateConnection(ConnectionStateType.Finished)
   await faber.updateConnection(ConnectionStateType.Finished)
+  return { alice, faber }
+}
+
+module.exports.connectViaOobMessage = async function connectViaOobMessage (alice, faber, msg) {
+  await alice.createConnectionUsingOobMessage(msg)
+  await alice.updateConnection(ConnectionStateType.Requested)
+  await faber.createConnectionFromReceivedRequest()
+  await alice.updateConnection(ConnectionStateType.Finished)
+  await faber.updateConnection(ConnectionStateType.Finished)
+  return { alice, faber }
+}
+
+module.exports.createAliceAndFaber = async function createAliceAndFaber () {
+  const alice = await createAlice()
+  const faber = await createFaber()
   return { alice, faber }
 }

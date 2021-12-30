@@ -1,8 +1,10 @@
 /* eslint-env jest */
 require('jest')
+const sleep = require('sleep-promise')
 
 const { initRustapi } = require('../src/index')
-const { createPairedAliceAndFaberViaOobMsg } = require('./utils/utils')
+const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMessage} = require('./utils/utils')
+const {IssuerStateType, HolderStateType} = require('@hyperledger/node-vcx-wrapper')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
@@ -32,5 +34,26 @@ describe('test out of band communication', () => {
     expect(payloadAlice['@id']).toBeDefined()
     expect(payloadAlice['@type']).toBeDefined()
     expect(payloadAlice.content).toBe('Hello Alice')
+  })
+
+  it('Faber issues credential via OOB', async () => {
+    try {
+      const {alice, faber} = await createAliceAndFaber()
+      await faber.createCredDef(undefined, undefined)
+      console.log(`Creating oob offer`)
+      const oobCredOfferMsg = await faber.createOobCredOffer()
+
+      await connectViaOobMessage(alice, faber, oobCredOfferMsg)
+
+      console.log(`Going to accept credential offer`)
+      await alice.acceptOobCredentialOffer(oobCredOfferMsg)
+      console.log(`Accepted credential offer`)
+      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.sendCredential()
+      await alice.updateStateCredentialV2(HolderStateType.Finished)
+    } catch (e) {
+      console.error(e.stack)
+      await sleep(1000)
+    }
   })
 })

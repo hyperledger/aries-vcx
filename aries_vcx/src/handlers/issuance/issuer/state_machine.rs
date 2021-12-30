@@ -239,7 +239,7 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn get_credential_offer_msg(&self) -> VcxResult<CredentialOffer> {
+    pub fn get_credential_offer(&self) -> VcxResult<CredentialOffer> {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
             IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),

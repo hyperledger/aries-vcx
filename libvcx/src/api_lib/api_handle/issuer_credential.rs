@@ -109,7 +109,7 @@ pub fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
     })
 }
 
-pub fn get_credential_offer_msg(handle: u32) -> VcxResult<CredentialOffer> {
+pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
         Ok(credential.get_credential_offer_msg()?)
     })
