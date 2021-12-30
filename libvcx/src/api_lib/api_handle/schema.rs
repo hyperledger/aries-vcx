@@ -8,7 +8,7 @@ use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");

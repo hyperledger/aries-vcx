@@ -6,7 +6,7 @@ use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");

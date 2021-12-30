@@ -14,7 +14,7 @@ use crate::aries_vcx::{
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCacheAsync<Prover> = ObjectCacheAsync::<Prover>::new("disclosed-proofs-cache");

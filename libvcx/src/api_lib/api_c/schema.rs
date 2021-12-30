@@ -10,7 +10,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///

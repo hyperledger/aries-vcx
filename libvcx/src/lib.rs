@@ -28,4 +28,3 @@ extern crate async_std;
 
 #[macro_use]
 pub mod api_lib;
-pub mod error;

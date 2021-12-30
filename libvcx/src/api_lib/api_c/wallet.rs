@@ -11,7 +11,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///

@@ -4,7 +4,7 @@ use aries_vcx::utils::error::SUCCESS;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Set default logger implementation.
 ///

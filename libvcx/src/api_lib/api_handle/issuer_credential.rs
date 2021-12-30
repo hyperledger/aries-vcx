@@ -9,7 +9,7 @@ use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 use crate::aries_vcx::handlers::issuance::issuer::Issuer;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::issuance::credential_offer::OfferInfo;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCacheAsync<Issuer> = ObjectCacheAsync::<Issuer>::new("issuer-credentials-cache");

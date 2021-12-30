@@ -9,7 +9,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[no_mangle]
 pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,

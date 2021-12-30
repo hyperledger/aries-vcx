@@ -13,7 +13,7 @@ pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use aries_vcx::libindy;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]

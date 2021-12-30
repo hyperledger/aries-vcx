@@ -134,6 +134,14 @@ pub enum VcxErrorKind {
     #[fail(display = "Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
 
+    // Public agent
+    #[fail(display = "Could not create public agent")]
+    CreatePublicAgent,
+
+    // Out of Band
+    #[fail(display = "Could not create out of band message.")]
+    CreateOutOfBand,
+
     // Pool
     #[fail(display = "Invalid genesis transactions path.")]
     InvalidGenesisTxnPath,
@@ -455,7 +463,9 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
             VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
-            VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num
+            VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num,
+            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
+            VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num
         }
     }
 }
@@ -548,6 +558,8 @@ impl From<u32> for VcxErrorKind {
             _ if { error::NO_AGENT_INFO.code_num == code } => VcxErrorKind::NoAgentInformation,
             _ if { error::REV_REG_DEF_NOT_FOUND.code_num == code } => VcxErrorKind::RevRegDefNotFound,
             _ if { error::REV_DELTA_NOT_FOUND.code_num == code } => VcxErrorKind::RevDeltaNotFound,
+            _ if { error::CREATE_PUBLIC_AGENT.code_num == code } => VcxErrorKind::CreatePublicAgent,
+            _ if { error::CREATE_OUT_OF_BAND.code_num == code } => VcxErrorKind::CreateOutOfBand,
             _ => VcxErrorKind::UnknownError,
         }
     }

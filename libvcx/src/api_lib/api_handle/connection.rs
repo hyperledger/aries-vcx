@@ -15,7 +15,7 @@ use crate::aries_vcx::handlers::connection::connection::Connection;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use crate::aries_vcx::messages::connection::request::Request;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCacheAsync<Connection> = ObjectCacheAsync::<Connection>::new("connections-cache");

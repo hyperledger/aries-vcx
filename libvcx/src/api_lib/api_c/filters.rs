@@ -8,7 +8,7 @@ use aries_vcx::utils::filters;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///

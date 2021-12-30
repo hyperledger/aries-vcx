@@ -8,7 +8,7 @@ use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 use crate::aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCacheAsync<Verifier> = ObjectCacheAsync::<Verifier>::new("proofs-cache");
