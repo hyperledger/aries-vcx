@@ -1,10 +1,10 @@
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationProposalReceivedState {
     pub presentation_proposal: PresentationProposal,
-    pub presentation_request_data: Option<PresentationRequestData>,
+    pub presentation_request: Option<PresentationRequest>,
 }
 
 impl PresentationProposalReceivedState {

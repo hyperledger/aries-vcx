@@ -164,8 +164,7 @@ impl From<PresentationProposalData> for PresentationProposal {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::_thread;
-
+    use crate::messages::connection::response::test_utils::_thread;
     use super::*;
 
     fn _attachment() -> ::serde_json::Value {

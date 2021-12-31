@@ -79,7 +79,7 @@ pub mod test_utils {
         _presentation_request().id.0
     }
 
-    pub fn _thread() -> Thread {
+    pub fn thread() -> Thread {
         Thread::new().set_thid(_presentation_request().id.0)
     }
 

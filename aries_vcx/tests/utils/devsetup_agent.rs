@@ -205,10 +205,10 @@ pub mod test {
                 {"name": "degree"},
                 {"name": "empty_param", "restrictions": {"attr::empty_param::value": ""}}
             ]).to_string();
-            let presentation_request =
+            let presentation_request_data =
                 PresentationRequestData::create("1").unwrap()
                     .set_requested_attributes_as_string(requested_attrs).unwrap();
-            Verifier::create_from_request(String::from("alice_degree"), &presentation_request).unwrap()
+            Verifier::create_from_request(String::from("alice_degree"), &presentation_request_data).unwrap()
         }
 
         pub fn create_invite(&mut self) -> String {
@@ -286,7 +286,7 @@ pub mod test {
             self.verifier = self.create_presentation_request();
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
-            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap(), None).unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap()).unwrap();
             self.verifier.update_state(&self.connection).unwrap();
 
             assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
@@ -302,7 +302,7 @@ pub mod test {
 
             self.verifier.update_state(&self.connection).unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
-            assert_eq!(expected_status, self.verifier.presentation_status());
+            assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
     }
 

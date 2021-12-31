@@ -1,12 +1,22 @@
-use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct PresentationRequestSet {
-    pub presentation_request_data: PresentationRequestData,
+pub struct PresentationRequestSetState {
+    pub presentation_request: PresentationRequest,
 }
 
-impl PresentationRequestSet {
-    pub fn new(presentation_request_data: PresentationRequestData) -> Self {
-        Self { presentation_request_data }
+impl PresentationRequestSetState {
+    pub fn new(presentation_request: PresentationRequest) -> Self {
+        Self { presentation_request }
+    }
+}
+
+impl From<PresentationRequestSetState> for PresentationRequestSentState {
+    fn from(state: PresentationRequestSetState) -> Self {
+        trace!("transit state from PresentationRequestSetState to PresentationRequestSentState");
+        PresentationRequestSentState {
+            presentation_request: state.presentation_request
+        }
     }
 }

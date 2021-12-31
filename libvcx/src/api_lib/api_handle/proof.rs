@@ -70,7 +70,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 
 pub fn get_proof_state(handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get(handle, |proof| {
-        Ok(proof.presentation_status())
+        Ok(proof.get_presentation_status())
     })
 }
 
@@ -104,22 +104,28 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub fn generate_proof_request_msg(handle: u32) -> VcxResult<String> {
+pub fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.generate_presentation_request_msg().map_err(|err| err.into())
-    })
-}
-
-pub fn send_proof_request(handle: u32, connection_handle: u32, comment: Option<String>) -> VcxResult<u32> {
-    PROOF_MAP.get_mut(handle, |proof| {
-        proof.send_presentation_request(connection::send_message_closure(connection_handle)?, comment.clone())?;
+        proof.send_presentation_request(connection::send_message_closure(connection_handle)?)?;
         Ok(error::SUCCESS.code_num)
     })
 }
 
-pub fn get_proof(handle: u32) -> VcxResult<String> {
+pub fn mark_presentation_request_msg_sent(handle: u32) -> VcxResult<()> {
+    PROOF_MAP.get_mut(handle, |proof| {
+        proof.mark_presentation_request_msg_sent().map_err(|err| err.into())
+    })
+}
+
+pub fn get_presentation_request_msg(handle: u32) -> VcxResult<String> {
+    PROOF_MAP.get_mut(handle, |proof| {
+        proof.get_presentation_request_msg().map_err(|err| err.into())
+    })
+}
+
+pub fn get_presentation_msg(handle: u32) -> VcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
-        proof.get_presentation().map_err(|err| err.into())
+        proof.get_presentation_msg().map_err(|err| err.into())
     })
 }
 
@@ -223,7 +229,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
 
         let handle_proof = create_default_proof();
-        assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
@@ -234,7 +240,7 @@ pub mod tests {
 
         let handle = create_default_proof();
         assert!(is_valid_handle(handle));
-        assert!(get_proof(handle).is_err())
+        assert!(get_presentation_msg(handle).is_err())
     }
 
     #[test]
@@ -247,7 +253,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
         connection::release(handle_conn).unwrap();
@@ -268,7 +274,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
@@ -285,7 +291,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
@@ -300,7 +306,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
 
         update_state(handle_proof, Some(PROOF_REJECT_RESPONSE_STR_V2), handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Failed as u32);
@@ -314,7 +320,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
@@ -328,13 +334,13 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
 
-        let proof_str = get_proof(handle_proof).unwrap();
+        let proof_str = get_presentation_msg(handle_proof).unwrap();
         assert_eq!(proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION.replace("\n", "").replace(" ", ""));
     }
 
@@ -364,15 +370,15 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        let _request = generate_proof_request_msg(handle_proof).unwrap();
+        let _request = get_presentation_request_msg(handle_proof).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
-        assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::IOError);
+        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap_err().kind(), VcxErrorKind::IOError);
         assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         // Retry sending proof request
-        assert_eq!(send_proof_request(handle_proof, handle_conn, _comment()).unwrap(), 0);
+        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), 0);
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
@@ -386,8 +392,8 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested();
         let handle_proof = create_default_proof();
 
-        let _request = generate_proof_request_msg(handle_proof).unwrap();
-        send_proof_request(handle_proof, handle_conn, _comment()).unwrap();
+        let _request = get_presentation_request_msg(handle_proof).unwrap();
+        send_proof_request(handle_proof, handle_conn).unwrap();
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
         assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
@@ -403,7 +409,7 @@ pub mod tests {
         let bad_handle = 100000;
         let empty = r#""#;
 
-        assert_eq!(send_proof_request(bad_handle, handle_conn, _comment()).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(send_proof_request(bad_handle, handle_conn).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(get_proof_state(handle_proof).unwrap(), 0);
         assert_eq!(create_proof("my source id".to_string(),
                                 empty.to_string(),

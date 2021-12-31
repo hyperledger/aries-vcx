@@ -340,6 +340,12 @@ export interface IFFIEntryPoint {
   ) => number;
   vcx_proof_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_proof_get_thread_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_mark_presentation_request_msg_sent: (
+      commandId: number,
+      proofHandle: number,
+      cb: ICbRef,
+  ) => number;
+
 
   // disclosed proof
   vcx_disclosed_proof_create_with_request: (
@@ -837,7 +843,11 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_proof_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR]],
   vcx_proof_get_thread_id: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_mark_presentation_request_msg_sent: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
   ],
 
   // disclosed proof
