@@ -175,21 +175,21 @@ describe('IssuerCredential:', () => {
     });
   });
 
-  describe('revoke:', () => {
-    it('throws: invalid revocation details', async () => {
-      const issuerCredential = await issuerCredentialCreate()
-      const error = await shouldThrow(() => issuerCredential.revokeCredential())
-      assert.equal(error.vcxCode, VCXCode.INVALID_REVOCATION_DETAILS)
-    })
-
-    it('success', async () => {
-      const issuerCredential1 = await issuerCredentialCreate()
-      const data = await issuerCredential1.serialize()
-      data.data.cred_rev_id = '123'
-      data.data.rev_reg_id = '456'
-      data.data.tails_file = 'file'
-      const issuerCredential2 = await IssuerCredential.deserialize(data)
-      await issuerCredential2.revokeCredential()
-    })
-  })
+  // describe('revoke:', () => {
+  //   it('throws: invalid revocation details', async () => {
+  //     const issuerCredential = await issuerCredentialCreate()
+  //     const error = await shouldThrow(() => issuerCredential.revokeCredential())
+  //     assert.equal(error.vcxCode, VCXCode.INVALID_REVOCATION_DETAILS)
+  //   })
+  //
+  //   it('success', async () => {
+  //     const issuerCredential1 = await issuerCredentialCreate()
+  //     const data = await issuerCredential1[0].serialize()
+  //     data.data.cred_rev_id = '123'
+  //     data.data.rev_reg_id = '456'
+  //     data.data.tails_file = 'file'
+  //     const issuerCredential2 = await IssuerCredential.deserialize(data)
+  //     await issuerCredential2.revokeCredential()
+  //   })
+  // })
 });

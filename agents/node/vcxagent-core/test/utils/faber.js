@@ -72,6 +72,19 @@ module.exports.createFaber = async function createFaber () {
     return oobCredOfferMsg
   }
 
+  async function createOobProofRequest () {
+    await vcxAgent.agentInitVcx()
+
+    const issuerDid = vcxAgent.getInstitutionDid()
+    const proofData = getFaberProofData(issuerDid, proofId)
+    logger.info(`Faber is sending proof request to connection ${connectionId}`)
+    const presentationRequestMsg = await vcxAgent.serviceVerifier.buildProofReqAndMarkAsSent(proofId, proofData)
+
+    await vcxAgent.agentShutdownVcx()
+    const oobPresentationRequestMsg = await createOobMsg(presentationRequestMsg)
+    return oobPresentationRequestMsg
+  }
+
   async function sendConnectionResponse () {
     logger.info('Faber is going to generate invite')
     await vcxAgent.agentInitVcx()
@@ -275,6 +288,7 @@ module.exports.createFaber = async function createFaber () {
     createInvite,
     createPublicInvite,
     createOobMsg,
+    createOobProofRequest,
     createConnectionFromReceivedRequest,
     updateConnection,
     sendConnectionResponse,

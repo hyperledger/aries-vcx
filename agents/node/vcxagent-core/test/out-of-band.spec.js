@@ -3,8 +3,9 @@ require('jest')
 const sleep = require('sleep-promise')
 
 const { initRustapi } = require('../src/index')
-const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMessage} = require('./utils/utils')
-const {IssuerStateType, HolderStateType} = require('@hyperledger/node-vcx-wrapper')
+const { VerifierStateType } = require('@hyperledger/node-vcx-wrapper')
+const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMessage, createPairedAliceAndFaber} = require('./utils/utils')
+const {IssuerStateType, HolderStateType, OutOfBandReceiver} = require('@hyperledger/node-vcx-wrapper')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
@@ -51,6 +52,29 @@ describe('test out of band communication', () => {
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
       await faber.sendCredential()
       await alice.updateStateCredentialV2(HolderStateType.Finished)
+    } catch (e) {
+      console.error(e.stack)
+      await sleep(1000)
+    }
+  })
+
+  it('Faber requests proof via OOB', async () => {
+    try {
+      const { alice, faber } = await createPairedAliceAndFaber()
+      await faber.buildLedgerPrimitives()
+      await faber.sendCredentialOffer()
+      await alice.acceptCredentialOffer()
+      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.sendCredential()
+      await alice.updateStateCredentialV2(HolderStateType.Finished)
+
+      const oobPresentationRequestMsg = await faber.createOobProofRequest()
+
+      const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
+      const presentationRequest = await oobReceiver.extractMessage()
+      await alice.sendHolderProof(presentationRequest, null)
+      await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
+
     } catch (e) {
       console.error(e.stack)
       await sleep(1000)
