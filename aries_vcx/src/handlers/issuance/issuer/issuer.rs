@@ -107,13 +107,11 @@ impl Issuer {
         Ok(offer.to_a2a_message())
     }
 
-    // todo: include in tests
     pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
         Ok(())
     }
 
-    // todo: Not needed, consumer should build and sent the offer himself, then call mark_credential_offer_sent
     pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
         if self.issuer_sm.get_state() == IssuerState::OfferSet {
             let cred_offer_msg = self.get_credential_offer_msg()?;

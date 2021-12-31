@@ -24,18 +24,6 @@ impl OfferSetState {
         }
     }
 }
-//
-// impl From<OfferSetState> for FinishedState {
-//     fn from(_state: OfferSetState) -> Self {
-//         trace!("SM is now in Finished state");
-//         FinishedState {
-//             cred_id: None,
-//             thread_id: String::new(),
-//             revocation_info_v1: None,
-//             status: Status::Undefined,
-//         }
-//     }
-// }
 
 impl From<OfferSetState> for OfferSentState {
     fn from(state: OfferSetState) -> Self {

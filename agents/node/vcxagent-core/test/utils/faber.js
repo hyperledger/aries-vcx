@@ -103,14 +103,15 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createCredDef (_revocationDetails, tailsUrl) {
+  async function createCredDef (revocationDetails, tailsUrl) {
+    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
+
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
 
     logger.info('Faber writing credential definition on ledger')
-    const revocationDetails = _revocationDetails || buildRevocationDetails({ supportRevocation: false })
     credDefId = getFaberCredDefName()
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
       schemaId,

@@ -1,8 +1,7 @@
 const {
-  Proof, IssuerCredential, IssuerStateType
+  Proof, IssuerCredential, IssuerStateType, VerifierStateType
 } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
-const {VerifierStateType} = require('../../../../../wrappers/node')
 
 module.exports.createServiceVerifier = function createServiceVerifier ({ logger, loadConnection, saveProof, loadProof, listProofIds }) {
   async function createProof (proofId, proofData) {
