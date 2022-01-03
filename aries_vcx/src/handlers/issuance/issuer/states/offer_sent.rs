@@ -2,12 +2,13 @@ use crate::handlers::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::handlers::issuance::issuer::states::finished::FinishedState;
 use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::messages::error::ProblemReport;
+use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {
-    pub offer: String,
+    pub offer: CredentialOffer,
     pub cred_data: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,

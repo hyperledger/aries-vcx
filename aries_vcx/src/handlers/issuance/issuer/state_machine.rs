@@ -233,7 +233,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    (IssuerFullState::OfferSent((offer_info, cred_offer).into()), thread_id)
+                    (IssuerFullState::OfferSent((offer_info, cred_offer_msg).into()), thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
@@ -251,7 +251,7 @@ impl IssuerSM {
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
                     )?(&cred_offer_msg.to_a2a_message())?;
-                    (IssuerFullState::OfferSent((cred_offer, offer_info).into()), thread_id)
+                    (IssuerFullState::OfferSent((cred_offer_msg, offer_info).into()), thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
@@ -382,14 +382,15 @@ fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: 
     Ok(new_offer)
 }
 
-fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &str, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
-    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &CredentialOffer, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
+    trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {:?}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
+    let offer = offer.offers_attach.content()?;
     if !request.from_thread(&thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
     };
     let request = &request.requests_attach.content()?;
     let cred_data = encode_attributes(cred_data)?;
-    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(offer,
+    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(&offer,
                                                                                        &request,
                                                                                        &cred_data,
                                                                                        rev_reg_id.clone(),
