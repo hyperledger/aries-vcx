@@ -223,6 +223,49 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
     }
   }
 
+
+    /**
+     * Sends a credential Offer to the end user.
+     *
+     * A Credential Offer is made up of the data provided in the creation of this object
+     *
+     * Example:
+     * ```
+     * connection = await Connection.create({id: 'foobar'})
+     * inviteDetails = await connection.connect()
+     * issuerCredential = await IssuerCredential.create({sourceId: "12",
+     *   credDefId: "credDefId", attr: {k    ey: "value"}, credentialName: "name", price: 0})
+     * await issuerCredential.sendOffer(connection)
+     * ```
+     */
+    public async sendOfferV2(connection: Connection): Promise<void> {
+        try {
+            await createFFICallbackPromise<void>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_issuer_send_credential_offer_v2(
+                        0,
+                        this.handle,
+                        connection.handle,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    }),
+            );
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
+
     /**
      * Flags the protocol object as the credential offer has been sent and incoming credential request message should
      * be expected.

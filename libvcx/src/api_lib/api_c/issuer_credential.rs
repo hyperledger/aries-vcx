@@ -126,6 +126,8 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(since = "0.28.0", note = "Call methods 'vcx_issuer_build_credential_offer_msg' and \
+then 'vcx_issuer_send_credential_offer_v2' instead.")]
 pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
                                                credential_handle: u32,
                                                cred_def_handle: u32,
@@ -166,6 +168,50 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
             }
             Err(x) => {
                 warn!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
+                      command_handle, credential_handle, x, source_id);
+                x.into()
+            }
+        };
+
+        cb(command_handle, err);
+
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+
+#[no_mangle]
+pub extern fn vcx_issuer_send_credential_offer_v2(command_handle: CommandHandle,
+                                                  credential_handle: u32,
+                                                  connection_handle: u32,
+                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_issuer_send_credential_offer_v2 >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
+           command_handle, credential_handle, connection_handle, source_id);
+
+    if !issuer_credential::is_valid_handle(credential_handle) {
+        return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
+    }
+
+    if !connection::is_valid_handle(connection_handle) {
+        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
+    }
+
+    execute(move || {
+        let err = match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle) {
+            Ok(x) => {
+                trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                       command_handle, credential_handle, error::SUCCESS.message, source_id);
+                x
+            }
+            Err(x) => {
+                warn!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 x.into()
             }

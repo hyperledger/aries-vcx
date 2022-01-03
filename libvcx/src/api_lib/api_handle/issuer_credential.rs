@@ -136,6 +136,17 @@ pub fn send_credential_offer(handle: u32,
     })
 }
 
+pub fn send_credential_offer_v2(credential_handle: u32,
+                                connection_handle: u32,) -> VcxResult<u32> {
+    ISSUER_CREDENTIAL_MAP.get_mut(credential_handle, |credential| {
+        let send_message = connection::send_message_closure(connection_handle)?;
+        credential.send_credential_offer(send_message)?;
+        let new_credential = credential.clone();
+        *credential = new_credential;
+        Ok(error::SUCCESS.code_num)
+    })
+}
+
 pub fn generate_credential_msg(handle: u32, _my_pw_did: &str) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |_| {
         Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet")) // TODO: implement

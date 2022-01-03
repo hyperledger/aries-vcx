@@ -92,6 +92,20 @@ describe('IssuerCredential:', () => {
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
+    it('success sendOfferV2', async () => {
+      const connection = await createConnectionInviterRequested();
+      const credDef = await credentialDefCreate();
+      const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
+      const attr = {
+        key1: 'value1',
+        key2: 'value2',
+        key3: 'value3',
+      }
+      await issuerCredential.buildCredentialOfferMsg({credDef, attr, comment: "hello"})
+      await issuerCredential.sendOfferV2(connection);
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
+    });
+
     it('build offer and mark as sent', async () => {
       const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
       const credDef = await credentialDefCreate();

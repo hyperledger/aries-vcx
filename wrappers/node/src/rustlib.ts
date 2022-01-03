@@ -288,6 +288,12 @@ export interface IFFIEntryPoint {
     credentialData: string,
     cb: ICbRef,
   ) => number;
+  vcx_issuer_send_credential_offer_v2: (
+      commandId: number,
+      credentialHandle: number,
+      connectionHandle: number,
+      cb: ICbRef,
+  ) => number;
   vcx_mark_credential_offer_msg_sent: (
       commandId: number,
       credentialHandle: number,
@@ -789,6 +795,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_issuer_send_credential_offer: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_issuer_send_credential_offer_v2: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_mark_credential_offer_msg_sent: [
     FFI_ERROR_CODE,
