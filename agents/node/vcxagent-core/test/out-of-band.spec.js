@@ -41,14 +41,11 @@ describe('test out of band communication', () => {
     try {
       const {alice, faber} = await createAliceAndFaber()
       await faber.createCredDef(undefined, undefined)
-      console.log(`Creating oob offer`)
       const oobCredOfferMsg = await faber.createOobCredOffer()
 
       await connectViaOobMessage(alice, faber, oobCredOfferMsg)
 
-      console.log(`Going to accept credential offer`)
       await alice.acceptOobCredentialOffer(oobCredOfferMsg)
-      console.log(`Accepted credential offer`)
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
       await faber.sendCredential()
       await alice.updateStateCredentialV2(HolderStateType.Finished)

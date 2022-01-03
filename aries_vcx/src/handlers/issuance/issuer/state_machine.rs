@@ -16,10 +16,9 @@ use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::mime_type::MimeType;
 use crate::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -219,16 +218,16 @@ impl IssuerSM {
         }
     }
 
-    pub fn set_offer(self, cred_offer_msg: CredentialOffer, credential_json: &str, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> VcxResult<Self> {
+    pub fn set_offer(self, cred_offer_msg: CredentialOffer, offer_info: &OfferInfo) -> VcxResult<Self> {
         let Self { state, source_id, thread_id } = self;
         let state = match state {
             IssuerFullState::Initial(_) | IssuerFullState::OfferSet(_) | IssuerFullState::ProposalReceived(_) => {
                 IssuerFullState::OfferSet(OfferSetState::new(
                     cred_offer_msg,
-                    credential_json,
-                    cred_def_id,
-                    rev_reg_id,
-                    tails_file
+                    &offer_info.credential_json,
+                    &offer_info.cred_def_id,
+                    offer_info.rev_reg_id.clone(),
+                    offer_info.tails_file.clone()
                 ))
             }
             _ => {
@@ -433,7 +432,7 @@ pub mod test {
             let cred_offer = CredentialOffer::create()
                 .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
-            self = self.set_offer(cred_offer, &cred_info.credential_json, &cred_info.cred_def_id, cred_info.rev_reg_id, cred_info.tails_file).unwrap();
+            self = self.set_offer(cred_offer, &cred_info).unwrap();
             self = self.mark_credential_offer_msg_sent().unwrap();
             self
         }
@@ -500,7 +499,7 @@ pub mod test {
             let cred_offer = CredentialOffer::create()
                 .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
-            issuer_sm = issuer_sm.set_offer(cred_offer, &cred_info.credential_json, &cred_info.cred_def_id, cred_info.rev_reg_id, cred_info.tails_file).unwrap();
+            issuer_sm = issuer_sm.set_offer(cred_offer, &cred_info).unwrap();
             issuer_sm = issuer_sm.mark_credential_offer_msg_sent().unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
@@ -684,7 +683,7 @@ pub mod test {
                 .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
 
-            let res1 = issuer_sm.set_offer(cred_offer, &cred_info.credential_json, &cred_info.cred_def_id, cred_info.rev_reg_id, cred_info.tails_file);
+            let res1 = issuer_sm.set_offer(cred_offer, &cred_info);
             assert!(res1.is_err());
         }
 

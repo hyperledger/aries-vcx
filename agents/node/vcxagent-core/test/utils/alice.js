@@ -32,7 +32,7 @@ module.exports.createAlice = async function createAlice () {
 
   async function createConnectionUsingOobMessage (oobMsg) {
     logger.info(`createConnectionUsingOobMessage >> Alice going to create connection using oob message`)
-    logger.debug(`createConnectionUsingOobMessage>> ${oobMsg}`)
+    logger.debug(`createConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, oobMsg)

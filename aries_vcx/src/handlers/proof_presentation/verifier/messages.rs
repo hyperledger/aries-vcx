@@ -4,7 +4,6 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
-type Comment = Option<String>;
 type Reason = String;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]

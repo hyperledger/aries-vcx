@@ -3,7 +3,6 @@ use std::ptr;
 use libc::c_char;
 
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};

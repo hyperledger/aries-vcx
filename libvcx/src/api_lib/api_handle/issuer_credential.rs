@@ -1,6 +1,5 @@
 use serde_json;
 
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;

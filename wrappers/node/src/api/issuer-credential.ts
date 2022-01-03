@@ -188,9 +188,8 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
    * ```
    * connection = await Connection.create({id: 'foobar'})
    * inviteDetails = await connection.connect()
-   * issuerCredential = await IssuerCredential.create({sourceId: "12",
-   *   credDefId: "credDefId", attr: {k    ey: "value"}, credentialName: "name", price: 0})
-   * await issuerCredential.sendOffer(connection)
+   * issuerCredential = await IssuerCredential.create({sourceId: "12")}
+   * await issuerCredential.sendOffer({ connection, credDef, attr: {k    ey: "value"}, })
    * ```
    */
   public async sendOffer({ connection, credDef, attr }: IIssuerCredentialOfferSendData): Promise<void> {
@@ -233,9 +232,13 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
      * ```
      * connection = await Connection.create({id: 'foobar'})
      * inviteDetails = await connection.connect()
-     * issuerCredential = await IssuerCredential.create({sourceId: "12",
-     *   credDefId: "credDefId", attr: {k    ey: "value"}, credentialName: "name", price: 0})
-     * await issuerCredential.sendOffer(connection)
+     * issuerCredential = await IssuerCredential.create({sourceId: "12")}
+     * issuerCredential.buildCredentialOfferMsg({
+     *    credDefId: "credDefId",
+     *    attr: {k    ey: "value"},
+     *    credentialName: "name"
+     * })
+     * await issuerCredential.sendOfferV2(connection)
      * ```
      */
     public async sendOfferV2(connection: Connection): Promise<void> {
@@ -299,7 +302,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
 
     /**
      * Generated Credential Offer
-     *
      */
     public async buildCredentialOfferMsg({ credDef, attr, comment }: IIssuerCredentialBuildOfferData): Promise<void> {
         try {

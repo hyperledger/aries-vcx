@@ -2,12 +2,11 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_ack::CredentialAck;
-use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 use crate::messages::issuance::credential_request::CredentialRequest;
 
 type OptionalComment = Option<String>;
-type CredentialOfferJson = String;
 
 #[derive(Debug, Clone)]
 pub enum CredentialIssuanceMessage {

@@ -293,11 +293,11 @@ mod tests {
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&city, "Draper", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&state, "UT", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&zip, "84000", MimeType::Plain).unwrap();
+            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain)
+            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain)
+            .add_credential_preview_data(&city, "Draper", MimeType::Plain)
+            .add_credential_preview_data(&state, "UT", MimeType::Plain)
+            .add_credential_preview_data(&zip, "84000", MimeType::Plain);
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
         holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
@@ -316,11 +316,11 @@ mod tests {
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&city, "Austin", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&state, "TX", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&zip, "42000", MimeType::Plain).unwrap();
+            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain)
+            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain)
+            .add_credential_preview_data(&city, "Austin", MimeType::Plain)
+            .add_credential_preview_data(&state, "TX", MimeType::Plain)
+            .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
         thread::sleep(Duration::from_millis(1000));
@@ -1095,7 +1095,7 @@ mod tests {
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
         let mut issuer_credential = create_and_send_cred_offer(&mut institution, &cred_def, &issuer_to_consumer, &credential_data, None);
-        let issuance_thread_id = issuer_credential.get_thread_id().unwrap();
+        let issuance_thread_id = issuer_credential.get_thread_id();
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
         let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);

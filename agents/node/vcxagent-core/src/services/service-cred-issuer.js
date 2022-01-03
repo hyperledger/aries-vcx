@@ -43,7 +43,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
   async function sendCredential (issuerCredId, connectionId) {
     const connection = await loadConnection(connectionId)
     const issuerCred = await loadIssuerCredential(issuerCredId)
-    logger.info(`Sending credential ${issuerCredId} to ${connectionId}`)
+    logger.info(`Sending credential '${issuerCredId}' to ${connectionId}`)
     await issuerCred.sendCredential(connection)
     const state = await issuerCred.getState()
     await saveIssuerCredential(issuerCredId, issuerCred)

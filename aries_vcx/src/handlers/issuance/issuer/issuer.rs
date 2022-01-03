@@ -8,6 +8,7 @@ use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -35,39 +36,38 @@ pub enum IssuerState {
 }
 
 
-fn _append_credential_preview(cred_offer_msg: CredentialOffer, credential_json: &str) -> VcxResult<CredentialOffer> {
-    trace!("Issuer::_append_credential_preview >>> cred_offer_msg: {:?}, credential_json: {:?}", cred_offer_msg, credential_json);
+fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {
+    trace!("Issuer::_build_credential_preview >>> credential_json: {:?}", credential_json);
 
     let cred_values: serde_json::Value = serde_json::from_str(credential_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json: {}, error: {:?}", credential_json, err)))?;
 
-    let mut new_offer = cred_offer_msg;
+    let mut credential_preview = CredentialPreviewData::new();
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
                 let key = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
                 let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
-                new_offer = new_offer.add_credential_preview_data(
+                credential_preview = credential_preview.add_value(
                     &key.to_string(),
                     &value.to_string(),
                     MimeType::Plain,
-                )?;
+                );
             };
         }
         serde_json::Value::Object(values_map) => {
             for item in values_map.iter() {
                 let (key, value) = item;
-                new_offer = new_offer.add_credential_preview_data(
+                credential_preview = credential_preview.add_value(
                     key,
                     &value.to_string(),
                     MimeType::Plain,
-                )?;
+                );
             }
         }
         _ => {}
     };
-
-    Ok(new_offer)
+    Ok(credential_preview)
 }
 
 impl Issuer {
@@ -84,21 +84,14 @@ impl Issuer {
     }
 
     pub fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
+        let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
         let cred_offer_msg = CredentialOffer::create()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?
+            .set_credential_preview_data(credential_preview)
             .set_comment(comment);
-        // todo: use .set_credential_preview(..), refactor _append_credential_preview
-        let cred_offer_msg = _append_credential_preview(cred_offer_msg, &offer_info.credential_json)?;
-        self.issuer_sm = self.issuer_sm.clone()
-            .set_offer(
-                cred_offer_msg,
-                &offer_info.credential_json,
-                &offer_info.cred_def_id,
-                offer_info.rev_reg_id,
-                offer_info.tails_file,
-            )?;
+        self.issuer_sm = self.issuer_sm.clone().set_offer(cred_offer_msg, &offer_info)?;
         Ok(())
     }
 
@@ -117,6 +110,11 @@ impl Issuer {
             let cred_offer_msg = self.get_credential_offer_msg()?;
             send_message(&cred_offer_msg)?;
             self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
+        } else {
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("Can't send credential offer in state {:?}", self.issuer_sm.get_state())
+            ));
         }
         Ok(())
     }
