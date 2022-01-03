@@ -51,7 +51,7 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::devsetup::SetupDefaults;
+    use crate::utils::lcreddevsetup::SetupDefaults;
 
     use super::*;
 

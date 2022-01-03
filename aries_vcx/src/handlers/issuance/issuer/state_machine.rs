@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::issuance::issuer::issuer::IssuerState;
@@ -30,6 +31,21 @@ pub enum IssuerFullState {
     RequestReceived(RequestReceivedState),
     CredentialSent(CredentialSentState),
     Finished(FinishedState),
+}
+
+// todo: Use this approach for logging in other protocols as well.
+impl Display for IssuerFullState {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
+        match *self {
+            IssuerFullState::Initial(_) => f.write_str("Initial"),
+            IssuerFullState::OfferSet(_) => f.write_str("OfferSet"),
+            IssuerFullState::ProposalReceived(_) => f.write_str("ProposalReceived"),
+            IssuerFullState::OfferSent(_) => f.write_str("OfferSent"),
+            IssuerFullState::RequestReceived(_) => f.write_str("RequestReceived"),
+            IssuerFullState::CredentialSent(_) => f.write_str("CredentialSent"),
+            IssuerFullState::Finished(_) => f.write_str("Finished"),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -232,7 +248,7 @@ impl IssuerSM {
             }
             _ => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidState,
-                                              format!("Can not set_offer in current state {:?}.", state)
+                                              format!("Can not set_offer in current state {}.", state)
                 ))
             }
         };
@@ -243,7 +259,7 @@ impl IssuerSM {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
             IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Can not get cred_offer_msg in current state."))
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Can not get_credential_offer in current state {}.", self.state)))
         }
     }
 
@@ -253,7 +269,7 @@ impl IssuerSM {
             IssuerFullState::OfferSet(state) => IssuerFullState::OfferSent(state.into()),
             IssuerFullState::OfferSent(state) => IssuerFullState::OfferSent(state),
             _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidState,
-                                               format!("Can not mark_as_offer_sent in current state {:?}.", state)
+                                               format!("Can not mark_as_offer_sent in current state {}.", state)
             ))
         };
         Ok(Self::step(source_id, thread_id, state))
@@ -262,6 +278,7 @@ impl IssuerSM {
     pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.thread_id, &cim)?;
+        let state_name = self.state.to_string();
         let Self { state, source_id, thread_id } = self;
         let (state, thread_id) = match state {
             IssuerFullState::Initial(state_data) => match cim {
@@ -270,13 +287,13 @@ impl IssuerSM {
                     (IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None)), thread_id)
                 }
                 _ => {
-                    warn!("Unable to process received message in this state");
+                    warn!("Unable to process received message in state {}", state_name);
                     (IssuerFullState::Initial(state_data), thread_id)
                 }
             },
             IssuerFullState::ProposalReceived(state_data) => match cim {
                 _ => {
-                    warn!("Unable to process received message in this state");
+                    warn!("Unable to process received message in state {}", state_name);
                     (IssuerFullState::ProposalReceived(state_data), thread_id)
                 }
             }
@@ -291,7 +308,7 @@ impl IssuerSM {
                     (IssuerFullState::Finished((state_data, problem_report).into()), thread_id)
                 }
                 _ => {
-                    warn!("Unable to process received message in this state");
+                    warn!("Unable to process received message in state {}", state_name);
                     (IssuerFullState::OfferSent(state_data), thread_id)
                 }
             },
@@ -320,7 +337,7 @@ impl IssuerSM {
                     }
                 }
                 _ => {
-                    warn!("Unable to process received message in this state");
+                    warn!("Unable to process received message in state {}", state_name);
                     (IssuerFullState::RequestReceived(state_data), thread_id)
                 }
             }
@@ -334,16 +351,16 @@ impl IssuerSM {
                     (IssuerFullState::Finished(state_data.into()), thread_id)
                 }
                 _ => {
-                    warn!("Unable to process received message in this state");
+                    warn!("Unable to process received message in state {}", state_name);
                     (IssuerFullState::CredentialSent(state_data), thread_id)
                 }
             }
             IssuerFullState::Finished(state_data) => {
-                warn!("Unable to process received message in this state");
+                warn!("Unable to process received message in state {}", state_name);
                 (IssuerFullState::Finished(state_data), thread_id)
             }
             IssuerFullState::OfferSet(state_data) => {
-                warn!("Unable to process received message in this state");
+                warn!("Unable to process received message in state {}", state_name);
                 (IssuerFullState::OfferSet(state_data), thread_id)
             }
         };

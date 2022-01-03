@@ -35,7 +35,6 @@ pub enum IssuerState {
     Failed,
 }
 
-
 fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {
     trace!("Issuer::_build_credential_preview >>> credential_json: {:?}", credential_json);
 

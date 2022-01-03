@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use crate::error::prelude::*;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
@@ -33,6 +34,18 @@ pub enum VerifierFullState {
     Finished(FinishedState),
 }
 
+impl Display for VerifierFullState {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::result::Result<(), ::std::fmt::Error> {
+        match *self {
+            VerifierFullState::Initial(_) => f.write_str("Initial"),
+            VerifierFullState::PresentationRequestSet(_) => f.write_str("PresentationRequestSet"),
+            VerifierFullState::PresentationProposalReceived(_) => f.write_str("PresentationProposalReceived"),
+            VerifierFullState::PresentationRequestSent(_) => f.write_str("PresentationRequestSent"),
+            VerifierFullState::Finished(_) => f.write_str("Finished"),
+        }
+    }
+}
+
 impl Default for VerifierFullState {
     fn default() -> Self {
         Self::Initial(InitialVerifierState::default())
@@ -54,7 +67,7 @@ impl VerifierSM {
         }
     }
 
-    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibiltiy of err at the bottom)
+    // todo: eliminate VcxResult (follow set_request err chain and eliminate possibility of err at the bottom)
     pub fn from_request(source_id: &str, presentation_request_data: &PresentationRequestData) -> VcxResult<Self> {
         let sm = Self {
             source_id: source_id.to_string(),
@@ -140,6 +153,7 @@ impl VerifierSM {
 
     pub fn step(self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
+        let state_name = self.state.to_string();
         let Self { source_id, state, thread_id } = self.clone();
         verify_thread_id(&thread_id, &message)?;
         let (state, thread_id) = match state {
@@ -153,7 +167,7 @@ impl VerifierSM {
                         (VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal.clone())), thread_id)
                     }
                     _ => {
-                        warn!("Unable to process received message in this state");
+                        warn!("Unable to process received message in state {}", state_name);
                         (VerifierFullState::Initial(state), thread_id)
                     }
                 }
@@ -161,7 +175,7 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSet(state) => {
                 match message {
                     _ => {
-                        warn!("Unable to process received message in this state");
+                        warn!("Unable to process received message in state {}", state_name);
                         (VerifierFullState::PresentationRequestSet(state), thread_id)
                     }
                 }
@@ -182,7 +196,7 @@ impl VerifierSM {
                         (VerifierFullState::Finished(FinishedState::declined(problem_report)), thread_id)
                     }
                     _ => {
-                        warn!("Unable to process received message in this state");
+                        warn!("Unable to process received message in state {}", state_name);
                         (VerifierFullState::PresentationProposalReceived(state), thread_id)
                     }
                 }
@@ -218,7 +232,7 @@ impl VerifierSM {
                         (VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)), thread_id)
                     }
                     _ => {
-                        warn!("Unable to process received message in this state");
+                        warn!("Unable to process received message in state {}", state_name);
                         (VerifierFullState::PresentationRequestSent(state), thread_id)
                     }
                 }
