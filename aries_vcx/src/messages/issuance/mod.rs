@@ -21,7 +21,7 @@ impl CredentialPreviewData {
         CredentialPreviewData::default()
     }
 
-    pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> VcxResult<CredentialPreviewData> {
+    pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialPreviewData {
         let data_value = match mime_type {
             MimeType::Plain => {
                 CredentialValue {
@@ -32,7 +32,7 @@ impl CredentialPreviewData {
             }
         };
         self.attributes.push(data_value);
-        Ok(self)
+        self
     }
 
     pub fn to_string(&self) -> VcxResult<String> {

@@ -4,10 +4,12 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::issuance::credential_offer::OfferInfo;
-use crate::messages::a2a::A2AMessage;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::CredentialPreviewData;
+use crate::messages::mime_type::MimeType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -24,12 +26,47 @@ pub struct IssuerConfig {
 #[derive(Debug, PartialEq)]
 pub enum IssuerState {
     Initial,
+    OfferSet,
     ProposalReceived,
     OfferSent,
     RequestReceived,
     CredentialSent,
     Finished,
     Failed,
+}
+
+fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {
+    trace!("Issuer::_build_credential_preview >>> credential_json: {:?}", credential_json);
+
+    let cred_values: serde_json::Value = serde_json::from_str(credential_json)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json: {}, error: {:?}", credential_json, err)))?;
+
+    let mut credential_preview = CredentialPreviewData::new();
+    match cred_values {
+        serde_json::Value::Array(cred_values) => {
+            for cred_value in cred_values.iter() {
+                let key = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
+                let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
+                credential_preview = credential_preview.add_value(
+                    &key.to_string(),
+                    &value.to_string(),
+                    MimeType::Plain,
+                );
+            };
+        }
+        serde_json::Value::Object(values_map) => {
+            for item in values_map.iter() {
+                let (key, value) = item;
+                credential_preview = credential_preview.add_value(
+                    key,
+                    &value.to_string(),
+                    MimeType::Plain,
+                );
+            }
+        }
+        _ => {}
+    };
+    Ok(credential_preview)
 }
 
 impl Issuer {
@@ -45,9 +82,40 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn send_credential_offer(&mut self, offer_info: OfferInfo, comment: Option<&str>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        let cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
-        self.step(CredentialIssuanceMessage::CredentialOfferSend(offer_info, cred_offer, comment.map(String::from)), Some(&send_message))
+    pub fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
+        let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
+        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
+        let cred_offer_msg = CredentialOffer::create()
+            .set_id(&self.issuer_sm.thread_id()?)
+            .set_offers_attach(&libindy_cred_offer)?
+            .set_credential_preview_data(credential_preview)
+            .set_comment(comment);
+        self.issuer_sm = self.issuer_sm.clone().set_offer(cred_offer_msg, &offer_info)?;
+        Ok(())
+    }
+
+    pub fn get_credential_offer_msg(&self) -> VcxResult<A2AMessage> {
+        let offer = self.issuer_sm.get_credential_offer()?;
+        Ok(offer.to_a2a_message())
+    }
+
+    pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
+        Ok(())
+    }
+
+    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        if self.issuer_sm.get_state() == IssuerState::OfferSet {
+            let cred_offer_msg = self.get_credential_offer_msg()?;
+            send_message(&cred_offer_msg)?;
+            self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
+        } else {
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("Can't send credential offer in state {:?}", self.issuer_sm.get_state())
+            ));
+        }
+        Ok(())
     }
 
     pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -115,12 +183,12 @@ impl Issuer {
 
 #[cfg(test)]
 pub mod test {
+    use crate::handlers::issuance::issuer::state_machine::test::_send_message;
+    use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
-    use crate::utils::devsetup::SetupMocks;
-    use crate::handlers::issuance::issuer::state_machine::test::_send_message;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -142,19 +210,19 @@ pub mod test {
 
     impl Issuer {
         fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
+            self.build_credential_offer_msg(_offer_info_unrevokable(), None);
+            self.mark_credential_offer_msg_sent();
             self
         }
 
         fn to_request_received_state(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
+            self = self.to_offer_sent_state_unrevokable();
             self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
             self
         }
 
         fn to_finished_state_unrevokable(mut self) -> Issuer {
-            self.step(CredentialIssuanceMessage::CredentialOfferSend(_offer_info_unrevokable(), LIBINDY_CRED_OFFER.to_string(), None), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            self = self.to_request_received_state();
             self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
             self
         }
@@ -193,7 +261,8 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
@@ -214,7 +283,8 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
@@ -224,7 +294,8 @@ pub mod test {
         issuer.step(msg.into(), _send_message()).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
@@ -245,8 +316,8 @@ pub mod test {
         let mut issuer = _issuer().to_offer_sent_state_unrevokable();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let res = issuer.send_credential_offer(_offer_info(), Some("comment"), _send_message_but_fail().unwrap());
+        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap());
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        assert!(res.is_ok());
+        assert!(res.is_err());
     }
 }

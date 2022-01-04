@@ -1,4 +1,3 @@
-use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
@@ -38,9 +37,9 @@ impl CredentialProposal {
         self
     }
 
-    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> VcxResult<Self> {
-        self.credential_proposal = self.credential_proposal.add_value(name, value, mime_type)?;
-        Ok(self)
+    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> Self {
+        self.credential_proposal = self.credential_proposal.add_value(name, value, mime_type);
+        self
     }
 
     pub fn set_id(mut self, id: &str) -> Self {
@@ -81,9 +80,9 @@ impl CredentialProposalData {
         self
     }
 
-    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> VcxResult<Self> {
-        self.credential_proposal = self.credential_proposal.add_value(name, value, mime_type)?;
-        Ok(self)
+    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> Self {
+        self.credential_proposal = self.credential_proposal.add_value(name, value, mime_type);
+        self
     }
 }
 
@@ -121,7 +120,7 @@ pub mod test_utils {
         let (name, value) = _value();
 
         CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain).unwrap()
+            .add_value(name, value, MimeType::Plain)
     }
 
     pub fn _credential_proposal() -> CredentialProposal {
@@ -162,7 +161,7 @@ pub mod tests {
             .set_thread_id(&thread_id())
             .set_cred_def_id(_cred_def_id())
             .set_schema_id(_schema_id())
-            .add_credential_preview_data(name, value, MimeType::Plain).unwrap();
+            .add_credential_preview_data(name, value, MimeType::Plain);
 
         assert_eq!(_credential_proposal(), credential_proposal);
     }

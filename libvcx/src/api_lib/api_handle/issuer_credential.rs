@@ -87,9 +87,30 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub fn generate_credential_offer_msg(handle: u32) -> VcxResult<(String, String)> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |_| {
-        Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet"))
+pub fn build_credential_offer_msg(handle: u32,
+                                  cred_def_handle: u32,
+                                  credential_json: String,
+                                  comment: Option<String>) -> VcxResult<()> {
+    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
+        let offer_info = OfferInfo {
+            credential_json: credential_json.clone(),
+            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+            rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
+            tails_file: credential_def::get_tails_file(cred_def_handle)?,
+        };
+        Ok(credential.build_credential_offer_msg(offer_info.clone(), comment.clone())?)
+    })
+}
+
+pub fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
+    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
+        Ok(credential.mark_credential_offer_msg_sent()?)
+    })
+}
+
+pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
+    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential| {
+        Ok(credential.get_credential_offer_msg()?)
     })
 }
 
@@ -105,7 +126,20 @@ pub fn send_credential_offer(handle: u32,
             rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
             tails_file: credential_def::get_tails_file(cred_def_handle)?,
         };
-        credential.send_credential_offer(offer_info, comment.as_deref(), connection::send_message_closure(connection_handle)?)?;
+        credential.build_credential_offer_msg(offer_info, comment.clone())?;
+        let send_message = connection::send_message_closure(connection_handle)?;
+        credential.send_credential_offer(send_message)?;
+        let new_credential = credential.clone();
+        *credential = new_credential;
+        Ok(error::SUCCESS.code_num)
+    })
+}
+
+pub fn send_credential_offer_v2(credential_handle: u32,
+                                connection_handle: u32,) -> VcxResult<u32> {
+    ISSUER_CREDENTIAL_MAP.get_mut(credential_handle, |credential| {
+        let send_message = connection::send_message_closure(connection_handle)?;
+        credential.send_credential_offer(send_message)?;
         let new_credential = credential.clone();
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
@@ -184,7 +218,7 @@ pub mod tests {
     use aries_vcx::libindy::utils::LibindyMock;
     use aries_vcx::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
-    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWithWalletAndAgency};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 

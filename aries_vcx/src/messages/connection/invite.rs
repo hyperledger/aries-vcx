@@ -4,7 +4,6 @@ use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did_doc::Did;
 use crate::messages::connection::service::ServiceResolvable;
-use crate::utils::uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -113,7 +112,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::messages::connection::did_doc::test_utils::*;
-
+    use crate::utils::uuid;
     use super::*;
 
     pub fn _pairwise_invitation() -> PairwiseInvitation {
@@ -161,7 +160,6 @@ pub mod test_utils {
 pub mod tests {
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
-
     use super::*;
 
     #[test]

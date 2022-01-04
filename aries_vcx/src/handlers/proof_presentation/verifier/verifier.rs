@@ -4,7 +4,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::handlers::proof_presentation::verifier::state_machine::VerifierSM;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_request::*;
@@ -35,7 +35,8 @@ impl Verifier {
 
     pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
         trace!("Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}", source_id, presentation_request);
-        Ok(Self { verifier_sm: VerifierSM::from_request(&source_id, presentation_request) })
+        let verifier_sm = VerifierSM::from_request(&source_id, presentation_request)?;
+        Ok(Self { verifier_sm })
     }
 
     pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
@@ -45,24 +46,20 @@ impl Verifier {
 
     pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }
 
-    pub fn get_state(&self) -> VerifierState {
-        trace!("Verifier::get_state >>>");
-        self.verifier_sm.get_state()
-    }
-
-    pub fn presentation_status(&self) -> u32 {
-        trace!("Verifier::presentation_state >>>");
-        self.verifier_sm.presentation_status()
-    }
+    pub fn get_state(&self) -> VerifierState { self.verifier_sm.get_state() }
 
     pub fn handle_message(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
         self.step(message, send_message)
     }
 
-    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>, comment: Option<String>) -> VcxResult<()> {
-        trace!("Verifier::send_presentation_request >>>");
-        self.step(VerifierMessages::SendPresentationRequest(comment), Some(&send_message))
+    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+        if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
+            let offer = self.verifier_sm.presentation_request()?.to_a2a_message();
+            send_message(&offer)?;
+            self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
+        }
+        Ok(())
     }
 
     pub fn send_ack(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
@@ -70,27 +67,36 @@ impl Verifier {
         self.step(VerifierMessages::SendPresentationAck(), Some(&send_message))
     }
 
-    pub fn set_request(&mut self, presentation_request_data: PresentationRequestData) -> VcxResult<()> {
-        self.verifier_sm = self.verifier_sm.clone().set_request(presentation_request_data)?;
+    pub fn set_request(&mut self, presentation_request_data: PresentationRequestData, comment: Option<String>) -> VcxResult<()> {
+        trace!("Verifier::set_request >>> presentation_request_data: {:?}, comment: ${:?}", presentation_request_data, comment);
+        self.verifier_sm = self.verifier_sm.clone().set_request(&presentation_request_data, comment)?;
         Ok(())
     }
 
-    pub fn generate_presentation_request_msg(&self) -> VcxResult<String> {
-        trace!("Verifier::generate_presentation_request_msg >>>");
-        let proof_request = self.verifier_sm.presentation_request()?;
-        Ok(json!(proof_request).to_string())
+    pub fn mark_presentation_request_msg_sent(&mut self) -> VcxResult<()> {
+        trace!("Verifier::mark_presentation_request_msg_sent >>>");
+        self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
+        Ok(())
     }
 
-    pub fn generate_presentation_request(&self) -> VcxResult<PresentationRequest> {
-        trace!("Verifier::generate_presentation_request >>>");
-        let proof_request = self.verifier_sm.presentation_request()?;
-        Ok(proof_request)
+    pub fn get_presentation_request_msg(&self) -> VcxResult<String> {
+        let msg = self.verifier_sm.presentation_request()?.to_a2a_message();
+        Ok(json!(msg).to_string())
     }
 
-    pub fn get_presentation(&self) -> VcxResult<String> {
+    pub fn get_presentation_request(&self) -> VcxResult<PresentationRequest> {
+        self.verifier_sm.presentation_request()
+    }
+
+    pub fn get_presentation_msg(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
-        let proof = self.verifier_sm.presentation()?.to_a2a_message();
-        Ok(json!(proof).to_string())
+        let msg = self.verifier_sm.presentation()?.to_a2a_message();
+        Ok(json!(msg).to_string())
+    }
+
+    pub fn get_presentation_status(&self) -> u32 {
+        trace!("Verifier::presentation_state >>>");
+        self.verifier_sm.presentation_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
@@ -154,12 +160,12 @@ mod tests {
     use super::*;
 
     fn _verifier() -> Verifier {
-    let presentation_request =
+    let presentation_request_data =
         PresentationRequestData::create("1").unwrap()
             .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
             .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
             .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
-        Verifier::create_from_request("1".to_string(), &presentation_request).unwrap()
+        Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
 
     }
 
@@ -169,7 +175,7 @@ mod tests {
 
     impl Verifier {
         fn to_presentation_request_sent_state(&mut self) {
-            self.send_presentation_request(_send_message().unwrap(), _comment()).unwrap();
+            self.send_presentation_request(_send_message().unwrap()).unwrap();
         }
 
         fn to_finished_state(&mut self) {
@@ -186,7 +192,7 @@ mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
         let mut verifier = _verifier();
         verifier.to_finished_state();
-        let presentation = verifier.get_presentation().unwrap();
+        let presentation = verifier.get_presentation_msg().unwrap();
         assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
         assert_eq!(verifier.get_state(), VerifierState::Finished);
     }

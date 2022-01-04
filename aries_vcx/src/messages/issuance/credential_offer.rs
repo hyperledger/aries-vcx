@@ -39,14 +39,14 @@ impl CredentialOffer {
         Ok(self)
     }
 
-    pub fn set_credential_preview_data(mut self, credential_preview: CredentialPreviewData) -> VcxResult<CredentialOffer> {
+    pub fn set_credential_preview_data(mut self, credential_preview: CredentialPreviewData) -> CredentialOffer {
         self.credential_preview = credential_preview;
-        Ok(self)
+        self
     }
 
-    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> VcxResult<CredentialOffer> {
-        self.credential_preview = self.credential_preview.add_value(name, value, mime_type)?;
-        Ok(self)
+    pub fn add_credential_preview_data(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialOffer {
+        self.credential_preview = self.credential_preview.add_value(name, value, mime_type);
+        self
     }
 }
 
@@ -96,7 +96,7 @@ pub mod test_utils {
     pub fn _preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
         CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain).unwrap()
+            .add_value(name, value, MimeType::Plain)
     }
 
     pub fn thread() -> Thread {
@@ -166,7 +166,7 @@ pub mod tests {
         let credential_offer: CredentialOffer = CredentialOffer::create()
             .set_comment(_comment())
             .set_thread_id(&_thread_id())
-            .set_credential_preview_data(_preview_data()).unwrap()
+            .set_credential_preview_data(_preview_data())
             .set_offers_attach(&_attachment().to_string()).unwrap();
 
         assert_eq!(_credential_offer(), credential_offer);

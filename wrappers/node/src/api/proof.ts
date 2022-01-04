@@ -381,6 +381,37 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
+  /**
+   * Flags the protocol object as the credential offer has been sent and incoming credential request message should
+   * be expected.
+   */
+  public async markPresentationRequestMsgSent(): Promise<void> {
+    try {
+      await createFFICallbackPromise<void>(
+          (resolve, reject, cb) => {
+            const rc = rustAPI().vcx_mark_presentation_request_msg_sent(
+                0,
+                this.handle,
+                cb,
+            );
+            if (rc) {
+              reject(rc);
+            }
+          },
+          (resolve, reject) =>
+              ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                resolve();
+              }),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async getThreadId(): Promise<string> {
     try {
       const threadId = await createFFICallbackPromise<string>(

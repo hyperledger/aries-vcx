@@ -481,7 +481,7 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
     }
 
     execute(move || {
-        let err = match proof::send_proof_request(proof_handle, connection_handle, None) {
+        let err = match proof::send_proof_request(proof_handle, connection_handle) {
             Ok(x) => {
                 trace!("vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                        command_handle, 0, proof_handle, source_id);
@@ -532,7 +532,7 @@ pub extern fn vcx_proof_get_request_msg(command_handle: CommandHandle,
     }
 
     execute(move || {
-        match proof::generate_proof_request_msg(proof_handle) {
+        match proof::get_presentation_request_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!("vcx_proof_get_request_msg_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
@@ -585,7 +585,7 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
     execute(move || {
         let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
 
-        match proof::get_proof(proof_handle) {
+        match proof::get_presentation_msg(proof_handle) {
             Ok(proof_msg) => {
                 trace!("vcx_get_proof_cb(command_handle: {}, proof_handle: {}, rc: {}, proof: {}) source_id: {}", command_handle, proof_handle, 0, proof_msg, source_id);
                 let msg = CStringUtils::string_to_cstring(proof_msg);
@@ -596,6 +596,44 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
                 cb(command_handle, err.into(), proof::get_proof_state(proof_handle).unwrap_or(0), ptr::null_mut());
             }
         };
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_mark_presentation_request_msg_sent(command_handle: CommandHandle,
+                                                 proof_handle: u32,
+                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
+    info!("vcx_mark_presentation_request_msg_sent >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
+    trace!("vcx_mark_presentation_request_msg_sent(command_handle: {}, credential_handle: {}) source_id: {}",
+           command_handle, proof_handle, source_id);
+
+    if !proof::is_valid_handle(proof_handle) {
+        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
+    }
+
+    execute(move || {
+        match proof::mark_presentation_request_msg_sent(proof_handle) {
+            Ok(offer_msg) => {
+                let offer_msg = json!(offer_msg).to_string();
+                let offer_msg = CStringUtils::string_to_cstring(offer_msg);
+                trace!("vcx_mark_presentation_request_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                       command_handle, proof_handle, error::SUCCESS.message, source_id);
+                cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_mark_presentation_request_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
+                      command_handle, proof_handle, x, source_id);
+                cb(command_handle, x.into(), ptr::null_mut());
+            }
+        };
+
         Ok(())
     });
 

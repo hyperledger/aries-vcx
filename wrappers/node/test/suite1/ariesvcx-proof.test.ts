@@ -1,7 +1,7 @@
 import '../module-resolver-helper';
 
 import { assert } from 'chai';
-import { createConnectionInviterRequested, dataProofCreate, proofCreate } from 'helpers/entities';
+import {createConnectionInviterRequested, credentialDefCreate, dataProofCreate, proofCreate} from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import {
   Connection,
@@ -11,8 +11,8 @@ import {
   VerifierStateType,
   VCXCode,
   VCXMock,
-  VCXMockMessage,
-} from 'src';
+  VCXMockMessage, IssuerCredential, IssuerStateType,
+} from 'src'
 
 describe('Proof:', () => {
   before(() => initVcxTestMode());
@@ -119,6 +119,13 @@ describe('Proof:', () => {
         caught_error = err;
       }
       assert.isNotNull(caught_error);
+    });
+
+    it('build presentation request and mark as sent', async () => {
+      const proof = await proofCreate();
+      assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSet);
+      await proof.markPresentationRequestMsgSent()
+      assert.equal(await proof.getState(), VerifierStateType.PresentationRequestSent);
     });
   });
 

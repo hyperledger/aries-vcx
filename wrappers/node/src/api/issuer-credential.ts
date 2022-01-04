@@ -76,6 +76,15 @@ export interface IIssuerCredentialOfferSendData {
     [index: string]: string;
   };
 }
+
+export interface IIssuerCredentialBuildOfferData {
+    credDef: CredentialDef;
+    attr: {
+        [index: string]: string;
+    };
+    comment: string
+}
+
 export interface IIssuerCredentialVCXAttributes {
   [index: string]: string;
 }
@@ -179,9 +188,8 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
    * ```
    * connection = await Connection.create({id: 'foobar'})
    * inviteDetails = await connection.connect()
-   * issuerCredential = await IssuerCredential.create({sourceId: "12",
-   *   credDefId: "credDefId", attr: {k    ey: "value"}, credentialName: "name", price: 0})
-   * await issuerCredential.sendOffer(connection)
+   * issuerCredential = await IssuerCredential.create({sourceId: "12")}
+   * await issuerCredential.sendOffer({ connection, credDef, attr: {k    ey: "value"}, })
    * ```
    */
   public async sendOffer({ connection, credDef, attr }: IIssuerCredentialOfferSendData): Promise<void> {
@@ -213,6 +221,117 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
       throw new VCXInternalError(err);
     }
   }
+
+
+    /**
+     * Sends a credential Offer to the end user.
+     *
+     * A Credential Offer is made up of the data provided in the creation of this object
+     *
+     * Example:
+     * ```
+     * connection = await Connection.create({id: 'foobar'})
+     * inviteDetails = await connection.connect()
+     * issuerCredential = await IssuerCredential.create({sourceId: "12")}
+     * issuerCredential.buildCredentialOfferMsg({
+     *    credDefId: "credDefId",
+     *    attr: {k    ey: "value"},
+     *    credentialName: "name"
+     * })
+     * await issuerCredential.sendOfferV2(connection)
+     * ```
+     */
+    public async sendOfferV2(connection: Connection): Promise<void> {
+        try {
+            await createFFICallbackPromise<void>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_issuer_send_credential_offer_v2(
+                        0,
+                        this.handle,
+                        connection.handle,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    }),
+            );
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
+
+    /**
+     * Flags the protocol object as the credential offer has been sent and incoming credential request message should
+     * be expected.
+     */
+    public async markCredentialOfferMsgSent(): Promise<void> {
+        try {
+            await createFFICallbackPromise<void>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_mark_credential_offer_msg_sent(
+                        0,
+                        this.handle,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    }),
+            );
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
+
+    /**
+     * Generated Credential Offer
+     */
+    public async buildCredentialOfferMsg({ credDef, attr, comment }: IIssuerCredentialBuildOfferData): Promise<void> {
+        try {
+            await createFFICallbackPromise<void>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_issuer_build_credential_offer_msg(
+                        0,
+                        this.handle,
+                        credDef.handle,
+                        JSON.stringify(attr),
+                        comment,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    }),
+            );
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
 
   /**
    * Gets the credential offer message for sending to connection.

@@ -251,7 +251,8 @@ mod tests {
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.send_credential_offer(offer_info, comment, connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, comment.map(String::from)).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -292,11 +293,11 @@ mod tests {
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&city, "Draper", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&state, "UT", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&zip, "84000", MimeType::Plain).unwrap();
+            .add_credential_preview_data(&address1, "123 Main St", MimeType::Plain)
+            .add_credential_preview_data(&address2, "Suite 3", MimeType::Plain)
+            .add_credential_preview_data(&city, "Draper", MimeType::Plain)
+            .add_credential_preview_data(&state, "UT", MimeType::Plain)
+            .add_credential_preview_data(&zip, "84000", MimeType::Plain);
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
         holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
@@ -315,11 +316,11 @@ mod tests {
             .set_schema_id(schema_id.to_string())
             .set_cred_def_id(cred_def_id.to_string())
             .set_comment(comment.to_string())
-            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&city, "Austin", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&state, "TX", MimeType::Plain).unwrap()
-            .add_credential_preview_data(&zip, "42000", MimeType::Plain).unwrap();
+            .add_credential_preview_data(&address1, "456 Side St", MimeType::Plain)
+            .add_credential_preview_data(&address2, "Suite 666", MimeType::Plain)
+            .add_credential_preview_data(&city, "Austin", MimeType::Plain)
+            .add_credential_preview_data(&state, "TX", MimeType::Plain)
+            .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder.send_proposal(proposal, connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
         thread::sleep(Duration::from_millis(1000));
@@ -338,7 +339,8 @@ mod tests {
             rev_reg_id,
             tails_file
         };
-        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -356,7 +358,8 @@ mod tests {
             rev_reg_id,
             tails_file
         };
-        issuer.send_credential_offer(offer_info, Some("comment"), connection.send_message_closure().unwrap()).unwrap();
+        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
+        issuer.send_credential_offer(connection.send_message_closure().unwrap()).unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
@@ -452,8 +455,8 @@ mod tests {
         let presentation_request_data =
             PresentationRequestData::create("request-1").unwrap()
             .set_requested_attributes_as_vec(attrs).unwrap();
-        verifier.set_request(presentation_request_data).unwrap();
-        verifier.send_presentation_request(&connection.send_message_closure().unwrap(), None).unwrap();
+        verifier.set_request(presentation_request_data, None).unwrap();
+        verifier.send_presentation_request(&connection.send_message_closure().unwrap()).unwrap();
     }
 
     fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
@@ -475,13 +478,13 @@ mod tests {
 
     fn send_proof_request(faber: &mut Faber, connection: &Connection, requested_attrs: &str, requested_preds: &str, revocation_interval: &str, request_name: Option<&str>) -> Verifier {
         faber.activate().unwrap();
-        let presentation_request =
+        let presentation_request_data =
             PresentationRequestData::create(request_name.unwrap_or("name")).unwrap()
                 .set_requested_attributes_as_string(requested_attrs.to_string()).unwrap()
                 .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
-        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
-        verifier.send_presentation_request(connection.send_message_closure().unwrap(), None).unwrap();
+        let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
+        verifier.send_presentation_request(connection.send_message_closure().unwrap()).unwrap();
         thread::sleep(Duration::from_millis(2000));
         verifier
     }
@@ -494,7 +497,7 @@ mod tests {
                 .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
         let verifier = Verifier::create_from_request("1".to_string(), &presentation_request).unwrap();
-        verifier.generate_presentation_request().unwrap()
+        verifier.get_presentation_request().unwrap()
     }
 
     fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> Prover {
@@ -539,7 +542,7 @@ mod tests {
         institution.activate().unwrap();
         verifier.update_state(&connection).unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     fn revoke_credential(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: Option<String>) {
@@ -693,7 +696,7 @@ mod tests {
         info!("test_proof_should_be_validated :: verifier :: going to verify proof");
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -721,7 +724,7 @@ mod tests {
         info!("test_basic_revocation :: verifier :: going to verify proof");
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
         info!("verifier received presentation!: {}", verifier.get_presentation_attachment().unwrap());
     }
 
@@ -777,7 +780,7 @@ mod tests {
         info!("test_basic_revocation :: verifier :: going to verify proof");
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -797,7 +800,7 @@ mod tests {
 
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap());
         let request_name2 = Some("request2");
@@ -806,7 +809,7 @@ mod tests {
 
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -834,14 +837,14 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None);
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer1).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer2, &schema_id, &cred_def_id, request_name2);
         prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None);
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer2).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -862,14 +865,14 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None);
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, request_name2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None);
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -890,14 +893,14 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None);
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut verifier = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None);
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -944,9 +947,9 @@ mod tests {
         verifier1.update_state(&institution_to_consumer1).unwrap();
         verifier2.update_state(&institution_to_consumer2).unwrap();
         verifier3.update_state(&institution_to_consumer3).unwrap();
-        assert_eq!(verifier1.presentation_status(), ProofStateType::ProofValidated as u32);
-        assert_eq!(verifier2.presentation_status(), ProofStateType::ProofValidated as u32);
-        assert_eq!(verifier3.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier1.get_presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier2.get_presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier3.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         // Publish revocations and verify the two are invalid, third still valid
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap());
@@ -966,9 +969,9 @@ mod tests {
         verifier1.update_state(&institution_to_consumer1).unwrap();
         verifier2.update_state(&institution_to_consumer2).unwrap();
         verifier3.update_state(&institution_to_consumer3).unwrap();
-        assert_eq!(verifier1.presentation_status(), ProofStateType::ProofInvalid as u32);
-        assert_eq!(verifier2.presentation_status(), ProofStateType::ProofInvalid as u32);
-        assert_eq!(verifier3.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier1.get_presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(verifier2.get_presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(verifier3.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -1014,7 +1017,7 @@ mod tests {
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         institution.activate().unwrap();
         verifier.update_state(&institution_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     fn retrieved_to_selected_credentials_simple(retrieved_credentials: &str, with_tails: bool) -> Value {
@@ -1132,7 +1135,7 @@ mod tests {
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         institution.activate().unwrap();
         verifier.update_state(&issuer_to_consumer).unwrap();
-        assert_eq!(verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
     }
 
@@ -1158,13 +1161,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[test]
@@ -1191,13 +1194,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[test]
@@ -1224,13 +1227,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
     #[test]
@@ -1256,13 +1259,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[test]
@@ -1290,13 +1293,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
     #[test]
@@ -1324,13 +1327,13 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofValidated as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2);
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).unwrap();
-        assert_eq!(proof_verifier.presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
     #[test]

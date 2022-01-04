@@ -288,6 +288,25 @@ export interface IFFIEntryPoint {
     credentialData: string,
     cb: ICbRef,
   ) => number;
+  vcx_issuer_send_credential_offer_v2: (
+      commandId: number,
+      credentialHandle: number,
+      connectionHandle: number,
+      cb: ICbRef,
+  ) => number;
+  vcx_mark_credential_offer_msg_sent: (
+      commandId: number,
+      credentialHandle: number,
+      cb: ICbRef,
+  ) => number;
+  vcx_issuer_build_credential_offer_msg: (
+      commandId: number,
+      credentialHandle: number,
+      credentialDefHandle: number,
+      credentialData: string,
+      comment: string,
+      cb: ICbRef,
+  ) => number;
   vcx_issuer_get_credential_offer_msg: (
     commandId: number,
     credentialHandle: number,
@@ -327,6 +346,12 @@ export interface IFFIEntryPoint {
   ) => number;
   vcx_proof_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_proof_get_thread_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_mark_presentation_request_msg_sent: (
+      commandId: number,
+      proofHandle: number,
+      cb: ICbRef,
+  ) => number;
+
 
   // disclosed proof
   vcx_disclosed_proof_create_with_request: (
@@ -771,6 +796,18 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_issuer_send_credential_offer_v2: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_mark_credential_offer_msg_sent: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_issuer_build_credential_offer_msg: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_issuer_get_credential_offer_msg: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
@@ -816,7 +853,11 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_proof_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR]],
   vcx_proof_get_thread_id: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_mark_presentation_request_msg_sent: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR],
   ],
 
   // disclosed proof

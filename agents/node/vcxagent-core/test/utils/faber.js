@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType } = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, IssuerStateType, VerifierStateType, HolderStateType} = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
 module.exports.createFaber = async function createFaber () {
@@ -51,16 +51,38 @@ module.exports.createFaber = async function createFaber () {
     return invite
   }
 
-  async function createOobMsg () {
+  async function createOobMsg (wrappedMessage) {
     logger.info('Faber is going to generate out of band message')
     await vcxAgent.agentInitVcx()
 
     const agent = await vcxAgent.serviceAgent.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
-    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMsg(agent, 'faber-oob-msg')
+    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMsg(agent, 'faber-oob-msg', wrappedMessage)
 
     await vcxAgent.agentShutdownVcx()
 
     return oobMsg
+  }
+
+  async function createOobCredOffer () {
+    await vcxAgent.agentInitVcx()
+    const schemaAttrs = getAliceSchemaAttrs()
+    const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, schemaAttrs)
+    await vcxAgent.agentShutdownVcx()
+    const oobCredOfferMsg = await createOobMsg(credOfferMsg)
+    return oobCredOfferMsg
+  }
+
+  async function createOobProofRequest () {
+    await vcxAgent.agentInitVcx()
+
+    const issuerDid = vcxAgent.getInstitutionDid()
+    const proofData = getFaberProofData(issuerDid, proofId)
+    logger.info(`Faber is sending proof request to connection ${connectionId}`)
+    const presentationRequestMsg = await vcxAgent.serviceVerifier.buildProofReqAndMarkAsSent(proofId, proofData)
+
+    await vcxAgent.agentShutdownVcx()
+    const oobPresentationRequestMsg = await createOobMsg(presentationRequestMsg)
+    return oobPresentationRequestMsg
   }
 
   async function sendConnectionResponse () {
@@ -81,26 +103,47 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOffer (_revocationDetails, tailsUrl) {
+  async function createCredDef (revocationDetails, tailsUrl) {
+    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
+
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
 
     logger.info('Faber writing credential definition on ledger')
-    const revocationDetails = _revocationDetails || buildRevocationDetails({ supportRevocation: false })
+    credDefId = getFaberCredDefName()
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
+      schemaId,
+      credDefId,
+      revocationDetails,
+      tailsUrl
+    )
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function buildLedgerPrimitives(revocationDetails, tailsUrl) {
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Faber writing schema on ledger')
+    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+
+    logger.info('Faber writing credential definition on ledger')
+    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
       schemaId,
       getFaberCredDefName(),
       revocationDetails,
       tailsUrl
     )
-
-    logger.info('Faber sending credential to Alice')
-    const schemaAttrs = getAliceSchemaAttrs()
     credDefId = getFaberCredDefName()
-    await vcxAgent.serviceCredIssuer.sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
+    await vcxAgent.agentShutdownVcx()
+  }
 
+  async function sendCredentialOffer () {
+    await vcxAgent.agentInitVcx()
+    const schemaAttrs = getAliceSchemaAttrs()
+    await vcxAgent.serviceCredIssuer.sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
   }
 
@@ -237,6 +280,8 @@ module.exports.createFaber = async function createFaber () {
   }
 
   return {
+    buildLedgerPrimitives,
+    createCredDef,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
     sendMessage,
@@ -244,10 +289,12 @@ module.exports.createFaber = async function createFaber () {
     createInvite,
     createPublicInvite,
     createOobMsg,
+    createOobProofRequest,
     createConnectionFromReceivedRequest,
     updateConnection,
     sendConnectionResponse,
     sendCredentialOffer,
+    createOobCredOffer,
     updateStateCredentialV2,
     sendCredential,
     requestProofFromAlice,

@@ -2,10 +2,10 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import {
-  createConnectionInviterRequested,
+  createConnectionInviterRequested, credentialDefCreate,
   dataIssuerCredentialCreate,
   issuerCredentialCreate,
-} from 'helpers/entities';
+} from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
 import { Connection, IssuerCredential, IssuerStateType, VCXCode } from 'src';
 
@@ -92,6 +92,41 @@ describe('IssuerCredential:', () => {
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
+    it('success sendOfferV2', async () => {
+      const connection = await createConnectionInviterRequested();
+      const credDef = await credentialDefCreate();
+      const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
+      const attr = {
+        key1: 'value1',
+        key2: 'value2',
+        key3: 'value3',
+      }
+      await issuerCredential.buildCredentialOfferMsg({credDef, attr, comment: "hello"})
+      await issuerCredential.sendOfferV2(connection);
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
+    });
+
+    it('build offer and mark as sent', async () => {
+      const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
+      const credDef = await credentialDefCreate();
+      const attr = {
+          key1: 'value1',
+          key2: 'value2',
+          key3: 'value3',
+      }
+      await issuerCredential.buildCredentialOfferMsg({ credDef, attr, comment: "c1" });
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
+      const offer = JSON.parse(await issuerCredential.getCredentialOfferMsg())
+      // @ts-ignore
+      assert.isDefined(offer['@id']);
+      assert.equal(offer.comment, 'c1');
+      assert.isDefined(offer.credential_preview);
+      assert.equal(offer.credential_preview['@type'], 'https://didcomm.org/issue-credential/1.0/credential-preview');
+
+      await issuerCredential.markCredentialOfferMsgSent();
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
+    });
+
     it('throws: not initialized', async () => {
       const [_issuerCredential, data] = await issuerCredentialCreate();
       const issuerCredential = new IssuerCredential('');
@@ -163,7 +198,7 @@ describe('IssuerCredential:', () => {
   //
   //   it('success', async () => {
   //     const issuerCredential1 = await issuerCredentialCreate()
-  //     const data = await issuerCredential1.serialize()
+  //     const data = await issuerCredential1[0].serialize()
   //     data.data.cred_rev_id = '123'
   //     data.data.rev_reg_id = '456'
   //     data.data.tails_file = 'file'

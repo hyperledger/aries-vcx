@@ -156,13 +156,13 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
     execute(move || {
         match out_of_band::extract_a2a_message(handle) {
             Ok(msg) => {
-                trace!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {}, msg: {})",
+                trace!("vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, msg);
                 let msg = CStringUtils::string_to_cstring(msg);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                warn!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {}, msg: {})",
+                warn!("vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
             }
