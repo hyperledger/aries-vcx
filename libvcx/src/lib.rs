@@ -24,6 +24,7 @@ extern crate serde_json;
 extern crate time;
 extern crate uuid;
 extern crate tokio;
+extern crate async_std;
 
 #[macro_use]
 pub mod api_lib;

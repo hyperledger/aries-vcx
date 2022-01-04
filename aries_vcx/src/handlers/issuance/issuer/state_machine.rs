@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::handlers::SendClosure;
 use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::states::initial::InitialIssuerState;
 use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
@@ -275,7 +276,7 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
+    pub async fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.thread_id, &cim)?;
         let state_name = self.state.to_string();
@@ -320,7 +321,7 @@ impl IssuerSM {
                             let credential_msg = credential_msg.set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&credential_msg.to_a2a_message())?;
+                            )?(credential_msg.to_a2a_message()).await?;
                             (IssuerFullState::Finished((state_data, cred_rev_id).into()), thread_id)
                         }
                         Err(err) => {
@@ -330,7 +331,7 @@ impl IssuerSM {
 
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&problem_report.to_a2a_message())?;
+                            )?(problem_report.to_a2a_message()).await?;
                             // TODO: Shouldn't we transition to CredentialSent and wait for ack?
                             (IssuerFullState::Finished((state_data, problem_report).into()), thread_id)
                         }

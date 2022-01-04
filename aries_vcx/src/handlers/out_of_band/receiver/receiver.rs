@@ -1,3 +1,6 @@
+use std::clone::Clone;
+use std::future::Future;
+
 use crate::handlers::out_of_band::OutOfBand;
 use crate::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
@@ -87,7 +90,7 @@ impl OutOfBandReceiver {
         return Ok(None);
     }
 
-    pub fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
+    pub async fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("OutOfBand::build_connection >>> autohop_enabled: {}", autohop_enabled);
         let service = match self.oob.services.get(0) {
             Some(service) => service,
@@ -96,7 +99,7 @@ impl OutOfBandReceiver {
             }
         };
         let invite: PairwiseInvitation = PairwiseInvitation::try_from(service)?;
-        Connection::create_with_invite(&self.oob.id.0, Invitation::Pairwise(invite), autohop_enabled)
+        Connection::create_with_invite(&self.oob.id.0, Invitation::Pairwise(invite), autohop_enabled).await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {

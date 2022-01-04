@@ -75,12 +75,12 @@ impl DeleteConnectionBuilder {
         }
     }
 
-    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
+    pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("DeleteConnection::send >>>");
 
         let data = self.prepare_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         self.parse_response(&response)
     }
@@ -97,7 +97,7 @@ impl DeleteConnectionBuilder {
     }
 }
 
-pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<()> {
+pub async fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<()> {
     trace!("send_delete_connection_message >>>");
 
     delete_connection()
@@ -106,6 +106,7 @@ pub fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent_did: 
         .agent_did(agent_did)?
         .agent_vk(agent_vk)?
         .send_secure()
+        .await
         .map_err(|err| err.extend("Cannot delete connection"))
 }
 

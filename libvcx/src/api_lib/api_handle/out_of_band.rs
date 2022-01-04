@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use serde_json::Value;
 
+use futures::future::FutureExt;
+use futures::executor::block_on;
+
 use crate::aries_vcx::handlers::out_of_band::GoalCode;
 use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
 use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
@@ -120,10 +123,10 @@ pub fn connection_exists(handle: u32, conn_handles: Vec<u32>) -> VcxResult<(u32,
     trace!("connection_exists >>> handle: {}, conn_handles: {:?}", handle, conn_handles);
     let mut conn_map = HashMap::new();
     for conn_handle in conn_handles {
-        let connection = CONNECTION_MAP.get(conn_handle, |connection| {
+        let connection = block_on(CONNECTION_MAP.get(conn_handle, |connection, []| async move {
                 Ok(connection.clone())
-            },
-        )?;
+            }.boxed(),
+        ))?;
         conn_map.insert(conn_handle, connection);
     };
     let connections = conn_map.values().collect();
@@ -144,7 +147,7 @@ pub fn connection_exists(handle: u32, conn_handles: Vec<u32>) -> VcxResult<(u32,
 
 pub fn build_connection(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
-        oob.build_connection(false)?.to_string().map_err(|err| err.into())
+        block_on(oob.build_connection(false))?.to_string().map_err(|err| err.into())
     })
 }
 

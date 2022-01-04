@@ -1,3 +1,5 @@
+use futures::executor::block_on;
+
 use crate::aries_vcx::handlers::connection::public_agent::PublicAgent;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::error::prelude::*;
@@ -17,14 +19,14 @@ fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
 
 pub fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<u32> {
     trace!("create_public_agent >>> source_id: {}, institution_did: {}", source_id, institution_did);
-    let agent = PublicAgent::create(source_id, institution_did)?;
+    let agent = block_on(PublicAgent::create(source_id, institution_did))?;
     return store_public_agent(agent);
 }
 
 pub fn download_connection_requests(agent_handle: u32, uids: Option<Vec<String>>) -> VcxResult<String> {
     trace!("download_connection_requests >>> agent_handle: {}, uids: {:?}", agent_handle, uids);
     PUBLIC_AGENT_MAP.get(agent_handle, |agent| {
-        let requests = agent.download_connection_requests(uids.clone())?;
+        let requests = block_on(agent.download_connection_requests(uids.clone()))?;
         let requests = serde_json::to_string(&requests)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded connection requests {:?}, err: {:?}", requests, err)))?;
         Ok(requests)

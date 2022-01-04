@@ -3,6 +3,7 @@ use std::thread;
 
 use libc::c_char;
 use serde_json;
+use futures::future::{FutureExt, BoxFuture};
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
@@ -13,7 +14,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::{execute, execute_async};
 use crate::error::prelude::*;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -182,8 +183,8 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
     trace!("vcx_messages_download(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, uids);
 
-    execute(move || {
-        match aries_vcx::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match aries_vcx::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids).await {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -211,7 +212,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }
@@ -298,8 +299,8 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
     trace!("vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
            command_handle, message_statuses, uids);
 
-    execute(move || {
-        match connection::download_messages(conn_handles, message_statuses, uids) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match connection::download_messages(conn_handles, message_statuses, uids).await {
             Ok(x) => {
                 match serde_json::to_string(&x) {
                     Ok(x) => {
@@ -327,7 +328,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }
@@ -367,8 +368,8 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     trace!("vcx_messages_set_status(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, msg_json);
 
-    execute(move || {
-        match aries_vcx::agency_client::update_message::update_agency_messages(&message_status, &msg_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match aries_vcx::agency_client::update_message::update_agency_messages(&message_status, &msg_json).await {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -384,7 +385,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }

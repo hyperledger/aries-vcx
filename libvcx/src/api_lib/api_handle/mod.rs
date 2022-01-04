@@ -6,5 +6,6 @@ pub mod issuer_credential;
 pub mod proof;
 pub mod schema;
 pub mod object_cache;
+pub mod object_cache_async;
 pub mod agent;
 pub mod out_of_band;

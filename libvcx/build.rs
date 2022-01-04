@@ -15,6 +15,7 @@ use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use serde_derive::Deserialize;
 
 
 // used in formatting the Cargo.toml file

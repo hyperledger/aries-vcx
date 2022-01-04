@@ -1,4 +1,5 @@
 use serde_json;
+use futures::executor::block_on;
 
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 use aries_vcx::settings::indy_mocks_enabled;
@@ -87,17 +88,17 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
     HANDLE_MAP.get_mut(handle, |credential| {
         trace!("credential::update_state >>> ");
         if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
-        let send_message = connection::send_message_closure(connection_handle)?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
 
         if let Some(message) = message {
             let message: A2AMessage = serde_json::from_str(&message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-            credential.step(message.into(), Some(&send_message))?;
+            block_on(credential.step(message.into(), Some(send_message)))?;
         } else {
-            let messages = connection::get_messages(connection_handle)?;
+            let messages = block_on(connection::get_messages(connection_handle))?;
             if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-                credential.step(msg.into(), Some(&send_message))?;
-                connection::update_message_status(connection_handle, uid)?;
+                block_on(credential.step(msg.into(), Some(send_message)))?;
+                block_on(connection::update_message_status(connection_handle, &uid))?;
             }
         }
         Ok(credential.get_state().into())
@@ -185,9 +186,9 @@ pub fn generate_credential_request_msg(handle: u32, _my_pw_did: &str, _their_pw_
 pub fn send_credential_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     trace!("Credential::send_credential_request >>> credential_handle: {}, connection_handle: {}", handle, connection_handle);
     HANDLE_MAP.get_mut(handle, |credential| {
-        let my_pw_did = connection::get_pw_did(connection_handle)?;
-        let send_message = connection::send_message_closure(connection_handle)?;
-        credential.send_request(my_pw_did, send_message)?;
+        let my_pw_did = block_on(connection::get_pw_did(connection_handle))?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
+        block_on(credential.send_request(my_pw_did, send_message))?;
         let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
         *credential = new_credential;
         Ok(error::SUCCESS.code_num)
@@ -201,7 +202,7 @@ fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<S
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match connection::get_message_by_id(connection_handle, msg_id.to_string()) {
+    let credential_offer = match block_on(connection::get_message_by_id(connection_handle, msg_id)) {
         Ok(message) => match message {
             A2AMessage::CredentialOffer(_) => Ok(message),
             msg => {
@@ -224,7 +225,7 @@ pub fn get_credential_offer_messages_with_conn_handle(connection_handle: u32) ->
     AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
     AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
 
-    let credential_offers: Vec<A2AMessage> = connection::get_messages(connection_handle)?
+    let credential_offers: Vec<A2AMessage> = block_on(connection::get_messages(connection_handle))?
         .into_iter()
         .filter_map(|(_, a2a_message)| {
             match a2a_message {

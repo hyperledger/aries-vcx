@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
@@ -36,16 +37,16 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
+    pub async fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(send_message)).await
     }
 
-    pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
+    pub async fn send_request(&mut self, my_pw_did: String, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(send_message)).await
     }
 
-    pub fn reject_offer(&mut self, comment: Option<&str>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(&send_message))
+    pub async fn reject_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -108,20 +109,20 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().handle_message(message, send_message)?;
+    pub async fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().handle_message(message, send_message).await?;
         Ok(())
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
-        trace!("Holder::update_state >>> ");
+    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
+        trace!("Holder::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
+        let messages = connection.get_messages().await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
+            self.step(msg.into(), Some(send_message)).await?;
+            connection.update_message_status(&uid).await?;
         }
         Ok(self.get_state())
     }

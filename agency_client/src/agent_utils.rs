@@ -141,14 +141,14 @@ pub struct ComMethod {
     value: String,
 }
 
-pub fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+pub async fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     /* STEP 1 - CONNECT */
     let message = A2AMessage::Version2(
         A2AMessageV2::Connect(Connect::build(my_did, my_vk))
     );
 
-    let mut response = send_message_to_agency(&message, agency_did)?;
+    let mut response = send_message_to_agency(&message, agency_did).await?;
 
     let ConnectResponse { from_vk: agency_pw_vk, from_did: agency_pw_did, .. } =
         match response.remove(0) {
@@ -168,10 +168,10 @@ pub fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResul
     Ok((agency_pw_did, agency_pw_vk))
 }
 
-pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
+pub async fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     info!("onboarding >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
-    let (agency_pw_did, _) = connect(my_did, my_vk, agency_did)?;
+    let (agency_pw_did, _) = connect(my_did, my_vk, agency_did).await?;
 
     /* STEP 2 - REGISTER */
     let message = A2AMessage::Version2(
@@ -179,7 +179,7 @@ pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
     );
 
     AgencyMockDecrypted::set_next_decrypted_response(constants::REGISTER_RESPONSE_DECRYPTED);
-    let mut response = send_message_to_agency(&message, &agency_pw_did)?;
+    let mut response = send_message_to_agency(&message, &agency_pw_did).await?;
 
     let _response: SignUpResponse =
         match response.remove(0) {
@@ -192,7 +192,7 @@ pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
         A2AMessageV2::CreateAgent(CreateAgent::build())
     );
     AgencyMockDecrypted::set_next_decrypted_response(constants::AGENT_CREATED_DECRYPTED);
-    let mut response = send_message_to_agency(&message, &agency_pw_did)?;
+    let mut response = send_message_to_agency(&message, &agency_pw_did).await?;
 
     let response: CreateAgentResponse =
         match response.remove(0) {
@@ -204,7 +204,7 @@ pub fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientRe
     Ok((response.from_did, response.from_vk))
 }
 
-pub fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
+pub async fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
     info!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
 
     let com_method: ComMethod = ComMethod {
@@ -215,14 +215,14 @@ pub fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
 
     match agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID) {
         Ok(to_did) => {
-            update_agent_webhook_v2(&to_did, com_method)?;
+            update_agent_webhook_v2(&to_did, com_method).await?;
         }
         Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
     }
     Ok(())
 }
 
-fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientResult<()> {
+async fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientResult<()> {
     info!("> update_agent_webhook_v2");
     if agency_mocks_enabled() {
         warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
@@ -232,15 +232,16 @@ fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientR
     let message = A2AMessage::Version2(
         A2AMessageV2::UpdateComMethod(UpdateComMethod::build(com_method))
     );
-    send_message_to_agency(&message, &to_did)?;
+    send_message_to_agency(&message, &to_did).await?;
     Ok(())
 }
 
-pub fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
+pub async fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
     trace!("send_message_to_agency >>> message: ..., did: {}", did);
     let data = prepare_message_for_agency(message, &did)?;
 
     let response = post_to_agency(&data)
+        .await
         .map_err(|err| err.map(AgencyClientErrorKind::InvalidHttpResponse, error_utils::INVALID_HTTP_RESPONSE.message))?;
 
     parse_response_from_agency(&response)

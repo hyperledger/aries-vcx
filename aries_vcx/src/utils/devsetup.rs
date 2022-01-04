@@ -229,9 +229,9 @@ impl Drop for SetupIndyMocks {
 }
 
 impl SetupWithWalletAndAgency {
-    pub fn init() -> SetupWithWalletAndAgency {
+    pub async fn init() -> SetupWithWalletAndAgency {
         setup();
-        let institution_did = setup_indy_env();
+        let institution_did = setup_indy_env().await;
         SetupWithWalletAndAgency {
             institution_did
         }
@@ -336,7 +336,7 @@ pub fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
-pub fn setup_indy_env() -> String {
+pub async fn setup_indy_env() -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 

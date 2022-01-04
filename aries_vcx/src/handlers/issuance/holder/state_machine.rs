@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::issuance::holder::holder::HolderState;
 use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::handlers::issuance::holder::states::offer_received::OfferReceivedState;
@@ -124,7 +125,7 @@ impl HolderSM {
         HolderSM { state, source_id, thread_id }
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<HolderSM> {
+    pub async fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         let HolderSM { state, source_id, thread_id } = self;
         verify_thread_id(&thread_id, &cim)?;
@@ -135,7 +136,7 @@ impl HolderSM {
                         .set_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                    )?(&proposal.to_a2a_message())?;
+                    )?(proposal.to_a2a_message()).await?;
                     HolderFullState::ProposalSent(ProposalSentState::new(proposal))
                 },
                 _ => {
@@ -163,7 +164,7 @@ impl HolderSM {
                                 .set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&cred_request.to_a2a_message())?;
+                            )?(cred_request.to_a2a_message()).await?;
                             HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
                         }
                         Err(err) => {
@@ -172,7 +173,7 @@ impl HolderSM {
                                 .set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&problem_report.to_a2a_message())?;
+                            )?(problem_report.to_a2a_message()).await?;
                             HolderFullState::Finished(problem_report.into())
                         }
                     }
@@ -182,7 +183,7 @@ impl HolderSM {
                         .set_thread_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                    )?(&proposal.to_a2a_message())?;
+                    )?(proposal.to_a2a_message()).await?;
                     HolderFullState::ProposalSent(ProposalSentState::new(proposal))
                 },
                 CredentialIssuanceMessage::CredentialOfferReject(comment) => {
@@ -191,7 +192,7 @@ impl HolderSM {
                             .set_comment(comment);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&problem_report.to_a2a_message())?;
+                        )?(problem_report.to_a2a_message()).await?;
                         HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
@@ -208,7 +209,7 @@ impl HolderSM {
                                 let ack = CredentialAck::create().set_thread_id(&thread_id);
                                 send_message.ok_or(
                                     VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                                )?(&A2AMessage::CredentialAck(ack))?;
+                                )?(A2AMessage::CredentialAck(ack)).await?;
                             }
                             HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
                         }
@@ -218,7 +219,7 @@ impl HolderSM {
                                 .set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&problem_report.to_a2a_message())?;
+                            )?(problem_report.to_a2a_message()).await?;
                             HolderFullState::Finished(problem_report.into())
                         }
                     }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
@@ -48,23 +49,23 @@ impl Verifier {
 
     pub fn get_state(&self) -> VerifierState { self.verifier_sm.get_state() }
 
-    pub fn handle_message(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+    pub async fn handle_message(&mut self, message: VerifierMessages, send_message: Option<SendClosure>) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(message, send_message)
+        self.step(message, send_message).await
     }
 
-    pub fn send_presentation_request(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
             let offer = self.verifier_sm.presentation_request()?.to_a2a_message();
-            send_message(&offer)?;
+            send_message(offer).await?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
         }
         Ok(())
     }
 
-    pub fn send_ack(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
-        self.step(VerifierMessages::SendPresentationAck(), Some(&send_message))
+        self.step(VerifierMessages::SendPresentationAck(), Some(send_message)).await 
     }
 
     pub fn set_request(&mut self, presentation_request_data: PresentationRequestData, comment: Option<String>) -> VcxResult<()> {
@@ -112,9 +113,9 @@ impl Verifier {
         Ok(self.verifier_sm.thread_id())
     }
 
-    pub fn step(&mut self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
+    pub async fn step(&mut self, message: VerifierMessages, send_message: Option<SendClosure>)
                 -> VcxResult<()> {
-        self.verifier_sm = self.verifier_sm.clone().step(message, send_message)?;
+        self.verifier_sm = self.verifier_sm.clone().step(message, send_message).await?;
         Ok(())
     }
 
@@ -126,20 +127,20 @@ impl Verifier {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
-    pub fn decline_presentation_proposal(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>, reason: &str) -> VcxResult<()> {
+    pub async fn decline_presentation_proposal<'a>(&'a mut self, send_message: SendClosure, reason: &'a str) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
-        self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message))
+        self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message)).await
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
+    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
         if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
+        let messages = connection.get_messages().await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
+            self.step(msg.into(), Some(send_message)).await?;
+            connection.update_message_status(&uid).await?;
         }
         Ok(self.get_state())
     }

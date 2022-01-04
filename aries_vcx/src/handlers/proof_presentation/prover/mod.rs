@@ -9,8 +9,9 @@ mod state_machine;
 mod messages;
 mod states;
 
-pub fn get_proof_request_messages(connection: &Connection) -> VcxResult<String> {
-    let presentation_requests: Vec<A2AMessage> = connection.get_messages()?
+pub async fn get_proof_request_messages(connection: &Connection) -> VcxResult<String> {
+    let presentation_requests: Vec<A2AMessage> = connection.get_messages()
+        .await?
         .into_iter()
         .filter_map(|(_, message)| {
             match message {

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
@@ -104,10 +105,10 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn send_credential_offer(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.issuer_sm.get_state() == IssuerState::OfferSet {
             let cred_offer_msg = self.get_credential_offer_msg()?;
-            send_message(&cred_offer_msg)?;
+            send_message(cred_offer_msg).await?;
             self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
         } else {
             return Err(VcxError::from_msg(
@@ -118,8 +119,8 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn send_credential(&mut self, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialSend(), Some(&send_message))
+    pub async fn send_credential(&mut self, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialSend(), Some(send_message)).await
     }
 
     pub fn get_state(&self) -> IssuerState {
@@ -162,20 +163,20 @@ impl Issuer {
         Ok(self.issuer_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message)?;
+    pub async fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message).await?;
         Ok(())
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<IssuerState> {
+    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<IssuerState> {
         trace!("Issuer::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
+        let messages = connection.get_messages().await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
+            self.step(msg.into(), Some(send_message)).await?;
+            connection.update_message_status(&uid).await?;
         }
         Ok(self.get_state())
     }

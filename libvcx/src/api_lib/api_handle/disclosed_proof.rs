@@ -1,4 +1,6 @@
 use serde_json;
+use futures::executor::block_on;
+use futures::future::FutureExt;
 
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 use aries_vcx::settings::indy_mocks_enabled;
@@ -47,10 +49,6 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
 }
 
 pub fn create_proof_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
-    if !connection::is_v3_connection(connection_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
-    };
-
     let proof_request = get_proof_request(connection_handle, &msg_id)?;
 
     let presentation_request: PresentationRequest = serde_json::from_str(&proof_request)
@@ -78,19 +76,19 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
             trace!("disclosed_proof::update_state >> found no available transition");
             return Ok(proof.get_state().into());
         }
-        let send_message = connection::send_message_closure(connection_handle)?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
 
         if let Some(message) = message {
             let message: A2AMessage = serde_json::from_str(message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Can not updated state with message: Message deserialization failed: {:?}", err)))?;
             trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
-            proof.handle_message(message.into(), Some(&send_message))?;
+            block_on(proof.handle_message(message.into(), Some(send_message)))?;
         } else {
-            let messages = connection::get_messages(connection_handle)?;
+            let messages = block_on(connection::get_messages(connection_handle))?;
             trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
             if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-                proof.handle_message(message.into(), Some(&send_message))?;
-                connection::update_message_status(connection_handle, uid)?;
+                block_on(proof.handle_message(message.into(), Some(send_message)))?;
+                block_on(connection::update_message_status(connection_handle, &uid))?;
             };
         }
         Ok(proof.get_state().into())
@@ -129,8 +127,8 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        let send_message = connection::send_message_closure(connection_handle)?;
-        proof.send_presentation(&send_message)?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
+        block_on(proof.send_presentation(send_message))?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -146,8 +144,8 @@ pub fn generate_reject_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        let send_message = connection::send_message_closure(connection_handle)?;
-        proof.decline_presentation_request(&send_message, Some(String::from("Presentation Request was rejected")), None)?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
+        block_on(proof.decline_presentation_request(send_message, Some(String::from("Presentation Request was rejected")), None))?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -156,15 +154,15 @@ pub fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
 
 pub fn generate_proof(handle: u32, credentials: String, self_attested_attrs: String) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        proof.generate_presentation(credentials.clone(), self_attested_attrs.clone())?;
+        block_on(proof.generate_presentation(credentials.clone(), self_attested_attrs.clone()))?;
         Ok(error::SUCCESS.code_num)
     }).map(|_| error::SUCCESS.code_num)
 }
 
 pub fn decline_presentation_request(handle: u32, connection_handle: u32, reason: Option<String>, proposal: Option<String>) -> VcxResult<u32> {
     HANDLE_MAP.get_mut(handle, |proof| {
-        let send_message = connection::send_message_closure(connection_handle)?;
-        proof.decline_presentation_request(&send_message, reason.clone(), proposal.clone())?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
+        block_on(proof.decline_presentation_request(send_message, reason.clone(), proposal.clone()))?;
         let new_proof = proof.clone();
         *proof = new_proof;
         Ok(error::SUCCESS.code_num)
@@ -200,10 +198,6 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 }
 
 fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
-    if !connection::is_v3_connection(connection_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
-    };
-
     if indy_mocks_enabled() {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -212,7 +206,7 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
     let presentation_request = {
         trace!("Prover::get_presentation_request >>> connection_handle: {:?}, msg_id: {:?}", connection_handle, msg_id);
 
-        let message = connection::get_message_by_id(connection_handle, msg_id.to_string())?;
+        let message = block_on(connection::get_message_by_id(connection_handle, msg_id))?;
 
         match message {
             A2AMessage::PresentationRequest(presentation_request) => presentation_request,
@@ -229,12 +223,8 @@ fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> 
 pub fn get_proof_request_messages(connection_handle: u32) -> VcxResult<String> {
     trace!("get_proof_request_messages >>> connection_handle: {}", connection_handle);
 
-    if !connection::is_v3_connection(connection_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Connection can not be used for Proprietary Issuance protocol")));
-    }
-
     let presentation_requests: Vec<A2AMessage> =
-        connection::get_messages(connection_handle)?
+        block_on(connection::get_messages(connection_handle))?
             .into_iter()
             .filter_map(|(_, message)| {
                 match message {

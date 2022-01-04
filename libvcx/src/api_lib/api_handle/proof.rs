@@ -1,4 +1,5 @@
 use serde_json;
+use futures::executor::block_on;
 
 use aries_vcx::utils::error;
 
@@ -43,19 +44,19 @@ pub fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) 
     PROOF_MAP.get_mut(handle, |proof| {
         trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
         if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
-        let send_message = connection::send_message_closure(connection_handle)?;
+        let send_message = block_on(connection::send_message_closure(connection_handle))?;
 
         if let Some(message) = message {
             let message: A2AMessage = serde_json::from_str(message)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
             trace!("proof::update_state >>> updating using message {:?}", message);
-            proof.handle_message(message.into(), Some(&send_message))?;
+            block_on(proof.handle_message(message.into(), Some(send_message)))?;
         } else {
-            let messages = connection::get_messages(connection_handle)?;
+            let messages = block_on(connection::get_messages(connection_handle))?;
             trace!("proof::update_state >>> found messages: {:?}", messages);
             if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-                proof.handle_message(message.into(), Some(&send_message))?;
-                connection::update_message_status(connection_handle, uid)?;
+                block_on(proof.handle_message(message.into(), Some(send_message)))?;
+                block_on(connection::update_message_status(connection_handle, &uid))?;
             };
         }
         Ok(proof.get_state().into())
@@ -106,7 +107,7 @@ pub fn from_string(proof_data: &str) -> VcxResult<u32> {
 
 pub fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     PROOF_MAP.get_mut(handle, |proof| {
-        proof.send_presentation_request(connection::send_message_closure(connection_handle)?)?;
+        block_on(proof.send_presentation_request(block_on(connection::send_message_closure(connection_handle))?))?;
         Ok(error::SUCCESS.code_num)
     })
 }

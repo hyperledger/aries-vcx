@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use libc::c_char;
+use futures::future::{BoxFuture, FutureExt};
 
 use aries_vcx::utils;
 use aries_vcx::indy::CommandHandle;
@@ -15,7 +16,7 @@ use aries_vcx::utils::version_constants;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::get_current_error_c_json;
-use crate::api_lib::utils::runtime::{execute, init_threadpool};
+use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 use crate::error::prelude::*;
 
 /// Only for Wrapper testing purposes, sets global library settings.
@@ -356,8 +357,8 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
-    execute(move || {
-        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]).await {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -373,7 +374,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }

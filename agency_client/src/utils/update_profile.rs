@@ -8,7 +8,6 @@ use crate::utils::comm::post_to_agency;
 #[derive(Debug)]
 pub struct UpdateProfileDataBuilder {
     to_did: String,
-    agent_payload: String,
     configs: Vec<ConfigOption>,
 }
 
@@ -38,7 +37,6 @@ impl UpdateProfileDataBuilder {
         UpdateProfileDataBuilder {
             to_did: String::new(),
             configs: Vec::new(),
-            agent_payload: String::new(),
         }
     }
 
@@ -71,14 +69,14 @@ impl UpdateProfileDataBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
+    pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("UpdateProfileData::send_secure >>>");
 
         AgencyMock::set_next_response(constants::UPDATE_PROFILE_RESPONSE.to_vec());
 
         let data = self.prepare_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         self.parse_response(response)
     }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::handlers::proof_presentation::prover::prover::ProverState;
 use crate::handlers::proof_presentation::prover::states::initial::InitialProverState;
@@ -93,9 +94,9 @@ impl ProverSM {
         None
     }
 
-    pub fn step(self,
+    pub async fn step(self,
                 message: ProverMessages,
-                send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>,
+                send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
         let ProverSM { source_id, state, thread_id } = self;
@@ -108,7 +109,7 @@ impl ProverSM {
                             .set_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&proposal.to_a2a_message())?;
+                        )?(proposal.to_a2a_message()).await?;
                         ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
                     }
                     _ => {
@@ -139,7 +140,7 @@ impl ProverSM {
                             .set_thread_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&proposal.to_a2a_message())?;
+                        )?(proposal.to_a2a_message()).await?;
                         ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
                     }
                     ProverMessages::SetPresentation(presentation) => {
@@ -168,7 +169,7 @@ impl ProverSM {
                     }
                     ProverMessages::RejectPresentationRequest(reason) => {
                         if let Some(send_message) = send_message {
-                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
+                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id).await?;
                             ProverFullState::Finished((state, problem_report).into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -176,7 +177,7 @@ impl ProverSM {
                     }
                     ProverMessages::ProposePresentation(preview) => {
                         if let Some(send_message) = send_message {
-                            Self::_handle_presentation_proposal(send_message, preview, &thread_id)?;
+                            Self::_handle_presentation_proposal(send_message, preview, &thread_id).await?;
                             ProverFullState::Finished(state.into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -192,7 +193,7 @@ impl ProverSM {
                 match message {
                     ProverMessages::SendPresentation => {
                         if let Some(send_message) = send_message {
-                            send_message(&state.presentation.to_a2a_message())?;
+                            send_message(state.presentation.to_a2a_message()).await?;
                             ProverFullState::PresentationSent((state).into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -200,7 +201,7 @@ impl ProverSM {
                     }
                     ProverMessages::RejectPresentationRequest(reason) => {
                         if let Some(send_message) = send_message {
-                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id)?;
+                            let problem_report = Self::_handle_reject_presentation_request(send_message, &reason, &thread_id).await?;
                             ProverFullState::Finished(FinishedState::declined(problem_report))
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -208,7 +209,7 @@ impl ProverSM {
                     }
                     ProverMessages::ProposePresentation(preview) => {
                         if let Some(send_message) = send_message {
-                            Self::_handle_presentation_proposal(send_message, preview, &thread_id)?;
+                            Self::_handle_presentation_proposal(send_message, preview, &thread_id).await?;
                             ProverFullState::Finished(state.into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -224,7 +225,7 @@ impl ProverSM {
                 match message {
                     ProverMessages::SendPresentation => {
                         if let Some(send_message) = send_message {
-                            send_message(&state.problem_report.to_a2a_message())?;
+                            send_message(state.problem_report.to_a2a_message()).await?;
                             ProverFullState::Finished((state).into())
                         } else {
                             return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Send message closure is required."));
@@ -259,27 +260,27 @@ impl ProverSM {
         Ok(ProverSM { source_id, state, thread_id })
     }
 
-    fn _handle_reject_presentation_request(
-        send_message: &impl Fn(&A2AMessage) -> VcxResult<()>,
-        reason: &str,
-        thread_id: &str,
+    async fn _handle_reject_presentation_request<'a>(
+        send_message: SendClosure,
+        reason: &'a str,
+        thread_id: &'a str,
     ) -> VcxResult<ProblemReport> {
         let problem_report = ProblemReport::create()
             .set_comment(Some(reason.to_string()))
             .set_thread_id(thread_id);
-        send_message(&problem_report.to_a2a_message())?;
+        send_message(problem_report.to_a2a_message()).await?;
         Ok(problem_report)
     }
 
-    fn _handle_presentation_proposal(
-        send_message: &impl Fn(&A2AMessage) -> VcxResult<()>,
+    async fn _handle_presentation_proposal(
+        send_message: SendClosure,
         preview: PresentationPreview,
         thread_id: &str,
     ) -> VcxResult<()> {
         let proposal = PresentationProposal::create()
             .set_presentation_preview(preview)
             .set_thread_id(thread_id);
-        send_message(&proposal.to_a2a_message())
+        send_message(proposal.to_a2a_message()).await
     }
 
     pub fn source_id(&self) -> String { self.source_id.clone() }

@@ -1,4 +1,5 @@
 use agency_client::agent_utils;
+use futures::executor::block_on;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::signus;
@@ -34,7 +35,7 @@ pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> V
     settings::get_agency_client_mut().unwrap().set_my_pwdid(&my_did);
     settings::get_agency_client_mut().unwrap().set_agent_vk(&provision_agent_config.agency_verkey); // This is reset when connection is established and agent did needs not be set before onboarding
 
-    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &provision_agent_config.agency_did)?;
+    let (agent_did, agent_vk) = block_on(agent_utils::onboarding(&my_did, &my_vk, &provision_agent_config.agency_did))?;
 
     Ok(AgencyClientConfig {
         agency_did: provision_agent_config.agency_did.clone(),

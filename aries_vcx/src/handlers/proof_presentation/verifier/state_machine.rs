@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::handlers::proof_presentation::verifier::states::initial::InitialVerifierState;
 use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
@@ -151,7 +152,7 @@ impl VerifierSM {
         Ok(Self { source_id, thread_id, state })
     }
 
-    pub fn step(self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
+    pub async fn step(self, message: VerifierMessages, send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
         let state_name = self.state.to_string();
         let Self { source_id, state, thread_id } = self.clone();
@@ -192,7 +193,7 @@ impl VerifierSM {
                             .set_thread_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&problem_report.to_a2a_message())?;
+                        )?(problem_report.to_a2a_message()).await?;
                         (VerifierFullState::Finished(FinishedState::declined(problem_report)), thread_id)
                     }
                     _ => {
@@ -204,8 +205,14 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 match message {
                     VerifierMessages::VerifyPresentation(presentation) => {
-                        match state.verify_presentation(&presentation, &thread_id, send_message) {
+                        match state.verify_presentation(&presentation, &thread_id).await {
                             Ok(()) => {
+                                if presentation.please_ack.is_some() {
+                                    let ack = PresentationAck::create().set_thread_id(&state.presentation_request.id.0);
+                                    send_message.ok_or(
+                                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                                    )?(A2AMessage::PresentationAck(ack)).await?;
+                                };
                                 (VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()), thread_id)
                             }
                             Err(err) => {
@@ -215,7 +222,7 @@ impl VerifierSM {
                                         .set_thread_id(&thread_id);
                                 send_message.ok_or(
                                     VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                                )?(&problem_report.to_a2a_message())?;
+                                )?(problem_report.to_a2a_message()).await?;
                                 match err.kind() {
                                     VcxErrorKind::InvalidProof => {
                                         (VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()), thread_id)
@@ -242,7 +249,7 @@ impl VerifierSM {
                     let ack = PresentationAck::create().set_thread_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                    )?(&A2AMessage::PresentationAck(ack))?;
+                    )?(A2AMessage::PresentationAck(ack)).await?;
                 }
                 (VerifierFullState::Finished(state), thread_id)
             }

@@ -2,10 +2,8 @@ use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
 use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
-use crate::messages::a2a::A2AMessage;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
 use crate::settings;
@@ -16,7 +14,7 @@ pub struct PresentationRequestSentState {
 }
 
 impl PresentationRequestSentState {
-    pub fn verify_presentation(&self, presentation: &Presentation, thread_id: &str, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+    pub async fn verify_presentation(&self, presentation: &Presentation, thread_id: &str) -> VcxResult<()> {
         if !settings::indy_mocks_enabled() && !presentation.from_thread(&thread_id) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
         };
@@ -26,13 +24,6 @@ impl PresentationRequestSentState {
 
         if !valid {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, "Presentation verification failed"));
-        }
-
-        if presentation.please_ack.is_some() {
-            let ack = PresentationAck::create().set_thread_id(&self.presentation_request.id.0);
-            send_message.ok_or(
-                VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-            )?(&A2AMessage::PresentationAck(ack))?;
         }
 
         Ok(())
