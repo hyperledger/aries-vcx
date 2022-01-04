@@ -1095,7 +1095,7 @@ mod tests {
         let credential_data = credential_data.to_string();
         info!("test_real_proof :: generated credential data: {}", credential_data);
         let mut issuer_credential = create_and_send_cred_offer(&mut institution, &cred_def, &issuer_to_consumer, &credential_data, None);
-        let issuance_thread_id = issuer_credential.get_thread_id();
+        let issuance_thread_id = issuer_credential.get_thread_id().unwrap();
 
         info!("test_real_proof :: AS CONSUMER SEND CREDENTIAL REQUEST");
         let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None);

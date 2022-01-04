@@ -166,7 +166,7 @@ pub mod tests {
         let credential_offer: CredentialOffer = CredentialOffer::create()
             .set_comment(_comment())
             .set_thread_id(&_thread_id())
-            .set_credential_preview_data(_preview_data()).unwrap()
+            .set_credential_preview_data(_preview_data())
             .set_offers_attach(&_attachment().to_string()).unwrap();
 
         assert_eq!(_credential_offer(), credential_offer);

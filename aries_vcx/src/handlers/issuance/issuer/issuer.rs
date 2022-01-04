@@ -318,6 +318,6 @@ pub mod test {
 
         let res = issuer.send_credential_offer(_send_message_but_fail().unwrap());
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        assert!(res.is_ok());
+        assert!(res.is_err());
     }
 }
