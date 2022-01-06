@@ -4,6 +4,7 @@ use serde_json;
 
 use aries_vcx::agency_client::get_message::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
+use aries_vcx::messages::connection::invite::PublicInvitation;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
@@ -16,6 +17,14 @@ use crate::error::prelude::*;
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
+}
+
+pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
+    trace!("generate_public_invite >>> label: {}, public_did: {}", public_did, label);
+    let invitation = A2AMessage::ConnectionInvitationPublic(PublicInvitation::create()
+        .set_public_did(public_did)
+        .set_label(label));
+    Ok(json!(invitation).to_string())
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -550,4 +559,18 @@ pub mod tests {
         let err = send_generic_message(handle, "this is the message").unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_generate_public_invitation() {
+        let _setup = SetupMocks::init();
+
+        let invitation = generate_public_invitation("sob:mainnet:abcde123", "faber-enterprise").unwrap();
+        let parsed = json!(invitation);
+        assert!(parsed["@id"].is_string());
+        assert_eq!(parsed["@type"], json!(expected).to_string());
+        assert_eq!(parsed["did"], "sob:mainnet:abcde123");
+        assert_eq!(parsed["label"], "faber-enterprise");
+    }
+
 }

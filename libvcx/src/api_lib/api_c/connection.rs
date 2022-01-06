@@ -100,6 +100,39 @@ use crate::error::prelude::*;
         Disclose - https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features#disclose-message-type
 */
 
+#[no_mangle]
+pub extern fn vcx_generate_public_invite(command_handle: CommandHandle,
+                                         public_did: *const c_char,
+                                         label: *const c_char,
+                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, public_invite: *const c_char)>) -> u32 {
+    info!("vcx_generate_public_invite >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(public_did, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(label, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_generate_public_invite(command_handle: {}, public_did: {}, label: {})", command_handle, public_did, label);
+
+    execute(move || {
+        match connection::generate_public_invitation(&public_did, &label) {
+            Ok(public_invite) => {
+                trace!("vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
+                       command_handle, error::SUCCESS.message, public_invite);
+                let public_invite = CStringUtils::string_to_cstring(public_invite);
+                cb(command_handle, error::SUCCESS.code_num, public_invite.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
 /// Delete a Connection object from the agency and release its handle.
 ///
 /// NOTE: This eliminates the connection and any ability to use it for any communication.

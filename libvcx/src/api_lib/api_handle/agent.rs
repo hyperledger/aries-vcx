@@ -21,16 +21,6 @@ pub fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<
     return store_public_agent(agent);
 }
 
-pub fn generate_public_invite(agent_handle: u32, label: &str) -> VcxResult<String> {
-    trace!("generate_public_invite >>> agent_handle: {}, label: {}", agent_handle, label);
-    PUBLIC_AGENT_MAP.get(agent_handle, |agent| {
-        let invite = agent.generate_public_invite(label)?;
-        let invite = serde_json::to_string(&invite)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize public invite {:?}, err: {:?}", invite, err)))?;
-        Ok(invite)
-    })
-}
-
 pub fn download_connection_requests(agent_handle: u32, uids: Option<Vec<String>>) -> VcxResult<String> {
     trace!("download_connection_requests >>> agent_handle: {}, uids: {:?}", agent_handle, uids);
     PUBLIC_AGENT_MAP.get(agent_handle, |agent| {

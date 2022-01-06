@@ -79,18 +79,18 @@ impl PublicInvitation {
         Self::default()
     }
 
-    pub fn set_label(mut self, label: String) -> Self {
-        self.label = label;
+    pub fn set_label(mut self, label: &str) -> Self {
+        self.label = label.into();
         self
     }
 
-    pub fn set_id(mut self, id: String) -> Self {
-        self.id = MessageId(id);
+    pub fn set_id(mut self, id: &str) -> Self {
+        self.id = MessageId(id.into());
         self
     }
 
-    pub fn set_public_did(mut self, public_did: String) -> Self {
-        self.did = public_did;
+    pub fn set_public_did(mut self, public_did: &str) -> Self {
+        self.did = public_did.into();
         self
     }
 }
@@ -178,8 +178,8 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     fn test_public_invite_build_works() {
         let invitation: PublicInvitation = PublicInvitation::default()
-            .set_label(_label())
-            .set_public_did(_did());
+            .set_label(&_label())
+            .set_public_did(&_did());
 
         assert_eq!(_public_invitation(), invitation);
     }
