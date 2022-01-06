@@ -115,6 +115,12 @@ pub fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxR
         .map_err(VcxError::from)
 }
 
+pub fn libindy_build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
+    ledger::build_attrib_request(submitter_did, target_did, hash, raw, enc)
+        .wait()
+        .map_err(VcxError::from)
+}
+
 pub fn libindy_build_get_auth_rule_request(submitter_did: Option<&str>, txn_type: Option<&str>, action: Option<&str>, field: Option<&str>,
                                            old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
     ledger::build_get_auth_rule_request(submitter_did, txn_type, action, field, old_value, new_value)
@@ -416,10 +422,21 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
     Ok(())
 }
 
-// TODO: To test: does work like update, or write?
+pub fn build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
+    trace!("build_attrib_request >>> submitter_did: {}, target_did: {}, hash: {:?}, raw: {:?}, enc: {:?}", submitter_did, target_did, hash, raw, enc);
+    if settings::indy_mocks_enabled() {
+        return Ok("{}".into());
+    }
+    let request = libindy_build_attrib_request(submitter_did, target_did, hash, raw, enc)?;
+    let request = append_txn_author_agreement_to_request(&request)?;
+
+    Ok(request)
+}
+
 pub fn add_attr(did: &str, key: &str, value: &str) -> VcxResult<String> {
+    trace!("add_attr >>> did: {}, key: {}, value: {}", did, key, value);
     let attrib_json = json!({ key: value }).to_string();
-    let attrib_req = ledger::build_attrib_request(&did, &did, None, Some(&attrib_json), None).wait()?;
+    let attrib_req = build_attrib_request(&did, &did, None, Some(&attrib_json), None)?;
     libindy_sign_and_submit_request(&did, &attrib_req)
 }
 
@@ -428,7 +445,6 @@ pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
     libindy_submit_request(&get_attrib_req)
 }
 
-// TODO: This should be responsibility of the service struct?
 pub fn get_service(did: &Did) -> VcxResult<FullService> {
     let attr_resp = get_attr(did, "service")?;
     let data = get_data_from_response(&attr_resp)?;
