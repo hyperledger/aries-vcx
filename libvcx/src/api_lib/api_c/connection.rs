@@ -105,7 +105,7 @@ pub extern fn vcx_generate_public_invite(command_handle: CommandHandle,
                                          public_did: *const c_char,
                                          label: *const c_char,
                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, public_invite: *const c_char)>) -> u32 {
-    info!("vcx_generate_public_invite >>>");
+    info!("vcx_generate_public_invite >>> ");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(public_did, VcxErrorKind::InvalidOption);

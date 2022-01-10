@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType, HolderStateType} = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, IssuerStateType, VerifierStateType, HolderStateType, generatePublicInvite} = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
 module.exports.createFaber = async function createFaber () {
@@ -42,20 +42,23 @@ module.exports.createFaber = async function createFaber () {
     logger.info('Faber is going to generate public invite')
     await vcxAgent.agentInitVcx()
 
-    await vcxAgent.serviceAgent.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
-    const invite = await vcxAgent.serviceAgent.getPublicInvite(agentId, 'faber-label')
-    logger.info(`Faber generated public invite:\n${invite}`)
+    const institutionDid = vcxAgent.getInstitutionDid()
+    logger.info(`Faber creating public agent ${agentId}`)
+    await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, institutionDid)
+    logger.info(`Faber creating public invitation for did ${institutionDid}`)
+    const publicInvitation = await generatePublicInvite(institutionDid, 'Faber')
+    logger.info(`Faber generated public invite:\n${publicInvitation}`)
 
     await vcxAgent.agentShutdownVcx()
 
-    return invite
+    return publicInvitation
   }
 
   async function createOobMsg (wrappedMessage) {
     logger.info('Faber is going to generate out of band message')
     await vcxAgent.agentInitVcx()
 
-    const agent = await vcxAgent.serviceAgent.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
+    const agent = await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
     const oobMsg = await vcxAgent.serviceOutOfBand.createOobMsg(agent, 'faber-oob-msg', wrappedMessage)
 
     await vcxAgent.agentShutdownVcx()
@@ -209,7 +212,7 @@ module.exports.createFaber = async function createFaber () {
 
   async function _downloadConnectionRequests () {
     logger.info('Faber is going to download connection requests')
-    const connectionRequests = await vcxAgent.serviceAgent.downloadConnectionRequests(agentId)
+    const connectionRequests = await vcxAgent.servicePublicAgents.downloadConnectionRequests(agentId)
     logger.info(`Downloaded connection requests: ${connectionRequests}`)
     return JSON.parse(connectionRequests)
   }

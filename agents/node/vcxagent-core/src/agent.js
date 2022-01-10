@@ -6,7 +6,7 @@ const { createServiceProver } = require('./services/service-prover')
 const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
-const { createServiceAgents } = require('./services/service-agents')
+const { createServicePublicAgents } = require('./services/service-public-agents')
 const { createServiceOutOfBand } = require('./services/service-out-of-band')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
@@ -121,7 +121,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     loadProof: storageService.loadProof,
     listProofIds: storageService.listProofKeys
   })
-  const serviceAgent = createServiceAgents({
+  const servicePublicAgents = createServicePublicAgents({
     logger,
     saveAgent: storageService.saveAgent,
     loadAgent: storageService.loadAgent
@@ -156,7 +156,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePos
     serviceVerifier,
 
     // agents
-    serviceAgent,
+    servicePublicAgents,
 
     // out of band
     serviceOutOfBand

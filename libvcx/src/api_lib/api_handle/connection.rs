@@ -285,6 +285,7 @@ pub fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<Messag
 
 #[cfg(test)]
 pub mod tests {
+    use serde_json::Value;
     use aries_vcx;
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
@@ -566,9 +567,9 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let invitation = generate_public_invitation("sob:mainnet:abcde123", "faber-enterprise").unwrap();
-        let parsed = json!(invitation);
+        let parsed: Value = serde_json::from_str(&invitation).unwrap();
         assert!(parsed["@id"].is_string());
-        assert_eq!(parsed["@type"], json!(expected).to_string());
+        assert_eq!(parsed["@type"], "https://didcomm.org/connections/1.0/invitation");
         assert_eq!(parsed["did"], "sob:mainnet:abcde123");
         assert_eq!(parsed["label"], "faber-enterprise");
     }
