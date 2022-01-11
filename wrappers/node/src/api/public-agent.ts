@@ -16,59 +16,21 @@ export interface IPairwiseInfo {
 }
 
 export interface IAgentSerializedData {
-  source_id: string; 
+  source_id: string;
   agent_info: IAgentInfo,
   pairwise_info: IPairwiseInfo,
   institution_did: string
 }
 
-export class Agent extends VCXBase<IAgentSerializedData> {
-  public static async create(sourceId: string, institution_did: string): Promise<Agent> {
-    const agent = new Agent(sourceId);
+export class PublicAgent extends VCXBase<IAgentSerializedData> {
+  public static async create(sourceId: string, institution_did: string): Promise<PublicAgent> {
+    const agent = new PublicAgent(sourceId);
     const commandHandle = 0;
     try {
       await agent._create((cb) =>
         rustAPI().vcx_public_agent_create(commandHandle, sourceId, institution_did, cb),
       );
       return agent;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async generatePublicInvite(label: string): Promise<string> {
-    try {
-      const data = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const commandHandle = 0;
-          const rc = rustAPI().vcx_public_agent_generate_public_invite(
-            commandHandle,
-            this.handle,
-            label,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: number, err: number, invite: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!invite) {
-                reject('no public invite returned');
-                return;
-              }
-              resolve(invite);
-            },
-          ),
-      );
-      return data;
     } catch (err) {
       throw new VCXInternalError(err);
     }
@@ -151,8 +113,8 @@ export class Agent extends VCXBase<IAgentSerializedData> {
 
   public static async deserialize(
     agentData: ISerializedData<IAgentSerializedData>,
-  ): Promise<Agent> {
-    const agent = await super._deserialize<Agent>(Agent, agentData);
+  ): Promise<PublicAgent> {
+    const agent = await super._deserialize<PublicAgent>(PublicAgent, agentData);
     return agent;
   }
 

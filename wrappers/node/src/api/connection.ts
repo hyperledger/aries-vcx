@@ -5,7 +5,7 @@ import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
-import { Agent } from './agent';
+import { PublicAgent } from './public-agent';
 import { PtrBuffer } from './utils';
 
 /**
@@ -133,7 +133,7 @@ export interface IRecipientInviteInfo extends IConnectionCreateData {
 export interface IFromRequestInfo extends IConnectionCreateData {
   // Invitation provided by an entity that wishes to make a connection.
   invite: IConnectionInvite;
-  agent: Agent;
+  agent: PublicAgent;
   request: string;
 }
 
@@ -249,6 +249,44 @@ export async function downloadMessagesV2({
   } catch (err) {
     throw new VCXInternalError(err);
   }
+}
+
+export async function generatePublicInvite(public_did: string, label: string): Promise<string> {
+    try {
+        const data = await createFFICallbackPromise<string>(
+            (resolve, reject, cb) => {
+                const commandHandle = 0;
+                const rc = rustAPI().vcx_generate_public_invite(
+                    commandHandle,
+                    public_did,
+                    label,
+                    cb,
+                );
+                if (rc) {
+                    reject(rc);
+                }
+            },
+            (resolve, reject) =>
+                ffi.Callback(
+                    'void',
+                    ['uint32', 'uint32', 'string'],
+                    (handle: number, err: number, invite: string) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        if (!invite) {
+                            reject('no public invite returned');
+                            return;
+                        }
+                        resolve(invite);
+                    },
+                ),
+        );
+        return data;
+    } catch (err) {
+        throw new VCXInternalError(err);
+    }
 }
 
 /**

@@ -8,7 +8,7 @@ const {
   Schema,
   DisclosedProof,
   Proof,
-  Agent
+  PublicAgent
 } = require('@hyperledger/node-vcx-wrapper')
 
 async function createStorageService (agentName) {
@@ -138,9 +138,9 @@ async function createStorageService (agentName) {
   async function loadAgent (name) {
     const serialized = await storageAgents.get(name)
     if (!serialized) {
-      throw Error(`Agent ${name} was not found.`)
+      throw Error(`PublicAgent ${name} was not found.`)
     }
-    return Agent.deserialize(serialized)
+    return PublicAgent.deserialize(serialized)
   }
 
   async function listConnectionKeys () {

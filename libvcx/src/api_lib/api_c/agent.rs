@@ -42,42 +42,6 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_public_agent_generate_public_invite(command_handle: CommandHandle,
-                                                      agent_handle: u32,
-                                                      label: *const c_char,
-                                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, public_invite: *const c_char)>) -> u32 {
-    info!("vcx_public_agent_generate_public_invite >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(label, VcxErrorKind::InvalidOption);
-
-    if !agent::is_valid_handle(agent_handle) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
-    trace!("vcx_public_agent_generate_public_invite(command_handle: {}, label: {})", command_handle, label);
-
-    execute(move || {
-        match agent::generate_public_invite(agent_handle, &label) {
-            Ok(public_invite) => {
-                trace!("generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
-                       command_handle, error::SUCCESS.message, public_invite);
-                let public_invite = CStringUtils::string_to_cstring(public_invite);
-                cb(command_handle, error::SUCCESS.code_num, public_invite.as_ptr());
-            }
-            Err(x) => {
-                warn!("generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
-            }
-        }
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
 pub extern fn vcx_public_agent_download_connection_requests(command_handle: CommandHandle,
                                                             agent_handle: u32,
                                                             uids: *const c_char,

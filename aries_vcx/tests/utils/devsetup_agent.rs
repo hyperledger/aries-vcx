@@ -26,6 +26,7 @@ pub mod test {
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
+    use aries_vcx::messages::connection::invite::PublicInvitation;
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
     #[derive(Debug)]
@@ -221,8 +222,10 @@ pub mod test {
         }
 
         pub fn create_public_invite(&mut self) -> String {
-            self.activate().unwrap();
-            json!(self.agent.generate_public_invite("faber").unwrap()).to_string()
+            let public_invitation = PublicInvitation::create()
+                .set_label("faber")
+                .set_public_did(&self.config_issuer.institution_did);
+            json!(public_invitation).to_string()
         }
 
         pub fn update_state(&mut self, expected_state: u32) {

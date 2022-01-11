@@ -3,7 +3,6 @@ use std::convert::TryFrom;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::messages::connection::invite::PublicInvitation;
 use crate::messages::connection::service::FullService;
 use crate::libindy::utils::ledger::add_service;
 use crate::messages::connection::request::Request;
@@ -43,13 +42,6 @@ impl PublicAgent {
 
     pub fn service(&self) -> VcxResult<FullService> {
         FullService::try_from(self)
-    }
-
-    pub fn generate_public_invite(&self, label: &str) -> VcxResult<PublicInvitation> {
-        let invite: PublicInvitation = PublicInvitation::create()
-            .set_label(label.to_string())
-            .set_public_did(self.institution_did.to_string());
-        Ok(invite)
     }
 
     pub fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
@@ -115,19 +107,5 @@ pub mod tests {
             },
             institution_did: INSTITUTION_DID.to_string()
         }
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_generate_public_invite() {
-        let _setup = SetupMocks::init();
-        let expected_invite = PublicInvitation {
-            id: MessageId("testid".to_string()),
-            label: "hello".to_string(),
-            did: "2hoqvcwupRTUNkXn6ArYzs".to_string()
-        };
-        let agent = PublicAgent::create("testid", INSTITUTION_DID).unwrap();
-        let invite = agent.generate_public_invite(LABEL).unwrap();
-        assert_eq!(expected_invite, invite);
     }
 }
