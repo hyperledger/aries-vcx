@@ -2023,25 +2023,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indy"
-version = "0.8.2"
-dependencies = [
- "async-std",
- "async-trait",
- "failure",
- "futures 0.1.31",
- "indy-sys",
- "lazy_static",
- "libc",
- "log",
- "num-derive 0.2.5",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
 name = "indy-api-types"
 version = "0.1.0"
 dependencies = [
@@ -2284,7 +2265,6 @@ dependencies = [
  "hex",
  "http-client",
  "ics23",
- "indy",
  "indy-api-types",
  "indy-sys",
  "indy-utils",
@@ -2328,6 +2308,7 @@ dependencies = [
  "ursa",
  "uuid 0.7.4",
  "variant_count",
+ "vdrtools",
  "walkdir",
  "zeroize",
  "zmq",
@@ -4720,6 +4701,25 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "vdrtools"
+version = "0.8.2"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "failure",
+ "futures 0.1.31",
+ "indy-sys",
+ "lazy_static",
+ "libc",
+ "log",
+ "num-derive 0.2.5",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
 
 [[package]]
 name = "version_check"
