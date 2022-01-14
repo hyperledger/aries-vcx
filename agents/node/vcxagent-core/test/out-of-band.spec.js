@@ -9,7 +9,7 @@ const {IssuerStateType, HolderStateType, OutOfBandReceiver} = require('@hyperled
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'error')
 })
 
 describe('test out of band communication', () => {
