@@ -36,6 +36,10 @@ impl OutOfBandSender {
         self
     }
 
+    pub fn get_services(&self) -> Vec<ServiceResolvable> {
+        self.oob.services.clone()
+    }
+
     pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
@@ -54,11 +58,11 @@ impl OutOfBandSender {
 
     pub fn append_a2a_message(mut self, msg: A2AMessage) -> VcxResult<Self> {
         let (attach_id, attach) = match msg {
-            A2AMessage::PresentationRequest(request) => {
-                (AttachmentId::PresentationRequest, json!(&request).to_string())
+            a2a_msg @ A2AMessage::PresentationRequest(_) => {
+                (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
             }
-            A2AMessage::CredentialOffer(offer) => {
-                 (AttachmentId::CredentialOffer, json!(&offer).to_string())
+            a2a_msg @ A2AMessage::CredentialOffer(_) => {
+                 (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
             }
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
@@ -84,5 +88,85 @@ impl OutOfBandSender {
         Ok(Self {
             oob: OutOfBand::from_string(oob_data)?
         })
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::messages::connection::request::tests::_request;
+    use crate::handlers::connection::public_agent::tests::_public_agent;
+    use crate::messages::basic_message::message::BasicMessage;
+    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
+    use crate::messages::connection::service::FullService;
+    use crate::messages::issuance::credential_offer::CredentialOffer;
+    use crate::utils::devsetup::SetupMocks;
+
+    use super::*;
+
+    fn _create_oob() -> OutOfBandSender {
+        OutOfBandSender::create()
+            .set_label("oob-label")
+            .set_goal("issue-vc")
+            .set_goal_code(&GoalCode::IssueVC)
+    }
+
+    fn _create_service() -> ServiceResolvable {
+        ServiceResolvable::FullService(FullService::create()
+            .set_service_endpoint("http://example.org/agent".into())
+            .set_routing_keys(vec!("12345".into()))
+            .set_recipient_keys(vec!("abcde".into())))
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_append_service_object_to_oob_services() {
+        let _setup = SetupMocks::init();
+
+        let service = _create_service();
+        let mut oob = _create_oob()
+            .append_service(&service);
+        let service_str = json!(service).to_string();
+        let resolved_service = oob.get_services();
+
+        assert_eq!(resolved_service.len(), 1);
+        assert_eq!(service, resolved_service[0]);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_append_did_to_oob_services() {
+        let _setup = SetupMocks::init();
+
+        let service = ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".to_string());
+        let mut oob = _create_oob()
+            .append_service(&service);
+        let resolved_service = oob.get_services();
+
+        assert_eq!(resolved_service.len(), 1);
+        assert_eq!(service, resolved_service[0]);
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_oob_sender_to_a2a_message() {
+        let _setup = SetupMocks::init();
+
+        let inserted_offer = CredentialOffer::create();
+        let basic_msg = A2AMessage::CredentialOffer(inserted_offer.clone());
+        let mut oob = _create_oob().append_a2a_message(basic_msg).unwrap();
+
+        let attach_msg = oob.to_a2a_message();
+        if let A2AMessage::OutOfBand(oob_msg) = attach_msg {
+            let attachment = oob_msg.requests_attach.content().unwrap();
+            let attachment: A2AMessage = serde_json::from_str(&attachment).unwrap();
+            if let A2AMessage::CredentialOffer(offer) = attachment {
+                assert_eq!(offer, inserted_offer)
+            } else {
+                panic!("Expected credential Aries credential offer in attachment, but got {:?}", attachment);
+            }
+        } else {
+            panic!("Expected OutOfBand message variant, got {:?}", attach_msg);
+        }
     }
 }

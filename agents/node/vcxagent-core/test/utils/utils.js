@@ -24,10 +24,10 @@ module.exports.createPairedAliceAndFaberViaPublicInvite = async function createP
   return { alice, faber }
 }
 
-module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedAliceAndFaberViaOobMsg () {
+module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedAliceAndFaberViaOobMsg (usePublicDid) {
   const alice = await createAlice()
   const faber = await createFaber()
-  const msg = await faber.createOobMsg()
+  const msg = await faber.createOobCredOffer(usePublicDid)
   await alice.createConnectionUsingOobMessage(msg)
   await alice.updateConnection(ConnectionStateType.Requested)
   await faber.createConnectionFromReceivedRequest()
