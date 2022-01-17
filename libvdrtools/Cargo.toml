@@ -1,0 +1,156 @@
+[package]
+name = "libvdrtools"
+version = "0.8.2"
+authors = ["Evernym"]
+edition = "2018"
+
+description = "A library that facilitates building standards compliant and interoperable solutions for self-sovereign identity by abstracting the operations for interacting with a verifiable data registry as defined by Hyperledger Aries."
+license = "Apache-2.0"
+build = "build.rs"
+
+[lib]
+name = "vdrtools"
+path = "src/lib.rs"
+crate-type = ["staticlib", "rlib", "cdylib"]
+
+[features]
+default = ["base58_bs58", "pair_amcl", "local_nodes_pool", "revocation_tests"]
+base58_bs58 = ["bs58"]
+pair_amcl = ["ursa"]
+local_nodes_pool = []
+local_nodes_cheqd_pool = []
+revocation_tests = []
+force_full_interaction_tests = []
+sodium_static = []
+only_high_cases = []
+mysql_storage = []
+cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "vdrtools/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
+
+# Causes the build to fail on all warnings
+fatal_warnings = []
+
+[dependencies]
+async-std = "1.8.0"
+async-trait = "0.1.42"
+cfg-if = "1.0.0"
+env_logger = "0.7"
+etcommon-rlp = "0.2.4"
+failure = { version = "0.1.8", features = ["backtrace"] }
+hex = "0.4.0"
+libc = "0.2.95"
+log = "0.4.8"
+log-derive = "0.3.0"
+num_cpus = "1.8.0"
+derivative = "1.0.2"
+backtrace = "=0.3.11"
+rand = "0.8.4"
+bs58 = { version = "0.4.0", optional = true }
+serde = "1.0.99"
+serde_json = "1.0.40"
+serde_derive = "1.0.99"
+sha2 = "0.9"
+sha3 = "0.9"
+rmp-serde = "0.13.7"
+time = "0.1.42"
+threadpool = "1.7.1"
+zmq = "0.9.1"
+lazy_static = "1.3"
+byteorder = "1.3.2"
+log-panics = "2.0.0"
+zeroize = "~1.3.0"
+regex = "1.2.1"
+indy-api-types = { path = "./indy-api-types"}
+indy-utils = { path = "./indy-utils"}
+indy-wallet = { path = "./indy-wallet"}
+quote = "=1.0.7"
+variant_count = "*"
+num-traits = "0.2"
+num-derive = "0.2"
+convert_case = "0.3.2"
+futures = "0.3.1"
+lru = "0.6.5"
+http-client = "6.4.1"
+ics23 = "0.6.5"
+lexical-core = "0.7.6"
+bip32 = { version = "0.2.2", features = ["alloc"] }
+bip39 = "1.0.1"
+pbkdf2 = "0.9.0"
+password-hash = { version = "0.3.2", features = ["alloc"] }
+rust_crypto = { version = "0.2.36", package="rust-crypto"}
+
+cosmrs = { version = "0.2.1", features = ["rpc", "bip32"], optional = true }
+k256 = { version = "0.9.6", features = ["ecdsa-core", "ecdsa"] }
+uuid = { version = "0.7.4", default-features = false, features = ["v4"] }
+ursa = { version = "0.3.7", optional = true}
+prost = "0.7.0"
+prost-types = "0.7.0"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.5"
+
+[dev-dependencies]
+criterion = "0.2"
+vdrtools = { path = "../wrappers/rust" }
+indy-sys = { path = "../wrappers/rust/indy-sys" }
+sodiumoxide = {version = "0.0.16"}
+openssl = "0.10"
+dirs = "2.0.2"
+rstest = "0.6.4"
+
+[[bench]]
+name = "wallet"
+harness = false
+
+[package.metadata.deb]
+extended-description = """"""
+section = "devel"
+priority = "optional"
+conflicts = "libindy"  # TODO rename libs and remove this section
+maintainer-scripts = "./debian"
+changelog = "./debian/changelog"
+
+[package.metadata.deb.variants.libvdrtools-xenial]
+provides = "libvdrtools (= 0.0.1)"
+name = "libvdrtools"
+depends = "libzmq5, libsodium18, libssl1.0.0"
+assets = [
+    ["target/release/libvdrtools.so", "usr/lib/", "644"],
+]
+
+[package.metadata.deb.variants.libvdrtools-bionic]
+provides = "libvdrtools (= 0.0.1)"
+name = "libvdrtools"
+depends = "libzmq5, libsodium23, libssl1.1"
+assets = [
+    ["target/release/libvdrtools.so", "usr/lib/", "644"],
+]
+
+[package.metadata.deb.variants.libvdrtools-dev-xenial]
+provides = "libvdrtools-dev (= 0.0.1)"
+name = "libvdrtools-dev"
+depends = "libvdrtools (= 0.0.1)"
+assets = [
+    ["include/*.h", "usr/include/vdrtools/", "644"],
+    ["target/release/libvdrtools.a", "usr/lib/", "644"],
+]
+
+[package.metadata.deb.variants.libvdrtools-dev-bionic]
+provides = "libvdrtools-dev (= 0.0.1)"
+name = "libvdrtools-dev"
+depends = "libvdrtools (= 0.0.1)"
+assets = [
+    ["include/*.h", "usr/include/vdrtools/", "644"],
+    ["target/release/libvdrtools.a", "usr/lib/", "644"],
+]
+
+[build-dependencies]
+regex = "1.2.1"
+prost = { version = "0.7", optional = true }
+prost-build = { version = "0.7", optional = true }
+tonic = { version = "0.4", optional = true }
+tonic-build = { version = "0.4", optional = true }
+tempdir = "0.3"
+walkdir = "2"
+
+[dependencies.tendermint-proto]
+version = "0.22"
