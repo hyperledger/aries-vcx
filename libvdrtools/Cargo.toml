@@ -109,10 +109,10 @@ conflicts = "libindy"  # TODO rename libs and remove this section
 maintainer-scripts = "./debian"
 changelog = "./debian/changelog"
 
-[package.metadata.deb.variants.libvdrtools-xenial]
+[package.metadata.deb.variants.libvdrtools-focal]
 provides = "libvdrtools (= 0.0.1)"
 name = "libvdrtools"
-depends = "libzmq5, libsodium18, libssl1.0.0"
+depends = "libzmq5, libsodium23, libssl1.1"
 assets = [
     ["target/release/libvdrtools.so", "usr/lib/", "644"],
 ]
@@ -125,7 +125,7 @@ assets = [
     ["target/release/libvdrtools.so", "usr/lib/", "644"],
 ]
 
-[package.metadata.deb.variants.libvdrtools-dev-xenial]
+[package.metadata.deb.variants.libvdrtools-dev-focal]
 provides = "libvdrtools-dev (= 0.0.1)"
 name = "libvdrtools-dev"
 depends = "libvdrtools (= 0.0.1)"

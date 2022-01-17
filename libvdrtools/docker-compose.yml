@@ -3,7 +3,7 @@ services:
   indy-client-rust-test:
     build:
       context: .
-      dockerfile: ci/ubuntu.dockerfile
+      dockerfile: ci/ubuntu20.dockerfile
     command: cargo test --color=always -- --nocapture
     volumes:
       - ".:/home/indy/indy-client-rust"
