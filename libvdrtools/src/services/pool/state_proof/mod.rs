@@ -3,7 +3,7 @@ extern crate rmp_serde;
 
 use std::collections::HashMap;
 use indy_utils::crypto::hash::{Hash};
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 
 use indy_utils::crypto::base64;
 use rlp::UntrustedRlp;
@@ -20,7 +20,7 @@ use super::types::*;
 use self::log_derive::logfn;
 use ursa::bls::{Bls, Generator, MultiSignature, VerKey};
 use self::node::{Node, TrieDB};
-use rust_base58::FromBase58;
+use crate::utils::crypto::base58::FromBase58;
 use crate::services::pool::Nodes;
 
 mod node;

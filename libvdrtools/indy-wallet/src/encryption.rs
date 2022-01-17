@@ -3,7 +3,6 @@ use std::str;
 
 use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use indy_utils::crypto::{chacha20poly1305_ietf, hmacsha256, pwhash_argon2i13};
-use rust_base58::FromBase58;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -98,7 +97,7 @@ fn _derive_master_key(
 }
 
 fn _raw_master_key(passphrase: &str) -> IndyResult<chacha20poly1305_ietf::Key> {
-    let bytes = passphrase.from_base58()?;
+    let bytes = bs58::decode(passphrase).into_vec()?;
 
     chacha20poly1305_ietf::Key::from_slice(&bytes).map_err(|err| err.extend("Invalid mastery key"))
 }

@@ -7,7 +7,7 @@ use std::{
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 use serde_json;
 
 use super::{ReadableBlob, Reader, ReaderType};

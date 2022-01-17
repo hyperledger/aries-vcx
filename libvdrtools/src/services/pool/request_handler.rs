@@ -28,7 +28,7 @@ use ursa::bls::Generator;
 use std::hash::{Hash, Hasher};
 use log_derive::logfn;
 use indy_api_types::CommandHandle;
-use rust_base58::FromBase58;
+use crate::utils::crypto::base58::FromBase58;
 use crate::domain::pool::PoolMode;
 
 struct RequestSM<T: Networker> {

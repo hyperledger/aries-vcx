@@ -7,7 +7,7 @@ use indy_api_types::{errors::*, PoolHandle};
 use indy_utils::next_pool_handle;
 use async_trait::async_trait;
 use async_std::sync::Arc;
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 
 use crate::domain::{
     pool::{

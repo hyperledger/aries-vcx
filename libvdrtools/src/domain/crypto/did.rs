@@ -4,8 +4,6 @@ use indy_api_types::{
 };
 use lazy_static::lazy_static;
 use regex::Regex;
-use rust_base58::FromBase58;
-
 use crate::utils::qualifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -119,7 +117,7 @@ impl Validatable for DidValue {
         if self.is_fully_qualified() {
             // pass
         } else {
-            let did = self.0.from_base58().map_err(|err| err.to_string())?;
+            let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
 
             if did.len() != 16 && did.len() != 32 {
                 return Err(format!("Trying to use DID with unexpected length: {}. \
@@ -145,7 +143,7 @@ impl ShortDidValue {
 
 impl Validatable for ShortDidValue {
     fn validate(&self) -> Result<(), String> {
-        let did = self.0.from_base58().map_err(|err| err.to_string())?;
+        let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
 
         if did.len() != 16 && did.len() != 32 {
             return Err(format!("Trying to use DID with unexpected length: {}. \

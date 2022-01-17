@@ -10,6 +10,8 @@ edition = "2018"
 default = ["casting_errors"]
 casting_errors = ["openssl", "rust-base58", "zmq", "ursa", "sqlx"]
 cheqd = ["http-client", "cosmrs"]
+rust-base58 = ["bs58"]
+
 
 [dependencies]
 failure = "0.1.8"
@@ -17,7 +19,7 @@ futures = "0.3.1"
 log = { version = "0.4.11", features = ["std"] }
 libc = "0.2.95"
 openssl = {version = "0.10", optional = true}
-rust-base58 = {version = "0.0.4", optional = true}
+bs58 = {version = "0.4.0", optional = true}
 serde = "1.0.99"
 serde_json = "1.0.40"
 serde_derive = "1.0.99"

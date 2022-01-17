@@ -16,7 +16,7 @@ use crate::services::pool::events::*;
 use crate::services::pool::{merkle_tree_factory, Nodes, PoolService};
 use crate::services::pool::networker::{Networker, ZMQNetworker};
 use crate::services::pool::request_handler::{RequestHandler, RequestHandlerImpl};
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use crate::services::pool::types::{LedgerStatus, RemoteNode};
 use indy_utils::crypto::ed25519_sign;
 use crate::services::pool::merkle_tree_factory:: dump_to_json_string;

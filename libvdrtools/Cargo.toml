@@ -14,8 +14,8 @@ path = "src/lib.rs"
 crate-type = ["staticlib", "rlib", "cdylib"]
 
 [features]
-default = ["base58_rust_base58", "pair_amcl", "local_nodes_pool", "revocation_tests"]
-base58_rust_base58 = ["rust-base58"]
+default = ["base58_bs58", "pair_amcl", "local_nodes_pool", "revocation_tests"]
+base58_bs58 = ["bs58"]
 pair_amcl = ["ursa"]
 local_nodes_pool = []
 local_nodes_cheqd_pool = []
@@ -44,7 +44,7 @@ num_cpus = "1.8.0"
 derivative = "1.0.2"
 backtrace = "=0.3.11"
 rand = "0.8.4"
-rust-base58 = {version = "0.0.4", optional = true}
+bs58 = { version = "0.4.0", optional = true }
 serde = "1.0.99"
 serde_json = "1.0.40"
 serde_derive = "1.0.99"

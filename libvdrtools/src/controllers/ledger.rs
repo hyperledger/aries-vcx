@@ -2,7 +2,7 @@ use std::{string::ToString, sync::Arc};
 
 use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 use serde_json::{self, Value};
 
 use crate::{

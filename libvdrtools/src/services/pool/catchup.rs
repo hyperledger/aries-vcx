@@ -7,7 +7,7 @@ use failure::Context;
 use indy_api_types::errors::prelude::*;
 use crate::services::ledger::merkletree::merkletree::MerkleTree;
 use crate::services::pool::merkle_tree_factory;
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use crate::domain::pool::PoolMode;
 use crate::services::pool::types::{CatchupReq, Message};
 

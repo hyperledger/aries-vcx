@@ -1,5 +1,5 @@
 use indy_api_types::errors::prelude::*;
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use crate::services::CryptoService;
 
 

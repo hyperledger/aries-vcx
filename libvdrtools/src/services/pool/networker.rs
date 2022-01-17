@@ -395,7 +395,7 @@ pub mod networker_tests {
     use indy_utils::crypto::ed25519_sign;
 
     use super::*;
-    use rust_base58::base58::FromBase58;
+    use crate::utils::crypto::base58::FromBase58;
 
     const REQ_ID: &str = "1";
     const MESSAGE: &str = "msg";

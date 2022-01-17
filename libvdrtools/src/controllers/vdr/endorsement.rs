@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 
 use indy_api_types::{errors::*, WalletHandle};
 use indy_wallet::RecordOptions;
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 
 #[cfg(feature = "cheqd")]
 use indy_utils::crypto::base64;

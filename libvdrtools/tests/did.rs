@@ -431,15 +431,15 @@ mod high_cases {
 
     mod create_my_did {
         use super::*;
-        use rust_base58::FromBase58;
+
 
         #[test]
         fn indy_create_my_did_works_for_empty_json() {
             let setup = Setup::wallet();
 
             let (my_did, my_verkey) = did::create_my_did(setup.wallet_handle, "{}").unwrap();
-            assert_eq!(my_did.from_base58().unwrap().len(), 16);
-            assert_eq!(my_verkey.from_base58().unwrap().len(), 32);
+            assert_eq!(bs58::decode(my_did).into_vec().unwrap().len(), 16);
+            assert_eq!(bs58::decode(my_verkey).into_vec().unwrap().len(), 32);
         }
 
         #[test]
@@ -452,14 +452,13 @@ mod high_cases {
 
             assert!(my_did.starts_with(DEFAULT_PREFIX));
             assert_eq!(
-                my_did
-                    .replace(DEFAULT_PREFIX, "")
-                    .from_base58()
+                bs58::decode(my_did .replace(DEFAULT_PREFIX, ""))
+                    .into_vec()
                     .unwrap()
                     .len(),
                 16
             );
-            assert_eq!(my_verkey.from_base58().unwrap().len(), 32);
+            assert_eq!(bs58::decode(my_verkey).into_vec().unwrap().len(), 32);
         }
 
         #[test]
@@ -476,7 +475,7 @@ mod high_cases {
             let (my_did_3, my_verkey_3) =
                 did::create_my_did(setup.wallet_handle, &my_did_json).unwrap();
 
-            assert_eq!(my_did_1.from_base58().unwrap().len(), 16);
+            assert_eq!(bs58::decode(&my_did_1).into_vec().unwrap().len(), 16);
             assert!(my_did_2.starts_with(DEFAULT_PREFIX));
             assert!(my_did_3.starts_with("did:indy:"));
 

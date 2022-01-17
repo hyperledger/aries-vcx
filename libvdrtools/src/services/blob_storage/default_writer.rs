@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use async_std::{fs, fs::File, prelude::*};
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 use serde_json;
 
 use crate::utils::environment;

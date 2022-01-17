@@ -909,7 +909,7 @@ pub mod tests {
 
     pub(crate) mod nodes_emulator {
         use indy_utils::crypto::ed25519_sign;
-        use rust_base58::{FromBase58, ToBase58};
+        use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
         use super::*;
 

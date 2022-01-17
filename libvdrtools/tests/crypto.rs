@@ -37,20 +37,19 @@ mod high_cases {
 
     mod create_key {
         use super::*;
-        use rust_base58::FromBase58;
 
         #[test]
         fn indy_create_key_works_for_seed() {
             let setup = Setup::wallet();
             let verkey = crypto::create_key(setup.wallet_handle, Some(MY1_SEED)).unwrap();
-            assert_eq!(verkey.from_base58().unwrap().len(), 32);
+            assert_eq!(bs58::decode(verkey).into_vec().unwrap().len(), 32);
         }
 
         #[test]
         fn indy_create_key_works_without_seed() {
             let setup = Setup::wallet();
             let verkey = crypto::create_key(setup.wallet_handle, None).unwrap();
-            assert_eq!(verkey.from_base58().unwrap().len(), 32);
+            assert_eq!(bs58::decode(verkey).into_vec().unwrap().len(), 32);
         }
     }
 

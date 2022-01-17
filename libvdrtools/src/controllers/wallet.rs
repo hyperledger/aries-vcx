@@ -14,7 +14,7 @@ use indy_utils::crypto::{
 };
 
 use indy_wallet::{KeyDerivationData, WalletService};
-use rust_base58::ToBase58;
+use crate::utils::crypto::base58::ToBase58;
 
 use crate::services::CryptoService;
 

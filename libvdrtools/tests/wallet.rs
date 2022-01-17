@@ -307,7 +307,6 @@ mod high_cases {
 
     mod generate_wallet_key {
         use super::*;
-        use rust_base58::FromBase58;
 
         #[test]
         fn indy_generate_wallet_key_works() {
@@ -332,7 +331,7 @@ mod high_cases {
             let config = json!({ "seed": MY1_SEED }).to_string();
             let key = wallet::generate_wallet_key(Some(config.as_str())).unwrap();
             assert_eq!(
-                key.from_base58().unwrap(),
+                bs58::decode(&key).into_vec().unwrap(),
                 vec![
                     177, 92, 220, 199, 104, 203, 161, 4, 218, 78, 105, 13, 7, 50, 66, 107, 154,
                     155, 108, 133, 1, 30, 87, 149, 233, 76, 39, 156, 178, 46, 230, 124

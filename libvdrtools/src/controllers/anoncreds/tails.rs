@@ -8,7 +8,7 @@ use ursa::{
     errors::prelude::{UrsaCryptoError, UrsaCryptoErrorKind},
 };
 
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::anoncreds::revocation_registry_definition::RevocationRegistryDefinitionV1,

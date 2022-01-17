@@ -92,6 +92,7 @@ USER indy
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.54.0
 ENV PATH /home/indy/.cargo/bin:$PATH
 
-RUN cargo install --version 1.34.0 cargo-deb --no-default-features
+RUN cargo install cargo-deb --no-default-features --version 1.34.0
 
 WORKDIR /home/indy
+

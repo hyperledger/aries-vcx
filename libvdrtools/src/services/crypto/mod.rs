@@ -11,7 +11,7 @@ use indy_utils::crypto::{
     ed25519_box, ed25519_sign,
 };
 
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::crypto::{

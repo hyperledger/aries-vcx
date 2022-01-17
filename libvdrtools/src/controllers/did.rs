@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
-use rust_base58::{FromBase58, ToBase58};
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::crypto::did::{
