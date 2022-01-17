@@ -170,18 +170,18 @@ mod tests {
 
     }
 
-    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| send_message("", &DidDoc::default(), &A2AMessage::BasicMessage(BasicMessage::default())))
+    pub fn _send_message() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin(send_message("".to_string(), DidDoc::default(), A2AMessage::BasicMessage(BasicMessage::default())))))
     }
 
     impl Verifier {
-        fn to_presentation_request_sent_state(&mut self) {
-            self.send_presentation_request(_send_message().unwrap()).unwrap();
+        async fn to_presentation_request_sent_state(&mut self) {
+            self.send_presentation_request(_send_message().unwrap()).await.unwrap();
         }
 
-        fn to_finished_state(&mut self) {
-            self.to_presentation_request_sent_state();
-            self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+        async fn to_finished_state(&mut self) {
+            self.to_presentation_request_sent_state().await;
+            self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
         }
     }
 

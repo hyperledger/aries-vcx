@@ -58,8 +58,8 @@ pub mod test {
         Ok(determine_message_type(a2a_message))
     }
 
-    fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
-        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).unwrap();
+    async fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
+        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).await.unwrap();
         assert_eq!(1, messages.len());
         let messages = messages.pop().unwrap();
 
@@ -69,7 +69,7 @@ pub mod test {
             if filter_msg_type == msg_type {
                 return Some(VcxAgencyMessage {
                     uid: message.uid,
-                    decrypted_msg: decrypted_msg.clone(),
+                    decrypted_msg: decrypted_msg.to_string(),
                 });
             }
         }
@@ -126,7 +126,7 @@ pub mod test {
     }
 
     impl Faber {
-        pub fn setup() -> Faber {
+        pub async fn setup() -> Faber {
             settings::clear_config();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
@@ -158,10 +158,10 @@ pub mod test {
                 config_issuer,
                 schema: Schema::default(),
                 cred_def: CredentialDef::default(),
-                connection: Connection::create("faber", true).unwrap(),
+                connection: Connection::create("faber", true).await.unwrap(),
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent: PublicAgent::create("faber", &institution_did).unwrap()
+                agent: PublicAgent::create("faber", &institution_did).await.unwrap()
             };
             close_main_wallet().unwrap();
             faber
@@ -212,10 +212,10 @@ pub mod test {
             Verifier::create_from_request(String::from("alice_degree"), &presentation_request_data).unwrap()
         }
 
-        pub fn create_invite(&mut self) -> String {
+        pub async fn create_invite(&mut self) -> String {
             self.activate().unwrap();
-            self.connection.connect().unwrap();
-            self.connection.update_state().unwrap();
+            self.connection.connect().await.unwrap();
+            self.connection.update_state().await.unwrap();
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
@@ -228,20 +228,20 @@ pub mod test {
             json!(public_invitation).to_string()
         }
 
-        pub fn update_state(&mut self, expected_state: u32) {
+        pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
-            self.connection.update_state().unwrap();
+            self.connection.update_state().await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
-        pub fn ping(&mut self) {
+        pub async fn ping(&mut self) {
             self.activate().unwrap();
-            self.connection.send_ping(None).unwrap();
+            self.connection.send_ping(None).await.unwrap();
         }
 
-        pub fn discovery_features(&mut self) {
+        pub async fn discovery_features(&mut self) {
             self.activate().unwrap();
-            self.connection.send_discovery_features(None, None).unwrap();
+            self.connection.send_discovery_features(None, None).await.unwrap();
         }
 
         pub fn connection_info(&mut self) -> serde_json::Value {
@@ -250,7 +250,7 @@ pub mod test {
             serde_json::from_str(&details).unwrap()
         }
 
-        pub fn offer_credential(&mut self) {
+        pub async fn offer_credential(&mut self) {
             self.activate().unwrap();
 
             let credential_json = json!({
@@ -268,42 +268,42 @@ pub mod test {
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential.build_credential_offer_msg(offer_info, None).unwrap();
-            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap()).unwrap();
-            self.issuer_credential.update_state(&self.connection).unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap()).await.unwrap();
+            self.issuer_credential.update_state(&self.connection).await.unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
-        pub fn send_credential(&mut self) {
+        pub async fn send_credential(&mut self) {
             self.activate().unwrap();
-            self.issuer_credential.update_state(&self.connection).unwrap();
+            self.issuer_credential.update_state(&self.connection).await.unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
-            self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).unwrap();
-            self.issuer_credential.update_state(&self.connection).unwrap();
+            self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).await.unwrap();
+            self.issuer_credential.update_state(&self.connection).await.unwrap();
             assert_eq!(IssuerState::Finished, self.issuer_credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.issuer_credential.get_credential_status().unwrap());
         }
 
-        pub fn request_presentation(&mut self) {
+        pub async fn request_presentation(&mut self) {
             self.activate().unwrap();
             self.verifier = self.create_presentation_request();
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
-            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap()).unwrap();
-            self.verifier.update_state(&self.connection).unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap()).await.unwrap();
+            self.verifier.update_state(&self.connection).await.unwrap();
 
             assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
 
-        pub fn verify_presentation(&mut self) {
+        pub async fn verify_presentation(&mut self) {
             self.activate().unwrap();
-            self.update_proof_state(VerifierState::Finished, aries_vcx::messages::status::Status::Success.code())
+            self.update_proof_state(VerifierState::Finished, aries_vcx::messages::status::Status::Success.code()).await
         }
 
-        pub fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
+        pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().unwrap();
 
-            self.verifier.update_state(&self.connection).unwrap();
+            self.verifier.update_state(&self.connection).await.unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
@@ -319,7 +319,7 @@ pub mod test {
     }
 
     impl Alice {
-        pub fn setup() -> Alice {
+        pub async fn setup() -> Alice {
             settings::clear_config();
 
             let config_wallet = WalletConfig {
@@ -347,7 +347,7 @@ pub mod test {
                 is_active: false,
                 config_wallet,
                 config_agency,
-                connection: Connection::create("tmp_empoty", true).unwrap(),
+                connection: Connection::create("tmp_empoty", true).await.unwrap(),
                 credential: Holder::default(),
                 prover: Prover::default()
             };
@@ -355,30 +355,31 @@ pub mod test {
             alice
         }
 
-        pub fn accept_invite(&mut self, invite: &str) {
+        pub async fn accept_invite(&mut self, invite: &str) {
             self.activate().unwrap();
-            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).unwrap();
-            self.connection.connect().unwrap();
-            self.connection.update_state().unwrap();
+            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true).await.unwrap();
+            self.connection.connect().await.unwrap();
+            self.connection.update_state().await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
-        pub fn update_state(&mut self, expected_state: u32) {
+        pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().unwrap();
-            self.connection.update_state().unwrap();
+            self.connection.update_state().await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
-        pub fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
+        pub async fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate()?;
             let did = self.connection.pairwise_info().pw_did.to_string();
             download_message(did, message_type)
+                .await
                 .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }
 
-        pub fn accept_offer(&mut self) {
+        pub async fn accept_offer(&mut self) {
             self.activate().unwrap();
-            let offers = get_credential_offer_messages(&self.connection).unwrap();
+            let offers = get_credential_offer_messages(&self.connection).await.unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
             let offer = serde_json::to_string(&offer).unwrap();
             let cred_offer: CredentialOffer = serde_json::from_str(&offer)
@@ -389,29 +390,29 @@ pub mod test {
             assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
-            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap()).unwrap();
+            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap()).await.unwrap();
             assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 
-        pub fn accept_credential(&mut self) {
+        pub async fn accept_credential(&mut self) {
             self.activate().unwrap();
-            self.credential.update_state(&self.connection).unwrap();
+            self.credential.update_state(&self.connection).await.unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
-        pub fn get_proof_request_messages(&mut self) -> PresentationRequest {
+        pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
             self.activate().unwrap();
-            let presentation_requests = get_proof_request_messages(&self.connection).unwrap();
+            let presentation_requests = get_proof_request_messages(&self.connection).await.unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
             let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
             presentation_request
         }
 
-        pub fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
+        pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
             self.activate().unwrap();
-            match self.connection.get_message_by_id(msg_id).unwrap() {
+            match self.connection.get_message_by_id(msg_id).await.unwrap() {
                 A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
@@ -420,9 +421,9 @@ pub mod test {
             }
         }
 
-        pub fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
+        pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
             self.activate().unwrap();
-            match self.connection.get_message_by_id(msg_id).unwrap() {
+            match self.connection.get_message_by_id(msg_id).await.unwrap() {
                 A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
@@ -446,24 +447,24 @@ pub mod test {
             use_credentials
         }
 
-        pub fn send_presentation(&mut self) {
+        pub async fn send_presentation(&mut self) {
             self.activate().unwrap();
-            let presentation_request = self.get_proof_request_messages();
+            let presentation_request = self.get_proof_request_messages().await;
 
             self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
 
             let credentials = self.get_credentials_for_presentation();
 
-            self.prover.generate_presentation(credentials.to_string(), String::from("{}")).unwrap();
+            self.prover.generate_presentation(credentials.to_string(), String::from("{}")).await.unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-            self.prover.send_presentation(&self.connection.send_message_closure().unwrap()).unwrap();
+            self.prover.send_presentation(self.connection.send_message_closure().unwrap()).await.unwrap();
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
-        pub fn ensure_presentation_verified(&mut self) {
+        pub async fn ensure_presentation_verified(&mut self) {
             self.activate().unwrap();
-            self.prover.update_state(&self.connection).unwrap();
+            self.prover.update_state(&self.connection).await.unwrap();
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }

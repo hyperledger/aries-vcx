@@ -138,8 +138,8 @@ pub mod test {
 
     use super::*;
 
-    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    pub fn _send_message() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
 
     fn _holder_from_offer() -> Holder {
@@ -151,58 +151,58 @@ pub mod test {
     }
 
     impl Holder {
-        fn to_finished_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+        async fn to_finished_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
             self
         }
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_without_negotiation() {
+    async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let holder = _holder().to_finished_state();
+        let holder = _holder().to_finished_state().await;
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_with_negotiation() {
+    async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_request(_my_pw_did(), _send_message().unwrap()).unwrap();
+        holder.send_request(_my_pw_did(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

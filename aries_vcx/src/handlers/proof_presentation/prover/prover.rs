@@ -165,10 +165,10 @@ mod tests {
 
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_retrieve_credentials() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_retrieve_credentials() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let (_, _, req, _) = create_proof();
@@ -182,9 +182,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_retrieve_credentials_empty() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_retrieve_credentials_empty() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -211,9 +211,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
+        let setup = SetupWithWalletAndAgency::init().await;
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let mut req = json!({
@@ -267,9 +267,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_proof() {
+        let setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
@@ -314,14 +314,14 @@ mod tests {
               "self_attested_attr_3":"attested_val"
         });
 
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_self_attested_proof() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_self_attested_proof() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let indy_proof_req = json!({
            "nonce":"123432421212",
@@ -347,14 +347,14 @@ mod tests {
               "address1_1":"attested_address",
               "zip_2": "attested_zip"
         });
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof_with_predicates() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_proof_with_predicates() {
+        let setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
@@ -403,7 +403,7 @@ mod tests {
         let self_attested: serde_json::Value = json!({
               "self_attested_attr_3":"attested_val"
         });
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 }

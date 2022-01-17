@@ -205,8 +205,8 @@ pub mod test {
         Issuer::create_from_proposal("test_source_id", &_credential_proposal()).unwrap()
     }
 
-    fn _send_message_but_fail() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| Err(VcxError::from(VcxErrorKind::IOError)))
+    fn _send_message_but_fail() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin(async { Err(VcxError::from(VcxErrorKind::IOError)) })))
     }
 
     impl Issuer {
@@ -216,108 +216,108 @@ pub mod test {
             self
         }
 
-        fn to_request_received_state(mut self) -> Issuer {
+        async fn to_request_received_state(mut self) -> Issuer {
             self = self.to_offer_sent_state_unrevokable();
-            self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
 
-        fn to_finished_state_unrevokable(mut self) -> Issuer {
-            self = self.to_request_received_state();
-            self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+        async fn to_finished_state_unrevokable(mut self) -> Issuer {
+            self = self.to_request_received_state().await;
+            self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             self
         }
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_cant_revoke_without_revocation_details() {
+    async fn test_cant_revoke_without_revocation_details() {
         let _setup = SetupMocks::init();
-        let issuer = _issuer().to_finished_state_unrevokable();
+        let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
         let revoc_result = issuer.revoke_credential(true);
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_credential_can_be_resent_after_failure() {
+    async fn test_credential_can_be_resent_after_failure() {
         let _setup = SetupMocks::init();
-        let mut issuer = _issuer().to_request_received_state();
+        let mut issuer = _issuer().to_request_received_state().await;
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer.send_credential(_send_message_but_fail().unwrap());
+        let send_result = issuer.send_credential(_send_message_but_fail().unwrap()).await;
         assert_eq!(send_result.is_err(), true);
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer.send_credential(_send_message().unwrap());
+        let send_result = issuer.send_credential(_send_message().unwrap()).await;
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_without_negotiation() {
+    async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).unwrap();
+        issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer.send_credential(_send_message().unwrap()).unwrap();
+        issuer.send_credential(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_with_negotiation() {
+    async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).unwrap();
+        issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
-        issuer.send_credential_offer(_send_message().unwrap()).unwrap();
+        issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).unwrap();
+        issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer.send_credential(_send_message().unwrap()).unwrap();
+        issuer.send_credential(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn issuer_cant_send_offer_twice() {
+    async fn issuer_cant_send_offer_twice() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer().to_offer_sent_state_unrevokable();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
-        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap());
+        let res = issuer.send_credential_offer(_send_message_but_fail().unwrap()).await;
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         assert!(res.is_err());
     }
