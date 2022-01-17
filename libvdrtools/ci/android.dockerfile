@@ -11,6 +11,7 @@ ENV PATH=${PATH}:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools:${ANDROID_
 COPY android.prepare.sh .
 COPY setup.android.env.sh .
 USER root
+RUN apt-get update && apt-get install -y zip
 RUN chmod +x android.prepare.sh
 RUN chown indy:indy android.prepare.sh
 USER indy
