@@ -358,13 +358,13 @@ pub mod tests {
         assert_eq!(cred_original_serialized, cred_restored_serialized);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn full_credential_test() {
+    async fn full_credential_test() {
         let _setup = SetupMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
-        let handle_conn = connection::tests::build_test_connection_inviter_requested();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
         info!("full_credential_test:: going to _get_offer");
         let offer = _get_offer(handle_conn);
@@ -441,12 +441,12 @@ pub mod tests {
         // serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_credential_offer() {
+    async fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_invitee_completed();
+        let connection_h = connection::tests::build_test_connection_invitee_completed().await;
 
         let offer = get_credential_offer_messages_with_conn_handle(connection_h).unwrap();
         let o: serde_json::Value = serde_json::from_str(&offer).unwrap();

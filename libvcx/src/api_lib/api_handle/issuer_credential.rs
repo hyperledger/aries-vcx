@@ -265,12 +265,12 @@ pub mod tests {
         assert!(!string.is_empty());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_credential_offer() {
+    async fn test_send_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         let handle_cred = _issuer_credential_create();
 
@@ -288,12 +288,12 @@ pub mod tests {
             .generate_credential_offer().unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_retry_send_credential_offer() {
+    async fn test_retry_send_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         let handle = _issuer_credential_create();
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
@@ -329,12 +329,12 @@ pub mod tests {
         assert_eq!(new_string, string);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_update_state_with_message() {
+    async fn test_update_state_with_message() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
@@ -344,12 +344,12 @@ pub mod tests {
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::RequestReceived));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_update_state_with_bad_message() {
+    async fn test_update_state_with_bad_message() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
         assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);

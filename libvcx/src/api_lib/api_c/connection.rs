@@ -1374,16 +1374,16 @@ mod tests {
         assert_eq!(rc, error::INVALID_OPTION.code_num);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_connect() {
+    async fn test_vcx_connection_connect() {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
 
-        let handle = build_test_connection_inviter_null();
+        let handle = build_test_connection_inviter_null().await;
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1393,13 +1393,13 @@ mod tests {
         assert!(invite_details.is_some());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_connect_returns_invitation() {
+    async fn test_vcx_connection_connect_returns_invitation() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_null();
-        let invitation = connect(handle).unwrap().unwrap();
+        let handle = build_test_connection_inviter_null().await;
+        let invitation = connect(handle).await.unwrap().unwrap();
         let invitation: Value = serde_json::from_str(&invitation).unwrap();
         assert!(invitation["serviceEndpoint"].is_string());
         assert!(invitation["recipientKeys"].is_array());
@@ -1408,12 +1408,12 @@ mod tests {
         assert!(invitation["@id"].is_string());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_update_state() {
+    async fn test_vcx_connection_update_state() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_invited();
+        let handle = build_test_connection_inviter_invited().await;
         assert!(handle > 0);
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
@@ -1433,12 +1433,12 @@ mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateAccepted as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_update_state_with_message() {
+    async fn test_vcx_connection_update_state_with_message() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_requested();
+        let handle = build_test_connection_inviter_requested().await;
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1461,12 +1461,12 @@ mod tests {
         assert_eq!(rc, error::INVALID_OPTION.code_num);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_serialize() {
+    async fn test_vcx_connection_serialize() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_requested();
+        let handle = build_test_connection_inviter_requested().await;
         assert!(handle > 0);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1476,12 +1476,12 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_release() {
+    async fn test_vcx_connection_release() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_requested();
+        let handle = build_test_connection_inviter_requested().await;
 
         let rc = vcx_connection_release(handle);
         assert_eq!(rc, error::SUCCESS.code_num);
@@ -1508,12 +1508,12 @@ mod tests {
         assert!(handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_get_state() {
+    async fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 
-        let handle = build_test_connection_inviter_invited();
+        let handle = build_test_connection_inviter_invited().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
@@ -1528,12 +1528,12 @@ mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32)
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_delete_connection() {
+    async fn test_vcx_connection_delete_connection() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(DELETE_CONNECTION_DECRYPTED_RESPONSE);
 
@@ -1541,15 +1541,15 @@ mod tests {
         assert_eq!(vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(connection::get_source_id(connection_handle).await.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_message() {
+    async fn test_send_message() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         let msg = CString::new("MESSAGE").unwrap().into_raw();
         let send_msg_options = CString::new(json!({"msg_type":"type", "msg_title": "title", "ref_msg_id":null}).to_string()).unwrap().into_raw();
@@ -1558,12 +1558,12 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_sign() {
+    async fn test_sign() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_invited();
+        let connection_handle = connection::tests::build_test_connection_inviter_invited().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();
@@ -1578,12 +1578,12 @@ mod tests {
         let _sig = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_verify_signature() {
+    async fn test_verify_signature() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();

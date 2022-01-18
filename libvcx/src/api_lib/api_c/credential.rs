@@ -1042,12 +1042,12 @@ mod tests {
         assert!(handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_get_new_offers() {
+    async fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed().await;
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_offers(cb.command_handle,
@@ -1057,12 +1057,12 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_create() {
+    async fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed().await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_create_with_msgid(cb.command_handle,
@@ -1085,12 +1085,12 @@ mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), HolderState::OfferReceived as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_update_state() {
+    async fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_inviter_requested();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::OfferReceived as u32);
@@ -1115,13 +1115,13 @@ mod tests {
         assert_eq!(rev_reg_id, rev_reg_id_expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // Missing implementation for v3 in generate_credential_request_msg
-    fn test_vcx_credential_get_request_msg() {
+    async fn test_vcx_credential_get_request_msg() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = connection::tests::build_test_connection_inviter_invited().await;
 
         let my_pw_did = CString::new(connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
         let their_pw_did = CString::new(connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();

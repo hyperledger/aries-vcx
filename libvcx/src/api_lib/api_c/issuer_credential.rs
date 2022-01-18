@@ -1115,12 +1115,12 @@ pub mod tests {
         assert_ne!(handle, handle_2);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_issuer_send_credential_offer() {
+    async fn test_vcx_issuer_send_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         let credential_handle = _vcx_issuer_create_credential_c_closure().unwrap();
 
@@ -1144,12 +1144,12 @@ pub mod tests {
         assert_eq!(state, u32::from(IssuerState::RequestReceived));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_issuer_update_state_v2() {
+    async fn test_vcx_issuer_update_state_v2() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_invitee_completed();
+        let connection_handle = connection::tests::build_test_connection_invitee_completed().await;
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         let cb = return_types_u32::Return_U32::new().unwrap();
 
@@ -1163,9 +1163,9 @@ pub mod tests {
 
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        let connection_serialized = connection::to_string(connection_handle).unwrap();
-        connection::release(connection_handle).unwrap();
-        let connection_handle = connection::from_string(&connection_serialized).unwrap();
+        let connection_serialized = connection::to_string(connection_handle).await.unwrap();
+        connection::release(connection_handle).await.unwrap();
+        let connection_handle = connection::from_string(&connection_serialized).await.unwrap();
 
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();

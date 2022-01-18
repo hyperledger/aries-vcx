@@ -222,12 +222,12 @@ pub mod tests {
         assert!(!is_valid_handle(handle));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_proof_request() {
+    async fn test_send_proof_request() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         let handle_proof = create_default_proof();
         assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), error::SUCCESS.code_num);
@@ -244,52 +244,35 @@ pub mod tests {
         assert!(get_presentation_msg(handle).is_err())
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_update_state_v2() {
+    async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
-        connection::release(handle_conn).unwrap();
-        let handle_conn = build_test_connection_inviter_requested();
+        connection::release(handle_conn).await.unwrap();
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
 
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_update_state() {
+    async fn test_update_state() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
-        let handle_conn = build_test_connection_inviter_requested();
-        let handle_proof = create_default_proof();
-
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
-
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_proof_validation_with_predicate() {
-        let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().
-            set_mock_result_for_validate_indy_proof(Ok(true));
-
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn).unwrap();
@@ -299,12 +282,29 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_update_state_with_reject_message() {
+    async fn test_proof_validation_with_predicate() {
+        let _setup = SetupMocks::init();
+        let _mock_builder = MockBuilder::init().
+            set_mock_result_for_validate_indy_proof(Ok(true));
+
+        let handle_conn = build_test_connection_inviter_requested().await;
+        let handle_proof = create_default_proof();
+
+        send_proof_request(handle_proof, handle_conn).unwrap();
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_update_state_with_reject_message() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn).unwrap();
@@ -313,26 +313,26 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Failed as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_presentation_request() {
+    async fn test_send_presentation_request() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof() {
+    async fn test_get_proof() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         send_proof_request(handle_proof, handle_conn).unwrap();
@@ -363,12 +363,12 @@ pub mod tests {
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_proof_request_can_be_retried() {
+    async fn test_send_proof_request_can_be_retried() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         let _request = get_presentation_request_msg(handle_proof).unwrap();
@@ -383,14 +383,14 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_accepted() {
+    async fn test_proof_accepted() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         let _request = get_presentation_request_msg(handle_proof).unwrap();
@@ -399,12 +399,12 @@ pub mod tests {
         assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_errors() {
+    async fn test_proof_errors() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = build_test_connection_inviter_requested();
+        let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof();
 
         let bad_handle = 100000;

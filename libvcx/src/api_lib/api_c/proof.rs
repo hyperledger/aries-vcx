@@ -788,12 +788,12 @@ mod tests {
         assert!(handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_update_state() {
+    async fn test_proof_update_state() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let connection_handle = build_test_connection_inviter_requested().await;
         let proof_handle = create_proof_util().unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -806,9 +806,9 @@ mod tests {
         assert_eq!(state, 1);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_proof_send_request() {
+    async fn test_vcx_proof_send_request() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
@@ -817,7 +817,7 @@ mod tests {
 
         assert_eq!(proof::get_state(proof_handle).unwrap(), 1);
 
-        let connection_handle = build_test_connection_inviter_requested();
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_proof_send_request(cb.command_handle,

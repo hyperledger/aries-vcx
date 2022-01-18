@@ -290,12 +290,12 @@ mod tests {
         assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_cycle() {
+    async fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested();
+        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -316,12 +316,12 @@ mod tests {
         assert_eq!(ProverState::Finished as u32, get_state(handle_proof).unwrap());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_update_state_v2() {
+    async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
@@ -337,8 +337,8 @@ mod tests {
         send_proof(handle, connection_handle).unwrap();
         assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
 
-        connection::release(connection_handle).unwrap();
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
+        connection::release(connection_handle).await.unwrap();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
@@ -347,12 +347,12 @@ mod tests {
         assert_eq!(ProverState::Finished as u32, get_state(handle).unwrap());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_reject_cycle() {
+    async fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested();
+        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -398,12 +398,12 @@ mod tests {
         assert_eq!(from_string("{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof_request() {
+    async fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_invitee_completed();
+        let connection_h = connection::tests::build_test_connection_invitee_completed().await;
 
         let request = get_proof_request(connection_h, "123").unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
@@ -420,12 +420,12 @@ mod tests {
         from_string(&serialized).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof_request_attachment() {
+    async fn test_get_proof_request_attachment() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested();
+        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);

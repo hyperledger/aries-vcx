@@ -724,13 +724,13 @@ mod tests {
         vcx_shutdown(false);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_shutdown() {
+    async fn test_shutdown() {
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
-        let connection = connection::tests::build_test_connection_inviter_invited();
+        let connection = connection::tests::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create_and_store("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), "{}".to_string()).unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
@@ -739,7 +739,7 @@ mod tests {
         let credential = credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);
-        assert_eq!(connection::release(connection).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(connection::release(connection).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
         assert_eq!(issuer_credential::release(issuer_credential).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
         assert_eq!(schema::release(schema).unwrap_err().kind(), VcxErrorKind::InvalidSchemaHandle);
         assert_eq!(proof::release(proof).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
@@ -991,9 +991,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn test_agency_client_does_not_have_to_be_initialized() {
+    async fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupWithWalletAndAgency::init();
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
@@ -1001,8 +1001,8 @@ mod tests {
 
         settings::clear_config();
 
-        let connection_handle = connection::create_connection("test_create_works").unwrap();
-        connection::connect(connection_handle).unwrap();
+        let connection_handle = connection::create_connection("test_create_works").await.unwrap();
+        connection::connect(connection_handle).await.unwrap();
 
         settings::set_testing_defaults();
     }

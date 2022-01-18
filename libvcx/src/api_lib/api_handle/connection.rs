@@ -299,8 +299,8 @@ pub mod tests {
     use super::*;
     use aries_vcx::settings;
 
-    pub fn mock_connection() -> u32 {
-        build_test_connection_inviter_requested()
+    pub async fn mock_connection() -> u32 {
+        build_test_connection_inviter_requested().await
     }
 
     fn _setup() {
@@ -311,252 +311,252 @@ pub mod tests {
         "test connection"
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_works() {
+    async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
+        assert!(connection::is_valid_handle(connection_handle).await);
+        assert_eq!(0, connection::get_state(connection_handle).await);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_pairwise_invite() {
+    async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).await.unwrap();
+        assert!(connection::is_valid_handle(connection_handle).await);
+        assert_eq!(1, connection::get_state(connection_handle).await);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_public_invite() {
+    async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).await.unwrap();
+        assert!(connection::is_valid_handle(connection_handle).await);
+        assert_eq!(1, connection::get_state(connection_handle).await);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection_with_request() {
+    async fn test_create_connection_with_request() {
         let _setup = SetupMocks::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).unwrap();
         let connection_handle = connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle).unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(2, connection::get_state(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
+        assert_eq!(2, connection::get_state(connection_handle).await);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_connection_state_works() {
+    async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).unwrap();
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
+        assert_eq!(0, connection::get_state(connection_handle).await);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_connection_delete() {
+    async fn test_connection_delete() {
         let _setup = SetupMocks::init();
         warn!(">> test_connection_delete going to create connection");
-        let connection_handle = connection::create_connection(_source_id()).unwrap();
+        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
         warn!(">> test_connection_delete checking is valid handle");
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
 
-        connection::release(connection_handle).unwrap();
-        assert!(!connection::is_valid_handle(connection_handle));
+        connection::release(connection_handle).await.unwrap();
+        assert!(!connection::is_valid_handle(connection_handle).await);
     }
 
-    pub fn build_test_connection_inviter_null() -> u32 {
-        let handle = create_connection("faber_to_alice").unwrap();
+    pub async fn build_test_connection_inviter_null() -> u32 {
+        let handle = create_connection("faber_to_alice").await.unwrap();
         handle
     }
 
-    pub fn build_test_connection_inviter_invited() -> u32 {
-        let handle = create_connection("faber_to_alice").unwrap();
-        connect(handle).unwrap();
+    pub async fn build_test_connection_inviter_invited() -> u32 {
+        let handle = create_connection("faber_to_alice").await.unwrap();
+        connect(handle).await.unwrap();
         handle
     }
 
-    pub fn build_test_connection_invitee_completed() -> u32 {
-        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
+    pub async fn build_test_connection_invitee_completed() -> u32 {
+        from_string(CONNECTION_SM_INVITEE_COMPLETED).await.unwrap()
     }
 
-    pub fn build_test_connection_inviter_requested() -> u32 {
-        let handle = build_test_connection_inviter_invited();
-        update_state_with_message(handle, ARIES_CONNECTION_REQUEST).unwrap();
+    pub async fn build_test_connection_inviter_requested() -> u32 {
+        let handle = build_test_connection_inviter_invited().await;
+        update_state_with_message(handle, ARIES_CONNECTION_REQUEST).await.unwrap();
         handle
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_connection() {
+    async fn test_create_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_create_connection").unwrap();
-        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
+        let handle = create_connection("test_create_connection").await.unwrap();
+        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
 
 
-        connect(handle).unwrap();
-        assert_eq!(get_pw_did(handle).unwrap(), constants::DID);
-        assert_eq!(get_pw_verkey(handle).unwrap(), constants::VERKEY);
+        connect(handle).await.unwrap();
+        assert_eq!(get_pw_did(handle).await.unwrap(), constants::DID);
+        assert_eq!(get_pw_verkey(handle).await.unwrap(), constants::VERKEY);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
-        update_state(handle).unwrap();
-        assert_eq!(get_state(handle), VcxStateType::VcxStateRequestReceived as u32);
+        update_state(handle).await.unwrap();
+        assert_eq!(get_state(handle).await, VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
-        update_state(handle).unwrap();
-        assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
+        update_state(handle).await.unwrap();
+        assert_eq!(get_state(handle).await, VcxStateType::VcxStateAccepted as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);
-        assert_eq!(delete_connection(handle).unwrap(), 0);
+        assert_eq!(delete_connection(handle).await.unwrap(), 0);
 
         // This errors b/c we release handle in delete connection
-        assert!(release(handle).is_err());
+        assert!(release(handle).await.is_err());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_drop_create() {
+    async fn test_create_drop_create() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_create_drop_create").unwrap();
+        let handle = create_connection("test_create_drop_create").await.unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
-        let did1 = get_pw_did(handle).unwrap();
+        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
+        let did1 = get_pw_did(handle).await.unwrap();
 
-        release(handle).unwrap();
+        release(handle).await.unwrap();
 
-        let handle2 = create_connection("test_create_drop_create").unwrap();
+        let handle2 = create_connection("test_create_drop_create").await.unwrap();
 
-        assert_eq!(get_state(handle2), VcxStateType::VcxStateNone as u32);
-        let did2 = get_pw_did(handle2).unwrap();
+        assert_eq!(get_state(handle2).await, VcxStateType::VcxStateNone as u32);
+        let did2 = get_pw_did(handle2).await.unwrap();
 
         assert_ne!(handle, handle2);
         assert_eq!(did1, did2);
 
-        release(handle2).unwrap();
+        release(handle2).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_connection_release_fails() {
+    async fn test_connection_release_fails() {
         let _setup = SetupEmpty::init();
 
-        let rc = release(1);
+        let rc = release(1).await;
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_state_fails() {
+    async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
-        let state = get_state(1);
+        let state = get_state(1).await;
         assert_eq!(state, VcxStateType::VcxStateNone as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_string_fails() {
+    async fn test_get_string_fails() {
         let _setup = SetupEmpty::init();
 
-        let rc = to_string(0);
+        let rc = to_string(0).await;
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_service_endpoint() {
+    async fn test_get_service_endpoint() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_get_qr_code_data").unwrap();
+        let handle = create_connection("test_get_qr_code_data").await.unwrap();
 
-        connect(handle).unwrap();
+        connect(handle).await.unwrap();
 
-        let details = get_invite_details(handle).unwrap();
+        let details = get_invite_details(handle).await.unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
 
-        assert_eq!(get_invite_details(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(get_invite_details(0).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_retry_connection() {
+    async fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_serialize_deserialize").unwrap();
+        let handle = create_connection("test_serialize_deserialize").await.unwrap();
 
-        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
+        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
 
-        connect(handle).unwrap();
-        connect(handle).unwrap();
+        connect(handle).await.unwrap();
+        connect(handle).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_all() {
+    async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_connection("rel1").unwrap();
-        let h2 = create_connection("rel2").unwrap();
-        let h3 = create_connection("rel3").unwrap();
-        let h4 = create_connection("rel4").unwrap();
-        let h5 = create_connection("rel5").unwrap();
+        let h1 = create_connection("rel1").await.unwrap();
+        let h2 = create_connection("rel2").await.unwrap();
+        let h3 = create_connection("rel3").await.unwrap();
+        let h4 = create_connection("rel4").await.unwrap();
+        let h5 = create_connection("rel5").await.unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h1).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h2).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h3).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h4).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h5).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_with_valid_invite_details() {
+    async fn test_create_with_valid_invite_details() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle).unwrap();
+        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
+        connect(handle).await.unwrap();
 
-        let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
-        connect(handle_2).unwrap();
+        let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
+        connect(handle_2).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_process_acceptance_message() {
+    async fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_process_acceptance_message").unwrap();
-        assert_eq!(error::SUCCESS.code_num, update_state_with_message(handle, ARIES_CONNECTION_REQUEST).unwrap());
+        let handle = create_connection("test_process_acceptance_message").await.unwrap();
+        assert_eq!(error::SUCCESS.code_num, update_state_with_message(handle, ARIES_CONNECTION_REQUEST).await.unwrap());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_connection_handle_is_found() {
+    async fn test_connection_handle_is_found() {
         let _setup = SetupMocks::init();
-        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).unwrap();
+        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
 
-        CONNECTION_MAP.get_mut(handle, |_connection| {
-            Ok(())
-        }).unwrap();
+        CONNECTION_MAP.get_mut(handle, |_connection, []| {
+            async move { Ok(()) }.boxed()
+        }).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_send_generic_message_fails_with_invalid_connection() {
+    async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = connection::tests::build_test_connection_inviter_invited();
+        let handle = connection::tests::build_test_connection_inviter_invited().await;
 
-        let err = send_generic_message(handle, "this is the message").unwrap_err();
+        let err = send_generic_message(handle, "this is the message").await.unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);
     }
 

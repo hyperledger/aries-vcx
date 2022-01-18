@@ -1033,12 +1033,12 @@ mod tests {
         assert_eq!(err, error::INVALID_JSON.code_num);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_with_msgid() {
+    async fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
-        let cxn = connection::tests::build_test_connection_inviter_requested();
+        let cxn = connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_disclosed_proof_create_with_msgid(cb.command_handle,
@@ -1108,59 +1108,59 @@ mod tests {
         let _s = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_send_proof() {
+    async fn test_vcx_send_proof() {
         let _setup = SetupMocks::init();
 
         let handle_proof = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(disclosed_proof::get_state(handle_proof).unwrap(), ProverState::PresentationRequestReceived as u32);
 
-        let handle_conn = connection::tests::build_test_connection_inviter_requested();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_disclosed_proof_send_proof(cb.command_handle, handle_proof, handle_conn, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_reject_proof_request() {
+    async fn test_vcx_reject_proof_request() {
         let _setup = SetupMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested();
+        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_disclosed_proof_reject_proof(cb.command_handle, handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "to_restore")]
     #[cfg(feature = "general_test")] // todo: generate_reject_proof_msg is not implemented for aries
-    fn test_vcx_get_reject_msg() {
+    async fn test_vcx_get_reject_msg() {
         let _setup = SetupMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
-        let _connection_handle = connection::tests::build_test_connection_inviter_requested();
+        let _connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_disclosed_proof_get_reject_msg(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_proof_get_requests() {
+    async fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
-        let cxn = connection::tests::build_test_connection_inviter_requested();
+        let cxn = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);
