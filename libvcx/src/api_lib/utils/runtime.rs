@@ -9,6 +9,7 @@ use std::sync::Once;
 use std::thread;
 
 use futures::future;
+use futures::executor::block_on;
 use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
 
@@ -75,7 +76,7 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
     if TP_INIT.is_completed() {
         execute_on_tokio(future);
     } else {
-        thread::spawn(|| { future });
+        block_on(future).unwrap();
     }
 }
 
