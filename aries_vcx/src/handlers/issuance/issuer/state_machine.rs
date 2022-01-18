@@ -713,9 +713,6 @@ pub mod test {
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_finished_state().await;
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
-            let cred_offer = CredentialOffer::create()
-                .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
-            let cred_info = _offer_info();
 
             let res1 = issuer_sm.mark_credential_offer_msg_sent();
             assert!(res1.is_err());

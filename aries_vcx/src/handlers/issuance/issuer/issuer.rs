@@ -188,7 +188,6 @@ pub mod test {
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::utils::constants::LIBINDY_CRED_OFFER;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
@@ -211,8 +210,8 @@ pub mod test {
 
     impl Issuer {
         fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.build_credential_offer_msg(_offer_info_unrevokable(), None);
-            self.mark_credential_offer_msg_sent();
+            self.build_credential_offer_msg(_offer_info_unrevokable(), None).unwrap();
+            self.mark_credential_offer_msg_sent().unwrap();
             self
         }
 

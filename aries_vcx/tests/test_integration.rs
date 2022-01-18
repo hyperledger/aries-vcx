@@ -4,7 +4,6 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-#[macro_use]
 extern crate tokio;
 
 use std::fmt;
@@ -939,11 +938,11 @@ mod tests {
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
         let mut verifier1 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name1).await;
-        prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name1, None);
+        prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name1, None).await;
         let mut verifier2 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name1).await;
-        prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name1, None);
+        prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name1, None).await;
         let mut verifier3 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name1).await;
-        prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None);
+        prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None).await;
 
         institution.activate().unwrap();
         verifier1.update_state(&institution_to_consumer1).await.unwrap();
@@ -958,11 +957,11 @@ mod tests {
         thread::sleep(Duration::from_millis(2000));
         let request_name2 = Some("request2");
         let mut verifier1 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer1, &schema_id, &cred_def_id, request_name2).await;
-        prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name2, None);
+        prover_select_credentials_and_send_proof(&mut consumer1, &consumer_to_institution1, request_name2, None).await;
         let mut verifier2 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer2, &schema_id, &cred_def_id, request_name2).await;
-        prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name2, None);
+        prover_select_credentials_and_send_proof(&mut consumer2, &consumer_to_institution2, request_name2, None).await;
         let mut verifier3 = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer3, &schema_id, &cred_def_id, request_name2).await;
-        prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name2, None);
+        prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name2, None).await;
         assert_ne!(verifier1, verifier2);
         assert_ne!(verifier1, verifier3);
         assert_ne!(verifier2, verifier3);
@@ -1103,7 +1102,7 @@ mod tests {
         let mut holder_credential = send_cred_req(&mut consumer, &consumer_to_issuer, None).await;
 
         info!("test_real_proof :: AS INSTITUTION SEND CREDENTIAL");
-        send_credential(&mut consumer, &mut institution, &mut issuer_credential, &issuer_to_consumer, &consumer_to_issuer, &mut holder_credential, false);
+        send_credential(&mut consumer, &mut institution, &mut issuer_credential, &issuer_to_consumer, &consumer_to_issuer, &mut holder_credential, false).await;
         assert_eq!(issuance_thread_id, holder_credential.get_thread_id().unwrap());
         assert_eq!(issuance_thread_id, issuer_credential.get_thread_id().unwrap());
 
@@ -1160,13 +1159,13 @@ mod tests {
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -1193,13 +1192,13 @@ mod tests {
         revoke_credential(&mut issuer, &credential_handle1, rev_reg_id);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -1226,13 +1225,13 @@ mod tests {
         revoke_credential(&mut issuer, &credential_handle2, rev_reg_id);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
@@ -1258,13 +1257,13 @@ mod tests {
         let _credential_handle2 = _exchange_credential(&mut consumer, &mut issuer, credential_data2.clone(), &cred_def, &consumer_to_issuer, &issuer_to_consumer, req2).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -1292,13 +1291,13 @@ mod tests {
         revoke_credential(&mut issuer, &credential_handle1, rev_reg_id);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -1326,13 +1325,13 @@ mod tests {
         revoke_credential(&mut issuer, &credential_handle2, rev_reg_id);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
-        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2));
+        prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().unwrap();
         proof_verifier.update_state(&verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
@@ -1468,7 +1467,7 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let tails_file = cred_def.get_tails_file().unwrap();
 
-        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
     }
 
     #[tokio::test]
@@ -1504,10 +1503,10 @@ mod tests {
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment").await;
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id.clone(), Some(tails_file.clone())).await;
-        send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment");
-        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file));
-        accept_offer(&mut consumer, &consumer_to_institution, &mut holder);
-        send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true);
+        send_cred_proposal_1(&mut holder, &mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment").await;
+        accept_cred_proposal_1(&mut issuer, &mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
+        accept_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
+        send_credential(&mut consumer, &mut institution, &mut issuer, &institution_to_consumer, &consumer_to_institution, &mut holder, true).await;
     }
 
     #[tokio::test]
@@ -1521,13 +1520,13 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let tails_file = cred_def.get_tails_file().unwrap();
 
-        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
         let mut verifier = Verifier::create("1").unwrap();
-        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
         let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
         generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
-        verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
+        verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
     }
 
     #[tokio::test]
@@ -1541,9 +1540,9 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let tails_file = cred_def.get_tails_file().unwrap();
 
-        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
-        reject_proof_proposal(&mut institution, &institution_to_consumer);
+        reject_proof_proposal(&mut institution, &institution_to_consumer).await;
         receive_proof_proposal_rejection(&mut consumer, &mut prover, &consumer_to_institution).await;
     }
 
@@ -1558,15 +1557,15 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
         let tails_file = cred_def.get_tails_file().unwrap();
 
-        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment");
+        _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
         let mut verifier = Verifier::create("1").unwrap();
-        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
-        send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id);
-        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer);
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
+        send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
+        accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
         let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
         generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
-        verify_proof(&mut institution, &mut verifier, &institution_to_consumer);
+        verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
     }
 
     pub struct Pool {}
@@ -1610,16 +1609,16 @@ mod tests {
         faber.update_state(4).await;
 
         // Credential issuance
-        faber.offer_credential();
-        alice.accept_offer();
-        faber.send_credential();
-        alice.accept_credential();
+        faber.offer_credential().await;
+        alice.accept_offer().await;
+        faber.send_credential().await;
+        alice.accept_credential().await;
 
         // Credential Presentation
-        faber.request_presentation();
-        alice.send_presentation();
-        faber.verify_presentation();
-        alice.ensure_presentation_verified();
+        faber.request_presentation().await;
+        alice.send_presentation().await;
+        faber.verify_presentation().await;
+        alice.ensure_presentation_verified().await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -1647,7 +1646,7 @@ mod tests {
         faber.update_state(4).await;
 
         // Ping
-        faber.ping();
+        faber.ping().await;
 
         alice.update_state(4).await;
 
@@ -1657,7 +1656,7 @@ mod tests {
         assert!(faber_connection_info["their"]["protocols"].as_array().is_none());
 
         // Discovery Features
-        faber.discovery_features();
+        faber.discovery_features().await;
 
         alice.update_state(4).await;
 
@@ -1696,7 +1695,7 @@ mod tests {
         */
 
         // Credential issuance
-        faber.offer_credential();
+        faber.offer_credential().await;
 
         // Alice creates Credential object with message id
         {
@@ -1709,11 +1708,11 @@ mod tests {
             assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
-        faber.send_credential();
-        alice.accept_credential();
+        faber.send_credential().await;
+        alice.accept_credential().await;
 
         // Credential Presentation
-        faber.request_presentation();
+        faber.request_presentation().await;
 
         // Alice creates Presentation object with message id
         {
@@ -1730,7 +1729,7 @@ mod tests {
             assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
-        faber.verify_presentation();
+        faber.verify_presentation().await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -1762,7 +1761,7 @@ mod tests {
         */
 
         // Credential issuance
-        faber.offer_credential();
+        faber.offer_credential().await;
 
         // Alice creates Credential object with Offer
         {
@@ -1778,11 +1777,11 @@ mod tests {
             assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
-        faber.send_credential();
-        alice.accept_credential();
+        faber.send_credential().await;
+        alice.accept_credential().await;
 
         // Credential Presentation
-        faber.request_presentation();
+        faber.request_presentation().await;
 
         // Alice creates Presentation object with Proof Request
         {
@@ -1802,7 +1801,7 @@ mod tests {
             assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
-        faber.verify_presentation();
+        faber.verify_presentation().await;
     }
 
     #[tokio::test]

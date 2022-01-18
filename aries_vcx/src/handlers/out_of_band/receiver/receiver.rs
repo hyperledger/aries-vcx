@@ -1,5 +1,4 @@
 use std::clone::Clone;
-use std::future::Future;
 
 use crate::handlers::out_of_band::OutOfBand;
 use crate::handlers::connection::connection::Connection;

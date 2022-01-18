@@ -154,7 +154,6 @@ mod tests {
     use crate::messages::a2a::A2AMessage;
     use crate::messages::basic_message::message::BasicMessage;
     use crate::utils::devsetup::*;
-    use crate::messages::proof_presentation::presentation::test_utils::_comment;
     use crate::utils::send_message;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
 
@@ -185,14 +184,14 @@ mod tests {
         }
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_presentation() {
+    async fn test_get_presentation() {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
         let mut verifier = _verifier();
-        verifier.to_finished_state();
+        verifier.to_finished_state().await;
         let presentation = verifier.get_presentation_msg().unwrap();
         assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());
         assert_eq!(verifier.get_state(), VerifierState::Finished);

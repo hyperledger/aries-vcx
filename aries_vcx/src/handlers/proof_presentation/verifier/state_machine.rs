@@ -348,7 +348,7 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::proof_presentation::presentation::test_utils::{_comment, _presentation, _presentation_1};
+    use crate::messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
     use crate::messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;

@@ -92,12 +92,7 @@ impl PublicAgent {
 pub mod tests {
     use super::*;
 
-    use crate::utils::devsetup::*;
-
-    use crate::messages::a2a::MessageId;
-
     static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-    static LABEL: &str = "hello";
 
     pub fn _public_agent() -> PublicAgent {
         PublicAgent {
