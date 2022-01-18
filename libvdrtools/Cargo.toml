@@ -24,7 +24,7 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-cheqd = ["indy-api-types/cheqd", "indy-sys/cheqd", "vdrtools/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
+cheqd = ["indy-api-types/cheqd", "vdrtools-sys/cheqd", "vdrtools/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -91,7 +91,7 @@ android_logger = "0.5"
 [dev-dependencies]
 criterion = "0.2"
 vdrtools = { path = "../wrappers/rust" }
-indy-sys = { path = "../wrappers/rust/indy-sys" }
+vdrtools-sys = { path = "../wrappers/rust/indy-sys" }
 sodiumoxide = {version = "0.0.16"}
 openssl = "0.10"
 dirs = "2.0.2"

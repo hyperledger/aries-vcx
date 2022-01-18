@@ -55,7 +55,7 @@ fn indy_set_log_max_lvl_works() {
     logger::set_logger(&LOG_COUNTER).unwrap();
 
     unsafe {
-        indy_sys::logger::indy_set_log_max_lvl(LevelFilter::Trace as usize as u32);
+        vdrtools_sys::logger::indy_set_log_max_lvl(LevelFilter::Trace as usize as u32);
     }
 
     LOG_IGNORE_IN_STAT.lock().unwrap().push("vdrtools::api::logger");
@@ -69,7 +69,7 @@ fn indy_set_log_max_lvl_works() {
     let log_stat_default_2 = LOG_STAT.lock().unwrap().clone();
 
     unsafe {
-        indy_sys::logger::indy_set_log_max_lvl(LevelFilter::Off as usize as u32);
+        vdrtools_sys::logger::indy_set_log_max_lvl(LevelFilter::Off as usize as u32);
     }
 
     pool::close_pool_ledger(1 as PoolHandle).wait().unwrap_err();
@@ -77,7 +77,7 @@ fn indy_set_log_max_lvl_works() {
     let log_stat_off = LOG_STAT.lock().unwrap().clone();
 
     unsafe {
-        indy_sys::logger::indy_set_log_max_lvl(LevelFilter::max() as usize as u32);
+        vdrtools_sys::logger::indy_set_log_max_lvl(LevelFilter::max() as usize as u32);
     }
 
     pool::close_pool_ledger(1 as PoolHandle).wait().unwrap_err();
@@ -85,7 +85,7 @@ fn indy_set_log_max_lvl_works() {
     let log_stat_all = LOG_STAT.lock().unwrap().clone();
 
     unsafe {
-        indy_sys::logger::indy_set_log_max_lvl(LevelFilter::Debug as usize as u32);
+        vdrtools_sys::logger::indy_set_log_max_lvl(LevelFilter::Debug as usize as u32);
     }
 
     pool::close_pool_ledger(1 as PoolHandle).wait().unwrap_err();
