@@ -373,24 +373,22 @@ pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle,
                                                    credentialdef_handle: u32,
                                                    revocation_details: *const c_char,
-                                                   tails_url: *const c_char,
                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_state: *const c_char)>) -> u32 {
     info!("vcx_credentialdef_rotate_rev_reg_def >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(revocation_details, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tails_url, VcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
-    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}, tails_url: {:?}) source_id: {}",
-           command_handle, credentialdef_handle, revocation_details, tails_url, source_id);
+    trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, revocation_details: {}) source_id: {}",
+           command_handle, credentialdef_handle, revocation_details, source_id);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
     execute(move || {
-        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details, &tails_url) {
+        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details) {
             Ok(x) => {
                 trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
                        command_handle, credentialdef_handle, error::SUCCESS.message, x, source_id);

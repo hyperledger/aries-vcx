@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use futures::future::FutureExt;
 
 use crate::aries_vcx::handlers::out_of_band::GoalCode;
@@ -188,6 +187,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
+    use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::utils::devsetup::SetupMocks;
     use crate::aries_vcx::messages::connection::service::FullService;
     use super::*;

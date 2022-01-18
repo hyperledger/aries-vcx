@@ -159,7 +159,7 @@ mod tests {
     use crate::utils;
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-    use crate::utils::constants::TEST_TAILS_FILE;
+    use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;
 
@@ -301,11 +301,11 @@ mod tests {
            "attrs":{
               "address1_1": {
                 "credential": all_creds["attrs"]["address1_1"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
               "zip_2": {
                 "credential": all_creds["attrs"]["zip_2"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
            }
         });
@@ -388,15 +388,15 @@ mod tests {
            "attrs":{
               "address1_1": {
                 "credential": all_creds["attrs"]["address1_1"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
               "zip_2": {
                 "credential": all_creds["attrs"]["zip_2"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
               "zip_3": {
                 "credential": all_creds["attrs"]["zip_3"][0],
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
            },
         });

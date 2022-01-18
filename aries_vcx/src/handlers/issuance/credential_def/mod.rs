@@ -3,20 +3,12 @@ use std::fmt;
 use serde_json;
 
 use crate::error::prelude::*;
+use crate::handlers::issuance::credential_def::revocation_registry::RevocationRegistry;
 use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::anoncreds::RevocationRegistryDefinition;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
-pub struct RevocationRegistry {
-    pub rev_reg_id: String,
-    rev_reg_def: RevocationRegistryDefinition,
-    rev_reg_entry: String,
-    tails_file: String,
-    max_creds: u32,
-    tag: u32,
-}
+mod revocation_registry;
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
@@ -42,7 +34,7 @@ pub struct CredentialDefConfig {
 #[builder(setter(into, strip_option), default)]
 pub struct RevocationDetails {
     pub support_revocation: Option<bool>,
-    pub tails_file: Option<String>,
+    pub tails_dir: Option<String>,
     pub max_creds: Option<u32>,
 }
 
@@ -108,41 +100,6 @@ impl Default for PublicEntityStateType {
     }
 }
 
-fn _create_and_store(config: &CredentialDefConfig,
-                     revocation_details: &RevocationDetails) -> VcxResult<(String, String, Option<String>, Option<RevocationRegistryDefinition>, Option<String>)> {
-    let CredentialDefConfig { issuer_did, schema_id, tag } = config;
-
-    let (_, schema_json) = anoncreds::get_schema_json(&schema_id)?;
-
-    let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(&issuer_did,
-                                                                    &schema_json,
-                                                                    &tag,
-                                                                    None,
-                                                                    revocation_details.support_revocation)?;
-
-    let (rev_reg_id, rev_reg_def, rev_reg_entry) = match revocation_details.support_revocation {
-        Some(true) => {
-            let tails_file = revocation_details
-                .tails_file
-                .as_ref()
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `tails_file` field not found"))?;
-
-            let max_creds = revocation_details
-                .max_creds
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `max_creds` field not found"))?;
-
-            let (rev_reg_id, rev_reg_def, rev_reg_entry) =
-                anoncreds::generate_rev_reg(&issuer_did, &cred_def_id, &tails_file, max_creds, "tag1")
-                    .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
-
-            (Some(rev_reg_id), Some(rev_reg_def), Some(rev_reg_entry))
-        }
-        _ => (None, None, None),
-    };
-
-    Ok((cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry))
-}
-
 fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
     match anoncreds::get_cred_def(Some(issuer_did), cred_def_id) {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
@@ -154,25 +111,27 @@ fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResu
 impl CredentialDef {
     pub fn create_and_store(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails) -> VcxResult<Self> {
         trace!("CredentialDef::create_and_store >>> source_id: {}, config: {:?}, revocation_details: {:?}", source_id, config, revocation_details);
+        let CredentialDefConfig { issuer_did, schema_id, tag } = config;
+        let (_, schema_json) = anoncreds::get_schema_json(&schema_id)?;
+        let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(&issuer_did,
+                                                                        &schema_json,
+                                                                        &tag,
+                                                                        None,
+                                                                        revocation_details.support_revocation.clone())?;
 
-        let (cred_def_id, cred_def_json, rev_reg_id, rev_reg_def, rev_reg_entry) = _create_and_store(&config, &revocation_details)?;
+        let rev_reg = if revocation_details.support_revocation.unwrap_or(false) {
+            let tails_dir = revocation_details
+                .tails_dir
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `tails_dir` field not found"))?;
 
-        let CredentialDefConfig { issuer_did, tag, .. } = config;
+            let max_creds = revocation_details
+                .max_creds
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `max_creds` field not found"))?;
 
-        let rev_reg = match (rev_reg_id, rev_reg_def, rev_reg_entry, revocation_details.tails_file, revocation_details.max_creds) {
-            (Some(rev_reg_id), Some(rev_reg_def), Some(rev_reg_entry), Some(tails_file), Some(max_creds)) => {
-                Some(RevocationRegistry {
-                    rev_reg_id,
-                    rev_reg_def,
-                    rev_reg_entry,
-                    tails_file,
-                    max_creds,
-                    tag: 1
-                })
-            }
-            _ => None
+            Some(RevocationRegistry::create(&issuer_did, &cred_def_id, &tails_dir, max_creds, 1)?)
+        } else {
+            None
         };
-
         Ok(
             Self {
                 source_id,
@@ -186,43 +145,95 @@ impl CredentialDef {
         )
     }
 
-    pub fn publish(mut self, tails_url: Option<&str>) -> VcxResult<Self> {
-        trace!("CredentialDef::publish >>>");
+    pub fn was_published(&self) -> bool {
+        self.state == PublicEntityStateType::Published
+    }
 
-        match _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id) {
-            Ok(Some(ledger_cred_def_json)) => {
-                return Err(VcxError::from_msg(VcxErrorKind::CreateCredDef, format!("Credential definition with id {} already exists on the ledger: {}", self.cred_def_id, ledger_cred_def_json)));
-            }
-            Ok(None) => {
-                anoncreds::publish_cred_def(&self.issuer_did, &self.cred_def_json)?;
-
-                match self.rev_reg {
-                    Some(ref mut rev_reg) => {
-                        if let Some(tails_url) = tails_url {
-                            rev_reg.rev_reg_def.value.tails_location = String::from(tails_url);
-                        } else {
-                            return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "tails_url must be specified if credential is revokable"));
-                        };
-
-                        anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg.rev_reg_def)
-                            .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot create CredentialDefinition"))?;
-
-                        anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg.rev_reg_id, &rev_reg.rev_reg_entry)
-                            .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
-
-                    }
-                    _ => ()
-                }
-            }
-            Err(err) => return Err(err)
-        };
-
+    pub fn publish_cred_def(self) -> VcxResult<Self> {
+        trace!("publish_cred_def >>> issuer_did: {}, cred_def_id: {}", self.issuer_did, self.cred_def_id);
+        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id)? {
+            return Err(VcxError::from_msg(VcxErrorKind::CredDefAlreadyCreated, format!("Credential definition with id {} already exists on the ledger: {}", self.cred_def_id, ledger_cred_def_json)));
+        }
+        anoncreds::publish_cred_def(&self.issuer_did, &self.cred_def_json)?;
         Ok(
             Self {
                 state: PublicEntityStateType::Published,
                 ..self
             }
         )
+    }
+
+    pub fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails) -> VcxResult<()> {
+        trace!("CredentialDef::rotate_rev_reg >>> revocation_details: {:?}", revocation_details);
+        let (tails_dir, max_creds) = (
+            revocation_details.tails_dir.or(self.get_tails_dir()),
+            revocation_details.max_creds.or(self.get_max_creds())
+        );
+
+        self.rev_reg = match (&self.rev_reg, &tails_dir, &max_creds) {
+            (Some(rev_reg), Some(tails_dir), Some(max_creds)) => {
+                let tag = rev_reg.tag + 1;
+                Some(RevocationRegistry::create(&self.issuer_did, &self.cred_def_id, tails_dir, max_creds.clone(), tag)?)
+            }
+            _ => return {
+                Err(VcxError::from_msg(VcxErrorKind::RevRegDefNotFound,
+                                       "No revocation registry definitions associated with this credential definition",
+                ))
+            }
+        };
+        trace!("rotate_rev_reg_def <<< new_rev_reg_def: {:?}", self.rev_reg);
+        Ok(())
+    }
+
+    pub fn publish_revocation_primitives(&mut self, tails_url: &str) -> VcxResult<()> {
+        warn!("publish_revocation_primitives >>> tails_url: {}", tails_url);
+        self.publish_built_rev_reg_def(tails_url)?;
+        self.publish_built_rev_reg_delta()
+    }
+
+    pub fn has_pending_revocations_primitives_to_be_published(&self) -> bool {
+        match &self.rev_reg {
+            None => false,
+            Some(rev_reg) => {
+                !rev_reg.was_rev_reg_def_published() || !rev_reg.was_rev_reg_delta_published()
+            }
+        }
+    }
+
+    pub fn publish_built_rev_reg_def(&mut self, tails_url: &str) -> VcxResult<()> {
+        match &mut self.rev_reg {
+            Some(rev_reg) => {
+                if rev_reg.was_rev_reg_def_published() {
+                    info!("No unpublished revocation registry definition found, nothing to publish")
+                } else {
+                    rev_reg.publish_rev_reg_def(&self.issuer_did, tails_url)?;
+                }
+            }
+            _ => return {
+                Err(VcxError::from_msg(VcxErrorKind::NotReady,
+                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
+                ))
+            }
+        }
+        Ok(())
+    }
+
+    pub fn publish_built_rev_reg_delta(&mut self) -> VcxResult<()> {
+        match &mut self.rev_reg {
+            Some(rev_reg) => {
+                if rev_reg.was_rev_reg_delta_published() {
+                    info!("No unpublished revocation registry delta found, nothing to publish")
+                } else {
+                    rev_reg.publish_rev_reg_delta(&self.issuer_did)?;
+                }
+            }
+            _ => return {
+                Err(VcxError::from_msg(VcxErrorKind::NotReady,
+                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
+                ))
+            }
+        }
+        Ok(())
     }
 
     pub fn from_string(data: &str) -> VcxResult<Self> {
@@ -247,9 +258,9 @@ impl CredentialDef {
         }
     }
 
-    pub fn get_tails_file(&self) -> Option<String> {
+    pub fn get_tails_dir(&self) -> Option<String> {
         match &self.rev_reg {
-            Some(rev_reg) => Some(rev_reg.tails_file.clone()),
+            Some(rev_reg) => Some(rev_reg.tails_dir.clone()),
             None => None
         }
     }
@@ -293,42 +304,4 @@ impl CredentialDef {
     }
 
     pub fn get_state(&self) -> u32 { self.state as u32 }
-
-    pub fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails, new_tails_url: &str) -> VcxResult<RevocationRegistry> {
-        debug!("CredentialDef::rotate_rev_reg >>> revocation_details: {:?}", revocation_details);
-        let (tails_file, max_creds) = (
-            revocation_details.clone().tails_file.or(self.get_tails_file()),
-            revocation_details.max_creds.or(self.get_max_creds())
-        );
-        match (&mut self.rev_reg, &tails_file, &max_creds) {
-            (Some(rev_reg), Some(tails_file), Some(max_creds)) => {
-                let tag = format!("tag{}", rev_reg.tag + 1);
-                let (rev_reg_id, mut rev_reg_def, rev_reg_entry) =
-                    anoncreds::generate_rev_reg(&self.issuer_did, &self.cred_def_id, &tails_file, *max_creds, tag.as_str())
-                        .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create revocation registry defintion"))?;
-
-                rev_reg_def.value.tails_location = String::from(new_tails_url);
-
-                anoncreds::publish_rev_reg_def(&self.issuer_did, &rev_reg_def)
-                    .map_err(|err| err.map(VcxErrorKind::CreateCredDef, "Cannot publish revocation registry defintion"))?;
-
-                anoncreds::publish_rev_reg_delta(&self.issuer_did, &rev_reg_id, &rev_reg_entry)
-                    .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
-
-                let new_rev_reg = RevocationRegistry {
-                    rev_reg_id,
-                    rev_reg_def,
-                    rev_reg_entry,
-                    tails_file: tails_file.to_string(),
-                    max_creds: *max_creds,
-                    tag: rev_reg.tag + 1,
-                };
-                self.rev_reg = Some(new_rev_reg.clone());
-
-                trace!("rotate_rev_reg_def <<< new_rev_reg_def: {:?}", new_rev_reg);
-                Ok(new_rev_reg)
-            }
-            _ => Err(VcxError::from_msg(VcxErrorKind::RevRegDefNotFound, "No revocation registry definitions associated with this credential definition"))
-        }
-    }
 }

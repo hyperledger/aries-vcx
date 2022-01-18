@@ -44,18 +44,17 @@ function getSampleSchemaData () {
   }
 }
 
-module.exports.buildRevocationDetails = function buildRevocationDetails ({ supportRevocation, tailsFile, tailsUrl, maxCreds }) {
+module.exports.buildRevocationDetails = function buildRevocationDetails ({ supportRevocation, tailsDir, tailsUrl, maxCreds }) {
   if (supportRevocation === true) {
     return {
       supportRevocation,
-      tailsFile,
+      tailsDir,
       tailsUrl,
       maxCreds
     }
   } else {
     return {
       supportRevocation: false
-      // tailsFile: '/tmp/tails', // todo: CredDefinition in node wrapper should not require this when revocation is disabled
     }
   }
 }

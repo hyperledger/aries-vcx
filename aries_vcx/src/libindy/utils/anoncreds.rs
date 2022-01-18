@@ -54,10 +54,10 @@ pub fn libindy_verifier_verify_proof(proof_req_json: &str,
         .map_err(VcxError::from)
 }
 
-pub fn libindy_create_and_store_revoc_reg(issuer_did: &str, cred_def_id: &str, tails_path: &str, max_creds: u32, tag: &str) -> VcxResult<(String, String, String)> {
-    trace!("creating revocation: {}, {}, {}", cred_def_id, tails_path, max_creds);
+pub fn libindy_create_and_store_revoc_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &str, max_creds: u32, tag: &str) -> VcxResult<(String, String, String)> {
+    trace!("creating revocation: {}, {}, {}", cred_def_id, tails_dir, max_creds);
 
-    let tails_config = json!({"base_dir": tails_path,"uri_pattern": ""}).to_string();
+    let tails_config = json!({"base_dir": tails_dir,"uri_pattern": ""}).to_string();
 
     let writer = blob_storage::open_writer(BLOB_STORAGE_TYPE, &tails_config)
         .wait()?;
@@ -503,15 +503,15 @@ pub fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
     Ok((cred_def_id.to_string(), cred_def_json))
 }
 
-pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_file: &str, max_creds: u32, tag: &str)
+pub fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &str, max_creds: u32, tag: &str)
                         -> VcxResult<(String, RevocationRegistryDefinition, String)> {
-    trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_file, max_creds, tag);
+    trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_dir, max_creds, tag);
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
         libindy_create_and_store_revoc_reg(issuer_did,
                                            cred_def_id,
-                                           tails_file,
+                                           tails_dir,
                                            max_creds,
                                            tag)?;
 
@@ -668,7 +668,7 @@ pub mod test_utils {
     use crate::{libindy, settings};
     use crate::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use crate::handlers::issuance::issuer::utils::encode_attributes;
-    use crate::utils::constants::{TEST_TAILS_FILE, TEST_TAILS_URL};
+    use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
@@ -709,7 +709,7 @@ pub mod test_utils {
         let (revocation_details, tails_url) = if support_rev {
             (RevocationDetailsBuilder::default()
                 .support_revocation(support_rev)
-                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .tails_dir(get_temp_dir_path(TAILS_DIR).to_str().unwrap())
                 .max_creds(10 as u32)
                 .build()
                 .unwrap(),
@@ -721,9 +721,14 @@ pub mod test_utils {
                 .unwrap(),
             None)
         };
-        let cred_def = CredentialDef::create_and_store("1".to_string(),
+        let mut cred_def = CredentialDef::create_and_store("1".to_string(),
                                                          config,
-                                                         revocation_details).unwrap().publish(tails_url).unwrap();
+                                                         revocation_details).unwrap()
+            .publish_cred_def().unwrap();
+        if let Some(tails_url) = tails_url {
+            cred_def.publish_revocation_primitives(tails_url).unwrap();
+        }
+
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -754,7 +759,7 @@ pub mod test_utils {
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
         let (rev_def_json, tails_file) = if revocation {
             let (_id, json) = get_rev_reg_def_json(&rev_reg_id.clone().unwrap()).unwrap();
-            (Some(json), Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string().to_string()))
+            (Some(json), Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string().to_string()))
         } else { (None, None) };
 
         let (cred, cred_rev_id, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(&offer, &req, &encoded_attributes, rev_reg_id.clone(), tails_file).unwrap();
@@ -894,7 +899,7 @@ pub mod test_utils {
 #[cfg(test)]
 pub mod tests {
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
-    use crate::utils::constants::TEST_TAILS_FILE;
+    use crate::utils::constants::TAILS_DIR;
     use crate::utils::constants::SCHEMAS_JSON;
     use crate::utils::devsetup::{SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks};
     use crate::utils::get_temp_dir_path;
@@ -992,12 +997,12 @@ pub mod tests {
     async fn test_issuer_revoke_credential() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), "", "");
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), "", "");
         assert!(rc.is_err());
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
             = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
 
         assert!(rc.is_ok());
     }
@@ -1152,7 +1157,7 @@ pub mod tests {
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        revoke_credential(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
+        revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();

@@ -114,7 +114,7 @@ mod tests {
     use aries_vcx::messages::mime_type::MimeType;
     use aries_vcx::settings;
     use aries_vcx::utils::{
-        constants::{TEST_TAILS_FILE, TEST_TAILS_URL},
+        constants::{TAILS_DIR, TEST_TAILS_URL},
         get_temp_dir_path,
     };
     use aries_vcx::utils::constants;
@@ -138,7 +138,7 @@ mod tests {
         let (revocation_details, tails_url) = if support_rev {
             (RevocationDetailsBuilder::default()
                 .support_revocation(support_rev)
-                .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+                .tails_dir(get_temp_dir_path(TAILS_DIR).to_str().unwrap())
                 .max_creds(10 as u32)
                 .build()
                 .unwrap(),
@@ -150,9 +150,13 @@ mod tests {
                 .unwrap(),
             None)
         };
-        let cred_def = CredentialDef::create_and_store("1".to_string(),
+        let mut cred_def = CredentialDef::create_and_store("1".to_string(),
                                                          config,
-                                                         revocation_details).unwrap().publish(tails_url).unwrap();
+                                                         revocation_details).unwrap()
+            .publish_cred_def().unwrap();
+        if let Some(tails_url) = tails_url {
+            cred_def.publish_revocation_primitives(tails_url).unwrap();
+        }
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -248,7 +252,7 @@ mod tests {
             credential_json: credential_json.to_string(),
             cred_def_id: cred_def.get_cred_def_id(),
             rev_reg_id: cred_def.get_rev_reg_id(),
-            tails_file: cred_def.get_tails_file(),
+            tails_file: cred_def.get_tails_dir(),
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
@@ -569,11 +573,12 @@ mod tests {
         faber.activate().unwrap();
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
-            .tails_file(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap())
+            .tails_dir(get_temp_dir_path(TAILS_DIR).to_str().unwrap())
             .max_creds(10 as u32)
             .build()
             .unwrap();
-        cred_def.rotate_rev_reg(revocation_details, TEST_TAILS_URL).unwrap();
+        cred_def.rotate_rev_reg(revocation_details).unwrap();
+        cred_def.publish_revocation_primitives(TEST_TAILS_URL).unwrap();
     }
 
     fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
@@ -1032,7 +1037,7 @@ mod tests {
                 let first_cred = &cred_array[0];
                 credentials_mapped["attrs"][key]["credential"] = first_cred.clone();
                 if with_tails {
-                    credentials_mapped["attrs"][key]["tails_file"] = Value::from(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap());
+                    credentials_mapped["attrs"][key]["tails_file"] = Value::from(get_temp_dir_path(TAILS_DIR).to_str().unwrap());
                 }
             }
         }
@@ -1063,7 +1068,7 @@ mod tests {
             let first_cred: &serde_json::Value = &filtered[0];
             credentials_mapped["attrs"][key]["credential"] = first_cred.clone();
             if with_tails {
-                credentials_mapped["attrs"][key]["tails_file"] = Value::from(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap());
+                credentials_mapped["attrs"][key]["tails_file"] = Value::from(get_temp_dir_path(TAILS_DIR).to_str().unwrap());
             }
         }
         return credentials_mapped;
@@ -1465,7 +1470,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
     }
@@ -1479,7 +1484,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment").await;
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
@@ -1499,7 +1504,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment").await;
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id.clone(), Some(tails_file.clone())).await;
@@ -1518,7 +1523,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
@@ -1538,7 +1543,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
@@ -1555,7 +1560,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg_id) = _create_address_schema();
-        let tails_file = cred_def.get_tails_file().unwrap();
+        let tails_file = cred_def.get_tails_dir().unwrap();
 
         _exchange_credential_with_proposal(&mut consumer, &mut institution, &consumer_to_institution, &institution_to_consumer, &schema_id, &cred_def_id, rev_reg_id, Some(tails_file), "comment").await;
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;

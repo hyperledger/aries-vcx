@@ -12,7 +12,7 @@ const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
 
-const tailsFile = '/tmp/tails'
+const tailsDir = '/tmp/tails'
 
 async function runFaber (options) {
   logger.info(`Starting. Revocation enabled=${options.revocation}`)
@@ -41,7 +41,7 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsFile, maxCreds: 5 }), testTailsUrl)
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsDir, maxCreds: 5 }), testTailsUrl)
 
     await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
