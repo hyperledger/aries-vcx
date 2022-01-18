@@ -21,7 +21,7 @@ use std::{ffi::CString, ptr::null};
 #[cfg(feature = "local_nodes_pool")]
 use std::thread;
 
-use indy_sys::*;
+use vdrtools_sys::*;
 use vdrtoolsrs::ErrorCode;
 
 use utils::{

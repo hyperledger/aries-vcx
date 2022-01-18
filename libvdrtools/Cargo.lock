@@ -2051,18 +2051,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indy-sys"
-version = "0.8.0"
-dependencies = [
- "libc",
- "pkg-config",
- "regex",
- "serde",
- "serde_derive",
- "vcpkg",
-]
-
-[[package]]
 name = "indy-utils"
 version = "0.1.0"
 dependencies = [
@@ -2243,7 +2231,7 @@ dependencies = [
 
 [[package]]
 name = "libvdrtools"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "android_logger",
  "async-std",
@@ -2267,7 +2255,6 @@ dependencies = [
  "http-client",
  "ics23",
  "indy-api-types",
- "indy-sys",
  "indy-utils",
  "indy-wallet",
  "k256",
@@ -2309,6 +2296,7 @@ dependencies = [
  "uuid 0.7.4",
  "variant_count",
  "vdrtools",
+ "vdrtools-sys",
  "walkdir",
  "zeroize",
  "zmq",
@@ -4649,13 +4637,12 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vdrtools"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "async-std",
  "async-trait",
  "failure",
  "futures 0.1.31",
- "indy-sys",
  "lazy_static",
  "libc",
  "log",
@@ -4664,6 +4651,19 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "vdrtools-sys",
+]
+
+[[package]]
+name = "vdrtools-sys"
+version = "0.8.3"
+dependencies = [
+ "libc",
+ "pkg-config",
+ "regex",
+ "serde",
+ "serde_derive",
+ "vcpkg",
 ]
 
 [[package]]

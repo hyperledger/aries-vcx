@@ -452,7 +452,7 @@ mod medium_cases {
         #[cfg(feature = "local_nodes_pool")]
         //FIXME: test
         fn indy_close_pool_ledger_works_for_pending_request() {
-            use vdrtoolsrs::{future::Future, self as indy};
+            use vdrtoolsrs::{future::Future, self as vdrtools};
 
             let setup = Setup::empty();
 
