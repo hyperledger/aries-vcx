@@ -66,10 +66,10 @@ RUN apt-get install -y wget
 RUN useradd -ms /bin/bash -u $uid indy
 USER indy
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.54.0
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.58.0
 ENV PATH /home/indy/.cargo/bin:$PATH
 
-RUN cargo install cargo-deb --no-default-features --version 1.34.0
+RUN cargo install cargo-deb --no-default-features
 
 EXPOSE 8080
 
