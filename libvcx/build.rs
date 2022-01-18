@@ -19,10 +19,10 @@ use serde_derive::Deserialize;
 
 
 // used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Tomlfile {
-    contents: Contents,
-}
+// #[derive(Deserialize, Debug)]
+// struct Tomlfile {
+//     contents: Contents,
+// }
 
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
@@ -40,8 +40,6 @@ struct Deb {
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
 struct Package {
-    name: String,
-    version: Option<String>,
     metadata: Metadata,
 }
 
@@ -49,7 +47,6 @@ struct Package {
 #[derive(Deserialize, Debug)]
 struct Contents {
     package: Package,
-    dependencies: Option<toml::Value>,
 }
 
 fn main() {

@@ -178,7 +178,6 @@ pub mod tests {
     static ISSUER_DID: &str = "4fUDR9R7fjwELRvH9JT6HH";
 
     pub fn revocation_details(revoc: bool) -> (String, Option<String>) {
-        let mut revocation_details = json!({"support_revocation":revoc});
         let (revoc_details, tails_file) = if revoc {
             (RevocationDetailsBuilder::default()
                 .support_revocation(true)
@@ -363,7 +362,7 @@ pub mod tests {
                            revocation_details.to_string()).unwrap();
 
         sleep(Duration::from_secs(1));
-        let err = create_and_store("1".to_string(),
+        let _err = create_and_store("1".to_string(),
                                    schema_id.clone(),
                                    did.clone(),
                                    "tag_1".to_string(),

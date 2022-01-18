@@ -1,6 +1,5 @@
 use serde_json;
 use futures::executor::block_on;
-use futures::future::FutureExt;
 
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 use aries_vcx::settings::indy_mocks_enabled;

@@ -7,7 +7,6 @@ use futures::future::FutureExt;
 use aries_vcx::agency_client::get_message::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::messages::connection::invite::PublicInvitation;
-use aries_vcx::handlers::connection::public_agent::PublicAgent;
 use aries_vcx::handlers::SendClosure;
 use aries_vcx::utils::error;
 
@@ -509,7 +508,7 @@ pub mod tests {
         let h3 = create_connection("rel3").await.unwrap();
         let h4 = create_connection("rel4").await.unwrap();
         let h5 = create_connection("rel5").await.unwrap();
-        release_all();
+        release_all().await;
         assert_eq!(release(h1).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
         assert_eq!(release(h2).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
         assert_eq!(release(h3).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);

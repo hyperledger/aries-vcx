@@ -149,7 +149,6 @@ pub mod tests {
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
     use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
-    use crate::aries_vcx::messages::proof_presentation::presentation::test_utils::_comment;
 
     use super::*;
 

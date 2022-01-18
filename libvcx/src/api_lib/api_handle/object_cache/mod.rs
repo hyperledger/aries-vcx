@@ -192,7 +192,7 @@ mod tests {
         let handle = test.add(String::from("TEST")).unwrap();
 
         test.get_mut(handle, |obj| {
-            obj.to_lowercase();
+            obj.make_ascii_uppercase();
             Ok(())
         }).unwrap();
 

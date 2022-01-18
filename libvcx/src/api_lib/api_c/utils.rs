@@ -17,12 +17,6 @@ use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 use crate::error::prelude::*;
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct UpdateAgentInfo {
-    id: String,
-    value: String,
-}
-
 /// Provision an agent in the agency.
 ///
 /// #Params
