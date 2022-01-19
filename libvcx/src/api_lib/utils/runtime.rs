@@ -50,6 +50,8 @@ pub fn init_runtime(config: ThreadpoolConfig) {
                 })
                 .on_thread_start(|| debug!("Starting tokio runtime worker thread for vcx ffi."))
                 .worker_threads(num_threads)
+                .enable_time()
+                .enable_io()
                 .build()
                 .unwrap();
 

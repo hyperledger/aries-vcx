@@ -2024,14 +2024,14 @@ mod tests {
         info!("test_connection_send_works:: Test if Send Message works");
         {
             faber.activate().unwrap();
-            faber.connection.send_message_closure().unwrap()(&message.to_a2a_message()).unwrap();
+            faber.connection.send_message_closure().unwrap()(message.to_a2a_message()).await.unwrap();
         }
 
         {
             info!("test_connection_send_works:: Test if Get Messages works");
             alice.activate().unwrap();
 
-            let messages = alice.connection.get_messages().unwrap();
+            let messages = alice.connection.get_messages().await.unwrap();
             assert_eq!(1, messages.len());
 
             uid = messages.keys().next().unwrap().clone();
@@ -2047,7 +2047,7 @@ mod tests {
         {
             alice.activate().unwrap();
 
-            let message = alice.connection.get_message_by_id(&uid.clone()).unwrap();
+            let message = alice.connection.get_message_by_id(&uid.clone()).await.unwrap();
 
             match message {
                 A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
@@ -2060,7 +2060,7 @@ mod tests {
             alice.activate().unwrap();
 
             alice.connection.update_message_status(&uid).await.unwrap();
-            let messages = alice.connection.get_messages().unwrap();
+            let messages = alice.connection.get_messages().await.unwrap();
             assert_eq!(0, messages.len());
         }
 
@@ -2073,7 +2073,7 @@ mod tests {
 
             alice.activate().unwrap();
 
-            let messages = alice.connection.get_messages().unwrap();
+            let messages = alice.connection.get_messages().await.unwrap();
             assert_eq!(1, messages.len());
 
             let uid = messages.keys().next().unwrap().clone();
@@ -2093,7 +2093,7 @@ mod tests {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().unwrap();
-            faber.connection.send_message_closure().unwrap()(&credential_offer.to_a2a_message()).unwrap();
+            faber.connection.send_message_closure().unwrap()(credential_offer.to_a2a_message()).await.unwrap();
 
             alice.activate().unwrap();
 
@@ -2160,7 +2160,7 @@ mod tests {
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
         let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
-        update_agency_messages("MS-106", &message).unwrap();
+        update_agency_messages("MS-106", &message).await.unwrap();
 
         let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 2);

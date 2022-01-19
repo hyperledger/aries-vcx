@@ -1,10 +1,8 @@
 use std::ptr;
-use std::thread;
 
 use libc::c_char;
 use serde_json;
 use futures::future::{FutureExt, BoxFuture};
-use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
@@ -67,8 +65,8 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
         }
     };
 
-    thread::spawn(move || {
-        match block_on(aries_vcx::utils::provision::provision_cloud_agent(&agency_config)) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match aries_vcx::utils::provision::provision_cloud_agent(&agency_config).await {
             Err(e) => {
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
@@ -82,7 +80,8 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                 cb(command_handle, 0, msg.as_ptr());
             }
         }
-    });
+        Ok(())
+    }.boxed());
 
     error::SUCCESS.code_num
 }
