@@ -1,7 +1,6 @@
 use std::ptr;
 
 use libc::c_char;
-use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
@@ -231,7 +230,7 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !block_on(connection::is_valid_handle(connection_handle)) {
+    if !connection::is_valid_handle(connection_handle) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -375,7 +374,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(connection::is_valid_handle(connection_handle)) {
+    if !connection::is_valid_handle(connection_handle) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -503,7 +502,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !block_on(connection::is_valid_handle(connection_handle)) {
+    if !connection::is_valid_handle(connection_handle) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -561,7 +560,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: C
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !block_on(connection::is_valid_handle(connection_handle)) {
+    if !connection::is_valid_handle(connection_handle) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -888,7 +887,7 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
     check_useful_opt_c_str!(proposal, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(connection::is_valid_handle(connection_handle)) {
+    if !connection::is_valid_handle(connection_handle) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 

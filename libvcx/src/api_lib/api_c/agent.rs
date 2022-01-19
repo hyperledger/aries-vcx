@@ -1,11 +1,12 @@
 use std::ptr;
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::indy_sys::CommandHandle;
 
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::execute_async;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
@@ -22,8 +23,8 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_create(command_handle: {}, institution_did: {}) source_id: {}", command_handle, institution_did, source_id);
 
-    execute(move || {
-        match agent::create_public_agent(&source_id, &institution_did) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::create_public_agent(&source_id, &institution_did).await {
             Ok(handle) => {
                 trace!("vcx_public_agent_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -36,7 +37,7 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -65,8 +66,8 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
 
     trace!("vcx_public_agent_download_connection_requests(command_handle: {}, agent_handle: {}, uids: {:?})", command_handle, agent_handle, uids);
 
-    execute(move || {
-        match agent::download_connection_requests(agent_handle, uids) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::download_connection_requests(agent_handle, uids.as_ref()).await {
             Ok(requests) => {
                 trace!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
                        command_handle, error::SUCCESS.message, requests);
@@ -80,7 +81,7 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -99,8 +100,8 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_get_service(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
-    execute(move || {
-        match agent::get_service(agent_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::get_service(agent_handle).await {
             Ok(service) => {
                 trace!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
                        command_handle, error::SUCCESS.message, service);
@@ -114,7 +115,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -133,8 +134,8 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_serialize(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
-    execute(move || {
-        match agent::to_string(agent_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::to_string(agent_handle).await {
             Ok(agent_json) => {
                 trace!("vcx_public_agent_serialize_cb(command_handle: {}, rc: {}, agent_json: {})",
                        command_handle, error::SUCCESS.message, agent_json);
@@ -148,7 +149,7 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -164,8 +165,8 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_deserialize(command_handle: {}, agent_json: {})", command_handle, agent_json);
 
-    execute(move || {
-        match agent::from_string(&agent_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::from_string(&agent_json).await {
             Ok(agent_handle) => {
                 trace!("vcx_public_agent_deserialize_cb(command_handle: {}, rc: {}, agent_handle: {})",
                        command_handle, error::SUCCESS.message, agent_handle);
@@ -178,7 +179,7 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

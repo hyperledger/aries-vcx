@@ -2,7 +2,6 @@ use std::ffi::CString;
 
 use libc::c_char;
 use futures::future::{BoxFuture, FutureExt};
-use futures::executor::block_on;
 
 use aries_vcx::utils;
 use aries_vcx::indy::CommandHandle;
@@ -273,7 +272,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     };
 
     crate::api_lib::api_handle::schema::release_all();
-    block_on(crate::api_lib::api_handle::connection::release_all());
+    crate::api_lib::api_handle::connection::release_all();
     crate::api_lib::api_handle::issuer_credential::release_all();
     crate::api_lib::api_handle::credential_def::release_all();
     crate::api_lib::api_handle::proof::release_all();

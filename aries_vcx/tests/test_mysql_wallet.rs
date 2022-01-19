@@ -35,8 +35,6 @@ mod test_utils {
 #[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
-    use futures::executor::block_on;
-
     use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_wallet, WalletConfig, WalletConfigBuilder};
     use aries_vcx::settings;
@@ -46,10 +44,10 @@ mod dbtests {
 
     use crate::test_utils::setup_mysql_walletdb;
 
-    #[test]
-    fn test_provision_cloud_agent_with_mysql_wallet() {
+    #[tokio::test]
+    async fn test_provision_cloud_agent_with_mysql_wallet() {
         LibvcxDefaultLogger::init_testing_logger();
-        let db_name = block_on(setup_mysql_walletdb()).unwrap();
+        let db_name = setup_mysql_walletdb().await;
         let storage_config = json!({
             "read_host": "localhost",
             "write_host": "localhost",
@@ -81,7 +79,7 @@ mod dbtests {
         open_as_main_wallet(&config_wallet).unwrap();
         let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
         init_issuer_config(&config_issuer).unwrap();
-        provision_cloud_agent(&config_provision_agent).unwrap();
+        provision_cloud_agent(&config_provision_agent).await.unwrap();
         close_main_wallet().unwrap();
     }
 }

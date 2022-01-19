@@ -21,9 +21,11 @@ impl<T> ObjectCacheAsync<T> {
         }
     }
 
-    pub async fn has_handle(&self, handle: u32) -> bool {
-        let store = self.store.read().await;
-        store.contains_key(&handle)
+    pub fn has_handle(&self, handle: u32) -> bool {
+        match self.store.try_read() {
+            Some(store) => store.contains_key(&handle),
+            _ => false
+        }
     }
 
     pub async fn get<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
@@ -79,16 +81,16 @@ impl<T> ObjectCacheAsync<T> {
         }
     }
 
-    pub async fn release(&self, handle: u32) -> VcxResult<()> {
-        let mut store = self.store.write().await;
+    pub  fn release(&self, handle: u32) -> VcxResult<()> {
+        let mut store = self.store.try_write().ok_or(VcxError::from_msg(VcxErrorKind::WalletAccessFailed, "Failed to open the store for writing"))?;
         match store.remove(&handle) {
             Some(_) => Ok(()),
             None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCacheAsync: {}] Object not found for handle: {}", self.cache_name, handle)))
         }
     }
 
-    pub async fn drain(&self) -> VcxResult<()> {
-        let mut store = self.store.write().await;
+    pub fn drain(&self) -> VcxResult<()> {
+        let mut store = self.store.try_write().ok_or(VcxError::from_msg(VcxErrorKind::WalletAccessFailed, "Failed to open the store for writing"))?;
         Ok(store.clear())
     }
 
