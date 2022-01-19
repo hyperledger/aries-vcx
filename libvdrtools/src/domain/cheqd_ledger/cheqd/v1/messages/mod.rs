@@ -1,0 +1,23 @@
+pub use super::models::VerificationMethod;
+pub use super::models::Service;
+pub use msg_create_cred_def::MsgCreateCredDef;
+pub use msg_create_schema::MsgCreateSchema;
+pub use msg_create_did::MsgCreateDid;
+pub use msg_create_did_payload::MsgCreateDidPayload;
+pub use msg_create_did_response::MsgCreateDidResponse;
+pub use msg_update_did::MsgUpdateDid;
+pub use msg_update_did_payload::MsgUpdateDidPayload;
+pub use msg_update_did_response::MsgUpdateDidResponse;
+pub use msg_write_request::MsgWriteRequest;
+pub use msg_write_request_payload::MsgWriteRequestPayload;
+
+mod msg_create_did;
+mod msg_create_did_payload;
+mod msg_create_did_response;
+mod msg_update_did;
+mod msg_update_did_payload;
+mod msg_update_did_response;
+mod msg_create_cred_def;
+mod msg_create_schema;
+mod msg_write_request_payload;
+mod msg_write_request;
