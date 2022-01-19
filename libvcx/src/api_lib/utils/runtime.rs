@@ -76,7 +76,7 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
     if TP_INIT.is_completed() {
         execute_on_tokio(future);
     } else {
-        block_on(future).unwrap();
+        thread::spawn(|| block_on(future));
     }
 }
 

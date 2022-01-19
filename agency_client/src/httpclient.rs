@@ -44,8 +44,10 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             .map_err(|err| {
                 AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
             })?;
+    debug!("Posted");
 
     if !response.status().is_success() {
+        debug!("Hello");
         match response.text().await {
             Ok(content) => {
                 Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Agency responded with error. Details: {}", content)))
@@ -55,6 +57,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             }
         }
     } else {
+        debug!("world");
         Ok(response.text().await
             .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, "could not read response")))?.into())
     }

@@ -149,7 +149,7 @@ pub mod test {
             open_as_main_wallet(&config_wallet).unwrap();
             let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
             init_issuer_config(&config_issuer).unwrap();
-            let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
+            let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
             let institution_did = config_issuer.clone().institution_did;
             let faber = Faber {
                 is_active: false,
@@ -342,7 +342,7 @@ pub mod test {
 
             create_wallet(&config_wallet).unwrap();
             open_as_main_wallet(&config_wallet).unwrap();
-            let config_agency = provision_cloud_agent(&config_provision_agent).unwrap();
+            let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
             let alice = Alice {
                 is_active: false,
                 config_wallet,

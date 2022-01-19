@@ -4,6 +4,7 @@ use std::thread;
 use libc::c_char;
 use serde_json;
 use futures::future::{FutureExt, BoxFuture};
+use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
@@ -67,7 +68,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     };
 
     thread::spawn(move || {
-        match aries_vcx::utils::provision::provision_cloud_agent(&agency_config) {
+        match block_on(aries_vcx::utils::provision::provision_cloud_agent(&agency_config)) {
             Err(e) => {
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
