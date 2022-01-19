@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_append_service_object_to_oob_services() {
+    fn test_append_full_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
         let service = _create_service();
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_append_did_to_oob_services() {
+    fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
         let service = ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".to_string());
@@ -154,19 +154,16 @@ mod tests {
 
         let inserted_offer = CredentialOffer::create();
         let basic_msg = A2AMessage::CredentialOffer(inserted_offer.clone());
-        let mut oob = _create_oob().append_a2a_message(basic_msg).unwrap();
-
-        let attach_msg = oob.to_a2a_message();
-        if let A2AMessage::OutOfBand(oob_msg) = attach_msg {
+        let oob = _create_oob().append_a2a_message(basic_msg).unwrap();
+        let oob_msg = oob.to_a2a_message();
+        assert!(matches!(oob_msg, A2AMessage::OutOfBand(..)));
+        if let A2AMessage::OutOfBand(oob_msg) = oob_msg {
             let attachment = oob_msg.requests_attach.content().unwrap();
             let attachment: A2AMessage = serde_json::from_str(&attachment).unwrap();
+            assert!(matches!(attachment, A2AMessage::CredentialOffer(..)));
             if let A2AMessage::CredentialOffer(offer) = attachment {
                 assert_eq!(offer, inserted_offer)
-            } else {
-                panic!("Expected credential Aries credential offer in attachment, but got {:?}", attachment);
             }
-        } else {
-            panic!("Expected OutOfBand message variant, got {:?}", attach_msg);
         }
     }
 }

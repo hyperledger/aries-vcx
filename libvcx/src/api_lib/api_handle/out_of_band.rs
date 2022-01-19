@@ -91,8 +91,7 @@ pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
 pub fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
     trace!("get_services >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
-        let services = oob.get_services();
-        Ok(services)
+        Ok(oob.get_services())
     })
 }
 
@@ -199,15 +198,15 @@ pub mod tests {
         }).to_string();
         let oob_handle = create_out_of_band(&config).unwrap();
         assert!(oob_handle > 0);
-        let service0 = ServiceResolvable::FullService(FullService::create()
+        let service = ServiceResolvable::FullService(FullService::create()
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())));
-        append_service(oob_handle, &json!(service0).to_string()).unwrap();
+        append_service(oob_handle, &json!(service).to_string()).unwrap();
         append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
         let resolved_service = get_services(oob_handle).unwrap();
         assert_eq!(resolved_service.len(), 2);
-        assert_eq!(service0, resolved_service[0]);
+        assert_eq!(service, resolved_service[0]);
         assert_eq!(ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".into()), resolved_service[1]);
     }
 }
