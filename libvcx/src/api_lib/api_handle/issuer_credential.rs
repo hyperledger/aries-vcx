@@ -280,9 +280,9 @@ pub mod tests {
 
     #[cfg(feature = "pool_tests")]
     #[cfg(feature = "to_restore")]
-    #[test]
-    fn test_generate_cred_offer() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_cred_offer() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let _issuer = create_full_issuer_credential().0
             .generate_credential_offer().unwrap();

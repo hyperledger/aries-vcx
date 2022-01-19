@@ -237,9 +237,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_cred_def_without_rev_will_have_no_rev_id() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_cred_def_without_rev_will_have_no_rev_id() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (_, handle) = create_cred_def_real(false);
         let rev_reg_id = get_rev_reg_id(handle).ok();
@@ -259,9 +259,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_revocable_fails_with_no_tails_file() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_revocable_fails_with_no_tails_file() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -283,9 +283,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_tails_url_written_to_ledger() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_tails_url_written_to_ledger() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -310,9 +310,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_revocable_cred_def() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_revocable_cred_def() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -338,9 +338,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_credential_def_real() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_credential_def_real() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (_, handle) = create_cred_def_real(false);
 
@@ -350,9 +350,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_credential_works_twice() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_credential_works_twice() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (_, schema_id, did, revocation_details, _) = prepare_create_cred_def_data(false);
         create_and_store("1".to_string(),

@@ -995,7 +995,7 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupWithWalletAndAgency::init();
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
