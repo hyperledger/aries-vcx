@@ -93,7 +93,7 @@ impl<T> ObjectCacheAsync<T> {
         }
     }
 
-    pub  fn release(&self, handle: u32) -> VcxResult<()> {
+    pub fn release(&self, handle: u32) -> VcxResult<()> {
         let mut store = self.store.try_write().ok_or(VcxError::from_msg(VcxErrorKind::WalletAccessFailed, "Failed to open the store for writing"))?;
         match store.remove(&handle) {
             Some(_) => Ok(()),
