@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
 use aries_vcx::indy_sys::CommandHandle;
@@ -489,7 +490,7 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let (rc, handle) = match from_string(&connection_data).await {
             Ok(x) => {
-                let source_id = get_source_id(x).await.unwrap_or_default();
+                let source_id = get_source_id(x).unwrap_or_default();
                 trace!("vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, x, source_id);
                 (error::SUCCESS.code_num, x)
@@ -961,7 +962,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match connection::get_their_pw_verkey(connection_handle) {
+    let vk = match block_on(connection::get_their_pw_verkey(connection_handle)) {
         Ok(x) => x,
         Err(e) => return e.into(),
     };
@@ -1540,7 +1541,7 @@ mod tests {
         assert_eq!(vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(connection::get_source_id(connection_handle).await.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(connection::get_source_id(connection_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
     #[tokio::test]

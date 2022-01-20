@@ -110,7 +110,7 @@ pub async fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
 }
 
 pub async fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move{
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential, []| async move{
         Ok(credential.get_credential_offer_msg()?)
     }.boxed()).await
 }
@@ -146,10 +146,8 @@ pub async fn send_credential_offer_v2(handle: u32, connection_handle: u32,) -> V
     }.boxed()).await
 }
 
-pub async fn generate_credential_msg(handle: u32, _my_pw_did: &str) -> VcxResult<String> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet")) // TODO: implement
-    }.boxed()).await
+pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<String> {
+    Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet")) // TODO: implement
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
@@ -161,13 +159,13 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
 
 pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential, []| async move {
         credential.revoke_credential(true).map_err(|err| err.into())
     }.boxed()).await
 }
 
 pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential, []| async move {
         credential.revoke_credential(false).map_err(|err| err.into())
     }.boxed()).await
 }

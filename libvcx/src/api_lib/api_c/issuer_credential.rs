@@ -8,7 +8,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime:: execute_async;
+use crate::api_lib::utils::runtime:: {execute_async, execute};
 use crate::error::prelude::*;
 
 /*
@@ -634,8 +634,8 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_get_credential_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}) source_id: {}",
            command_handle, credential_handle, my_pw_did, source_id);
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did).await {
+    execute(move || {
+        match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!("vcx_issuer_get_credential_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -650,7 +650,7 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
