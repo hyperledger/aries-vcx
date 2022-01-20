@@ -23,6 +23,10 @@ module.exports.createFaber = async function createFaber () {
   }
 
   const vcxAgent = await createVcxAgent(faberAgentConfig)
+  const institutionDid = vcxAgent.getInstitutionDid()
+  await vcxAgent.agentInitVcx()
+  const agent = await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, institutionDid)
+  await vcxAgent.agentShutdownVcx()
 
   async function createInvite () {
     logger.info('Faber is going to generate invite')
@@ -54,28 +58,43 @@ module.exports.createFaber = async function createFaber () {
     return publicInvitation
   }
 
-  async function createOobMsg (wrappedMessage) {
+  async function createOobMessageWithService (wrappedMessage) {
     logger.info('Faber is going to generate out of band message')
     await vcxAgent.agentInitVcx()
 
-    const agent = await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, vcxAgent.getInstitutionDid())
-    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMsg(agent, 'faber-oob-msg', wrappedMessage)
+    const service = await agent.getService()
+    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMessageWithService(wrappedMessage, 'faber-oob-msg', service)
 
     await vcxAgent.agentShutdownVcx()
 
     return oobMsg
   }
 
-  async function createOobCredOffer () {
+  async function createOobMessageWithDid (wrappedMessage) {
+    logger.info('Faber is going to generate out of band message')
+    await vcxAgent.agentInitVcx()
+
+    const publicDid = vcxAgent.getInstitutionDid()
+    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMessageWithDid(wrappedMessage, 'faber-oob-msg', publicDid)
+
+    await vcxAgent.agentShutdownVcx()
+
+    return oobMsg
+  }
+
+  async function createOobCredOffer (usePublicDid = true) {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
     const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
-    const oobCredOfferMsg = await createOobMsg(credOfferMsg)
-    return oobCredOfferMsg
+    if (usePublicDid) {
+      return await createOobMessageWithDid(credOfferMsg)
+    } else {
+      return await createOobMessageWithService(credOfferMsg)
+    }
   }
 
-  async function createOobProofRequest () {
+  async function createOobProofRequest (usePublicDid = true) {
     await vcxAgent.agentInitVcx()
 
     const issuerDid = vcxAgent.getInstitutionDid()
@@ -84,8 +103,11 @@ module.exports.createFaber = async function createFaber () {
     const presentationRequestMsg = await vcxAgent.serviceVerifier.buildProofReqAndMarkAsSent(proofId, proofData)
 
     await vcxAgent.agentShutdownVcx()
-    const oobPresentationRequestMsg = await createOobMsg(presentationRequestMsg)
-    return oobPresentationRequestMsg
+    if (usePublicDid) {
+      return await createOobMessageWithDid(presentationRequestMsg)
+    } else {
+      return await createOobMessageWithService(presentationRequestMsg)
+    }
   }
 
   async function sendConnectionResponse () {
@@ -291,7 +313,8 @@ module.exports.createFaber = async function createFaber () {
     verifySignature,
     createInvite,
     createPublicInvite,
-    createOobMsg,
+    createOobMessageWithDid,
+    createOobMessageWithService,
     createOobProofRequest,
     createConnectionFromReceivedRequest,
     updateConnection,

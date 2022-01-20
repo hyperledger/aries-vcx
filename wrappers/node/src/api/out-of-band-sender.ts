@@ -79,6 +79,39 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
     }
   }
 
+  public async appendServiceDid(did: string): Promise<void> {
+      try {
+          await createFFICallbackPromise<void>(
+              (resolve, reject, cb) => {
+                  const commandHandle = 0;
+                  const rc = rustAPI().vcx_out_of_band_sender_append_service_did(
+                      commandHandle,
+                      this.handle,
+                      did,
+                      cb,
+                  );
+                  if (rc) {
+                      reject(rc);
+                  }
+              },
+              (resolve, reject) =>
+                  ffi.Callback(
+                      'void',
+                      ['uint32', 'uint32'],
+                      (handle: number, err: number) => {
+                          if (err) {
+                              reject(err);
+                              return;
+                          }
+                          resolve();
+                      },
+                  ),
+          );
+      } catch (err) {
+          throw new VCXInternalError(err);
+      }
+  }
+
   public async appendService(service: string): Promise<void> {
     try {
       await createFFICallbackPromise<void>(

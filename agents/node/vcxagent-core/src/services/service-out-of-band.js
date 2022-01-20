@@ -1,12 +1,10 @@
 const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
-  async function createOobMsg (agent, label, message) {
+
+  async function _createOobSender(message, label) {
     logger.info(`createOobMsg >>>`)
     const oob = await OutOfBandSender.create({ label })
-    const service = await agent.getService()
-    logger.info(`createOobMsg >>> appending service ${service}`)
-    await oob.appendService(service)
     if (message) {
       const msgParsed = JSON.parse(message)
       const msgType = msgParsed["@type"]
@@ -17,7 +15,19 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
       await oob.appendMessage(message)
       logger.info(`createOobMsg >>> append message`)
     }
-    return oob.toMessage()
+    return oob
+  }
+
+  async function createOobMessageWithService (message, label, service) {
+    const oobSender = await _createOobSender(message, label)
+    await oobSender.appendService(service)
+    return await oobSender.toMessage()
+  }
+
+  async function createOobMessageWithDid (message, label, publicDid) {
+    const oobSender = await _createOobSender(message, label)
+    await oobSender.appendServiceDid(publicDid)
+    return await oobSender.toMessage()
   }
 
   async function createConnectionFromOobMsg (connectionId, oobMsg) {
@@ -28,7 +38,8 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   }
 
   return {
-    createOobMsg,
+    createOobMessageWithService,
+    createOobMessageWithDid,
     createConnectionFromOobMsg
   }
 }

@@ -9,12 +9,20 @@ const {IssuerStateType, HolderStateType, OutOfBandReceiver} = require('@hyperled
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'error')
 })
 
 describe('test out of band communication', () => {
+  it('Faber establishes connection with Alice via service OOB message ', async () => {
+    await createPairedAliceAndFaberViaOobMsg(false)
+  })
+
+  it('Faber establishes connection with Alice via DID OOB message ', async () => {
+    await createPairedAliceAndFaberViaOobMsg(true)
+  })
+
   it('Faber establishes connection with Alice via OOB message and they exchange messages', async () => {
-    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg(true)
 
     await alice.sendMessage('Hello Faber')
     const msgsFaber = await faber.downloadReceivedMessagesV2()
