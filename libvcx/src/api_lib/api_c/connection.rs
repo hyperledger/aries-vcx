@@ -1,7 +1,6 @@
 use std::ptr;
 
 use libc::c_char;
-use futures::executor::block_on;
 use futures::future::BoxFuture;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
@@ -352,7 +351,7 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
         None
     };
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_connect(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -386,7 +385,7 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_get_thread_id(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -435,7 +434,7 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_serialize(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -535,7 +534,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_update_state(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -589,7 +588,7 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_update_state_with_message(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -644,7 +643,7 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_get_state(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -700,7 +699,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -882,7 +881,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match block_on(connection::get_pw_verkey(connection_handle)) {
+    let vk = match connection::get_pw_verkey(connection_handle) {
         Ok(x) => x,
         Err(e) => return e.into(),
     };
@@ -962,7 +961,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match block_on(connection::get_their_pw_verkey(connection_handle)) {
+    let vk = match connection::get_their_pw_verkey(connection_handle) {
         Ok(x) => x,
         Err(e) => return e.into(),
     };
@@ -1000,7 +999,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
 pub extern fn vcx_connection_release(connection_handle: u32) -> u32 {
     info!("vcx_connection_release >>>");
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     match release(connection_handle) {
         Ok(()) => {
             trace!("vcx_connection_release(connection_handle: {}, rc: {}), source_id: {:?}",
@@ -1118,7 +1117,7 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_info(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -1167,7 +1166,7 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_get_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
@@ -1216,7 +1215,7 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    let source_id = block_on(get_source_id(connection_handle)).unwrap_or_default();
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_get_their_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 

@@ -1,13 +1,14 @@
 use std::ptr;
 
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime:: execute_async;
 use crate::error::prelude::*;
 
 /*
@@ -89,8 +90,8 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
 
     trace!("vcx_issuer_create_credential(command_handle: {}, source_id: {})", command_handle, source_id);
 
-    execute(move || {
-        let (rc, handle) = match issuer_credential::issuer_credential_create(source_id) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let (rc, handle) = match issuer_credential::issuer_credential_create(source_id).await {
             Ok(x) => {
                 trace!("vcx_issuer_create_credential_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, issuer_credential::get_source_id(x).unwrap_or_default());
@@ -106,7 +107,7 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
         cb(command_handle, rc, handle);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -158,8 +159,8 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
         return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the published state").into();
     }
 
-    execute(move || {
-        let err = match issuer_credential::send_credential_offer(credential_handle, cred_def_handle, connection_handle, credential_data, None) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::send_credential_offer(credential_handle, cred_def_handle, connection_handle, &credential_data, None).await {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -175,7 +176,7 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -202,8 +203,8 @@ pub extern fn vcx_issuer_send_credential_offer_v2(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    execute(move || {
-        let err = match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle).await {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -219,7 +220,7 @@ pub extern fn vcx_issuer_send_credential_offer_v2(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -251,8 +252,8 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::get_credential_offer_msg(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::get_credential_offer_msg(credential_handle).await {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();
                 let offer_msg = CStringUtils::string_to_cstring(offer_msg);
@@ -268,7 +269,7 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -300,8 +301,8 @@ pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandl
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, credential_data, comment) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, &credential_data, comment.as_deref()).await {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();
                 let offer_msg = CStringUtils::string_to_cstring(offer_msg);
@@ -317,7 +318,7 @@ pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandl
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -338,8 +339,8 @@ pub extern fn vcx_mark_credential_offer_msg_sent(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::mark_credential_offer_msg_sent(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::mark_credential_offer_msg_sent(credential_handle).await {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();
                 let offer_msg = CStringUtils::string_to_cstring(offer_msg);
@@ -355,7 +356,7 @@ pub extern fn vcx_mark_credential_offer_msg_sent(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -401,8 +402,8 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::update_state(credential_handle, None, connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::update_state(credential_handle, None, connection_handle).await {
             Ok(x) => {
                 trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, connection_handle, error::SUCCESS.message, x, source_id);
@@ -416,7 +417,7 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -464,8 +465,8 @@ pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle:
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::update_state(credential_handle, Some(&message), connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::update_state(credential_handle, Some(&message), connection_handle).await {
             Ok(x) => {
                 trace!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -479,7 +480,7 @@ pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle:
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -516,8 +517,8 @@ pub extern fn vcx_issuer_credential_get_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle).into();
     }
 
-    execute(move || {
-        match issuer_credential::get_state(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::get_state(credential_handle).await {
             Ok(x) => {
                 trace!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -531,7 +532,7 @@ pub extern fn vcx_issuer_credential_get_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -581,8 +582,8 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_send_credential(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, credential_handle, connection_handle, source_id);
-    execute(move || {
-        let err = match issuer_credential::send_credential(credential_handle, connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::send_credential(credential_handle, connection_handle).await {
             Ok(x) => {
                 trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -598,7 +599,7 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -633,8 +634,8 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_get_credential_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}) source_id: {}",
            command_handle, credential_handle, my_pw_did, source_id);
-    execute(move || {
-        match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did).await {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!("vcx_issuer_get_credential_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -649,7 +650,7 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -669,8 +670,8 @@ pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, credential_handle, source_id);
-    execute(move || {
-        match issuer_credential::get_rev_reg_id(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::get_rev_reg_id(credential_handle).await {
             Ok(rev_reg_id) => {
                 let rev_reg_id = CStringUtils::string_to_cstring(rev_reg_id);
                 trace!("vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
@@ -685,7 +686,7 @@ pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -705,8 +706,8 @@ pub extern fn vcx_issuer_credential_is_revokable(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_is_revokable(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, credential_handle, source_id);
-    execute(move || {
-        match issuer_credential::is_revokable(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::is_revokable(credential_handle).await {
             Ok(revokable) => {
                 trace!("vcx_issuer_credential_is_revokable_cb(command_handle: {}, credential_handle: {}, revokable: {}, rc: {}) source_id: {}",
                        command_handle, credential_handle, revokable, error::SUCCESS.message, source_id);
@@ -720,7 +721,7 @@ pub extern fn vcx_issuer_credential_is_revokable(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -757,8 +758,8 @@ pub extern fn vcx_issuer_credential_serialize(command_handle: CommandHandle,
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_issuer_credential_serialize(credential_serialize(command_handle: {}, credential_handle: {}), source_id: {}",
            command_handle, credential_handle, source_id);
-    execute(move || {
-        match issuer_credential::to_string(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::to_string(credential_handle).await {
             Ok(x) => {
                 trace!("vcx_issuer_credential_serialize_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, credential_handle, error::SUCCESS.message, x, source_id);
@@ -773,7 +774,7 @@ pub extern fn vcx_issuer_credential_serialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -800,8 +801,8 @@ pub extern fn vcx_issuer_credential_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_issuer_credential_deserialize(command_handle: {}, credential_data: {})", command_handle, credential_data);
 
-    execute(move || {
-        let (rc, handle) = match issuer_credential::from_string(&credential_data) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let (rc, handle) = match issuer_credential::from_string(&credential_data).await {
             Ok(x) => {
                 trace!("vcx_issuer_credential_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
                        command_handle, error::SUCCESS.message, x, issuer_credential::get_source_id(x).unwrap_or_default());
@@ -817,7 +818,7 @@ pub extern fn vcx_issuer_credential_deserialize(command_handle: CommandHandle,
         cb(command_handle, rc, handle);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -872,8 +873,8 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    execute(move || {
-        let err = match issuer_credential::revoke_credential(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::revoke_credential(credential_handle).await {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -889,7 +890,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -908,8 +909,8 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    execute(move || {
-        let err = match issuer_credential::revoke_credential_local(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::revoke_credential_local(credential_handle).await {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -925,7 +926,7 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -945,8 +946,8 @@ pub extern fn vcx_issuer_credential_get_thread_id(command_handle: CommandHandle,
     trace!("vcx_issuer_credential_get_thread_id(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match issuer_credential::get_thread_id(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::get_thread_id(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_issuer_credential_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -961,7 +962,7 @@ pub extern fn vcx_issuer_credential_get_thread_id(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

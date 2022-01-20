@@ -42,6 +42,18 @@ impl<T> ObjectCacheAsync<T> {
         }
     }
 
+    pub fn try_get<F, R>(&self, handle: u32, closure: F) -> VcxResult<R>
+        where F: Fn(&T) -> VcxResult<R> {
+        let store = self.store.try_read().ok_or(VcxError::from_msg(VcxErrorKind::WalletAccessFailed, "Failed to obtain read access to ObjectCache"))?;
+        match store.get(&handle) {
+            Some(m) => match m.try_lock() {
+                Some(obj) => closure(obj.deref()),
+                None => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+            },
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+        }
+    }
+
     pub async fn get_mut<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
     where
         for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>

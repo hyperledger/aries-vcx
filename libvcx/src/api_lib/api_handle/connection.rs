@@ -51,10 +51,10 @@ pub async fn get_pw_did(handle: u32) -> VcxResult<String> {
     }.boxed()).await
 }
 
-pub async fn get_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.try_get(handle, |connection| {
         Ok(connection.pairwise_info().pw_vk.clone())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
@@ -82,10 +82,10 @@ pub async fn get_state(handle: u32) -> u32 {
     }.boxed()).await.unwrap_or(0)
 }
 
-pub async fn get_source_id(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+pub fn get_source_id(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.try_get(handle, |connection| {
         Ok(connection.get_source_id())
-    }.boxed()).await
+    })
 }
 
 pub async fn store_connection(connection: Connection) -> VcxResult<u32> {
