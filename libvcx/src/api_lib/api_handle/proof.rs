@@ -256,7 +256,7 @@ pub mod tests {
         send_proof_request(handle_proof, handle_conn).unwrap();
         assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
 
-        connection::release(handle_conn).await.unwrap();
+        connection::release(handle_conn).unwrap();
         let handle_conn = build_test_connection_inviter_requested().await;
 
         update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();

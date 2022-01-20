@@ -1,5 +1,7 @@
 extern crate futures;
 
+use futures::executor::block_on;
+
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::FnOnce;
@@ -77,7 +79,7 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
     if TP_INIT.is_completed() {
         execute_on_tokio(future);
     } else {
-        tokio::spawn(async { future.await });
+        thread::spawn(|| { block_on(future) });
     }
 }
 

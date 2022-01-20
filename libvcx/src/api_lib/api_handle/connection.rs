@@ -363,7 +363,7 @@ pub mod tests {
         warn!(">> test_connection_delete checking is valid handle");
         assert!(connection::is_valid_handle(connection_handle));
 
-        connection::release(connection_handle).await.unwrap();
+        connection::release(connection_handle).unwrap();
         assert!(!connection::is_valid_handle(connection_handle));
     }
 
@@ -415,7 +415,7 @@ pub mod tests {
         assert_eq!(delete_connection(handle).await.unwrap(), 0);
 
         // This errors b/c we release handle in delete connection
-        assert!(release(handle).await.is_err());
+        assert!(release(handle).is_err());
     }
 
     #[tokio::test]
@@ -428,7 +428,7 @@ pub mod tests {
         assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
         let did1 = get_pw_did(handle).await.unwrap();
 
-        release(handle).await.unwrap();
+        release(handle).unwrap();
 
         let handle2 = create_connection("test_create_drop_create").await.unwrap();
 
@@ -438,7 +438,7 @@ pub mod tests {
         assert_ne!(handle, handle2);
         assert_eq!(did1, did2);
 
-        release(handle2).await.unwrap();
+        release(handle2).unwrap();
     }
 
     #[tokio::test]
@@ -446,7 +446,7 @@ pub mod tests {
     async fn test_connection_release_fails() {
         let _setup = SetupEmpty::init();
 
-        let rc = release(1).await;
+        let rc = release(1);
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
@@ -506,12 +506,12 @@ pub mod tests {
         let h3 = create_connection("rel3").await.unwrap();
         let h4 = create_connection("rel4").await.unwrap();
         let h5 = create_connection("rel5").await.unwrap();
-        release_all().await;
-        assert_eq!(release(h1).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h2).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h3).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h4).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h5).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        release_all();
+        assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[tokio::test]

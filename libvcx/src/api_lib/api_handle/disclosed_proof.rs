@@ -336,7 +336,7 @@ mod tests {
         send_proof(handle, connection_handle).unwrap();
         assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
 
-        connection::release(connection_handle).await.unwrap();
+        connection::release(connection_handle).unwrap();
         let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);

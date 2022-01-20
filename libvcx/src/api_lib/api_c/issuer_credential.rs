@@ -1163,7 +1163,7 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let connection_serialized = connection::to_string(connection_handle).await.unwrap();
-        connection::release(connection_handle).await.unwrap();
+        connection::release(connection_handle).unwrap();
         let connection_handle = connection::from_string(&connection_serialized).await.unwrap();
 
 

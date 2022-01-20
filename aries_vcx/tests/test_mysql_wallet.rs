@@ -47,7 +47,7 @@ mod dbtests {
     #[tokio::test]
     async fn test_provision_cloud_agent_with_mysql_wallet() {
         LibvcxDefaultLogger::init_testing_logger();
-        let db_name = setup_mysql_walletdb().await;
+        let db_name = setup_mysql_walletdb().await.unwrap();
         let storage_config = json!({
             "read_host": "localhost",
             "write_host": "localhost",

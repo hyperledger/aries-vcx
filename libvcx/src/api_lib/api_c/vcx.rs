@@ -739,7 +739,7 @@ mod tests {
         let credential = credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);
-        assert_eq!(connection::release(connection).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(connection::release(connection).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
         assert_eq!(issuer_credential::release(issuer_credential).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
         assert_eq!(schema::release(schema).unwrap_err().kind(), VcxErrorKind::InvalidSchemaHandle);
         assert_eq!(proof::release(proof).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
