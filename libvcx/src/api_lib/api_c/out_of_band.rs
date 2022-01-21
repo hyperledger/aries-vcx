@@ -1,11 +1,12 @@
 use std::ptr;
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::indy_sys::CommandHandle;
 
 use crate::api_lib::api_handle::out_of_band;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::execute_async;
 use crate::error::prelude::*;
 use aries_vcx::utils::error;
 
@@ -20,8 +21,8 @@ pub extern fn vcx_out_of_band_sender_create(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_sender_create(command_handle: {}, config: {})", command_handle, config);
 
-    execute(move || {
-        match out_of_band::create_out_of_band(&config) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::create_out_of_band(&config).await {
             Ok(handle) => {
                 trace!("vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -34,7 +35,7 @@ pub extern fn vcx_out_of_band_sender_create(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -50,8 +51,8 @@ pub extern fn vcx_out_of_band_receiver_create(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_receiver_create(command_handle: {}, message: {})", command_handle, message);
 
-    execute(move || {
-        match out_of_band::create_out_of_band_msg_from_msg(&message) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::create_out_of_band_msg_from_msg(&message).await {
             Ok(handle) => {
                 trace!("vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -64,7 +65,7 @@ pub extern fn vcx_out_of_band_receiver_create(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -85,8 +86,8 @@ pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandl
 
     trace!("vcx_out_of_band_sender_append_message(command_handle: {}, handle: {}, message: {})", command_handle, handle, message);
 
-    execute(move || {
-        match out_of_band::append_message(handle, &message) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::append_message(handle, &message).await {
             Ok(()) => {
                 trace!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -99,7 +100,7 @@ pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandl
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -120,8 +121,8 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
 
     trace!("vcx_out_of_band_sender_append_service(command_handle: {}, handle: {}, service: {})", command_handle, handle, service);
 
-    execute(move || {
-        match out_of_band::append_service(handle, &service) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::append_service(handle, &service).await {
             Ok(()) => {
                 trace!("vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -134,7 +135,7 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -189,8 +190,8 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
 
     trace!("vcx_out_of_band_receiver_extract_message(command_handle: {}, handle: {})", command_handle, handle);
 
-    execute(move || {
-        match out_of_band::extract_a2a_message(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::extract_a2a_message(handle).await {
             Ok(msg) => {
                 trace!("vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, msg);
@@ -204,7 +205,7 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -223,8 +224,8 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_to_message(command_handle: {}, handle: {})", command_handle, handle);
 
-    execute(move || {
-        match out_of_band::to_a2a_message(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::to_a2a_message(handle).await {
             Ok(msg) => {
                 trace!("vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, msg);
@@ -238,7 +239,7 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -267,8 +268,8 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
         }
     };
 
-    execute(move || {
-        match out_of_band::connection_exists(handle, conn_handles) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::connection_exists(handle, &conn_handles).await {
             Ok((conn_handle, found_one)) => {
                 trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
                        command_handle, error::SUCCESS.message, conn_handle, found_one);
@@ -281,7 +282,7 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -300,8 +301,8 @@ pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandH
 
     trace!("vcx_out_of_band_receiver_build_connection(command_handle: {}, handle: {})", command_handle, handle);
 
-    execute(move || {
-        match out_of_band::build_connection(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::build_connection(handle).await {
             Ok(connection) => {
                 trace!("vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
                        command_handle, error::SUCCESS.message, connection);
@@ -316,7 +317,7 @@ pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandH
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -335,8 +336,8 @@ pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_sender_serialize(command_handle: {}, handle: {})", command_handle, handle);
 
-    execute(move || {
-        match out_of_band::to_string_sender(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::to_string_sender(handle).await {
             Ok(oob_json) => {
                 trace!("vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                        command_handle, error::SUCCESS.message, oob_json);
@@ -350,7 +351,7 @@ pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -369,8 +370,8 @@ pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_receiver_serialize(command_handle: {}, handle: {})", command_handle, handle);
 
-    execute(move || {
-        match out_of_band::to_string_receiver(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::to_string_receiver(handle).await {
             Ok(oob_json) => {
                 trace!("vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                        command_handle, error::SUCCESS.message, oob_json);
@@ -384,7 +385,7 @@ pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -400,8 +401,8 @@ pub extern fn vcx_out_of_band_sender_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_out_of_band_sender_deserialize(command_handle: {}, oob_json: {})", command_handle, oob_json);
 
-    execute(move || {
-        match out_of_band::from_string_sender(&oob_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::from_string_sender(&oob_json).await {
             Ok(handle) => {
                 trace!("vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -414,7 +415,7 @@ pub extern fn vcx_out_of_band_sender_deserialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -430,8 +431,8 @@ pub extern fn vcx_out_of_band_receiver_deserialize(command_handle: CommandHandle
 
     trace!("vcx_out_of_band_receiver_deserialize(command_handle: {}, oob_json: {})", command_handle, oob_json);
 
-    execute(move || {
-        match out_of_band::from_string_receiver(&oob_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::from_string_receiver(&oob_json).await {
             Ok(handle) => {
                 trace!("vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                        command_handle, error::SUCCESS.message, handle);
@@ -444,7 +445,7 @@ pub extern fn vcx_out_of_band_receiver_deserialize(command_handle: CommandHandle
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
