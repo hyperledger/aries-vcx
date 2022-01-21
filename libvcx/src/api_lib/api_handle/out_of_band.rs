@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-use serde_json::Value;
 
 use futures::future::FutureExt;
 
 use crate::aries_vcx::handlers::out_of_band::GoalCode;
 use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
 use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
-use crate::aries_vcx::messages::connection::service::{ServiceResolvable, FullService};
+use crate::aries_vcx::messages::connection::service::ServiceResolvable;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
@@ -86,17 +85,17 @@ pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 
 pub async fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob. []| async move {
+    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
         *oob = oob.clone().append_service(&ServiceResolvable::Did(did.into()));
         Ok(())
-    }.boxed())
+    }.boxed()).await
 }
 
 pub async fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
     trace!("get_services >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
         Ok(oob.get_services())
-    }.boxed())
+    }.boxed()).await
 }
 
 pub async fn extract_a2a_message(handle: u32) -> VcxResult<String> {
@@ -190,26 +189,27 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[allow(unused_imports)]
 pub mod tests {
     use aries_vcx::utils::devsetup::SetupMocks;
+    use crate::aries_vcx::messages::connection::service::FullService;
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_build_oob_sender_append_services() {
+    async fn test_build_oob_sender_append_services() {
         let _setup = SetupMocks::init();
         let config = json!(OOBConfig {
             label: Some("foo".into()),
             goal_code: Some(GoalCode::IssueVC),
             goal: Some("foobar".into())
         }).to_string();
-        let oob_handle = create_out_of_band(&config).unwrap();
+        let oob_handle = create_out_of_band(&config).await.unwrap();
         assert!(oob_handle > 0);
         let service = ServiceResolvable::FullService(FullService::create()
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())));
-        append_service(oob_handle, &json!(service).to_string()).unwrap();
-        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
-        let resolved_service = get_services(oob_handle).unwrap();
+        append_service(oob_handle, &json!(service).to_string()).await.unwrap();
+        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").await.unwrap();
+        let resolved_service = get_services(oob_handle).await.unwrap();
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
         assert_eq!(ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".into()), resolved_service[1]);

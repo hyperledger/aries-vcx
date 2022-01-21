@@ -94,10 +94,6 @@ impl OutOfBandSender {
 
 #[cfg(test)]
 mod tests {
-    use crate::messages::connection::request::tests::_request;
-    use crate::handlers::connection::public_agent::tests::_public_agent;
-    use crate::messages::basic_message::message::BasicMessage;
-    use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::service::FullService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
@@ -124,9 +120,8 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let service = _create_service();
-        let mut oob = _create_oob()
+        let oob = _create_oob()
             .append_service(&service);
-        let service_str = json!(service).to_string();
         let resolved_service = oob.get_services();
 
         assert_eq!(resolved_service.len(), 1);
@@ -139,7 +134,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let service = ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".to_string());
-        let mut oob = _create_oob()
+        let oob = _create_oob()
             .append_service(&service);
         let resolved_service = oob.get_services();
 

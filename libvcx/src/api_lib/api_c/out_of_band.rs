@@ -157,8 +157,8 @@ pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandH
 
     trace!("vcx_out_of_band_sender_append_service_did(command_handle: {}, handle: {}, did: {})", command_handle, handle, did);
 
-    execute(move || {
-        match out_of_band::append_service_did(handle, &did) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::append_service_did(handle, &did).await {
             Ok(()) => {
                 trace!("vcx_out_of_band_sender_append_service_did_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -171,7 +171,7 @@ pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandH
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
