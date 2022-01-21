@@ -82,7 +82,7 @@ describe('DisclosedProof', () => {
       const error = await shouldThrow(() =>
         DisclosedProof.createWithMsgId({ connection: {} as any, ...data }),
       );
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 

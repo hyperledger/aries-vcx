@@ -92,7 +92,7 @@ describe('Credential:', () => {
       const data = await dataCredentialCreateWithOffer();
       const credential = await Credential.create(data);
       assert.equal(await credential.getState(), HolderStateType.OfferReceived);
-      credential.sendRequest({ connection });
+      await credential.sendRequest({ connection });
       assert.equal(await credential.getState(), HolderStateType.RequestSent);
     });
   });
