@@ -2,7 +2,6 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
-use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
 use aries_vcx::indy_sys::CommandHandle;
@@ -882,12 +881,17 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match connection::get_pw_verkey(connection_handle) {
-        Ok(x) => x,
-        Err(e) => return e.into(),
-    };
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let vk = match connection::get_pw_verkey(connection_handle).await {
+            Ok(x) => x,
+            Err(e) => {
+                warn!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
+                      command_handle, e);
+                cb(command_handle, e.into(), ptr::null_mut(), 0);
+                return Ok(());
+            }
+        };
 
-    execute(move || {
         match libindy::utils::crypto::sign(&vk, &data_raw) {
             Ok(x) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -905,7 +909,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -962,12 +966,17 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    let vk = match block_on(connection::get_their_pw_verkey(connection_handle)) {
-        Ok(x) => x,
-        Err(e) => return e.into(),
-    };
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let vk = match connection::get_their_pw_verkey(connection_handle).await {
+            Ok(x) => x,
+            Err(e) => {
+                warn!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
+                      command_handle, e, false);
+                cb(command_handle, e.into(), false);
+                return Ok(());
+            }
+        };
 
-    execute(move || {
         match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
             Ok(x) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
@@ -984,7 +993,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

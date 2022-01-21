@@ -51,10 +51,10 @@ pub async fn get_pw_did(handle: u32) -> VcxResult<String> {
     }.boxed()).await
 }
 
-pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.try_get(handle, |connection| {
+pub async fn get_pw_verkey(handle: u32) -> VcxResult<String> {
+    CONNECTION_MAP.get(handle, |connection, []| async move {
         Ok(connection.pairwise_info().pw_vk.clone())
-    })
+    }.boxed()).await
 }
 
 pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
