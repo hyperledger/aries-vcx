@@ -2199,7 +2199,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_credential_def() {
-        let _setup = SetupWithWalletAndAgency::init();
+        let _setup = SetupWithWalletAndAgency::init().await;
         let (_, _, cred_def_id, cred_def_json, _, _) = create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let (id, r_cred_def_json) = libindy::utils::anoncreds::get_cred_def_json(&cred_def_id).unwrap();

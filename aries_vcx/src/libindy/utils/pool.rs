@@ -170,9 +170,9 @@ pub mod tests {
     use crate::utils::devsetup::SetupWithWalletAndAgency;
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_open_close_pool() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_open_close_pool() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         assert!(get_pool_handle().unwrap() > 0);
     }
