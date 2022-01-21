@@ -264,27 +264,27 @@ mod tests {
 
     use super::*;
 
-    fn _get_proof_request_messages(connection_h: u32) -> String {
-        let requests = get_proof_request_messages(connection_h).unwrap();
+    async fn _get_proof_request_messages(connection_h: u32) -> String {
+        let requests = get_proof_request_messages(connection_h).await.unwrap();
         let requests: Value = serde_json::from_str(&requests).unwrap();
         let requests = serde_json::to_string(&requests[0]).unwrap();
         requests
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_proof() {
+    async fn test_create_proof() {
         let _setup = SetupMocks::init();
 
-        assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
+        assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).await.unwrap() > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_fails() {
+    async fn test_create_fails() {
         let _setup = SetupMocks::init();
 
-        assert_eq!(create_proof("1", "{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(create_proof("1", "{}").await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
     #[tokio::test]
@@ -297,20 +297,20 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
 
-        let request = _get_proof_request_messages(connection_h);
+        let request = _get_proof_request_messages(connection_h).await;
 
-        let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle_proof).unwrap());
+        let handle_proof = create_proof("TEST_CREDENTIAL", &request).await.unwrap();
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle_proof).await.unwrap());
 
         let _mock_builder = MockBuilder::init().
             set_mock_generate_indy_proof("{\"selected\":\"credentials\"}");
 
-        generate_proof(handle_proof, String::from("{\"selected\":\"credentials\"}"), "{}".to_string()).unwrap();
-        send_proof(handle_proof, connection_h).unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle_proof).unwrap());
+        generate_proof(handle_proof, "{\"selected\":\"credentials\"}", "{}").await.unwrap();
+        send_proof(handle_proof, connection_h).await.unwrap();
+        assert_eq!(ProverState::PresentationSent as u32, get_state(handle_proof).await.unwrap());
 
-        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), connection_h).unwrap();
-        assert_eq!(ProverState::Finished as u32, get_state(handle_proof).unwrap());
+        update_state(handle_proof, Some(ARIES_PROOF_PRESENTATION_ACK), connection_h).await.unwrap();
+        assert_eq!(ProverState::Finished as u32, get_state(handle_proof).await.unwrap());
     }
 
     #[tokio::test]
@@ -323,16 +323,16 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
 
-        let request = _get_proof_request_messages(connection_handle);
+        let request = _get_proof_request_messages(connection_handle).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
+        let handle = create_proof("TEST_CREDENTIAL", &request).await.unwrap();
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).await.unwrap());
 
-        generate_proof(handle, ARIES_PROVER_CREDENTIALS.to_string(), ARIES_PROVER_SELF_ATTESTED_ATTRS.to_string()).unwrap();
-        assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).unwrap());
+        generate_proof(handle, ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS).await.unwrap();
+        assert_eq!(ProverState::PresentationPrepared as u32, get_state(handle).await.unwrap());
 
-        send_proof(handle, connection_handle).unwrap();
-        assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
+        send_proof(handle, connection_handle).await.unwrap();
+        assert_eq!(ProverState::PresentationSent as u32, get_state(handle).await.unwrap());
 
         connection::release(connection_handle).unwrap();
         let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
@@ -340,8 +340,8 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
 
-        update_state(handle, None, connection_handle).unwrap();
-        assert_eq!(ProverState::Finished as u32, get_state(handle).unwrap());
+        update_state(handle, None, connection_handle).await.unwrap();
+        assert_eq!(ProverState::Finished as u32, get_state(handle).await.unwrap());
     }
 
     #[tokio::test]
@@ -354,45 +354,45 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
 
-        let request = _get_proof_request_messages(connection_h);
+        let request = _get_proof_request_messages(connection_h).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
+        let handle = create_proof("TEST_CREDENTIAL", &request).await.unwrap();
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).await.unwrap());
 
-        reject_proof(handle, connection_h).unwrap();
-        assert_eq!(ProverState::Failed as u32, get_state(handle).unwrap());
+        reject_proof(handle, connection_h).await.unwrap();
+        assert_eq!(ProverState::Failed as u32, get_state(handle).await.unwrap());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn get_state_test() {
+    async fn get_state_test() {
         let _setup = SetupMocks::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap())
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).await.unwrap();
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).await.unwrap())
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn to_string_test() {
+    async fn to_string_test() {
         let _setup = SetupMocks::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).await.unwrap();
 
-        let serialized = to_string(handle).unwrap();
+        let serialized = to_string(handle).await.unwrap();
         let j: Value = serde_json::from_str(&serialized).unwrap();
         assert_eq!(j["version"], utils::constants::V3_OBJECT_SERIALIZE_VERSION);
 
-        let handle_2 = from_string(&serialized).unwrap();
+        let handle_2 = from_string(&serialized).await.unwrap();
         assert_ne!(handle, handle_2);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_deserialize_fails() {
+    async fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
-        assert_eq!(from_string("{}").unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(from_string("{}").await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
     #[tokio::test]
@@ -402,19 +402,19 @@ mod tests {
 
         let connection_h = connection::tests::build_test_connection_invitee_completed().await;
 
-        let request = get_proof_request(connection_h, "123").unwrap();
+        let request = get_proof_request(connection_h, "123").await.unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_deserialize_succeeds_with_self_attest_allowed() {
+    async fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).await.unwrap();
 
-        let serialized = to_string(handle).unwrap();
-        from_string(&serialized).unwrap();
+        let serialized = to_string(handle).await.unwrap();
+        from_string(&serialized).await.unwrap();
     }
 
     #[tokio::test]
@@ -427,12 +427,12 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
 
-        let request = _get_proof_request_messages(connection_h);
+        let request = _get_proof_request_messages(connection_h).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
-        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).unwrap());
+        let handle = create_proof("TEST_CREDENTIAL", &request).await.unwrap();
+        assert_eq!(ProverState::PresentationRequestReceived as u32, get_state(handle).await.unwrap());
 
-        let attrs = get_proof_request_attachment(handle).unwrap();
+        let attrs = get_proof_request_attachment(handle).await.unwrap();
         let _attrs: PresentationRequestData = serde_json::from_str(&attrs).unwrap();
     }
 }

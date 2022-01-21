@@ -235,30 +235,30 @@ pub mod tests {
         libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).unwrap();
     }
 
-    fn _issuer_credential_create() -> u32 {
-        issuer_credential_create("1".to_string()).unwrap()
+    async fn _issuer_credential_create() -> u32 {
+        issuer_credential_create("1".to_string()).await.unwrap()
     }
 
-    fn _cred_json() -> String {
-        "{\"attr\":\"value\"}".to_string()
+    fn _cred_json() -> &'static str {
+        "{\"attr\":\"value\"}"
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_issuer_credential_create_succeeds() {
+    async fn test_issuer_credential_create_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = _issuer_credential_create();
+        let handle = _issuer_credential_create().await;
         assert!(handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_to_string_succeeds() {
+    async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = _issuer_credential_create();
-        let string = to_string(handle).unwrap();
+        let handle = _issuer_credential_create().await;
+        let string = to_string(handle).await.unwrap();
         assert!(!string.is_empty());
     }
 
@@ -269,10 +269,10 @@ pub mod tests {
 
         let handle_conn = build_test_connection_inviter_requested().await;
 
-        let handle_cred = _issuer_credential_create();
+        let handle_cred = _issuer_credential_create().await;
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::OfferSent));
     }
 
     #[cfg(feature = "pool_tests")]
@@ -292,37 +292,37 @@ pub mod tests {
 
         let connection_handle = build_test_connection_inviter_requested().await;
 
-        let handle = _issuer_credential_create();
-        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
+        let handle = _issuer_credential_create().await;
+        assert_eq!(get_state(handle).await.unwrap(), u32::from(IssuerState::Initial));
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let res = send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).unwrap_err();
+        let res = send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidState);
-        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
+        assert_eq!(get_state(handle).await.unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        assert_eq!(send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(handle).await.unwrap(), u32::from(IssuerState::OfferSent));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_from_string_succeeds() {
+    async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = _issuer_credential_create();
+        let handle = _issuer_credential_create().await;
 
-        let string = to_string(handle).unwrap();
+        let string = to_string(handle).await.unwrap();
 
         let value: serde_json::Value = serde_json::from_str(&string).unwrap();
         assert_eq!(value["version"], V3_OBJECT_SERIALIZE_VERSION);
 
         release(handle).unwrap();
 
-        let new_handle = from_string(&string).unwrap();
+        let new_handle = from_string(&string).await.unwrap();
 
-        let new_string = to_string(new_handle).unwrap();
+        let new_string = to_string(new_handle).await.unwrap();
         assert_eq!(new_string, string);
     }
 
@@ -332,13 +332,13 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_cred = _issuer_credential_create();
+        let handle_cred = _issuer_credential_create().await;
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::OfferSent));
 
-        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).unwrap();
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::RequestReceived));
+        issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::RequestReceived));
     }
 
     #[tokio::test]
@@ -347,27 +347,27 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_cred = _issuer_credential_create();
+        let handle_cred = _issuer_credential_create().await;
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message
-        let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn);
+        let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
-        assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
+        assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::OfferSent));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_all() {
+    async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = _issuer_credential_create();
-        let h2 = _issuer_credential_create();
-        let h3 = _issuer_credential_create();
-        let h4 = _issuer_credential_create();
-        let h5 = _issuer_credential_create();
+        let h1 = _issuer_credential_create().await;
+        let h2 = _issuer_credential_create().await;
+        let h3 = _issuer_credential_create().await;
+        let h4 = _issuer_credential_create().await;
+        let h5 = _issuer_credential_create().await;
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
@@ -376,12 +376,12 @@ pub mod tests {
         assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_errors() {
+    async fn test_errors() {
         let _setup = SetupLibraryWallet::init();
 
-        assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(to_string(0).await.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
     }
 

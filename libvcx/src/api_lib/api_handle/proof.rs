@@ -153,28 +153,28 @@ pub mod tests {
 
     use super::*;
 
-    fn create_default_proof() -> u32 {
+    async fn create_default_proof() -> u32 {
         create_proof("1".to_string(),
                      REQUESTED_ATTRS.to_owned(),
                      REQUESTED_PREDICATES.to_owned(),
                      r#"{"support_revocation":false}"#.to_string(),
-                     "Optional".to_owned()).unwrap()
+                     "Optional".to_owned()).await.unwrap()
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_proof_succeeds() {
+    async fn test_create_proof_succeeds() {
         let _setup = SetupMocks::init();
-        create_default_proof();
+        create_default_proof().await;
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_revocation_details() {
+    async fn test_revocation_details() {
         let _setup = SetupMocks::init();
 
         // No Revocation
-        create_default_proof();
+        create_default_proof().await;
 
         // Support Revocation Success
         let revocation_details = json!({
@@ -184,40 +184,40 @@ pub mod tests {
                      REQUESTED_ATTRS.to_owned(),
                      REQUESTED_PREDICATES.to_owned(),
                      revocation_details.to_string(),
-                     "Optional".to_owned()).unwrap();
+                     "Optional".to_owned()).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_to_string_succeeds() {
+    async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_default_proof();
-        let proof_string = to_string(handle).unwrap();
+        let handle = create_default_proof().await;
+        let proof_string = to_string(handle).await.unwrap();
         let s: Value = serde_json::from_str(&proof_string).unwrap();
         assert_eq!(s["version"], V3_OBJECT_SERIALIZE_VERSION);
         assert!(s["data"]["verifier_sm"].is_object());
         assert!(!proof_string.is_empty());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_from_string_succeeds() {
+    async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_default_proof();
-        let proof_data = to_string(handle).unwrap();
-        let _hnadle2 = from_string(&proof_data).unwrap();
-        let proof_data2 = to_string(handle).unwrap();
+        let handle = create_default_proof().await;
+        let proof_data = to_string(handle).await.unwrap();
+        let _hnadle2 = from_string(&proof_data).await.unwrap();
+        let proof_data2 = to_string(handle).await.unwrap();
         assert_eq!(proof_data, proof_data2);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_proof() {
+    async fn test_release_proof() {
         let _setup = SetupMocks::init();
 
-        let handle = create_default_proof();
+        let handle = create_default_proof().await;
         assert!(release(handle).is_ok());
         assert!(!is_valid_handle(handle));
     }
@@ -229,19 +229,19 @@ pub mod tests {
 
         let handle_conn = build_test_connection_inviter_requested().await;
 
-        let handle_proof = create_default_proof();
-        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), error::SUCCESS.code_num);
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        let handle_proof = create_default_proof().await;
+        assert_eq!(send_proof_request(handle_proof, handle_conn).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof_fails_with_no_proof() {
+    async fn test_get_proof_fails_with_no_proof() {
         let _setup = SetupMocks::init();
 
-        let handle = create_default_proof();
+        let handle = create_default_proof().await;
         assert!(is_valid_handle(handle));
-        assert!(get_presentation_msg(handle).is_err())
+        assert!(get_presentation_msg(handle).await.is_err())
     }
 
     #[tokio::test]
@@ -252,17 +252,17 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
 
         connection::release(handle_conn).unwrap();
         let handle_conn = build_test_connection_inviter_requested().await;
 
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).await.unwrap();
 
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -273,13 +273,13 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
 
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -290,13 +290,13 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
 
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -305,12 +305,12 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
 
-        update_state(handle_proof, Some(PROOF_REJECT_RESPONSE_STR_V2), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Failed as u32);
+        update_state(handle_proof, Some(PROOF_REJECT_RESPONSE_STR_V2), handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Failed as u32);
     }
 
     #[tokio::test]
@@ -319,10 +319,10 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
     #[tokio::test]
@@ -333,28 +333,28 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
 
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
 
-        let proof_str = get_presentation_msg(handle_proof).unwrap();
+        let proof_str = get_presentation_msg(handle_proof).await.unwrap();
         assert_eq!(proof_str, mockdata_proof::ARIES_PROOF_PRESENTATION.replace("\n", "").replace(" ", ""));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_all() {
+    async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
-        let h2 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
-        let h3 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
-        let h4 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
-        let h5 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
+        let h1 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
+        let h2 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
+        let h3 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
+        let h4 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
+        let h5 = create_proof("1".to_string(), REQUESTED_ATTRS.to_owned(), REQUESTED_PREDICATES.to_owned(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
@@ -369,18 +369,18 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        let _request = get_presentation_request_msg(handle_proof).unwrap();
-        assert_eq!(get_state(handle_proof).unwrap(), 1);
+        let _request = get_presentation_request_msg(handle_proof).await.unwrap();
+        assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(aries_vcx::agency_client::error::AgencyClientError::from_msg(aries_vcx::agency_client::error::AgencyClientErrorKind::IOError, "Sending message timeout.")));
-        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap_err().kind(), VcxErrorKind::IOError);
-        assert_eq!(get_state(handle_proof).unwrap(), 1);
+        assert_eq!(send_proof_request(handle_proof, handle_conn).await.unwrap_err().kind(), VcxErrorKind::IOError);
+        assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
         // Retry sending proof request
-        assert_eq!(send_proof_request(handle_proof, handle_conn).unwrap(), 0);
-        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::PresentationRequestSent as u32);
+        assert_eq!(send_proof_request(handle_proof, handle_conn).await.unwrap(), 0);
+        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::PresentationRequestSent as u32);
     }
 
     #[tokio::test]
@@ -391,12 +391,12 @@ pub mod tests {
             set_mock_result_for_validate_indy_proof(Ok(true));
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
-        let _request = get_presentation_request_msg(handle_proof).unwrap();
-        send_proof_request(handle_proof, handle_conn).unwrap();
-        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).unwrap();
-        assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
+        let _request = get_presentation_request_msg(handle_proof).await.unwrap();
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
+        update_state(handle_proof, Some(mockdata_proof::ARIES_PROOF_PRESENTATION), handle_conn).await.unwrap();
+        assert_eq!(proof::get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -405,20 +405,20 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle_conn = build_test_connection_inviter_requested().await;
-        let handle_proof = create_default_proof();
+        let handle_proof = create_default_proof().await;
 
         let bad_handle = 100000;
         let empty = r#""#;
 
-        assert_eq!(send_proof_request(bad_handle, handle_conn).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
-        assert_eq!(get_proof_state(handle_proof).unwrap(), 0);
+        assert_eq!(send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(get_proof_state(handle_proof).await.unwrap(), 0);
         assert_eq!(create_proof("my source id".to_string(),
                                 empty.to_string(),
                                 "{}".to_string(),
                                 r#"{"support_revocation":false}"#.to_string(),
-                                "my name".to_string()).unwrap_err().kind(), VcxErrorKind::InvalidJson);
-        assert_eq!(to_string(bad_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+                                "my name".to_string()).await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(to_string(bad_handle).await.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(get_source_id(bad_handle).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
-        assert_eq!(from_string(empty).unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(from_string(empty).await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 }

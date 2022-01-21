@@ -81,7 +81,7 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_1);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_2);
 
-        let messages = get_proof_request_messages(connection_h).unwrap();
+        let messages = get_proof_request_messages(connection_h).await.unwrap();
         let requests = CString::new(messages).unwrap().into_raw();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

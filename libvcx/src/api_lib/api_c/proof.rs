@@ -813,7 +813,7 @@ mod tests {
 
         let proof_handle = create_proof_util().unwrap();
 
-        assert_eq!(proof::get_state(proof_handle).unwrap(), 1);
+        assert_eq!(proof::get_state(proof_handle).await.unwrap(), 1);
 
         let connection_handle = build_test_connection_inviter_requested().await;
 
@@ -825,7 +825,7 @@ mod tests {
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(proof::get_state(proof_handle).unwrap(), VerifierState::PresentationRequestSent as u32);
+        assert_eq!(proof::get_state(proof_handle).await.unwrap(), VerifierState::PresentationRequestSent as u32);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_v2_proof_update_state_with_message(cb.command_handle,
@@ -836,7 +836,7 @@ mod tests {
                    error::SUCCESS.code_num);
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(proof::get_state(proof_handle).unwrap(), VerifierState::Finished as u32);
+        assert_eq!(proof::get_state(proof_handle).await.unwrap(), VerifierState::Finished as u32);
     }
 
     #[test]
@@ -854,12 +854,12 @@ mod tests {
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_proof_returns_proof_with_proof_state_invalid() {
+    async fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupMocks::init();
 
-        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
+        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).await.unwrap();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_get_proof_msg(cb.command_handle,
@@ -873,13 +873,13 @@ mod tests {
         assert_eq!(vcx_proof_release(proof_handle), error::INVALID_PROOF_HANDLE.code_num);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_connection_get_state() {
+    async fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).unwrap();
+        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).await.unwrap();
 
         let rc = vcx_proof_get_state(cb.command_handle, handle, Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);

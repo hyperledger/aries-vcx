@@ -1276,13 +1276,13 @@ pub mod tests {
         assert_eq!(state, u32::from(IssuerState::Initial));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_issuer_revoke_credential() {
+    async fn test_vcx_issuer_revoke_credential() {
         let _setup = SetupMocks::init();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);
-        let handle = issuer_credential::from_string(CREDENTIAL_ISSUER_SM_FINISHED).unwrap();
+        let handle = issuer_credential::from_string(CREDENTIAL_ISSUER_SM_FINISHED).await.unwrap();
 
         // send the credential
         let cb = return_types_u32::Return_U32::new().unwrap();

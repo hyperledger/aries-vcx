@@ -1093,20 +1093,20 @@ mod tests {
         let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::OfferReceived as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::OfferReceived as u32);
         debug!("credential handle = {}", handle_cred);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_credential_send_request(cb.command_handle, handle_cred, handle_conn, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::RequestSent as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::RequestSent as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_v2_credential_update_state(cb.command_handle, handle_cred, handle_conn, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::Finished as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::Finished as u32);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_rev_reg_id(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1135,12 +1135,12 @@ mod tests {
         serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_credential() {
+    async fn test_get_credential() {
         let _setup = SetupMocks::init();
 
-        let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
+        let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).await.unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_credential(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
