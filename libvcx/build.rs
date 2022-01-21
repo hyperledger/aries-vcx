@@ -22,9 +22,7 @@ extern crate serde;
 
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
-struct Tomlfile {
-    contents: Contents,
-}
+struct Tomlfile;
 
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
@@ -42,8 +40,6 @@ struct Deb {
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
 struct Package {
-    name: String,
-    version: Option<String>,
     metadata: Metadata,
 }
 
@@ -51,7 +47,6 @@ struct Package {
 #[derive(Deserialize, Debug)]
 struct Contents {
     package: Package,
-    dependencies: Option<toml::Value>,
 }
 
 fn main() {
