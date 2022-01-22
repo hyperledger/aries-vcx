@@ -77,7 +77,7 @@ describe('DisclosedProof', () => {
       assert.equal(error.vcxCode, VCXCode.UNKNOWN_ERROR);
     });
 
-    it('throws: missing connection handle', async () => {
+    it.skip('throws: missing connection handle', async () => {
       const { connection, ...data } = await dataDisclosedProofCreateWithMsgId();
       const error = await shouldThrow(() =>
         DisclosedProof.createWithMsgId({ connection: {} as any, ...data }),
