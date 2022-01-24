@@ -1,7 +1,6 @@
 use std::ptr;
 use libc::c_char;
 use futures::future::BoxFuture;
-use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 
@@ -81,10 +80,6 @@ pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandl
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     trace!("vcx_out_of_band_sender_append_message(command_handle: {}, handle: {}, message: {})", command_handle, handle, message);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -115,10 +110,6 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
 
     check_useful_c_str!(service, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_out_of_band_sender_append_service(command_handle: {}, handle: {}, service: {})", command_handle, handle, service);
 
@@ -152,10 +143,6 @@ pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandH
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     trace!("vcx_out_of_band_sender_append_service_did(command_handle: {}, handle: {}, did: {})", command_handle, handle, did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -184,10 +171,6 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
     info!("vcx_out_of_band_receiver_extract_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_out_of_band_receiver_extract_message(command_handle: {}, handle: {})", command_handle, handle);
 
@@ -218,10 +201,6 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
     info!("vcx_out_of_band_to_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_out_of_band_to_message(command_handle: {}, handle: {})", command_handle, handle);
 
@@ -254,10 +233,6 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
 
     check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_out_of_band_receiver_connection_exists(command_handle: {}, handle: {}, conn_handles: {})", command_handle, handle, conn_handles);
 
@@ -296,10 +271,6 @@ pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandH
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     trace!("vcx_out_of_band_receiver_build_connection(command_handle: {}, handle: {})", command_handle, handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -331,10 +302,6 @@ pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     trace!("vcx_out_of_band_sender_serialize(command_handle: {}, handle: {})", command_handle, handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -364,10 +331,6 @@ pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
     info!("vcx_out_of_band_receiver_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(out_of_band::is_valid_handle(handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_out_of_band_receiver_serialize(command_handle: {}, handle: {})", command_handle, handle);
 

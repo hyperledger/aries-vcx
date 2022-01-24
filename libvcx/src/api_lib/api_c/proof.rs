@@ -2,12 +2,10 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
-use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute_async;
@@ -189,14 +187,6 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
     trace!("vcx_v2_proof_update_state(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
 
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
-    if !block_on(connection::is_valid_handle(connection_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::update_state(proof_handle, None, connection_handle).await {
             Ok(x) => {
@@ -252,14 +242,6 @@ pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHand
     trace!("vcx_v2_proof_update_state_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
-    if !block_on(connection::is_valid_handle(connection_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::update_state(proof_handle, Some(&message), connection_handle).await {
             Ok(x) => {
@@ -308,10 +290,6 @@ pub extern fn vcx_proof_get_state(command_handle: CommandHandle,
     trace!("vcx_proof_get_state(command_handle: {}, proof_handle: {}), source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::get_state(proof_handle).await {
             Ok(x) => {
@@ -353,10 +331,6 @@ pub extern fn vcx_proof_serialize(command_handle: CommandHandle,
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_serialize(command_handle: {}, proof_handle: {}) source_id: {}", command_handle, proof_handle, source_id);
-
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::to_string(proof_handle).await {
@@ -474,13 +448,6 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_send_request(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
-    if !block_on(connection::is_valid_handle(connection_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let err = match proof::send_proof_request(proof_handle, connection_handle).await {
@@ -529,9 +496,6 @@ pub extern fn vcx_proof_get_request_msg(command_handle: CommandHandle,
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_get_request_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::get_presentation_request_msg(proof_handle).await {
@@ -580,10 +544,6 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
     trace!("vcx_get_proof_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::get_presentation_msg(proof_handle).await {
             Ok(proof_msg) => {
@@ -613,10 +573,6 @@ pub extern fn vcx_mark_presentation_request_msg_sent(command_handle: CommandHand
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_mark_presentation_request_msg_sent(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
-
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match proof::mark_presentation_request_msg_sent(proof_handle).await {
@@ -653,9 +609,6 @@ pub extern fn vcx_proof_get_thread_id(command_handle: CommandHandle,
     info!("vcx_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !block_on(proof::is_valid_handle(proof_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
-    }
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_get_thread_id(command_handle: {}, proof_handle: {}) source_id: {})",

@@ -1,7 +1,6 @@
 use std::ptr;
 use libc::c_char;
 use futures::future::BoxFuture;
-use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 
@@ -52,10 +51,6 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(agent::is_valid_handle(agent_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     let uids = if !uids.is_null() {
         check_useful_c_str!(uids, VcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
@@ -95,10 +90,6 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(agent::is_valid_handle(agent_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
-
     trace!("vcx_public_agent_get_service(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -128,10 +119,6 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
     info!("vcx_public_agent_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(agent::is_valid_handle(agent_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidHandle).into();
-    }
 
     trace!("vcx_public_agent_serialize(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 

@@ -2,7 +2,6 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
-use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
 use aries_vcx::indy_sys::CommandHandle;
@@ -159,9 +158,6 @@ pub extern fn vcx_connection_delete_connection(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
     trace!("vcx_connection_delete_connection(command_handle: {}, connection_handle: {})", command_handle, connection_handle);
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match delete_connection(connection_handle).await {
@@ -340,11 +336,6 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     let _options = if !connection_options.is_null() {
         check_useful_opt_c_str!(connection_options, VcxErrorKind::InvalidOption);
         connection_options.to_owned()
@@ -390,11 +381,6 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
     trace!("vcx_connection_get_thread_id(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_thread_id - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match get_thread_id(connection_handle).await {
             Ok(tid) => {
@@ -438,11 +424,6 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_serialize(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match to_string(connection_handle).await {
@@ -539,11 +520,6 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
     trace!("vcx_connection_update_state(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_update_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state(connection_handle).await {
             Ok(x) => {
@@ -592,11 +568,6 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_update_state_with_message(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state_with_message(connection_handle, &message).await {
@@ -648,11 +619,6 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
     trace!("vcx_connection_get_state(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle).await, source_id);
@@ -703,11 +669,6 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match get_invite_details(connection_handle).await {
@@ -877,11 +838,6 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     trace!("vcx_connection_sign_data: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}",
            connection_handle, data_raw, data_len);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_sign - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let vk = match connection::get_pw_verkey(connection_handle).await {
             Ok(x) => x,
@@ -961,11 +917,6 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
 
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}",
            connection_handle, data_raw, data_len, signature_raw, signature_len);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_verify_signature - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let vk = match connection::get_their_pw_verkey(connection_handle).await {
@@ -1132,11 +1083,6 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
     trace!("vcx_connection_info(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_info - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match get_connection_info(connection_handle).await {
             Ok(info) => {
@@ -1180,11 +1126,6 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!("vcx_connection_get_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match get_pw_did(connection_handle).await {
@@ -1230,11 +1171,6 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
     trace!("vcx_connection_get_their_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_get_state - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match get_their_pw_did(connection_handle).await {
             Ok(json) => {
@@ -1265,11 +1201,6 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
     info!("vcx_connection_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !block_on(is_valid_handle(connection_handle)) {
-        error!("vcx_connection_messages_download - invalid handle");
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
 
     let message_statuses = if !message_statuses.is_null() {
         check_useful_c_str!(message_statuses, VcxErrorKind::InvalidOption);
