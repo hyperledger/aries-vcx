@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
@@ -188,11 +189,11 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
     trace!("vcx_v2_proof_update_state(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -251,11 +252,11 @@ pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHand
     trace!("vcx_v2_proof_update_state_with_message(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -307,7 +308,7 @@ pub extern fn vcx_proof_get_state(command_handle: CommandHandle,
     trace!("vcx_proof_get_state(command_handle: {}, proof_handle: {}), source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
@@ -353,7 +354,7 @@ pub extern fn vcx_proof_serialize(command_handle: CommandHandle,
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_serialize(command_handle: {}, proof_handle: {}) source_id: {}", command_handle, proof_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     };
 
@@ -473,11 +474,11 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_send_request(command_handle: {}, proof_handle: {}, connection_handle: {}) source_id: {}",
            command_handle, proof_handle, connection_handle, source_id);
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -528,7 +529,7 @@ pub extern fn vcx_proof_get_request_msg(command_handle: CommandHandle,
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!("vcx_proof_get_request_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
@@ -579,7 +580,7 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
     trace!("vcx_get_proof_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
@@ -613,7 +614,7 @@ pub extern fn vcx_mark_presentation_request_msg_sent(command_handle: CommandHand
     trace!("vcx_mark_presentation_request_msg_sent(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidProofHandle).into();
     }
 
@@ -652,7 +653,7 @@ pub extern fn vcx_proof_get_thread_id(command_handle: CommandHandle,
     info!("vcx_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !proof::is_valid_handle(proof_handle) {
+    if !block_on(proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 

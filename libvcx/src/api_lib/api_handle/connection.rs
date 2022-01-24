@@ -29,8 +29,8 @@ pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<St
     Ok(json!(invitation).to_string())
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    CONNECTION_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    CONNECTION_MAP.has_handle(handle).await
 }
 
 pub async fn get_agent_did(handle: u32) -> VcxResult<String> {
@@ -313,7 +313,7 @@ pub mod tests {
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
         assert_eq!(0, connection::get_state(connection_handle).await);
     }
 
@@ -322,7 +322,7 @@ pub mod tests {
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
         assert_eq!(1, connection::get_state(connection_handle).await);
     }
 
@@ -331,7 +331,7 @@ pub mod tests {
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
         assert_eq!(1, connection::get_state(connection_handle).await);
     }
 
@@ -342,7 +342,7 @@ pub mod tests {
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
         let connection_handle = connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
         assert_eq!(2, connection::get_state(connection_handle).await);
     }
 
@@ -361,10 +361,10 @@ pub mod tests {
         warn!(">> test_connection_delete going to create connection");
         let connection_handle = connection::create_connection(_source_id()).await.unwrap();
         warn!(">> test_connection_delete checking is valid handle");
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(connection::is_valid_handle(connection_handle).await);
 
         connection::release(connection_handle).unwrap();
-        assert!(!connection::is_valid_handle(connection_handle));
+        assert!(!connection::is_valid_handle(connection_handle).await);
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {

@@ -68,8 +68,8 @@ pub fn release_all() {
     ISSUER_CREDENTIAL_MAP.drain().ok();
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    ISSUER_CREDENTIAL_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    ISSUER_CREDENTIAL_MAP.has_handle(handle).await
 }
 
 pub async fn to_string(handle: u32) -> VcxResult<String> {

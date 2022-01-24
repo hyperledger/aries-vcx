@@ -8,8 +8,8 @@ lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCacheAsync<PublicAgent> = ObjectCacheAsync::<PublicAgent>::new("public-agent-cache");
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    PUBLIC_AGENT_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    PUBLIC_AGENT_MAP.has_handle(handle).await
 }
 
 async fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {

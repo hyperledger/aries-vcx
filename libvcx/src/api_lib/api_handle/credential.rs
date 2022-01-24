@@ -240,8 +240,8 @@ pub fn release_all() {
     HANDLE_MAP.drain().ok();
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    HANDLE_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    HANDLE_MAP.has_handle(handle).await
 }
 
 pub async fn to_string(handle: u32) -> VcxResult<String> {

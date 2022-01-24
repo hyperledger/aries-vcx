@@ -1,6 +1,7 @@
 use std::ptr;
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 
@@ -51,7 +52,7 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !agent::is_valid_handle(agent_handle) {
+    if !block_on(agent::is_valid_handle(agent_handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -94,7 +95,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !agent::is_valid_handle(agent_handle) {
+    if !block_on(agent::is_valid_handle(agent_handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -128,7 +129,7 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !agent::is_valid_handle(agent_handle) {
+    if !block_on(agent::is_valid_handle(agent_handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 

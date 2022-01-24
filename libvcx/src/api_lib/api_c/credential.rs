@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
@@ -125,7 +126,7 @@ pub extern fn vcx_get_credential(command_handle: CommandHandle,
     info!("vcx_get_credential >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -175,7 +176,7 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
     info!("vcx_delete_credential >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -207,7 +208,7 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
     info!("vcx_credential_get_attributes >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -243,7 +244,7 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
     info!("vcx_credential_get_attachment >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -279,7 +280,7 @@ pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
     info!("vcx_credential_get_tails_location >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -315,7 +316,7 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
     info!("vcx_credential_get_tails_hash >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -351,7 +352,7 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
     info!("vcx_credential_get_rev_reg_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -387,7 +388,7 @@ pub extern fn vcx_credential_get_thread_id(command_handle: CommandHandle,
     info!("vcx_credential_get_thread_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -423,7 +424,7 @@ pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
     info!("vcx_credential_is_revokable >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -526,11 +527,11 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -586,7 +587,7 @@ pub extern fn vcx_credential_get_request_msg(command_handle: CommandHandle,
     check_useful_opt_c_str!(their_pw_did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -636,7 +637,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -688,11 +689,11 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -755,11 +756,11 @@ pub extern fn vcx_v2_credential_update_state_with_message(command_handle: Comman
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
+    if !block_on(credential::is_valid_handle(credential_handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -818,7 +819,7 @@ pub extern fn vcx_credential_get_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(handle) {
+    if !block_on(credential::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 
@@ -866,7 +867,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(handle) {
+    if !block_on(credential::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
     }
 

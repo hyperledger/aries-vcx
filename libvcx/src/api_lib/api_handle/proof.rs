@@ -37,8 +37,8 @@ pub async fn create_proof(source_id: String,
         .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    PROOF_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    PROOF_MAP.has_handle(handle).await
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
@@ -219,7 +219,7 @@ pub mod tests {
 
         let handle = create_default_proof().await;
         assert!(release(handle).is_ok());
-        assert!(!is_valid_handle(handle));
+        assert!(!is_valid_handle(handle).await);
     }
 
     #[tokio::test]
@@ -240,7 +240,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_default_proof().await;
-        assert!(is_valid_handle(handle));
+        assert!(is_valid_handle(handle).await);
         assert!(get_presentation_msg(handle).await.is_err())
     }
 

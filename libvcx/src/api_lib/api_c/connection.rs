@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
 use aries_vcx::indy_sys::CommandHandle;
@@ -158,7 +159,7 @@ pub extern fn vcx_connection_delete_connection(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
     trace!("vcx_connection_delete_connection(command_handle: {}, connection_handle: {})", command_handle, connection_handle);
@@ -339,7 +340,7 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -389,7 +390,7 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
     trace!("vcx_connection_get_thread_id(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_thread_id - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -438,7 +439,7 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
     trace!("vcx_connection_serialize(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -538,7 +539,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
     trace!("vcx_connection_update_state(command_handle: {}, connection_handle: {}, source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_update_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -592,7 +593,7 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
     trace!("vcx_connection_update_state_with_message(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -647,7 +648,7 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
     trace!("vcx_connection_get_state(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -703,7 +704,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
     trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -876,7 +877,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     trace!("vcx_connection_sign_data: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}",
            connection_handle, data_raw, data_len);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_sign - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -961,7 +962,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}",
            connection_handle, data_raw, data_len, signature_raw, signature_len);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_verify_signature - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -1131,7 +1132,7 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
     trace!("vcx_connection_info(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_info - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -1180,7 +1181,7 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
     trace!("vcx_connection_get_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -1229,7 +1230,7 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
     trace!("vcx_connection_get_their_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_get_state - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
@@ -1265,7 +1266,7 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !is_valid_handle(connection_handle) {
+    if !block_on(is_valid_handle(connection_handle)) {
         error!("vcx_connection_messages_download - invalid handle");
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }

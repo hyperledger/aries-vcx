@@ -21,11 +21,8 @@ impl<T> ObjectCacheAsync<T> {
         }
     }
 
-    pub fn has_handle(&self, handle: u32) -> bool {
-        match self.store.try_read() {
-            Some(store) => store.contains_key(&handle),
-            _ => false
-        }
+    pub async fn has_handle(&self, handle: u32) -> bool {
+        self.store.read().await.contains_key(&handle)
     }
 
     pub async fn get<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>

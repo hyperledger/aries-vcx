@@ -1,6 +1,7 @@
 use std::ptr;
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 
@@ -80,7 +81,7 @@ pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandl
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -115,7 +116,7 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
     check_useful_c_str!(service, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -151,7 +152,7 @@ pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandH
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -184,7 +185,7 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -218,7 +219,7 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -254,7 +255,7 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
     check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -295,7 +296,7 @@ pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandH
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -330,7 +331,7 @@ pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 
@@ -364,7 +365,7 @@ pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !out_of_band::is_valid_handle(handle) {
+    if !block_on(out_of_band::is_valid_handle(handle)) {
         return VcxError::from(VcxErrorKind::InvalidHandle).into();
     }
 

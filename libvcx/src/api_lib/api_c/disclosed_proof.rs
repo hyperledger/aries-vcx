@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use futures::future::BoxFuture;
+use futures::executor::block_on;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
@@ -177,7 +178,7 @@ pub extern fn vcx_disclosed_proof_send_proof(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -227,11 +228,11 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -278,7 +279,7 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -326,7 +327,7 @@ pub extern fn vcx_disclosed_proof_get_reject_msg(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -375,7 +376,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -425,7 +426,7 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -461,7 +462,7 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -499,11 +500,11 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -557,11 +558,11 @@ pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: C
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
@@ -608,7 +609,7 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -704,7 +705,7 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -786,7 +787,7 @@ pub extern fn vcx_disclosed_proof_generate_proof(command_handle: CommandHandle,
     check_useful_c_str!(self_attested_attrs, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -888,11 +889,11 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
     check_useful_opt_c_str!(proposal, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !connection::is_valid_handle(connection_handle) {
+    if !block_on(connection::is_valid_handle(connection_handle)) {
         return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
     }
 
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 
@@ -927,7 +928,7 @@ pub extern fn vcx_disclosed_proof_get_thread_id(command_handle: CommandHandle,
     info!("vcx_disclosed_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !disclosed_proof::is_valid_handle(proof_handle) {
+    if !block_on(disclosed_proof::is_valid_handle(proof_handle)) {
         return VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle).into();
     }
 

@@ -23,8 +23,8 @@ pub struct OOBConfig {
     pub goal: Option<String>,
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    OUT_OF_BAND_SENDER_MAP.has_handle(handle) || OUT_OF_BAND_RECEIVER_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    OUT_OF_BAND_SENDER_MAP.has_handle(handle).await || OUT_OF_BAND_RECEIVER_MAP.has_handle(handle).await
 }
 
 async fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {

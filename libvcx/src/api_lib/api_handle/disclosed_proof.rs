@@ -184,8 +184,8 @@ pub async fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
     }.boxed()).await
 }
 
-pub fn is_valid_handle(handle: u32) -> bool {
-    HANDLE_MAP.has_handle(handle)
+pub async fn is_valid_handle(handle: u32) -> bool {
+    HANDLE_MAP.has_handle(handle).await
 }
 
 pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
