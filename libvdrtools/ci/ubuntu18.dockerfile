@@ -95,4 +95,3 @@ ENV PATH /home/indy/.cargo/bin:$PATH
 RUN cargo install cargo-deb --no-default-features
 
 WORKDIR /home/indy
-
