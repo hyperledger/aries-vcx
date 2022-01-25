@@ -17,7 +17,7 @@ rust-base58 = ["bs58"]
 failure = "0.1.8"
 futures = "0.3.21"
 log = { version = "0.4.17", features = ["std"] }
-libc = "0.2.126"
+libc = "0.2.114"
 openssl = {version = "0.10", optional = true}
 bs58 = {version = "0.4.0", optional = true}
 serde = "1.0.99"
