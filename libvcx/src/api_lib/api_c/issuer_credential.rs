@@ -6,7 +6,7 @@ use futures::future::BoxFuture;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::{connection, credential_def, issuer_credential};
+use crate::api_lib::api_handle::{credential_def, issuer_credential};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime:: {execute_async, execute};
 use crate::error::prelude::*;
@@ -899,10 +899,10 @@ pub mod tests {
     use aries_vcx::utils::get_temp_dir_path;
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
 
+    use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
-
     use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";

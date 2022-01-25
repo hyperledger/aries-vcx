@@ -1322,7 +1322,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
-        assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
+        assert_eq!(rc, error::SUCCESS.code_num);
 
         let handle = build_test_connection_inviter_null().await;
         assert!(handle > 0);
@@ -1432,7 +1432,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(0, handle, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
-        assert_eq!(rc, error::INVALID_CONNECTION_HANDLE.code_num);
+        assert_eq!(rc, error::SUCCESS.code_num);
     }
 
     #[test]

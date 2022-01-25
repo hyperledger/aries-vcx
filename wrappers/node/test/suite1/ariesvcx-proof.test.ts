@@ -69,7 +69,7 @@ describe('Proof:', () => {
     it('throws: not initialized', async () => {
       const proof = new Proof(null as any, {} as any);
       const error = await shouldThrow(() => proof.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_PROOF_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 
@@ -147,14 +147,14 @@ describe('Proof:', () => {
       const connection = await createConnectionInviterRequested();
       const proof = new Proof(null as any, {} as any);
       const error = await shouldThrow(() => proof.requestProof(connection));
-      assert.equal(error.vcxCode, VCXCode.INVALID_PROOF_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
 
     it('throws: connection not initialized', async () => {
       const connection = new (Connection as any)();
       const proof = await proofCreate();
       const error = await shouldThrow(() => proof.requestProof(connection));
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 });

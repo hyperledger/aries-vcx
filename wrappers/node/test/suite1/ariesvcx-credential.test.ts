@@ -63,7 +63,7 @@ describe('Credential:', () => {
     it('throws: not initialized', async () => {
       const credential = new Credential(null as any);
       const error = await shouldThrow(() => credential.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 

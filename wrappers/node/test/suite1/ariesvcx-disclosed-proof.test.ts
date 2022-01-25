@@ -98,7 +98,7 @@ describe('DisclosedProof', () => {
     it('throws: not initialized', async () => {
       const disclosedProof = new (DisclosedProof as any)();
       const error = await shouldThrow(() => disclosedProof.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_DISCLOSED_PROOF_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 

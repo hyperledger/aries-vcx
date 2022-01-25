@@ -6,7 +6,6 @@ use futures::future::BoxFuture;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime:: {execute_async, execute};
@@ -904,6 +903,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
 
     use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
+    use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
@@ -1071,7 +1071,7 @@ mod tests {
 
         let bad_handle = 1123;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())), error::INVALID_CREDENTIAL_HANDLE.code_num);
+        assert_eq!(vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
     }
 
     #[test]

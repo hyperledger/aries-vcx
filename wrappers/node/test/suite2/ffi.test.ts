@@ -36,7 +36,7 @@ describe('Using the vcx ffi directly', () => {
     assert.equal(result, 0);
   });
 
-  it(`a call to vcx_connection_connect should return ${VCXCode.INVALID_CONNECTION_HANDLE}`, () => {
+  it(`a call to vcx_connection_connect should return ${VCXCode.SUCCESS}`, () => {
     const result = run.ffi.vcx_connection_connect(
       0,
       1,
@@ -47,10 +47,10 @@ describe('Using the vcx ffi directly', () => {
         (_xhandle: number, _err: number, _connectionHandle: number) => null,
       ),
     );
-    assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);
+    assert.equal(result, VCXCode.SUCCESS);
   });
 
-  it(`a call to vcx_connection_serialize should return ${VCXCode.INVALID_CONNECTION_HANDLE}`, () => {
+  it(`a call to vcx_connection_serialize should return ${VCXCode.SUCCESS}`, () => {
     const result = run.ffi.vcx_connection_serialize(
       0,
       1,
@@ -60,10 +60,10 @@ describe('Using the vcx ffi directly', () => {
         (_xhandle: number, _err: number, _data: string) => null,
       ),
     );
-    assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);
+    assert.equal(result, VCXCode.SUCCESS);
   });
 
-  it(`a call to vcx_connection_get_state should return ${VCXCode.INVALID_CONNECTION_HANDLE}`, () => {
+  it(`a call to vcx_connection_get_state should return ${VCXCode.SUCCESS}`, () => {
     const result = run.ffi.vcx_connection_update_state(
       0,
       1,
@@ -73,6 +73,6 @@ describe('Using the vcx ffi directly', () => {
         (_xhandle: number, _err: number, _state: number) => null,
       ),
     );
-    assert.equal(result, VCXCode.INVALID_CONNECTION_HANDLE);
+    assert.equal(result, VCXCode.SUCCESS);
   });
 });
