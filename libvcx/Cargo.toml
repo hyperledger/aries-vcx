@@ -14,9 +14,9 @@ path = "src/lib.rs"
 crate-type = ["staticlib","rlib", "cdylib"]
 
 [features]
-pool_tests = []
-agency_tests = []
-general_test = []
+pool_tests = ["tokio/rt", "tokio/macros"]
+agency_tests = ["tokio/rt", "tokio/macros"]
+general_test = ["tokio/rt", "tokio/macros"]
 to_restore = []
 fatal_warnings = []
 

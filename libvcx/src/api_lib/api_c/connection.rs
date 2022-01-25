@@ -1322,6 +1322,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(cb.command_handle, 0, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
+        assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
         assert_eq!(rc, error::SUCCESS.code_num);
 
         let handle = build_test_connection_inviter_null().await;
@@ -1432,6 +1433,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_connect(0, handle, CString::new("{}").unwrap().into_raw(), Some(cb.get_callback()));
+        assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
         assert_eq!(rc, error::SUCCESS.code_num);
     }
 
