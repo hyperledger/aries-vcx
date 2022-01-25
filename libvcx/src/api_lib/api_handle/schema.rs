@@ -264,9 +264,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_get_schema_attrs_from_ledger() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_get_schema_attrs_from_ledger() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(constants::DEFAULT_SCHEMA_ATTRS);
 
@@ -276,9 +276,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_schema_with_pool() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_schema_with_pool() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let handle = create_schema_real();
 
@@ -288,9 +288,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_create_duplicate_fails() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_create_duplicate_fails() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -332,9 +332,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_vcx_endorse_schema() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_vcx_endorse_schema() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -355,9 +355,9 @@ pub mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_vcx_schema_get_state_with_ledger() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_vcx_schema_get_state_with_ledger() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let handle = create_schema_real();
         assert_eq!(1, get_state(handle).unwrap());

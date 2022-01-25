@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::handlers::proof_presentation::prover::state_machine::ProverSM;
@@ -55,9 +56,9 @@ impl Prover {
         anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request)
     }
 
-    pub fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {
+    pub async fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {
         trace!("Prover::generate_presentation >>> credentials: {}, self_attested_attrs: {:?}", credentials, self_attested_attrs);
-        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)), None::<&fn(&A2AMessage) -> _>)
+        self.step(ProverMessages::PreparePresentation((credentials, self_attested_attrs)), None).await
     }
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
@@ -66,19 +67,19 @@ impl Prover {
         Ok(json!(proof).to_string())
     }
 
-    pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
+    pub async fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        self.step(ProverMessages::SetPresentation(presentation), None::<&fn(&A2AMessage) -> _>)
+        self.step(ProverMessages::SetPresentation(presentation), None).await
     }
 
-    pub fn send_proposal(&mut self, proposal_data: PresentationProposalData, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub async fn send_proposal(&mut self, proposal_data: PresentationProposalData, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
-        self.step(ProverMessages::PresentationProposalSend(proposal_data), Some(&send_message))
+        self.step(ProverMessages::PresentationProposalSend(proposal_data), Some(send_message)).await
     }
 
-    pub fn send_presentation(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
+    pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.step(ProverMessages::SendPresentation, Some(&send_message))
+        self.step(ProverMessages::SendPresentation, Some(send_message)).await
     }
 
     pub fn progressable_by_message(&self) -> bool {
@@ -89,9 +90,9 @@ impl Prover {
         self.prover_sm.find_message_to_handle(messages)
     }
 
-    pub fn handle_message(&mut self, message: ProverMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
+    pub async fn handle_message(&mut self, message: ProverMessages, send_message: Option<SendClosure>) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(message, send_message)
+        self.step(message, send_message).await
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
@@ -109,26 +110,26 @@ impl Prover {
 
     pub fn get_thread_id(&self) -> VcxResult<String> { self.prover_sm.get_thread_id() }
 
-    pub fn step(&mut self,
+    pub async fn step(&mut self,
                 message: ProverMessages,
-                send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>)
+                send_message: Option<SendClosure>)
                 -> VcxResult<()>
     {
-        self.prover_sm = self.prover_sm.clone().step(message, send_message)?;
+        self.prover_sm = self.prover_sm.clone().step(message, send_message).await?;
         Ok(())
     }
 
-    pub fn decline_presentation_request(&mut self, send_message: &impl Fn(&A2AMessage) -> VcxResult<()>, reason: Option<String>, proposal: Option<String>) -> VcxResult<()> {
+    pub async fn decline_presentation_request(&mut self, send_message: SendClosure, reason: Option<String>, proposal: Option<String>) -> VcxResult<()> {
         trace!("Prover::decline_presentation_request >>> reason: {:?}, proposal: {:?}", reason, proposal);
         match (reason, proposal) {
             (Some(reason), None) => {
-                self.step(ProverMessages::RejectPresentationRequest(reason), Some(send_message))
+                self.step(ProverMessages::RejectPresentationRequest(reason), Some(send_message)).await
             }
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize Presentation Preview: {:?}", err)))?;
 
-                self.step(ProverMessages::ProposePresentation(presentation_preview), Some(send_message))
+                self.step(ProverMessages::ProposePresentation(presentation_preview), Some(send_message)).await
             }
             (None, None) => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Either `reason` or `proposal` parameter must be specified."));
@@ -139,15 +140,15 @@ impl Prover {
         }
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<ProverState> {
+    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<ProverState> {
         trace!("Prover::update_state >>> ");
         if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
+        let messages = connection.get_messages().await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
+            self.step(msg.into(), Some(send_message)).await?;
+            connection.update_message_status(&uid).await?;
         }
         Ok(self.get_state())
     }
@@ -164,10 +165,10 @@ mod tests {
 
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_retrieve_credentials() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_retrieve_credentials() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
         let (_, _, req, _) = create_proof();
@@ -181,9 +182,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_retrieve_credentials_empty() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_retrieve_credentials_empty() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -210,9 +211,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
+        let setup = SetupWithWalletAndAgency::init().await;
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
 
         let mut req = json!({
@@ -266,9 +267,9 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_proof() {
+        let setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
@@ -313,14 +314,14 @@ mod tests {
               "self_attested_attr_3":"attested_val"
         });
 
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_self_attested_proof() {
-        let _setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_self_attested_proof() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let indy_proof_req = json!({
            "nonce":"123432421212",
@@ -346,14 +347,14 @@ mod tests {
               "address1_1":"attested_address",
               "zip_2": "attested_zip"
         });
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_generate_proof_with_predicates() {
-        let setup = SetupWithWalletAndAgency::init();
+    #[tokio::test]
+    async fn test_generate_proof_with_predicates() {
+        let setup = SetupWithWalletAndAgency::init().await;
 
         create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
         let to = time::get_time().sec;
@@ -402,7 +403,7 @@ mod tests {
         let self_attested: serde_json::Value = json!({
               "self_attested_attr_3":"attested_val"
         });
-        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string());
+        let generated_proof = proof.generate_presentation(selected_credentials.to_string(), self_attested.to_string()).await;
         assert!(generated_proof.is_ok());
     }
 }

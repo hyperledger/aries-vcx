@@ -1,14 +1,14 @@
 use std::ptr;
 
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime:: {execute_async, execute};
 use crate::error::prelude::*;
 
 /*
@@ -79,8 +79,8 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
     trace!("vcx_credential_create_with_offer(command_handle: {}, source_id: {}, offer: {})",
            command_handle, source_id, secret!(&offer));
 
-    execute(move || {
-        match credential::credential_create_with_offer(&source_id, &offer) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::credential_create_with_offer(&source_id, &offer).await {
             Ok(x) => {
                 trace!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {})",
                        command_handle, source_id, error::SUCCESS.message, x);
@@ -94,7 +94,7 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -124,16 +124,12 @@ pub extern fn vcx_get_credential(command_handle: CommandHandle,
     info!("vcx_get_credential >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_get_credential(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_credential(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_credential(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_get_credential_cb(commmand_handle: {}, rc: {}, msg: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -148,7 +144,7 @@ pub extern fn vcx_get_credential(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -174,14 +170,10 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
     info!("vcx_delete_credential >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_delete_credential(command_handle: {}, credential_handle: {}), source_id: {})", command_handle, credential_handle, source_id);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::delete_credential(credential_handle) {
             Ok(_) => {
                 trace!("vcx_delete_credential_cb(command_handle: {}, rc: {}), credential_handle: {}, source_id: {})", command_handle, error::SUCCESS.message, credential_handle, source_id);
@@ -194,7 +186,7 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
         }
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -206,16 +198,12 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
     info!("vcx_credential_get_attributes >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_attributes(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_attributes(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_attributes(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_attribute_cb(commmand_handle: {}, rc: {}, attributes: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -230,7 +218,7 @@ pub extern fn vcx_credential_get_attributes(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -242,16 +230,12 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
     info!("vcx_credential_get_attachment >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_attachment(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_attachment(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_attachment(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_attachment_cb(commmand_handle: {}, rc: {}, attachment: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -266,7 +250,7 @@ pub extern fn vcx_credential_get_attachment(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -278,16 +262,12 @@ pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
     info!("vcx_credential_get_tails_location >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_tails_location(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_tails_location(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_tails_location(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_tails_location_cb(commmand_handle: {}, rc: {}, location: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -302,7 +282,7 @@ pub extern fn vcx_credential_get_tails_location(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -314,16 +294,12 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
     info!("vcx_credential_get_tails_hash >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_tails_hash(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_tails_hash(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_tails_hash(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_tails_hash_cb(commmand_handle: {}, rc: {}, hash: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -338,7 +314,7 @@ pub extern fn vcx_credential_get_tails_hash(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -350,16 +326,12 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
     info!("vcx_credential_get_rev_reg_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_rev_reg_id(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_rev_reg_id(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_rev_reg_id(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_rev_reg_id_cb(commmand_handle: {}, rc: {}, rev_reg_id: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -374,7 +346,7 @@ pub extern fn vcx_credential_get_rev_reg_id(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -386,16 +358,12 @@ pub extern fn vcx_credential_get_thread_id(command_handle: CommandHandle,
     info!("vcx_credential_get_thread_id >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_thread_id(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::get_thread_id(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_thread_id(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -410,7 +378,7 @@ pub extern fn vcx_credential_get_thread_id(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -422,16 +390,12 @@ pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
     info!("vcx_credential_is_revokable >>> credential_handle: {:?}", credential_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_is_revokable(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::is_revokable(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::is_revokable(credential_handle).await {
             Ok(revokable) => {
                 trace!("vcx_credential_is_revokable_cb(commmand_handle: {}, rc: {}, revokable: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, revokable, source_id);
@@ -445,7 +409,7 @@ pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -481,8 +445,8 @@ pub extern fn vcx_credential_create_with_msgid(command_handle: CommandHandle,
     trace!("vcx_credential_create_with_msgid(command_handle: {}, source_id: {}, connection_handle: {}, msg_id: {})",
            command_handle, source_id, connection_handle, msg_id);
 
-    execute(move || {
-        match credential::credential_create_with_msgid(&source_id, connection_handle, &msg_id) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::credential_create_with_msgid(&source_id, connection_handle, &msg_id).await {
             Ok((handle, offer_string)) => {
                 let c_offer = CStringUtils::string_to_cstring(offer_string);
                 trace!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {}) source_id: {}",
@@ -497,7 +461,7 @@ pub extern fn vcx_credential_create_with_msgid(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -525,20 +489,12 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
-    if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_send_request(command_handle: {}, credential_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, credential_handle, connection_handle, source_id);
 
-    execute(move || {
-        match credential::send_credential_request(credential_handle, connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::send_credential_request(credential_handle, connection_handle).await {
             Ok(x) => {
                 trace!("vcx_credential_send_request_cb(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x.to_string(), source_id);
@@ -552,7 +508,7 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -584,10 +540,6 @@ pub extern fn vcx_credential_get_request_msg(command_handle: CommandHandle,
     check_useful_c_str!(my_pw_did, VcxErrorKind::InvalidOption);
     check_useful_opt_c_str!(their_pw_did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
 
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_credential_get_request_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}, their_pw_did: {:?}), source_id: {:?}",
@@ -635,15 +587,11 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     trace!("vcx_credential_get_offers(command_handle: {}, connection_handle: {})",
            command_handle, connection_handle);
 
-    execute(move || {
-        match credential::get_credential_offer_messages_with_conn_handle(connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_credential_offer_messages_with_conn_handle(connection_handle).await {
             Ok(x) => {
                 trace!("vcx_credential_get_offers_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, x.to_string(), x);
@@ -658,7 +606,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -687,20 +635,12 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
-    if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_v2_credential_update_state(command_handle: {}, credential_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, credential_handle, connection_handle, source_id);
 
-    execute(move || {
-        match credential::update_state(credential_handle, None, connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::update_state(credential_handle, None, connection_handle).await {
             Ok(_) => (),
             Err(e) => {
                 error!("vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -709,7 +649,7 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
             }
         }
 
-        match credential::get_state(credential_handle) {
+        match credential::get_state(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, s, source_id);
@@ -723,7 +663,7 @@ pub extern fn vcx_v2_credential_update_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -754,20 +694,12 @@ pub extern fn vcx_v2_credential_update_state_with_message(command_handle: Comman
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(credential_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
-    if !connection::is_valid_handle(connection_handle) {
-        return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into();
-    }
-
     let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
     trace!("vcx_v2_credential_update_state_with_message(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::update_state(credential_handle, Some(&message), connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::update_state(credential_handle, Some(&message), connection_handle).await {
             Ok(_) => (),
             Err(e) => {
                 error!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -776,7 +708,7 @@ pub extern fn vcx_v2_credential_update_state_with_message(command_handle: Comman
             }
         }
 
-        match credential::get_state(credential_handle) {
+        match credential::get_state(credential_handle).await {
             Ok(s) => {
                 trace!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, s, source_id);
@@ -790,7 +722,7 @@ pub extern fn vcx_v2_credential_update_state_with_message(command_handle: Comman
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -817,16 +749,12 @@ pub extern fn vcx_credential_get_state(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(handle).unwrap_or_default();
     trace!("vcx_credential_get_state(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, handle, source_id);
 
-    execute(move || {
-        match credential::get_state(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::get_state(handle).await {
             Ok(s) => {
                 trace!("vcx_credential_get_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, s, source_id);
@@ -840,7 +768,7 @@ pub extern fn vcx_credential_get_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -865,16 +793,12 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    if !credential::is_valid_handle(handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredentialHandle).into();
-    }
-
     let source_id = credential::get_source_id(handle).unwrap_or_default();
     trace!("vcx_credential_serialize(command_handle: {}, credential_handle: {}), source_id: {:?}",
            command_handle, handle, source_id);
 
-    execute(move || {
-        match credential::to_string(handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::to_string(handle).await {
             Ok(x) => {
                 trace!("vcx_credential_serialize_cb(command_handle: {}, rc: {}, data: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, x, source_id);
@@ -889,7 +813,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -918,8 +842,8 @@ pub extern fn vcx_credential_deserialize(command_handle: CommandHandle,
     trace!("vcx_credential_deserialize(command_handle: {}, credential_data: {})",
            command_handle, credential_data);
 
-    execute(move || {
-        match credential::from_string(&credential_data) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::from_string(&credential_data).await {
             Ok(x) => {
                 trace!("vcx_credential_deserialize_cb(command_handle: {}, rc: {}, credential_handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, credential::get_source_id(x).unwrap_or_default());
@@ -934,7 +858,7 @@ pub extern fn vcx_credential_deserialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -979,6 +903,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
 
     use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
+    use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
@@ -1041,12 +966,12 @@ mod tests {
         assert!(handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_get_new_offers() {
+    async fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed().await;
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_offers(cb.command_handle,
@@ -1056,12 +981,12 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_create() {
+    async fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = connection::tests::build_test_connection_invitee_completed().await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_create_with_msgid(cb.command_handle,
@@ -1084,28 +1009,28 @@ mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), HolderState::OfferReceived as u32);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credential_update_state() {
+    async fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_inviter_requested();
+        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::OfferReceived as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::OfferReceived as u32);
         debug!("credential handle = {}", handle_cred);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_credential_send_request(cb.command_handle, handle_cred, handle_conn, 0, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::RequestSent as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::RequestSent as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_RESPONSE);
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_v2_credential_update_state(cb.command_handle, handle_cred, handle_conn, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(credential::get_state(handle_cred).unwrap(), HolderState::Finished as u32);
+        assert_eq!(credential::get_state(handle_cred).await.unwrap(), HolderState::Finished as u32);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credential_get_rev_reg_id(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
@@ -1114,13 +1039,13 @@ mod tests {
         assert_eq!(rev_reg_id, rev_reg_id_expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
     #[cfg(feature = "to_restore")] // Missing implementation for v3 in generate_credential_request_msg
-    fn test_vcx_credential_get_request_msg() {
+    async fn test_vcx_credential_get_request_msg() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = connection::tests::build_test_connection_inviter_invited();
+        let handle_conn = connection::tests::build_test_connection_inviter_invited().await;
 
         let my_pw_did = CString::new(connection::get_pw_did(handle_conn).unwrap()).unwrap().into_raw();
         let their_pw_did = CString::new(connection::get_their_pw_did(handle_conn).unwrap()).unwrap().into_raw();
@@ -1134,19 +1059,19 @@ mod tests {
         serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_credential() {
+    async fn test_get_credential() {
         let _setup = SetupMocks::init();
 
-        let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).unwrap();
+        let handle_cred = credential::from_string(CREDENTIAL_SM_FINISHED).await.unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_get_credential(cb.command_handle, handle_cred, Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
         let bad_handle = 1123;
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())), error::INVALID_CREDENTIAL_HANDLE.code_num);
+        assert_eq!(vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())), error::SUCCESS.code_num);
     }
 
     #[test]

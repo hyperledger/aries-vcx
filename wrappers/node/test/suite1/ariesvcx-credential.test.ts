@@ -63,7 +63,7 @@ describe('Credential:', () => {
     it('throws: not initialized', async () => {
       const credential = new Credential(null as any);
       const error = await shouldThrow(() => credential.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_CREDENTIAL_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 
@@ -92,7 +92,7 @@ describe('Credential:', () => {
       const data = await dataCredentialCreateWithOffer();
       const credential = await Credential.create(data);
       assert.equal(await credential.getState(), HolderStateType.OfferReceived);
-      credential.sendRequest({ connection });
+      await credential.sendRequest({ connection });
       assert.equal(await credential.getState(), HolderStateType.RequestSent);
     });
   });

@@ -44,10 +44,10 @@ pub mod tests {
 
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_proof_self_attested_proof_validation() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_proof_self_attested_proof_validation() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -88,10 +88,10 @@ pub mod tests {
         assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_proof_restrictions() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_proof_restrictions() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -145,10 +145,10 @@ pub mod tests {
         assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).unwrap(), true);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_proof_validate_attribute() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_proof_validate_attribute() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([

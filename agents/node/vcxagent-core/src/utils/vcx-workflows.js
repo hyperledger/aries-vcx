@@ -1,5 +1,5 @@
 const {
-  initRustAPI, initVcxWithConfig, provisionCloudAgent,
+  initRustAPI, initThreadpool, initVcxWithConfig, provisionCloudAgent,
   createWallet, openMainWallet, closeMainWallet,
   configureIssuerWallet
 } = require('@hyperledger/node-vcx-wrapper')
@@ -30,8 +30,9 @@ async function initVcxWithProvisionedAgentConfig (config) {
   await initVcxWithConfig(JSON.stringify(config))
 }
 
-async function initRustapi (logLevel = 'vcx=error') {
+async function initRustapi (logLevel = 'vcx=error', num_threads = 4) {
   await initRustApiAndLogger(logLevel)
+  await initThreadpool({ num_threads })
 }
 
 async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger) {

@@ -1,5 +1,8 @@
 use std::convert::TryFrom;
 
+use futures::stream::iter;
+use futures::StreamExt;
+
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
@@ -18,9 +21,9 @@ pub struct PublicAgent {
 }
 
 impl PublicAgent {
-    pub fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
+    pub async fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create()?;
-        let agent_info = CloudAgentInfo::create(&pairwise_info)?;
+        let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let institution_did = String::from(institution_did);
         let source_id = String::from(source_id);
         let service = FullService::try_from((&pairwise_info, &agent_info))?;
@@ -44,31 +47,33 @@ impl PublicAgent {
         FullService::try_from(self)
     }
 
-    pub fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
-        let connection_requests: Vec<Request> = self.agent_info.get_messages_noauth(&self.pairwise_info)?
-            .into_iter()
-            .filter_map(|(uid, message)| {
+    pub async fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
+        let connection_requests: Vec<Request> = iter(self.agent_info.get_messages_noauth(&self.pairwise_info)
+            .await?
+            .into_iter())
+            .filter_map(|(uid, message)| async {
                 match message {
                     // TODO: Rewrite once if let chains become stable: https://github.com/rust-lang/rust/issues/53667
                     A2AMessage::ConnectionRequest(request) => match &uids {
                         Some(uids) => if uids.contains(&uid) {
-                            self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
+                            self.agent_info.update_message_status(&self.pairwise_info, uid).await.ok()?;
                             Some(request)
                         } else {
                             None
                         }
                         None => {
-                            self.agent_info.update_message_status(&self.pairwise_info, uid).ok()?;
+                            self.agent_info.update_message_status(&self.pairwise_info, uid).await.ok()?;
                             Some(request)
                         }
                     }
                     _ => {
-                        self.agent_info.reject_message(&self.pairwise_info, uid).ok()?;
+                        self.agent_info.reject_message(&self.pairwise_info, uid).await.ok()?;
                         None
                     }
                 }
             })
-            .collect();
+            .collect()
+            .await;
        Ok(connection_requests) 
     }
 
@@ -87,12 +92,7 @@ impl PublicAgent {
 pub mod tests {
     use super::*;
 
-    use crate::utils::devsetup::*;
-
-    use crate::messages::a2a::MessageId;
-
     static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";
-    static LABEL: &str = "hello";
 
     pub fn _public_agent() -> PublicAgent {
         PublicAgent {

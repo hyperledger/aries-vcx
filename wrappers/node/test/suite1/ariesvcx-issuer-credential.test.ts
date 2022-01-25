@@ -39,7 +39,7 @@ describe('IssuerCredential:', () => {
     it('throws: not initialized', async () => {
       const issuerCredential = new IssuerCredential('');
       const error = await shouldThrow(() => issuerCredential.serialize());
-      assert.equal(error.vcxCode, VCXCode.INVALID_ISSUER_CREDENTIAL_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 
@@ -131,7 +131,7 @@ describe('IssuerCredential:', () => {
       const [_issuerCredential, data] = await issuerCredentialCreate();
       const issuerCredential = new IssuerCredential('');
       const error = await shouldThrow(() => issuerCredential.sendOffer(data));
-      assert.equal(error.vcxCode, VCXCode.INVALID_ISSUER_CREDENTIAL_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
 
     it('throws: connection not initialized', async () => {
@@ -139,7 +139,7 @@ describe('IssuerCredential:', () => {
       const [issuerCredential, data] = await issuerCredentialCreate();
       data.connection = connection;
       const error = await shouldThrow(() => issuerCredential.sendOffer(data));
-      assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
 
     // "vcx_issuer_get_credential_offer_msg" not implemented for Aries
@@ -169,7 +169,7 @@ describe('IssuerCredential:', () => {
       const connection = await createConnectionInviterRequested();
       const issuerCredential = new IssuerCredential('');
       const error = await shouldThrow(() => issuerCredential.sendCredential(connection));
-      assert.equal(error.vcxCode, VCXCode.INVALID_ISSUER_CREDENTIAL_HANDLE);
+      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
 
     // todo: recorder this test/behaviour in 4.0, issuerCredential is not throwing, only prints warning

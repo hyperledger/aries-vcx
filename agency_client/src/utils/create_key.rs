@@ -56,7 +56,7 @@ impl CreateKeyBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&self) -> AgencyClientResult<(String, String)> {
+    pub async fn send_secure(&self) -> AgencyClientResult<(String, String)> {
         trace!("CreateKeyBuilder::send_secure >>>");
 
         if mocking::agency_mocks_enabled() {
@@ -66,7 +66,7 @@ impl CreateKeyBuilder {
 
         let data = self.prepare_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         self.parse_response(&response)
     }

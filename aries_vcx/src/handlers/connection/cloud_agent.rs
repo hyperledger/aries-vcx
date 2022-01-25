@@ -25,7 +25,7 @@ impl Default for CloudAgentInfo {
     }
 }
 
-pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
+pub async fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxResult<(String, String)> {
     debug!("creating pairwise keys on agent for connection {}", source_id);
     trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
 
@@ -33,6 +33,7 @@ pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxR
         .for_did(pw_did)?
         .for_verkey(pw_verkey)?
         .send_secure()
+        .await
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
     trace!("create_agent_keys <<< agent_did: {}, agent_verkey: {}", agent_did, agent_verkey);
@@ -41,24 +42,25 @@ pub fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -> VcxR
 
 fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
-        {
-            for message in _a2a_messages.values() {
-                let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
-                warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
-            }
+    {
+        for message in _a2a_messages.values() {
+            let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+            warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
         }
+    }
 }
 
 impl CloudAgentInfo {
-    pub fn create(pairwise_info: &PairwiseInfo) -> VcxResult<CloudAgentInfo> {
+    pub async fn create(pairwise_info: &PairwiseInfo) -> VcxResult<CloudAgentInfo> {
         trace!("CloudAgentInfo::create >>> pairwise_info: {:?}", pairwise_info);
-        let (agent_did, agent_vk) = create_agent_keys("", &pairwise_info.pw_did, &pairwise_info.pw_vk)?;
+        let (agent_did, agent_vk) = create_agent_keys("", &pairwise_info.pw_did, &pairwise_info.pw_vk).await?;
         Ok(CloudAgentInfo { agent_did, agent_vk })
     }
 
-    pub fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
+    pub async fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
         trace!("CloudAgentInfo::delete >>>");
         send_delete_connection_message(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
+            .await
             .map_err(|err| err.into())
     }
 
@@ -72,7 +74,7 @@ impl CloudAgentInfo {
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
-    pub fn update_message_status(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
+    pub async fn update_message_status(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
         trace!("CloudAgentInfo::update_message_status >>> uid: {:?}", uid);
 
         let messages_to_update = vec![UIDsByConn {
@@ -81,10 +83,11 @@ impl CloudAgentInfo {
         }];
 
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
+            .await
             .map_err(|err| err.into())
     }
 
-    pub fn reject_message(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
+    pub async fn reject_message(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
         trace!("CloudAgentInfo::reject_message >>> uid: {:?}", uid);
 
         let messages_to_reject = vec![UIDsByConn {
@@ -93,36 +96,38 @@ impl CloudAgentInfo {
         }];
 
         update_messages_status(MessageStatusCode::Rejected, messages_to_reject)
+            .await
             .map_err(|err| err.into())
     }
 
-    pub fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<Message>> {
+    pub async fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<Message>> {
         trace!("CloudAgentInfo::download_encrypted_messages >>>");
         get_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
+            .await
             .map_err(|err| err.into())
     }
 
-    pub fn get_messages(&self, expect_sender_vk: &str, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages(&self, expect_sender_vk: &str, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("CloudAgentInfo::get_messages >>> expect_sender_vk: {}", expect_sender_vk);
-        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info)?;
+        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk)?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
 
-    pub fn get_messages_noauth(&self, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages_noauth(&self, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("CloudAgentInfo::get_messages_noauth >>>");
-        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info)?;
+        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages_noauth >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages_noauth(&messages)?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
 
-    pub fn get_message_by_id(&self, msg_id: &str, expected_sender_vk: &str, pairwise_info: &PairwiseInfo) -> VcxResult<A2AMessage> {
+    pub async fn get_message_by_id(&self, msg_id: &str, expected_sender_vk: &str, pairwise_info: &PairwiseInfo) -> VcxResult<A2AMessage> {
         trace!("CloudAgentInfo::get_message_by_id >>> msg_id: {:?}", msg_id);
-        let mut messages = self.download_encrypted_messages(Some(vec![msg_id.to_string()]), None, pairwise_info)?;
+        let mut messages = self.download_encrypted_messages(Some(vec![msg_id.to_string()]), None, pairwise_info).await?;
         let message = messages
             .pop()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;

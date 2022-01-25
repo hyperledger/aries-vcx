@@ -115,12 +115,12 @@ impl GetMessagesBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> AgencyClientResult<Vec<Message>> {
+    pub async fn send_secure(&mut self) -> AgencyClientResult<Vec<Message>> {
         debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
         let data = self.prepare_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         self.parse_response(response)
     }
@@ -141,12 +141,12 @@ impl GetMessagesBuilder {
         }
     }
 
-    pub fn download_messages_noauth(&mut self) -> AgencyClientResult<Vec<MessageByConnection>> {
+    pub async fn download_messages_noauth(&mut self) -> AgencyClientResult<Vec<MessageByConnection>> {
         trace!("GetMessages::download >>>");
 
         let data = self.prepare_download_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         if mocking::agency_mocks_enabled() && response.len() == 0 {
             return Ok(Vec::new());
@@ -291,7 +291,7 @@ impl Message {
     }
 }
 
-pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<Message>> {
+pub async fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<Message>> {
     trace!("get_connection_messages >>> pw_did: {}, pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
            pw_did, pw_vk, agent_vk, msg_uid);
 
@@ -303,6 +303,7 @@ pub fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent
         .uid(msg_uid)?
         .status_codes(status_codes)?
         .send_secure()
+        .await
         .map_err(|err| err.map(AgencyClientErrorKind::PostMessageFailed, "Cannot get messages"))?;
 
     trace!("message returned: {:?}", response);
@@ -335,7 +336,7 @@ pub fn parse_connection_handles(conn_handles: Vec<String>) -> AgencyClientResult
     Ok(codes)
 }
 
-pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> AgencyClientResult<Vec<MessageByConnection>> {
+pub async fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes: Option<Vec<String>>, uids: Option<Vec<String>>) -> AgencyClientResult<Vec<MessageByConnection>> {
     trace!("download_messages_noauth >>> pairwise_dids: {:?}, status_codes: {:?}, uids: {:?}",
            pairwise_dids, status_codes, uids);
 
@@ -346,7 +347,8 @@ pub fn download_messages_noauth(pairwise_dids: Option<Vec<String>>, status_codes
             .uid(uids)?
             .status_codes(status_codes)?
             .pairwise_dids(pairwise_dids)?
-            .download_messages_noauth()?;
+            .download_messages_noauth()
+            .await?;
 
     trace!("message returned: {:?}", response);
     Ok(response)

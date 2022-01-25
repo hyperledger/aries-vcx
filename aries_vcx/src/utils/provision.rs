@@ -24,7 +24,7 @@ pub struct AgencyClientConfig {
     pub sdk_to_remote_verkey: String,
 }
 
-pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyClientConfig> {
+pub async fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyClientConfig> {
     let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None)?;
 
     settings::get_agency_client_mut().unwrap().set_agency_did(&provision_agent_config.agency_did);
@@ -34,7 +34,7 @@ pub fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> V
     settings::get_agency_client_mut().unwrap().set_my_pwdid(&my_did);
     settings::get_agency_client_mut().unwrap().set_agent_vk(&provision_agent_config.agency_verkey); // This is reset when connection is established and agent did needs not be set before onboarding
 
-    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &provision_agent_config.agency_did)?;
+    let (agent_did, agent_vk) = agent_utils::onboarding(&my_did, &my_vk, &provision_agent_config.agency_did).await?;
 
     Ok(AgencyClientConfig {
         agency_did: provision_agent_config.agency_did.clone(),

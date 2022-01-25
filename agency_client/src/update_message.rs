@@ -58,14 +58,14 @@ impl UpdateMessageStatusByConnectionsBuilder {
         Ok(self)
     }
 
-    pub fn send_secure(&mut self) -> AgencyClientResult<()> {
+    pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("UpdateMessages::send >>>");
 
         AgencyMock::set_next_response(constants::UPDATE_MESSAGES_RESPONSE.to_vec());
 
         let data = self.prepare_request()?;
 
-        let response = post_to_agency(&data)?;
+        let response = post_to_agency(&data).await?;
 
         self.parse_response(&response)
     }
@@ -97,7 +97,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 }
 
-pub fn update_agency_messages(status_code: &str, msg_json: &str) -> AgencyClientResult<()> {
+pub async fn update_agency_messages(status_code: &str, msg_json: &str) -> AgencyClientResult<()> {
     trace!("update_agency_messages >>> status_code: {:?}, msg_json: {:?}", status_code, msg_json);
 
     let status_code: MessageStatusCode = ::serde_json::from_str(&format!("\"{}\"", status_code))
@@ -108,10 +108,10 @@ pub fn update_agency_messages(status_code: &str, msg_json: &str) -> AgencyClient
     let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(msg_json)
         .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize UIDsByConn: {}", err)))?;
 
-    update_messages(status_code, uids_by_conns)
+    update_messages(status_code, uids_by_conns).await
 }
 
-pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<()> {
+pub async fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<()> {
     trace!("update_messages >>> ");
 
     if mocking::agency_mocks_enabled() {
@@ -123,6 +123,7 @@ pub fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsBy
         .uids_by_conns(uids_by_conns)?
         .status_code(status_code)?
         .send_secure()
+        .await
 }
 
 #[cfg(test)]

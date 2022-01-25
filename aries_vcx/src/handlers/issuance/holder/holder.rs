@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
@@ -36,16 +37,16 @@ impl Holder {
         Ok(Holder { holder_sm })
     }
 
-    pub fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(&send_message))
+    pub async fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(send_message)).await
     }
 
-    pub fn send_request(&mut self, my_pw_did: String, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(&send_message))
+    pub async fn send_request(&mut self, my_pw_did: String, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(send_message)).await
     }
 
-    pub fn reject_offer(&mut self, comment: Option<&str>, send_message: impl Fn(&A2AMessage) -> VcxResult<()>) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(&send_message))
+    pub async fn reject_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
+        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -108,20 +109,20 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().handle_message(message, send_message)?;
+    pub async fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().handle_message(message, send_message).await?;
         Ok(())
     }
 
-    pub fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
-        trace!("Holder::update_state >>> ");
+    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
+        trace!("Holder::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages()?;
+        let messages = connection.get_messages().await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(&send_message))?;
-            connection.update_message_status(uid)?;
+            self.step(msg.into(), Some(send_message)).await?;
+            connection.update_message_status(&uid).await?;
         }
         Ok(self.get_state())
     }
@@ -137,8 +138,8 @@ pub mod test {
 
     use super::*;
 
-    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    pub fn _send_message() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
 
     fn _holder_from_offer() -> Holder {
@@ -150,58 +151,58 @@ pub mod test {
     }
 
     impl Holder {
-        fn to_finished_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).unwrap();
-            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+        async fn to_finished_state(mut self) -> Holder {
+            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
             self
         }
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_without_negotiation() {
+    async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
-        let holder = _holder().to_finished_state();
+        let holder = _holder().to_finished_state().await;
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn exchange_credential_from_proposal_with_negotiation() {
+    async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).unwrap();
+        holder.send_proposal(_credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_request(_my_pw_did(), _send_message().unwrap()).unwrap();
+        holder.send_request(_my_pw_did(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(msg.into(), _send_message()).unwrap();
+        holder.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

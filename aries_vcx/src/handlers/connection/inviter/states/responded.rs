@@ -1,3 +1,6 @@
+use std::future::Future;
+use std::clone::Clone;
+
 use crate::error::prelude::*;
 use crate::handlers::connection::inviter::states::complete::CompleteState;
 use crate::handlers::connection::inviter::states::initial::InitialState;
@@ -15,7 +18,6 @@ pub struct RespondedState {
     pub signed_response: SignedResponse,
     pub did_doc: DidDoc,
 }
-
 
 impl From<(RespondedState, ProblemReport)> for InitialState {
     fn from((_state, problem_report): (RespondedState, ProblemReport)) -> InitialState {
@@ -46,11 +48,15 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 }
 
 impl RespondedState {
-    pub fn handle_ping(&self,
+    pub async fn handle_ping<F, T>(&self,
                        ping: &Ping,
                        pw_vk: &str,
-                       send_message: fn(&str, &DidDoc, &A2AMessage) -> VcxResult<()>,
-    ) -> VcxResult<()> {
-        handle_ping(ping, pw_vk, &self.did_doc, send_message)
+                       send_message: F
+    ) -> VcxResult<()>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        handle_ping(ping, pw_vk, &self.did_doc, send_message).await
     }
 }

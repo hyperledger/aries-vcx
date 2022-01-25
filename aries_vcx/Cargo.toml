@@ -13,13 +13,13 @@ path = "src/lib.rs"
 
 [features]
 test_utils = []
-pool_tests = ["test_utils"]
-agency_pool_tests = ["test_utils"]
-agency_v2 = ["test_utils"]
-general_test = ["test_utils"]
+pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
+agency_pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
+agency_v2 = ["test_utils", "tokio/rt", "tokio/macros"]
+general_test = ["test_utils", "tokio/rt", "tokio/macros"]
 fatal_warnings = []
 warnlog_fetched_messages = []
-mysql_test = ["test_utils", "sqlx"]
+mysql_test = ["test_utils", "sqlx", "tokio/rt", "tokio/macros"]
 
 [dependencies]
 env_logger = "0.5.10"
@@ -50,6 +50,7 @@ strum_macros = "0.16.0"
 agency_client = { version = "0.1.0", path = "../agency_client" }
 sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
 derive_builder = "0.10.2"
+tokio = { version = "=1.7.1" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

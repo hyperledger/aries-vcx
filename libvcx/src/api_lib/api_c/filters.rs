@@ -70,18 +70,18 @@ mod tests {
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_filter_proof_requests_by_name() {
+    async fn test_vcx_filter_proof_requests_by_name() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested();
+        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_1);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_2);
 
-        let messages = get_proof_request_messages(connection_h).unwrap();
+        let messages = get_proof_request_messages(connection_h).await.unwrap();
         let requests = CString::new(messages).unwrap().into_raw();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();

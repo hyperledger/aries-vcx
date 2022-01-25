@@ -38,7 +38,7 @@ describe('Connection:', () => {
     it('throws: not initialized', async () => {
       const connection = new (Connection as any)();
       const err = await shouldThrow(async () => connection.connect({ data: '{}' }));
-      assert.equal(err.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
+      assert.equal(err.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
   });
 

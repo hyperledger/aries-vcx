@@ -1,5 +1,7 @@
 extern crate futures;
 
+use futures::executor::block_on;
+
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::FnOnce;
@@ -9,6 +11,7 @@ use std::sync::Once;
 use std::thread;
 
 use futures::future;
+use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
@@ -48,6 +51,8 @@ pub fn init_runtime(config: ThreadpoolConfig) {
                 })
                 .on_thread_start(|| debug!("Starting tokio runtime worker thread for vcx ffi."))
                 .worker_threads(num_threads)
+                .enable_time()
+                .enable_io()
                 .build()
                 .unwrap();
 
@@ -60,8 +65,9 @@ pub fn init_runtime(config: ThreadpoolConfig) {
 }
 
 pub fn execute<F>(closure: F)
-    where
-        F: FnOnce() -> Result<(), ()> + Send + 'static {
+where
+    F: FnOnce() -> Result<(), ()> + Send + 'static
+{
     if TP_INIT.is_completed() {
         execute_on_tokio(future::lazy(|_| closure()));
     } else {
@@ -69,10 +75,19 @@ pub fn execute<F>(closure: F)
     }
 }
 
+pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
+    if TP_INIT.is_completed() {
+        execute_on_tokio(future);
+    } else {
+        thread::spawn(|| { block_on(future) });
+    }
+}
+
 fn execute_on_tokio<F>(future: F)
-    where
-        F: Future + Send + 'static,
-        F::Output: Send + 'static {
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static 
+{
     let handle;
     unsafe { handle = TP_HANDLE; }
     match THREADPOOL.lock().unwrap().get(&handle) {

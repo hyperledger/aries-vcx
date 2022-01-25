@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::handlers::SendClosure;
 use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::states::initial::InitialIssuerState;
 use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
@@ -275,7 +276,7 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
+    pub async fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.thread_id, &cim)?;
         let state_name = self.state.to_string();
@@ -320,7 +321,7 @@ impl IssuerSM {
                             let credential_msg = credential_msg.set_thread_id(&thread_id);
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&credential_msg.to_a2a_message())?;
+                            )?(credential_msg.to_a2a_message()).await?;
                             (IssuerFullState::Finished((state_data, cred_rev_id).into()), thread_id)
                         }
                         Err(err) => {
@@ -330,7 +331,7 @@ impl IssuerSM {
 
                             send_message.ok_or(
                                 VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                            )?(&problem_report.to_a2a_message())?;
+                            )?(problem_report.to_a2a_message()).await?;
                             // TODO: Shouldn't we transition to CredentialSent and wait for ack?
                             (IssuerFullState::Finished((state_data, problem_report).into()), thread_id)
                         }
@@ -428,8 +429,8 @@ pub mod test {
         String::from("TEST_TAILS_FILE")
     }
 
-    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    pub fn _send_message() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
 
     fn _issuer_sm() -> IssuerSM {
@@ -454,15 +455,15 @@ pub mod test {
             self
         }
 
-        fn to_request_received_state(mut self) -> IssuerSM {
+        async fn to_request_received_state(mut self) -> IssuerSM {
             self = self.to_offer_sent_state();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            self = self.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
 
-        fn to_finished_state(mut self) -> IssuerSM {
-            self = self.to_request_received_state();
-            self = self.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+        async fn to_finished_state(mut self) -> IssuerSM {
+            self = self.to_request_received_state().await;
+            self = self.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             self
         }
     }
@@ -496,20 +497,20 @@ pub mod test {
     mod handle_message {
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_proposal_message_from_initial_state() {
+        async fn test_issuer_handle_credential_proposal_message_from_initial_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), None).await.unwrap();
 
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_set_credential_offer_message_in_initial_state() {
+        async fn test_issuer_set_credential_offer_message_in_initial_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
@@ -522,17 +523,17 @@ pub mod test {
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_other_messages_from_initial_state() {
+        async fn test_issuer_handle_other_messages_from_initial_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
         }
 
@@ -547,154 +548,154 @@ pub mod test {
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_other_messages_from_proposal_received_state() {
+        async fn test_issuer_handle_other_messages_from_proposal_received_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm_from_proposal();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_request_message_from_offer_sent_state() {
+        async fn test_issuer_handle_credential_request_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::RequestReceived(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_proposal_message_from_offer_sent_state() {
+        async fn test_issuer_handle_credential_proposal_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialProposal(_credential_proposal()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_problem_report_message_from_offer_sent_state() {
+        async fn test_issuer_handle_problem_report_message_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_other_messages_from_offer_sent_state() {
+        async fn test_issuer_handle_other_messages_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_send_message_from_request_received_state() {
+        async fn test_issuer_handle_credential_send_message_from_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Success.code(), issuer_sm.credential_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_credential_send_message_from_request_received_state_with_invalid_request() {
+        async fn test_issuer_handle_credential_send_message_from_request_received_state_with_invalid_request() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(CredentialRequest::create()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(CredentialRequest::create()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_other_messages_from_request_received_state() {
+        async fn test_issuer_handle_other_messages_from_request_received_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_credential_send_fails_with_incorrect_thread_id() {
+        async fn test_issuer_credential_send_fails_with_incorrect_thread_id() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request_1()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request_1()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_handle_messages_from_finished_state() {
+        async fn test_issuer_handle_messages_from_finished_state() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_in_finished_state_returns_error_on_set_offer() {
+        async fn test_issuer_in_finished_state_returns_error_on_set_offer() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             let cred_offer = CredentialOffer::create()
                 .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
@@ -704,17 +705,14 @@ pub mod test {
             assert!(res1.is_err());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_in_finished_state_returns_error_on_mark_credential_offer_msg_sent() {
+        async fn test_issuer_in_finished_state_returns_error_on_mark_credential_offer_msg_sent() {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.to_finished_state();
+            issuer_sm = issuer_sm.to_finished_state().await;
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
-            let cred_offer = CredentialOffer::create()
-                .set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
-            let cred_info = _offer_info();
 
             let res1 = issuer_sm.mark_credential_offer_msg_sent();
             assert!(res1.is_err());
@@ -724,9 +722,9 @@ pub mod test {
     mod find_message_to_handle {
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_find_message_to_handle_from_initial_state() {
+        async fn test_issuer_find_message_to_handle_from_initial_state() {
             let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm();
@@ -744,9 +742,9 @@ pub mod test {
             assert_match!(A2AMessage::CredentialProposal(_), message);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_find_message_to_handle_from_offer_sent_state() {
+        async fn test_issuer_find_message_to_handle_from_offer_sent_state() {
             let _setup = SetupMocks::init();
 
             let issuer = _issuer_sm().to_offer_sent_state();
@@ -816,12 +814,12 @@ pub mod test {
             }
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_find_message_to_handle_from_request_state() {
+        async fn test_issuer_find_message_to_handle_from_request_state() {
             let _setup = SetupMocks::init();
 
-            let issuer = _issuer_sm().to_finished_state();
+            let issuer = _issuer_sm().to_finished_state().await;
 
             // No messages
             {
@@ -838,12 +836,12 @@ pub mod test {
             }
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_issuer_find_message_to_handle_from_credential_sent_state() {
+        async fn test_issuer_find_message_to_handle_from_credential_sent_state() {
             let _setup = SetupMocks::init();
 
-            let issuer = _issuer_sm().to_finished_state();
+            let issuer = _issuer_sm().to_finished_state().await;
 
             // No messages
             {
@@ -864,48 +862,48 @@ pub mod test {
     mod get_state {
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_get_state() {
+        async fn test_get_state() {
             let _setup = SetupMocks::init();
 
             assert_eq!(IssuerState::Initial, _issuer_sm().get_state());
             assert_eq!(IssuerState::ProposalReceived, _issuer_sm().to_proposal_received_state().get_state());
             assert_eq!(IssuerState::OfferSent, _issuer_sm().to_offer_sent_state().get_state());
-            assert_eq!(IssuerState::RequestReceived, _issuer_sm().to_request_received_state().get_state());
-            assert_eq!(IssuerState::Finished, _issuer_sm().to_finished_state().get_state());
+            assert_eq!(IssuerState::RequestReceived, _issuer_sm().to_request_received_state().await.get_state());
+            assert_eq!(IssuerState::Finished, _issuer_sm().to_finished_state().await.get_state());
         }
     }
 
     mod get_rev_reg_id {
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_get_rev_reg_id() {
+        async fn test_get_rev_reg_id() {
             let _setup = SetupMocks::init();
 
             assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().get_rev_reg_id().unwrap_err().kind());
             assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().to_proposal_received_state().get_rev_reg_id().unwrap_err().kind());
             assert_eq!(_rev_reg_id(), _issuer_sm().to_offer_sent_state().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().get_rev_reg_id().unwrap());
-            assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm().to_request_received_state().await.get_rev_reg_id().unwrap());
+            assert_eq!(_rev_reg_id(), _issuer_sm().to_finished_state().await.get_rev_reg_id().unwrap());
         }
     }
 
     mod is_revokable {
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_is_revokable() {
+        async fn test_is_revokable() {
             let _setup = SetupMocks::init();
 
             assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().is_revokable().unwrap_err().kind());
             assert_eq!(true, _issuer_sm().to_proposal_received_state().is_revokable().unwrap());
             assert_eq!(true, _issuer_sm().to_offer_sent_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_request_received_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_finished_state().is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm().to_request_received_state().await.is_revokable().unwrap());
+            assert_eq!(true, _issuer_sm().to_finished_state().await.is_revokable().unwrap());
         }
     }
 }

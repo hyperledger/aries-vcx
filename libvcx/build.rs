@@ -1,27 +1,28 @@
-#[allow(unused_imports)]
+use std::env;
+use std::fs;
+use std::io::prelude::*;
+use std::fs::File;
+use std::path::Path;
+
+extern crate toml;
+
 #[macro_use]
-extern crate serde;
 extern crate serde_derive;
+
 // error in rust compiler.  Bugfix requested in Sept. 2017
 // these are used, but the compiler is not seeing it for
 // some reason
 #[allow(unused_imports)]
 #[macro_use]
 extern crate serde_json;
-extern crate toml;
-
-use std::env;
-use std::fs;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
-
+// error in rust compiler.  Bugfix has been submitted in Sept. 2017
+#[allow(unused_imports)]
+#[macro_use]
+extern crate serde;
 
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
-struct Tomlfile {
-    contents: Contents,
-}
+struct Tomlfile;
 
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
@@ -39,8 +40,6 @@ struct Deb {
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
 struct Package {
-    name: String,
-    version: Option<String>,
     metadata: Metadata,
 }
 
@@ -48,7 +47,6 @@ struct Package {
 #[derive(Deserialize, Debug)]
 struct Contents {
     package: Package,
-    dependencies: Option<toml::Value>,
 }
 
 fn main() {
@@ -57,14 +55,15 @@ fn main() {
 
     if let Ok(_mode) = env::var("LIBINDY_STATIC") {
         let libindy_lib_path = env::var("LIBINDY_DIR").unwrap();
-        println!("cargo:rustc-link-search=native={}", libindy_lib_path);
+        println!("cargo:rustc-link-search=native={}",libindy_lib_path);
         println!("cargo:rustc-link-lib=static=indy");
-    } else if target.contains("aarch64-linux-android") || target.contains("armv7-linux-androideabi") ||
+    }else if target.contains("aarch64-linux-android") || target.contains("armv7-linux-androideabi") ||
         target.contains("arm-linux-androideabi") || target.contains("i686-linux-android") ||
         target.contains("x86_64-linux-android") || target.contains("aarch64-apple-ios") ||
         target.contains("armv7-apple-ios") || target.contains("armv7s-apple-ios") ||
         target.contains("i386-apple-ios") || target.contains("x86_64-apple-ios") {
-        let libindy_lib_path = match env::var("LIBINDY_DIR") {
+
+        let libindy_lib_path = match env::var("LIBINDY_DIR"){
             Ok(val) => val,
             Err(..) => panic!("Missing required environment variable LIBINDY_DIR")
         };
@@ -77,24 +76,24 @@ fn main() {
             }
         };
 
-        println!("cargo:rustc-link-search=native={}", libindy_lib_path);
+        println!("cargo:rustc-link-search=native={}",libindy_lib_path);
         println!("cargo:rustc-link-lib=static=indy");
-
         println!("cargo:rustc-link-search=native={}", openssl);
         println!("cargo:rustc-link-lib=static=crypto");
         println!("cargo:rustc-link-lib=static=ssl");
-    } else if target.contains("darwin") {
+
+    }else if target.contains("darwin"){
         //OSX specific logic
         println!("cargo:rustc-link-lib=sodium");
         println!("cargo:rustc-link-lib=zmq");
         println!("cargo:rustc-link-lib=indy");
         //OSX does not allow 3rd party libs to be installed in /usr/lib. Instead install it in /usr/local/lib
         println!("cargo:rustc-link-search=native=/usr/local/lib");
-    } else if target.contains("-linux-") {
+    }else if target.contains("-linux-"){
         //Linux specific logic
         println!("cargo:rustc-link-lib=indy");
         println!("cargo:rustc-link-search=native=/usr/lib");
-    } else if target.contains("-windows-") {
+    }else if target.contains("-windows-") {
         println!("cargo:rustc-link-lib=indy.dll");
 
         let profile = env::var("PROFILE").unwrap();
@@ -125,38 +124,38 @@ fn main() {
             // Leaving as unwrap, this is in the build script.
             let revision = get_revision().unwrap();
             write_variables(&revision);
-        }
-        Err(_) => { println!("NOT injecting version information"); }
+        },
+        Err(_) => {println!("NOT injecting version information"); },
     };
 }
 
 
 // Writes to the file 'src/utils/version_constants.rs' for use
 // in outputing the version dynamically.
-fn write_variables(revision: &str) {
+fn write_variables(revision:&str) {
     let out_dir = "src/utils/";
     let dest_path = Path::new(&out_dir).join("version_constants.rs");
     let mut f = File::create(&dest_path).unwrap();
     let s = format!("pub const VERSION: &'static str = env!(\"CARGO_PKG_VERSION\");\npub const REVISION: &'static str = \"{}\";\n", revision);
     if let Err(e) = f.write_all(s.as_bytes()) {
-        panic!("Error creating version_constants.rs: {}", e);
+       panic!("Error creating version_constants.rs: {}", e);
     };
+
 }
 
 // Gets the revision number from the Cargo.toml file.
 pub fn get_revision() -> Option<String> {
-    let dir = match env::var("CARGO_MANIFEST_DIR") {
+    let dir = match  env::var("CARGO_MANIFEST_DIR"){
         Ok(d) => d,
         Err(_) => panic!("Couldn't Manifest Directory"),
     };
     let filename = "Cargo.toml";
-    let p = format!("{}/{}", dir, filename);
+    let p = format!("{}/{}",dir,filename);
     let mut input = String::new();
     File::open(p).and_then(|mut f| {
-        f.read_to_string(&mut input)
-    }).unwrap();
-    let tomlfile: Contents = toml::from_str(&input).unwrap();
-    let revision: String = match tomlfile.package.metadata.deb.revision {
+        f.read_to_string(&mut input)}).unwrap();
+    let tomlfile:Contents = toml::from_str(&input).unwrap();
+    let revision:String = match tomlfile.package.metadata.deb.revision {
         Some(v) => v,
         None => String::from(""),
     };

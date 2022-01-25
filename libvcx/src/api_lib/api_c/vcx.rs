@@ -1,6 +1,7 @@
 use std::ffi::CString;
 
 use libc::c_char;
+use futures::future::{BoxFuture, FutureExt};
 
 use aries_vcx::utils;
 use aries_vcx::indy::CommandHandle;
@@ -15,7 +16,7 @@ use aries_vcx::utils::version_constants;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::get_current_error_c_json;
-use crate::api_lib::utils::runtime::{execute, init_threadpool};
+use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 use crate::error::prelude::*;
 
 /// Only for Wrapper testing purposes, sets global library settings.
@@ -356,8 +357,8 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
-    execute(move || {
-        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]).await {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -373,7 +374,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }
@@ -723,19 +724,19 @@ mod tests {
         vcx_shutdown(false);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_shutdown() {
+    async fn test_shutdown() {
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
-        let connection = connection::tests::build_test_connection_inviter_invited();
+        let connection = connection::tests::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create_and_store("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
-        let proof = proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).unwrap();
+        let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).await.unwrap();
+        let proof = proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
         let schema = schema::create_and_publish_schema("5", "VsKV7grR1BUE29mG2Fm2kX".to_string(), "name".to_string(), "0.1".to_string(), data.to_string()).unwrap();
-        let disclosed_proof = disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        let credential = credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER).unwrap();
+        let disclosed_proof = disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION).await.unwrap();
+        let credential = credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER).await.unwrap();
 
         vcx_shutdown(true);
         assert_eq!(connection::release(connection).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
@@ -990,18 +991,18 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupWithWalletAndAgency::init();
+    async fn test_agency_client_does_not_have_to_be_initialized() {
+        let _setup = SetupWithWalletAndAgency::init().await;
 
         api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
 
-        let connection_handle = connection::create_connection("test_create_works").unwrap();
-        connection::connect(connection_handle).unwrap();
+        let connection_handle = connection::create_connection("test_create_works").await.unwrap();
+        connection::connect(connection_handle).await.unwrap();
 
         settings::set_testing_defaults();
     }

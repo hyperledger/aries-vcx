@@ -63,16 +63,16 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     path
 }
 
-pub fn send_message(sender_verkey: &str, did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
+pub async fn send_message(sender_verkey: String, did_doc: DidDoc, message: A2AMessage) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let envelope = EncryptionEnvelope::create(&message, Some(sender_verkey), &did_doc)?;
-    agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint())?;
+    let envelope = EncryptionEnvelope::create(&message, Some(&sender_verkey), &did_doc)?;
+    agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint()).await?;
     Ok(())
 }
 
-pub fn send_message_anonymously(did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
+pub async fn send_message_anonymously(did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
     trace!("send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let envelope = EncryptionEnvelope::create(&message, None, &did_doc)?;
-    agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint())?;
+    agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint()).await?;
     Ok(())
 }

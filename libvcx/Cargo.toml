@@ -14,9 +14,9 @@ path = "src/lib.rs"
 crate-type = ["staticlib","rlib", "cdylib"]
 
 [features]
-pool_tests = []
-agency_tests = []
-general_test = []
+pool_tests = ["tokio/rt", "tokio/macros"]
+agency_tests = ["tokio/rt", "tokio/macros"]
+general_test = ["tokio/rt", "tokio/macros"]
 to_restore = []
 fatal_warnings = []
 
@@ -35,10 +35,11 @@ rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 futures = "0.3.15"
-tokio = { version = "1.7.1", features = ["rt-multi-thread"] }
+tokio = { version = "=1.7.1", features = ["rt-multi-thread"] }
 uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
 failure = "0.1.6"
 aries-vcx = { path = "../aries_vcx" }
+async-std = "1.10.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

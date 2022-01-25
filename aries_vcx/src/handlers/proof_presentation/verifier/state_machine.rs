@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::prelude::*;
+use crate::handlers::SendClosure;
 use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
 use crate::handlers::proof_presentation::verifier::states::initial::InitialVerifierState;
 use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
@@ -151,7 +152,7 @@ impl VerifierSM {
         Ok(Self { source_id, thread_id, state })
     }
 
-    pub fn step(self, message: VerifierMessages, send_message: Option<&impl Fn(&A2AMessage) -> VcxResult<()>>) -> VcxResult<Self> {
+    pub async fn step(self, message: VerifierMessages, send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
         let state_name = self.state.to_string();
         let Self { source_id, state, thread_id } = self.clone();
@@ -192,7 +193,7 @@ impl VerifierSM {
                             .set_thread_id(&thread_id);
                         send_message.ok_or(
                             VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                        )?(&problem_report.to_a2a_message())?;
+                        )?(problem_report.to_a2a_message()).await?;
                         (VerifierFullState::Finished(FinishedState::declined(problem_report)), thread_id)
                     }
                     _ => {
@@ -204,8 +205,14 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 match message {
                     VerifierMessages::VerifyPresentation(presentation) => {
-                        match state.verify_presentation(&presentation, &thread_id, send_message) {
+                        match state.verify_presentation(&presentation, &thread_id).await {
                             Ok(()) => {
+                                if presentation.please_ack.is_some() {
+                                    let ack = PresentationAck::create().set_thread_id(&state.presentation_request.id.0);
+                                    send_message.ok_or(
+                                        VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
+                                    )?(A2AMessage::PresentationAck(ack)).await?;
+                                };
                                 (VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()), thread_id)
                             }
                             Err(err) => {
@@ -215,7 +222,7 @@ impl VerifierSM {
                                         .set_thread_id(&thread_id);
                                 send_message.ok_or(
                                     VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                                )?(&problem_report.to_a2a_message())?;
+                                )?(problem_report.to_a2a_message()).await?;
                                 match err.kind() {
                                     VcxErrorKind::InvalidProof => {
                                         (VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()), thread_id)
@@ -242,7 +249,7 @@ impl VerifierSM {
                     let ack = PresentationAck::create().set_thread_id(&thread_id);
                     send_message.ok_or(
                         VcxError::from_msg(VcxErrorKind::InvalidState, "Attempted to call undefined send_message callback")
-                    )?(&A2AMessage::PresentationAck(ack))?;
+                    )?(A2AMessage::PresentationAck(ack)).await?;
                 }
                 (VerifierFullState::Finished(state), thread_id)
             }
@@ -341,7 +348,7 @@ impl VerifierSM {
 
 #[cfg(test)]
 pub mod test {
-    use crate::messages::proof_presentation::presentation::test_utils::{_comment, _presentation, _presentation_1};
+    use crate::messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
     use crate::messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
@@ -359,8 +366,8 @@ pub mod test {
         VerifierSM::from_request(&source_id(), &_presentation_request_data()).unwrap()
     }
 
-    pub fn _send_message() -> Option<&'static impl Fn(&A2AMessage) -> VcxResult<()>> {
-        Some(&|_: &A2AMessage| VcxResult::Ok(()))
+    pub fn _send_message() -> Option<SendClosure> {
+        Some(Box::new(|_: A2AMessage| Box::pin( async { VcxResult::Ok(()) })))
     }
 
     pub fn _reason() -> String {
@@ -368,13 +375,13 @@ pub mod test {
     }
 
     impl VerifierSM {
-        fn to_presentation_proposal_received_state(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
+        async fn to_presentation_proposal_received_state(mut self) -> VerifierSM {
+            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
             self
         }
 
-        fn to_presentation_proposal_received_state_with_request(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None::<&fn(&A2AMessage) -> _>).unwrap();
+        async fn to_presentation_proposal_received_state_with_request(mut self) -> VerifierSM {
+            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
             self = self.set_request(&_presentation_request_data(), Some("foo".into())).unwrap();
             self
         }
@@ -384,9 +391,9 @@ pub mod test {
             self
         }
 
-        fn to_finished_state(mut self) -> VerifierSM {
+        async fn to_finished_state(mut self) -> VerifierSM {
             self = self.to_presentation_request_sent_state();
-            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             self
         }
     }
@@ -443,13 +450,13 @@ pub mod test {
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_set_presentation_proposal_received_from_initial_state() {
+        async fn test_prover_handle_set_presentation_proposal_received_from_initial_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
@@ -465,154 +472,154 @@ pub mod test {
             assert_match!(VerifierFullState::PresentationRequestSent(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_presentation_request_set_state() {
+        async fn test_prover_handle_other_messages_from_presentation_request_set_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_message_from_presentation_proposal_received_state() {
+        async fn test_prover_handle_send_presentation_request_message_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
-            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state_with_request();
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state_with_request().await;
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
 
             assert_match!(VerifierFullState::PresentationRequestSent(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_send_presentation_request_from_presentation_proposal_received_state_fails_without_request() {
+        async fn test_prover_handle_send_presentation_request_from_presentation_proposal_received_state_fails_without_request() {
             let _setup = SetupMocks::init();
 
-            let verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+            let verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
             let res = verifier_sm.mark_presentation_request_msg_sent();
 
             assert!(res.is_err());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_reject_presentation_proposal_message_from_presentation_proposal_received_state() {
+        async fn test_prover_handle_reject_presentation_proposal_message_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
-            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
-            verifier_sm = verifier_sm.step(VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).unwrap();
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
+            verifier_sm = verifier_sm.step(VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Declined(ProblemReport::default()).code(), verifier_sm.presentation_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_other_messages_from_presentation_proposal_received_state() {
+        async fn test_prover_handle_other_messages_from_presentation_proposal_received_state() {
             let _setup = SetupMocks::init();
 
-            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state();
+            let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
+        async fn test_prover_handle_verify_presentation_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_invalid_presentation_message() {
+        async fn test_prover_handle_invalid_presentation_message() {
             let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
             assert_eq!(Status::Failed(ProblemReport::create()).code(), verifier_sm.presentation_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_presentation_verification_fails_with_incorrect_thread_id() {
+        async fn test_prover_presentation_verification_fails_with_incorrect_thread_id() {
             let _setup = SetupEmpty::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(false));
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), _send_message());
+            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), _send_message()).await;
             assert!(res.is_err());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
+        async fn test_prover_handle_presentation_proposal_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
+        async fn test_prover_handle_presentation_reject_message_from_presentation_request_sent_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_prover_handle_messages_from_presentation_finished_state() {
+        async fn test_prover_handle_messages_from_presentation_finished_state() {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).unwrap();
+            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
         }
     }
@@ -711,12 +718,12 @@ pub mod test {
             }
         }
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_verifier_find_message_to_handle_from_finished_state() {
+        async fn test_verifier_find_message_to_handle_from_finished_state() {
             let _setup = SetupMocks::init();
 
-            let verifier = _verifier_sm_from_request().to_finished_state();
+            let verifier = _verifier_sm_from_request().to_finished_state().await;
 
             // No messages
             {
@@ -738,16 +745,16 @@ pub mod test {
 
         use super::*;
 
-        #[test]
+        #[tokio::test]
         #[cfg(feature = "general_test")]
-        fn test_get_state() {
+        async fn test_get_state() {
             let _setup = SetupMocks::init();
             let _mock_builder = MockBuilder::init().
                 set_mock_result_for_validate_indy_proof(Ok(true));
 
             assert_eq!(VerifierState::PresentationRequestSet, _verifier_sm_from_request().get_state());
             assert_eq!(VerifierState::PresentationRequestSent, _verifier_sm_from_request().to_presentation_request_sent_state().get_state());
-            assert_eq!(VerifierState::Finished, _verifier_sm_from_request().to_finished_state().get_state());
+            assert_eq!(VerifierState::Finished, _verifier_sm_from_request().to_finished_state().await.get_state());
         }
     }
 }
