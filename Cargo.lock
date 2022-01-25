@@ -1045,7 +1045,7 @@ dependencies = [
 [[package]]
 name = "indy"
 version = "0.8.1"
-source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee#edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1065,7 +1065,7 @@ dependencies = [
 [[package]]
 name = "indy-sys"
 version = "0.8.0"
-source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee#edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee"
 dependencies = [
  "libc",
  "pkg-config",
@@ -1140,9 +1140,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.95"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
+checksum = "b0005d08a8f7b65fb8073cb697aa0b12b631ed251ce73d862ce50eeb52ce3b50"
 
 [[package]]
 name = "libloading"
