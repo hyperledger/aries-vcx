@@ -1045,7 +1045,7 @@ dependencies = [
 [[package]]
 name = "indy"
 version = "0.8.1"
-source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee#edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1065,7 +1065,7 @@ dependencies = [
 [[package]]
 name = "indy-sys"
 version = "0.8.0"
-source = "git+https://gitlab.com/PatrikStas/vdr-tools.git?rev=b5fd711a#b5fd711a696f3e71738f1b71f5dc32b03e0164d1"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee#edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee"
 dependencies = [
  "libc",
  "pkg-config",
@@ -1140,9 +1140,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.95"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
+checksum = "b0005d08a8f7b65fb8073cb697aa0b12b631ed251ce73d862ce50eeb52ce3b50"
 
 [[package]]
 name = "libloading"
@@ -2365,11 +2365,10 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.7.1"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fb2ed024293bb19f7a5dc54fe83bf86532a44c12a2bb8ba40d64a4509395ca2"
+checksum = "fbbf1c778ec206785635ce8ad57fe52b3009ae9e0c9f574a728f3049d3e55838"
 dependencies = [
- "autocfg 1.0.1",
  "bytes",
  "libc",
  "memchr",

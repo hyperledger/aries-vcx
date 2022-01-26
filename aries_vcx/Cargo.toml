@@ -27,7 +27,7 @@ log = "0.4"
 chrono = "0.4"
 time = "0.1.36"
 lazy_static = "1.3"
-libc = "=0.2.95"
+libc = "=0.2.114"
 rand = "0.7.3"
 serde = "1.0.97"
 serde_json = "1.0.40"
@@ -39,8 +39,8 @@ rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 num-traits = "0.2.0"
-indy = { git = "https://gitlab.com/PatrikStas/vdr-tools.git", rev = "b5fd711a" }
-indy-sys = { git = "https://gitlab.com/PatrikStas/vdr-tools.git", rev = "b5fd711a" }
+indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee" }
+indy-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee" }
 futures = "0.3.15"
 libloading = "0.5.0"
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
@@ -50,7 +50,7 @@ strum_macros = "0.16.0"
 agency_client = { version = "0.1.0", path = "../agency_client" }
 sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
 derive_builder = "0.10.2"
-tokio = { version = "=1.7.1" }
+tokio = { version = "1.15.0" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
