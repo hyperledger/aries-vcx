@@ -2231,7 +2231,7 @@ dependencies = [
 
 [[package]]
 name = "libvdrtools"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "android_logger",
  "async-std",
@@ -4637,7 +4637,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vdrtools"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "async-std",
  "async-trait",
@@ -4656,7 +4656,7 @@ dependencies = [
 
 [[package]]
 name = "vdrtools-sys"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "libc",
  "pkg-config",
