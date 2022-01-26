@@ -92,6 +92,9 @@ pub async fn build_credential_offer_msg(handle: u32,
                                   cred_def_handle: u32,
                                   credential_json: &str,
                                   comment: Option<&str>) -> VcxResult<()> {
+    if credential_def::has_pending_revocations_primitives_to_be_published(cred_def_handle)? {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")))
+    };
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
@@ -221,7 +224,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
-    use crate::api_lib::api_handle::credential_def::tests::create_cred_def_fake;
+    use crate::api_lib::api_handle::credential_def::tests::{create_cred_def_fake, create_cred_def_fake_unpublished};
     use crate::api_lib::api_handle::issuer_credential;
     use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
 
@@ -273,6 +276,18 @@ pub mod tests {
 
         assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).await.unwrap(), u32::from(IssuerState::OfferSent));
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_fail_creating_cred_offer_if_revocations_were_not_published() {
+        let _setup = SetupMocks::init();
+
+        let handle_conn = build_test_connection_inviter_requested().await;
+
+        let handle_cred = _issuer_credential_create().await;
+
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake_unpublished(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
     }
 
     #[cfg(feature = "pool_tests")]

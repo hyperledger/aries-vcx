@@ -56,14 +56,9 @@ pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
     })
 }
 
-pub fn publish_revocation_primitives(handle: u32, tails_url: &str) -> VcxResult<()> {
+pub fn has_pending_revocations_primitives_to_be_published(handle: u32) -> VcxResult<bool> {
     CREDENTIALDEF_MAP.get_mut(handle, |cd| {
-        if cd.has_pending_revocations_primitives_to_be_published() {
-            cd.publish_revocation_primitives(&tails_url)?;
-        } else {
-            info!("publish_revocation_primitives >>> Revocation primitives was already published")
-        }
-        Ok(())
+        Ok(cd.has_pending_revocations_primitives_to_be_published())
     })
 }
 
@@ -249,6 +244,12 @@ pub mod tests {
     }
 
     pub fn create_cred_def_fake() -> u32 {
+        let handle = create_cred_def_fake_unpublished();
+        publish(handle, Some("dummy.org".to_string())).unwrap();
+        handle
+    }
+
+    pub fn create_cred_def_fake_unpublished() -> u32 {
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
             .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
@@ -258,11 +259,10 @@ pub mod tests {
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
 
         let handle = create_and_store("SourceId".to_string(),
-                           SCHEMA_ID.to_string(),
-                           ISSUER_DID.to_string(),
-                           "tag".to_string(),
-                           revocation_details).unwrap();
-        publish(handle, Some("dummy.org".to_string())).unwrap();
+                                      SCHEMA_ID.to_string(),
+                                      ISSUER_DID.to_string(),
+                                      "tag".to_string(),
+                                      revocation_details).unwrap();
         handle
     }
 

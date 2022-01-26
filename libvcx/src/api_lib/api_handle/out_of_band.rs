@@ -189,7 +189,6 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 pub mod tests {
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::utils::devsetup::SetupMocks;
-    use crate::aries_vcx::messages::connection::service::FullService;
     use super::*;
 
     #[tokio::test]
