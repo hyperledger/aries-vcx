@@ -33,9 +33,32 @@ pub fn create_and_store(source_id: String,
 
 pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
     CREDENTIALDEF_MAP.get_mut(handle, |cd| {
-        let new_cd = cd.clone().publish(tails_url.as_deref())?;
-        *cd = new_cd;
+        if !cd.was_published() {
+            *cd = cd.clone().publish_cred_def()?;
+        } else {
+            info!("publish >>> Credential definition was already published")
+        }
+        if cd.has_pending_revocations_primitives_to_be_published() {
+            match &tails_url {
+                None => {
+                    return Err(VcxError::from_msg(VcxErrorKind::InvalidOption,
+                                                  "Revocation primitives should be published on ledger but tails_url was not provided"
+                    ));
+                }
+                Some(tails_url) => {
+                    cd.publish_revocation_primitives(&tails_url)?;
+                }
+            }
+        } else {
+            info!("publish >>> Revocation primitives was already published")
+        }
         Ok(())
+    })
+}
+
+pub fn has_pending_revocations_primitives_to_be_published(handle: u32) -> VcxResult<bool> {
+    CREDENTIALDEF_MAP.get_mut(handle, |cd| {
+        Ok(cd.has_pending_revocations_primitives_to_be_published())
     })
 }
 
@@ -85,7 +108,7 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 
 pub fn get_tails_file(handle: u32) -> VcxResult<Option<String>> {
     CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_tails_file())
+        Ok(c.get_tails_dir())
     })
 }
 
@@ -122,14 +145,16 @@ pub fn check_is_published(handle: u32) -> VcxResult<bool> {
     })
 }
 
-pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str, new_tails_url: &str) -> VcxResult<String> {
+pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
     CREDENTIALDEF_MAP.get_mut(handle, |s| {
         match &s.get_rev_reg_def()? {
             Some(_) => {
                 let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
-                let new_rev_reg = s.rotate_rev_reg(revocation_details, new_tails_url)?;
-                match update_rev_reg_ids_cache(&s.cred_def_id, &new_rev_reg.rev_reg_id) {
+                s.rotate_rev_reg(revocation_details)?;
+                let rev_reg_id = s.get_rev_reg_id()
+                    .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Failed to get revocation registry id after revocation registry rotation."))?;
+                match update_rev_reg_ids_cache(&s.cred_def_id, &rev_reg_id) {
                     Ok(()) => s.to_string().map_err(|err| err.into()),
                     Err(err) => Err(err.into())
                 }
@@ -181,7 +206,7 @@ pub mod tests {
         let (revoc_details, tails_file) = if revoc {
             (RevocationDetailsBuilder::default()
                 .support_revocation(true)
-                .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+                .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
                 .max_creds(10 as u32)
                 .build()
                 .unwrap(),
@@ -219,20 +244,25 @@ pub mod tests {
     }
 
     pub fn create_cred_def_fake() -> u32 {
+        let handle = create_cred_def_fake_unpublished();
+        publish(handle, Some("dummy.org".to_string())).unwrap();
+        handle
+    }
+
+    pub fn create_cred_def_fake_unpublished() -> u32 {
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
-            .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+            .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
             .max_creds(2 as u32)
             .build()
             .unwrap();
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
 
         let handle = create_and_store("SourceId".to_string(),
-                           SCHEMA_ID.to_string(),
-                           ISSUER_DID.to_string(),
-                           "tag".to_string(),
-                           revocation_details).unwrap();
-        publish(handle, Some("dummy.org".to_string())).unwrap();
+                                      SCHEMA_ID.to_string(),
+                                      ISSUER_DID.to_string(),
+                                      "tag".to_string(),
+                                      revocation_details).unwrap();
         handle
     }
 
@@ -268,7 +298,7 @@ pub mod tests {
 
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
-            .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+            .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
             .max_creds(2 as u32)
             .build()
             .unwrap();
@@ -292,7 +322,7 @@ pub mod tests {
 
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
-            .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+            .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
             .max_creds(2 as u32)
             .build()
             .unwrap();
@@ -319,7 +349,7 @@ pub mod tests {
 
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
-            .tails_file(get_temp_dir_path("tails.txt").to_str().unwrap())
+            .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
             .max_creds(2 as u32)
             .build()
             .unwrap();

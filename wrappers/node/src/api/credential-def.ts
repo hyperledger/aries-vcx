@@ -42,13 +42,13 @@ export interface ICredentialDefParams {
   schemaId?: string;
   name?: string;
   credDefId?: string;
-  tailsFile?: string;
+  tailsDir?: string;
 }
 
 export interface IRevocationDetails {
   maxCreds?: number;
   supportRevocation?: boolean;
-  tailsFile?: string;
+  tailsDir?: string;
 }
 
 export enum CredentialDefState {
@@ -65,14 +65,14 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     schemaId,
     sourceId,
   }: ICredentialDefCreateData): Promise<CredentialDef> {
-    const tailsFile = revocationDetails.tailsFile;
-    const credentialDef = new CredentialDef(sourceId, { schemaId, tailsFile });
+    const tailsDir = revocationDetails.tailsDir;
+    const credentialDef = new CredentialDef(sourceId, { schemaId, tailsDir });
     const commandHandle = 0;
     const issuerDid = null;
     const revocation = {
       max_creds: revocationDetails.maxCreds,
       support_revocation: revocationDetails.supportRevocation,
-      tails_file: revocationDetails.tailsFile,
+      tails_dir: revocationDetails.tailsDir,
     };
     try {
       await credentialDef._create((cb) =>
@@ -112,17 +112,17 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
   private _name: string | undefined;
   private _schemaId: string | undefined;
   private _credDefId: string | undefined;
-  private _tailsFile: string | undefined;
+  private _tailsDir: string | undefined;
   private _credDefTransaction: string | null;
   private _revocRegDefTransaction: string | null;
   private _revocRegEntryTransaction: string | null;
 
-  constructor(sourceId: string, { name, schemaId, credDefId, tailsFile }: ICredentialDefParams) {
+  constructor(sourceId: string, { name, schemaId, credDefId, tailsDir }: ICredentialDefParams) {
     super(sourceId);
     this._name = name;
     this._schemaId = schemaId;
     this._credDefId = credDefId;
-    this._tailsFile = tailsFile;
+    this._tailsDir = tailsDir;
     this._credDefTransaction = null;
     this._revocRegDefTransaction = null;
     this._revocRegEntryTransaction = null;
@@ -328,12 +328,11 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
   }
 
   public async rotateRevRegDef(
-    revocationDetails: IRevocationDetails,
-    tailsUrl?: string
+    revocationDetails: IRevocationDetails
   ): Promise<ISerializedData<ICredentialDefCreateData>> {
     const revocation = {
       max_creds: revocationDetails.maxCreds,
-      tails_file: revocationDetails.tailsFile,
+      tails_file: revocationDetails.tailsDir,
     };
     try {
       const dataStr = await createFFICallbackPromise<string>(
@@ -342,7 +341,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
             0,
             this.handle,
             JSON.stringify(revocation),
-            tailsUrl || '',
             cb,
           );
           if (rc) {
@@ -406,8 +404,8 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     return this._credDefId;
   }
 
-  get tailsFile(): string | undefined {
-    return this._tailsFile;
+  get tailsDir(): string | undefined {
+    return this._tailsDir;
   }
 
   protected _setHandle(handle: number): void {

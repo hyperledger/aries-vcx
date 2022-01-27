@@ -196,7 +196,8 @@ pub mod test {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create_and_store(String::from("test_cred_def"), config, RevocationDetails::default()).unwrap().publish(None).unwrap();
+            self.cred_def = CredentialDef::create_and_store(String::from("test_cred_def"), config, RevocationDetails::default()).unwrap()
+                .publish_cred_def().unwrap();
         }
 
         pub fn create_presentation_request(&self) -> Verifier {
@@ -264,7 +265,7 @@ pub mod test {
                 credential_json,
                 cred_def_id: self.cred_def.get_cred_def_id(),
                 rev_reg_id: self.cred_def.get_rev_reg_id(),
-                tails_file: self.cred_def.get_tails_file(),
+                tails_file: self.cred_def.get_tails_dir(),
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential.build_credential_offer_msg(offer_info, None).unwrap();

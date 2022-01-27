@@ -100,7 +100,7 @@ export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
   revocationDetails: {
     maxCreds: undefined,
     supportRevocation: false,
-    tailsFile: undefined,
+    tailsDir: undefined,
   },
   schemaId: 'testCredentialDefSchemaId',
   sourceId: 'testCredentialDefSourceId',

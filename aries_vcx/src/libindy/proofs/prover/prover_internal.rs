@@ -208,7 +208,7 @@ pub mod tests {
         constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
                     ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
                     CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-                    REV_STATE_JSON, SCHEMA_ID, TEST_TAILS_FILE},
+                    REV_STATE_JSON, SCHEMA_ID, TAILS_DIR},
         get_temp_dir_path,
     };
     use crate::utils::devsetup::*;
@@ -352,7 +352,7 @@ pub mod tests {
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: Some(NonRevokedInterval { from: Some(123), to: Some(456) }),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
         };
         let cred2 = CredInfoProver {
@@ -385,7 +385,7 @@ pub mod tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
               },
               "zip_2":{
                 "credential": {
@@ -464,7 +464,7 @@ pub mod tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string(),
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string(),
               },
            }
         });
@@ -476,7 +476,7 @@ pub mod tests {
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
             revocation_interval: None,
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
         }];
         assert_eq!(&credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(), &creds);
@@ -504,7 +504,7 @@ pub mod tests {
                     },
                     "interval":null
                 },
-                "tails_file": get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()
+                "tails_file": get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()
               },
            }
         });
@@ -591,7 +591,7 @@ pub mod tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
         };
@@ -619,7 +619,7 @@ pub mod tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: None,
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TEST_TAILS_FILE).to_str().unwrap().to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
         };

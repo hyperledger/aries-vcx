@@ -498,7 +498,6 @@ export interface IFFIEntryPoint {
     commandId: number,
     handle: number,
     details: string,
-    tailsUrl: string,
     cb: ICbRef,
   ) => string;
   vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -1056,7 +1055,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   ],
   vcx_credentialdef_rotate_rev_reg_def: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_credentialdef_publish_revocations: [
     FFI_ERROR_CODE,
