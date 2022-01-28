@@ -88,7 +88,7 @@ impl PartialEq for FullService {
 
 impl TryFrom<&PublicAgent> for FullService {
     type Error = VcxError;
-    fn try_from(agent: &PublicAgent) -> Result<Self, Self::Error> {
+    fn try_from(agent: &PublicAgent) -> VcxResult<Self> {
         Ok(FullService::create()
             .set_service_endpoint(get_agency_client()?.get_agency_url()?)
             .set_recipient_keys(vec![agent.pairwise_info().pw_vk.clone()])
@@ -98,7 +98,7 @@ impl TryFrom<&PublicAgent> for FullService {
 
 impl TryFrom<(&PairwiseInfo, &CloudAgentInfo)> for FullService {
     type Error = VcxError;
-    fn try_from((pairwise_info, agent_info): (&PairwiseInfo, &CloudAgentInfo)) -> Result<Self, Self::Error> {
+    fn try_from((pairwise_info, agent_info): (&PairwiseInfo, &CloudAgentInfo)) -> VcxResult<Self> {
         Ok(FullService::create()
             .set_service_endpoint(get_agency_client()?.get_agency_url()?)
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])

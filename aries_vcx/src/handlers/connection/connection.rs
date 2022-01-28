@@ -1,6 +1,7 @@
 use core::fmt;
 use std::collections::HashMap;
 use std::clone::Clone;
+use std::convert::TryFrom;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
@@ -24,6 +25,7 @@ use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::messages::connection::request::Request;
+use crate::messages::connection::service::FullService;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -656,6 +658,10 @@ impl Connection {
             }
         };
         Ok(())
+    }
+
+    pub fn get_full_service(&self) -> VcxResult<FullService> {
+        FullService::try_from((self.pairwise_info(), &self.cloud_agent_info()))
     }
 
     pub fn get_connection_info(&self) -> VcxResult<String> {

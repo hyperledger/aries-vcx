@@ -6,11 +6,11 @@ use futures::StreamExt;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::messages::connection::service::FullService;
-use crate::libindy::utils::ledger::add_service;
-use crate::messages::connection::request::Request;
-use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::request::Request;
+use crate::messages::connection::service::FullService;
+use crate::messages::a2a::A2AMessage;
+use crate::libindy::utils::ledger::add_service;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
