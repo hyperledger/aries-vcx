@@ -3,7 +3,6 @@ use serde_json;
 use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
 use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
-use aries_vcx::libindy::utils::cache::update_rev_reg_ids_cache;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -154,10 +153,7 @@ pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<St
                 s.rotate_rev_reg(revocation_details)?;
                 let rev_reg_id = s.get_rev_reg_id()
                     .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Failed to get revocation registry id after revocation registry rotation."))?;
-                match update_rev_reg_ids_cache(&s.cred_def_id, &rev_reg_id) {
-                    Ok(()) => s.to_string().map_err(|err| err.into()),
-                    Err(err) => Err(err.into())
-                }
+                Ok(rev_reg_id)
             }
             None => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempting to rotate revocation registry on unrevokable credential definition"))
         }
