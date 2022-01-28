@@ -1936,7 +1936,7 @@ mod tests {
 
     pub async fn create_connected_connections_via_public_invite(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         institution.activate().unwrap();
-        let public_invite_json = institution.create_public_invite();
+        let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
 
         consumer.activate().unwrap();

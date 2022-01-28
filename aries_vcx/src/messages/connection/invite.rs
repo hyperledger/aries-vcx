@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::did::Did;
 use crate::messages::connection::service::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -89,9 +89,9 @@ impl PublicInvitation {
         self
     }
 
-    pub fn set_public_did(mut self, public_did: &str) -> Self {
-        self.did = public_did.into();
-        self
+    pub fn set_public_did(mut self, public_did: &str) -> VcxResult<Self> {
+        self.did = Did::new(public_did)?;
+        Ok(self)
     }
 }
 
@@ -129,7 +129,7 @@ pub mod test_utils {
         PublicInvitation {
             id: MessageId::id(),
             label: _label(),
-            did: _did(),
+            did: Did::new(&_did()).unwrap(),
         }
     }
 
@@ -179,7 +179,7 @@ pub mod tests {
     fn test_public_invite_build_works() {
         let invitation: PublicInvitation = PublicInvitation::default()
             .set_label(&_label())
-            .set_public_did(&_did());
+            .set_public_did(&_did()).unwrap();
 
         assert_eq!(_public_invitation(), invitation);
     }

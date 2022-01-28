@@ -222,11 +222,11 @@ pub mod test {
             json!(self.connection.get_invite_details().unwrap()).to_string()
         }
 
-        pub fn create_public_invite(&mut self) -> String {
+        pub fn create_public_invite(&mut self) -> VcxResult<String> {
             let public_invitation = PublicInvitation::create()
                 .set_label("faber")
-                .set_public_did(&self.config_issuer.institution_did);
-            json!(public_invitation).to_string()
+                .set_public_did(&self.config_issuer.institution_did)?;
+            Ok(json!(public_invitation).to_string())
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {

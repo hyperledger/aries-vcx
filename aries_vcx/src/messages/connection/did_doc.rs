@@ -44,8 +44,6 @@ pub struct Authentication {
     pub public_key: String,
 }
 
-pub type Did = String;
-
 impl Default for DidDoc {
     fn default() -> DidDoc {
         DidDoc {
@@ -279,7 +277,7 @@ impl From<Invitation> for DidDoc {
         let mut did_doc: DidDoc = DidDoc::default();
         let (service_endpoint, recipient_keys, routing_keys) = match invitation {
             Invitation::Public(invitation) => {
-                did_doc.set_id(invitation.did.clone());
+                did_doc.set_id(invitation.did.to_string());
                 let service = ledger::get_service(&invitation.did).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     FullService::default()                

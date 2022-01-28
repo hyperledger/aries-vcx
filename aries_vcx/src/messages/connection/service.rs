@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::did::Did;
 use crate::libindy::utils::ledger;
 use crate::error::prelude::*;
 use crate::handlers::connection::public_agent::PublicAgent;
@@ -29,7 +29,7 @@ impl ServiceResolvable {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FullService {
-    pub id: Did,
+    pub id: String,
     #[serde(rename = "type")]
     pub type_: String,
     #[serde(default)]
