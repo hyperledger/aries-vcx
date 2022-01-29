@@ -5,29 +5,29 @@ use futures::StreamExt;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::messages::connection::service::FullService;
 use crate::libindy::utils::ledger::add_service;
-use crate::messages::connection::request::Request;
 use crate::messages::a2a::A2AMessage;
-use crate::messages::connection::did::Did;
+use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::request::Request;
+use crate::messages::connection::service::FullService;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
     source_id: String,
     agent_info: CloudAgentInfo,
     pairwise_info: PairwiseInfo,
-    institution_did: Did
+    institution_did: Did,
 }
 
 impl PublicAgent {
     pub async fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create()?;
         let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
+        let institution_did = String::from(institution_did);
+        let source_id = String::from(source_id);
         let service = FullService::try_from((&pairwise_info, &agent_info))?;
         add_service(&institution_did, &service)?;
-        let institution_did = Did::new(institution_did)?;
-        let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })
     }
 
@@ -40,7 +40,7 @@ impl PublicAgent {
     }
 
     pub fn did(&self) -> String {
-        self.institution_did.to_string()
+        self.institution_did.clone()
     }
 
     pub fn service(&self) -> VcxResult<FullService> {
@@ -74,7 +74,7 @@ impl PublicAgent {
             })
             .collect()
             .await;
-       Ok(connection_requests) 
+        Ok(connection_requests)
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
@@ -99,13 +99,13 @@ pub mod tests {
             source_id: "test-public-agent".to_string(),
             agent_info: CloudAgentInfo {
                 agent_did: "NaMhQmSjkWoi5aVWEkA9ya".to_string(),
-                agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string()
+                agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string(),
             },
             pairwise_info: PairwiseInfo {
                 pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
-                pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string()
+                pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
             },
-            institution_did: Did::new(INSTITUTION_DID).unwrap()
+            institution_did: INSTITUTION_DID.to_string(),
         }
     }
 }

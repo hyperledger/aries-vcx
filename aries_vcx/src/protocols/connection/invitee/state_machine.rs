@@ -1,15 +1,8 @@
+use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
-use std::clone::Clone;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::invitee::states::complete::CompleteState;
-use crate::handlers::connection::invitee::states::invited::InvitedState;
-use crate::handlers::connection::invitee::states::initial::InitialState;
-use crate::handlers::connection::invitee::states::requested::RequestedState;
-use crate::handlers::connection::invitee::states::responded::RespondedState;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::handlers::connection::util::verify_thread_id;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -22,6 +15,13 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::protocols::connection::invitee::states::complete::CompleteState;
+use crate::protocols::connection::invitee::states::initial::InitialState;
+use crate::protocols::connection::invitee::states::invited::InvitedState;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
+use crate::protocols::connection::invitee::states::responded::RespondedState;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::connection::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -224,14 +224,14 @@ impl SmConnectionInvitee {
     }
 
     async fn _send_ack<F, T>(&self,
-                 did_doc: &DidDoc,
-                 request: &Request,
-                 response: &SignedResponse,
-                 pairwise_info: &PairwiseInfo,
-                 send_message: F) -> VcxResult<Response>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+                             did_doc: &DidDoc,
+                             request: &Request,
+                             response: &SignedResponse,
+                             pairwise_info: &PairwiseInfo,
+                             send_message: F) -> VcxResult<Response>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
 
     {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
@@ -255,16 +255,16 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))) }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))); }
         };
         Ok(Self { state, thread_id: invitation.get_id()?, ..self })
     }
 
     pub async fn handle_connect<F, T>(self, routing_keys: Vec<String>, service_endpoint: String, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
-    { 
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
+    {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
                 let recipient_keys = vec!(self.pairwise_info.pw_vk.clone());
@@ -296,7 +296,7 @@ impl SmConnectionInvitee {
         Ok(Self { state, thread_id, ..self })
     }
 
-    pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> { 
+    pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
@@ -308,9 +308,9 @@ impl SmConnectionInvitee {
     }
 
     pub async fn handle_ping<F, T>(self, ping: Ping, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::Ping(ping.clone()))?;
         let state = match self.state {
@@ -318,22 +318,22 @@ impl SmConnectionInvitee {
                 state.handle_ping(&ping, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
-            _ => self.state.clone() 
+            _ => self.state.clone()
         };
         Ok(Self { state, ..self })
     }
 
     pub async fn handle_send_ping<F, T>(self, comment: Option<String>, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviteeFullState::Completed(state) => {
                 state.handle_send_ping(comment, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
-            _ => self.state.clone() 
+            _ => self.state.clone()
         };
         Ok(Self { state, ..self })
     }
@@ -344,24 +344,24 @@ impl SmConnectionInvitee {
     }
 
     pub async fn handle_discover_features<F, T>(self, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviteeFullState::Completed(state) => {
                 state.handle_discover_features(query_, comment, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
-            _ => self.state.clone() 
+            _ => self.state.clone()
         };
-        Ok(Self { state, ..self  })
+        Ok(Self { state, ..self })
     }
 
     pub async fn handle_discovery_query<F, T>(self, query: Query, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviteeFullState::Completed(state) => {
@@ -370,7 +370,7 @@ impl SmConnectionInvitee {
             }
             _ => self.state.clone()
         };
-        Ok(Self { state, ..self  })
+        Ok(Self { state, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
@@ -385,9 +385,9 @@ impl SmConnectionInvitee {
     }
 
     pub async fn handle_send_ack<F, T>(self, send_message: &F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviteeFullState::Responded(ref state) => {
@@ -416,7 +416,7 @@ impl SmConnectionInvitee {
             InviteeFullState::Invited(_state) => {
                 InviteeFullState::Initial(InitialState::new(None))
             }
-            _ => self.state.clone() 
+            _ => self.state.clone()
         };
         Ok(Self { state, ..self })
     }

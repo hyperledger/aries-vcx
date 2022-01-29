@@ -1,4 +1,4 @@
-use crate::handlers::connection::invitee::states::requested::RequestedState;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;

@@ -1,11 +1,11 @@
 use std::convert::TryFrom;
 
-use crate::messages::connection::did::Did;
-use crate::libindy::utils::ledger;
 use crate::error::prelude::*;
-use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::public_agent::PublicAgent;
+use crate::libindy::utils::ledger;
+use crate::messages::connection::did_doc::Did;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::settings::get_agency_client;
 
 pub const SERVICE_SUFFIX: &str = "indy";
@@ -15,7 +15,7 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 #[serde(untagged)]
 pub enum ServiceResolvable {
     FullService(FullService),
-    Did(Did)
+    Did(Did),
 }
 
 impl ServiceResolvable {
@@ -29,7 +29,7 @@ impl ServiceResolvable {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FullService {
-    pub id: String,
+    pub id: Did,
     #[serde(rename = "type")]
     pub type_: String,
     #[serde(default)]
@@ -82,7 +82,7 @@ impl Default for FullService {
 impl PartialEq for FullService {
     fn eq(&self, other: &Self) -> bool {
         self.recipient_keys == other.recipient_keys &&
-            self.routing_keys == other.routing_keys 
+            self.routing_keys == other.routing_keys
     }
 }
 
@@ -109,6 +109,7 @@ impl TryFrom<(&PairwiseInfo, &CloudAgentInfo)> for FullService {
 #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
+
     use super::*;
 
     #[test]

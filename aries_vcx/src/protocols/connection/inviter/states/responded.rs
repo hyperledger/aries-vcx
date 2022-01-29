@@ -2,9 +2,9 @@ use std::future::Future;
 use std::clone::Clone;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::inviter::states::complete::CompleteState;
-use crate::handlers::connection::inviter::states::initial::InitialState;
-use crate::handlers::connection::util::handle_ping;
+use crate::protocols::connection::inviter::states::complete::CompleteState;
+use crate::protocols::connection::inviter::states::initial::InitialState;
+use crate::protocols::connection::util::handle_ping;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::ack::Ack;
 use crate::messages::connection::did_doc::DidDoc;

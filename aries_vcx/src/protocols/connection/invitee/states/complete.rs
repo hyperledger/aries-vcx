@@ -2,9 +2,9 @@ use std::future::Future;
 use std::clone::Clone;
 
 use crate::error::VcxResult;
-use crate::handlers::connection::invitee::states::requested::RequestedState;
-use crate::handlers::connection::invitee::states::responded::RespondedState;
-use crate::handlers::connection::util::handle_ping;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
+use crate::protocols::connection::invitee::states::responded::RespondedState;
+use crate::protocols::connection::util::handle_ping;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::connection::did_doc::DidDoc;

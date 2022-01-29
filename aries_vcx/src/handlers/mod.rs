@@ -2,14 +2,13 @@ use futures::future::BoxFuture;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::ConnectionState;
-use crate::handlers::connection::invitee::state_machine::InviteeState;
-use crate::handlers::connection::inviter::state_machine::InviterState;
 use crate::handlers::issuance::holder::holder::HolderState;
 use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::proof_presentation::prover::prover::ProverState;
 use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
-
 use crate::messages::a2a::A2AMessage;
+use crate::protocols::connection::invitee::state_machine::InviteeState;
+use crate::protocols::connection::inviter::state_machine::InviterState;
 
 pub mod connection;
 pub mod issuance;

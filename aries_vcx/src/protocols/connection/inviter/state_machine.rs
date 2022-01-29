@@ -1,15 +1,9 @@
+use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
-use std::clone::Clone;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::inviter::states::complete::CompleteState;
-use crate::handlers::connection::inviter::states::invited::InvitedState;
-use crate::handlers::connection::inviter::states::initial::InitialState;
-use crate::handlers::connection::inviter::states::requested::RequestedState;
-use crate::handlers::connection::inviter::states::responded::RespondedState;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::handlers::connection::util::verify_thread_id;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -22,6 +16,12 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::protocols::connection::inviter::states::complete::CompleteState;
+use crate::protocols::connection::inviter::states::initial::InitialState;
+use crate::protocols::connection::inviter::states::invited::InvitedState;
+use crate::protocols::connection::inviter::states::requested::RequestedState;
+use crate::protocols::connection::inviter::states::responded::RespondedState;
+use crate::protocols::connection::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter
@@ -241,11 +241,11 @@ impl SmConnectionInviter {
     async fn _send_response<F, T>(
         state: &RequestedState,
         new_pw_vk: String,
-        send_message: F
+        send_message: F,
     ) -> VcxResult<()>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         send_message(new_pw_vk, state.did_doc.clone(), state.signed_response.to_a2a_message()).await
     }
@@ -270,14 +270,14 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_connection_request<F, T>(self,
-                                     request: Request,
-                                     new_pairwise_info: &PairwiseInfo,
-                                     new_routing_keys: Vec<String>,
-                                     new_service_endpoint: String,
-                                     send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+                                                 request: Request,
+                                                 new_pairwise_info: &PairwiseInfo,
+                                                 new_routing_keys: Vec<String>,
+                                                 new_service_endpoint: String,
+                                                 send_message: F) -> VcxResult<Self>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let bootstrap_pairwise_info = self.pairwise_info.clone();
         let thread_id = request.get_thread_id();
@@ -315,9 +315,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_ping<F, T>(self, ping: Ping, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let Self { state, pairwise_info, .. } = self;
         let state = match state {
@@ -335,9 +335,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_send_ping<F, T>(self, comment: Option<String>, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Responded(state) => {
@@ -369,9 +369,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_discover_features<F, T>(self, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Completed(state) => {
@@ -384,9 +384,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_discovery_query<F, T>(self, query: Query, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Completed(state) => {
@@ -422,9 +422,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_send_response<F, T>(self, send_message: &F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
@@ -449,9 +449,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_ack<F, T>(self, ack: Ack, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let Self { state, pairwise_info, .. } = self.clone();
         let state = match state {
