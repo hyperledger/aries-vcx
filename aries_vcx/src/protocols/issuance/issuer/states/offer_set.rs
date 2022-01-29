@@ -1,5 +1,5 @@
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferSetState {
@@ -7,7 +7,7 @@ pub struct OfferSetState {
     pub credential_json: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
-    pub tails_file: Option<String>
+    pub tails_file: Option<String>,
 }
 
 impl OfferSetState {
@@ -17,7 +17,7 @@ impl OfferSetState {
             credential_json: credential_json.into(),
             cred_def_id: cred_def_id.into(),
             rev_reg_id,
-            tails_file
+            tails_file,
         }
     }
 }

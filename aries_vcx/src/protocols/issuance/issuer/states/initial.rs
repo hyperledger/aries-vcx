@@ -1,5 +1,5 @@
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq)]
 pub struct InitialIssuerState {}

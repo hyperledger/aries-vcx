@@ -1,10 +1,10 @@
-use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
-use crate::protocols::issuance::issuer::states::finished::FinishedState;
-use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
+use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OfferSentState {

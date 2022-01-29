@@ -1,10 +1,7 @@
-use std::future::Future;
 use std::clone::Clone;
+use std::future::Future;
 
 use crate::error::prelude::*;
-use crate::protocols::connection::inviter::states::complete::CompleteState;
-use crate::protocols::connection::inviter::states::initial::InitialState;
-use crate::protocols::connection::util::handle_ping;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::ack::Ack;
 use crate::messages::connection::did_doc::DidDoc;
@@ -12,6 +9,9 @@ use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::protocols::connection::inviter::states::complete::CompleteState;
+use crate::protocols::connection::inviter::states::initial::InitialState;
+use crate::protocols::connection::util::handle_ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
@@ -49,13 +49,13 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 
 impl RespondedState {
     pub async fn handle_ping<F, T>(&self,
-                       ping: &Ping,
-                       pw_vk: &str,
-                       send_message: F
+                                   ping: &Ping,
+                                   pw_vk: &str,
+                                   send_message: F,
     ) -> VcxResult<()>
-    where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         handle_ping(ping, pw_vk, &self.did_doc, send_message).await
     }

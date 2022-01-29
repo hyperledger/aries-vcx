@@ -1,10 +1,10 @@
-use crate::protocols::connection::invitee::states::invited::InvitedState;
-use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::invite::Invitation;
+use crate::messages::connection::problem_report::ProblemReport;
+use crate::protocols::connection::invitee::states::invited::InvitedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
-    problem_report: Option<ProblemReport>
+    problem_report: Option<ProblemReport>,
 }
 
 impl From<(InitialState, Invitation)> for InvitedState {

@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::future::Future;
 
 use crate::error::prelude::*;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -21,6 +20,7 @@ use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::connection::util::verify_thread_id;
 
 #[derive(Clone)]

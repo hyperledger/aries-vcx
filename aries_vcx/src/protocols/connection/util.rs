@@ -1,5 +1,5 @@
-use std::future::Future;
 use std::clone::Clone;
+use std::future::Future;
 
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
@@ -14,13 +14,13 @@ fn _build_ping_response(ping: &Ping) -> PingResponse {
 }
 
 pub async fn handle_ping<F, T>(ping: &Ping,
-                   pw_vk: &str,
-                   did_doc: &DidDoc,
-                   send_message: F
+                               pw_vk: &str,
+                               did_doc: &DidDoc,
+                               send_message: F,
 ) -> VcxResult<()>
-where
-    F: Fn(String, DidDoc, A2AMessage) -> T,
-    T: Future<Output=VcxResult<()>>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
 {
     if ping.response_requested {
         send_message(pw_vk.to_string(), did_doc.clone(), _build_ping_response(ping).to_a2a_message()).await?;

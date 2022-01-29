@@ -1,7 +1,7 @@
-use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {

@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
+use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::{Credential, CredentialData};
 use crate::messages::status::Status;
-use crate::messages::error::ProblemReport;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
