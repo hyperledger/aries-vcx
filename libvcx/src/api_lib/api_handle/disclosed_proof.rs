@@ -10,7 +10,7 @@ use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 use crate::aries_vcx::{
-    handlers::proof_presentation::prover::prover::Prover,
+    handlers::proof_presentation::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 use crate::aries_vcx::messages::a2a::A2AMessage;
@@ -259,7 +259,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof;
     use aries_vcx::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
 
-    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
+    use crate::aries_vcx::handlers::proof_presentation::prover::ProverState;
     use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 
     use super::*;

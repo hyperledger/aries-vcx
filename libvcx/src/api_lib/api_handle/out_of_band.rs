@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use futures::future::FutureExt;
 
 use crate::aries_vcx::handlers::out_of_band::GoalCode;
-use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
+use crate::aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+use crate::aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use crate::aries_vcx::messages::connection::service::ServiceResolvable;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::connection::did::Did;

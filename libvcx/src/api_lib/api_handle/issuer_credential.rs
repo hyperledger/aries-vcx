@@ -6,7 +6,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::issuance::issuer::issuer::Issuer;
+use crate::aries_vcx::handlers::issuance::issuer::Issuer;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use crate::error::prelude::*;
@@ -226,7 +226,7 @@ pub mod tests {
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::{create_cred_def_fake, create_cred_def_fake_unpublished};
     use crate::api_lib::api_handle::issuer_credential;
-    use crate::aries_vcx::handlers::issuance::issuer::issuer::IssuerState;
+    use crate::aries_vcx::handlers::issuance::issuer::IssuerState;
 
     use super::*;
 

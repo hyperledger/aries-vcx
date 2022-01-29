@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::issuance::holder::holder::HolderState;
+use crate::handlers::issuance::holder::HolderState;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 use crate::messages::a2a::{A2AMessage, MessageId};

@@ -10,7 +10,7 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 use crate::aries_vcx::{
-    handlers::issuance::holder::holder::Holder,
+    handlers::issuance::holder::Holder,
     messages::a2a::A2AMessage,
     messages::issuance::credential_offer::CredentialOffer,
 };
@@ -290,7 +290,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
-    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use crate::aries_vcx::handlers::issuance::holder::HolderState;
     use crate::aries_vcx::messages::issuance::credential::Credential;
     use crate::error::VcxErrorKind;
 

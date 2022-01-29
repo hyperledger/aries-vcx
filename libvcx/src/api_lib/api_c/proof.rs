@@ -642,7 +642,7 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use aries_vcx::handlers::proof_presentation::verifier::VerifierState;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;

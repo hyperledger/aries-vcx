@@ -5,7 +5,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
+use crate::aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 use crate::aries_vcx::messages::a2a::A2AMessage;
 use crate::error::prelude::*;
@@ -149,7 +149,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
-    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use crate::aries_vcx::handlers::proof_presentation::verifier::VerifierState;
 
     use super::*;
 

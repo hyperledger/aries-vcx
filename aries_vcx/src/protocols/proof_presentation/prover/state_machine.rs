@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::proof_presentation::prover::prover::ProverState;
+use crate::handlers::proof_presentation::prover::ProverState;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;

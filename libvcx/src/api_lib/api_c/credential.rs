@@ -897,7 +897,7 @@ mod tests {
     use serde_json::Value;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-    use aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::handlers::issuance::holder::HolderState;
     use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::prelude::*;
-use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
+use crate::handlers::proof_presentation::verifier::VerifierState;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
