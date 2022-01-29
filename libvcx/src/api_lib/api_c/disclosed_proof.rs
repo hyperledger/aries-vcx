@@ -925,7 +925,7 @@ mod tests {
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::aries_vcx::handlers::proof_presentation::prover::ProverState;
+    use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     use super::*;
 

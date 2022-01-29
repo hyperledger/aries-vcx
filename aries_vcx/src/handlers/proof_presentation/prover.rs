@@ -9,23 +9,11 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
-use crate::protocols::proof_presentation::prover::state_machine::ProverSM;
+use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
     prover_sm: ProverSM,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ProverState {
-    Initial,
-    PresentationProposalSent,
-    PresentationRequestReceived,
-    PresentationPrepared,
-    PresentationPreparationFailed,
-    PresentationSent,
-    Finished,
-    Failed,
 }
 
 impl Prover {

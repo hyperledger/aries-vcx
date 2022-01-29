@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::proof_presentation::prover::ProverState;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -26,6 +25,18 @@ pub struct ProverSM {
     source_id: String,
     thread_id: String,
     state: ProverFullState,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ProverState {
+    Initial,
+    PresentationProposalSent,
+    PresentationRequestReceived,
+    PresentationPrepared,
+    PresentationPreparationFailed,
+    PresentationSent,
+    Finished,
+    Failed,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -93,7 +93,7 @@ mod tests {
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-    use aries_vcx::handlers::proof_presentation::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::{Verifier, VerifierState};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
@@ -114,6 +114,7 @@ mod tests {
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},
