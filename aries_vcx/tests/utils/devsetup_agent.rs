@@ -16,12 +16,12 @@ pub mod test {
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
-    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
+    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::schema::schema::Schema;
-    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+    use aries_vcx::libindy::schema;
+    use aries_vcx::libindy::credential_def::PublicEntityStateType;
     use aries_vcx::messages::issuance::credential_offer::OfferInfo;
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};

@@ -1,5 +1,5 @@
 use crate::error::{VcxErrorKind, VcxResult};
-use crate::handlers::issuance::credential_def::PublicEntityStateType;
+use crate::libindy::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::RevocationRegistryDefinition;
 

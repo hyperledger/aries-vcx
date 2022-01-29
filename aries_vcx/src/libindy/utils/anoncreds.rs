@@ -666,7 +666,7 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::{libindy, settings};
-    use crate::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
+    use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use crate::handlers::issuance::issuer::utils::encode_attributes;
     use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;

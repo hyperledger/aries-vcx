@@ -3,7 +3,7 @@ use std::fmt;
 use serde_json;
 
 use crate::error::prelude::*;
-use crate::handlers::issuance::credential_def::revocation_registry::RevocationRegistry;
+use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
 use crate::libindy::utils::anoncreds;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;

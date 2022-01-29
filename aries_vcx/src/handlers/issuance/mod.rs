@@ -6,8 +6,6 @@ use crate::settings;
 pub mod issuer;
 pub mod holder;
 pub mod messages;
-pub mod credential_def;
-pub mod schema;
 
 pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceMessage) -> VcxResult<()> {
     if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {

@@ -1,7 +1,7 @@
 use serde_json;
 
-use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
-use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
+use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
+use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
@@ -183,7 +183,7 @@ pub mod tests {
 
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    use aries_vcx::handlers::issuance::credential_def::RevocationDetailsBuilder;
+    use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{

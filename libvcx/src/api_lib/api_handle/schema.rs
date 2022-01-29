@@ -2,8 +2,8 @@ use std::string::ToString;
 
 use serde_json;
 
-use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
-use aries_vcx::handlers::issuance::schema::schema::{Schema, SchemaData};
+use aries_vcx::libindy::credential_def::PublicEntityStateType;
+use aries_vcx::libindy::schema::{Schema, SchemaData};
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
 

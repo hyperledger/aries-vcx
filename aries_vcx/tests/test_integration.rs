@@ -88,7 +88,7 @@ mod tests {
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
     use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
-    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
+    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
