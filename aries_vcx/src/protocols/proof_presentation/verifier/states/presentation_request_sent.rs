@@ -1,11 +1,11 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::handlers::proof_presentation::verifier::state_machine::RevocationStatus;
-use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
+use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::settings;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

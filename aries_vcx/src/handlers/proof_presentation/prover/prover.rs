@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::proof_presentation::prover::messages::ProverMessages;
-use crate::handlers::proof_presentation::prover::state_machine::ProverSM;
+use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::state_machine::ProverSM;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -111,9 +111,9 @@ impl Prover {
     pub fn get_thread_id(&self) -> VcxResult<String> { self.prover_sm.get_thread_id() }
 
     pub async fn step(&mut self,
-                message: ProverMessages,
-                send_message: Option<SendClosure>)
-                -> VcxResult<()>
+                      message: ProverMessages,
+                      send_message: Option<SendClosure>)
+                      -> VcxResult<()>
     {
         self.prover_sm = self.prover_sm.clone().step(message, send_message).await?;
         Ok(())
@@ -156,9 +156,9 @@ impl Prover {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils;
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use crate::utils;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::*;
     use crate::utils::get_temp_dir_path;

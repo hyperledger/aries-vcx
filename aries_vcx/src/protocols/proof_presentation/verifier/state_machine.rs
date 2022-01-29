@@ -2,22 +2,22 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
-use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use crate::handlers::proof_presentation::verifier::states::initial::InitialVerifierState;
-use crate::handlers::proof_presentation::verifier::states::finished::FinishedState;
-use crate::handlers::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
-use crate::handlers::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
-use crate::handlers::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
 use crate::handlers::proof_presentation::verifier::verifier::VerifierState;
-use crate::handlers::proof_presentation::verifier::verify_thread_id;
+use crate::handlers::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
+use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::status::Status;
+use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
+use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
+use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
+use crate::protocols::proof_presentation::verifier::states::presentation_proposal_received::PresentationProposalReceivedState;
+use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
+use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
+use crate::protocols::proof_presentation::verifier::verify_thread_id;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -137,7 +137,7 @@ impl VerifierSM {
                     .set_request_presentations_attach(request_data)?;
                 VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(presentation_request))
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot set presentation request in this state")) }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot set presentation request in this state")); }
         };
         Ok(Self { source_id, state, thread_id })
     }
@@ -343,7 +343,6 @@ impl VerifierSM {
             _ => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Presentation proposal not received yet"))
         }
     }
-
 }
 
 #[cfg(test)]
@@ -354,7 +353,7 @@ pub mod test {
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
     use crate::messages::proof_presentation::test::{_ack, _problem_report};
     use crate::test::source_id;
-    use crate::utils::devsetup::{SetupMocks, SetupEmpty};
+    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
 
     use super::*;
 
@@ -367,7 +366,7 @@ pub mod test {
     }
 
     pub fn _send_message() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| Box::pin( async { VcxResult::Ok(()) })))
+        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
 
     pub fn _reason() -> String {

@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::proof_presentation::verifier::messages::VerifierMessages;
-use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::handlers::proof_presentation::verifier::state_machine::VerifierSM;
+use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
+use crate::protocols::proof_presentation::verifier::state_machine::VerifierSM;
+use crate::handlers::SendClosure;
 use crate::messages::a2a::A2AMessage;
+use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::*;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -65,7 +65,7 @@ impl Verifier {
 
     pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
-        self.step(VerifierMessages::SendPresentationAck(), Some(send_message)).await 
+        self.step(VerifierMessages::SendPresentationAck(), Some(send_message)).await
     }
 
     pub fn set_request(&mut self, presentation_request_data: PresentationRequestData, comment: Option<String>) -> VcxResult<()> {
@@ -114,7 +114,7 @@ impl Verifier {
     }
 
     pub async fn step(&mut self, message: VerifierMessages, send_message: Option<SendClosure>)
-                -> VcxResult<()> {
+                      -> VcxResult<()> {
         self.verifier_sm = self.verifier_sm.clone().step(message, send_message).await?;
         Ok(())
     }
@@ -148,25 +148,24 @@ impl Verifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
-    use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::messages::connection::did_doc::DidDoc;
     use crate::messages::a2a::A2AMessage;
     use crate::messages::basic_message::message::BasicMessage;
-    use crate::utils::devsetup::*;
-    use crate::utils::send_message;
+    use crate::messages::connection::did_doc::DidDoc;
+    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
+    use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mock_settings::MockBuilder;
+    use crate::utils::send_message;
 
     use super::*;
 
     fn _verifier() -> Verifier {
-    let presentation_request_data =
-        PresentationRequestData::create("1").unwrap()
-            .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
-            .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
-            .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
+        let presentation_request_data =
+            PresentationRequestData::create("1").unwrap()
+                .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
+                .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
+                .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
-
     }
 
     pub fn _send_message() -> Option<SendClosure> {

@@ -1,4 +1,4 @@
-use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;

@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
-use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::handlers::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
+use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;

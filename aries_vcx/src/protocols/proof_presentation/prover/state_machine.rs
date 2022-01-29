@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
-use crate::handlers::proof_presentation::prover::messages::ProverMessages;
 use crate::handlers::proof_presentation::prover::prover::ProverState;
-use crate::handlers::proof_presentation::prover::states::initial::InitialProverState;
-use crate::handlers::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
-use crate::handlers::proof_presentation::prover::states::finished::FinishedState;
-use crate::handlers::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
-use crate::handlers::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::handlers::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::handlers::proof_presentation::prover::states::presentation_sent::PresentationSentState;
-use crate::handlers::proof_presentation::prover::verify_thread_id;
-use crate::messages::a2a::{MessageId, A2AMessage};
+use crate::handlers::SendClosure;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
+use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
+use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
+use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
+use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
+use crate::protocols::proof_presentation::prover::states::presentation_proposal_sent::PresentationProposalSent;
+use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
+use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
+use crate::protocols::proof_presentation::prover::verify_thread_id;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -95,8 +95,8 @@ impl ProverSM {
     }
 
     pub async fn step(self,
-                message: ProverMessages,
-                send_message: Option<SendClosure>,
+                      message: ProverMessages,
+                      send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
         let ProverSM { source_id, state, thread_id } = self;
