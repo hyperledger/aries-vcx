@@ -1,14 +1,15 @@
 use std::collections::HashMap;
+
 use futures::future::FutureExt;
 
-use crate::aries_vcx::handlers::out_of_band::GoalCode;
-use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
-use crate::aries_vcx::messages::connection::service::ServiceResolvable;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::aries_vcx::messages::connection::did::Did;
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
+use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
+use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use crate::aries_vcx::handlers::out_of_band::GoalCode;
+use crate::aries_vcx::messages::a2a::A2AMessage;
+use crate::aries_vcx::messages::connection::service::ServiceResolvable;
 use crate::error::prelude::*;
 
 lazy_static! {
@@ -86,7 +87,7 @@ pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 pub async fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        *oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
+        *oob = oob.clone().append_service(&ServiceResolvable::Did(did.into()));
         Ok(())
     }.boxed()).await
 }
@@ -125,8 +126,8 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
         let mut conn_map = HashMap::new();
         for conn_handle in conn_handles {
             let connection = CONNECTION_MAP.get(*conn_handle, |connection, []| async move {
-                    Ok(connection.clone())
-                }.boxed(),
+                Ok(connection.clone())
+            }.boxed(),
             ).await?;
             conn_map.insert(*conn_handle, connection);
         };
@@ -136,10 +137,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
             if let Some((&handle, _)) = conn_map
                 .iter()
                 .find(|(_, conn)| *conn == connection) {
-                    Ok((handle, true))
-                } else {
-                    Err(VcxError::from(VcxErrorKind::InvalidState))
-                }
+                Ok((handle, true))
+            } else {
+                Err(VcxError::from(VcxErrorKind::InvalidState))
+            }
         } else {
             Ok((0, false))
         }
@@ -190,6 +191,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 pub mod tests {
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::utils::devsetup::SetupMocks;
+
     use super::*;
 
     #[tokio::test]
@@ -212,6 +214,6 @@ pub mod tests {
         let resolved_service = get_services(oob_handle).await.unwrap();
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
-        assert_eq!(ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()), resolved_service[1]);
+        assert_eq!(ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".into()), resolved_service[1]);
     }
 }

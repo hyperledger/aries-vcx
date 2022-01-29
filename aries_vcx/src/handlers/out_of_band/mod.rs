@@ -1,14 +1,14 @@
-pub mod receiver;
-pub mod sender;
-
-// TODO: move to messages
-use crate::messages::mime_type::MimeType;
+use crate::a2a_message;
+use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_type::MessageType;
-use crate::messages::connection::service::ServiceResolvable;
 use crate::messages::attachment::Attachments;
-use crate::error::prelude::*;
-use crate::a2a_message;
+use crate::messages::connection::service::ServiceResolvable;
+// TODO: move to messages
+use crate::messages::mime_type::MimeType;
+
+pub mod receiver;
+pub mod sender;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum GoalCode {
@@ -19,12 +19,12 @@ pub enum GoalCode {
     #[serde(rename = "create-account")]
     CreateAccount,
     #[serde(rename = "p2p-messaging")]
-    P2PMessaging
+    P2PMessaging,
 }
 
 pub enum HandshakeProtocol {
     ConnectionV1,
-    DidExchangeV1
+    DidExchangeV1,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
@@ -63,13 +63,13 @@ impl OutOfBand {
 // TODO: Add more tests
 #[cfg(test)]
 mod test {
-    use super::*;
-
+    use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
+    use crate::handlers::out_of_band::sender::OutOfBandSender;
     use crate::messages::connection::service::FullService;
-    use crate::utils::mockdata::mockdata_oob;
     use crate::utils::devsetup::SetupMocks;
-    use crate::handlers::out_of_band::sender::sender::OutOfBandSender;
-    use crate::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
+    use crate::utils::mockdata::mockdata_oob;
+
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]
