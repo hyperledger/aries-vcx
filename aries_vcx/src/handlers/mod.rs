@@ -2,7 +2,7 @@ use futures::future::BoxFuture;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::ConnectionState;
-use crate::handlers::proof_presentation::verifier::VerifierState;
+use crate::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::invitee::state_machine::InviteeState;
 use crate::protocols::connection::inviter::state_machine::InviterState;

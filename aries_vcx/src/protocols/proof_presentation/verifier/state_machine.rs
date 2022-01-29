@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::prelude::*;
-use crate::handlers::proof_presentation::verifier::VerifierState;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -24,6 +23,16 @@ pub struct VerifierSM {
     source_id: String,
     thread_id: String,
     state: VerifierFullState,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum VerifierState {
+    Initial,
+    PresentationProposalReceived,
+    PresentationRequestSet,
+    PresentationRequestSent,
+    Finished,
+    Failed,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

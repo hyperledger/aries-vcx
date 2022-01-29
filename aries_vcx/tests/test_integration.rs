@@ -95,7 +95,7 @@ mod tests {
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
@@ -115,6 +115,7 @@ mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},

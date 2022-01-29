@@ -9,7 +9,7 @@ pub mod test {
     use aries_vcx::handlers::issuance::issuer::Issuer;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::verifier::{Verifier, VerifierState};
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::libindy::credential_def::PublicEntityStateType;
@@ -27,6 +27,7 @@ pub mod test {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::settings;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};

@@ -2,27 +2,17 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
-use crate::protocols::proof_presentation::verifier::state_machine::VerifierSM;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::*;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
+use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
     verifier_sm: VerifierSM,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum VerifierState {
-    Initial,
-    PresentationProposalReceived,
-    PresentationRequestSet,
-    PresentationRequestSent,
-    Finished,
-    Failed,
 }
 
 impl Verifier {
