@@ -68,8 +68,8 @@ mod test {
     use crate::messages::connection::service::FullService;
     use crate::utils::mockdata::mockdata_oob;
     use crate::utils::devsetup::SetupMocks;
-    use crate::handlers::out_of_band::sender::OutOfBandSender;
-    use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
+    use crate::handlers::out_of_band::sender::sender::OutOfBandSender;
+    use crate::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
 
     #[test]
     #[cfg(feature = "general_test")]

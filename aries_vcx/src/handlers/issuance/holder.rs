@@ -7,21 +7,11 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::holder::state_machine::HolderSM;
+use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
     holder_sm: HolderSM,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum HolderState {
-    Initial,
-    ProposalSent,
-    OfferReceived,
-    RequestSent,
-    Finished,
-    Failed,
 }
 
 impl Holder {

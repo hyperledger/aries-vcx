@@ -86,15 +86,15 @@ mod tests {
     use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::holder::{Holder, HolderState};
-    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerConfig, IssuerState};
+    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
-    use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
-    use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
+    use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
+    use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
     use aries_vcx::handlers::proof_presentation::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::{Verifier, VerifierState};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
@@ -112,6 +112,7 @@ mod tests {
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},

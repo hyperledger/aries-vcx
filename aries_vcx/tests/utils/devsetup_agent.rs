@@ -4,11 +4,11 @@ pub mod test {
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
+    use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerState};
-    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::{Prover, ProverState};
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::{Verifier, VerifierState};
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
@@ -24,6 +24,7 @@ pub mod test {
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::settings;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
