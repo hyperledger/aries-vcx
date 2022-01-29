@@ -88,6 +88,12 @@ impl PublicAgent {
     }
 }
 
+impl From<&PublicAgent> for PairwiseInfo {
+    fn from(agent: &PublicAgent) -> Self {
+        agent.pairwise_info()
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

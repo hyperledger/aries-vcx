@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::SendClosure;
+use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::*;

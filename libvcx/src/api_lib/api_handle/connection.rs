@@ -6,7 +6,7 @@ use futures::future::FutureExt;
 use aries_vcx::agency_client::get_message::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::messages::connection::invite::PublicInvitation;
-use aries_vcx::handlers::SendClosure;
+use aries_vcx::protocols::SendClosure;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
