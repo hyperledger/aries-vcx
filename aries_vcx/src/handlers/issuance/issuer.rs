@@ -10,7 +10,7 @@ use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::state_machine::IssuerSM;
+use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -22,18 +22,6 @@ pub struct IssuerConfig {
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
     pub tails_file: Option<String>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum IssuerState {
-    Initial,
-    OfferSet,
-    ProposalReceived,
-    OfferSent,
-    RequestReceived,
-    CredentialSent,
-    Finished,
-    Failed,
 }
 
 fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {

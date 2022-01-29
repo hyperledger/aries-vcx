@@ -88,7 +88,7 @@ mod tests {
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerConfig, IssuerState};
+    use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerConfig};
     use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
@@ -113,6 +113,7 @@ mod tests {
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+    use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},

@@ -902,7 +902,7 @@ pub mod tests {
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::aries_vcx::handlers::issuance::issuer::IssuerState;
+    use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";

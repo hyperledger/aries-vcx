@@ -226,7 +226,7 @@ pub mod tests {
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::{create_cred_def_fake, create_cred_def_fake_unpublished};
     use crate::api_lib::api_handle::issuer_credential;
-    use crate::aries_vcx::handlers::issuance::issuer::IssuerState;
+    use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
 

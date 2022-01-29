@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::handlers::issuance::issuer::IssuerState;
 use crate::libindy::credentials::encode_attributes;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds;
@@ -32,6 +31,18 @@ pub enum IssuerFullState {
     RequestReceived(RequestReceivedState),
     CredentialSent(CredentialSentState),
     Finished(FinishedState),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum IssuerState {
+    Initial,
+    OfferSet,
+    ProposalReceived,
+    OfferSent,
+    RequestReceived,
+    CredentialSent,
+    Finished,
+    Failed,
 }
 
 // todo: Use this approach for logging in other protocols as well.
