@@ -4,7 +4,6 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 
 pub mod issuer;
-pub mod utils;
 
 pub async fn get_credential_proposal_messages(connection: &Connection) -> VcxResult<String> {
     let credential_proposals: Vec<CredentialProposal> = connection.get_messages()

@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::issuance::issuer::issuer::IssuerState;
-use crate::handlers::issuance::issuer::utils::encode_attributes;
+use crate::libindy::credentials::encode_attributes;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
