@@ -93,7 +93,7 @@ mod tests {
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
     use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
