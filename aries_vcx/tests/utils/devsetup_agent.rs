@@ -4,7 +4,7 @@ pub mod test {
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
-    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
