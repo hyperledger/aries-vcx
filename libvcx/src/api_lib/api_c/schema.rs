@@ -481,12 +481,14 @@ mod tests {
 
     use aries_vcx::libindy::credential_def::PublicEntityStateType;
     use aries_vcx::libindy::schema;
+    use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
 
     use crate::api_lib;
+    use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -663,7 +665,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (handle, _) = schema::prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
+        let (handle, _) = prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));

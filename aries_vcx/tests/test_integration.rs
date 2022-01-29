@@ -86,8 +86,8 @@ mod tests {
     use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};

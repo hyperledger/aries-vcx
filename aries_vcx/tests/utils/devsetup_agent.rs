@@ -13,8 +13,8 @@ pub mod test {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
@@ -26,6 +26,7 @@ pub mod test {
     use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
     use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
+    use aries_vcx::libindy::schema::Schema;
     use aries_vcx::messages::connection::invite::PublicInvitation;
     use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
