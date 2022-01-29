@@ -1,12 +1,12 @@
 use crate::error::prelude::*;
-use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::libindy::utils::anoncreds::get_cred_def_json;
 use crate::settings;
 
 pub mod issuer;
 pub mod holder;
 
-pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceMessage) -> VcxResult<()> {
+pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> VcxResult<()> {
     if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle message {:?}: thread id does not match, expected {:?}", message, thread_id)));
     };

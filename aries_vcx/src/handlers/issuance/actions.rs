@@ -9,7 +9,7 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 type OptionalComment = Option<String>;
 
 #[derive(Debug, Clone)]
-pub enum CredentialIssuanceMessage {
+pub enum CredentialIssuanceAction {
     CredentialSend(),
     CredentialProposalSend(CredentialProposalData),
     CredentialProposal(CredentialProposal),
@@ -23,7 +23,7 @@ pub enum CredentialIssuanceMessage {
     Unknown,
 }
 
-impl CredentialIssuanceMessage {
+impl CredentialIssuanceAction {
     pub fn thread_id_matches(&self, thread_id: &str) -> bool {
         match self {
             Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
@@ -34,29 +34,29 @@ impl CredentialIssuanceMessage {
     }
 }
 
-impl From<A2AMessage> for CredentialIssuanceMessage {
+impl From<A2AMessage> for CredentialIssuanceAction {
     fn from(msg: A2AMessage) -> Self {
         match msg {
             A2AMessage::CredentialProposal(proposal) => {
-                CredentialIssuanceMessage::CredentialProposal(proposal)
+                CredentialIssuanceAction::CredentialProposal(proposal)
             }
             A2AMessage::CredentialOffer(offer) => {
-                CredentialIssuanceMessage::CredentialOffer(offer)
+                CredentialIssuanceAction::CredentialOffer(offer)
             }
             A2AMessage::CredentialRequest(request) => {
-                CredentialIssuanceMessage::CredentialRequest(request)
+                CredentialIssuanceAction::CredentialRequest(request)
             }
             A2AMessage::Credential(credential) => {
-                CredentialIssuanceMessage::Credential(credential)
+                CredentialIssuanceAction::Credential(credential)
             }
             A2AMessage::Ack(ack) | A2AMessage::CredentialAck(ack) => {
-                CredentialIssuanceMessage::CredentialAck(ack)
+                CredentialIssuanceAction::CredentialAck(ack)
             }
             A2AMessage::CommonProblemReport(report) => {
-                CredentialIssuanceMessage::ProblemReport(report)
+                CredentialIssuanceAction::ProblemReport(report)
             }
             _ => {
-                CredentialIssuanceMessage::Unknown
+                CredentialIssuanceAction::Unknown
             }
         }
     }

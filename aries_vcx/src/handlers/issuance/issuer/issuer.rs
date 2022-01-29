@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
@@ -120,7 +120,7 @@ impl Issuer {
     }
 
     pub async fn send_credential(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialSend(), Some(send_message)).await
+        self.step(CredentialIssuanceAction::CredentialSend(), Some(send_message)).await
     }
 
     pub fn get_state(&self) -> IssuerState {
@@ -163,7 +163,7 @@ impl Issuer {
         Ok(self.issuer_sm.credential_status())
     }
 
-    pub async fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<()> {
+    pub async fn step(&mut self, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message).await?;
         Ok(())
     }
@@ -217,13 +217,13 @@ pub mod test {
 
         async fn to_request_received_state(mut self) -> Issuer {
             self = self.to_offer_sent_state_unrevokable();
-            self.step(CredentialIssuanceMessage::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
 
         async fn to_finished_state_unrevokable(mut self) -> Issuer {
             self = self.to_request_received_state().await;
-            self.step(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
             self
         }
     }

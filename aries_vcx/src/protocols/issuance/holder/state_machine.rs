@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::issuance::holder::holder::HolderState;
-use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::handlers::issuance::verify_thread_id;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
@@ -125,13 +125,13 @@ impl HolderSM {
         HolderSM { state, source_id, thread_id }
     }
 
-    pub async fn handle_message(self, cim: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<HolderSM> {
+    pub async fn handle_message(self, cim: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<HolderSM> {
         trace!("Holder::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         let HolderSM { state, source_id, thread_id } = self;
         verify_thread_id(&thread_id, &cim)?;
         let state = match state {
             HolderFullState::Initial(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialProposalSend(proposal_data) => {
+                CredentialIssuanceAction::CredentialProposalSend(proposal_data) => {
                     let proposal = CredentialProposal::from(proposal_data)
                         .set_id(&thread_id);
                     send_message.ok_or(
@@ -144,10 +144,10 @@ impl HolderSM {
                 }
             },
             HolderFullState::ProposalSent(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialOffer(offer) => {
+                CredentialIssuanceAction::CredentialOffer(offer) => {
                     HolderFullState::OfferReceived(OfferReceivedState::new(offer))
                 }
-                CredentialIssuanceMessage::ProblemReport(problem_report) => {
+                CredentialIssuanceAction::ProblemReport(problem_report) => {
                     HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
@@ -156,7 +156,7 @@ impl HolderSM {
                 }
             },
             HolderFullState::OfferReceived(state_data) => match cim {
-                CredentialIssuanceMessage::CredentialRequestSend(my_pw_did) => {
+                CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
                     let request = _make_credential_request(my_pw_did, &state_data.offer);
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
@@ -178,7 +178,7 @@ impl HolderSM {
                         }
                     }
                 }
-                CredentialIssuanceMessage::CredentialProposalSend(proposal_data) => {
+                CredentialIssuanceAction::CredentialProposalSend(proposal_data) => {
                     let proposal = CredentialProposal::from(proposal_data)
                         .set_thread_id(&thread_id);
                     send_message.ok_or(
@@ -186,7 +186,7 @@ impl HolderSM {
                     )?(proposal.to_a2a_message()).await?;
                     HolderFullState::ProposalSent(ProposalSentState::new(proposal))
                 }
-                CredentialIssuanceMessage::CredentialOfferReject(comment) => {
+                CredentialIssuanceAction::CredentialOfferReject(comment) => {
                     let problem_report = ProblemReport::create()
                         .set_thread_id(&thread_id)
                         .set_comment(comment);
@@ -201,7 +201,7 @@ impl HolderSM {
                 }
             },
             HolderFullState::RequestSent(state_data) => match cim {
-                CredentialIssuanceMessage::Credential(credential) => {
+                CredentialIssuanceAction::Credential(credential) => {
                     let result = _store_credential(&credential, &state_data.req_meta, &state_data.cred_def_json);
                     match result {
                         Ok((cred_id, rev_reg_def_json)) => {
@@ -224,7 +224,7 @@ impl HolderSM {
                         }
                     }
                 }
-                CredentialIssuanceMessage::ProblemReport(problem_report) => {
+                CredentialIssuanceAction::ProblemReport(problem_report) => {
                     HolderFullState::Finished(problem_report.into())
                 }
                 _ => {
@@ -429,13 +429,13 @@ mod test {
 
     impl HolderSM {
         async fn to_request_sent_state(mut self) -> HolderSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            self = self.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
             self
         }
 
         async fn to_finished_state(mut self) -> HolderSM {
-            self = self.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            self = self.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
+            self = self.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            self = self.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             self
         }
     }
@@ -473,7 +473,7 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
 
             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
         }
@@ -486,7 +486,7 @@ mod test {
             let credential_offer = CredentialOffer::create().set_offers_attach(r#"{"credential offer": {}}"#).unwrap();
 
             let mut holder_sm = HolderSM::from_offer(credential_offer, "test source".to_string());
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
 
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
@@ -498,10 +498,10 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialSend(), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::ProblemReport(_problem_report()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
         }
 
@@ -511,8 +511,8 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
 
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
             assert_eq!(Status::Success.code(), holder_sm.credential_status());
@@ -524,8 +524,8 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::Credential(Credential::create()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::Credential(Credential::create()), _send_message()).await.unwrap();
 
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
@@ -537,8 +537,8 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::ProblemReport(_problem_report()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::ProblemReport(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), holder_sm.credential_status());
@@ -550,12 +550,12 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::RequestSent(_), holder_sm.state);
         }
 
@@ -565,16 +565,16 @@ mod test {
             let _setup = SetupMocks::init();
 
             let mut holder_sm = _holder_sm();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
 
-            holder_sm = holder_sm.handle_message(CredentialIssuanceMessage::CredentialAck(_ack()), _send_message()).await.unwrap();
+            holder_sm = holder_sm.handle_message(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             assert_match!(HolderFullState::Finished(_), holder_sm.state);
         }
     }

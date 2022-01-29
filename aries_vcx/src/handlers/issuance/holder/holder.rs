@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::handlers::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
@@ -38,15 +38,15 @@ impl Holder {
     }
 
     pub async fn send_proposal(&mut self, credential_proposal: CredentialProposalData, send_message: SendClosure) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialProposalSend(credential_proposal), Some(send_message)).await
+        self.step(CredentialIssuanceAction::CredentialProposalSend(credential_proposal), Some(send_message)).await
     }
 
     pub async fn send_request(&mut self, my_pw_did: String, send_message: SendClosure) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialRequestSend(my_pw_did), Some(send_message)).await
+        self.step(CredentialIssuanceAction::CredentialRequestSend(my_pw_did), Some(send_message)).await
     }
 
     pub async fn reject_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
-        self.step(CredentialIssuanceMessage::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
+        self.step(CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -109,7 +109,7 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn step(&mut self, message: CredentialIssuanceMessage, send_message: Option<SendClosure>) -> VcxResult<()> {
+    pub async fn step(&mut self, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().handle_message(message, send_message).await?;
         Ok(())
     }
@@ -152,10 +152,10 @@ pub mod test {
 
     impl Holder {
         async fn to_finished_state(mut self) -> Holder {
-            self.step(CredentialIssuanceMessage::CredentialProposalSend(_credential_proposal_data()), _send_message()).await.unwrap();
-            self.step(CredentialIssuanceMessage::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
-            self.step(CredentialIssuanceMessage::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            self.step(CredentialIssuanceMessage::Credential(_credential()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             self
         }
     }
