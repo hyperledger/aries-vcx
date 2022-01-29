@@ -3,8 +3,6 @@ use crate::handlers::connection::connection::Connection;
 use crate::messages::a2a::A2AMessage;
 
 pub mod holder;
-mod state_machine;
-mod states;
 
 pub async fn get_credential_offer_messages(connection: &Connection) -> VcxResult<String> {
     let credential_offers: Vec<A2AMessage> = connection.get_messages()

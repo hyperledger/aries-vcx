@@ -1,4 +1,4 @@
-use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]

@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::handlers::issuance::is_cred_def_revokable;
-use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

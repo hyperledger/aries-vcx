@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::issuance::holder::state_machine::HolderSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposalData;
+use crate::protocols::issuance::holder::state_machine::HolderSM;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {

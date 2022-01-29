@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
-use crate::handlers::issuance::holder::states::finished::FinishedHolderState;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::status::Status;
+use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestSentState {

@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::issuance::issuer::state_machine::IssuerSM;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
+use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
+use crate::protocols::issuance::issuer::state_machine::IssuerSM;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -113,7 +113,7 @@ impl Issuer {
         } else {
             return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,
-                format!("Can't send credential offer in state {:?}", self.issuer_sm.get_state())
+                format!("Can't send credential offer in state {:?}", self.issuer_sm.get_state()),
             ));
         }
         Ok(())
@@ -184,10 +184,10 @@ impl Issuer {
 
 #[cfg(test)]
 pub mod test {
-    use crate::handlers::issuance::issuer::state_machine::test::_send_message;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
+    use crate::protocols::issuance::issuer::state_machine::test::_send_message;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

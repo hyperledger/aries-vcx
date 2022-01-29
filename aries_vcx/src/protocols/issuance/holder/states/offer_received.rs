@@ -1,8 +1,8 @@
 use crate::error::prelude::*;
-use crate::handlers::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
-use crate::handlers::issuance::holder::states::request_sent::RequestSentState;
 use crate::handlers::issuance::is_cred_def_revokable;
 use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
+use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct OfferReceivedState {

@@ -2,26 +2,26 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::handlers::SendClosure;
 use crate::handlers::issuance::issuer::issuer::IssuerState;
-use crate::handlers::issuance::issuer::states::initial::InitialIssuerState;
-use crate::handlers::issuance::issuer::states::proposal_received::ProposalReceivedState;
-use crate::handlers::issuance::issuer::states::offer_sent::OfferSentState;
-use crate::handlers::issuance::issuer::states::requested_received::RequestReceivedState;
-use crate::handlers::issuance::issuer::states::credential_sent::CredentialSentState;
-use crate::handlers::issuance::issuer::states::finished::FinishedState;
-use crate::handlers::issuance::issuer::states::offer_set::OfferSetState;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
 use crate::handlers::issuance::messages::CredentialIssuanceMessage;
 use crate::handlers::issuance::verify_thread_id;
+use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
+use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
+use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
+use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
+use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
+use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -124,7 +124,7 @@ impl IssuerSM {
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
-            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); }
             IssuerFullState::OfferSet(state) => state.rev_reg_id.clone(),
             IssuerFullState::ProposalReceived(state) => match &state.offer_info {
                 Some(offer_info) => offer_info.rev_reg_id.clone(),
@@ -144,7 +144,7 @@ impl IssuerSM {
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
         match &self.state {
-            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); },
+            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); }
             IssuerFullState::ProposalReceived(state) => state.is_revokable(),
             IssuerFullState::OfferSet(state) => Ok(state.rev_reg_id.is_some()),
             IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
@@ -244,13 +244,13 @@ impl IssuerSM {
                     &offer_info.credential_json,
                     &offer_info.cred_def_id,
                     offer_info.rev_reg_id.clone(),
-                    offer_info.tails_file.clone()
+                    offer_info.tails_file.clone(),
                 ))
             }
             _ => {
                 return Err(VcxError::from_msg(VcxErrorKind::InvalidState,
-                                              format!("Can not set_offer in current state {}.", state)
-                ))
+                                              format!("Can not set_offer in current state {}.", state),
+                ));
             }
         };
         Ok(Self::step(source_id, thread_id, state))
@@ -270,7 +270,7 @@ impl IssuerSM {
             IssuerFullState::OfferSet(state) => IssuerFullState::OfferSent(state.into()),
             IssuerFullState::OfferSent(state) => IssuerFullState::OfferSent(state),
             _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidState,
-                                               format!("Can not mark_as_offer_sent in current state {}.", state)
+                                               format!("Can not mark_as_offer_sent in current state {}.", state),
             ))
         };
         Ok(Self::step(source_id, thread_id, state))
@@ -409,15 +409,15 @@ fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, 
 
 #[cfg(test)]
 pub mod test {
+    use crate::messages::a2a::A2AMessage;
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use crate::messages::issuance::test::{_ack, _problem_report};
-    use crate::messages::a2a::A2AMessage;
     use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 

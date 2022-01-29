@@ -1,5 +1,5 @@
-use crate::handlers::issuance::issuer::state_machine::RevocationInfoV1;
-use crate::handlers::issuance::issuer::states::finished::FinishedState;
+use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
+use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
