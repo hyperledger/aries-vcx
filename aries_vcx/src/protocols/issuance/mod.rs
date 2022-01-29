@@ -1,10 +1,11 @@
 use crate::error::prelude::*;
-use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::libindy::utils::anoncreds::get_cred_def_json;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::settings;
 
 pub mod issuer;
 pub mod holder;
+pub mod actions;
 
 pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> VcxResult<()> {
     if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {

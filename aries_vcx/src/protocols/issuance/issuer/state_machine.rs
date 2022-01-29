@@ -4,8 +4,6 @@ use std::fmt::Display;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::handlers::issuance::issuer::issuer::IssuerState;
 use crate::handlers::issuance::issuer::utils::encode_attributes;
-use crate::handlers::issuance::actions::CredentialIssuanceAction;
-use crate::handlers::issuance::verify_thread_id;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
@@ -15,6 +13,7 @@ use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::protocols::issuance::issuer::states::initial::InitialIssuerState;
@@ -22,6 +21,7 @@ use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
+use crate::protocols::issuance::verify_thread_id;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {

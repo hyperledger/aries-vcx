@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::issuance::holder::holder::HolderState;
-use crate::handlers::issuance::actions::CredentialIssuanceAction;
-use crate::handlers::issuance::verify_thread_id;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 use crate::messages::a2a::{A2AMessage, MessageId};
@@ -14,11 +12,13 @@ use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
 use crate::protocols::issuance::holder::states::offer_received::OfferReceivedState;
 use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
+use crate::protocols::issuance::verify_thread_id;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {

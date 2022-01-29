@@ -1,20 +1,20 @@
 use crate::error::prelude::*;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::handlers::issuance::is_cred_def_revokable;
-use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::protocols::issuance::is_cred_def_revokable;
+use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalReceivedState {
     pub credential_proposal: CredentialProposal,
-    pub offer_info: Option<OfferInfo>
+    pub offer_info: Option<OfferInfo>,
 }
 
 impl ProposalReceivedState {
     pub fn new(credential_proposal: CredentialProposal, offer_info: Option<OfferInfo>) -> Self {
         Self {
             credential_proposal,
-            offer_info
+            offer_info,
         }
     }
 

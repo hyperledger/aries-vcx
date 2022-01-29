@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
-use crate::handlers::issuance::is_cred_def_revokable;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
+use crate::protocols::issuance::is_cred_def_revokable;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProposalSentState {

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::issuance::actions::CredentialIssuanceAction;
 use crate::handlers::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
@@ -10,6 +9,7 @@ use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::IssuerSM;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
