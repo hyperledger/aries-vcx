@@ -14,7 +14,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error, set_current_error_2, set_current_error_agency};
+use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error, set_current_error_agency};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Provision an agent in the agency.
@@ -61,7 +61,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     let agency_config = match serde_json::from_str::<AgentProvisionConfig>(&agency_config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -70,7 +70,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match aries_vcx::utils::provision::provision_cloud_agent(&agency_config).await {
             Err(e) => {
-                set_current_error(&e);
+                set_current_error_vcx(&e);
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
             }

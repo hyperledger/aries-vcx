@@ -16,7 +16,7 @@ use aries_vcx::utils::provision::AgencyClientConfig;
 use aries_vcx::utils::version_constants;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error, set_current_error_2, set_current_error_agency};
+use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error_vcx, set_current_error, set_current_error_agency};
 use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 
 /// Only for Wrapper testing purposes, sets global library settings.
@@ -101,7 +101,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     let agency_config = match serde_json::from_str::<AgencyClientConfig>(&config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -152,7 +152,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
     let issuer_config = match serde_json::from_str::<IssuerConfig>(&config) {
         Ok(issuer_config) => issuer_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -218,7 +218,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
     let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
         Ok(pool_config) => pool_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }

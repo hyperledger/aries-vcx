@@ -11,7 +11,7 @@ use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalle
 use aries_vcx::utils::error;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error, set_current_error_2};
+use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
 use crate::api_lib::utils::runtime::execute;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
@@ -50,7 +50,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
         Ok(wallet_config) => wallet_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -143,7 +143,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
     let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
         Ok(wallet_config) => wallet_config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -255,7 +255,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -311,7 +311,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -367,7 +367,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -423,7 +423,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -479,7 +479,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -536,7 +536,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, x, "null");
 
@@ -590,7 +590,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
                        command_handle, x);
 
@@ -658,7 +658,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, x, "null");
 
@@ -716,7 +716,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, x, "null");
 
@@ -857,7 +857,7 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
     let config = match serde_json::from_str::<RestoreWalletConfigs>(&config) {
         Ok(config) => config,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_wallet_import >>> invalid import configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }

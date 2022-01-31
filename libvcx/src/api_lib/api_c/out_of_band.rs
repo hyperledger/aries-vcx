@@ -9,7 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::out_of_band;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error, set_current_error_2};
+use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
 use crate::api_lib::utils::runtime::execute_async;
 
 #[no_mangle]
@@ -31,7 +31,7 @@ pub extern fn vcx_out_of_band_sender_create(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -62,7 +62,7 @@ pub extern fn vcx_out_of_band_receiver_create(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {}):",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -94,7 +94,7 @@ pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandl
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
                       command_handle, x);
                 cb(command_handle, x.into());
@@ -126,7 +126,7 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
                       command_handle, x);
                 cb(command_handle, x.into());
@@ -159,7 +159,7 @@ pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandH
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_append_service_did_cb(command_handle: {}, rc: {})",
                       command_handle, x);
                 cb(command_handle, x.into());
@@ -190,7 +190,7 @@ pub extern fn vcx_out_of_band_receiver_extract_message(command_handle: CommandHa
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
@@ -221,7 +221,7 @@ pub extern fn vcx_out_of_band_to_message(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
@@ -248,7 +248,7 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
     let conn_handles = match serde_json::from_str::<Vec<u32>>(&conn_handles) {
         Ok(conn_handles) => conn_handles,
         Err(err) => {
-            set_current_error_2(&err);
+            set_current_error(&err);
             error!("vcx_out_of_band_receiver_connection_exists >>> failed to parse connection handles: {}, err: {:?}", conn_handles, err);
             return error::INVALID_CONNECTION_HANDLE.code_num;
         }
@@ -262,7 +262,7 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
                 cb(command_handle, error::SUCCESS.code_num, conn_handle, found_one);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
                       command_handle, x, 0, false);
                 cb(command_handle, x.into(), 0, false);
@@ -293,7 +293,7 @@ pub extern fn vcx_out_of_band_receiver_build_connection(command_handle: CommandH
                 cb(command_handle, error::SUCCESS.code_num, connection.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
                       command_handle, x, "");
                 cb(command_handle, x.into(), ptr::null());
@@ -324,7 +324,7 @@ pub extern fn vcx_out_of_band_sender_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
@@ -355,7 +355,7 @@ pub extern fn vcx_out_of_band_receiver_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
@@ -386,7 +386,7 @@ pub extern fn vcx_out_of_band_sender_deserialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -417,7 +417,7 @@ pub extern fn vcx_out_of_band_receiver_deserialize(command_handle: CommandHandle
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);

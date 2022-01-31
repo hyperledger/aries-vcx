@@ -9,7 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{credential_def, issuer_credential};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error;
+use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -99,7 +99,7 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_create_credential_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                       command_handle, x, 0, "");
                 (x.into(), 0)
@@ -161,7 +161,7 @@ pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
                 x
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 x.into()
@@ -198,7 +198,7 @@ pub extern fn vcx_issuer_send_credential_offer_v2(command_handle: CommandHandle,
                 x
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 x.into()
@@ -246,7 +246,7 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_get_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -292,7 +292,7 @@ pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandl
                 cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_build_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -327,7 +327,7 @@ pub extern fn vcx_mark_credential_offer_msg_sent(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_mark_credential_offer_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -381,7 +381,7 @@ pub extern fn vcx_v2_issuer_credential_update_state(command_handle: CommandHandl
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, connection_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -437,7 +437,7 @@ pub extern fn vcx_v2_issuer_credential_update_state_with_message(command_handle:
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -486,7 +486,7 @@ pub extern fn vcx_issuer_credential_get_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, credential_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -544,7 +544,7 @@ pub extern fn vcx_issuer_send_credential(command_handle: CommandHandle,
                 x
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 x.into()
@@ -594,7 +594,7 @@ pub extern fn vcx_issuer_get_credential_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_get_credential_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -627,7 +627,7 @@ pub extern fn vcx_issuer_credential_get_rev_reg_id(command_handle: CommandHandle
                 cb(command_handle, error::SUCCESS.code_num, rev_reg_id.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_credential_get_rev_reg_id_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -659,7 +659,7 @@ pub extern fn vcx_issuer_credential_is_revokable(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, revokable);
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_credential_is_revokable_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 cb(command_handle, x.into(), false);
@@ -709,7 +709,7 @@ pub extern fn vcx_issuer_credential_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 trace!("vcx_issuer_credential_serialize_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {})",
                        command_handle, credential_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -752,7 +752,7 @@ pub extern fn vcx_issuer_credential_deserialize(command_handle: CommandHandle,
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_credential_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 (x.into(), 0)
@@ -821,7 +821,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
                 error::SUCCESS.code_num
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 x.into()
@@ -854,7 +854,7 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
                 error::SUCCESS.code_num
             }
             Err(x) => {
-                set_current_error(&x);
+                set_current_error_vcx(&x);
                 warn!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, x, source_id);
                 x.into()

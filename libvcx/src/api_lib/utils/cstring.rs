@@ -4,7 +4,7 @@ use std::str::Utf8Error;
 
 use libc::c_char;
 
-use crate::api_lib::utils::error::set_current_error;
+use crate::api_lib::utils::error::set_current_error_vcx;
 
 pub struct CStringUtils {}
 
@@ -44,14 +44,14 @@ macro_rules! check_useful_c_str {
             Ok(Some(val)) => val,
             _ => {
                 let err = VcxError::from_msg($e, "Invalid pointer has been passed");
-                set_current_error(&err);
+                set_current_error_vcx(&err);
                 return err.into();
             }
         };
 
         if $x.is_empty() {
             let err = VcxError::from_msg($e, "Empty string has been passed");
-            set_current_error(&err);
+            set_current_error_vcx(&err);
             return err.into();
         }
     }
@@ -63,7 +63,7 @@ macro_rules! check_useful_opt_c_str {
             Ok(opt_val) => opt_val,
             Err(_) => {
                 let err = VcxError::from_msg($e, "Invalid pointer has been passed");
-                set_current_error(&err);
+                set_current_error_vcx(&err);
                 return err.into();
              }
         };
@@ -74,12 +74,12 @@ macro_rules! check_useful_c_byte_array {
     ($ptr:ident, $len:expr, $err1:expr, $err2:expr) => {
         if $ptr.is_null() {
             let err = VcxError::from_msg($err1, "Invalid pointer has been passed");
-            set_current_error(&err);
+            set_current_error_vcx(&err);
             return err.into();
         }
         if $len <= 0 {
             let err = VcxError::from_msg($err2, "Array length must be greater than 0");
-            set_current_error(&err);
+            set_current_error_vcx(&err);
             return err.into();
         }
         let $ptr = unsafe { std::slice::from_raw_parts($ptr, $len as usize) };
