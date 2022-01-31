@@ -24,7 +24,7 @@ lazy_static! {
 pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
     trace!("generate_public_invite >>> label: {}, public_did: {}", public_did, label);
     let invitation = A2AMessage::ConnectionInvitationPublic(PublicInvitation::create()
-        .set_public_did(public_did)
+        .set_public_did(public_did)?
         .set_label(label));
     Ok(json!(invitation).to_string())
 }
@@ -562,11 +562,11 @@ pub mod tests {
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 
-        let invitation = generate_public_invitation("sob:mainnet:abcde123", "faber-enterprise").unwrap();
+        let invitation = generate_public_invitation(constants::INSTITUTION_DID, "faber-enterprise").unwrap();
         let parsed: Value = serde_json::from_str(&invitation).unwrap();
         assert!(parsed["@id"].is_string());
         assert_eq!(parsed["@type"], "https://didcomm.org/connections/1.0/invitation");
-        assert_eq!(parsed["did"], "sob:mainnet:abcde123");
+        assert_eq!(parsed["did"], constants::INSTITUTION_DID);
         assert_eq!(parsed["label"], "faber-enterprise");
     }
 

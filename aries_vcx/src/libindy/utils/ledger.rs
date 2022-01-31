@@ -10,7 +10,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
-use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
@@ -446,7 +446,7 @@ pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
 }
 
 pub fn get_service(did: &Did) -> VcxResult<FullService> {
-    let attr_resp = get_attr(did, "service")?;
+    let attr_resp = get_attr(&did.to_string(), "service")?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = data["service"]
         .as_str().ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Unable to read service from the ledger response")))?.to_string();
@@ -522,7 +522,7 @@ mod test {
         let expect_service = FullService::default();
         add_service(&did, &expect_service).unwrap();
         thread::sleep(Duration::from_millis(50));
-        let service = get_service(&did).unwrap();
+        let service = get_service(&Did::new(&did).unwrap()).unwrap();
 
         assert_eq!(expect_service, service)
     }

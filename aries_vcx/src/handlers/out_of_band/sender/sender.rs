@@ -97,6 +97,7 @@ mod tests {
     use crate::messages::connection::service::FullService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
+    use crate::messages::connection::did::Did;
 
     use super::*;
 
@@ -133,7 +134,7 @@ mod tests {
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
-        let service = ServiceResolvable::Did("V4SGRU86Z58d6TV7PBUe6f".to_string());
+        let service = ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
         let oob = _create_oob()
             .append_service(&service);
         let resolved_service = oob.get_services();
