@@ -346,30 +346,8 @@ impl<E> VcxErrorExt for E where E: Fail
 
 impl From<VcxError> for u32 {
     fn from(code: VcxError) -> u32 {
-        set_current_error(&code);
         code.kind().into()
     }
-}
-
-thread_local! {
-    pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
-}
-
-fn string_to_cstring(s: String) -> CString {
-    CString::new(s).unwrap()
-}
-
-pub fn set_current_error(err: &VcxError) {
-    CURRENT_ERROR_C_JSON.try_with(|error| {
-        let error_json = json!({
-            "error": err.kind().to_string(),
-            "message": err.to_string(),
-            "cause": <dyn Fail>::find_root_cause(err).to_string(),
-            "backtrace": err.backtrace().map(|bt| bt.to_string())
-        }).to_string();
-        error.replace(Some(string_to_cstring(error_json)));
-    })
-        .map_err(|err| error!("Thread local variable access failed with: {:?}", err)).ok();
 }
 
 impl From<VcxErrorKind> for u32 {

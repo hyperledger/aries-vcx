@@ -9,6 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -87,6 +88,7 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x)
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {})",
                       command_handle, source_id, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -599,6 +601,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_credential_get_offers_cb(command_handle: {}, rc: {}, msg: null)",
                        command_handle, x);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -806,6 +809,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_credential_serialize_cb(command_handle: {}, rc: {}, data: {}), source_id: {:?}",
                        command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -851,6 +855,7 @@ pub extern fn vcx_credential_deserialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_credential_deserialize_cb(command_handle: {}, rc: {}, credential_handle: {}) source_id: {}",
                        command_handle, x, 0, "");
                 cb(command_handle, x.into(), 0);

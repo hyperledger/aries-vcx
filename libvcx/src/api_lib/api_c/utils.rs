@@ -14,6 +14,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::{set_current_error, set_current_error_2, set_current_error_agency};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Provision an agent in the agency.
@@ -60,6 +61,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     let agency_config = match serde_json::from_str::<AgentProvisionConfig>(&agency_config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
+            set_current_error_2(&err);
             error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -68,6 +70,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match aries_vcx::utils::provision::provision_cloud_agent(&agency_config).await {
             Err(e) => {
+                set_current_error(&e);
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
                 cb(command_handle, e.into(), ptr::null_mut());
             }
@@ -180,24 +183,15 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match aries_vcx::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids).await {
             Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
-                        trace!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, x);
+                let msgs = json!(x).to_string();
+                trace!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                       command_handle, error::SUCCESS.message, msgs);
 
-                        let msg = CStringUtils::string_to_cstring(x);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
-                        warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                              command_handle, err, "null");
-
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                };
+                let msg = CStringUtils::string_to_cstring(msgs);
+                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(e) => {
+                set_current_error_agency(&e);
                 warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                       command_handle, e, "null");
 

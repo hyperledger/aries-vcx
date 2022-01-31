@@ -9,6 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::disclosed_proof;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -91,6 +92,7 @@ pub extern fn vcx_disclosed_proof_create_with_request(command_handle: CommandHan
                 cb(command_handle, 0, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_create_with_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -188,6 +190,7 @@ pub extern fn vcx_disclosed_proof_send_proof(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_send_proof_cb(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into());
@@ -234,6 +237,7 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_reject_proof_cb(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into());
@@ -278,6 +282,7 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_get_proof_msg_cb(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -322,6 +327,7 @@ pub extern fn vcx_disclosed_proof_get_reject_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_get_reject_msg_cb(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -366,6 +372,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, x);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -445,6 +452,7 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
                 cb(command_handle, error::SUCCESS.code_num, attrs.as_ptr());
             }
             Err(err) => {
+                set_current_error(&err);
                 error!("vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, err, source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
@@ -572,6 +580,7 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_serialize_cb(command_handle: {}, rc: {}, data: {}) source_id: {}",
                        command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -617,6 +626,7 @@ pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
                 cb(command_handle, 0, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_deserialize_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                        command_handle, x, 0, "");
                 cb(command_handle, x.into(), 0);
@@ -664,6 +674,7 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, rc: {}, data: {}) source_id: {}",
                        command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -741,6 +752,7 @@ pub extern fn vcx_disclosed_proof_generate_proof(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_generate_proof(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into());
@@ -839,6 +851,7 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_disclosed_proof_decline_presentation_request(command_handle: {}, rc: {}) source_id: {}",
                        command_handle, x, source_id);
                 cb(command_handle, x.into());

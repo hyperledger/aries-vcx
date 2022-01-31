@@ -8,6 +8,7 @@ use aries_vcx::utils::error;
 use aries_vcx::utils::filters;
 
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::runtime::execute;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
@@ -44,6 +45,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x.as_ptr());
             }
             Err(err) => {
+                set_current_error(&err);
                 error!("vcx_filter_proof_requests_by_name_cb(command_handle: {}, rc: {}, msg: {})",
                        command_handle, error::SUCCESS.message, err);
                 cb(command_handle, err.into(), ptr::null_mut());

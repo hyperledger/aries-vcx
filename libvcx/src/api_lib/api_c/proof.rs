@@ -9,6 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::runtime::execute_async;
 
 /*
@@ -142,6 +143,7 @@ pub extern fn vcx_proof_create(command_handle: CommandHandle,
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                       command_handle, x, 0, x);
                 (x.into(), 0)
@@ -195,6 +197,7 @@ pub extern fn vcx_v2_proof_update_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_v2_proof_update_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                        command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -250,6 +253,7 @@ pub extern fn vcx_v2_proof_update_state_with_message(command_handle: CommandHand
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_v2_proof_update_state_with_message_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -298,6 +302,7 @@ pub extern fn vcx_proof_get_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_get_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
                       command_handle, x, proof_handle, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -341,6 +346,7 @@ pub extern fn vcx_proof_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_serialize_cb(command_handle: {}, proof_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, proof_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -384,6 +390,7 @@ pub extern fn vcx_proof_deserialize(command_handle: CommandHandle,
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_deserialize_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                       command_handle, x, 0, "");
                 (x.into(), 0)
@@ -457,6 +464,7 @@ pub extern fn vcx_proof_send_request(command_handle: CommandHandle,
                 x
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                       command_handle, x, proof_handle, source_id);
                 x.into()
@@ -506,6 +514,7 @@ pub extern fn vcx_proof_get_request_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_proof_get_request_msg_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                       command_handle, x, proof_handle, source_id);
                 cb(command_handle, x.into(), ptr::null_mut())
@@ -552,6 +561,7 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, proof::get_proof_state(proof_handle).await.unwrap_or(0), msg.as_ptr());
             }
             Err(err) => {
+                set_current_error(&err);
                 warn!("vcx_get_proof_cb(command_handle: {}, proof_handle: {}, rc: {}, proof: {}) source_id: {}", command_handle, proof_handle, err, "null", source_id);
                 cb(command_handle, err.into(), proof::get_proof_state(proof_handle).await.unwrap_or(0), ptr::null_mut());
             }
@@ -584,6 +594,7 @@ pub extern fn vcx_mark_presentation_request_msg_sent(command_handle: CommandHand
                 cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_mark_presentation_request_msg_sent_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
                       command_handle, proof_handle, x, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());

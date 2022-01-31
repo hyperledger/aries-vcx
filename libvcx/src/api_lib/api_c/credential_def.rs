@@ -9,6 +9,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::runtime::execute;
 
 #[no_mangle]
@@ -57,6 +58,7 @@ pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
                 (error::SUCCESS.code_num, x)
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_create_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                       command_handle, x, 0, "");
                 (x.into(), 0)
@@ -96,6 +98,7 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
+                set_current_error(&err);
                 warn!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                       command_handle, err, credentialdef_handle, source_id);
                 cb(command_handle, err.into());
@@ -143,6 +146,7 @@ pub extern fn vcx_credentialdef_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), source_id: {:?}",
                       command_handle, credentialdef_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -230,6 +234,7 @@ pub extern fn vcx_credentialdef_get_cred_def_id(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: {}) source_id: {}",
                       command_handle, cred_def_handle, x, "", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -262,6 +267,7 @@ pub extern fn vcx_credentialdef_release(credentialdef_handle: u32) -> u32 {
         }
 
         Err(x) => {
+            set_current_error(&x);
             warn!("vcx_credentialdef_release(credentialdef_handle: {}, rc: {}), source_id: {}",
                   credentialdef_handle, x, source_id);
             x.into()
@@ -307,6 +313,7 @@ pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_update_state(command_handle: {}, rc: {}, state: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -357,6 +364,7 @@ pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_get_state(command_handle: {}, rc: {}, state: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -396,6 +404,7 @@ pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
                       command_handle, credentialdef_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -433,6 +442,7 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(x) => {
+                set_current_error(&x);
                 warn!("vcx_credentialdef_publish_revocations(command_handle: {}, credentialdef_handle: {}, rc: {})",
                       command_handle, credentialdef_handle, x);
                 cb(command_handle, x.into());
@@ -466,6 +476,7 @@ pub extern fn vcx_credentialdef_get_tails_hash(command_handle: CommandHandle,
                 cb(command_handle, 0, hash.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_credentialdef_get_tails_hash_cb(command_handle: {}, rc: {}, hash: {}), source_id: {}",
                        command_handle, x, "null", credential_def::get_source_id(handle).unwrap_or_default());
                 cb(command_handle, x.into(), ptr::null());
@@ -499,6 +510,7 @@ pub extern fn vcx_credentialdef_get_rev_reg_id(command_handle: CommandHandle,
                 cb(command_handle, 0, rev_reg_id.as_ptr());
             }
             Err(x) => {
+                set_current_error(&x);
                 error!("vcx_credentialdef_get_rev_reg_id(command_handle: {}, rc: {}, rev_reg_id: {}), source_id: {}",
                        command_handle, x, "null", credential_def::get_source_id(handle).unwrap_or_default());
                 cb(command_handle, x.into(), ptr::null());

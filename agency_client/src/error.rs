@@ -165,7 +165,6 @@ impl From<Context<AgencyClientErrorKind>> for AgencyClientError {
 
 impl From<AgencyClientError> for u32 {
     fn from(code: AgencyClientError) -> u32 {
-        set_current_error(&code);
         code.kind().into()
     }
 }
@@ -296,25 +295,4 @@ impl<E> VcxErrorExt for E where E: Fail
     fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientError where D: fmt::Display + Send + Sync + 'static {
         self.context(format!("\n{}: {}", std::any::type_name::<E>(), msg)).context(kind).into()
     }
-}
-
-thread_local! {
-    pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
-}
-
-fn string_to_cstring(s: String) -> CString {
-    CString::new(s).unwrap()
-}
-
-pub fn set_current_error(err: &AgencyClientError) {
-    CURRENT_ERROR_C_JSON.try_with(|error| {
-        let error_json = json!({
-            "error": err.kind().to_string(),
-            "message": err.to_string(),
-            "cause": <dyn Fail>::find_root_cause(err).to_string(),
-            "backtrace": err.backtrace().map(|bt| bt.to_string())
-        }).to_string();
-        error.replace(Some(string_to_cstring(error_json)));
-    })
-        .map_err(|err| error!("Thread local variable access failed with: {:?}", err)).ok();
 }
