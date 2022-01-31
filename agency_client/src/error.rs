@@ -19,8 +19,6 @@ pub enum AgencyClientErrorKind {
     #[fail(display = "Invalid Configuration")]
     InvalidConfiguration,
     #[fail(display = "Obj was not found with handle")]
-    InvalidHandle,
-    #[fail(display = "Invalid JSON string")]
     InvalidJson,
     #[fail(display = "Invalid Option")]
     InvalidOption,
@@ -35,16 +33,6 @@ pub enum AgencyClientErrorKind {
     #[fail(display = "Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
 
-    // Payment
-    #[fail(display = "Insufficient amount of tokens to process request")]
-    InsufficientTokenAmount,
-
-    #[fail(display = "Can't create, Credential Def already on ledger")]
-    CredDefAlreadyCreated,
-
-    // Pool
-    #[fail(display = "Formatting for Pool Config are incorrect.")]
-    CreatePoolConfig,
     #[fail(display = "Message failed in post")]
     PostMessageFailed,
 
@@ -174,21 +162,17 @@ impl From<AgencyClientErrorKind> for u32 {
         match code {
             AgencyClientErrorKind::InvalidState => error_utils::INVALID_STATE.code_num,
             AgencyClientErrorKind::InvalidConfiguration => error_utils::INVALID_CONFIGURATION.code_num,
-            AgencyClientErrorKind::InvalidHandle => error_utils::INVALID_OBJ_HANDLE.code_num,
             AgencyClientErrorKind::InvalidJson => error_utils::INVALID_JSON.code_num,
             AgencyClientErrorKind::InvalidOption => error_utils::INVALID_OPTION.code_num,
             AgencyClientErrorKind::InvalidMessagePack => error_utils::INVALID_MSGPACK.code_num,
             AgencyClientErrorKind::IOError => error_utils::IOERROR.code_num,
             AgencyClientErrorKind::LibindyInvalidStructure => error_utils::LIBINDY_INVALID_STRUCTURE.code_num,
-            AgencyClientErrorKind::InsufficientTokenAmount => error_utils::INSUFFICIENT_TOKEN_AMOUNT.code_num,
-            AgencyClientErrorKind::CredDefAlreadyCreated => error_utils::CREDENTIAL_DEF_ALREADY_CREATED.code_num,
             AgencyClientErrorKind::TimeoutLibindy => error_utils::TIMEOUT_LIBINDY_ERROR.code_num,
             AgencyClientErrorKind::InvalidLibindyParam => error_utils::INVALID_LIBINDY_PARAM.code_num,
             AgencyClientErrorKind::InvalidWalletHandle => error_utils::INVALID_WALLET_HANDLE.code_num,
             AgencyClientErrorKind::DuplicationWallet => error_utils::WALLET_ALREADY_EXISTS.code_num,
             AgencyClientErrorKind::WalletNotFound => error_utils::WALLET_NOT_FOUND.code_num,
             AgencyClientErrorKind::WalletRecordNotFound => error_utils::WALLET_RECORD_NOT_FOUND.code_num,
-            AgencyClientErrorKind::CreatePoolConfig => error_utils::CREATE_POOL_CONFIG.code_num,
             AgencyClientErrorKind::DuplicationWalletRecord => error_utils::DUPLICATE_WALLET_RECORD.code_num,
             AgencyClientErrorKind::WalletAlreadyOpen => error_utils::WALLET_ALREADY_OPEN.code_num,
             AgencyClientErrorKind::DuplicationMasterSecret => error_utils::DUPLICATE_MASTER_SECRET.code_num,
@@ -215,7 +199,6 @@ impl From<u32> for AgencyClientErrorKind {
         match code {
             _ if { error_utils::INVALID_STATE.code_num == code } => AgencyClientErrorKind::InvalidState,
             _ if { error_utils::INVALID_CONFIGURATION.code_num == code } => AgencyClientErrorKind::InvalidConfiguration,
-            _ if { error_utils::INVALID_OBJ_HANDLE.code_num == code } => AgencyClientErrorKind::InvalidHandle,
             _ if { error_utils::INVALID_JSON.code_num == code } => AgencyClientErrorKind::InvalidJson,
             _ if { error_utils::INVALID_OPTION.code_num == code } => AgencyClientErrorKind::InvalidOption,
             _ if { error_utils::INVALID_MSGPACK.code_num == code } => AgencyClientErrorKind::InvalidMessagePack,
@@ -223,12 +206,10 @@ impl From<u32> for AgencyClientErrorKind {
             _ if { error_utils::LIBINDY_INVALID_STRUCTURE.code_num == code } => AgencyClientErrorKind::LibindyInvalidStructure,
             _ if { error_utils::TIMEOUT_LIBINDY_ERROR.code_num == code } => AgencyClientErrorKind::TimeoutLibindy,
             _ if { error_utils::INVALID_LIBINDY_PARAM.code_num == code } => AgencyClientErrorKind::InvalidLibindyParam,
-            _ if { error_utils::CREDENTIAL_DEF_ALREADY_CREATED.code_num == code } => AgencyClientErrorKind::CredDefAlreadyCreated,
             _ if { error_utils::INVALID_WALLET_HANDLE.code_num == code } => AgencyClientErrorKind::InvalidWalletHandle,
             _ if { error_utils::WALLET_ALREADY_EXISTS.code_num == code } => AgencyClientErrorKind::DuplicationWallet,
             _ if { error_utils::WALLET_NOT_FOUND.code_num == code } => AgencyClientErrorKind::WalletNotFound,
             _ if { error_utils::WALLET_RECORD_NOT_FOUND.code_num == code } => AgencyClientErrorKind::WalletRecordNotFound,
-            _ if { error_utils::CREATE_POOL_CONFIG.code_num == code } => AgencyClientErrorKind::CreatePoolConfig,
             _ if { error_utils::DUPLICATE_WALLET_RECORD.code_num == code } => AgencyClientErrorKind::DuplicationWalletRecord,
             _ if { error_utils::WALLET_ALREADY_OPEN.code_num == code } => AgencyClientErrorKind::WalletAlreadyOpen,
             _ if { error_utils::DUPLICATE_MASTER_SECRET.code_num == code } => AgencyClientErrorKind::DuplicationMasterSecret,
@@ -261,11 +242,8 @@ impl From<IndyError> for AgencyClientError {
             206 => AgencyClientError::from_msg(AgencyClientErrorKind::WalletAlreadyOpen, error.message),
             212 => AgencyClientError::from_msg(AgencyClientErrorKind::WalletRecordNotFound, error.message),
             213 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationWalletRecord, error.message),
-            306 => AgencyClientError::from_msg(AgencyClientErrorKind::CreatePoolConfig, error.message),
             404 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationMasterSecret, error.message),
-            407 => AgencyClientError::from_msg(AgencyClientErrorKind::CredDefAlreadyCreated, error.message),
             600 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationDid, error.message),
-            702 => AgencyClientError::from_msg(AgencyClientErrorKind::InsufficientTokenAmount, error.message),
             error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message)
         }
     }
