@@ -7,7 +7,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::libindy::utils::ledger::add_service;
 use crate::messages::a2a::A2AMessage;
-use crate::messages::connection::did_doc::Did;
+use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -24,10 +24,10 @@ impl PublicAgent {
     pub async fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create()?;
         let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
-        let institution_did = String::from(institution_did);
-        let source_id = String::from(source_id);
         let service = FullService::try_from((&pairwise_info, &agent_info))?;
         add_service(&institution_did, &service)?;
+        let institution_did = Did::new(institution_did)?;
+        let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })
     }
 
@@ -40,7 +40,7 @@ impl PublicAgent {
     }
 
     pub fn did(&self) -> String {
-        self.institution_did.clone()
+        self.institution_did.to_string()
     }
 
     pub fn service(&self) -> VcxResult<FullService> {
@@ -111,7 +111,7 @@ pub mod tests {
                 pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
                 pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
             },
-            institution_did: INSTITUTION_DID.to_string(),
+            institution_did: Did::new(INSTITUTION_DID).unwrap()
         }
     }
 }
