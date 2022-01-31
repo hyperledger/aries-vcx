@@ -4,8 +4,6 @@ use std::str::Utf8Error;
 
 use libc::c_char;
 
-use crate::api_lib::utils::error::set_current_error_vcx;
-
 pub struct CStringUtils {}
 
 impl CStringUtils {

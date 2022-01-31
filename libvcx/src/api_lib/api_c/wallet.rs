@@ -3,7 +3,7 @@ use std::thread;
 
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::init::open_as_main_wallet;
 use aries_vcx::libindy::utils::wallet;
@@ -11,7 +11,7 @@ use aries_vcx::libindy::utils::wallet::{export_main_wallet, import, RestoreWalle
 use aries_vcx::utils::error;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
+use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.

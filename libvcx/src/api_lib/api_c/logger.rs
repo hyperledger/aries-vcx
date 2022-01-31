@@ -1,6 +1,6 @@
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::utils::error::SUCCESS;
 
 use crate::api_lib::utils::cstring::CStringUtils;

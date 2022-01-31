@@ -8,8 +8,7 @@ use libc::c_char;
 use aries_vcx::agency_client::error::AgencyClientError;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::utils::error;
+use aries_vcx::error::VcxError;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
@@ -47,7 +46,7 @@ pub fn set_current_error_vcx(err: &VcxError) {
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err)).ok();
 }
 
-pub fn set_current_error(err: &Error) {
+pub fn set_current_error(err: &dyn Error) {
     CURRENT_ERROR_C_JSON.try_with(|error| {
         let error_json = json!({
             "message": err.to_string()

@@ -3,7 +3,7 @@ use std::ptr;
 use libc::c_char;
 use serde_json;
 
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::settings;
 use aries_vcx::utils::error;

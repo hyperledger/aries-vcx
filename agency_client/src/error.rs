@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::ffi::CString;
 use std::fmt;
 
 use failure::{Backtrace, Context, Fail};

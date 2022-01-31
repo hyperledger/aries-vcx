@@ -6,7 +6,7 @@ use serde_json;
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::mocking::AgencyMock;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
@@ -14,7 +14,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error, set_current_error_agency};
+use crate::api_lib::utils::error::{set_current_error, set_current_error_agency, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Provision an agent in the agency.
