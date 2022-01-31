@@ -1,15 +1,15 @@
 use std::ptr;
 
-use libc::c_char;
 use futures::future::BoxFuture;
+use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::disclosed_proof;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::{execute, execute_async};
-use crate::error::prelude::*;
 
 /*
     APIs in this module are called by a prover throughout the request-proof-and-verify process.

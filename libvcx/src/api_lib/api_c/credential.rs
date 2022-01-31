@@ -3,13 +3,13 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::{execute, execute_async};
-use crate::error::prelude::*;
 
 /*
     The API represents a Holder side in credential issuance process.

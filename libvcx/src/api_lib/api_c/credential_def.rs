@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::settings;
 use aries_vcx::utils::error;
@@ -9,7 +10,6 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[no_mangle]
 pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
@@ -47,10 +47,10 @@ pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
 
     execute(move || {
         let (rc, handle) = match credential_def::create_and_store(source_id,
-                                                                    schema_id,
-                                                                    issuer_did,
-                                                                    tag,
-                                                                    revocation_details) {
+                                                                  schema_id,
+                                                                  issuer_did,
+                                                                  tag,
+                                                                  revocation_details) {
             Ok(x) => {
                 trace!("vcx_credentialdef_create_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, x, credential_def::get_source_id(x).unwrap_or_default());
@@ -530,12 +530,12 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
-                                            CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new(SCHEMA_ID).unwrap().into_raw(),
-                                            CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
-                                            CString::new("tag").unwrap().into_raw(),
-                                            CString::new("{}").unwrap().into_raw(),
-                                            Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                      CString::new("Test Source ID").unwrap().into_raw(),
+                                                      CString::new(SCHEMA_ID).unwrap().into_raw(),
+                                                      CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
+                                                      CString::new("tag").unwrap().into_raw(),
+                                                      CString::new("{}").unwrap().into_raw(),
+                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
@@ -546,12 +546,12 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
-                                            CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new(SCHEMA_ID).unwrap().into_raw(),
-                                            ptr::null(),
-                                            CString::new("tag").unwrap().into_raw(),
-                                            CString::new("{}").unwrap().into_raw(),
-                                            Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                      CString::new("Test Source ID").unwrap().into_raw(),
+                                                      CString::new(SCHEMA_ID).unwrap().into_raw(),
+                                                      ptr::null(),
+                                                      CString::new("tag").unwrap().into_raw(),
+                                                      CString::new("{}").unwrap().into_raw(),
+                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
     }
 
@@ -562,12 +562,12 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
-                                            CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new(SCHEMA_ID).unwrap().into_raw(),
-                                            ptr::null(),
-                                            CString::new("tag").unwrap().into_raw(),
-                                            CString::new("{}").unwrap().into_raw(),
-                                            Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                      CString::new("Test Source ID").unwrap().into_raw(),
+                                                      CString::new(SCHEMA_ID).unwrap().into_raw(),
+                                                      ptr::null(),
+                                                      CString::new("tag").unwrap().into_raw(),
+                                                      CString::new("{}").unwrap().into_raw(),
+                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -616,12 +616,12 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
-                                            CString::new("Test Source ID Release Test").unwrap().into_raw(),
-                                            CString::new(SCHEMA_ID).unwrap().into_raw(),
-                                            ptr::null(),
-                                            CString::new("tag").unwrap().into_raw(),
-                                            CString::new("{}").unwrap().into_raw(),
-                                            Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                      CString::new("Test Source ID Release Test").unwrap().into_raw(),
+                                                      CString::new(SCHEMA_ID).unwrap().into_raw(),
+                                                      ptr::null(),
+                                                      CString::new("tag").unwrap().into_raw(),
+                                                      CString::new("{}").unwrap().into_raw(),
+                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let unknown_handle = handle + 1;
@@ -636,12 +636,12 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
-                                            CString::new("Test Source ID").unwrap().into_raw(),
-                                            CString::new(SCHEMA_ID).unwrap().into_raw(),
-                                            CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
-                                            CString::new("tag").unwrap().into_raw(),
-                                            CString::new("{}").unwrap().into_raw(),
-                                            Some(cb.get_callback())), error::SUCCESS.code_num);
+                                                      CString::new("Test Source ID").unwrap().into_raw(),
+                                                      CString::new(SCHEMA_ID).unwrap().into_raw(),
+                                                      CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
+                                                      CString::new("tag").unwrap().into_raw(),
+                                                      CString::new("{}").unwrap().into_raw(),
+                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(vcx_credentialdef_get_cred_def_id(cb.command_handle, handle, Some(cb.get_callback())), error::SUCCESS.code_num);

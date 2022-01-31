@@ -2,13 +2,13 @@ use std::ptr;
 
 use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 use aries_vcx::utils::filters;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Filters proof requests based on name selected by verifier when creating the request.
 ///

@@ -1,15 +1,15 @@
 use std::ptr;
 
-use libc::c_char;
 use futures::future::BoxFuture;
+use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{credential_def, issuer_credential};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime:: {execute_async, execute};
-use crate::error::prelude::*;
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
     The API represents an Issuer side in credential issuance process.
@@ -903,6 +903,7 @@ pub mod tests {
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+
     use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
@@ -1002,7 +1003,7 @@ pub mod tests {
         assert_eq!(vcx_issuer_create_credential(cb.command_handle,
                                                 ptr::null(),
                                                 Some(cb.get_callback())),
-                  error::INVALID_OPTION.code_num);
+                   error::INVALID_OPTION.code_num);
         // todo: Timeouting 15 seconds in test, could we do this better?
         let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
     }
@@ -1048,7 +1049,7 @@ pub mod tests {
                                                     connection_handle,
                                                     CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),
-                                                    error::SUCCESS.code_num);
+                   error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
@@ -1076,7 +1077,7 @@ pub mod tests {
                                                     connection_handle,
                                                     CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),
-                                                    error::SUCCESS.code_num);
+                   error::SUCCESS.code_num);
 
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 

@@ -1,9 +1,10 @@
 use std::ptr;
 
-use libc::c_char;
 use futures::future::BoxFuture;
+use libc::c_char;
 
 use aries_vcx::agency_client::get_message::parse_status_codes;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
@@ -13,7 +14,6 @@ use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::{execute, execute_async};
-use crate::error::prelude::*;
 
 /*
     Tha API represents a pairwise connection with another identity owner.

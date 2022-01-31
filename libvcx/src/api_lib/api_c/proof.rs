@@ -1,15 +1,15 @@
 use std::ptr;
 
-use libc::c_char;
 use futures::future::BoxFuture;
+use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute_async;
-use crate::error::prelude::*;
 
 /*
     APIs in this module are called by a verifier throughout the request-proof-and-verify process.
@@ -564,8 +564,8 @@ pub extern fn vcx_get_proof_msg(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_mark_presentation_request_msg_sent(command_handle: CommandHandle,
-                                                 proof_handle: u32,
-                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
+                                                     proof_handle: u32,
+                                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
     info!("vcx_mark_presentation_request_msg_sent >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -648,9 +648,9 @@ mod tests {
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
 
-    use crate::api_lib::ProofStateType;
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
+    use crate::api_lib::ProofStateType;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 

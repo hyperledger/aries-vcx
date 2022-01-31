@@ -1,14 +1,15 @@
 use std::ptr;
-use libc::c_char;
-use futures::future::BoxFuture;
 
+use futures::future::BoxFuture;
+use libc::c_char;
+
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute_async;
-use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,

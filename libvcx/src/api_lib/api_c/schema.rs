@@ -3,6 +3,7 @@ use std::ptr;
 use libc::c_char;
 use serde_json;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::settings;
 use aries_vcx::utils::error;
@@ -10,7 +11,6 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::runtime::execute;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -485,7 +485,7 @@ mod tests {
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupMocks, SetupWithWalletAndAgency};
 
     use crate::api_lib;
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
