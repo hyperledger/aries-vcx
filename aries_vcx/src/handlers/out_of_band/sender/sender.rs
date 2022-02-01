@@ -40,6 +40,10 @@ impl OutOfBandSender {
         self.oob.services.clone()
     }
 
+    pub fn get_id(&self) -> String {
+        self.oob.id.0.clone()
+    }
+
     pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),

@@ -28,6 +28,10 @@ impl OutOfBandReceiver {
         }
     }
 
+    pub fn get_id(&self) -> String {
+        self.oob.id.0.clone()
+    }
+
     pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {

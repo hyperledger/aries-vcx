@@ -1452,6 +1452,45 @@ mod tests {
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
+    async fn test_oob_connection_handshake_reuse() {
+        let _setup = SetupLibraryAgencyV2::init();
+        let mut institution = Faber::setup().await;
+        let mut consumer = Alice::setup().await;
+
+        let (consumer_to_institution, mut institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
+
+        institution.activate().unwrap();
+        let service = FullService::try_from(&institution.agent).unwrap();
+        let oob_sender = OutOfBandSender::create()
+            .set_label("test-label")
+            .set_goal_code(&GoalCode::P2PMessaging)
+            .set_goal("To exchange message")
+            .append_service(&ServiceResolvable::FullService(service));
+        let oob_msg = oob_sender.to_a2a_message();
+
+        consumer.activate().unwrap();
+        let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
+        let conns = vec![&consumer_to_institution];
+        let conn = oob_receiver.connection_exists(&conns).unwrap();
+        assert!(conn.is_some());
+        conn.unwrap().send_handshake_reuse(&oob_receiver.get_id()).await.unwrap();
+
+        institution.activate().unwrap();
+        let mut msgs = institution_to_consumer.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        assert_eq!(msgs.len(), 1);
+        let a2a_msg: A2AMessage = serde_json::from_str(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap();
+        assert!(matches!(a2a_msg, A2AMessage::OutOfBandHandshakeReuse(..)));
+        institution_to_consumer.update_state().await.unwrap();
+
+        consumer.activate().unwrap();
+        let mut msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        assert_eq!(msgs.len(), 1);
+        let a2a_msg: A2AMessage = serde_json::from_str(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap();
+        assert!(matches!(a2a_msg, A2AMessage::OutOfBandHandshakeReuseAccepted(..)));
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "agency_pool_tests")]
     pub async fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2::init();
         let mut institution = Faber::setup().await;
