@@ -9,6 +9,7 @@ use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
@@ -53,6 +54,21 @@ impl CompleteState {
         T: Future<Output=VcxResult<()>>
     {
         handle_ping(ping, pw_vk, &self.did_doc, send_message).await
+    }
+
+    pub async fn handle_send_handshake_reuse<F, T>(&self,
+                            oob_id: &str,
+                            pw_vk: &str,
+                            send_message: F
+    ) -> VcxResult<()>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let msg = OutOfBandHandshakeReuse::default()
+            .set_parent_thread_id(&oob_id);
+        send_message(pw_vk.to_string(), self.did_doc.clone(), msg.to_a2a_message()).await.ok();
+        Ok(())
     }
 
     pub async fn handle_discover_features<F, T>(&self,

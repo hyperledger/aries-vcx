@@ -338,6 +338,22 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
+    pub async fn handle_send_handshake_reuse<F, T>(self, oob_id: &str, send_message: F) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviteeFullState::Completed(state) => {
+                state.handle_send_handshake_reuse(oob_id, &self.pairwise_info.pw_vk, send_message).await?;
+                InviteeFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
+        };
+        Ok(Self { state, ..self })
+    }
+
+
     pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
         Ok(self)

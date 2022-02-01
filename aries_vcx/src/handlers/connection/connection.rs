@@ -640,6 +640,19 @@ impl Connection {
         Ok(())
     }
 
+    pub async fn send_handshake_reuse(&mut self, oob_id: &str) -> VcxResult<()> {
+        trace!("Connection::send_handshake_reuse >>>");
+        self.connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(oob_id, send_message).await?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(oob_id, send_message).await?)
+            }
+        };
+        Ok(())
+    }
+
     pub async fn delete(&self) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
         self.cloud_agent_info().destroy(self.pairwise_info()).await
