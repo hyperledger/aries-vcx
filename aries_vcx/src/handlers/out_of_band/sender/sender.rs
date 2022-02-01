@@ -1,4 +1,4 @@
-use crate::handlers::out_of_band::{OutOfBand, GoalCode, HandshakeProtocol};
+use crate::handlers::out_of_band::{OutOfBandInvitation, GoalCode, HandshakeProtocol};
 use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::service::ServiceResolvable;
 use crate::messages::a2a::A2AMessage;
@@ -8,7 +8,7 @@ use crate::error::prelude::*;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
-    pub oob: OutOfBand
+    pub oob: OutOfBandInvitation
 }
 
 impl OutOfBandSender {
@@ -86,7 +86,7 @@ impl OutOfBandSender {
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBand::from_string(oob_data)?
+            oob: OutOfBandInvitation::from_string(oob_data)?
         })
     }
 }
@@ -152,8 +152,8 @@ mod tests {
         let basic_msg = A2AMessage::CredentialOffer(inserted_offer.clone());
         let oob = _create_oob().append_a2a_message(basic_msg).unwrap();
         let oob_msg = oob.to_a2a_message();
-        assert!(matches!(oob_msg, A2AMessage::OutOfBand(..)));
-        if let A2AMessage::OutOfBand(oob_msg) = oob_msg {
+        assert!(matches!(oob_msg, A2AMessage::OutOfBandInvitation(..)));
+        if let A2AMessage::OutOfBandInvitation(oob_msg) = oob_msg {
             let attachment = oob_msg.requests_attach.content().unwrap();
             let attachment: A2AMessage = serde_json::from_str(&attachment).unwrap();
             assert!(matches!(attachment, A2AMessage::CredentialOffer(..)));

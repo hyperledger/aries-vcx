@@ -93,7 +93,7 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
     use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
     use aries_vcx::handlers::issuance::issuer::get_credential_proposal_messages;
-    use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBand};
+    use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
     use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
     use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;

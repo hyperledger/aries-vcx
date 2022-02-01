@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use crate::handlers::out_of_band::OutOfBand;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
@@ -16,20 +16,20 @@ use std::convert::TryFrom;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct OutOfBandReceiver {
-    pub oob: OutOfBand
+    pub oob: OutOfBandInvitation
 }
 
 impl OutOfBandReceiver {
     pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
-        trace!("OutOfBand::create_from_a2a_msg >>> msg: {:?}", msg);
+        trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
-            A2AMessage::OutOfBand(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
+            A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
             _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
         }
     }
 
     pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
-        trace!("OutOfBand::connection_exists >>>");
+        trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
                 match connection.bootstrap_did_doc() {
@@ -52,7 +52,7 @@ impl OutOfBandReceiver {
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
-        trace!("OutOfBand::extract_a2a_message >>>");
+        trace!("OutOfBandReceiver::extract_a2a_message >>>");
         if let Some(attach) = self.oob.requests_attach.get() {
             let attach_json = self.oob.requests_attach.content()?;
             match attach.id() {
@@ -90,7 +90,7 @@ impl OutOfBandReceiver {
     }
 
     pub async fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
-        trace!("OutOfBand::build_connection >>> autohop_enabled: {}", autohop_enabled);
+        trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
         let service = match self.oob.services.get(0) {
             Some(service) => service,
             None => {
@@ -112,7 +112,7 @@ impl OutOfBandReceiver {
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBand::from_string(oob_data)?
+            oob: OutOfBandInvitation::from_string(oob_data)?
         })
     }
 }

@@ -45,7 +45,7 @@ describe('Connection:', () => {
       await oobSender.appendService(JSON.stringify(service))
       await oobSender.appendMessage(JSON.stringify(credentialOffer))
       const msg = JSON.parse(await oobSender.toMessage())
-      assert.equal(msg["@type"], "https://didcomm.org/out-of-band/1.0/out-of-band")
+      assert.equal(msg["@type"], "https://didcomm.org/out-of-band/1.0/invitation")
       assert.equal(msg["goal"], "bar")
       assert.equal(msg["label"], "foo")
     })

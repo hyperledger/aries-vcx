@@ -132,7 +132,6 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
     error::SUCCESS.code_num
 }
 
-
 #[no_mangle]
 pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandHandle,
                                                         handle: u32,

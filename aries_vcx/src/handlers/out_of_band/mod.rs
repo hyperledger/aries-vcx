@@ -28,7 +28,7 @@ pub enum HandshakeProtocol {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
-pub struct OutOfBand {
+pub struct OutOfBandInvitation {
     #[serde(rename = "@id")]
     pub id: MessageId,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -46,15 +46,15 @@ pub struct OutOfBand {
     pub requests_attach: Attachments,
 }
 
-a2a_message!(OutOfBand);
+a2a_message!(OutOfBandInvitation);
 
-impl OutOfBand {
+impl OutOfBandInvitation {
     pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize out of band message: {:?}", err)))
     }
 
-    pub fn from_string(oob_data: &str) -> VcxResult<OutOfBand> {
+    pub fn from_string(oob_data: &str) -> VcxResult<OutOfBandInvitation> {
         serde_json::from_str(oob_data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize out of band message: {:?}", err)))
     }
