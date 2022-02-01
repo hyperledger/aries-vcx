@@ -1480,7 +1480,7 @@ mod tests {
         assert_eq!(msgs.len(), 1);
         let a2a_msg: A2AMessage = serde_json::from_str(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap();
         assert!(matches!(a2a_msg, A2AMessage::OutOfBandHandshakeReuse(..)));
-        institution_to_consumer.update_state().await.unwrap();
+        institution_to_consumer.update_state_with_message(&a2a_msg).await.unwrap();
 
         consumer.activate().unwrap();
         let mut msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();

@@ -196,6 +196,12 @@ export interface IFFIEntryPoint {
     sendMsgOptions: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_send_handshake_reuse: (
+    commandId: number,
+    handle: number,
+    oob_id: string,
+    cb: ICbRef,
+  ) => number;
   vcx_connection_sign_data: (
     commandId: number,
     handle: number,
@@ -690,6 +696,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_send_message: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_send_handshake_reuse: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_connection_sign_data: [
     FFI_ERROR_CODE,

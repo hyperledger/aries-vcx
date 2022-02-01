@@ -799,6 +799,40 @@ pub extern fn vcx_connection_send_ping(command_handle: u32,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_connection_send_handshake_reuse(command_handle: u32,
+                                                  connection_handle: u32,
+                                                  oob_id: *const c_char,
+                                                  cb: Option<extern fn(xcommand_handle: u32, err: u32)>) -> u32 {
+    info!("vcx_connection_send_handshake_reuse >>>");
+
+    check_useful_c_str!(oob_id, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_connection_send_handshake_reuse(command_handle: {}, connection_handle: {})",
+           command_handle, connection_handle);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match send_handshake_reuse(connection_handle, &oob_id).await {
+            Ok(()) => {
+                trace!("vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(e) => {
+                warn!("vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
+                      command_handle, e);
+
+                cb(command_handle, e.into());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
 /// Generate a signature for the specified data using connection pairwise keys
 ///
 /// #params

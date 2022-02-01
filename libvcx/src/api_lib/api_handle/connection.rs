@@ -124,6 +124,12 @@ pub async fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResul
     }.boxed()).await
 }
 
+pub async fn send_handshake_reuse(connection_handle: u32, oob_id: &str) -> VcxResult<()> {
+    CONNECTION_MAP.get(connection_handle, |connection, []| async move {
+        connection.send_handshake_reuse(oob_id).await.map_err(|err| err.into())
+    }.boxed()).await
+}
+
 pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection, []| async move {
         let message: A2AMessage = serde_json::from_str(message)
