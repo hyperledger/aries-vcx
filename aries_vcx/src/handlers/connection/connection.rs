@@ -452,6 +452,9 @@ impl Connection {
                         A2AMessage::PingResponse(ping_response) => {
                             (sm_inviter.handle_ping_response(ping_response)?, None, false)
                         }
+                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
+                            (sm_inviter.handle_handshake_reuse(reuse, send_message).await?, None, false)
+                        }
                         A2AMessage::Query(query) => {
                             (sm_inviter.handle_discovery_query(query, send_message).await?, None, false)
                         }
@@ -486,7 +489,6 @@ impl Connection {
         }
     }
 
-
     async fn _step_invitee(&self, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
@@ -512,6 +514,9 @@ impl Connection {
                         }
                         A2AMessage::PingResponse(ping_response) => {
                             (sm_invitee.handle_ping_response(ping_response)?, false)
+                        }
+                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
+                            (sm_invitee.handle_handshake_reuse(reuse, send_message).await?, false)
                         }
                         A2AMessage::Query(query) => {
                             (sm_invitee.handle_discovery_query(query, send_message).await?, false)

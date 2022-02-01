@@ -22,6 +22,7 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -338,6 +339,11 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
+    pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
+        Ok(self)
+    }
+
     pub async fn handle_send_handshake_reuse<F, T>(self, oob_id: &str, send_message: F) -> VcxResult<Self>
     where
         F: Fn(String, DidDoc, A2AMessage) -> T,
@@ -353,10 +359,22 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-
-    pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
-        Ok(self)
+    pub async fn handle_handshake_reuse<F, T>(self,
+                            reuse_msg: OutOfBandHandshakeReuse,
+                            send_message: F
+    ) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviteeFullState::Completed(state) => {
+                state.handle_send_handshake_reuse_accepted(reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
+                InviteeFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
+        };
+        Ok(Self { state, ..self })
     }
 
     pub async fn handle_discover_features<F, T>(self, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>

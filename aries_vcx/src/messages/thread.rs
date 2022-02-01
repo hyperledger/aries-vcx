@@ -73,7 +73,6 @@ macro_rules! threadlike (($type:ident) => (
                 self.id.0.clone()
             }
         }
-
     }
 ));
 
