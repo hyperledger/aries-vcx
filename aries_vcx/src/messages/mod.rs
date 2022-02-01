@@ -16,3 +16,4 @@ pub mod discovery;
 pub mod trust_ping;
 pub mod basic_message;
 pub mod localization;
+pub mod out_of_band;

@@ -23,6 +23,8 @@ use crate::messages::proof_presentation::presentation_request::PresentationReque
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::handlers::out_of_band::OutOfBandInvitation;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -73,6 +75,8 @@ pub enum A2AMessage {
 
     /// out of band
     OutOfBandInvitation(OutOfBandInvitation),
+    OutOfBandHandshakeReuse(OutOfBandHandshakeReuse),
+    OutOfBandHandshakeReuseAccepted(OutOfBandHandshakeReuseAccepted),
 
     /// Any Raw Message
     Generic(Value),
@@ -225,6 +229,16 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(|msg| A2AMessage::OutOfBandInvitation(msg))
                     .map_err(de::Error::custom)
             }
+            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE) => {
+                OutOfBandHandshakeReuse::deserialize(value)
+                    .map(|msg| A2AMessage::OutOfBandHandshakeReuse(msg))
+                    .map_err(de::Error::custom)
+            }
+            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACK) => {
+                OutOfBandHandshakeReuseAccepted::deserialize(value)
+                    .map(|msg| A2AMessage::OutOfBandHandshakeReuseAccepted(msg))
+                    .map_err(de::Error::custom)
+            }
             (_, other_type) => {
                 warn!("Unexpected @type field structure: {}", other_type);
                 Ok(A2AMessage::Generic(value))
@@ -266,6 +280,8 @@ impl Serialize for A2AMessage {
             A2AMessage::Disclose(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE),
             A2AMessage::BasicMessage(msg) => set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE),
             A2AMessage::OutOfBandInvitation(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION),
+            A2AMessage::OutOfBandHandshakeReuse(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE),
+            A2AMessage::OutOfBandHandshakeReuseAccepted(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACK),
             A2AMessage::Generic(msg) => Ok(msg.clone())
         }.map_err(ser::Error::custom)?;
 
@@ -320,6 +336,8 @@ impl A2AMessage {
     const DISCLOSE: &'static str = "disclose";
     const BASIC_MESSAGE: &'static str = "message";
     const OUT_OF_BAND_INVITATION: &'static str = "invitation";
+    const OUT_OF_BAND_HANDSHAKE_REUSE: &'static str = "handshake-reuse";
+    const OUT_OF_BAND_HANDSHAKE_REUSE_ACK: &'static str = "handshake-reuse-accepted";
 }
 
 #[cfg(test)]
