@@ -85,4 +85,14 @@ describe('test out of band communication', () => {
       await sleep(1000)
     }
   })
+
+  it('Faber and Alice exchange handshake reuse messages', async () => {
+    try {
+      const { alice, faber } = await createPairedAliceAndFaber()
+
+    } catch (e) {
+      console.error(e.stack)
+      await sleep(1000)
+    }
+  })
 })
