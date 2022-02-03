@@ -111,7 +111,7 @@ pub extern fn vcx_out_of_band_receiver_get_thread_id(command_handle: CommandHand
     trace!("vcx_out_of_band_receiver_get_thread_id(command_handle: {}, handle: {})", command_handle, handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match out_of_band::get_thread_id_sender(handle).await {
+        match out_of_band::get_thread_id_receiver(handle).await {
             Ok(thid) => {
                 trace!("vcx_out_of_band_receiver_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
                        command_handle, error::SUCCESS.message, thid);
