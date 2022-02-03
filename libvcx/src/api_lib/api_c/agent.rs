@@ -83,6 +83,38 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
 }
 
 #[no_mangle]
+pub extern fn vcx_public_agent_download_message(command_handle: CommandHandle,
+                                                agent_handle: u32,
+                                                uid: *const c_char,
+                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
+    info!("vcx_public_agent_download_message >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(uid, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_public_agent_download_message(command_handle: {}, agent_handle: {}, uids: {:?})", command_handle, agent_handle, uid);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match agent::download_message(agent_handle, &uid).await {
+            Ok(msg) => {
+                trace!("vcx_public_agent_download_message_cb(command_handle: {}, rc: {}, msg: {})",
+                       command_handle, error::SUCCESS.message, msg);
+                let msg = CStringUtils::string_to_cstring(msg);
+                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_public_agent_download_message_cb(command_handle: {}, rc: {}, msg: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
 pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
                                            agent_handle: u32,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>) -> u32 {

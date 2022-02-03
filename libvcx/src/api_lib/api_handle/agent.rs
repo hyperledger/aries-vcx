@@ -33,6 +33,15 @@ pub async fn download_connection_requests(agent_handle: u32, uids: Option<&Vec<S
     }.boxed()).await
 }
 
+pub async fn download_message(agent_handle: u32, uid: &str) -> VcxResult<String> {
+    trace!("download_message >>> agent_handle: {}, uid: {:?}", agent_handle, uid);
+    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move {
+        let msg = agent.download_message(uid).await?;
+        serde_json::to_string(&msg)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded message {:?}, err: {:?}", msg, err)))
+    }.boxed()).await
+}
+
 pub async fn get_service(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent, []| async move {
         let service = agent.service()?;
