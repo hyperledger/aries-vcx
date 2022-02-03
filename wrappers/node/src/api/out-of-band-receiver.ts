@@ -5,6 +5,7 @@ import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { IOOBSerializedData } from './out-of-band-sender';
 import { Connection } from './connection';
 import { VCXBase } from './vcx-base';
+import { ISerializedData } from './common';
 
 export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
   public static async createWithMessage(msg: string): Promise<OutOfBandReceiver> {
@@ -18,6 +19,13 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  public static async deserialize(
+    data: ISerializedData<IOOBSerializedData>,
+  ): Promise<OutOfBandReceiver> {
+    const newObj = { ...data, source_id: 'foo' };
+    return super._deserialize(OutOfBandReceiver, newObj);
   }
 
   public async extractMessage(): Promise<string> {
