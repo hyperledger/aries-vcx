@@ -645,6 +645,7 @@ impl Connection {
         Ok(())
     }
 
+    // TODO: Make sure thid == @id
     pub async fn send_handshake_reuse(&self, oob_id: &str) -> VcxResult<()> {
         trace!("Connection::send_handshake_reuse >>>");
         match &self.connection_sm {

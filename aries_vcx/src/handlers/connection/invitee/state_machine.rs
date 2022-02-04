@@ -274,7 +274,7 @@ impl SmConnectionInvitee {
                     .set_did(self.pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint)
                     .set_keys(recipient_keys, routing_keys);
-                let (request, thread_id) = match state.invitation {
+                let (request, thread_id) = match &state.invitation {
                     Invitation::Public(_) => (
                         request
                             .clone()
@@ -286,6 +286,13 @@ impl SmConnectionInvitee {
                         request
                             .set_thread_id(&self.thread_id),
                         self.get_thread_id()
+                    ),
+                    Invitation::OutOfBand(invite) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&invite.id.0)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone()
                     )
                 };
                 let ddo = DidDoc::from(state.invitation.clone());

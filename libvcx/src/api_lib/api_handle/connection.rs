@@ -178,7 +178,8 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
         let invitation = connection.get_invite_details()
             .map(|invitation| match invitation {
                 InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             });
         Ok(invitation)
     }.boxed()).await
@@ -210,7 +211,8 @@ pub async fn get_invite_details(handle: u32) -> VcxResult<String> {
         connection.get_invite_details()
             .map(|invitation| match invitation {
                 InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             })
             .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }.boxed()).await.or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))

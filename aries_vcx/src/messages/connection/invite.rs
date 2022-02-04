@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use crate::error::prelude::*;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::ServiceResolvable;
@@ -10,6 +11,7 @@ use crate::messages::connection::service::ServiceResolvable;
 pub enum Invitation {
     Pairwise(PairwiseInvitation),
     Public(PublicInvitation),
+    OutOfBand(OutOfBandInvitation)
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -38,7 +40,8 @@ impl Invitation {
     pub fn get_id(&self) -> VcxResult<String> {
         match self {
             Self::Pairwise(invite) => Ok(invite.id.0.clone()),
-            Self::Public(invite) => Ok(invite.id.0.clone())
+            Self::Public(invite) => Ok(invite.id.0.clone()),
+            Self::OutOfBand(invite) => Ok(invite.id.0.clone())
         }
     }
 }

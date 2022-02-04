@@ -10,9 +10,8 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::service::ServiceResolvable;
-use std::convert::TryFrom;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct OutOfBandReceiver {
@@ -95,14 +94,7 @@ impl OutOfBandReceiver {
 
     pub async fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
-        let service = match self.oob.services.get(0) {
-            Some(service) => service,
-            None => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidInviteDetail, "No service found in OoB message"));
-            }
-        };
-        let invite: PairwiseInvitation = PairwiseInvitation::try_from(service)?;
-        Connection::create_with_invite(&self.oob.id.0, Invitation::Pairwise(invite), autohop_enabled).await
+        Connection::create_with_invite(&self.oob.id.0, Invitation::OutOfBand(self.oob.clone()), autohop_enabled).await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
