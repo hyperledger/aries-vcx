@@ -80,12 +80,18 @@ macro_rules! threadlike (($type:ident) => (
 macro_rules! threadlike_optional (($type:ident) => (
     impl $type {
         pub fn set_thread_id(mut self, id: &str) -> $type {
-            self.thread = Some(Thread::new().set_thid(id.to_string()));
+            self.thread = match &self.thread {
+                Some(thread) => Some(thread.clone().set_thid(id.to_string())),
+                None => Some(Thread::new().set_thid(id.to_string()))
+            };
             self
         }
 
         pub fn set_parent_thread_id(mut self, id: &str) -> $type {
-            self.thread = Some(Thread::new().set_pthid(id.to_string()));
+            self.thread = match &self.thread {
+                Some(thread) => Some(thread.clone().set_pthid(id.to_string())),
+                None => Some(Thread::new().set_pthid(id.to_string()))
+            };
             self
         }
 

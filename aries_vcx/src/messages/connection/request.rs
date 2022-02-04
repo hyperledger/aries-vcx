@@ -47,9 +47,8 @@ impl Request {
         self
     }
 
-    pub fn set_thread_id_matching_id(mut self) -> Request {
-        self = self.clone().set_thread_id(&self.id.0);
-        self
+    pub fn set_thread_id_matching_id(self) -> Request {
+        self.clone().set_thread_id(&self.id.0)
     }
 }
 
