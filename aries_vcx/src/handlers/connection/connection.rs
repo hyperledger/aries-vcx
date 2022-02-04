@@ -89,7 +89,7 @@ impl Connection {
     }
 
     pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
-        trace!("Connection::create_with_invite >>> source_id: {}", source_id);
+        trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let mut connection = Self {
@@ -713,14 +713,28 @@ impl Connection {
     }
 
     pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
-        let expected_sender_vk = self.remote_vk()?;
-        let msgs = self.cloud_agent_info()
-            .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-            .await?
-            .iter()
-            .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
-            .collect::<VcxResult<Vec<Message>>>()?;
-        Ok(msgs)
+        match self.get_state() {
+            ConnectionState::Invitee(InviteeState::Initial) |
+            ConnectionState::Inviter(InviterState::Initial) |
+            ConnectionState::Inviter(InviterState::Invited) => {
+                let msgs = self.cloud_agent_info()
+                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .await?
+                    .iter()
+                    .map(|msg| msg.decrypt_noauth())
+                    .collect::<Vec<Message>>();
+                Ok(msgs)
+            }
+            _ => {
+                let expected_sender_vk = self.remote_vk()?;
+                self.cloud_agent_info()
+                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .await?
+                    .iter()
+                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
+                    .collect::<VcxResult<Vec<Message>>>()
+            }
+        }
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
