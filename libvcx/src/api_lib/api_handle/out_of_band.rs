@@ -2,16 +2,16 @@ use std::collections::HashMap;
 
 use futures::future::FutureExt;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::connection::did::Did;
+use aries_vcx::messages::connection::service::ServiceResolvable;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::out_of_band::GoalCode;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::aries_vcx::messages::connection::did::Did;
-use crate::aries_vcx::messages::connection::service::ServiceResolvable;
-use crate::error::prelude::*;
 
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCacheAsync<OutOfBandSender> = ObjectCacheAsync::<OutOfBandSender>::new("out-of-band-sender-cache");

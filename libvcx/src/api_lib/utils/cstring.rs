@@ -36,16 +36,21 @@ impl CStringUtils {
     }
 }
 
-//TODO DOCUMENT WHAT THIS DOES
 macro_rules! check_useful_c_str {
     ($x:ident, $e:expr) => {
         let $x = match CStringUtils::c_str_to_string($x) {
             Ok(Some(val)) => val,
-            _ => return VcxError::from_msg($e, "Invalid pointer has been passed").into()
+            _ => {
+                let err = VcxError::from_msg($e, "Invalid pointer has been passed");
+                set_current_error_vcx(&err);
+                return err.into();
+            }
         };
 
         if $x.is_empty() {
-            return VcxError::from_msg($e, "Empty string has been passed").into()
+            let err = VcxError::from_msg($e, "Empty string has been passed");
+            set_current_error_vcx(&err);
+            return err.into();
         }
     }
 }
@@ -54,22 +59,27 @@ macro_rules! check_useful_opt_c_str {
     ($x:ident, $e:expr) => {
         let $x = match CStringUtils::c_str_to_string($x) {
             Ok(opt_val) => opt_val,
-            Err(_) => return VcxError::from_msg($e, "Invalid pointer has been passed").into()
+            Err(_) => {
+                let err = VcxError::from_msg($e, "Invalid pointer has been passed");
+                set_current_error_vcx(&err);
+                return err.into();
+             }
         };
     }
 }
 
-/// Vector helpers
 macro_rules! check_useful_c_byte_array {
     ($ptr:ident, $len:expr, $err1:expr, $err2:expr) => {
         if $ptr.is_null() {
-            return VcxError::from_msg($err1, "Invalid pointer has been passed").into()
+            let err = VcxError::from_msg($err1, "Invalid pointer has been passed");
+            set_current_error_vcx(&err);
+            return err.into();
         }
-
         if $len <= 0 {
-            return VcxError::from_msg($err2, "Array length must be greater than 0").into()
+            let err = VcxError::from_msg($err2, "Array length must be greater than 0");
+            set_current_error_vcx(&err);
+            return err.into();
         }
-
         let $ptr = unsafe { std::slice::from_raw_parts($ptr, $len as usize) };
         let $ptr = $ptr.to_vec();
     }

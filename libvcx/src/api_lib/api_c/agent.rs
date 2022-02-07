@@ -1,14 +1,16 @@
 use std::ptr;
-use libc::c_char;
-use futures::future::BoxFuture;
 
+use futures::future::BoxFuture;
+use libc::c_char;
+
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::execute_async;
-use crate::error::prelude::*;
-use aries_vcx::utils::error;
 
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
@@ -31,6 +33,7 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_public_agent_create_cb(command_handle: {}, rc: {}, handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -71,6 +74,7 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
                 cb(command_handle, error::SUCCESS.code_num, requests.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
@@ -101,6 +105,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, service.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
@@ -131,6 +136,7 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, agent_json.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_public_agent_serialize_cb(command_handle: {}, rc: {}, agent_json: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), ptr::null());
@@ -161,6 +167,7 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, agent_handle);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_public_agent_deserialize_cb(command_handle: {}, rc: {}, agent_handle: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);

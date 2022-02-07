@@ -1,15 +1,15 @@
-use serde_json;
 use futures::future::FutureExt;
+use serde_json;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::issuance::issuer::Issuer;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::aries_vcx::messages::issuance::credential_offer::OfferInfo;
-use crate::error::prelude::*;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCacheAsync<Issuer> = ObjectCacheAsync::<Issuer>::new("issuer-credentials-cache");
@@ -89,11 +89,11 @@ pub async fn from_string(credential_data: &str) -> VcxResult<u32> {
 }
 
 pub async fn build_credential_offer_msg(handle: u32,
-                                  cred_def_handle: u32,
-                                  credential_json: &str,
-                                  comment: Option<&str>) -> VcxResult<()> {
+                                        cred_def_handle: u32,
+                                        credential_json: &str,
+                                        comment: Option<&str>) -> VcxResult<()> {
     if credential_def::has_pending_revocations_primitives_to_be_published(cred_def_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")))
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")));
     };
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
         let offer_info = OfferInfo {
@@ -113,16 +113,16 @@ pub async fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
 }
 
 pub async fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential, []| async move{
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential, []| async move {
         Ok(credential.get_credential_offer_msg()?)
     }.boxed()).await
 }
 
 pub async fn send_credential_offer(handle: u32,
-                             cred_def_handle: u32,
-                             connection_handle: u32,
-                             credential_json: &str,
-                             comment: Option<&str>) -> VcxResult<u32> {
+                                   cred_def_handle: u32,
+                                   connection_handle: u32,
+                                   credential_json: &str,
+                                   comment: Option<&str>) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
@@ -139,7 +139,7 @@ pub async fn send_credential_offer(handle: u32,
     }.boxed()).await
 }
 
-pub async fn send_credential_offer_v2(handle: u32, connection_handle: u32,) -> VcxResult<u32> {
+pub async fn send_credential_offer_v2(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
         let send_message = connection::send_message_closure(connection_handle).await?;
         credential.send_credential_offer(send_message).await?;

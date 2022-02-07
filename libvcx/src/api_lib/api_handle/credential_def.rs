@@ -1,22 +1,22 @@
 use serde_json;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::error::prelude::*;
 
 lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
 pub fn create_and_store(source_id: String,
-                          schema_id: String,
-                          issuer_did: String,
-                          tag: String,
-                          revocation_details: String) -> VcxResult<u32> {
+                        schema_id: String,
+                        issuer_did: String,
+                        tag: String,
+                        revocation_details: String) -> VcxResult<u32> {
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)
@@ -41,7 +41,7 @@ pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
             match &tails_url {
                 None => {
                     return Err(VcxError::from_msg(VcxErrorKind::InvalidOption,
-                                                  "Revocation primitives should be published on ledger but tails_url was not provided"
+                                                  "Revocation primitives should be published on ledger but tails_url was not provided",
                     ));
                 }
                 Some(tails_url) => {
@@ -181,16 +181,16 @@ pub mod tests {
         time::Duration,
     };
 
+    use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupMocks, SetupWithWalletAndAgency};
 
     use crate::api_lib::api_handle::schema;
 
@@ -201,18 +201,18 @@ pub mod tests {
     pub fn revocation_details(revoc: bool) -> (String, Option<String>) {
         let (revoc_details, tails_file) = if revoc {
             (RevocationDetailsBuilder::default()
-                .support_revocation(true)
-                .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
-                .max_creds(10 as u32)
-                .build()
-                .unwrap(),
-            Some("http://tails-url.org".to_string()))
+                 .support_revocation(true)
+                 .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
+                 .max_creds(10 as u32)
+                 .build()
+                 .unwrap(),
+             Some("http://tails-url.org".to_string()))
         } else {
             (RevocationDetailsBuilder::default()
-                .support_revocation(false)
-                .build()
-                .unwrap(),
-            None)
+                 .support_revocation(false)
+                 .build()
+                 .unwrap(),
+             None)
         };
         (serde_json::to_string(&revoc_details).unwrap(), tails_file)
     }
@@ -300,10 +300,10 @@ pub mod tests {
             .unwrap();
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
         let handle = create_and_store("1".to_string(),
-                                    schema_id,
-                                    did,
-                                    "tag_1".to_string(),
-                                    revocation_details).unwrap();
+                                      schema_id,
+                                      did,
+                                      "tag_1".to_string(),
+                                      revocation_details).unwrap();
         let rc = publish(handle, None);
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidOption);
     }
@@ -324,10 +324,10 @@ pub mod tests {
             .unwrap();
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
         let handle = create_and_store("1".to_string(),
-                                        schema_id,
-                                        did,
-                                        "tag1".to_string(),
-                                        revocation_details).unwrap();
+                                      schema_id,
+                                      did,
+                                      "tag1".to_string(),
+                                      revocation_details).unwrap();
         publish(handle, Some(utils::constants::TEST_TAILS_URL.to_string())).unwrap();
         let rev_reg_def = get_rev_reg_def(handle).unwrap().unwrap();
         let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def).unwrap();
@@ -351,10 +351,10 @@ pub mod tests {
             .unwrap();
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
         let handle = create_and_store("1".to_string(),
-                                        schema_id,
-                                        did,
-                                        "tag_1".to_string(),
-                                        revocation_details).unwrap();
+                                      schema_id,
+                                      did,
+                                      "tag_1".to_string(),
+                                      revocation_details).unwrap();
         publish(handle, Some("tails_url".to_string())).unwrap();
 
         assert!(get_rev_reg_def(handle).unwrap().is_some());
@@ -382,17 +382,17 @@ pub mod tests {
 
         let (_, schema_id, did, revocation_details, _) = prepare_create_cred_def_data(false);
         create_and_store("1".to_string(),
-                           schema_id.clone(),
-                           did.clone(),
-                           "tag_1".to_string(),
-                           revocation_details.to_string()).unwrap();
+                         schema_id.clone(),
+                         did.clone(),
+                         "tag_1".to_string(),
+                         revocation_details.to_string()).unwrap();
 
         sleep(Duration::from_secs(1));
         let _err = create_and_store("1".to_string(),
-                                   schema_id.clone(),
-                                   did.clone(),
-                                   "tag_1".to_string(),
-                                   revocation_details.to_string()).unwrap();
+                                    schema_id.clone(),
+                                    did.clone(),
+                                    "tag_1".to_string(),
+                                    revocation_details.to_string()).unwrap();
     }
 
     #[test]
