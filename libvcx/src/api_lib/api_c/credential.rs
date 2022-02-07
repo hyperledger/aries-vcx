@@ -1,15 +1,16 @@
 use std::ptr;
 
-use libc::c_char;
 use futures::future::BoxFuture;
+use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::credential;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::runtime:: {execute_async, execute};
-use crate::error::prelude::*;
+use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
     The API represents a Holder side in credential issuance process.
@@ -87,6 +88,7 @@ pub extern fn vcx_credential_create_with_offer(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x)
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {})",
                       command_handle, source_id, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -599,6 +601,7 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 error!("vcx_credential_get_offers_cb(command_handle: {}, rc: {}, msg: null)",
                        command_handle, x);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -806,6 +809,7 @@ pub extern fn vcx_credential_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 error!("vcx_credential_serialize_cb(command_handle: {}, rc: {}, data: {}), source_id: {:?}",
                        command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -851,6 +855,7 @@ pub extern fn vcx_credential_deserialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 error!("vcx_credential_deserialize_cb(command_handle: {}, rc: {}, credential_handle: {}) source_id: {}",
                        command_handle, x, 0, "");
                 cb(command_handle, x.into(), 0);
@@ -897,13 +902,13 @@ mod tests {
     use serde_json::Value;
 
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-    use aries_vcx::handlers::issuance::holder::holder::HolderState;
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
 
-    use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 

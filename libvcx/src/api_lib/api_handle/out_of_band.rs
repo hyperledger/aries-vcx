@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+
 use futures::future::FutureExt;
 
-use crate::aries_vcx::handlers::out_of_band::GoalCode;
-use crate::aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-use crate::aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
-use crate::aries_vcx::messages::connection::service::ServiceResolvable;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::aries_vcx::messages::connection::did::Did;
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::out_of_band::GoalCode;
+use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
+use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::connection::did::Did;
+use aries_vcx::messages::connection::service::ServiceResolvable;
+
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
-use crate::error::prelude::*;
+use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
 
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCacheAsync<OutOfBandSender> = ObjectCacheAsync::<OutOfBandSender>::new("out-of-band-sender-cache");
@@ -125,8 +127,8 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
         let mut conn_map = HashMap::new();
         for conn_handle in conn_handles {
             let connection = CONNECTION_MAP.get(*conn_handle, |connection, []| async move {
-                    Ok(connection.clone())
-                }.boxed(),
+                Ok(connection.clone())
+            }.boxed(),
             ).await?;
             conn_map.insert(*conn_handle, connection);
         };
@@ -136,10 +138,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
             if let Some((&handle, _)) = conn_map
                 .iter()
                 .find(|(_, conn)| *conn == connection) {
-                    Ok((handle, true))
-                } else {
-                    Err(VcxError::from(VcxErrorKind::InvalidState))
-                }
+                Ok((handle, true))
+            } else {
+                Err(VcxError::from(VcxErrorKind::InvalidState))
+            }
         } else {
             Ok((0, false))
         }
@@ -190,6 +192,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 pub mod tests {
     use aries_vcx::messages::connection::service::FullService;
     use aries_vcx::utils::devsetup::SetupMocks;
+
     use super::*;
 
     #[tokio::test]

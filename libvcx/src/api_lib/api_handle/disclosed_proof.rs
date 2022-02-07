@@ -1,7 +1,13 @@
-use serde_json;
 use futures::future::FutureExt;
+use serde_json;
 
+use aries_vcx::{
+    handlers::proof_presentation::prover::Prover,
+    messages::proof_presentation::presentation_request::PresentationRequest,
+};
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
@@ -9,12 +15,6 @@ use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::{
-    handlers::proof_presentation::prover::prover::Prover,
-    messages::proof_presentation::presentation_request::PresentationRequest,
-};
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::error::prelude::*;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCacheAsync<Prover> = ObjectCacheAsync::<Prover>::new("disclosed-proofs-cache");
@@ -259,8 +259,8 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof;
     use aries_vcx::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
 
-    use crate::aries_vcx::handlers::proof_presentation::prover::prover::ProverState;
     use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
+    use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     use super::*;
 

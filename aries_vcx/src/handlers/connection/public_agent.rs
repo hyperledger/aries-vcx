@@ -5,19 +5,19 @@ use futures::StreamExt;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
-use crate::messages::connection::service::FullService;
 use crate::libindy::utils::ledger::add_service;
-use crate::messages::connection::request::Request;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did::Did;
+use crate::messages::connection::request::Request;
+use crate::messages::connection::service::FullService;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicAgent {
     source_id: String,
     agent_info: CloudAgentInfo,
     pairwise_info: PairwiseInfo,
-    institution_did: Did
+    institution_did: Did,
 }
 
 impl PublicAgent {
@@ -74,7 +74,7 @@ impl PublicAgent {
             })
             .collect()
             .await;
-       Ok(connection_requests) 
+        Ok(connection_requests)
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
@@ -85,6 +85,12 @@ impl PublicAgent {
     pub fn from_string(agent_data: &str) -> VcxResult<Self> {
         serde_json::from_str(agent_data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Agent: {:?}", err)))
+    }
+}
+
+impl From<&PublicAgent> for PairwiseInfo {
+    fn from(agent: &PublicAgent) -> Self {
+        agent.pairwise_info()
     }
 }
 
@@ -99,11 +105,11 @@ pub mod tests {
             source_id: "test-public-agent".to_string(),
             agent_info: CloudAgentInfo {
                 agent_did: "NaMhQmSjkWoi5aVWEkA9ya".to_string(),
-                agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string()
+                agent_vk: "Cm2rgfweypyJ5u9h46ZnqcJrCVYvgau1DAuVJV6MgVBc".to_string(),
             },
             pairwise_info: PairwiseInfo {
                 pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
-                pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string()
+                pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
             },
             institution_did: Did::new(INSTITUTION_DID).unwrap()
         }

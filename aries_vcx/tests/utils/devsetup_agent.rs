@@ -1,33 +1,36 @@
 #[cfg(test)]
 pub mod test {
     use aries_vcx::agency_client::payload::PayloadKinds;
-    use aries_vcx::settings;
-
-    use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::public_agent::PublicAgent;
+    use aries_vcx::handlers::issuance::holder::Holder;
+    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::issuer::Issuer;
+    use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
+    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
+    use aries_vcx::libindy::credential_def::PublicEntityStateType;
+    use aries_vcx::libindy::schema;
+    use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds;
+    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::messages::a2a::A2AMessage;
+    use aries_vcx::messages::connection::invite::PublicInvitation;
+    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::issuance::credential_offer::OfferInfo;
+    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+    use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+    use aries_vcx::settings;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
-    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
-    use aries_vcx::handlers::connection::public_agent::PublicAgent;
-    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
-    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerState};
-    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
-    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::schema::schema::Schema;
-    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
-    use aries_vcx::messages::issuance::credential_offer::OfferInfo;
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
-    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
-    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
-    use aries_vcx::messages::connection::invite::PublicInvitation;
-    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -90,7 +93,7 @@ pub mod test {
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
-        pub agent: PublicAgent
+        pub agent: PublicAgent,
     }
 
     impl TestAgent for Faber {
@@ -137,13 +140,13 @@ pub mod test {
                 storage_config: None,
                 storage_credentials: None,
                 rekey: None,
-                rekey_derivation_method: None
+                rekey_derivation_method: None,
             };
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
-                agent_seed: None
+                agent_seed: None,
             };
             create_wallet(&config_wallet).unwrap();
             open_as_main_wallet(&config_wallet).unwrap();
@@ -161,7 +164,7 @@ pub mod test {
                 connection: Connection::create("faber", true).await.unwrap(),
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent: PublicAgent::create("faber", &institution_did).await.unwrap()
+                agent: PublicAgent::create("faber", &institution_did).await.unwrap(),
             };
             close_main_wallet().unwrap();
             faber
@@ -316,7 +319,7 @@ pub mod test {
         pub config_agency: AgencyClientConfig,
         pub connection: Connection,
         pub credential: Holder,
-        pub prover: Prover
+        pub prover: Prover,
     }
 
     impl Alice {
@@ -331,14 +334,14 @@ pub mod test {
                 storage_config: None,
                 storage_credentials: None,
                 rekey: None,
-                rekey_derivation_method: None
+                rekey_derivation_method: None,
             };
 
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: C_AGENCY_DID.to_string(),
                 agency_verkey: C_AGENCY_VERKEY.to_string(),
                 agency_endpoint: C_AGENCY_ENDPOINT.to_string(),
-                agent_seed: None
+                agent_seed: None,
             };
 
             create_wallet(&config_wallet).unwrap();
@@ -350,7 +353,7 @@ pub mod test {
                 config_agency,
                 connection: Connection::create("tmp_empoty", true).await.unwrap(),
                 credential: Holder::default(),
-                prover: Prover::default()
+                prover: Prover::default(),
             };
             close_main_wallet().unwrap();
             alice
@@ -417,7 +420,7 @@ pub mod test {
                 A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
-                                                  format!("Message of different type was received: {:?}", msg)))
+                                           format!("Message of different type was received: {:?}", msg)))
                 }
             }
         }
@@ -428,7 +431,7 @@ pub mod test {
                 A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
-                                                  format!("Message of different type was received: {:?}", msg)))
+                                           format!("Message of different type was received: {:?}", msg)))
                 }
             }
         }

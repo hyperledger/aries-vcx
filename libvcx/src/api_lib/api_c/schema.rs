@@ -3,14 +3,15 @@ use std::ptr;
 use libc::c_char;
 use serde_json;
 
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::settings;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::execute;
-use crate::error::prelude::*;
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -71,6 +72,7 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                       command_handle, x, 0, source_id);
                 cb(command_handle, x.into(), 0);
@@ -146,6 +148,7 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle, transaction.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
                       command_handle, x, 0, "", source_id);
                 cb(command_handle, x.into(), 0, ptr::null_mut());
@@ -194,6 +197,7 @@ pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_serialize_cb(command_handle: {}, schema_handle: {}, rc: {}, state: {}) source_id: {}",
                       command_handle, schema_handle, x, "null", source_id);
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -235,6 +239,7 @@ pub extern fn vcx_schema_deserialize(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, x);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
                       command_handle, x, 0, "");
                 cb(command_handle, x.into(), 0);
@@ -304,6 +309,7 @@ pub extern fn vcx_schema_get_schema_id(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {}, rc: {}, schema_seq_no: {})",
                       command_handle, schema_handle, x, "");
                 cb(command_handle, x.into(), ptr::null_mut());
@@ -356,6 +362,7 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, handle, msg.as_ptr());
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_get_attributes_cb(command_handle: {}, rc: {}, handle: {}, attrs: {})",
                       command_handle, x, 0, "");
                 cb(command_handle, x.into(), 0, ptr::null_mut());
@@ -406,6 +413,7 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -456,6 +464,7 @@ pub extern fn vcx_schema_get_state(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
             Err(x) => {
+                set_current_error_vcx(&x);
                 warn!("vcx_schema_get_state(command_handle: {}, rc: {}, state: {})",
                       command_handle, x, 0);
                 cb(command_handle, x.into(), 0);
@@ -479,14 +488,16 @@ mod tests {
 
     use rand::Rng;
 
-    use aries_vcx::handlers::issuance::credential_def::PublicEntityStateType;
-    use aries_vcx::handlers::issuance::schema::schema::Schema;
+    use aries_vcx::libindy::credential_def::PublicEntityStateType;
+    use aries_vcx::libindy::schema;
+    use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::{SetupWithWalletAndAgency, SetupMocks};
+    use aries_vcx::utils::devsetup::{SetupMocks, SetupWithWalletAndAgency};
 
     use crate::api_lib;
+    use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -663,7 +674,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (handle, _) = schema::prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
+        let (handle, _) = prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));

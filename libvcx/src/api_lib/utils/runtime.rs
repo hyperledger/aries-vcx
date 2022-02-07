@@ -14,7 +14,7 @@ use futures::future;
 use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 lazy_static! {
     static ref THREADPOOL: Mutex<HashMap<u32, Runtime>> = Default::default();

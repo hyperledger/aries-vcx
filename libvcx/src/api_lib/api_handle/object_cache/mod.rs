@@ -6,7 +6,7 @@ use futures::future::BoxFuture;
 
 use rand::Rng;
 
-use crate::error::prelude::*;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 pub struct ObjectCache<T> {
     pub cache_name: String,

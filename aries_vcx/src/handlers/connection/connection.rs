@@ -1,29 +1,29 @@
 use core::fmt;
-use std::collections::HashMap;
 use std::clone::Clone;
+use std::collections::HashMap;
 
+use futures::future::BoxFuture;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
-use futures::future::BoxFuture;
 
 use agency_client::get_message::Message;
 use agency_client::MessageStatusCode;
 
 use crate::error::prelude::*;
-use crate::handlers::SendClosure;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
-use crate::handlers::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
-use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
+use crate::handlers::connection::public_agent::PublicAgent;
+use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
-use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::messages::connection::request::Request;
+use crate::messages::discovery::disclose::ProtocolDescriptor;
+use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
+use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -313,7 +313,7 @@ impl Connection {
         Ok(Self {
             connection_sm,
             cloud_agent_info: new_cloud_agent_info,
-            autohop_enabled: self.autohop_enabled
+            autohop_enabled: self.autohop_enabled,
         })
     }
 
@@ -598,7 +598,7 @@ impl Connection {
         self.cloud_agent_info().get_message_by_id(msg_id, &expected_sender_vk, self.pairwise_info()).await
     }
 
-    pub fn send_message_closure(&self) -> VcxResult<SendClosure>  {
+    pub fn send_message_closure(&self) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
@@ -742,8 +742,8 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, <A as MapAccess<'de>>::Error>
-    where
-        A: MapAccess<'de>
+        where
+            A: MapAccess<'de>
     {
         let mut map_value = serde_json::Map::new();
         while let Some(key) = map.next_key()? {
@@ -787,9 +787,9 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 
 #[cfg(test)]
 mod tests {
-    use crate::messages::connection::request::tests::_request;
     use crate::handlers::connection::public_agent::tests::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
+    use crate::messages::connection::request::tests::_request;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

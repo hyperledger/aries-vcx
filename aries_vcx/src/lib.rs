@@ -41,8 +41,9 @@ pub mod error;
 pub mod libindy;
 pub mod settings;
 pub mod init;
+pub mod protocols;
 
-#[cfg(test)]
+ #[cfg(test)]
 pub mod test {
     pub fn source_id() -> String {
         String::from("test source id")
