@@ -89,7 +89,7 @@ impl CompleteState {
     {
         let reuse_msg = OutOfBandHandshakeReuse::default()
             .set_thread_id_matching_id()
-            .set_parent_thread_id(&oob_id);
+            .set_parent_thread_id(oob_id);
         send_message(pw_vk.to_string(), self.did_doc.clone(), reuse_msg.to_a2a_message()).await.ok();
         Ok(())
     }

@@ -16,6 +16,7 @@ use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
@@ -359,14 +360,14 @@ impl SmConnectionInvitee {
         Ok(self)
     }
 
-    pub async fn handle_send_handshake_reuse<F, T>(self, oob_id: &str, send_message: F) -> VcxResult<Self>
+    pub async fn handle_send_handshake_reuse<F, T>(self, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
     where
         F: Fn(String, DidDoc, A2AMessage) -> T,
         T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviteeFullState::Completed(state) => {
-                state.handle_send_handshake_reuse(oob_id, &self.pairwise_info.pw_vk, send_message).await?;
+                state.handle_send_handshake_reuse(&oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
             s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }

@@ -1478,7 +1478,8 @@ mod tests {
         let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_some());
         let receiver_oob_id = oob_receiver.get_id();
-        conn.unwrap().send_handshake_reuse(&receiver_oob_id).await.unwrap();
+        let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
+        conn.unwrap().send_handshake_reuse(&receiver_msg).await.unwrap();
 
         institution.activate().unwrap();
         let mut msgs = institution_to_consumer.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();

@@ -124,9 +124,9 @@ pub async fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResul
     }.boxed()).await
 }
 
-pub async fn send_handshake_reuse(connection_handle: u32, oob_id: &str) -> VcxResult<()> {
+pub async fn send_handshake_reuse(connection_handle: u32, oob_msg: &str) -> VcxResult<()> {
     CONNECTION_MAP.get(connection_handle, |connection, []| async move {
-        connection.send_handshake_reuse(oob_id).await.map_err(|err| err.into())
+        connection.send_handshake_reuse(oob_msg).await.map_err(|err| err.into())
     }.boxed()).await
 }
 

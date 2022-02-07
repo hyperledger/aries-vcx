@@ -645,14 +645,21 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn send_handshake_reuse(&self, oob_id: &str) -> VcxResult<()> {
+    pub async fn send_handshake_reuse(&self, oob_msg: &str) -> VcxResult<()> {
         trace!("Connection::send_handshake_reuse >>>");
+        let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
+            Ok(a2a_msg) => match a2a_msg {
+                A2AMessage::OutOfBandInvitation(oob) => oob,
+                a @ _ => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Received invalid message type: {:?}", a))); }
+            }
+            Err(err) => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize message, err: {:?}", err))); }
+        };
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(oob_id, send_message).await?)
+                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(oob, send_message).await?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(oob_id, send_message).await?)
+                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(oob, send_message).await?)
             }
         };
         Ok(())

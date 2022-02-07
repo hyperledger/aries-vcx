@@ -616,14 +616,14 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     }
   }
 
-  public async sendHandshakeReuse(oobId: string): Promise<void> {
+  public async sendHandshakeReuse(oobMsg: string): Promise<void> {
     try {
       return await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_connection_send_handshake_reuse(
             0,
             this.handle,
-            oobId,
+            oobMsg,
             cb,
           );
           if (rc) {

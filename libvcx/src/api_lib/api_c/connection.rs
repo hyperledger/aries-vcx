@@ -814,18 +814,18 @@ pub extern fn vcx_connection_send_ping(command_handle: u32,
 #[no_mangle]
 pub extern fn vcx_connection_send_handshake_reuse(command_handle: u32,
                                                   connection_handle: u32,
-                                                  oob_id: *const c_char,
+                                                  oob_msg: *const c_char,
                                                   cb: Option<extern fn(xcommand_handle: u32, err: u32)>) -> u32 {
     info!("vcx_connection_send_handshake_reuse >>>");
 
-    check_useful_c_str!(oob_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(oob_msg, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_send_handshake_reuse(command_handle: {}, connection_handle: {})",
-           command_handle, connection_handle);
+    trace!("vcx_connection_send_handshake_reuse(command_handle: {}, connection_handle: {}, oob_msg: {})",
+           command_handle, connection_handle, oob_msg);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match send_handshake_reuse(connection_handle, &oob_id).await {
+        match send_handshake_reuse(connection_handle, &oob_msg).await {
             Ok(()) => {
                 trace!("vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
