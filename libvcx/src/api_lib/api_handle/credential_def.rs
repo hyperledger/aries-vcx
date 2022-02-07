@@ -151,9 +151,7 @@ pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<St
                 let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
                 s.rotate_rev_reg(revocation_details)?;
-                let rev_reg_id = s.get_rev_reg_id()
-                    .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, "Failed to get revocation registry id after revocation registry rotation."))?;
-                Ok(rev_reg_id)
+                s.to_string().map_err(|err| err.into())
             }
             None => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempting to rotate revocation registry on unrevokable credential definition"))
         }
