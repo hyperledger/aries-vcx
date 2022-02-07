@@ -234,7 +234,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(|msg| A2AMessage::OutOfBandHandshakeReuse(msg))
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACK) => {
+            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED) => {
                 OutOfBandHandshakeReuseAccepted::deserialize(value)
                     .map(|msg| A2AMessage::OutOfBandHandshakeReuseAccepted(msg))
                     .map_err(de::Error::custom)
@@ -281,7 +281,7 @@ impl Serialize for A2AMessage {
             A2AMessage::BasicMessage(msg) => set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE),
             A2AMessage::OutOfBandInvitation(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION),
             A2AMessage::OutOfBandHandshakeReuse(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE),
-            A2AMessage::OutOfBandHandshakeReuseAccepted(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACK),
+            A2AMessage::OutOfBandHandshakeReuseAccepted(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED),
             A2AMessage::Generic(msg) => Ok(msg.clone())
         }.map_err(ser::Error::custom)?;
 
@@ -337,7 +337,7 @@ impl A2AMessage {
     const BASIC_MESSAGE: &'static str = "message";
     const OUT_OF_BAND_INVITATION: &'static str = "invitation";
     const OUT_OF_BAND_HANDSHAKE_REUSE: &'static str = "handshake-reuse";
-    const OUT_OF_BAND_HANDSHAKE_REUSE_ACK: &'static str = "handshake-reuse-accepted";
+    const OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED: &'static str = "handshake-reuse-accepted";
 }
 
 #[cfg(test)]

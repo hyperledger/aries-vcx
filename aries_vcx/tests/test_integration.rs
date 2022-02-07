@@ -1460,7 +1460,7 @@ mod tests {
         let mut institution = Faber::setup().await;
         let mut consumer = Alice::setup().await;
 
-        let (consumer_to_institution, mut institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
+        let (mut consumer_to_institution, mut institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
         institution.activate().unwrap();
         let service = FullService::try_from(&institution.agent).unwrap();
@@ -1469,6 +1469,7 @@ mod tests {
             .set_goal_code(&GoalCode::P2PMessaging)
             .set_goal("To exchange message")
             .append_service(&ServiceResolvable::FullService(service));
+        let sender_oob_id = oob_sender.get_id();
         let oob_msg = oob_sender.to_a2a_message();
 
         consumer.activate().unwrap();
@@ -1476,20 +1477,38 @@ mod tests {
         let conns = vec![&consumer_to_institution];
         let conn = oob_receiver.connection_exists(&conns).unwrap();
         assert!(conn.is_some());
-        conn.unwrap().send_handshake_reuse(&oob_receiver.get_id()).await.unwrap();
+        let receiver_oob_id = oob_receiver.get_id();
+        conn.unwrap().send_handshake_reuse(&receiver_oob_id).await.unwrap();
 
         institution.activate().unwrap();
         let mut msgs = institution_to_consumer.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let a2a_msg: A2AMessage = serde_json::from_str(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap();
-        assert!(matches!(a2a_msg, A2AMessage::OutOfBandHandshakeReuse(..)));
-        institution_to_consumer.update_state_with_message(&a2a_msg).await.unwrap();
+        let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+            A2AMessage::OutOfBandHandshakeReuse(ref a2a_msg) => {
+                assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
+                assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
+                assert_eq!(a2a_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
+                a2a_msg.clone()
+            }
+            _ => { panic!("Expected OutOfBandHandshakeReuse message type"); }
+        };
+        institution_to_consumer.update_state_with_message(&A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
 
         consumer.activate().unwrap();
         let mut msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let a2a_msg: A2AMessage = serde_json::from_str(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap();
-        assert!(matches!(a2a_msg, A2AMessage::OutOfBandHandshakeReuseAccepted(..)));
+        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+            A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
+                assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
+                assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
+                assert_eq!(reuse_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
+                a2a_msg.clone()
+            }
+            _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
+        };
+        consumer_to_institution.update_state_with_message(&A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
+        consumer_to_institution.update_state().await.unwrap();
+        assert_eq!(consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
     }
 
     #[tokio::test]

@@ -46,10 +46,6 @@ impl Request {
         self.connection.did_doc.set_keys(recipient_keys, routing_keys);
         self
     }
-
-    pub fn set_thread_id_matching_id(self) -> Request {
-        self.clone().set_thread_id(&self.id.0)
-    }
 }
 
 a2a_message!(Request, ConnectionRequest);

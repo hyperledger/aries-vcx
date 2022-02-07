@@ -211,6 +211,14 @@ impl SmConnectionInvitee {
                         debug!("Disclose message received");
                         true
                     }
+                    A2AMessage::OutOfBandHandshakeReuse(_) => {
+                        debug!("OutOfBandHandshakeReuse message received");
+                        true
+                    }
+                    A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {
+                        debug!("OutOfBandHandshakeReuseAccepted message received");
+                        true
+                    }
                     _ => {
                         debug!("Unexpected message received in Completed state: {:?}", message);
                         false

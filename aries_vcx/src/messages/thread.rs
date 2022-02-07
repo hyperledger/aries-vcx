@@ -73,6 +73,10 @@ macro_rules! threadlike (($type:ident) => (
                 self.id.0.clone()
             }
         }
+
+        pub fn set_thread_id_matching_id(self) -> $type {
+            self.clone().set_thread_id(&self.id.0)
+        }
     }
 ));
 
@@ -109,6 +113,10 @@ macro_rules! threadlike_optional (($type:ident) => (
                 Some(thread) => thread.is_reply(thread_id),
                 None => true
             }
+        }
+
+        pub fn set_thread_id_matching_id(self) -> $type {
+            self.clone().set_thread_id(&self.id.0)
         }
     }
 ));
