@@ -86,20 +86,17 @@ mod tests {
     use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::handlers::connection::inviter::state_machine::InviterState;
-    use aries_vcx::handlers::issuance::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
-    use aries_vcx::handlers::issuance::holder::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::holder::holder::{Holder, HolderState};
-    use aries_vcx::handlers::issuance::issuer::issuer::{Issuer, IssuerConfig, IssuerState};
-    use aries_vcx::handlers::issuance::issuer::get_credential_proposal_messages;
+    use aries_vcx::handlers::issuance::holder::Holder;
+    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
+    use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerConfig};
+    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
     use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
-    use aries_vcx::handlers::out_of_band::receiver::receiver::OutOfBandReceiver;
-    use aries_vcx::handlers::out_of_band::sender::sender::OutOfBandSender;
-    use aries_vcx::handlers::proof_presentation::prover::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::prover::prover::{Prover, ProverState};
-    use aries_vcx::handlers::proof_presentation::verifier::verifier::{Verifier, VerifierState};
-    use aries_vcx::messages::proof_presentation::presentation_proposal::{PresentationProposal, PresentationProposalData, Attribute};
+    use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
+    use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+    use aries_vcx::handlers::proof_presentation::prover::Prover;
+    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
+    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::libindy::utils::wallet::*;
@@ -110,8 +107,15 @@ mod tests {
     use aries_vcx::messages::connection::service::ServiceResolvable;
     use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use aries_vcx::messages::mime_type::MimeType;
+    use aries_vcx::messages::proof_presentation::presentation_proposal::{Attribute, PresentationProposal, PresentationProposalData};
+    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+    use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+    use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::settings;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},
@@ -137,22 +141,22 @@ mod tests {
             .unwrap();
         let (revocation_details, tails_url) = if support_rev {
             (RevocationDetailsBuilder::default()
-                .support_revocation(support_rev)
-                .tails_dir(get_temp_dir_path(TAILS_DIR).to_str().unwrap())
-                .max_creds(10 as u32)
-                .build()
-                .unwrap(),
-            Some(TEST_TAILS_URL))
+                 .support_revocation(support_rev)
+                 .tails_dir(get_temp_dir_path(TAILS_DIR).to_str().unwrap())
+                 .max_creds(10 as u32)
+                 .build()
+                 .unwrap(),
+             Some(TEST_TAILS_URL))
         } else {
             (RevocationDetailsBuilder::default()
-                .support_revocation(support_rev)
-                .build()
-                .unwrap(),
-            None)
+                 .support_revocation(support_rev)
+                 .build()
+                 .unwrap(),
+             None)
         };
         let mut cred_def = CredentialDef::create_and_store("1".to_string(),
-                                                         config,
-                                                         revocation_details).unwrap()
+                                                           config,
+                                                           revocation_details).unwrap()
             .publish_cred_def().unwrap();
         if let Some(tails_url) = tails_url {
             cred_def.publish_revocation_primitives(tails_url).unwrap();
@@ -342,7 +346,7 @@ mod tests {
             credential_json: proposal.credential_proposal.to_string().unwrap(),
             cred_def_id: proposal.cred_def_id.clone(),
             rev_reg_id,
-            tails_file
+            tails_file,
         };
         issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
         issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
@@ -361,7 +365,7 @@ mod tests {
             credential_json: proposal.credential_proposal.to_string().unwrap(),
             cred_def_id: proposal.cred_def_id.clone(),
             rev_reg_id,
-            tails_file
+            tails_file,
         };
         issuer.build_credential_offer_msg(offer_info, Some("comment".into())).unwrap();
         issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
@@ -459,7 +463,7 @@ mod tests {
         }).collect();
         let presentation_request_data =
             PresentationRequestData::create("request-1").unwrap()
-            .set_requested_attributes_as_vec(attrs).unwrap();
+                .set_requested_attributes_as_vec(attrs).unwrap();
         verifier.set_request(presentation_request_data, None).unwrap();
         verifier.send_presentation_request(connection.send_message_closure().unwrap()).await.unwrap();
     }
@@ -646,7 +650,6 @@ mod tests {
             _ => retrieved_to_selected_credentials_simple(&retrieved_credentials, true)
         };
         serde_json::to_string(&selected_credentials_value).unwrap()
-        
     }
 
     async fn prover_select_credentials_and_send_proof_and_assert(
@@ -654,7 +657,7 @@ mod tests {
         consumer_to_institution: &Connection,
         request_name: Option<&str>,
         requested_values: Option<&str>,
-        expected_prover_state: ProverState
+        expected_prover_state: ProverState,
     ) {
         consumer.activate().unwrap();
         let mut prover = create_proof(consumer, consumer_to_institution, request_name).await;

@@ -1,7 +1,13 @@
-use serde_json;
 use futures::FutureExt;
+use serde_json;
 
+use aries_vcx::{
+    handlers::issuance::holder::Holder,
+    messages::a2a::A2AMessage,
+    messages::issuance::credential_offer::CredentialOffer,
+};
 use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
@@ -9,12 +15,6 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::{
-    handlers::issuance::holder::holder::Holder,
-    messages::a2a::A2AMessage,
-    messages::issuance::credential_offer::CredentialOffer,
-};
-use crate::error::prelude::*;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCacheAsync<Holder> = ObjectCacheAsync::<Holder>::new("credentials-cache");
@@ -284,15 +284,14 @@ pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
 
 #[cfg(test)]
 pub mod tests {
+    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
     use aries_vcx::utils::mockdata::mockdata_credex;
 
     use crate::api_lib::api_handle::connection;
     use crate::api_lib::api_handle::credential::{credential_create_with_offer, get_attributes, get_credential, send_credential_request};
-    use crate::aries_vcx::handlers::issuance::holder::holder::HolderState;
     use crate::aries_vcx::messages::issuance::credential::Credential;
-    use crate::error::VcxErrorKind;
 
     use super::*;
 

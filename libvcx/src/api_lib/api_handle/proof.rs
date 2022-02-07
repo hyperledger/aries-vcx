@@ -1,14 +1,14 @@
-use serde_json;
 use futures::future::FutureExt;
+use serde_json;
 
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::Verifier;
-use crate::aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::error::prelude::*;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCacheAsync<Verifier> = ObjectCacheAsync::<Verifier>::new("proofs-cache");
@@ -22,10 +22,10 @@ enum Proofs {
 }
 
 pub async fn create_proof(source_id: String,
-                    requested_attrs: String,
-                    requested_predicates: String,
-                    revocation_details: String,
-                    name: String) -> VcxResult<u32> {
+                          requested_attrs: String,
+                          requested_predicates: String,
+                          revocation_details: String,
+                          name: String) -> VcxResult<u32> {
     let presentation_request =
         PresentationRequestData::create(&name)?
             .set_requested_attributes_as_string(requested_attrs)?
@@ -149,7 +149,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
-    use crate::aries_vcx::handlers::proof_presentation::verifier::verifier::VerifierState;
+    use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 
     use super::*;
 

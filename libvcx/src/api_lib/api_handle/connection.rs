@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 
-use serde_json;
 use futures::future::FutureExt;
+use serde_json;
 
 use aries_vcx::agency_client::get_message::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
-use aries_vcx::handlers::SendClosure;
+use aries_vcx::messages::connection::request::Request;
+use aries_vcx::protocols::SendClosure;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::aries_vcx::handlers::connection::connection::Connection;
-use crate::aries_vcx::messages::a2a::A2AMessage;
-use crate::aries_vcx::messages::connection::invite::Invitation as InvitationV3;
-use crate::aries_vcx::messages::connection::request::Request;
-use crate::error::prelude::*;
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCacheAsync<Connection> = ObjectCacheAsync::<Connection>::new("connections-cache");
@@ -110,7 +110,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Vc
 }
 
 pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<u32> {
-    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move  {
+    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move {
         let request: Request = serde_json::from_str(request)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
         let connection = Connection::create_with_request(request, &agent).await?;
@@ -290,9 +290,11 @@ pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
+
     use aries_vcx;
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
+    use aries_vcx::settings;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED};
@@ -302,7 +304,6 @@ pub mod tests {
     use crate::api_lib::VcxStateType;
 
     use super::*;
-    use aries_vcx::settings;
 
     pub async fn mock_connection() -> u32 {
         build_test_connection_inviter_requested().await
@@ -577,5 +578,4 @@ pub mod tests {
         assert_eq!(parsed["did"], constants::INSTITUTION_DID);
         assert_eq!(parsed["label"], "faber-enterprise");
     }
-
 }

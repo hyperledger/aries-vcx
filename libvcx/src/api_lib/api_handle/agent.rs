@@ -1,8 +1,9 @@
 use futures::future::FutureExt;
 
-use crate::aries_vcx::handlers::connection::public_agent::PublicAgent;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::handlers::connection::public_agent::PublicAgent;
+
 use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
-use crate::error::prelude::*;
 
 lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCacheAsync<PublicAgent> = ObjectCacheAsync::<PublicAgent>::new("public-agent-cache");

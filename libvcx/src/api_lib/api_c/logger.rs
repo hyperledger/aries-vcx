@@ -1,10 +1,11 @@
 use libc::c_char;
 
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::utils::error::SUCCESS;
 
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
-use crate::error::prelude::*;
 
 /// Set default logger implementation.
 ///
@@ -31,9 +32,10 @@ pub extern fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
             info!("Logger Successfully Initialized with pattern {:?}", &pattern);
             SUCCESS.code_num
         }
-        Err(ec) => {
-            error!("Logger Failed To Initialize: {}", ec);
-            ec.into()
+        Err(err) => {
+            set_current_error_vcx(&err);
+            error!("Logger Failed To Initialize: {}", err);
+            err.into()
         }
     }
 }
@@ -67,9 +69,10 @@ pub extern fn vcx_set_logger(context: *const CVoid,
             debug!("Logger Successfully Initialized");
             SUCCESS.code_num
         }
-        Err(ec) => {
-            error!("Logger Failed To Initialize: {}", ec);
-            ec.into()
+        Err(err) => {
+            set_current_error_vcx(&err);
+            error!("Logger Failed To Initialize: {}", err);
+            err.into()
         }
     }
 }

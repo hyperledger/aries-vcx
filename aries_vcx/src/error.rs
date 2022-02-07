@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::ffi::CString;
 use std::fmt;
 use std::sync;
 
@@ -133,6 +131,14 @@ pub enum VcxErrorKind {
     DuplicationSchema,
     #[fail(display = "Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
+
+    // Public agent
+    #[fail(display = "Could not create public agent")]
+    CreatePublicAgent,
+
+    // Out of Band
+    #[fail(display = "Could not create out of band message.")]
+    CreateOutOfBand,
 
     // Pool
     #[fail(display = "Invalid genesis transactions path.")]
@@ -338,30 +344,8 @@ impl<E> VcxErrorExt for E where E: Fail
 
 impl From<VcxError> for u32 {
     fn from(code: VcxError) -> u32 {
-        set_current_error(&code);
         code.kind().into()
     }
-}
-
-thread_local! {
-    pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
-}
-
-fn string_to_cstring(s: String) -> CString {
-    CString::new(s).unwrap()
-}
-
-pub fn set_current_error(err: &VcxError) {
-    CURRENT_ERROR_C_JSON.try_with(|error| {
-        let error_json = json!({
-            "error": err.kind().to_string(),
-            "message": err.to_string(),
-            "cause": <dyn Fail>::find_root_cause(err).to_string(),
-            "backtrace": err.backtrace().map(|bt| bt.to_string())
-        }).to_string();
-        error.replace(Some(string_to_cstring(error_json)));
-    })
-        .map_err(|err| error!("Thread local variable access failed with: {:?}", err)).ok();
 }
 
 impl From<VcxErrorKind> for u32 {
@@ -455,7 +439,9 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             VcxErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
             VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
-            VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num
+            VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num,
+            VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
+            VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num
         }
     }
 }
@@ -548,6 +534,8 @@ impl From<u32> for VcxErrorKind {
             _ if { error::NO_AGENT_INFO.code_num == code } => VcxErrorKind::NoAgentInformation,
             _ if { error::REV_REG_DEF_NOT_FOUND.code_num == code } => VcxErrorKind::RevRegDefNotFound,
             _ if { error::REV_DELTA_NOT_FOUND.code_num == code } => VcxErrorKind::RevDeltaNotFound,
+            _ if { error::CREATE_PUBLIC_AGENT.code_num == code } => VcxErrorKind::CreatePublicAgent,
+            _ if { error::CREATE_OUT_OF_BAND.code_num == code } => VcxErrorKind::CreateOutOfBand,
             _ => VcxErrorKind::UnknownError,
         }
     }

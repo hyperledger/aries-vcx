@@ -5,8 +5,8 @@ use crate::agency_client::MessageStatusCode;
 use crate::agency_client::update_connection::send_delete_connection_message;
 use crate::agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
 use crate::error::prelude::*;
-use crate::handlers::connection::pairwise_info::PairwiseInfo;
 use crate::messages::a2a::A2AMessage;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::settings;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
@@ -42,12 +42,12 @@ pub async fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -
 
 fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
     #[cfg(feature = "warnlog_fetched_messages")]
-    {
-        for message in _a2a_messages.values() {
-            let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
-            warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+        {
+            for message in _a2a_messages.values() {
+                let serialized_msg = serde_json::to_string_pretty(message).unwrap_or_else(|_err| String::from("Failed to serialize A2AMessage."));
+                warn!("Fetched decrypted connection messages:\n{}", serialized_msg);
+            }
         }
-    }
 }
 
 impl CloudAgentInfo {
