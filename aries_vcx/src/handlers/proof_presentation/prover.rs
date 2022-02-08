@@ -147,7 +147,6 @@ pub mod test_utils {
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
-    use crate::settings;
 
     pub async fn get_proof_request_messages(connection: &Connection) -> VcxResult<String> {
         let presentation_requests: Vec<A2AMessage> = connection.get_messages()

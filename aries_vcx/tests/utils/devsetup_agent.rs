@@ -13,7 +13,6 @@ pub mod test {
     use aries_vcx::init::{create_agency_client_for_main_wallet, init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::libindy::credential_def::PublicEntityStateType;
-    use aries_vcx::libindy::schema;
     use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::libindy::utils::wallet::*;

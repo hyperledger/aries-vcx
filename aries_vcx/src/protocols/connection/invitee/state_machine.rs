@@ -15,6 +15,8 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
@@ -210,6 +212,14 @@ impl SmConnectionInvitee {
                         debug!("Disclose message received");
                         true
                     }
+                    A2AMessage::OutOfBandHandshakeReuse(_) => {
+                        debug!("OutOfBandHandshakeReuse message received");
+                        true
+                    }
+                    A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {
+                        debug!("OutOfBandHandshakeReuseAccepted message received");
+                        true
+                    }
                     _ => {
                         debug!("Unexpected message received in Completed state: {:?}", message);
                         false
@@ -273,7 +283,7 @@ impl SmConnectionInvitee {
                     .set_did(self.pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint)
                     .set_keys(recipient_keys, routing_keys);
-                let (request, thread_id) = match state.invitation {
+                let (request, thread_id) = match &state.invitation {
                     Invitation::Public(_) => (
                         request
                             .clone()
@@ -285,6 +295,13 @@ impl SmConnectionInvitee {
                         request
                             .set_thread_id(&self.thread_id),
                         self.get_thread_id()
+                    ),
+                    Invitation::OutOfBand(invite) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&invite.id.0)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone()
                     )
                 };
                 let ddo = DidDoc::from(state.invitation.clone());
@@ -341,6 +358,39 @@ impl SmConnectionInvitee {
     pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
         Ok(self)
+    }
+
+    pub async fn handle_send_handshake_reuse<F, T>(self, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviteeFullState::Completed(state) => {
+                state.handle_send_handshake_reuse(&oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
+                InviteeFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn handle_handshake_reuse<F, T>(self,
+                            reuse_msg: OutOfBandHandshakeReuse,
+                            send_message: F
+    ) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviteeFullState::Completed(state) => {
+                state.handle_send_handshake_reuse_accepted(reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
+                InviteeFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
+        };
+        Ok(Self { state, ..self })
     }
 
     pub async fn handle_discover_features<F, T>(self, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>

@@ -124,6 +124,12 @@ pub async fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResul
     }.boxed()).await
 }
 
+pub async fn send_handshake_reuse(connection_handle: u32, oob_msg: &str) -> VcxResult<()> {
+    CONNECTION_MAP.get(connection_handle, |connection, []| async move {
+        connection.send_handshake_reuse(oob_msg).await.map_err(|err| err.into())
+    }.boxed()).await
+}
+
 pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<u32> {
     CONNECTION_MAP.get_mut(handle, |connection, []| async move {
         let message: A2AMessage = serde_json::from_str(message)
@@ -172,7 +178,8 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
         let invitation = connection.get_invite_details()
             .map(|invitation| match invitation {
                 InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             });
         Ok(invitation)
     }.boxed()).await
@@ -204,7 +211,8 @@ pub async fn get_invite_details(handle: u32) -> VcxResult<String> {
         connection.get_invite_details()
             .map(|invitation| match invitation {
                 InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
-                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string()
+                InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
+                InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             })
             .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
     }.boxed()).await.or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))

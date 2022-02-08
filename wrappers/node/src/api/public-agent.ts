@@ -111,6 +111,44 @@ export class PublicAgent extends VCXBase<IAgentSerializedData> {
     }
   }
 
+  public async downloadMessage(uid: string): Promise<string> {
+    try {
+      const data = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_public_agent_download_message(
+            commandHandle,
+            this.handle,
+            uid,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, msg: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              if (!msg) {
+                reject('no message returned');
+                return;
+              }
+              resolve(msg);
+            },
+          ),
+      );
+      return data;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public static async deserialize(
     agentData: ISerializedData<IAgentSerializedData>,
   ): Promise<PublicAgent> {

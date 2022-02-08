@@ -196,6 +196,12 @@ export interface IFFIEntryPoint {
     sendMsgOptions: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_send_handshake_reuse: (
+    commandId: number,
+    handle: number,
+    oob_id: string,
+    cb: ICbRef,
+  ) => number;
   vcx_connection_sign_data: (
     commandId: number,
     handle: number,
@@ -538,6 +544,7 @@ export interface IFFIEntryPoint {
   vcx_public_agent_create: (commandId: number, sourceId: string, institutionDid: string, cb: ICbRef) => number;
   vcx_generate_public_invite: (commandId: number, public_did: string, label: string, cb: ICbRef) => number;
   vcx_public_agent_download_connection_requests: (commandId: number, handle: number, uids: string, cb: ICbRef) => number;
+  vcx_public_agent_download_message: (commandId: number, handle: number, uid: string, cb: ICbRef) => number;
   vcx_public_agent_get_service: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_public_agent_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
@@ -547,6 +554,8 @@ export interface IFFIEntryPoint {
   vcx_out_of_band_sender_append_message: (commandId: number, handle: number, message: string, cb: ICbRef) => number;
   vcx_out_of_band_sender_append_service: (commandId: number, handle: number, service: string, cb: ICbRef) => number;
   vcx_out_of_band_sender_append_service_did: (commandId: number, handle: number, did: string, cb: ICbRef) => number;
+  vcx_out_of_band_sender_get_thread_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_out_of_band_receiver_get_thread_id: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_receiver_extract_message: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_to_message: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_out_of_band_sender_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -690,6 +699,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_send_message: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_send_handshake_reuse: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_connection_sign_data: [
     FFI_ERROR_CODE,
@@ -1136,6 +1149,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_public_agent_download_message: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_public_agent_get_service: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_AGENT_HANDLE, FFI_CALLBACK_PTR],
@@ -1148,6 +1165,8 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_out_of_band_sender_append_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_sender_append_service: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_out_of_band_sender_append_service_did: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_sender_get_thread_id: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_out_of_band_receiver_get_thread_id: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_receiver_extract_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_to_message: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
   vcx_out_of_band_sender_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],

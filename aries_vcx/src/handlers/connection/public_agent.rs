@@ -77,6 +77,15 @@ impl PublicAgent {
         Ok(connection_requests)
     }
 
+    pub async fn download_message(&self, uid: &str) -> VcxResult<A2AMessage> {
+        self.agent_info.get_messages_noauth(&self.pairwise_info)
+            .await?
+            .into_iter()
+            .find(|(uid_, _)| uid == uid_)
+            .map(|(_, message)| message)
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", uid)))
+    }
+
     pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Agent: {:?}", err)))

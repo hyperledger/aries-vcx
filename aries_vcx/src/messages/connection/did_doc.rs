@@ -272,6 +272,7 @@ impl DidDoc {
     }
 }
 
+// TODO: Make into TryFrom
 impl From<Invitation> for DidDoc {
     fn from(invitation: Invitation) -> DidDoc {
         let mut did_doc: DidDoc = DidDoc::default();
@@ -287,6 +288,14 @@ impl From<Invitation> for DidDoc {
             Invitation::Pairwise(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
                 (invitation.service_endpoint.clone(), invitation.recipient_keys, invitation.routing_keys)
+            }
+            Invitation::OutOfBand(invitation) => {
+                did_doc.set_id(invitation.id.0.clone());
+                let service = invitation.services[0].resolve().unwrap_or_else(|err| {
+                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    FullService::default()
+                });
+                (service.service_endpoint, service.recipient_keys, service.routing_keys)
             }
         };
         did_doc.set_service_endpoint(service_endpoint);

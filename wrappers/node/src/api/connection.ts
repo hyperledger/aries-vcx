@@ -615,6 +615,39 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
       throw new VCXInternalError(err);
     }
   }
+
+  public async sendHandshakeReuse(oobMsg: string): Promise<void> {
+    try {
+      return await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_connection_send_handshake_reuse(
+            0,
+            this.handle,
+            oobMsg,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32'],
+            (xHandle: number, err: number) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   /**
    * Sign data using connection pairwise key.
    *

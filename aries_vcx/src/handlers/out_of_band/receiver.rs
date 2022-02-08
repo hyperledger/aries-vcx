@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use crate::handlers::out_of_band::OutOfBand;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
@@ -10,26 +10,29 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
+use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::service::ServiceResolvable;
-use std::convert::TryFrom;
 
 #[derive(Default, Debug, PartialEq)]
 pub struct OutOfBandReceiver {
-    pub oob: OutOfBand
+    pub oob: OutOfBandInvitation
 }
 
 impl OutOfBandReceiver {
     pub fn create_from_a2a_msg(msg: &A2AMessage) -> VcxResult<Self> {
-        trace!("OutOfBand::create_from_a2a_msg >>> msg: {:?}", msg);
+        trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
-            A2AMessage::OutOfBand(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
+            A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
             _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
         }
     }
 
+    pub fn get_id(&self) -> String {
+        self.oob.id.0.clone()
+    }
+
     pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
-        trace!("OutOfBand::connection_exists >>>");
+        trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
                 match connection.bootstrap_did_doc() {
@@ -52,7 +55,7 @@ impl OutOfBandReceiver {
 
     // TODO: There may be multiple A2AMessages in a single OoB msg
     pub fn extract_a2a_message(&self) -> VcxResult<Option<A2AMessage>> {
-        trace!("OutOfBand::extract_a2a_message >>>");
+        trace!("OutOfBandReceiver::extract_a2a_message >>>");
         if let Some(attach) = self.oob.requests_attach.get() {
             let attach_json = self.oob.requests_attach.content()?;
             match attach.id() {
@@ -90,15 +93,8 @@ impl OutOfBandReceiver {
     }
 
     pub async fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
-        trace!("OutOfBand::build_connection >>> autohop_enabled: {}", autohop_enabled);
-        let service = match self.oob.services.get(0) {
-            Some(service) => service,
-            None => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidInviteDetail, "No service found in OoB message"));
-            }
-        };
-        let invite: PairwiseInvitation = PairwiseInvitation::try_from(service)?;
-        Connection::create_with_invite(&self.oob.id.0, Invitation::Pairwise(invite), autohop_enabled).await
+        trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
+        Connection::create_with_invite(&self.oob.id.0, Invitation::OutOfBand(self.oob.clone()), autohop_enabled).await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
@@ -112,7 +108,7 @@ impl OutOfBandReceiver {
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBand::from_string(oob_data)?
+            oob: OutOfBandInvitation::from_string(oob_data)?
         })
     }
 }

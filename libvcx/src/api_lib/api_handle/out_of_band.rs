@@ -25,10 +25,6 @@ pub struct OOBConfig {
     pub goal: Option<String>,
 }
 
-pub async fn is_valid_handle(handle: u32) -> bool {
-    OUT_OF_BAND_SENDER_MAP.has_handle(handle).await || OUT_OF_BAND_RECEIVER_MAP.has_handle(handle).await
-}
-
 async fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP.add(oob)
         .await
@@ -151,6 +147,20 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
 pub async fn build_connection(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
         oob.build_connection(false).await?.to_string().map_err(|err| err.into())
+    }.boxed()).await
+}
+
+pub async fn get_thread_id_sender(handle: u32) -> VcxResult<String> {
+    trace!("get_thread_id_sender >>> handle: {}", handle);
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
+        Ok(oob.get_id())
+    }.boxed()).await
+}
+
+pub async fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
+    trace!("get_thread_id_receiver >>> handle: {}", handle);
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
+        Ok(oob.get_id())
     }.boxed()).await
 }
 

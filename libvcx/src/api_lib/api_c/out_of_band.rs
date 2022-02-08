@@ -75,6 +75,66 @@ pub extern fn vcx_out_of_band_receiver_create(command_handle: CommandHandle,
 }
 
 #[no_mangle]
+pub extern fn vcx_out_of_band_sender_get_thread_id(command_handle: CommandHandle,
+                                                   handle: u32,
+                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thid: *const c_char)>) -> u32 {
+    info!("vcx_out_of_band_sender_get_thread_id >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_out_of_band_sender_get_thread_id(command_handle: {}, handle: {})", command_handle, handle);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::get_thread_id_sender(handle).await {
+            Ok(thid) => {
+                trace!("vcx_out_of_band_sender_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
+                       command_handle, error::SUCCESS.message, thid);
+                let thid = CStringUtils::string_to_cstring(thid);
+                cb(command_handle, error::SUCCESS.code_num, thid.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_sender_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_out_of_band_receiver_get_thread_id(command_handle: CommandHandle,
+                                                     handle: u32,
+                                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thid: *const c_char)>) -> u32 {
+    info!("vcx_out_of_band_receiver_get_thread_id >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_out_of_band_receiver_get_thread_id(command_handle: {}, handle: {})", command_handle, handle);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::get_thread_id_receiver(handle).await {
+            Ok(thid) => {
+                trace!("vcx_out_of_band_receiver_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
+                       command_handle, error::SUCCESS.message, thid);
+                let thid = CStringUtils::string_to_cstring(thid);
+                cb(command_handle, error::SUCCESS.code_num, thid.as_ptr());
+            }
+            Err(x) => {
+                warn!("vcx_out_of_band_receiver_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
+                      command_handle, x, 0);
+                cb(command_handle, x.into(), ptr::null());
+            }
+        }
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
 pub extern fn vcx_out_of_band_sender_append_message(command_handle: CommandHandle,
                                                     handle: u32,
                                                     message: *const c_char,
@@ -137,7 +197,6 @@ pub extern fn vcx_out_of_band_sender_append_service(command_handle: CommandHandl
 
     error::SUCCESS.code_num
 }
-
 
 #[no_mangle]
 pub extern fn vcx_out_of_band_sender_append_service_did(command_handle: CommandHandle,

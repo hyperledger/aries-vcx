@@ -89,7 +89,7 @@ impl Connection {
     }
 
     pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
-        trace!("Connection::create_with_invite >>> source_id: {}", source_id);
+        trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
         let pairwise_info = PairwiseInfo::create()?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let mut connection = Self {
@@ -452,6 +452,9 @@ impl Connection {
                         A2AMessage::PingResponse(ping_response) => {
                             (sm_inviter.handle_ping_response(ping_response)?, None, false)
                         }
+                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
+                            (sm_inviter.handle_handshake_reuse(reuse, send_message).await?, None, false)
+                        }
                         A2AMessage::Query(query) => {
                             (sm_inviter.handle_discovery_query(query, send_message).await?, None, false)
                         }
@@ -486,7 +489,6 @@ impl Connection {
         }
     }
 
-
     async fn _step_invitee(&self, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
@@ -512,6 +514,9 @@ impl Connection {
                         }
                         A2AMessage::PingResponse(ping_response) => {
                             (sm_invitee.handle_ping_response(ping_response)?, false)
+                        }
+                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
+                            (sm_invitee.handle_handshake_reuse(reuse, send_message).await?, false)
                         }
                         A2AMessage::Query(query) => {
                             (sm_invitee.handle_discovery_query(query, send_message).await?, false)
@@ -640,6 +645,26 @@ impl Connection {
         Ok(())
     }
 
+    pub async fn send_handshake_reuse(&self, oob_msg: &str) -> VcxResult<()> {
+        trace!("Connection::send_handshake_reuse >>>");
+        let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
+            Ok(a2a_msg) => match a2a_msg {
+                A2AMessage::OutOfBandInvitation(oob) => oob,
+                a @ _ => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Received invalid message type: {:?}", a))); }
+            }
+            Err(err) => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize message, err: {:?}", err))); }
+        };
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(oob, send_message).await?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(oob, send_message).await?)
+            }
+        };
+        Ok(())
+    }
+
     pub async fn delete(&self) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
         self.cloud_agent_info().destroy(self.pairwise_info()).await
@@ -694,14 +719,28 @@ impl Connection {
     }
 
     pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
-        let expected_sender_vk = self.remote_vk()?;
-        let msgs = self.cloud_agent_info()
-            .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-            .await?
-            .iter()
-            .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
-            .collect::<VcxResult<Vec<Message>>>()?;
-        Ok(msgs)
+        match self.get_state() {
+            ConnectionState::Invitee(InviteeState::Initial) |
+            ConnectionState::Inviter(InviterState::Initial) |
+            ConnectionState::Inviter(InviterState::Invited) => {
+                let msgs = self.cloud_agent_info()
+                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .await?
+                    .iter()
+                    .map(|msg| msg.decrypt_noauth())
+                    .collect::<Vec<Message>>();
+                Ok(msgs)
+            }
+            _ => {
+                let expected_sender_vk = self.remote_vk()?;
+                self.cloud_agent_info()
+                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .await?
+                    .iter()
+                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
+                    .collect::<VcxResult<Vec<Message>>>()
+            }
+        }
     }
 
     pub fn to_string(&self) -> VcxResult<String> {

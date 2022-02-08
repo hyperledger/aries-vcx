@@ -37,9 +37,15 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
     await saveConnection(connectionId, connection)
   }
 
+  async function reuseConnectionFromOobMsg (connectionId, oobMsg) {
+    const connection = await loadConnection(connectionId)
+    await connection.sendHandshakeReuse(oobMsg)
+  }
+
   return {
     createOobMessageWithService,
     createOobMessageWithDid,
-    createConnectionFromOobMsg
+    createConnectionFromOobMsg,
+    reuseConnectionFromOobMsg
   }
 }

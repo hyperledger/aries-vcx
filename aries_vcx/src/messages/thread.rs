@@ -74,6 +74,9 @@ macro_rules! threadlike (($type:ident) => (
             }
         }
 
+        pub fn set_thread_id_matching_id(self) -> $type {
+            self.clone().set_thread_id(&self.id.0)
+        }
     }
 ));
 
@@ -81,12 +84,18 @@ macro_rules! threadlike (($type:ident) => (
 macro_rules! threadlike_optional (($type:ident) => (
     impl $type {
         pub fn set_thread_id(mut self, id: &str) -> $type {
-            self.thread = Some(Thread::new().set_thid(id.to_string()));
+            self.thread = match &self.thread {
+                Some(thread) => Some(thread.clone().set_thid(id.to_string())),
+                None => Some(Thread::new().set_thid(id.to_string()))
+            };
             self
         }
 
         pub fn set_parent_thread_id(mut self, id: &str) -> $type {
-            self.thread = Some(Thread::new().set_pthid(id.to_string()));
+            self.thread = match &self.thread {
+                Some(thread) => Some(thread.clone().set_pthid(id.to_string())),
+                None => Some(Thread::new().set_pthid(id.to_string()))
+            };
             self
         }
 
@@ -104,6 +113,10 @@ macro_rules! threadlike_optional (($type:ident) => (
                 Some(thread) => thread.is_reply(thread_id),
                 None => true
             }
+        }
+
+        pub fn set_thread_id_matching_id(self) -> $type {
+            self.clone().set_thread_id(&self.id.0)
         }
     }
 ));

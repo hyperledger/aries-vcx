@@ -3,8 +3,10 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { VCXBase } from './vcx-base';
+import { ISerializedData } from './common';
 
 export interface IOOBSerializedData {
+  source_id: string;
   id: string;
   label?: string;
   goal_code?: string;
@@ -15,6 +17,7 @@ export interface IOOBSerializedData {
 }
 
 export interface IOOBCreateData {
+  source_id: string;
   label?: string;
   goalCode?: GoalCode;
   goal?: string;
@@ -34,7 +37,7 @@ export enum HandshakeProtocol {
 
 export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
   public static async create(config: IOOBCreateData): Promise<OutOfBandSender> {
-    const oob = new OutOfBandSender("");
+    const oob = new OutOfBandSender(config.source_id);
     const commandHandle = 0;
     try {
       await oob._create((cb) =>
@@ -44,6 +47,13 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  public static async deserialize(
+    data: ISerializedData<IOOBSerializedData>,
+  ): Promise<OutOfBandSender> {
+    const newObj = { ...data, source_id: 'foo' };
+    return super._deserialize(OutOfBandSender, newObj);
   }
 
   public async appendMessage(message: string): Promise<void> {
@@ -173,6 +183,39 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
           ),
       );
       return msg
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async getThreadId(): Promise<string> {
+    try {
+      const thid = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const commandHandle = 0;
+          const rc = rustAPI().vcx_out_of_band_sender_get_thread_id(
+            commandHandle,
+            this.handle,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (handle: number, err: number, thid: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(thid);
+            },
+          ),
+      );
+      return thid;
     } catch (err) {
       throw new VCXInternalError(err);
     }

@@ -15,6 +15,8 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
@@ -225,6 +227,14 @@ impl SmConnectionInviter {
                         debug!("Disclose message received");
                         true
                     }
+                    A2AMessage::OutOfBandHandshakeReuse(_) => {
+                        debug!("OutOfBandHandshakeReuse message received");
+                        true
+                    }
+                    A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {
+                        debug!("OutOfBandHandshakeReuseAccepted message received");
+                        true
+                    }
                     _ => {
                         debug!("Unexpected message received in Completed state: {:?}", message);
                         false
@@ -364,6 +374,36 @@ impl SmConnectionInviter {
                 InviterFullState::Completed((state, ping_response).into())
             }
             _ => self.state
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn handle_send_handshake_reuse<F, T>(self, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviterFullState::Completed(state) => {
+                state.handle_send_handshake_reuse(&oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
+                InviterFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn handle_handshake_reuse<F, T>(self, reuse_msg: OutOfBandHandshakeReuse, send_message: F) -> VcxResult<Self>
+    where
+        F: Fn(String, DidDoc, A2AMessage) -> T,
+        T: Future<Output=VcxResult<()>>
+    {
+        let state = match self.state {
+            InviterFullState::Completed(state) => {
+                state.handle_send_handshake_reuse_accepted(reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
+                InviterFullState::Completed(state)
+            }
+            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
