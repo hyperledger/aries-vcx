@@ -63,30 +63,27 @@ pub async fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
 
 pub async fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        let msg = serde_json::from_str(msg)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-        *oob = oob.clone().append_a2a_message(msg)?;
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle).await?;
+    let msg = serde_json::from_str(msg)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
+    oob = oob.clone().append_a2a_message(msg)?;
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob).await
 }
 
 pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        let service = serde_json::from_str(service)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-        *oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle).await?;
+    let service = serde_json::from_str(service)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
+    oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob).await
 }
 
 pub async fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        *oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle).await?;
+    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob).await
 }
 
 pub async fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {

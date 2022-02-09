@@ -12,7 +12,7 @@ use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {
     source_id: String,
     agent_info: CloudAgentInfo,

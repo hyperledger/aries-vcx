@@ -31,32 +31,31 @@ pub fn create_and_store(source_id: String,
 }
 
 pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
-    CREDENTIALDEF_MAP.get_mut(handle, |cd| {
-        if !cd.was_published() {
-            *cd = cd.clone().publish_cred_def()?;
-        } else {
-            info!("publish >>> Credential definition was already published")
-        }
-        if cd.has_pending_revocations_primitives_to_be_published() {
-            match &tails_url {
-                None => {
-                    return Err(VcxError::from_msg(VcxErrorKind::InvalidOption,
-                                                  "Revocation primitives should be published on ledger but tails_url was not provided",
-                    ));
-                }
-                Some(tails_url) => {
-                    cd.publish_revocation_primitives(&tails_url)?;
-                }
+    let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
+    if !cd.was_published() {
+        cd = cd.publish_cred_def()?;
+    } else {
+        info!("publish >>> Credential definition was already published")
+    }
+    if cd.has_pending_revocations_primitives_to_be_published() {
+        match &tails_url {
+            None => {
+                return Err(VcxError::from_msg(VcxErrorKind::InvalidOption,
+                                              "Revocation primitives should be published on ledger but tails_url was not provided",
+                ));
             }
-        } else {
-            info!("publish >>> Revocation primitives was already published")
+            Some(tails_url) => {
+                cd.publish_revocation_primitives(&tails_url)?;
+            }
         }
-        Ok(())
-    })
+    } else {
+        info!("publish >>> Revocation primitives was already published")
+    }
+    CREDENTIALDEF_MAP.insert(handle, cd)
 }
 
 pub fn has_pending_revocations_primitives_to_be_published(handle: u32) -> VcxResult<bool> {
-    CREDENTIALDEF_MAP.get_mut(handle, |cd| {
+    CREDENTIALDEF_MAP.get(handle, |cd| {
         Ok(cd.has_pending_revocations_primitives_to_be_published())
     })
 }
@@ -127,39 +126,41 @@ pub fn release_all() {
 }
 
 pub fn update_state(handle: u32) -> VcxResult<u32> {
-    CREDENTIALDEF_MAP.get_mut(handle, |s| {
-        s.update_state().map_err(|err| err.into())
-    })
+    let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
+    let res = cd.update_state()?;
+    CREDENTIALDEF_MAP.insert(handle, cd)?;
+    Ok(res)
 }
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
-    CREDENTIALDEF_MAP.get_mut(handle, |s| {
+    CREDENTIALDEF_MAP.get(handle, |s| {
         Ok(s.get_state())
     })
 }
 
 pub fn check_is_published(handle: u32) -> VcxResult<bool> {
-    CREDENTIALDEF_MAP.get_mut(handle, |s| {
+    CREDENTIALDEF_MAP.get(handle, |s| {
         Ok(PublicEntityStateType::Published == s.state)
     })
 }
 
 pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
-    CREDENTIALDEF_MAP.get_mut(handle, |s| {
-        match &s.get_rev_reg_def()? {
-            Some(_) => {
-                let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
-                s.rotate_rev_reg(revocation_details)?;
-                s.to_string().map_err(|err| err.into())
-            }
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempting to rotate revocation registry on unrevokable credential definition"))
+    let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
+    let res = match &cd.get_rev_reg_def()? {
+        Some(_) => {
+            let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
+            cd.rotate_rev_reg(revocation_details)?;
+            cd.to_string().map_err(|err| err.into())
         }
-    })
+        None => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempting to rotate revocation registry on unrevokable credential definition"))
+    };
+    CREDENTIALDEF_MAP.insert(handle, cd)?;
+    res
 }
 
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
-    CREDENTIALDEF_MAP.get_mut(handle, |s| {
+    CREDENTIALDEF_MAP.get(handle, |s| {
         match &s.get_rev_reg_def()? {
             Some(rev_reg_def) => {
                 let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def)

@@ -85,24 +85,25 @@ pub async fn credential_create_with_msgid(source_id: &str, connection_handle: u3
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
-    HANDLE_MAP.get_mut(handle, |credential, []| async move {
-        trace!("credential::update_state >>> ");
-        if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
-        let send_message = connection::send_message_closure(connection_handle).await?;
+    let mut credential = HANDLE_MAP.get_cloned(handle).await?;
+    trace!("credential::update_state >>> ");
+    if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
-        if let Some(message) = message {
-            let message: A2AMessage = serde_json::from_str(&message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-            credential.step(message.into(), Some(send_message)).await?;
-        } else {
-            let messages = connection::get_messages(connection_handle).await?;
-            if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-                credential.step(msg.into(), Some(send_message)).await?;
-                connection::update_message_status(connection_handle, &uid).await?;
-            }
+    if let Some(message) = message {
+        let message: A2AMessage = serde_json::from_str(&message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+        credential.step(message.into(), Some(send_message)).await?;
+    } else {
+        let messages = connection::get_messages(connection_handle).await?;
+        if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+            credential.step(msg.into(), Some(send_message)).await?;
+            connection::update_message_status(connection_handle, &uid).await?;
         }
-        Ok(credential.get_state().into())
-    }.boxed()).await
+    }
+    let state = credential.get_state().into();
+    HANDLE_MAP.insert(handle, credential).await?;
+    Ok(state)
 }
 
 pub async fn get_credential(handle: u32) -> VcxResult<String> {
@@ -179,14 +180,12 @@ pub fn generate_credential_request_msg(_handle: u32, _my_pw_did: &str, _their_pw
 
 pub async fn send_credential_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     trace!("Credential::send_credential_request >>> credential_handle: {}, connection_handle: {}", handle, connection_handle);
-    HANDLE_MAP.get_mut(handle, |credential, []| async move {
-        let my_pw_did = connection::get_pw_did(connection_handle).await?;
-        let send_message = connection::send_message_closure(connection_handle).await?;
-        credential.send_request(my_pw_did, send_message).await?;
-        let new_credential = credential.clone(); // TODO: Why are we doing this exactly?
-        *credential = new_credential;
-        Ok(error::SUCCESS.code_num)
-    }.boxed()).await
+    let mut credential = HANDLE_MAP.get_cloned(handle).await?;
+    let my_pw_did = connection::get_pw_did(connection_handle).await?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
+    credential.send_request(my_pw_did, send_message).await?;
+    HANDLE_MAP.insert(handle, credential).await?;
+    Ok(error::SUCCESS.code_num)
 }
 
 async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<String> {

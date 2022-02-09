@@ -27,24 +27,25 @@ pub async fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        trace!("issuer_credential::update_state >>> ");
-        if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
-        let send_message = connection::send_message_closure(connection_handle).await?;
+    trace!("issuer_credential::update_state >>> ");
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
-        if let Some(message) = message {
-            let message: A2AMessage = serde_json::from_str(&message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-            credential.step(message.into(), Some(send_message)).await?;
-        } else {
-            let messages = connection::get_messages(connection_handle).await?;
-            if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-                credential.step(msg.into(), Some(send_message)).await?;
-                connection::update_message_status(connection_handle, &uid).await?;
-            }
+    if let Some(message) = message {
+        let message: A2AMessage = serde_json::from_str(&message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
+        credential.step(message.into(), Some(send_message)).await?;
+    } else {
+        let messages = connection::get_messages(connection_handle).await?;
+        if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
+            credential.step(msg.into(), Some(send_message)).await?;
+            connection::update_message_status(connection_handle, &uid).await?;
         }
-        Ok(credential.get_state().into())
-    }.boxed()).await
+    }
+    let res: u32 = credential.get_state().into();
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await?;
+    Ok(res)
 }
 
 pub async fn get_state(handle: u32) -> VcxResult<u32> {
@@ -95,21 +96,21 @@ pub async fn build_credential_offer_msg(handle: u32,
     if credential_def::has_pending_revocations_primitives_to_be_published(cred_def_handle)? {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")));
     };
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        let offer_info = OfferInfo {
-            credential_json: credential_json.to_string(),
-            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
-            rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
-            tails_file: credential_def::get_tails_file(cred_def_handle)?,
-        };
-        Ok(credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string()))?)
-    }.boxed()).await
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    let offer_info = OfferInfo {
+        credential_json: credential_json.to_string(),
+        cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+        rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
+        tails_file: credential_def::get_tails_file(cred_def_handle)?,
+    };
+    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string()))?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await
 }
 
 pub async fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        Ok(credential.mark_credential_offer_msg_sent()?)
-    }.boxed()).await
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    credential.mark_credential_offer_msg_sent()?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await
 }
 
 pub async fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
@@ -123,30 +124,26 @@ pub async fn send_credential_offer(handle: u32,
                                    connection_handle: u32,
                                    credential_json: &str,
                                    comment: Option<&str>) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        let offer_info = OfferInfo {
-            credential_json: credential_json.to_string(),
-            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
-            rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
-            tails_file: credential_def::get_tails_file(cred_def_handle)?,
-        };
-        credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string()))?;
-        let send_message = connection::send_message_closure(connection_handle).await?;
-        credential.send_credential_offer(send_message).await?;
-        let new_credential = credential.clone();
-        *credential = new_credential;
-        Ok(error::SUCCESS.code_num)
-    }.boxed()).await
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    let offer_info = OfferInfo {
+        credential_json: credential_json.to_string(),
+        cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+        rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
+        tails_file: credential_def::get_tails_file(cred_def_handle)?,
+    };
+    credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string()))?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
+    credential.send_credential_offer(send_message).await?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await?;
+    Ok(error::SUCCESS.code_num)
 }
 
 pub async fn send_credential_offer_v2(handle: u32, connection_handle: u32) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        let send_message = connection::send_message_closure(connection_handle).await?;
-        credential.send_credential_offer(send_message).await?;
-        let new_credential = credential.clone();
-        *credential = new_credential;
-        Ok(error::SUCCESS.code_num)
-    }.boxed()).await
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
+    credential.send_credential_offer(send_message).await?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await?;
+    Ok(error::SUCCESS.code_num)
 }
 
 pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<String> {
@@ -154,10 +151,10 @@ pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<Stri
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get_mut(handle, |credential, []| async move {
-        credential.send_credential(connection::send_message_closure(connection_handle).await?).await?;
-        Ok(error::SUCCESS.code_num)
-    }.boxed()).await
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle).await?;
+    credential.send_credential(connection::send_message_closure(connection_handle).await?).await?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential).await?;
+    Ok(error::SUCCESS.code_num)
 }
 
 pub async fn revoke_credential(handle: u32) -> VcxResult<()> {

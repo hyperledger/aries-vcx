@@ -3,6 +3,7 @@ use std::string::ToString;
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::utils::error;
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::schema::{Schema, SchemaData};
 use aries_vcx::libindy::utils::anoncreds;
@@ -134,13 +135,14 @@ pub fn release_all() {
 }
 
 pub fn update_state(handle: u32) -> VcxResult<u32> {
-    SCHEMA_MAP.get_mut(handle, |s| {
-        s.update_state().map_err(|err| err.into())
-    })
+    let mut schema = SCHEMA_MAP.get_cloned(handle)?;
+    let res = schema.update_state()?;
+    SCHEMA_MAP.insert(handle, schema)?;
+    Ok(res)
 }
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
-    SCHEMA_MAP.get_mut(handle, |s| {
+    SCHEMA_MAP.get(handle, |s| {
         Ok(s.get_state())
     })
 }

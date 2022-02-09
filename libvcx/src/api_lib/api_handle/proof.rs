@@ -42,26 +42,27 @@ pub async fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
-    PROOF_MAP.get_mut(handle, |proof, []| async move {
-        trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
-        if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
-        let send_message = connection::send_message_closure(connection_handle).await?;
+    let mut proof = PROOF_MAP.get_cloned(handle).await?;
+    trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
+    if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
-        if let Some(message) = message {
-            let message: A2AMessage = serde_json::from_str(message)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
-            trace!("proof::update_state >>> updating using message {:?}", message);
+    if let Some(message) = message {
+        let message: A2AMessage = serde_json::from_str(message)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
+        trace!("proof::update_state >>> updating using message {:?}", message);
+        proof.handle_message(message.into(), Some(send_message)).await?;
+    } else {
+        let messages = connection::get_messages(connection_handle).await?;
+        trace!("proof::update_state >>> found messages: {:?}", messages);
+        if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof.handle_message(message.into(), Some(send_message)).await?;
-        } else {
-            let messages = connection::get_messages(connection_handle).await?;
-            trace!("proof::update_state >>> found messages: {:?}", messages);
-            if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-                proof.handle_message(message.into(), Some(send_message)).await?;
-                connection::update_message_status(connection_handle, &uid).await?;
-            };
-        }
-        Ok(proof.get_state().into())
-    }.boxed()).await
+            connection::update_message_status(connection_handle, &uid).await?;
+        };
+    }
+    let state: u32 = proof.get_state().into();
+    PROOF_MAP.insert(handle, proof).await?;
+    Ok(state)
 }
 
 pub async fn get_state(handle: u32) -> VcxResult<u32> {
@@ -107,20 +108,20 @@ pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
 }
 
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
-    PROOF_MAP.get_mut(handle, |proof, []| async move {
-        proof.send_presentation_request(connection::send_message_closure(connection_handle).await?).await?;
-        Ok(error::SUCCESS.code_num)
-    }.boxed()).await
+    let mut proof = PROOF_MAP.get_cloned(handle).await?;
+    proof.send_presentation_request(connection::send_message_closure(connection_handle).await?).await?;
+    PROOF_MAP.insert(handle, proof).await?;
+    Ok(error::SUCCESS.code_num)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> VcxResult<()> {
-    PROOF_MAP.get_mut(handle, |proof, []| async move {
-        proof.mark_presentation_request_msg_sent().map_err(|err| err.into())
-    }.boxed()).await
+    let mut proof = PROOF_MAP.get_cloned(handle).await?;
+    proof.mark_presentation_request_msg_sent()?;
+    PROOF_MAP.insert(handle, proof).await
 }
 
 pub async fn get_presentation_request_msg(handle: u32) -> VcxResult<String> {
-    PROOF_MAP.get_mut(handle, |proof, []| async move {
+    PROOF_MAP.get(handle, |proof, []| async move {
         proof.get_presentation_request_msg().map_err(|err| err.into())
     }.boxed()).await
 }

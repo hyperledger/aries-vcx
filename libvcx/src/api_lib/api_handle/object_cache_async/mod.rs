@@ -8,12 +8,16 @@ use rand::Rng;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
-pub struct ObjectCacheAsync<T> {
+pub struct ObjectCacheAsync<T>
+    where T: Clone
+{
     pub cache_name: String,
     pub store: RwLock<HashMap<u32, Mutex<T>>>,
 }
 
-impl<T> ObjectCacheAsync<T> {
+impl<T> ObjectCacheAsync<T>
+    where T: Clone
+{
     pub fn new(cache_name: &str) -> Self {
         Self {
             store: Default::default(),
@@ -36,6 +40,17 @@ impl<T> ObjectCacheAsync<T> {
                 closure(obj.deref(), []).await
             },
             None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCacheAsync: {}] Object not found for handle: {}", self.cache_name, handle)))
+        }
+    }
+
+    pub async fn get_cloned(&self, handle: u32) -> VcxResult<T> {
+        let store = self.store.read().await;
+        match store.get(&handle) {
+            Some(m) => {
+                let obj = m.lock().await;
+                Ok((*obj.deref()).clone())
+            },
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
         }
     }
 
