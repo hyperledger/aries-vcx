@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use futures::future::FutureExt;
 use serde_json;
 
 use aries_vcx::agency_client::get_message::MessageByConnection;
@@ -15,10 +14,10 @@ use aries_vcx::protocols::SendClosure;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
-    pub static ref CONNECTION_MAP: ObjectCacheAsync<Connection> = ObjectCacheAsync::<Connection>::new("connections-cache");
+    pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
 }
 
 pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
@@ -30,66 +29,66 @@ pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<St
 }
 
 pub async fn is_valid_handle(handle: u32) -> bool {
-    CONNECTION_MAP.has_handle(handle).await
+    CONNECTION_MAP.has_handle(handle)
 }
 
 pub async fn get_agent_did(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.cloud_agent_info().agent_did.to_string())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_agent_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.cloud_agent_info().agent_vk.clone())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_pw_did(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.pairwise_info().pw_did.to_string())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.pairwise_info().pw_vk.clone())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.remote_did().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.remote_vk().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.get_thread_id())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.get_state().into())
-    }.boxed()).await.unwrap_or(0)
+    }).unwrap_or(0)
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.try_get(handle, |connection| {
+    CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.get_source_id())
     })
 }
 
 pub async fn store_connection(connection: Connection) -> VcxResult<u32> {
-    CONNECTION_MAP.add(connection).await
+    CONNECTION_MAP.add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
 }
 
@@ -110,32 +109,29 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Vc
 }
 
 pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<u32> {
-    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move {
-        let request: Request = serde_json::from_str(request)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
-        let connection = Connection::create_with_request(request, &agent).await?;
-        store_connection(connection).await
-    }.boxed()).await
+    let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
+    let request: Request = serde_json::from_str(request)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
+    let connection = Connection::create_with_request(request, &agent).await?;
+    store_connection(connection).await
 }
 
-pub async fn send_generic_message(connection_handle: u32, msg: &str) -> VcxResult<String> {
-    CONNECTION_MAP.get(connection_handle, |connection, []| async move {
-        connection.send_generic_message(msg).await.map_err(|err| err.into())
-    }.boxed()).await
+pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.send_generic_message(msg).await.map_err(|err| err.into())
 }
 
-pub async fn send_handshake_reuse(connection_handle: u32, oob_msg: &str) -> VcxResult<()> {
-    CONNECTION_MAP.get(connection_handle, |connection, []| async move {
-        connection.send_handshake_reuse(oob_msg).await.map_err(|err| err.into())
-    }.boxed()).await
+pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> VcxResult<()> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.send_handshake_reuse(oob_msg).await.map_err(|err| err.into())
 }
 
 pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<u32> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize message {} into A2AMessage, err: {:?}", message, err)))?;
     connection.update_state_with_message(&message).await?;
-    CONNECTION_MAP.insert(handle, connection).await?;
+    CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
 
@@ -152,24 +148,24 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
 // }
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let res = match connection.update_state().await {
         Ok(_) => Ok(error::SUCCESS.code_num),
         Err(err) => Err(err.into())
     };
-    CONNECTION_MAP.insert(handle, connection).await?;
+    CONNECTION_MAP.insert(handle, connection)?;
     res
 }
 
 pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
-    let connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.delete().await?;
     release(handle)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.connect().await?;
     let invitation = connection.get_invite_details()
         .map(|invitation| match invitation {
@@ -177,20 +173,19 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
             InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
             InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             });
-    CONNECTION_MAP.insert(handle, connection).await?;
+    CONNECTION_MAP.insert(handle, connection)?;
     Ok(invitation)
 }
 
 pub async fn to_string(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.to_string().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn from_string(connection_data: &str) -> VcxResult<u32> {
     let connection = Connection::from_string(connection_data)?;
-    let handle = CONNECTION_MAP.add(connection).await?;
-    Ok(handle)
+    CONNECTION_MAP.add(connection)
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
@@ -203,7 +198,7 @@ pub fn release_all() {
 }
 
 pub async fn get_invite_details(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.get_invite_details()
             .map(|invitation| match invitation {
                 InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -211,26 +206,23 @@ pub async fn get_invite_details(handle: u32) -> VcxResult<String> {
                 InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
             })
             .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
-    }.boxed()).await.or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 
 pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
-        connection.get_messages().await.map_err(|err| err.into())
-    }.boxed()).await
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.get_messages().await.map_err(|err| err.into())
 }
 
 pub async fn update_message_status(handle: u32, uid: &str) -> VcxResult<()> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
-        connection.update_message_status(uid).await.map_err(|err| err.into())
-    }.boxed()).await
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.update_message_status(uid).await.map_err(|err| err.into())
 }
 
 pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessage> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
-        connection.get_message_by_id(msg_id).await.map_err(|err| err.into())
-    }.boxed()).await
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.get_message_by_id(msg_id).await.map_err(|err| err.into())
 }
 
 pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
@@ -240,27 +232,27 @@ pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 }
 
 pub async fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.send_message_closure().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.send_ping(comment.map(String::from)).await?;
-    CONNECTION_MAP.insert(handle, connection).await
+    CONNECTION_MAP.insert(handle, connection)
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle).await?;
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.send_discovery_features(query.map(String::from), comment.map(String::from)).await?;
-    CONNECTION_MAP.insert(handle, connection).await
+    CONNECTION_MAP.insert(handle, connection)
 }
 
 pub async fn get_connection_info(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection, []| async move {
+    CONNECTION_MAP.get(handle, |connection| {
         connection.get_connection_info().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
@@ -269,10 +261,10 @@ pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<
     let mut connections = Vec::new();
     for conn_handle in conn_handles {
         let connection = CONNECTION_MAP.get(
-            conn_handle, |connection, []| async move {
+            conn_handle, |connection| {
                 Ok(connection.clone())
-            }.boxed(),
-        ).await?;
+            },
+        )?;
         connections.push(connection)
     };
     for connection in connections {
@@ -546,8 +538,8 @@ pub mod tests {
 //         let _setup = SetupMocks::init();
 //         let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION).await.unwrap();
 // 
-//         CONNECTION_MAP.get_mut(handle, |_connection, []| {
-//             async move { Ok(()) }.boxed()
+//         CONNECTION_MAP.get_mut(handle, |_connection| {
+//             { Ok(()) }.boxed()
 //         }).await.unwrap();
 //     }
 

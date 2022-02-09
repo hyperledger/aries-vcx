@@ -1,4 +1,3 @@
-use futures::future::FutureExt;
 use serde_json;
 
 use aries_vcx::{
@@ -14,10 +13,10 @@ use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 use crate::api_lib::api_handle::connection;
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
-    static ref HANDLE_MAP: ObjectCacheAsync<Prover> = ObjectCacheAsync::<Prover>::new("disclosed-proofs-cache");
+    static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -44,7 +43,7 @@ pub async fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
                                           format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
-    HANDLE_MAP.add(proof).await
+    HANDLE_MAP.add(proof)
 }
 
 pub async fn create_proof_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> VcxResult<(u32, String)> {
@@ -56,20 +55,20 @@ pub async fn create_proof_with_msgid(source_id: &str, connection_handle: u32, ms
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
-    let handle = HANDLE_MAP.add(proof).await?;
+    let handle = HANDLE_MAP.add(proof)?;
 
     debug!("inserting disclosed proof {} into handle map", source_id);
     Ok((handle, proof_request))
 }
 
 pub async fn get_state(handle: u32) -> VcxResult<u32> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         Ok(proof.get_state().into())
-    }.boxed()).await.or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+    }).or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
-    let mut proof = HANDLE_MAP.get_cloned(handle).await?;
+    let mut proof = HANDLE_MAP.get_cloned(handle)?;
     trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
     if !proof.progressable_by_message() {
         trace!("disclosed_proof::update_state >> found no available transition");
@@ -91,15 +90,15 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         };
     }
     let state: u32 = proof.get_state().into();
-    HANDLE_MAP.insert(handle, proof).await?;
+    HANDLE_MAP.insert(handle, proof)?;
     Ok(state)
 }
 
 pub async fn to_string(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         serde_json::to_string(&DisclosedProofs::V3(proof.clone()))
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("cannot serialize DisclosedProof proofect: {:?}", err)))
-    }.boxed()).await
+    })
 }
 
 pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
@@ -107,7 +106,7 @@ pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("cannot deserialize DisclosedProofs object: {:?}", err)))?;
 
     match proof {
-        DisclosedProofs::V3(proof) => HANDLE_MAP.add(proof).await
+        DisclosedProofs::V3(proof) => HANDLE_MAP.add(proof)
     }
 }
 
@@ -120,16 +119,16 @@ pub fn release_all() {
 }
 
 pub async fn generate_proof_msg(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         proof.generate_presentation_msg().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
-    let mut proof = HANDLE_MAP.get_cloned(handle).await?;
+    let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
-    HANDLE_MAP.insert(handle, proof).await?;
+    HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
@@ -139,54 +138,54 @@ pub fn generate_reject_proof_msg(_handle: u32) -> VcxResult<String> {
 }
 
 pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
-    let mut proof = HANDLE_MAP.get_cloned(handle).await?;
+    let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
     proof.decline_presentation_request(send_message, Some(String::from("Presentation Request was rejected")), None).await?;
-    HANDLE_MAP.insert(handle, proof).await?;
+    HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> VcxResult<u32> {
-    let mut proof = HANDLE_MAP.get_cloned(handle).await?;
+    let mut proof = HANDLE_MAP.get_cloned(handle)?;
     proof.generate_presentation(credentials.to_string(), self_attested_attrs.to_string()).await?;
-    HANDLE_MAP.insert(handle, proof).await?;
+    HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn decline_presentation_request(handle: u32, connection_handle: u32, reason: Option<&str>, proposal: Option<&str>) -> VcxResult<u32> {
-    let mut proof = HANDLE_MAP.get_cloned(handle).await?;
+    let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
     proof.decline_presentation_request(send_message, reason.map(|s| s.to_string()), proposal.map(|s| s.to_string())).await?;
-    HANDLE_MAP.insert(handle, proof).await?;
+    HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         proof.retrieve_credentials().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_proof_request_data(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         proof.presentation_request_data().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn get_proof_request_attachment(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         proof.get_proof_request_attachment().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn is_valid_handle(handle: u32) -> bool {
-    HANDLE_MAP.has_handle(handle).await
+    HANDLE_MAP.has_handle(handle)
 }
 
 pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         proof.get_thread_id().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 async fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
@@ -230,15 +229,15 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> VcxResult<Str
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.try_get(handle, |proof| {
+    HANDLE_MAP.get(handle, |proof| {
         Ok(proof.get_source_id())
     }).map_err(handle_err)
 }
 
 pub async fn get_presentation_status(handle: u32) -> VcxResult<u32> {
-    HANDLE_MAP.get(handle, |proof, []| async move {
+    HANDLE_MAP.get(handle, |proof| {
         Ok(proof.presentation_status())
-    }.boxed()).await
+    })
 }
 
 #[cfg(test)]

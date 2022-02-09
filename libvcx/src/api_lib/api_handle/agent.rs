@@ -1,20 +1,18 @@
-use futures::future::FutureExt;
-
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
-    pub static ref PUBLIC_AGENT_MAP: ObjectCacheAsync<PublicAgent> = ObjectCacheAsync::<PublicAgent>::new("public-agent-cache");
+    pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
 }
 
 pub async fn is_valid_handle(handle: u32) -> bool {
-    PUBLIC_AGENT_MAP.has_handle(handle).await
+    PUBLIC_AGENT_MAP.has_handle(handle)
 }
 
 async fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
-    PUBLIC_AGENT_MAP.add(agent).await
+    PUBLIC_AGENT_MAP.add(agent)
         .or(Err(VcxError::from(VcxErrorKind::CreatePublicAgent)))
 }
 
@@ -24,42 +22,40 @@ pub async fn create_public_agent(source_id: &str, institution_did: &str) -> VcxR
     store_public_agent(agent).await
 }
 
-pub async fn download_connection_requests(agent_handle: u32, uids: Option<&Vec<String>>) -> VcxResult<String> {
-    trace!("download_connection_requests >>> agent_handle: {}, uids: {:?}", agent_handle, uids);
-    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move {
-        let requests = agent.download_connection_requests(uids.map(|v| v.clone())).await?;
-        let requests = serde_json::to_string(&requests)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded connection requests {:?}, err: {:?}", requests, err)))?;
-        Ok(requests)
-    }.boxed()).await
+pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>>) -> VcxResult<String> {
+    trace!("download_connection_requests >>> handle: {}, uids: {:?}", handle, uids);
+    let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
+    let requests = agent.download_connection_requests(uids.map(|v| v.clone())).await?;
+    let requests = serde_json::to_string(&requests)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded connection requests {:?}, err: {:?}", requests, err)))?;
+    Ok(requests)
 }
 
-pub async fn download_message(agent_handle: u32, uid: &str) -> VcxResult<String> {
-    trace!("download_message >>> agent_handle: {}, uid: {:?}", agent_handle, uid);
-    PUBLIC_AGENT_MAP.get(agent_handle, |agent, []| async move {
-        let msg = agent.download_message(uid).await?;
-        serde_json::to_string(&msg)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded message {:?}, err: {:?}", msg, err)))
-    }.boxed()).await
+pub async fn download_message(handle: u32, uid: &str) -> VcxResult<String> {
+    trace!("download_message >>> handle: {}, uid: {:?}", handle, uid);
+    let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
+    let msg = agent.download_message(uid).await?;
+    serde_json::to_string(&msg)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded message {:?}, err: {:?}", msg, err)))
 }
 
 pub async fn get_service(handle: u32) -> VcxResult<String> {
-    PUBLIC_AGENT_MAP.get(handle, |agent, []| async move {
+    PUBLIC_AGENT_MAP.get(handle, |agent| {
         let service = agent.service()?;
         serde_json::to_string(&service)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize agent service {:?}, err: {:?}", service, err)))
-    }.boxed()).await
+    })
 }
 
 pub async fn to_string(handle: u32) -> VcxResult<String> {
-    PUBLIC_AGENT_MAP.get(handle, |agent, []| async move {
+    PUBLIC_AGENT_MAP.get(handle, |agent| {
         agent.to_string().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
 pub async fn from_string(agent_data: &str) -> VcxResult<u32> {
     let agent = PublicAgent::from_string(agent_data)?;
-    PUBLIC_AGENT_MAP.add(agent).await.map_err(|err| err.into())
+    PUBLIC_AGENT_MAP.add(agent).map_err(|err| err.into())
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
