@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use futures::future::FutureExt;
-
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
@@ -11,11 +9,11 @@ use aries_vcx::messages::connection::did::Did;
 use aries_vcx::messages::connection::service::ServiceResolvable;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
-use crate::api_lib::api_handle::object_cache_async::ObjectCacheAsync;
+use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
-    pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCacheAsync<OutOfBandSender> = ObjectCacheAsync::<OutOfBandSender>::new("out-of-band-sender-cache");
-    pub static ref OUT_OF_BAND_RECEIVER_MAP: ObjectCacheAsync<OutOfBandReceiver> = ObjectCacheAsync::<OutOfBandReceiver>::new("out-of-band-receiver-cache");
+    pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> = ObjectCache::<OutOfBandSender>::new("out-of-band-sender-cache");
+    pub static ref OUT_OF_BAND_RECEIVER_MAP: ObjectCache<OutOfBandReceiver> = ObjectCache::<OutOfBandReceiver>::new("out-of-band-receiver-cache");
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,15 +23,13 @@ pub struct OOBConfig {
     pub goal: Option<String>,
 }
 
-async fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
+fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP.add(oob)
-        .await
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
 
-async fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
+fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP.add(oob)
-        .await
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
 
@@ -51,54 +47,51 @@ pub async fn create_out_of_band(config: &str) -> VcxResult<u32> {
     if let Some(goal_code) = &config.goal_code {
         oob = oob.set_goal_code(&goal_code);
     };
-    store_out_of_band_sender(oob).await
+    store_out_of_band_sender(oob)
 }
 
-pub async fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
+pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
     trace!("create_out_of_band_msg_from_msg >>> msg: {}", msg);
     let msg: A2AMessage = serde_json::from_str(msg)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-    store_out_of_band_receiver(OutOfBandReceiver::create_from_a2a_msg(&msg)?).await
+    store_out_of_band_receiver(OutOfBandReceiver::create_from_a2a_msg(&msg)?)
 }
 
-pub async fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
+pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        let msg = serde_json::from_str(msg)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-        *oob = oob.clone().append_a2a_message(msg)?;
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    let msg = serde_json::from_str(msg)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
+    oob = oob.clone().append_a2a_message(msg)?;
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
+pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        let service = serde_json::from_str(service)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-        *oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    let service = serde_json::from_str(service)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
+    oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
+pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
-    OUT_OF_BAND_SENDER_MAP.get_mut(handle, |oob, []| async move {
-        *oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
-        Ok(())
-    }.boxed()).await
+    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
+    OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
+pub fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
     trace!("get_services >>> handle: {}", handle);
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         Ok(oob.get_services())
-    }.boxed()).await
+    })
 }
 
-pub async fn extract_a2a_message(handle: u32) -> VcxResult<String> {
+pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
     trace!("extract_a2a_message >>> handle: {}", handle);
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         if let Some(msg) = oob.extract_a2a_message()? {
             let msg = serde_json::to_string(&msg)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize message {:?}, err: {:?}", msg, err)))?;
@@ -106,26 +99,23 @@ pub async fn extract_a2a_message(handle: u32) -> VcxResult<String> {
         } else {
             Ok("".to_string())
         }
-    }.boxed()).await
+    })
 }
 
-pub async fn to_a2a_message(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
+pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         let msg = oob.to_a2a_message();
         Ok(serde_json::to_string(&msg)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize message {:?}, err: {:?}", msg, err)))?)
-    }.boxed()).await
+    })
 }
 
-pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
+pub fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
     trace!("connection_exists >>> handle: {}, conn_handles: {:?}", handle, conn_handles);
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         let mut conn_map = HashMap::new();
         for conn_handle in conn_handles {
-            let connection = CONNECTION_MAP.get(*conn_handle, |connection, []| async move {
-                Ok(connection.clone())
-            }.boxed(),
-            ).await?;
+            let connection = CONNECTION_MAP.get_cloned(*conn_handle)?;
             conn_map.insert(*conn_handle, connection);
         };
         let connections = conn_map.values().collect();
@@ -141,49 +131,48 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
         } else {
             Ok((0, false))
         }
-    }.boxed()).await
+    })
 }
 
 pub async fn build_connection(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
-        oob.build_connection(false).await?.to_string().map_err(|err| err.into())
-    }.boxed()).await
+    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
+    oob.build_connection(false).await?.to_string().map_err(|err| err.into())
 }
 
-pub async fn get_thread_id_sender(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id_sender(handle: u32) -> VcxResult<String> {
     trace!("get_thread_id_sender >>> handle: {}", handle);
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         Ok(oob.get_id())
-    }.boxed()).await
+    })
 }
 
-pub async fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
     trace!("get_thread_id_receiver >>> handle: {}", handle);
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         Ok(oob.get_id())
-    }.boxed()).await
+    })
 }
 
-pub async fn to_string_sender(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob, []| async move {
+pub fn to_string_sender(handle: u32) -> VcxResult<String> {
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         oob.to_string().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
-pub async fn to_string_receiver(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob, []| async move {
+pub fn to_string_receiver(handle: u32) -> VcxResult<String> {
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         oob.to_string().map_err(|err| err.into())
-    }.boxed()).await
+    })
 }
 
-pub async fn from_string_sender(oob_data: &str) -> VcxResult<u32> {
+pub fn from_string_sender(oob_data: &str) -> VcxResult<u32> {
     let oob = OutOfBandSender::from_string(oob_data)?;
-    OUT_OF_BAND_SENDER_MAP.add(oob).await.map_err(|err| err.into())
+    OUT_OF_BAND_SENDER_MAP.add(oob).map_err(|err| err.into())
 }
 
-pub async fn from_string_receiver(oob_data: &str) -> VcxResult<u32> {
+pub fn from_string_receiver(oob_data: &str) -> VcxResult<u32> {
     let oob = OutOfBandReceiver::from_string(oob_data)?;
-    OUT_OF_BAND_RECEIVER_MAP.add(oob).await.map_err(|err| err.into())
+    OUT_OF_BAND_RECEIVER_MAP.add(oob).map_err(|err| err.into())
 }
 
 pub fn release_sender(handle: u32) -> VcxResult<()> {
@@ -220,9 +209,9 @@ pub mod tests {
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())));
-        append_service(oob_handle, &json!(service).to_string()).await.unwrap();
-        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").await.unwrap();
-        let resolved_service = get_services(oob_handle).await.unwrap();
+        append_service(oob_handle, &json!(service).to_string()).unwrap();
+        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
+        let resolved_service = get_services(oob_handle).unwrap();
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
         assert_eq!(ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()), resolved_service[1]);

@@ -13,7 +13,7 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::service::ServiceResolvable;
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
     pub oob: OutOfBandInvitation
 }

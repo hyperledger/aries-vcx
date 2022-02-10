@@ -8,12 +8,16 @@ use rand::Rng;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
-pub struct ObjectCache<T> {
+pub struct ObjectCache<T>
+    where T: Clone
+{
     pub cache_name: String,
     pub store: RwLock<HashMap<u32, Mutex<T>>>,
 }
 
-impl<T> ObjectCache<T> {
+impl<T> ObjectCache<T>
+    where T: Clone
+{
     pub fn new(cache_name: &str) -> ObjectCache<T> {
         ObjectCache {
             store: Default::default(),
@@ -55,6 +59,17 @@ impl<T> ObjectCache<T> {
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref()),
+                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+            },
+            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+        }
+    }
+
+    pub fn get_cloned(&self, handle: u32) -> VcxResult<T> {
+        let store = self._lock_store_read()?;
+        match store.get(&handle) {
+            Some(m) => match m.lock() {
+                Ok(obj) => Ok((*obj.deref()).clone()),
                 Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
             },
             None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
