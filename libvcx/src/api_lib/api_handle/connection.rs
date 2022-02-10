@@ -28,53 +28,53 @@ pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<St
     Ok(json!(invitation).to_string())
 }
 
-pub async fn is_valid_handle(handle: u32) -> bool {
+pub fn is_valid_handle(handle: u32) -> bool {
     CONNECTION_MAP.has_handle(handle)
 }
 
-pub async fn get_agent_did(handle: u32) -> VcxResult<String> {
+pub fn get_agent_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.cloud_agent_info().agent_did.to_string())
     })
 }
 
-pub async fn get_agent_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.cloud_agent_info().agent_vk.clone())
     })
 }
 
-pub async fn get_pw_did(handle: u32) -> VcxResult<String> {
+pub fn get_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.pairwise_info().pw_did.to_string())
     })
 }
 
-pub async fn get_pw_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.pairwise_info().pw_vk.clone())
     })
 }
 
-pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.remote_did().map_err(|err| err.into())
     })
 }
 
-pub async fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.remote_vk().map_err(|err| err.into())
     })
 }
 
-pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.get_thread_id())
     })
 }
 
-pub async fn get_state(handle: u32) -> u32 {
+pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection.get_state().into())
@@ -87,7 +87,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub async fn store_connection(connection: Connection) -> VcxResult<u32> {
+pub fn store_connection(connection: Connection) -> VcxResult<u32> {
     CONNECTION_MAP.add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
 }
@@ -95,14 +95,14 @@ pub async fn store_connection(connection: Connection) -> VcxResult<u32> {
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = Connection::create(source_id, true).await?;
-    store_connection(connection).await
+    store_connection(connection)
 }
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
         let connection = Connection::create_with_invite(source_id, invitation, true).await?;
-        store_connection(connection).await
+        store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
     }
@@ -113,7 +113,7 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     let request: Request = serde_json::from_str(request)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
     let connection = Connection::create_with_request(request, &agent).await?;
-    store_connection(connection).await
+    store_connection(connection)
 }
 
 pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
@@ -177,13 +177,13 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
     Ok(invitation)
 }
 
-pub async fn to_string(handle: u32) -> VcxResult<String> {
+pub fn to_string(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.to_string().map_err(|err| err.into())
     })
 }
 
-pub async fn from_string(connection_data: &str) -> VcxResult<u32> {
+pub fn from_string(connection_data: &str) -> VcxResult<u32> {
     let connection = Connection::from_string(connection_data)?;
     CONNECTION_MAP.add(connection)
 }
@@ -197,7 +197,7 @@ pub fn release_all() {
     CONNECTION_MAP.drain().ok();
 }
 
-pub async fn get_invite_details(handle: u32) -> VcxResult<String> {
+pub fn get_invite_details(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_invite_details()
             .map(|invitation| match invitation {
@@ -227,11 +227,11 @@ pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessag
 
 pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
-    let send_message = send_message_closure(handle).await?;
+    let send_message = send_message_closure(handle)?;
     send_message(message).await.map_err(|err| err.into())
 }
 
-pub async fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
+pub fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.send_message_closure().map_err(|err| err.into())
     })
@@ -249,7 +249,7 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
     CONNECTION_MAP.insert(handle, connection)
 }
 
-pub async fn get_connection_info(handle: u32) -> VcxResult<String> {
+pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_connection_info().map_err(|err| err.into())
     })
@@ -310,8 +310,8 @@ pub mod tests {
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle).await);
-        assert_eq!(0, connection::get_state(connection_handle).await);
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(0, connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -319,8 +319,8 @@ pub mod tests {
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle).await);
-        assert_eq!(1, connection::get_state(connection_handle).await);
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(1, connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -328,8 +328,8 @@ pub mod tests {
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle).await);
-        assert_eq!(1, connection::get_state(connection_handle).await);
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(1, connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -339,8 +339,8 @@ pub mod tests {
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
         let connection_handle = connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle).await);
-        assert_eq!(2, connection::get_state(connection_handle).await);
+        assert!(connection::is_valid_handle(connection_handle));
+        assert_eq!(2, connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -348,7 +348,7 @@ pub mod tests {
     async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
         let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert_eq!(0, connection::get_state(connection_handle).await);
+        assert_eq!(0, connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -358,10 +358,10 @@ pub mod tests {
         warn!(">> test_connection_delete going to create connection");
         let connection_handle = connection::create_connection(_source_id()).await.unwrap();
         warn!(">> test_connection_delete checking is valid handle");
-        assert!(connection::is_valid_handle(connection_handle).await);
+        assert!(connection::is_valid_handle(connection_handle));
 
         connection::release(connection_handle).unwrap();
-        assert!(!connection::is_valid_handle(connection_handle).await);
+        assert!(!connection::is_valid_handle(connection_handle));
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {
@@ -375,8 +375,8 @@ pub mod tests {
         handle
     }
 
-    pub async fn build_test_connection_invitee_completed() -> u32 {
-        from_string(CONNECTION_SM_INVITEE_COMPLETED).await.unwrap()
+    pub fn build_test_connection_invitee_completed() -> u32 {
+        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
     }
 
     pub async fn build_test_connection_inviter_requested() -> u32 {
@@ -391,22 +391,22 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_connection("test_create_connection").await.unwrap();
-        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
 
         connect(handle).await.unwrap();
-        assert_eq!(get_pw_did(handle).await.unwrap(), constants::DID);
-        assert_eq!(get_pw_verkey(handle).await.unwrap(), constants::VERKEY);
+        assert_eq!(get_pw_did(handle).unwrap(), constants::DID);
+        assert_eq!(get_pw_verkey(handle).unwrap(), constants::VERKEY);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
         update_state(handle).await.unwrap();
-        assert_eq!(get_state(handle).await, VcxStateType::VcxStateRequestReceived as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateRequestReceived as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
         update_state(handle).await.unwrap();
-        assert_eq!(get_state(handle).await, VcxStateType::VcxStateAccepted as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
         AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);
         assert_eq!(delete_connection(handle).await.unwrap(), 0);
@@ -422,15 +422,15 @@ pub mod tests {
 
         let handle = create_connection("test_create_drop_create").await.unwrap();
 
-        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
-        let did1 = get_pw_did(handle).await.unwrap();
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
+        let did1 = get_pw_did(handle).unwrap();
 
         release(handle).unwrap();
 
         let handle2 = create_connection("test_create_drop_create").await.unwrap();
 
-        assert_eq!(get_state(handle2).await, VcxStateType::VcxStateNone as u32);
-        let did2 = get_pw_did(handle2).await.unwrap();
+        assert_eq!(get_state(handle2), VcxStateType::VcxStateNone as u32);
+        let did2 = get_pw_did(handle2).unwrap();
 
         assert_ne!(handle, handle2);
         assert_eq!(did1, did2);
@@ -452,7 +452,7 @@ pub mod tests {
     async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
-        let state = get_state(1).await;
+        let state = get_state(1);
         assert_eq!(state, VcxStateType::VcxStateNone as u32);
     }
 
@@ -461,7 +461,7 @@ pub mod tests {
     async fn test_get_string_fails() {
         let _setup = SetupEmpty::init();
 
-        let rc = to_string(0).await;
+        let rc = to_string(0);
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
     }
 
@@ -474,10 +474,10 @@ pub mod tests {
 
         connect(handle).await.unwrap();
 
-        let details = get_invite_details(handle).await.unwrap();
+        let details = get_invite_details(handle).unwrap();
         assert!(details.contains("\"serviceEndpoint\":"));
 
-        assert_eq!(get_invite_details(0).await.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(get_invite_details(0).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[tokio::test]
@@ -487,7 +487,7 @@ pub mod tests {
 
         let handle = create_connection("test_serialize_deserialize").await.unwrap();
 
-        assert_eq!(get_state(handle).await, VcxStateType::VcxStateNone as u32);
+        assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
         connect(handle).await.unwrap();
         connect(handle).await.unwrap();

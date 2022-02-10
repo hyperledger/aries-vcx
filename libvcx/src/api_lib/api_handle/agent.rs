@@ -11,7 +11,7 @@ pub async fn is_valid_handle(handle: u32) -> bool {
     PUBLIC_AGENT_MAP.has_handle(handle)
 }
 
-async fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
+fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
     PUBLIC_AGENT_MAP.add(agent)
         .or(Err(VcxError::from(VcxErrorKind::CreatePublicAgent)))
 }
@@ -19,7 +19,7 @@ async fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
 pub async fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<u32> {
     trace!("create_public_agent >>> source_id: {}, institution_did: {}", source_id, institution_did);
     let agent = PublicAgent::create(source_id, institution_did).await?;
-    store_public_agent(agent).await
+    store_public_agent(agent)
 }
 
 pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>>) -> VcxResult<String> {
@@ -39,7 +39,7 @@ pub async fn download_message(handle: u32, uid: &str) -> VcxResult<String> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize dowloaded message {:?}, err: {:?}", msg, err)))
 }
 
-pub async fn get_service(handle: u32) -> VcxResult<String> {
+pub fn get_service(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
         let service = agent.service()?;
         serde_json::to_string(&service)
@@ -47,13 +47,13 @@ pub async fn get_service(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub async fn to_string(handle: u32) -> VcxResult<String> {
+pub fn to_string(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
         agent.to_string().map_err(|err| err.into())
     })
 }
 
-pub async fn from_string(agent_data: &str) -> VcxResult<u32> {
+pub  fn from_string(agent_data: &str) -> VcxResult<u32> {
     let agent = PublicAgent::from_string(agent_data)?;
     PUBLIC_AGENT_MAP.add(agent).map_err(|err| err.into())
 }

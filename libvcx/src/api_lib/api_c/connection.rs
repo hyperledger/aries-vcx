@@ -387,8 +387,8 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
     trace!("vcx_connection_get_thread_id(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_thread_id(connection_handle).await {
+    execute(move || {
+        match get_thread_id(connection_handle) {
             Ok(tid) => {
                 trace!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, tid, source_id);
@@ -404,7 +404,7 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -432,8 +432,8 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
     trace!("vcx_connection_serialize(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match to_string(connection_handle).await {
+    execute(move || {
+        match to_string(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, json, source_id);
@@ -449,7 +449,7 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -476,8 +476,8 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_connection_deserialize(command_handle: {}, connection_data: {})", command_handle, connection_data);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let (rc, handle) = match from_string(&connection_data).await {
+    execute(move || {
+        let (rc, handle) = match from_string(&connection_data) {
             Ok(x) => {
                 let source_id = get_source_id(x).unwrap_or_default();
                 trace!("vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {:?}",
@@ -495,7 +495,7 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
         cb(command_handle, rc, handle);
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -533,17 +533,17 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
         let rc = match update_state(connection_handle).await {
             Ok(x) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                       command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle).await, source_id);
+                       command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
                 x
             }
             Err(x) => {
                 set_current_error_vcx(&x);
                 warn!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                      command_handle, x, connection_handle, get_state(connection_handle).await, source_id);
+                      command_handle, x, connection_handle, get_state(connection_handle), source_id);
                 x.into()
             }
         };
-        let state = get_state(connection_handle).await;
+        let state = get_state(connection_handle);
         cb(command_handle, rc, state);
 
         Ok(())
@@ -583,18 +583,18 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
         let rc = match update_state_with_message(connection_handle, &message).await {
             Ok(x) => {
                 trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                       command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle).await, source_id);
+                       command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
                 x
             }
             Err(x) => {
                 set_current_error_vcx(&x);
                 warn!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                      command_handle, x, connection_handle, get_state(connection_handle).await, source_id);
+                      command_handle, x, connection_handle, get_state(connection_handle), source_id);
                 x.into()
             }
         };
 
-        let state = get_state(connection_handle).await;
+        let state = get_state(connection_handle);
         cb(command_handle, rc, state);
 
         Ok(())
@@ -632,8 +632,8 @@ pub extern fn vcx_connection_get_state(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-               command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle).await, source_id);
-        cb(command_handle, error::SUCCESS.code_num, get_state(connection_handle).await);
+               command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
+        cb(command_handle, error::SUCCESS.code_num, get_state(connection_handle));
 
         Ok(())
     }));
@@ -681,8 +681,8 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
     trace!("vcx_connection_invite_details(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_invite_details(connection_handle).await {
+    execute(move || {
+        match get_invite_details(connection_handle) {
             Ok(str) => {
                 trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, str, source_id);
@@ -698,7 +698,7 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -884,8 +884,8 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     trace!("vcx_connection_sign_data: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}",
            connection_handle, data_raw, data_len);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match connection::get_pw_verkey(connection_handle).await {
+    execute(move || {
+        let vk = match connection::get_pw_verkey(connection_handle) {
             Ok(x) => x,
             Err(e) => {
                 warn!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
@@ -912,7 +912,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -964,8 +964,8 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}",
            connection_handle, data_raw, data_len, signature_raw, signature_len);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match connection::get_their_pw_verkey(connection_handle).await {
+    execute(move || {
+        let vk = match connection::get_their_pw_verkey(connection_handle) {
             Ok(x) => x,
             Err(e) => {
                 warn!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
@@ -991,7 +991,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -1129,8 +1129,8 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
     trace!("vcx_connection_info(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_connection_info(connection_handle).await {
+    execute(move || {
+        match get_connection_info(connection_handle) {
             Ok(info) => {
                 trace!("vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, info, source_id);
@@ -1146,7 +1146,7 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -1174,8 +1174,8 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
     trace!("vcx_connection_get_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_pw_did(connection_handle).await {
+    execute(move || {
+        match get_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, json, source_id);
@@ -1191,7 +1191,7 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -1219,8 +1219,8 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
     trace!("vcx_connection_get_their_pw_did(command_handle: {}, connection_handle: {}), source_id: {:?}",
            command_handle, connection_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_their_pw_did(connection_handle).await {
+    execute(move || {
+        match get_their_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",
                        command_handle, connection_handle, error::SUCCESS.message, json, source_id);
@@ -1236,7 +1236,7 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }

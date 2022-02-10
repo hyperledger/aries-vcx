@@ -84,8 +84,8 @@ pub extern fn vcx_disclosed_proof_create_with_request(command_handle: CommandHan
     trace!("vcx_disclosed_proof_create_with_request(command_handle: {}, source_id: {}, proof_req: {})",
            command_handle, source_id, proof_req);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::create_proof(&source_id, &proof_req).await {
+    execute(move || {
+        match disclosed_proof::create_proof(&source_id, &proof_req) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_create_with_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, source_id);
@@ -100,7 +100,7 @@ pub extern fn vcx_disclosed_proof_create_with_request(command_handle: CommandHan
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -273,8 +273,8 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_proof_msg(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::generate_proof_msg(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::generate_proof_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!("vcx_disclosed_proof_get_proof_msg_cb(command_handle: {}, rc: {}) source_id: {}",
@@ -290,7 +290,7 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -411,8 +411,8 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_state(command_handle: {}, proof_handle: {}), source_id: {:?}",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::get_state(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::get_state(proof_handle) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_get_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, s, source_id);
@@ -426,7 +426,7 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -443,8 +443,8 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
     trace!("vcx_disclosed_proof_get_attachment(command_handle: {}, proof_handle: {}), source_id: {:?}",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::get_proof_request_attachment(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::get_proof_request_attachment(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, source_id);
@@ -460,7 +460,7 @@ pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: C
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -571,8 +571,8 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_serialize(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::to_string(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::to_string(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_serialize_cb(command_handle: {}, rc: {}, data: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, source_id);
@@ -588,7 +588,7 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -617,8 +617,8 @@ pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_deserialize(command_handle: {}, proof_data: {})",
            command_handle, proof_data);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::from_string(&proof_data).await {
+    execute(move || {
+        match disclosed_proof::from_string(&proof_data) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_deserialize_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, disclosed_proof::get_source_id(x).unwrap_or_default());
@@ -634,7 +634,7 @@ pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -665,8 +665,8 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
     trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::retrieve_credentials(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::retrieve_credentials(proof_handle) {
             Ok(x) => {
                 trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, rc: {}, data: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, x, source_id);
@@ -682,7 +682,7 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -875,8 +875,8 @@ pub extern fn vcx_disclosed_proof_get_thread_id(command_handle: CommandHandle,
     trace!("vcx_disclosed_proof_get_thread_id(command_handle: {}, proof_handle: {}) source_id: {})",
            command_handle, proof_handle, source_id);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::get_thread_id(proof_handle).await {
+    execute(move || {
+        match disclosed_proof::get_thread_id(proof_handle) {
             Ok(s) => {
                 trace!("vcx_disclosed_proof_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, s, source_id);
@@ -891,7 +891,7 @@ pub extern fn vcx_disclosed_proof_get_thread_id(command_handle: CommandHandle,
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -1055,7 +1055,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle_proof = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(disclosed_proof::get_state(handle_proof).await.unwrap(), ProverState::PresentationRequestReceived as u32);
+        assert_eq!(disclosed_proof::get_state(handle_proof).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
 
@@ -1070,7 +1070,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(disclosed_proof::get_state(handle).await.unwrap(), ProverState::PresentationRequestReceived as u32);
+        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 
@@ -1087,7 +1087,7 @@ mod tests {
 
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
-        assert_eq!(disclosed_proof::get_state(handle).await.unwrap(), ProverState::PresentationRequestReceived as u32);
+        assert_eq!(disclosed_proof::get_state(handle).unwrap(), ProverState::PresentationRequestReceived as u32);
 
         let _connection_handle = connection::tests::build_test_connection_inviter_requested().await;
 

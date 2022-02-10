@@ -23,12 +23,12 @@ pub struct OOBConfig {
     pub goal: Option<String>,
 }
 
-async fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
+fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP.add(oob)
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
 
-async fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
+fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP.add(oob)
         .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
 }
@@ -47,17 +47,17 @@ pub async fn create_out_of_band(config: &str) -> VcxResult<u32> {
     if let Some(goal_code) = &config.goal_code {
         oob = oob.set_goal_code(&goal_code);
     };
-    store_out_of_band_sender(oob).await
+    store_out_of_band_sender(oob)
 }
 
-pub async fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
+pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
     trace!("create_out_of_band_msg_from_msg >>> msg: {}", msg);
     let msg: A2AMessage = serde_json::from_str(msg)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-    store_out_of_band_receiver(OutOfBandReceiver::create_from_a2a_msg(&msg)?).await
+    store_out_of_band_receiver(OutOfBandReceiver::create_from_a2a_msg(&msg)?)
 }
 
-pub async fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
+pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
     let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let msg = serde_json::from_str(msg)
@@ -66,7 +66,7 @@ pub async fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
+pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
     let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let service = serde_json::from_str(service)
@@ -75,21 +75,21 @@ pub async fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
+pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub async fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
+pub fn get_services(handle: u32) -> VcxResult<Vec<ServiceResolvable>> {
     trace!("get_services >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         Ok(oob.get_services())
     })
 }
 
-pub async fn extract_a2a_message(handle: u32) -> VcxResult<String> {
+pub fn extract_a2a_message(handle: u32) -> VcxResult<String> {
     trace!("extract_a2a_message >>> handle: {}", handle);
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         if let Some(msg) = oob.extract_a2a_message()? {
@@ -102,7 +102,7 @@ pub async fn extract_a2a_message(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub async fn to_a2a_message(handle: u32) -> VcxResult<String> {
+pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         let msg = oob.to_a2a_message();
         Ok(serde_json::to_string(&msg)
@@ -110,7 +110,7 @@ pub async fn to_a2a_message(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
+pub fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
     trace!("connection_exists >>> handle: {}, conn_handles: {:?}", handle, conn_handles);
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         let mut conn_map = HashMap::new();
@@ -139,38 +139,38 @@ pub async fn build_connection(handle: u32) -> VcxResult<String> {
     oob.build_connection(false).await?.to_string().map_err(|err| err.into())
 }
 
-pub async fn get_thread_id_sender(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id_sender(handle: u32) -> VcxResult<String> {
     trace!("get_thread_id_sender >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         Ok(oob.get_id())
     })
 }
 
-pub async fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
     trace!("get_thread_id_receiver >>> handle: {}", handle);
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         Ok(oob.get_id())
     })
 }
 
-pub async fn to_string_sender(handle: u32) -> VcxResult<String> {
+pub fn to_string_sender(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         oob.to_string().map_err(|err| err.into())
     })
 }
 
-pub async fn to_string_receiver(handle: u32) -> VcxResult<String> {
+pub fn to_string_receiver(handle: u32) -> VcxResult<String> {
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         oob.to_string().map_err(|err| err.into())
     })
 }
 
-pub async fn from_string_sender(oob_data: &str) -> VcxResult<u32> {
+pub fn from_string_sender(oob_data: &str) -> VcxResult<u32> {
     let oob = OutOfBandSender::from_string(oob_data)?;
     OUT_OF_BAND_SENDER_MAP.add(oob).map_err(|err| err.into())
 }
 
-pub async fn from_string_receiver(oob_data: &str) -> VcxResult<u32> {
+pub fn from_string_receiver(oob_data: &str) -> VcxResult<u32> {
     let oob = OutOfBandReceiver::from_string(oob_data)?;
     OUT_OF_BAND_RECEIVER_MAP.add(oob).map_err(|err| err.into())
 }
@@ -209,9 +209,9 @@ pub mod tests {
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())));
-        append_service(oob_handle, &json!(service).to_string()).await.unwrap();
-        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").await.unwrap();
-        let resolved_service = get_services(oob_handle).await.unwrap();
+        append_service(oob_handle, &json!(service).to_string()).unwrap();
+        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
+        let resolved_service = get_services(oob_handle).unwrap();
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
         assert_eq!(ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()), resolved_service[1]);

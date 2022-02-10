@@ -43,7 +43,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     trace!("proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}", handle, message, connection_handle);
     if !proof.progressable_by_message() { return Ok(proof.get_state().into()); }
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = connection::send_message_closure(connection_handle)?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message)
@@ -107,7 +107,7 @@ pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
 
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
-    proof.send_presentation_request(connection::send_message_closure(connection_handle).await?).await?;
+    proof.send_presentation_request(connection::send_message_closure(connection_handle)?).await?;
     PROOF_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }

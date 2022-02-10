@@ -10,7 +10,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;
-use crate::api_lib::utils::runtime::execute_async;
+use crate::api_lib::utils::runtime::{execute_async, execute};
 
 #[no_mangle]
 pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
@@ -128,8 +128,8 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_get_service(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match agent::get_service(agent_handle).await {
+    execute(move || {
+        match agent::get_service(agent_handle) {
             Ok(service) => {
                 trace!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
                        command_handle, error::SUCCESS.message, service);
@@ -144,7 +144,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
             }
         }
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -159,8 +159,8 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_serialize(command_handle: {}, agent_handle: {})", command_handle, agent_handle);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match agent::to_string(agent_handle).await {
+    execute(move || {
+        match agent::to_string(agent_handle) {
             Ok(agent_json) => {
                 trace!("vcx_public_agent_serialize_cb(command_handle: {}, rc: {}, agent_json: {})",
                        command_handle, error::SUCCESS.message, agent_json);
@@ -175,7 +175,7 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -191,8 +191,8 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
 
     trace!("vcx_public_agent_deserialize(command_handle: {}, agent_json: {})", command_handle, agent_json);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match agent::from_string(&agent_json).await {
+    execute(move || {
+        match agent::from_string(&agent_json) {
             Ok(agent_handle) => {
                 trace!("vcx_public_agent_deserialize_cb(command_handle: {}, rc: {}, agent_handle: {})",
                        command_handle, error::SUCCESS.message, agent_handle);
@@ -206,7 +206,7 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
             }
         }
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
