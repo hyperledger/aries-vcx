@@ -63,13 +63,14 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
 
   public async connectionExists(connections: [Connection]): Promise<void | Connection> {
     try {
+      const connHandles = connections.map((conn) => conn.handle);
       await createFFICallbackPromise<void | Connection>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
           const rc = rustAPI().vcx_out_of_band_receiver_connection_exists(
             commandHandle,
             this.handle,
-            JSON.stringify(connections),
+            JSON.stringify(connHandles),
             cb,
           );
           if (rc) {
