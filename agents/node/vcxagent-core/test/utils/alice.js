@@ -40,23 +40,6 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createOrReuseConnectionUsingOobMsg (oobMsg) {
-    logger.info('createOrReuseConnectionUsingOobMsg >> Alice going to create or reuse connection using oob message')
-    logger.debug(`createOrReuseConnectionUsingOobMsg >> oobMsg = ${oobMsg}`)
-    await vcxAgent.agentInitVcx()
-    let reused = false
-
-    if (await vcxAgent.serviceOutOfBand.connectionExists([connectionId], oobMsg)) {
-      await vcxAgent.serviceOutOfBand.reuseConnectionFromOobMsg(connectionId, oobMsg)
-      reused = true
-    } else {
-      await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, oobMsg)
-    }
-
-    await vcxAgent.agentShutdownVcx()
-    return reused
-  }
-
   async function updateConnection (expectedNextState) {
     logger.info(`Alice is going to update connection, expecting new state of ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
@@ -199,7 +182,6 @@ module.exports.createAlice = async function createAlice () {
     signData,
     acceptInvite,
     createConnectionUsingOobMessage,
-    createOrReuseConnectionUsingOobMsg,
     acceptOobCredentialOffer,
     updateConnection,
     acceptCredentialOffer,

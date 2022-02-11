@@ -42,20 +42,10 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
     await connection.sendHandshakeReuse(oobMsg)
   }
 
-  async function connectionExists (connectionIds, oobMsg) {
-    const connections = await Promise.all(connectionIds.map(async cid => loadConnection(cid)))
-    const oobReceiver = await OutOfBandReceiver.createWithMessage(oobMsg)
-    if (await oobReceiver.connectionExists(connections)) {
-      return true
-    }
-    return false
-  }
-
   return {
     createOobMessageWithService,
     createOobMessageWithDid,
     createConnectionFromOobMsg,
-    connectionExists,
     reuseConnectionFromOobMsg
   }
 }
