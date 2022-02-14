@@ -43,9 +43,16 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   }
 
   async function connectionExists (connectionIds, oobMsg) {
-    const connections = await Promise.all(connectionIds.map(async cid => loadConnection(cid)))
+    const connections = await connectionIds.reduce(async (filtered, cid) => {
+      let connection
+      try {
+        connection = await loadConnection(cid)
+        filtered.push(connection)
+        return filtered
+      } catch {}
+    }, [])
     const oobReceiver = await OutOfBandReceiver.createWithMessage(oobMsg)
-    if (await oobReceiver.connectionExists(connections)) {
+    if (connections && await oobReceiver.connectionExists(connections)) {
       return true
     }
     return false
