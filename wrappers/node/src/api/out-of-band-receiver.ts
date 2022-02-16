@@ -63,13 +63,14 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
 
   public async connectionExists(connections: [Connection]): Promise<void | Connection> {
     try {
-      await createFFICallbackPromise<void | Connection>(
+      const connHandles = connections.map((conn) => conn.handle);
+      const res = await createFFICallbackPromise<void | Connection>(
         (resolve, reject, cb) => {
           const commandHandle = 0;
           const rc = rustAPI().vcx_out_of_band_receiver_connection_exists(
             commandHandle,
             this.handle,
-            JSON.stringify(connections),
+            JSON.stringify(connHandles),
             cb,
           );
           if (rc) {
@@ -88,17 +89,17 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
               if (!found_one) {
                 resolve();
               } else {
-                connections.forEach((conn) => {
-                  if (conn.handle === conn_handle) {
-                    resolve(conn);
-                    return;
-                  }
-                });
+                const conn = connections.find((conn) => conn.handle === conn_handle);
+                if (conn) {
+                  resolve(conn);
+                  return;
+                }
                 reject(Error('Unexpected state: should have found connection'));
               }
             },
           ),
       );
+      return res
     } catch (err) {
       throw new VCXInternalError(err);
     }
