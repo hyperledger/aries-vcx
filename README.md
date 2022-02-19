@@ -12,17 +12,17 @@ essentially any platform. Officially we support:
   - Java (+Android)
   - iOS, 
   - NodeJS
-- Overview of [implemented Aries protocols](./aries.md)
+- Overview of [implemented Aries protocols](./ARIES.md)
 - AriesVCX requires [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
   One such implementation is [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/). 
   For early development and experimentation, you can use agency we have deployed at 
   `https://ariesvcx.agency.staging.absa.id/agency` (instance of NodeVCX Agency)
-
-# Work in progress
+  
+# Versioning
 - The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`. 
 - Although the API is mostly stable, breaking changes still occur in our releases. See our
-  [releases](https://github.com/hyperledger/aries-vcx/releases) page for our change history.
-- See our [roadmap](./roadmap.md).
+  [releases](https://github.com/hyperledger/aries-vcx/releases) page as our changelog.
+- See our [roadmap](./ROADMAP.md).
 
 # Get started
 The best way to get your hands on.  
