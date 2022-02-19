@@ -45,23 +45,6 @@ void VcxWrapperCommonHandleCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
-void VcxWrapperCommonUnsignedHandleCallback(vcx_command_handle_t xcommand_handle,
-                                    vcx_error_t err,
-                                    vcx_u32_t h) {
-    id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
-    [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
-
-    void (^completion)(NSError *, NSNumber *) = (void (^)(NSError *, NSNumber *)) block;
-
-    if (completion) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSError *error = [NSError errorFromVcxError:err];
-            NSNumber *handle = [NSNumber numberWithUnsignedInt:h];
-            completion(error, handle);
-        });
-    }
-}
-
 void VcxWrapperCommonSignedHandleCallback(vcx_command_handle_t xcommand_handle,
                                           vcx_error_t err,
                                           VcxHandle h) {
@@ -1559,46 +1542,6 @@ withConnectionHandle:(NSNumber *)connection_handle
     }
 }
 
-- (void) connectionRedirect: (NSNumber *) redirect_connection_handle
-        withConnectionHandle: (NSNumber *) connection_handle
-        withCompletion: (void (^)(NSError *error)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor: completion];
-
-    ret = vcx_connection_redirect(handle,
-                                  connection_handle.unsignedIntValue,
-                                  redirect_connection_handle.unsignedIntValue,
-                                  VcxWrapperCommonCallback);
-
-    if (ret != 0)
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
-- (void) getRedirectDetails: (NSNumber *) connection_handle
-        withCompletion: (void (^)(NSError *error, NSString *redirectDetails)) completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    ret = vcx_connection_get_redirect_details(handle,
-                                              connection_handle.unsignedIntValue,
-                                              VcxWrapperCommonStringCallback);
-
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, NSNumber *proofHandle))completion {
@@ -1662,72 +1605,6 @@ withConnectionHandle:(NSNumber *)connection_handle
     return vcx_disclosed_proof_release(proofHandle.unsignedIntValue);
 }
 
-- (void)createPaymentAddress:(NSString *)seed
-              withCompletion:(void (^)(NSError *error, NSString *address))completion {
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    const char *c_seed = [seed cStringUsingEncoding:NSUTF8StringEncoding];
-
-    ret = vcx_wallet_create_payment_address(handle, c_seed, VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
-- (void)getTokenInfo:(NSNumber *)payment_handle
-      withCompletion:(void (^)(NSError *error, NSString *tokenInfo))completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    ret = vcx_wallet_get_token_info(handle,
-                                    payment_handle.unsignedIntValue,
-                                    VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
-- (void)sendTokens:(NSNumber *)payment_handle
-        withTokens:(NSString *)tokens
-     withRecipient:(NSString *)recipient
-    withCompletion:(void (^)(NSError *error, NSString *recipient))completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-
-    const char* c_recipient = [recipient cStringUsingEncoding:NSUTF8StringEncoding];
-    const char* c_tokens = [tokens cStringUsingEncoding:NSUTF8StringEncoding];
-
-    ret = vcx_wallet_send_tokens(handle,
-                                 payment_handle.unsignedIntValue,
-                                 c_tokens,
-                                 c_recipient,
-                                 VcxWrapperCommonStringCallback);
-
-    if ( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
 - (void)downloadMessages:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
                   pwdids:(NSString *)pwdids
@@ -1785,22 +1662,6 @@ withConnectionHandle:(NSNumber *)connection_handle
 
         dispatch_async(dispatch_get_main_queue(), ^{
             completion([NSError errorFromVcxError: ret]);
-        });
-    }
-}
-
-- (void) getLedgerFees:(void(^)(NSError *error, NSString *fees)) completion
-{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    ret = vcx_ledger_get_fees(handle, VcxWrapperCommonStringCallback);
-
-    if (ret != 0)
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
         });
     }
 }

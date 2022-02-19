@@ -246,13 +246,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (void) getRejectMsg:(NSNumber *) proofHandle
        withCompletion:(void (^)(NSError *error, NSString *rejectMsg))completion;
 
-- (void)connectionRedirect:(NSNumber *)redirect_connection_handle
-      withConnectionHandle:(NSNumber *)connection_handle
-            withCompletion:(void (^)(NSError *error))completion;
-
-- (void)getRedirectDetails:(NSNumber *)connection_handle
-      withCompletion:(void (^)(NSError *error, NSString *redirectDetails))completion;
-
 - (void) proofCreateWithRequest:(NSString *) source_id
                withProofRequest:(NSString *) proofRequest
                  withCompletion:(void (^)(NSError *error, NSNumber *proofHandle))completion;
@@ -266,17 +259,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (int)proofRelease:(NSNumber *) proofHandle;
 
 - (int)vcxShutdown:(BOOL *)deleteWallet;
-
-- (void)createPaymentAddress:(NSString *)seed
-              withCompletion:(void (^)(NSError *error, NSString *address))completion;
-
-- (void)getTokenInfo:(NSNumber *)payment_handle
-      withCompletion:(void (^)(NSError *error, NSString *tokenInfo))completion;
-
-- (void)sendTokens:(NSNumber *)payment_handle
-        withTokens:(NSString *)tokens
-     withRecipient:(NSString *)recipient
-    withCompletion:(void (^)(NSError *error, NSString *recipient))completion;
 
 - (void)downloadMessages:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
@@ -295,8 +277,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 - (void)downloadAgentMessages:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s
                     completion:(void (^)(NSError *error, NSString* messages))completion;
-
-- (void) getLedgerFees:(void(^)(NSError *error, NSString *fees)) completion;
 
 - (void) getTxnAuthorAgreement:(void(^)(NSError *error, NSString *authorAgreement)) completion;
 
