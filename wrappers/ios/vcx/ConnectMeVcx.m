@@ -717,15 +717,15 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
                               oobMsg:(NSString *)oobMsg
                           completion:(void (^)(NSError *error))completion {
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    const char * oobMsg = [oobMsg cStringUsingEncoding:NSUTF8StringEncoding];
-    vcx_error_t ret = vcx_connection_send_handshake_reuse(handle, connectionHandle, oobMsg, VcxWrapperCommonCallback);
+    const char *oobMsg_ctype = [oobMsg cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_error_t ret = vcx_connection_send_handshake_reuse(handle, connectionHandle, oobMsg_ctype, VcxWrapperCommonCallback);
 
     if( ret != 0 )
     {
         [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
+            completion([NSError errorFromVcxError: ret]);
         });
     }
 }
