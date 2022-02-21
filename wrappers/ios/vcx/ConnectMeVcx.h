@@ -154,6 +154,10 @@ extern void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_h
                             uid_s:(NSString *)uid_s
                       completion:(void (^)(NSError *error, NSString* messages))completion;
 
+- (void)connectionSendHandshakeReuse:(VcxHandle)connectionHandle
+                       messageStatus:(NSString *)oobMsg
+                          completion:(void (^)(NSError *error))completion;
+
 - (void)agentUpdateInfo:(NSString *)config
              completion:(void (^)(NSError *error))completion;
 

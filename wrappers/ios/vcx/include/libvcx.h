@@ -163,6 +163,8 @@ vcx_error_t vcx_connection_get_their_pw_did(vcx_command_handle_t command_handle,
 
 vcx_error_t vcx_connection_messages_download(vcx_command_handle_t command_handle,  vcx_connection_handle_t connection_handle, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
 
+vcx_error_t vcx_connection_send_handshake_reuse(vcx_command_handle_t command_handle,  vcx_connection_handle_t connection_handle, const char *oob_msg, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
 /** Send a message to the specified connection
 ///
 /// #params
