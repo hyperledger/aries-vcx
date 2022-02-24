@@ -283,8 +283,7 @@ pub mod test {
 
             self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).await.unwrap();
             self.issuer_credential.update_state(&self.connection).await.unwrap();
-            assert_eq!(IssuerState::Finished, self.issuer_credential.get_state());
-            assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.issuer_credential.get_credential_status().unwrap());
+            assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
         }
 
         pub async fn request_presentation(&mut self) {
