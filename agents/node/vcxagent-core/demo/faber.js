@@ -128,7 +128,7 @@ async function runFaber (options) {
 
     const msgs = await vcxAgent.serviceConnections.getMessagesV2(connectionId)
     logger.debug(`Faber received messages: ${JSON.stringify(msgs, null, 2)}`)
-    assert(msgs.length === 3)
+    assert(msgs.length === 4)
   } catch (err) {
     exitcode = -1
     logger.error(`Faber encountered error ${err.message} ${err.stack}`)

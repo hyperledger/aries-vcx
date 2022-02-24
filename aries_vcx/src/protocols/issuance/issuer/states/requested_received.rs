@@ -1,4 +1,3 @@
-use crate::messages::a2a::MessageId;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
