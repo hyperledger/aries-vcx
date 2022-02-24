@@ -111,24 +111,27 @@ impl IssuerSM {
 
     pub fn revoke(&self, publish: bool) -> VcxResult<()> {
         trace!("Issuer::revoke >>> publish: {}", publish);
-        match &self.state {
-            IssuerFullState::Finished(state) => {
-                match &state.revocation_info_v1 {
-                    Some(rev_info) => {
-                        if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
-                            if publish {
-                                anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
-                            } else {
-                                anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id)?;
-                            }
-                            Ok(())
+        fn _revoke(rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
+            match rev_info {
+                Some(rev_info) => {
+                    if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
+                        if publish {
+                            anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
                         } else {
-                            Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Missing data to perform revocation."))
+                            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id)?;
                         }
+                        Ok(())
+                    } else {
+                        Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Missing data to perform revocation."))
                     }
-                    None => Err(VcxError::from(VcxErrorKind::NotReady))
                 }
+                None => Err(VcxError::from(VcxErrorKind::NotReady))
             }
+        }
+
+        match &self.state {
+            IssuerFullState::CredentialSent(state) => _revoke(&state.revocation_info_v1, publish),
+            IssuerFullState::Finished(state) => _revoke(&state.revocation_info_v1, publish),
             _ => Err(VcxError::from(VcxErrorKind::NotReady))
         }
     }
