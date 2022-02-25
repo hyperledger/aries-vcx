@@ -198,6 +198,8 @@ pub mod test {
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
+    use crate::messages::ack::Ack;
+    use crate::messages::ack::test_utils::_ack;
     use crate::protocols::issuance::issuer::state_machine::test::_send_message;
     use crate::utils::devsetup::SetupMocks;
 
@@ -235,6 +237,7 @@ pub mod test {
         async fn to_finished_state_unrevokable(mut self) -> Issuer {
             self = self.to_request_received_state().await;
             self.step(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            self.step(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             self
         }
     }
@@ -262,7 +265,7 @@ pub mod test {
 
         let send_result = issuer.send_credential(_send_message().unwrap()).await;
         assert_eq!(send_result.is_err(), false);
-        assert_eq!(IssuerState::Finished, issuer.get_state());
+        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
     }
 
     #[tokio::test]
@@ -284,6 +287,13 @@ pub mod test {
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer.send_credential(_send_message().unwrap()).await.unwrap();
+        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialAck(_ack())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
@@ -317,6 +327,13 @@ pub mod test {
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer.send_credential(_send_message().unwrap()).await.unwrap();
+        assert_eq!(IssuerState::CredentialSent, issuer.get_state());
+
+        let messages = map!(
+            "key_1".to_string() => A2AMessage::CredentialAck(_ack())
+        );
+        let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
+        issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 

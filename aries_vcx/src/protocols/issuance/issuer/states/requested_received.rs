@@ -1,4 +1,3 @@
-use crate::messages::a2a::MessageId;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
@@ -17,12 +16,12 @@ pub struct RequestReceivedState {
     pub request: CredentialRequest,
 }
 
-impl From<(RequestReceivedState, MessageId)> for CredentialSentState {
-    fn from((state, _sent_id): (RequestReceivedState, MessageId)) -> Self {
+impl From<(RequestReceivedState, Option<String>)> for CredentialSentState {
+    fn from((state, cred_rev_id): (RequestReceivedState, Option<String>)) -> Self {
         trace!("SM is now in CredentialSent state");
         CredentialSentState {
             revocation_info_v1: Some(RevocationInfoV1 {
-                cred_rev_id: None,
+                cred_rev_id,
                 rev_reg_id: state.rev_reg_id,
                 tails_file: state.tails_file,
             }),

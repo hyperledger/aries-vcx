@@ -21,6 +21,7 @@ describe('test update state', () => {
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
       await faber.sendCredential()
       await alice.updateStateCredentialV2(HolderStateType.Finished)
+      await faber.receiveCredentialAck()
 
       const request = await faber.requestProofFromAlice()
       await alice.sendHolderProof(JSON.parse(request))

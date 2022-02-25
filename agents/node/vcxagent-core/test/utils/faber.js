@@ -185,8 +185,18 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential')
-    expect(await vcxAgent.serviceCredIssuer.sendCredential(issuerCredId, connectionId)).toBe(IssuerStateType.Finished)
+    expect(await vcxAgent.serviceCredIssuer.sendCredential(issuerCredId, connectionId)).toBe(IssuerStateType.CredentialSent)
     logger.info('Credential sent')
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function receiveCredentialAck () {
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Issuer waiting for credential ack')
+    await vcxAgent.serviceCredIssuer.waitForCredentialAck(issuerCredId, connectionId)
+    logger.info('Credential ack received')
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -323,6 +333,7 @@ module.exports.createFaber = async function createFaber () {
     createOobCredOffer,
     updateStateCredentialV2,
     sendCredential,
+    receiveCredentialAck,
     requestProofFromAlice,
     updateStateVerifierProofV2,
     getCredentialRevRegId,
