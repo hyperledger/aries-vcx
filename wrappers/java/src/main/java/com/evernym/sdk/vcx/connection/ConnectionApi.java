@@ -324,6 +324,20 @@ public class ConnectionApi extends VcxJava.API {
 		return future;
 	}
 
+	public static CompletableFuture<Void> connectionSendHandshakeReuse(
+			int connectionHandle,
+			String oob_msg
+	) throws VcxException {
+		logger.debug("connectionSendHandshakeReuse() called with: connectionHandle = [" + connectionHandle + "], oob_msg = [" + oob_msg + "]");
+		CompletableFuture<Void> future = new CompletableFuture<>();
+		int commandHandle = addFuture(future);
+
+		int result = LibVcx.api.vcx_connection_send_handshake_reuse(commandHandle, connectionHandle, oob_msg, voidCb);
+		checkResult(result);
+
+		return future;
+	}
+
 	public static CompletableFuture<Void> connectionSendDiscoveryFeatures(
 			int connectionHandle,
 			String query,

@@ -158,6 +158,8 @@ public abstract class LibVcx {
          */
         public int vcx_connection_send_ping(int command_handle, int connection_handle, String comment, Callback cb);
 
+        public int vcx_connection_send_handshake_reuse(int command_handle, int connection_handle, String oob_msg, Callback cb);
+
         /**
          * Send discovery features message to the specified connection to discover which features it supports, and to what extent
          */

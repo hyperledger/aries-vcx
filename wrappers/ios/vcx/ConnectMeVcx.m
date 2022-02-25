@@ -711,7 +711,23 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
             completion([NSError errorFromVcxError: ret], nil);
         });
     }
+}
 
+- (void)connectionSendHandshakeReuse:(VcxHandle)connectionHandle
+                              oobMsg:(NSString *)oobMsg
+                          completion:(void (^)(NSError *error))completion {
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *oobMsg_ctype = [oobMsg cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_error_t ret = vcx_connection_send_handshake_reuse(handle, connectionHandle, oobMsg_ctype, VcxWrapperCommonCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
 }
 
 - (void)getCredential:(NSInteger)credentialHandle
