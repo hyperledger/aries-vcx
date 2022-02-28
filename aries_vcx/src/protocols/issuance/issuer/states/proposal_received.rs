@@ -1,7 +1,5 @@
-use crate::error::prelude::*;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::protocols::issuance::is_cred_def_revokable;
 use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -16,10 +14,6 @@ impl ProposalReceivedState {
             credential_proposal,
             offer_info,
         }
-    }
-
-    pub fn is_revokable(&self) -> VcxResult<bool> {
-        is_cred_def_revokable(&self.credential_proposal.cred_def_id)
     }
 }
 

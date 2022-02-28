@@ -156,15 +156,17 @@ impl IssuerSM {
         rev_registry.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation registry id found on revocation info - is this credential revokable?"))
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
+    pub fn is_revokable(&self) -> bool {
+        fn _is_revokable(rev_info: &Option<RevocationInfoV1>) -> bool {
+            match rev_info {
+                Some(rev_info) => rev_info.cred_rev_id.is_some(),
+                None => false
+            }
+        }
         match &self.state {
-            IssuerFullState::Initial(_state) => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info available in the initial state")); }
-            IssuerFullState::ProposalReceived(state) => state.is_revokable(),
-            IssuerFullState::OfferSet(state) => Ok(state.rev_reg_id.is_some()),
-            IssuerFullState::OfferSent(state) => Ok(state.rev_reg_id.is_some()),
-            IssuerFullState::RequestReceived(state) => Ok(state.rev_reg_id.is_some()),
-            IssuerFullState::CredentialSent(state) => Ok(state.revocation_info_v1.is_some()),
-            IssuerFullState::Finished(state) => Ok(state.revocation_info_v1.is_some()),
+            IssuerFullState::CredentialSent(state) => _is_revokable(&state.revocation_info_v1),
+            IssuerFullState::Finished(state) => _is_revokable(&state.revocation_info_v1),
+            _ => false
         }
     }
 
@@ -905,11 +907,11 @@ pub mod test {
         async fn test_is_revokable() {
             let _setup = SetupMocks::init();
 
-            assert_eq!(VcxErrorKind::InvalidState, _issuer_sm().is_revokable().unwrap_err().kind());
-            assert_eq!(true, _issuer_sm().to_proposal_received_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_offer_sent_state().is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_request_received_state().await.is_revokable().unwrap());
-            assert_eq!(true, _issuer_sm().to_finished_state().await.is_revokable().unwrap());
+            assert_eq!(false, _issuer_sm().is_revokable());
+            assert_eq!(false, _issuer_sm().to_proposal_received_state().is_revokable());
+            assert_eq!(false, _issuer_sm().to_offer_sent_state().is_revokable());
+            assert_eq!(false, _issuer_sm().to_request_received_state().await.is_revokable());
+            assert_eq!(false, _issuer_sm().to_finished_state().await.is_revokable());
         }
     }
 }
