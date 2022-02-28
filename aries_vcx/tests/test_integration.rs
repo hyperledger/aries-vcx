@@ -396,10 +396,10 @@ mod tests {
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
+        assert_eq!(issuer_credential.is_revokable(), false);
         issuer_credential.update_state(issuer_to_consumer).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
-        assert_eq!(issuer_credential.is_revokable().unwrap(), revokable);
+        assert_eq!(issuer_credential.is_revokable(), false);
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");

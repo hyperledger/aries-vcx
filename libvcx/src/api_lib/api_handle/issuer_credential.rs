@@ -189,7 +189,7 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.is_revokable().map_err(|err| err.into())
+        Ok(credential.is_revokable())
     })
 }
 

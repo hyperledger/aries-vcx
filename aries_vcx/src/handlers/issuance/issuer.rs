@@ -143,12 +143,12 @@ impl Issuer {
         self.issuer_sm.get_proposal()
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
-        self.issuer_sm.is_revokable()
-    }
-
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.issuer_sm.credential_status())
+    }
+
+    pub fn is_revokable(&self) -> bool {
+        self.issuer_sm.is_revokable()
     }
 
     pub async fn step(&mut self, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {

@@ -274,6 +274,7 @@ export interface IFFIEntryPoint {
   ) => number;
   vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_revoke_credential_local: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_issuer_credential_is_revokable: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_send_credential: (
     commandId: number,
     credentialHandle: number,
@@ -794,6 +795,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_issuer_revoke_credential_local: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_issuer_credential_is_revokable: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
