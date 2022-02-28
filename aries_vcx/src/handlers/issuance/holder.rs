@@ -35,7 +35,7 @@ impl Holder {
         self.step(CredentialIssuanceAction::CredentialRequestSend(my_pw_did), Some(send_message)).await
     }
 
-    pub async fn reject_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn decline_offer<'a>(&'a mut self, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
         self.step(CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
     }
 

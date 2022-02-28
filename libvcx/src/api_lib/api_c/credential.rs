@@ -614,6 +614,41 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_credential_decline_offer(command_handle: CommandHandle,
+                                          credential_handle: u32,
+                                          connection_handle: u32,
+                                          comment: *const c_char,
+                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_credential_decline_offer >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(comment, VcxErrorKind::InvalidOption);
+
+    let source_id = credential::get_source_id(credential_handle).unwrap_or_default();
+    trace!("vcx_credential_decline_offer(command_handle: {}, credential_handle: {}, connection_handle: {}), source_id: {:?}",
+           command_handle, credential_handle, connection_handle, source_id);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::decline_offer(credential_handle, connection_handle, comment.as_deref()).await {
+            Ok(x) => {
+                trace!("vcx_credential_decline_offer_cb(command_handle: {}, rc: {}) source_id: {}",
+                       command_handle, x.to_string(), source_id);
+                cb(command_handle, x);
+            }
+            Err(e) => {
+                warn!("vcx_credential_decline_offer_cb(command_handle: {}, rc: {}) source_id: {}",
+                      command_handle, e, source_id);
+                cb(command_handle, e.into());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
 /// Query the agency for the received messages.
 /// Checks for any messages changing state in the credential object and updates the state attribute.
 /// If it detects a credential it will store the credential in the wallet.

@@ -75,6 +75,16 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
     return credential
   }
 
+  async function createCredentialFromOfferAndDecline (connectionId, holderCredentialId, credentialOffer, comment) {
+    const connection = await loadConnection(connectionId)
+    const credential = await Credential.create({ sourceId: 'credential', offer: credentialOffer })
+    await saveHolderCredential(holderCredentialId, credential)
+    logger.info('Declining credential offer')
+    await credential.declineOffer(connection, comment)
+    await saveHolderCredential(holderCredentialId, credential)
+    return credential
+  }
+
   async function waitForCredentialOffer (connectionId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     logger.info('Going to try fetch credential offer and receive credential.')
     const connection = await loadConnection(connectionId)
@@ -88,6 +98,11 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
   async function waitForCredentialOfferAndAccept (connectionId, holderCredentialId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
     const pickedOffer = await waitForCredentialOffer(connectionId, credOfferFilter, attemptsThreshold, timeoutMs)
     return createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, pickedOffer)
+  }
+
+  async function waitForCredentialOfferAndDecline (connectionId, holderCredentialId, comment = 'declining offer', credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
+    const pickedOffer = await waitForCredentialOffer(connectionId, credOfferFilter, attemptsThreshold, timeoutMs)
+    return createCredentialFromOfferAndDecline(connectionId, holderCredentialId, pickedOffer, comment)
   }
 
   async function waitForCredentialOfferAndAcceptAndProgress (connectionId, holderCredentialId, credOfferFilter = null, attemptsThreshold = 10, timeoutMs = 2000) {
@@ -152,10 +167,12 @@ module.exports.createServiceCredHolder = function createServiceCredHolder ({ log
   return {
     waitForCredentialOffer,
     createCredentialFromOfferAndSendRequest,
+    createCredentialFromOfferAndDecline,
     waitForCredential,
     getCredentialData,
     waitForCredentialOfferAndAccept,
     waitForCredentialOfferAndAcceptAndProgress,
+    waitForCredentialOfferAndDecline,
     credentialUpdate,
     getTailsLocation,
     getRevRegId,
