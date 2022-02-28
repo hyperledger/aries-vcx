@@ -518,6 +518,33 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
     }
   }
 
+  public async isRevokable(): Promise<boolean> {
+    try {
+      return await createFFICallbackPromise<boolean>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_issuer_credential_is_revokable(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'bool'],
+            (xcommandHandle: number, err: number, revokable: boolean) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(revokable);
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async getRevRegId(): Promise<string> {
     try {
       const revRegId = await createFFICallbackPromise<string>(
