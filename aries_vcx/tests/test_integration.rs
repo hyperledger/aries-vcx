@@ -383,11 +383,11 @@ mod tests {
         assert_eq!(HolderState::RequestSent, holder.get_state());
     }
 
-    async fn reject_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+    async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().unwrap();
         holder.update_state(connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
-        holder.reject_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).await.unwrap();
+        holder.decline_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
     }
 
@@ -1550,7 +1550,7 @@ mod tests {
 
         let mut holder = send_cred_proposal(&mut consumer, &consumer_to_institution, &schema_id, &cred_def_id, "comment").await;
         let mut issuer = accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
-        reject_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
+        decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
         institution.activate().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer.update_state(&institution_to_consumer).await.unwrap();

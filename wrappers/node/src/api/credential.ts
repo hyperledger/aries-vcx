@@ -513,6 +513,35 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
     }
   }
 
+  public async declineOffer(connection: Connection, comment: string): Promise<void> {
+    try {
+      await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_credential_decline_offer(
+            0,
+            this.handle,
+            connection.handle,
+            comment,
+            cb,
+          );
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve();
+          }),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   get credOffer(): string {
     return this._credOffer;
   }

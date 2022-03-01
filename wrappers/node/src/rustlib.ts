@@ -460,6 +460,13 @@ export interface IFFIEntryPoint {
     payment: number,
     cb: ICbRef,
   ) => number;
+  vcx_credential_decline_offer: (
+    commandId: number,
+    handle: number,
+    connectionHandle: number,
+    comment: string,
+    cb: ICbRef,
+  ) => number;
   vcx_credential_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credential_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_v2_credential_update_state: (
@@ -969,6 +976,16 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_CREDENTIAL_HANDLE,
       FFI_CONNECTION_HANDLE,
       FFI_PAYMENT_HANDLE,
+      FFI_CALLBACK_PTR,
+    ],
+  ],
+  vcx_credential_decline_offer: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_CREDENTIAL_HANDLE,
+      FFI_CONNECTION_HANDLE,
+      FFI_STRING_DATA,
       FFI_CALLBACK_PTR,
     ],
   ],

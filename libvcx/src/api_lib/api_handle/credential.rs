@@ -272,6 +272,14 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
     })
 }
 
+pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> VcxResult<u32> {
+    let mut credential = HANDLE_MAP.get_cloned(handle)?;
+    let send_message = connection::send_message_closure(connection_handle)?;
+    credential.decline_offer(comment, send_message).await?;
+    HANDLE_MAP.insert(handle, credential)?;
+    Ok(error::SUCCESS.code_num)
+}
+
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
