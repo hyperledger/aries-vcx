@@ -296,6 +296,40 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
     this._name = name;
   }
 
+  public async updateStateWithMessage(connection: Connection, message: string): Promise<number> {
+    try {
+      const commandHandle = 0;
+      const state = await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_v2_proof_update_state_with_message(
+            commandHandle,
+            this.handle,
+            connection.handle,
+            message,
+            cb,
+          );
+          if (rc) {
+            resolve(0);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'uint32'],
+            (handle: number, err: number, _state: number) => {
+              if (err) {
+                reject(err);
+              }
+              resolve(_state);
+            },
+          ),
+      );
+      return state;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   /**
    * Sends a proof request to pairwise connection.
    *

@@ -179,6 +179,40 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
     super(sourceId);
   }
 
+  public async updateStateWithMessage(connection: Connection, message: string): Promise<number> {
+    try {
+      const commandHandle = 0;
+      const state = await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_v2_issuer_credential_update_state_with_message(
+            commandHandle,
+            this.handle,
+            connection.handle,
+            message,
+            cb,
+          );
+          if (rc) {
+            resolve(0);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'uint32'],
+            (handle: number, err: number, _state: number) => {
+              if (err) {
+                reject(err);
+              }
+              resolve(_state);
+            },
+          ),
+      );
+      return state;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   /**
    * Sends a credential Offer to the end user.
    *
