@@ -261,6 +261,13 @@ export interface IFFIEntryPoint {
     connHandle: number,
     cb: ICbRef,
   ) => number;
+  vcx_v2_issuer_credential_update_state_with_message: (
+    commandId: number,
+    handle: number,
+    connHandle: number,
+    msg: string,
+    cb: ICbRef,
+  ) => number;
   vcx_issuer_credential_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_credential_get_rev_reg_id: (
     commandId: number,
@@ -349,6 +356,13 @@ export interface IFFIEntryPoint {
     commandId: number,
     handle: number,
     connHandle: number,
+    cb: ICbRef,
+  ) => number;
+  vcx_v2_proof_update_state_with_message: (
+    commandId: number,
+    handle: number,
+    connHandle: number,
+    msg: string,
     cb: ICbRef,
   ) => number;
   vcx_proof_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -781,6 +795,16 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ],
+  vcx_v2_issuer_credential_update_state_with_message: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_CREDENTIAL_HANDLE,
+      FFI_CONNECTION_HANDLE,
+      FFI_STRING_DATA,
+      FFI_CALLBACK_PTR
+    ],
+  ],
   vcx_issuer_credential_get_state: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
@@ -874,6 +898,16 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_v2_proof_update_state: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_v2_proof_update_state_with_message: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_PROOF_HANDLE,
+      FFI_CONNECTION_HANDLE,
+      FFI_STRING_DATA,
+      FFI_CALLBACK_PTR,
+    ],
   ],
   vcx_proof_get_state: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_PROOF_HANDLE, FFI_CALLBACK_PTR]],
   vcx_proof_get_thread_id: [
