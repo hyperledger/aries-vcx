@@ -32,11 +32,11 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, handle);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_public_agent_create_cb(command_handle: {}, rc: {}, handle: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_create_cb(command_handle: {}, rc: {}, handle: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), 0);
             }
         }
         Ok(())
@@ -73,11 +73,11 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
                 let requests = CStringUtils::string_to_cstring(requests);
                 cb(command_handle, error::SUCCESS.code_num, requests.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_download_connection_requests_cb(command_handle: {}, rc: {}, requests: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
             }
         }
         Ok(())
@@ -106,10 +106,11 @@ pub extern fn vcx_public_agent_download_message(command_handle: CommandHandle,
                 let msg = CStringUtils::string_to_cstring(msg);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                warn!("vcx_public_agent_download_message_cb(command_handle: {}, rc: {}, msg: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_download_message_cb(command_handle: {}, rc: {}, msg: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
             }
         }
         Ok(())
@@ -136,11 +137,11 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
                 let service = CStringUtils::string_to_cstring(service);
                 cb(command_handle, error::SUCCESS.code_num, service.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_get_service_cb(command_handle: {}, rc: {}, service: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
             }
         }
         Ok(())
@@ -167,11 +168,11 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
                 let agent_json = CStringUtils::string_to_cstring(agent_json);
                 cb(command_handle, error::SUCCESS.code_num, agent_json.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_public_agent_serialize_cb(command_handle: {}, rc: {}, agent_json: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_serialize_cb(command_handle: {}, rc: {}, agent_json: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
             }
         }
         Ok(())
@@ -198,11 +199,11 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, agent_handle);
                 cb(command_handle, error::SUCCESS.code_num, agent_handle);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_public_agent_deserialize_cb(command_handle: {}, rc: {}, agent_handle: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_public_agent_deserialize_cb(command_handle: {}, rc: {}, agent_handle: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), 0);
             }
         }
         Ok(())
@@ -221,10 +222,11 @@ pub extern fn vcx_public_agent_release(agent_handle: u32) -> u32 {
                    agent_handle, error::SUCCESS.message);
             error::SUCCESS.code_num
         }
-        Err(e) => {
-            warn!("vcx_public_agent_release(agent_handle: {}), rc: {})",
-                  agent_handle, e);
-            e.into()
+        Err(err) => {
+            set_current_error_vcx(&err);
+            error!("vcx_public_agent_release(agent_handle: {}), rc: {})",
+                  agent_handle, err);
+            err.into()
         }
     }
 }

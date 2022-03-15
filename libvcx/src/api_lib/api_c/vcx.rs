@@ -113,9 +113,10 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
                 info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
             }
-            Err(e) => {
-                error!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}", command_handle, err);
+                cb(command_handle, err.into());
                 return Ok(());
             }
         }
@@ -164,9 +165,10 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
                 info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
             }
-            Err(e) => {
-                error!("vcx_init_issuer_config_cb >>> command_handle: {}, error {}", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_init_issuer_config_cb >>> command_handle: {}, error {}", command_handle, err);
+                cb(command_handle, err.into());
                 return Ok(());
             }
         }
@@ -230,9 +232,10 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             }
-            Err(e) => {
-                error!("vcx_open_main_pool_cb :: Vcx Pool Init Error {}.", e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_open_main_pool_cb :: Vcx Pool Init Error {}.", err);
+                cb(command_handle, err.into());
                 return Ok(());
             }
         }
@@ -370,7 +373,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
             }
             Err(err) => {
                 set_current_error_agency(&err);
-                warn!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
+                error!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                       command_handle, err);
 
                 cb(command_handle, err.into());
@@ -395,17 +398,18 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
 
     execute(move || {
         match ledger::libindy_get_txn_author_agreement() {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                let msg = CStringUtils::string_to_cstring(x);
+                let msg = CStringUtils::string_to_cstring(err);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(e) => {
+            Err(err) => {
+                set_current_error_vcx(&err);
                 error!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {})",
-                       command_handle, e);
-                cb(command_handle, e.into(), std::ptr::null_mut());
+                       command_handle, err);
+                cb(command_handle, err.into(), std::ptr::null_mut());
             }
         };
 

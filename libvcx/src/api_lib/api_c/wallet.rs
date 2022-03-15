@@ -58,9 +58,9 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
 
     thread::spawn(move || {
         match wallet::create_wallet(&wallet_config) {
-            Err(e) => {
-                error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
+                cb(command_handle, err.into());
             }
             Ok(_) => {
                 trace!("vcx_create_wallet_cb(command_handle: {}, rc: {})",
@@ -103,9 +103,9 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 
     thread::spawn(move || {
         match wallet::configure_issuer_wallet(&enterprise_seed) {
-            Err(e) => {
-                error!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into(), null());
+            Err(err) => {
+                error!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
+                cb(command_handle, err.into(), null());
             }
             Ok(conf) => {
                 let conf = serde_json::to_string(&conf).unwrap();
@@ -153,9 +153,10 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
 
     thread::spawn(move || {
         match open_as_main_wallet(&wallet_config) {
-            Err(e) => {
-                error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into(), aries_vcx::indy::INVALID_WALLET_HANDLE.0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
+                cb(command_handle, err.into(), aries_vcx::indy::INVALID_WALLET_HANDLE.0);
             }
             Ok(wh) => {
                 trace!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
@@ -186,9 +187,9 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
 
     thread::spawn(move || {
         match wallet::close_main_wallet() {
-            Err(e) => {
-                error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
+                cb(command_handle, err.into());
             }
             Ok(_) => {
                 trace!("vcx_close_main_wallet_cb(command_handle: {}, rc: {})",
@@ -254,12 +255,12 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -310,12 +311,12 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -366,12 +367,12 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -422,12 +423,12 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -478,12 +479,12 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -527,21 +528,21 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
 
     execute(move || {
         match wallet::get_record(&type_, &id, &options_json) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                let msg = CStringUtils::string_to_cstring(x);
+                let msg = CStringUtils::string_to_cstring(err);
 
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
-                       command_handle, x, "null");
+                       command_handle, err, "null");
 
                 let msg = CStringUtils::string_to_cstring("".to_string());
-                cb(command_handle, x.into(), msg.as_ptr());
+                cb(command_handle, err.into(), msg.as_ptr());
             }
         };
 
@@ -589,12 +590,12 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
-                       command_handle, x);
+                       command_handle, err);
 
-                cb(command_handle, x.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -651,18 +652,18 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
 
     execute(move || {
         match wallet::open_search(&type_, &query_json, &options_json) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                cb(command_handle, error::SUCCESS.code_num, x);
+                cb(command_handle, error::SUCCESS.code_num, err);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
-                       command_handle, x, "null");
+                       command_handle, err, "null");
 
-                cb(command_handle, x.into(), 0);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -707,21 +708,21 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
 
     execute(move || {
         match wallet::fetch_next_records(wallet_search_handle, count) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                let msg = CStringUtils::string_to_cstring(x);
+                let msg = CStringUtils::string_to_cstring(err);
 
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
+            Err(err) => {
+                set_current_error_vcx(&err);
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
-                       command_handle, x, "null");
+                       command_handle, err, "null");
 
                 let msg = CStringUtils::string_to_cstring("".to_string());
-                cb(command_handle, x.into(), msg.as_ptr());
+                cb(command_handle, err.into(), msg.as_ptr());
             }
         };
 
@@ -762,9 +763,9 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
                 trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, err);
+                cb(command_handle, err.into());
             }
         };
 
@@ -811,9 +812,9 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
                 trace!("vcx_wallet_export(command_handle: {}, rc: {})", command_handle, return_code);
                 cb(command_handle, return_code);
             }
-            Err(e) => {
-                warn!("vcx_wallet_export(command_handle: {}, rc: {})", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                error!("vcx_wallet_export(command_handle: {}, rc: {})", command_handle, err);
+                cb(command_handle, err.into());
             }
         };
 
@@ -870,9 +871,9 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
                 trace!("vcx_wallet_import(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_wallet_import(command_handle: {}, rc: {})", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                error!("vcx_wallet_import(command_handle: {}, rc: {})", command_handle, err);
+                cb(command_handle, err.into());
             }
         };
     });
