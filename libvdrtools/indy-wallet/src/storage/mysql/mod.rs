@@ -10,7 +10,7 @@ use indy_utils::crypto::base64;
 use log::LevelFilter;
 use query::{wql_to_sql, wql_to_sql_count};
 use serde::Deserialize;
-use sqlx::{ConnectOptions, Done, mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlRow}, MySqlPool, Row};
+use sqlx::{ConnectOptions, mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlRow}, MySqlPool, Row};
 
 use crate::{
     language,
