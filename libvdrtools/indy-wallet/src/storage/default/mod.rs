@@ -8,7 +8,7 @@ use indy_utils::environment;
 use serde::Deserialize;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
-    ConnectOptions, Done, SqlitePool,
+    ConnectOptions, SqlitePool,
 };
 
 use async_trait::async_trait;
