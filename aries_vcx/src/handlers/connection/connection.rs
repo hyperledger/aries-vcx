@@ -567,11 +567,11 @@ impl Connection {
     pub async fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = self.cloud_agent_info().get_messages_noauth(sm_inviter.pairwise_info()).await?;
+                let messages = self.cloud_agent_info().get_messages_noauth(sm_inviter.pairwise_info(), None).await?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = self.cloud_agent_info().get_messages_noauth(sm_invitee.pairwise_info()).await?;
+                let messages = self.cloud_agent_info().get_messages_noauth(sm_invitee.pairwise_info(), None).await?;
                 Ok(messages)
             }
         }

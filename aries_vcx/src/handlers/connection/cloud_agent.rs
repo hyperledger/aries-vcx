@@ -116,9 +116,9 @@ impl CloudAgentInfo {
         Ok(a2a_messages)
     }
 
-    pub async fn get_messages_noauth(&self, pairwise_info: &PairwiseInfo) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages_noauth(&self, pairwise_info: &PairwiseInfo, uids: Option<Vec<String>>) -> VcxResult<HashMap<String, A2AMessage>> {
         trace!("CloudAgentInfo::get_messages_noauth >>>");
-        let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
+        let messages = self.download_encrypted_messages(uids, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages_noauth >>> obtained {} messages", messages.len());
         let a2a_messages = self.decrypt_decode_messages_noauth(&messages)?;
         _log_messages_optionally(&a2a_messages);
