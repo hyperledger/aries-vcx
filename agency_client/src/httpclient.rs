@@ -2,10 +2,24 @@ use std::env;
 
 use reqwest;
 use reqwest::header::CONTENT_TYPE;
+use reqwest::Client;
+use async_std::sync::RwLock;
+use std::time::Duration;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
+use crate::utils::timeout::TimeoutUtils;
 use crate::mocking;
+
+lazy_static! {
+    static ref HTTP_CLIENT: RwLock<Client> = RwLock::new(reqwest::ClientBuilder::new()
+        .timeout(TimeoutUtils::long_timeout())
+        .pool_idle_timeout(Some(Duration::from_secs(4)))
+        .build()
+        .map_err(|err| {
+            AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
+        }).unwrap());
+}
 
 pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
     // todo: this function should be general, not knowing that agency exists -> move agency mocks to agency module
@@ -29,10 +43,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
         set_ssl_cert_location();
     }
 
-    let client = reqwest::ClientBuilder::new().timeout(crate::utils::timeout::TimeoutUtils::long_timeout()).build().map_err(|err| {
-        error!("error: {}", err);
-        AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Building reqwest client failed: {:?}", err))
-    })?;
+    let client = HTTP_CLIENT.read().await;
     debug!("Posting encrypted bundle to: \"{}\"", url);
 
     let response =

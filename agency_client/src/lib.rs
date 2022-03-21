@@ -14,6 +14,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate url;
+extern crate async_std;
 
 pub mod get_message;
 mod utils;
