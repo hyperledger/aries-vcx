@@ -48,7 +48,7 @@ impl PublicAgent {
     }
 
     pub async fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
-        let connection_requests: Vec<Request> = iter(self.agent_info.get_messages_noauth(&self.pairwise_info)
+        let connection_requests: Vec<Request> = iter(self.agent_info.get_messages_noauth(&self.pairwise_info, uids.clone())
             .await?
             .into_iter())
             .filter_map(|(uid, message)| async {
@@ -78,7 +78,7 @@ impl PublicAgent {
     }
 
     pub async fn download_message(&self, uid: &str) -> VcxResult<A2AMessage> {
-        self.agent_info.get_messages_noauth(&self.pairwise_info)
+        self.agent_info.get_messages_noauth(&self.pairwise_info, Some(vec![uid.to_string()]))
             .await?
             .into_iter()
             .find(|(uid_, _)| uid == uid_)
