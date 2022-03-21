@@ -53,21 +53,28 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             .send()
             .await
             .map_err(|err| {
-                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
+                let err_msg = format!("HTTP Client could not connect with ${}, err: {}", url, err.to_string());
+                error!("{}", err_msg);
+                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, err_msg)
             })?;
 
-    if !response.status().is_success() {
-        match response.text().await {
-            Ok(content) => {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Agency responded with error. Details: {}", content)))
-            }
-            Err(_) => {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Agency response could not be read.")))
+    let content_length = response.content_length();
+    let response_status = response.status();
+    match response.text().await {
+        Ok(payload) => {
+            if response_status.is_success() {
+                Ok(payload.into_bytes())
+            } else {
+                let err_msg = format!("POST {} failed due non-success HTTP status: {}, response body: {}", url, response_status.to_string(), payload);
+                error!("{}", err_msg);
+                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, err_msg))
             }
         }
-    } else {
-        Ok(response.text().await
-            .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, "could not read response")))?.into())
+        Err(error) => {
+            let err_msg = format!("POST {} failed because response can not be decoded as utf-8 text, HTTP status: {}, content-length header: {:?}, error: {:?}", url, response_status.to_string(), content_length, error);
+            error!("{}", err_msg);
+            Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, err_msg))
+        }
     }
 }
 
