@@ -54,8 +54,8 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
     check_useful_c_str!(schema_data, VcxErrorKind::InvalidOption);
 
     let issuer_did = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
-        Ok(x) => x,
-        Err(x) => return x.into()
+        Ok(err) => err,
+        Err(err) => return err.into()
     };
     trace!(target: "vcx", "vcx_schema_create(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {})",
            command_handle, source_id, schema_name, schema_data);
@@ -66,16 +66,16 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
                                                 schema_name,
                                                 version,
                                                 schema_data) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!(target: "vcx", "vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                       command_handle, error::SUCCESS.message, x, source_id);
-                cb(command_handle, error::SUCCESS.code_num, x);
+                       command_handle, error::SUCCESS.message, err, source_id);
+                cb(command_handle, error::SUCCESS.code_num, err);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
+                      command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -128,8 +128,8 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
     check_useful_c_str!(endorser, VcxErrorKind::InvalidOption);
 
     let issuer_did = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
-        Ok(x) => x,
-        Err(x) => return x.into()
+        Ok(err) => err,
+        Err(err) => return err.into()
     };
     trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {},  endorser: {})",
            command_handle, source_id, schema_name, schema_data, endorser);
@@ -147,11 +147,11 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
                 let transaction = CStringUtils::string_to_cstring(transaction);
                 cb(command_handle, error::SUCCESS.code_num, handle, transaction.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
-                      command_handle, x, 0, "", source_id);
-                cb(command_handle, x.into(), 0, ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
+                      command_handle, err, 0, "", source_id);
+                cb(command_handle, err.into(), 0, ptr::null_mut());
             }
         };
 
@@ -190,17 +190,17 @@ pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
 
     execute(move || {
         match schema::to_string(schema_handle) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_schema_serialize_cb(command_handle: {}, schema_handle: {}, rc: {}, state: {}) source_id: {}",
-                       command_handle, schema_handle, error::SUCCESS.message, x, source_id);
-                let msg = CStringUtils::string_to_cstring(x);
+                       command_handle, schema_handle, error::SUCCESS.message, err, source_id);
+                let msg = CStringUtils::string_to_cstring(err);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_serialize_cb(command_handle: {}, schema_handle: {}, rc: {}, state: {}) source_id: {}",
-                      command_handle, schema_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_serialize_cb(command_handle: {}, schema_handle: {}, rc: {}, state: {}) source_id: {}",
+                      command_handle, schema_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -233,16 +233,16 @@ pub extern fn vcx_schema_deserialize(command_handle: CommandHandle,
     trace!("vcx_schema_deserialize(command_handle: {}, schema_data: {})", command_handle, schema_data);
     execute(move || {
         match schema::from_string(&schema_data) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_schema_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
-                       command_handle, error::SUCCESS.message, x, schema::get_source_id(x).unwrap_or_default());
-                cb(command_handle, error::SUCCESS.code_num, x);
+                       command_handle, error::SUCCESS.message, err, schema::get_source_id(err).unwrap_or_default());
+                cb(command_handle, error::SUCCESS.code_num, err);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
-                      command_handle, x, 0, "");
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
+                      command_handle, err, 0, "");
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -270,10 +270,11 @@ pub extern fn vcx_schema_release(schema_handle: u32) -> u32 {
                    schema_handle, error::SUCCESS.message, source_id);
             error::SUCCESS.code_num
         }
-        Err(e) => {
-            warn!("vcx_schema_release(schema_handle: {}, rc: {}), source_id: {}",
-                  schema_handle, e, source_id);
-            e.into()
+        Err(err) => {
+            set_current_error_vcx(&err);
+            error!("vcx_schema_release(schema_handle: {}, rc: {}), source_id: {}",
+                  schema_handle, err, source_id);
+            err.into()
         }
     }
 }
@@ -302,17 +303,17 @@ pub extern fn vcx_schema_get_schema_id(command_handle: CommandHandle,
 
     execute(move || {
         match schema::get_schema_id(schema_handle) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {}, rc: {}, schema_seq_no: {})",
-                       command_handle, schema_handle, error::SUCCESS.message, x);
-                let msg = CStringUtils::string_to_cstring(x);
+                       command_handle, schema_handle, error::SUCCESS.message, err);
+                let msg = CStringUtils::string_to_cstring(err);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {}, rc: {}, schema_seq_no: {})",
-                      command_handle, schema_handle, x, "");
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_get_schema_id(command_handle: {}, schema_handle: {}, rc: {}, schema_seq_no: {})",
+                      command_handle, schema_handle, err, "");
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -361,11 +362,11 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
                 let msg = CStringUtils::string_to_cstring(data.to_string());
                 cb(command_handle, error::SUCCESS.code_num, handle, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_get_attributes_cb(command_handle: {}, rc: {}, handle: {}, attrs: {})",
-                      command_handle, x, 0, "");
-                cb(command_handle, x.into(), 0, ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_get_attributes_cb(command_handle: {}, rc: {}, handle: {}, attrs: {})",
+                      command_handle, err, 0, "");
+                cb(command_handle, err.into(), 0, ptr::null_mut());
             }
         };
 
@@ -412,11 +413,11 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, state);
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -463,11 +464,11 @@ pub extern fn vcx_schema_get_state(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, state);
                 cb(command_handle, error::SUCCESS.code_num, state);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_schema_get_state(command_handle: {}, rc: {}, state: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_schema_get_state(command_handle: {}, rc: {}, state: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), 0);
             }
         };
 

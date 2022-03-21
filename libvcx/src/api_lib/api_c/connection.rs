@@ -123,11 +123,11 @@ pub extern fn vcx_generate_public_invite(command_handle: CommandHandle,
                 let public_invite = CStringUtils::string_to_cstring(public_invite);
                 cb(command_handle, error::SUCCESS.code_num, public_invite.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
-                      command_handle, x, 0);
-                cb(command_handle, x.into(), ptr::null());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
             }
         }
         Ok(())
@@ -167,9 +167,10 @@ pub extern fn vcx_connection_delete_connection(command_handle: CommandHandle,
                 trace!("vcx_connection_delete_connection_cb(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                trace!("vcx_connection_delete_connection_cb(command_handle: {}, rc: {})", command_handle, e);
-                cb(command_handle, e.into());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                trace!("vcx_connection_delete_connection_cb(command_handle: {}, rc: {})", command_handle, err);
+                cb(command_handle, err.into());
             }
         }
 
@@ -209,11 +210,11 @@ pub extern fn vcx_connection_create(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, handle, source_id);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
+                      command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -265,11 +266,11 @@ pub extern fn vcx_connection_create_with_invite(command_handle: CommandHandle,
                        command_handle, error::SUCCESS.message, handle, source_id);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
+                      command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -300,11 +301,11 @@ pub extern fn vcx_connection_create_with_connection_request(command_handle: Comm
                        command_handle, error::SUCCESS.message, handle, source_id);
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
-                      command_handle, x, 0, source_id);
-                cb(command_handle, x.into(), 0);
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
+                      command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
             }
         };
 
@@ -363,7 +364,7 @@ pub extern fn vcx_connection_connect(command_handle: CommandHandle,
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                warn!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {})",
+                error!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {})",
                       command_handle, connection_handle, err, "null", source_id);
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -395,11 +396,11 @@ pub extern fn vcx_connection_get_thread_id(command_handle: CommandHandle,
                 let tid = CStringUtils::string_to_cstring(tid);
                 cb(command_handle, error::SUCCESS.code_num, tid.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -440,11 +441,11 @@ pub extern fn vcx_connection_serialize(command_handle: CommandHandle,
                 let msg = CStringUtils::string_to_cstring(json);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -478,17 +479,17 @@ pub extern fn vcx_connection_deserialize(command_handle: CommandHandle,
 
     execute(move || {
         let (rc, handle) = match from_string(&connection_data) {
-            Ok(x) => {
-                let source_id = get_source_id(x).unwrap_or_default();
+            Ok(err) => {
+                let source_id = get_source_id(err).unwrap_or_default();
                 trace!("vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {:?}",
-                       command_handle, error::SUCCESS.message, x, source_id);
-                (error::SUCCESS.code_num, x)
+                       command_handle, error::SUCCESS.message, err, source_id);
+                (error::SUCCESS.code_num, err)
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {} )",
-                      command_handle, x, 0);
-                (x.into(), 0)
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {} )",
+                      command_handle, err, 0);
+                (err.into(), 0)
             }
         };
 
@@ -531,16 +532,16 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state(connection_handle).await {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
-                x
+                err
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                      command_handle, x, connection_handle, get_state(connection_handle), source_id);
-                x.into()
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
+                      command_handle, err, connection_handle, get_state(connection_handle), source_id);
+                err.into()
             }
         };
         let state = get_state(connection_handle);
@@ -581,16 +582,16 @@ pub extern fn vcx_connection_update_state_with_message(command_handle: CommandHa
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state_with_message(connection_handle, &message).await {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
-                x
+                err
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
-                      command_handle, x, connection_handle, get_state(connection_handle), source_id);
-                x.into()
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}",
+                      command_handle, err, connection_handle, get_state(connection_handle), source_id);
+                err.into()
             }
         };
 
@@ -689,11 +690,11 @@ pub extern fn vcx_connection_invite_details(command_handle: CommandHandle,
                 let msg = CStringUtils::string_to_cstring(str);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {:?})",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}, source_id: {:?})",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -737,18 +738,18 @@ pub extern fn vcx_connection_send_message(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match send_generic_message(connection_handle, &msg).await {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_connection_send_message_cb(command_handle: {}, rc: {}, msg_id: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                let msg_id = CStringUtils::string_to_cstring(x);
+                let msg_id = CStringUtils::string_to_cstring(err);
                 cb(command_handle, error::SUCCESS.code_num, msg_id.as_ptr());
             }
-            Err(e) => {
-                warn!("vcx_connection_send_message_cb(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_connection_send_message_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into(), ptr::null_mut());
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -797,11 +798,11 @@ pub extern fn vcx_connection_send_ping(command_handle: u32,
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_connection_send_ping(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_connection_send_ping(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -831,11 +832,11 @@ pub extern fn vcx_connection_send_handshake_reuse(command_handle: u32,
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -886,28 +887,28 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
 
     execute(move || {
         let vk = match connection::get_pw_verkey(connection_handle) {
-            Ok(x) => x,
-            Err(e) => {
-                warn!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
-                      command_handle, e);
-                cb(command_handle, e.into(), ptr::null_mut(), 0);
+            Ok(err) => err,
+            Err(err) => {
+                error!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
+                      command_handle, err);
+                cb(command_handle, err.into(), ptr::null_mut(), 0);
                 return Ok(());
             }
         };
 
         match libindy::utils::crypto::sign(&vk, &data_raw) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
-                       command_handle, connection_handle, error::SUCCESS.message, x);
+                       command_handle, connection_handle, error::SUCCESS.message, err);
 
-                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&x);
+                let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&err);
                 cb(command_handle, error::SUCCESS.code_num, signature_raw, signature_len);
             }
-            Err(e) => {
-                warn!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
+                      command_handle, err);
 
-                cb(command_handle, e.into(), ptr::null_mut(), 0);
+                cb(command_handle, err.into(), ptr::null_mut(), 0);
             }
         };
 
@@ -966,27 +967,27 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
 
     execute(move || {
         let vk = match connection::get_their_pw_verkey(connection_handle) {
-            Ok(x) => x,
-            Err(e) => {
-                warn!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                      command_handle, e, false);
-                cb(command_handle, e.into(), false);
+            Ok(err) => err,
+            Err(err) => {
+                error!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
+                      command_handle, err, false);
+                cb(command_handle, err.into(), false);
                 return Ok(());
             }
         };
 
         match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                       command_handle, error::SUCCESS.message, x);
+                       command_handle, error::SUCCESS.message, err);
 
-                cb(command_handle, error::SUCCESS.code_num, x);
+                cb(command_handle, error::SUCCESS.code_num, err);
             }
-            Err(e) => {
-                warn!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                      command_handle, e, false);
+            Err(err) => {
+                error!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
+                      command_handle, err, false);
 
-                cb(command_handle, e.into(), false);
+                cb(command_handle, err.into(), false);
             }
         };
 
@@ -1014,10 +1015,10 @@ pub extern fn vcx_connection_release(connection_handle: u32) -> u32 {
                    connection_handle, error::SUCCESS.message, source_id);
             error::SUCCESS.code_num
         }
-        Err(e) => {
-            warn!("vcx_connection_release(connection_handle: {}), rc: {}), source_id: {:?}",
-                  connection_handle, e, source_id);
-            e.into()
+        Err(err) => {
+            error!("vcx_connection_release(connection_handle: {}), rc: {}), source_id: {:?}",
+                  connection_handle, err, source_id);
+            err.into()
         }
     }
 }
@@ -1070,11 +1071,11 @@ pub extern fn vcx_connection_send_discovery_features(command_handle: u32,
                        command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_connection_send_discovery_features(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_connection_send_discovery_features(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -1137,11 +1138,11 @@ pub extern fn vcx_connection_info(command_handle: CommandHandle,
                 let info = CStringUtils::string_to_cstring(info);
                 cb(command_handle, error::SUCCESS.code_num, info.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}, source_id: {:?})",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}, source_id: {:?})",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -1182,11 +1183,11 @@ pub extern fn vcx_connection_get_pw_did(command_handle: u32,
                 let msg = CStringUtils::string_to_cstring(json);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -1227,11 +1228,11 @@ pub extern fn vcx_connection_get_their_pw_did(command_handle: u32,
                 let msg = CStringUtils::string_to_cstring(json);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(x) => {
-                set_current_error_vcx(&x);
-                warn!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",
-                      command_handle, connection_handle, x, "null", source_id);
-                cb(command_handle, x.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}",
+                      command_handle, connection_handle, err, "null", source_id);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -1281,29 +1282,29 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match connection::download_messages(connection_handles, message_statuses, uids).await {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
+            Ok(err) => {
+                match serde_json::to_string(&err) {
+                    Ok(err) => {
                         trace!("vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, x);
+                               command_handle, error::SUCCESS.message, err);
 
-                        let msg = CStringUtils::string_to_cstring(x);
+                        let msg = CStringUtils::string_to_cstring(err);
                         cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
                     }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
-                        warn!("vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                    Err(err) => {
+                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", err));
+                        error!("vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                               command_handle, err, "null");
 
                         cb(command_handle, err.into(), ptr::null_mut());
                     }
                 };
             }
-            Err(e) => {
-                warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, e, "null");
+            Err(err) => {
+                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                      command_handle, err, "null");
 
-                cb(command_handle, e.into(), ptr::null_mut());
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 

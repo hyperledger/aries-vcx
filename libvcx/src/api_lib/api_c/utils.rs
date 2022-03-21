@@ -14,7 +14,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error, set_current_error_agency, set_current_error_vcx};
+use crate::api_lib::utils::error::{set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Provision an agent in the agency.
@@ -61,7 +61,6 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     let agency_config = match serde_json::from_str::<AgentProvisionConfig>(&agency_config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
-            set_current_error(&err);
             error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
             return error::INVALID_CONFIGURATION.code_num;
         }
@@ -69,10 +68,10 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match aries_vcx::utils::provision::provision_cloud_agent(&agency_config).await {
-            Err(e) => {
-                set_current_error_vcx(&e);
-                error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, e);
-                cb(command_handle, e.into(), ptr::null_mut());
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, err);
+                cb(command_handle, err.into(), ptr::null_mut());
             }
             Ok(agency_config) => {
                 let agency_config = serde_json::to_string(&agency_config).unwrap();
@@ -182,20 +181,19 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match aries_vcx::agency_client::get_message::download_messages_noauth(pw_dids, message_status, uids).await {
-            Ok(x) => {
-                let msgs = json!(x).to_string();
+            Ok(err) => {
+                let msgs = json!(err).to_string();
                 trace!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                        command_handle, error::SUCCESS.message, msgs);
 
                 let msg = CStringUtils::string_to_cstring(msgs);
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
-            Err(e) => {
-                set_current_error_agency(&e);
-                warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, e, "null");
+            Err(err) => {
+                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                      command_handle, err, "null");
 
-                cb(command_handle, e.into(), ptr::null_mut());
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -289,29 +287,30 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
         match connection::download_messages(conn_handles, message_statuses, uids).await {
-            Ok(x) => {
-                match serde_json::to_string(&x) {
-                    Ok(x) => {
+            Ok(err) => {
+                match serde_json::to_string(&err) {
+                    Ok(err) => {
                         trace!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, x);
+                               command_handle, error::SUCCESS.message, err);
 
-                        let msg = CStringUtils::string_to_cstring(x);
+                        let msg = CStringUtils::string_to_cstring(err);
                         cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
                     }
-                    Err(e) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", e));
-                        warn!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                    Err(err) => {
+                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", err));
+                        error!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                               command_handle, err, "null");
 
                         cb(command_handle, err.into(), ptr::null_mut());
                     }
                 };
             }
-            Err(e) => {
-                warn!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, e, "null");
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                      command_handle, err, "null");
 
-                cb(command_handle, e.into(), ptr::null_mut());
+                cb(command_handle, err.into(), ptr::null_mut());
             }
         };
 
@@ -364,11 +363,11 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into());
+                cb(command_handle, err.into());
             }
         };
 
@@ -422,11 +421,11 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
-            Err(e) => {
-                warn!("vcx_endorse_transaction(command_handle: {}, rc: {})",
-                      command_handle, e);
+            Err(err) => {
+                error!("vcx_endorse_transaction(command_handle: {}, rc: {})",
+                      command_handle, err);
 
-                cb(command_handle, e.into());
+                cb(command_handle, err.into());
             }
         };
 

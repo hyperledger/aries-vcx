@@ -38,11 +38,11 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
 
     execute(move || {
         match filters::filter_proof_requests_by_name(&requests, &match_name) {
-            Ok(x) => {
+            Ok(err) => {
                 trace!("vcx_filter_proof_requests_by_name_cb(command_handle: {}, requests: {}, rc: {}, requests: {})",
-                       command_handle, requests, error::SUCCESS.message, x);
-                let x = CStringUtils::string_to_cstring(x);
-                cb(command_handle, error::SUCCESS.code_num, x.as_ptr());
+                       command_handle, requests, error::SUCCESS.message, err);
+                let err = CStringUtils::string_to_cstring(err);
+                cb(command_handle, error::SUCCESS.code_num, err.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
