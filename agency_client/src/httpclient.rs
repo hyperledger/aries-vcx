@@ -1,15 +1,15 @@
 use std::env;
-
-use reqwest;
-use reqwest::header::CONTENT_TYPE;
-use reqwest::Client;
-use async_std::sync::RwLock;
 use std::time::Duration;
 
+use async_std::sync::RwLock;
+use reqwest;
+use reqwest::Client;
+use reqwest::header::CONTENT_TYPE;
+
+use crate::{AgencyMockDecrypted, mocking};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
+use crate::mocking::{AgencyMock, HttpClientMockResponse};
 use crate::utils::timeout::TimeoutUtils;
-use crate::mocking;
 
 lazy_static! {
     static ref HTTP_CLIENT: RwLock<Client> = RwLock::new(reqwest::ClientBuilder::new()
@@ -22,18 +22,17 @@ lazy_static! {
 }
 
 pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
-    // todo: this function should be general, not knowing that agency exists -> move agency mocks to agency module
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
-            warn!("HttpClient has mocked response");
+            warn!("post_to_agency >> mocking response for POST {}", url);
             return HttpClientMockResponse::get_response();
         }
         if AgencyMockDecrypted::has_decrypted_mock_responses() {
-            warn!("Agency requests returns empty response, decrypted mock response is available");
+            warn!("post_to_agency >> will use mocked decrypted response for POST {}", url);
             return Ok(vec!());
         }
         let mocked_response = AgencyMock::get_response();
-        debug!("Agency returns mocked response of length {}", mocked_response.len());
+        warn!("post_to_agency >> mocking response of length {} for POST {}", mocked_response.len(), url);
         return Ok(mocked_response);
     }
 
@@ -44,7 +43,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
     }
 
     let client = HTTP_CLIENT.read().await;
-    debug!("Posting encrypted bundle to: \"{}\"", url);
+    debug!("post_to_agency >> http client sending request POST {}", url);
 
     let response =
         client.post(url)
@@ -53,21 +52,22 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             .send()
             .await
             .map_err(|err| {
-                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Could not connect {:?}", err))
+                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("HTTP Client could not connect with {}, err: {}", url, err.to_string()))
             })?;
 
-    if !response.status().is_success() {
-        match response.text().await {
-            Ok(content) => {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Agency responded with error. Details: {}", content)))
-            }
-            Err(_) => {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("Agency response could not be read.")))
+    let content_length = response.content_length();
+    let response_status = response.status();
+    match response.text().await {
+        Ok(payload) => {
+            if response_status.is_success() {
+                Ok(payload.into_bytes())
+            } else {
+                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed due to non-success HTTP status: {}, response body: {}", url, response_status.to_string(), payload)))
             }
         }
-    } else {
-        Ok(response.text().await
-            .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, "could not read response")))?.into())
+        Err(error) => {
+            Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, content-length header: {:?}, error: {:?}", url, response_status.to_string(), content_length, error)))
+        }
     }
 }
 
