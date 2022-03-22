@@ -5,7 +5,6 @@ use failure::{Backtrace, Context, Fail};
 
 use agency_client;
 
-use crate::utils;
 use crate::utils::error;
 
 pub mod prelude {
@@ -300,7 +299,7 @@ impl From<VcxErrorKind> for VcxError {
 impl From<agency_client::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
         let kind_num: u32 = agency_err.kind().into();
-        VcxError::from_msg(kind_num.into(), utils::error::error_message(&agency_err.kind().clone().into()))
+        VcxError::from_msg(kind_num.into(), agency_err.to_string())
     }
 }
 
