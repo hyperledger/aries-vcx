@@ -42,7 +42,7 @@ const spawnFaber = () => {
 const spawnAlice = () => {
   return spawn('node',
     [path.resolve(__dirname, './alice.js'),
-      '--autofetch-invitation-url', 'http://localhost:8181'
+      '--autofetch-invitation-url', 'http://localhost:8181',
     ]
   )
 }

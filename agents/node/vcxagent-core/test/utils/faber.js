@@ -15,9 +15,9 @@ module.exports.createFaber = async function createFaber () {
 
   const faberAgentConfig = {
     agentName,
-    agencyUrl: 'http://localhost:8080',
+    agencyUrl: 'http://127.0.0.1:8080',
     seed: '000000000000000000000000Trustee1',
-    webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    webhookUrl: `http://127.0.0.1:7209/notifications/${agentName}`,
     usePostgresWallet: false,
     logger
   }

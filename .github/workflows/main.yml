@@ -571,7 +571,7 @@ jobs:
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
-          AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY" docker-compose -f ./ci/agency/docker-compose.yml up -d
+          docker-compose -f ./ci/agency/docker-compose.yml up -d
           sleep 10
 
       - name: Run pool integration tests
@@ -634,7 +634,7 @@ jobs:
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
-          AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY" docker-compose -f ./ci/agency/docker-compose.yml up -d
+          docker-compose -f ./ci/agency/docker-compose.yml up -d
           sleep 10
 
       - name: Run mysql integration tests
@@ -695,7 +695,7 @@ jobs:
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
-          AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY" docker-compose -f ./ci/agency/docker-compose.yml up -d
+          docker-compose -f ./ci/agency/docker-compose.yml up -d
           sleep 10
 
       - name: Run agency+pool integration tests
@@ -824,13 +824,13 @@ jobs:
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
-          AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY" docker-compose -f ./ci/agency/docker-compose.yml up -d
+          docker-compose -f ./ci/agency/docker-compose.yml up -d
           sleep 10
 
       - name: Run wrapper demo
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://127.0.0.1:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo)'
@@ -838,23 +838,15 @@ jobs:
       - name: Run wrapper demo with revocation
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://127.0.0.1:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
 
-      - name: Run wrapper demo with legacy initialization
-        run: |
-          set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
-                              bash -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:legacy)'
-
       - name: Run integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
+          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://127.0.0.1:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX \
                               bash -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && \
@@ -1135,7 +1127,7 @@ jobs:
           else
              echo "New version was not defined, skipping release."
           fi
-
+ 
   make-release:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
@@ -1204,7 +1196,6 @@ jobs:
           asset_path: ./libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
           asset_name: libvcx-android-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.aar
           asset_content_type: application/aar
-
 
   release-android-emulator:
     runs-on: ubuntu-20.04

@@ -28,7 +28,6 @@
     "demo:notifyserver": "node demo/notification-server.js",
     "demo": "node demo/integration-test.js",
     "demo:revocation": "REVOCATION=true node demo/integration-test.js",
-    "demo:legacy": "LEGACY=true node demo/integration-test.js",
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
     "demo:faber:rev": "node demo/faber.js --revocation",
@@ -47,8 +46,8 @@
     "test:integration:out-of-band": "jest --forceExit --env=node --runInBand test/out-of-band.spec.js"
   },
   "dependencies": {
-    "axios": "^0.21.4",
-    "ffi-napi": "^2.4.7",
+    "axios": "^0.26.1",
+    "ffi-napi": "^4.0.3",
     "fs-extra": "^4.0.2",
     "lodash": "^4.17.21",
     "mkdirp": "^1.0.4",

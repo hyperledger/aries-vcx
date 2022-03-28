@@ -1,14 +1,7 @@
 import * as ref from 'ref-napi';
-import * as StructType from 'ref-struct-di';
 import { ICbRef } from './utils/ffi-helpers';
 
 import { VCXRuntime } from './vcx';
-
-export const VcxStatus = StructType({
-  handle: 'int',
-  msg: 'string',
-  status: 'int',
-});
 
 interface IUintTypes {
   [key: string]: string;

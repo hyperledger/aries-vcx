@@ -101,7 +101,9 @@ const scheduleGarbageCollectionBeforeExit = () => {
   if (!garbageCollectionBeforeExitIsScheduled) {
     assert(global.gc);
     process.on('beforeExit', () => {
-      global.gc();
+      if (typeof global.gc != 'undefined') {
+        global.gc();
+      }
     });
   }
   garbageCollectionBeforeExitIsScheduled = true;

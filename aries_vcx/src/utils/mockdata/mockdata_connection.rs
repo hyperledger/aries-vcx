@@ -11,7 +11,7 @@ pub const ARIES_CONNECTION_INVITATION: &str = r#"
         "C9JGq5BLcZNAQZ3x27w9cHTA7N6dysZThjLjjPRbvDoC",
         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
     ],
-    "serviceEndpoint": "http://localhost:8080/agency/msg"
+    "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
 }"#;
 
 // Alice created and serialized connection created from received invitation
@@ -39,7 +39,7 @@ pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
                         "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
                         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                     ],
-                    "serviceEndpoint": "http://localhost:8080/agency/msg"
+                    "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                 }
             }
         }
@@ -82,7 +82,7 @@ pub const ARIES_CONNECTION_REQUEST: &str = r#"
                         "AKnC8qR9xsZZEBY7mdV6fzjmmtKxeegrNatpz4jSJhrH",
                         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                     ],
-                    "serviceEndpoint": "http://localhost:8080/agency/msg",
+                    "serviceEndpoint": "http://127.0.0.1:8080/agency/msg",
                     "type": "IndyAgent"
                 }
             ]
@@ -140,7 +140,7 @@ pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
                                         "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
                                         "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                                     ],
-                                    "serviceEndpoint": "http://localhost:8080/agency/msg"
+                                    "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                                 }
                             ]
                         }
@@ -175,7 +175,7 @@ pub const CONNECTION_SM_INVITEE_REQUESTED: &str = r#"
                                 "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
                                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                             ],
-                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                            "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                         }
                     ]
                 }
@@ -247,7 +247,7 @@ pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
                                 "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2",
                                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                             ],
-                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                            "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                         }
                     ]
                 },
@@ -280,7 +280,7 @@ pub const CONNECTION_SM_INVITEE_COMPLETED: &str = r#"
                                 "DekjTLFWUPs4EPg6tki78Dd99jWnr1JaNMwEgvjAiCMr",
                                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                             ],
-                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                            "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                         }
                     ]
                 },
@@ -347,7 +347,7 @@ pub const CONNECTION_SM_INVITER_COMPLETED: &str = r#"
                                 "9drH4FZk79Y4bx5jzPBaJEmB4woEGG1XQSfgF7NkyKvV",
                                 "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
                             ],
-                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                            "serviceEndpoint": "http://127.0.0.1:8080/agency/msg"
                         }
                     ]
                 },

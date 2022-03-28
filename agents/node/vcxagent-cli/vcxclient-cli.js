@@ -41,7 +41,7 @@ const optionDefinitions = [
     name: 'agencyUrl',
     type: String,
     description: 'Url of mediator agency',
-    defaultValue: 'http://localhost:8080'
+    defaultValue: 'http://127.0.0.1:8080'
   }
 ]
 

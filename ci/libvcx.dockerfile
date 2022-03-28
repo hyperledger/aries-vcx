@@ -12,12 +12,7 @@ RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 USER root
 RUN mv /home/indy/target/release/libvcx.so .
 
-FROM alpine:3.12
-
-ARG UID=1000
-ARG GID=1000
-
-RUN addgroup -g $GID node && adduser -u $UID -D -G node node
+FROM node:17.8.0-alpine3.14
 
 COPY --from=builder /usr/lib/libindy.so /home/indy/lib*.so /usr/lib/
 
@@ -39,11 +34,9 @@ RUN apk add --no-cache \
         git \
         libsodium-dev \
         libzmq \
-        nodejs \
-        npm \
         make \
         openssl-dev \
-        python2 \
+        python3 \
         zeromq-dev
 
 USER node

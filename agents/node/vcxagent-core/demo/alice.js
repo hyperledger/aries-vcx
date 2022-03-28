@@ -81,6 +81,7 @@ async function runAlice (options) {
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
 
+  await sleepPromise(3000)
   const msgs = await vcxAgent.serviceConnections.getMessages(connectionId)
   _validateMsgs(msgs)
 
@@ -93,7 +94,8 @@ async function runAlice (options) {
 
 function _validateMsgs (msgs) {
   logger.debug(`Validating messages:\n${JSON.stringify(msgs, null, 2)}`)
-  assert(msgs.length === 4)
+  assert(msgs.length === 5, `Expected to receive 5 messages, received ${msgs.length}`)
+
   assert(msgs[0].uid)
   assert(msgs[0].statusCode)
   assert(msgs[0].decryptedMsg)
