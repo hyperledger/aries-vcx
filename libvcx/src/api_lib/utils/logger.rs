@@ -19,6 +19,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 use self::env_logger::Builder as EnvLoggerBuilder;
+use self::env_logger::fmt::Formatter;
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
 
@@ -132,6 +133,14 @@ impl log::Log for LibvcxLogger {
 //WARN	Designates potentially harmful situations.
 pub struct LibvcxDefaultLogger;
 
+fn standard_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args())
+}
+
+fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    writeln!(buf, "{{\"level\":\"{}\",\"filename\":\"{}\",message:\"{}\"}}", record.level(), record.file().get_or_insert(""), record.args())
+}
+
 impl LibvcxDefaultLogger {
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
         info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
@@ -156,21 +165,19 @@ impl LibvcxDefaultLogger {
                 android_logger::init_once(log_filter);
             info!("Logging for Android");
         } else {
-            // This calls
-            // log::set_max_level(logger.filter());
-            // log::set_boxed_logger(Box::new(logger))
-            // which are what set the logger.
-            match EnvLoggerBuilder::new()
-                .format(|buf, record| writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args()))
-                .filter(None, LevelFilter::Off)
-                .parse(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
-                .try_init() {
-                Ok(()) => {}
-                Err(e) => {
-                    error!("Error in logging init: {:?}", e);
-                    return Err(VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", e)));
+            let formatter = match env::var("RUST_LOG_FORMATTER") {
+                Ok(val) => match val.as_str() {
+                    "json" => json_format,
+                    _ => standard_format
                 }
-            }
+                _ => standard_format
+            };
+            EnvLoggerBuilder::new()
+                .format(formatter)
+                .filter(None, LevelFilter::Off)
+                .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
+                .try_init()
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err)))?;
         }
         libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
             .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting default logger failed: {:?}", err)))
