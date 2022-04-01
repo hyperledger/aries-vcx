@@ -21,9 +21,9 @@ to_restore = []
 fatal_warnings = []
 
 [dependencies]
-env_logger = "0.5.10"
-log = "0.4"
-chrono = "0.4"
+env_logger = "0.9.0"
+log = "0.4.16"
+chrono = "0.4.19"
 time = "0.1.36"
 lazy_static = "1.3"
 libc = "=0.2.114"
