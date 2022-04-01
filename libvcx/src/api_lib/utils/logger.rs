@@ -22,6 +22,7 @@ use self::env_logger::Builder as EnvLoggerBuilder;
 use self::env_logger::fmt::Formatter;
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
+use crate::chrono::Local;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();
@@ -138,7 +139,7 @@ fn standard_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> 
 }
 
 fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{{\"level\":\"{}\",\"filename\":\"{}\",message:\"{}\"}}", record.level(), record.file().get_or_insert(""), record.args())
+    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",message:\"{}\"}}", Local::now().format("%Y-%m-%d %H:%M.%S"), record.level(), record.file().get_or_insert(""), record.args())
 }
 
 impl LibvcxDefaultLogger {
