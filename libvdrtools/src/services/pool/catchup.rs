@@ -79,16 +79,13 @@ pub fn check_nodes_responses_on_status(nodes_votes: &HashMap<(String, usize, Opt
                 }
             });
         } else {
-            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode, merkle_tree);
+            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode);
         }
     } else if let Some((_, votes_cnt)) = timeout_votes {
         if *votes_cnt == node_cnt - f {
-            return  match pool_mode {
-                PoolMode::InMemory => Ok(CatchupProgress::Restart(merkle_tree.clone())),
-                PoolMode::Persistent => _try_to_restart_catch_up(pool_name, err_msg(IndyErrorKind::PoolTimeout, "Pool timeout"))
-            };
+            return _reset_cache_and_restart_catch_up(pool_name, pool_mode, err_msg(IndyErrorKind::PoolTimeout, "Pool timeout"));
         } else {
-            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode, merkle_tree);
+            return _if_consensus_reachable(nodes_votes, node_cnt, *votes_cnt, f, pool_name, pool_mode);
         }
     }
     Ok(CatchupProgress::InProgress)
@@ -99,25 +96,21 @@ fn _if_consensus_reachable(nodes_votes: &HashMap<(String, usize, Option<Vec<Stri
                            votes_cnt: usize,
                            f: usize,
                            pool_name: &str,
-                           pool_mode: PoolMode,
-                           merkle_tree: &MerkleTree) -> IndyResult<CatchupProgress> {
+                           pool_mode: PoolMode) -> IndyResult<CatchupProgress> {
     let reps_cnt: usize = nodes_votes.values().map(HashSet::len).sum();
     let positive_votes_cnt = votes_cnt + (node_cnt - reps_cnt);
     let is_consensus_not_reachable = positive_votes_cnt < node_cnt - f;
     if is_consensus_not_reachable {
         //TODO: maybe we should change the error, but it was made to escape changing of ErrorCode returned to client
-        match pool_mode {
-            PoolMode::Persistent => _try_to_restart_catch_up(pool_name, err_msg(IndyErrorKind::PoolTimeout, "No consensus possible")),
-            PoolMode::InMemory => Ok(CatchupProgress::Restart(merkle_tree.clone()))
-        }
+        _reset_cache_and_restart_catch_up(pool_name, pool_mode, err_msg(IndyErrorKind::PoolTimeout, "No consensus possible"))
     } else {
         Ok(CatchupProgress::InProgress)
     }
 }
 
 
-fn _try_to_restart_catch_up(pool_name: &str, err: IndyError) -> IndyResult<CatchupProgress> {
-    if merkle_tree_factory::drop_cache(pool_name).is_ok() {
+fn _reset_cache_and_restart_catch_up(pool_name: &str, pool_mode: PoolMode, err: IndyError) -> IndyResult<CatchupProgress> {
+    if pool_mode == PoolMode::Persistent && merkle_tree_factory::drop_cache(pool_name).is_ok() {
         let merkle_tree = merkle_tree_factory::create(pool_name)?;
         Ok(CatchupProgress::Restart(merkle_tree))
     } else {

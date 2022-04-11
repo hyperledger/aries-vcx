@@ -16,6 +16,7 @@ extern crate log;
 mod utils;
 
 mod demos {
+    use serde_json::Value;
     use super::*;
 
     use utils::{
@@ -252,7 +253,12 @@ mod demos {
                                               &vdr::local_genesis_txn(),
                                               None).unwrap();
         let vdr = vdr::vdr_builder_finalize(vdr_builder).unwrap();
-        vdr::ping(&vdr, &indy_namespace_list()).unwrap();
+        let ping_status = vdr::ping(&vdr, &indy_namespace_list()).unwrap();
+        let ping_status = serde_json::from_str::<Value>(&ping_status).unwrap();
+        let ping_statuses_map = ping_status.as_object().unwrap();
+        for status in ping_statuses_map.values() {
+            assert_eq!(status["code"].as_str().unwrap(), "SUCCESS")
+        }
 
         // 1.1 Trustee publish Issuer DID to the Ledger
         // 1.2 Trustee prepare DID transaction

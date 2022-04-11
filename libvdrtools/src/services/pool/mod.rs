@@ -163,6 +163,7 @@ impl PoolService {
     }
 
     pub(crate) async fn open(&self, name: String, config: Option<PoolOpenConfig>, handle: Option<PoolHandle>) -> IndyResult<(PoolHandle, String)> {
+        trace!("PoolService::open >>>");
         if self
             .open_pools
             .lock()
@@ -200,7 +201,9 @@ impl PoolService {
         self.pending_pools.lock().await.insert(name.clone());
         POOL_HANDLE_SENDERS.lock().await.insert(pool_handle, sender);
 
+        debug!("PoolService::open ... waiting for result");
         let res = receiver.await?;
+        debug!("PoolService::open res: {:?}", res);
 
         self.pending_pools.lock().await.remove(&name);
 
