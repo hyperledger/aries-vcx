@@ -433,10 +433,9 @@ pub fn build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<
     Ok(request)
 }
 
-pub fn add_attr(did: &str, key: &str, value: &str) -> VcxResult<String> {
-    trace!("add_attr >>> did: {}, key: {}, value: {}", did, key, value);
-    let attrib_json = json!({ key: value }).to_string();
-    let attrib_req = build_attrib_request(&did, &did, None, Some(&attrib_json), None)?;
+pub fn add_attr(did: &str, attrib_json: &str) -> VcxResult<String> {
+    trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
+    let attrib_req = build_attrib_request(&did, &did, None, Some(attrib_json), None)?;
     libindy_sign_and_submit_request(&did, &attrib_req)
 }
 
@@ -448,16 +447,20 @@ pub fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
 pub fn get_service(did: &Did) -> VcxResult<FullService> {
     let attr_resp = get_attr(&did.to_string(), "service")?;
     let data = get_data_from_response(&attr_resp)?;
-    let ser_service = data["service"]
-        .as_str().ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Unable to read service from the ledger response")))?.to_string();
+    let ser_service = match data["service"].as_str() {
+        Some(ser_service) => ser_service.to_string(),
+        None => {
+            warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
+            data["service"].to_string()
+        }
+    };
     serde_json::from_str(&ser_service)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
 }
 
 pub fn add_service(did: &str, service: &FullService) -> VcxResult<String> {
-    let ser_service = serde_json::to_string(service)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
-    add_attr(did, "service", &ser_service)
+    let attrib_json = json!({ "service": service }).to_string();
+    add_attr(did, &attrib_json)
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
@@ -475,6 +478,13 @@ mod test {
     use crate::utils::devsetup::*;
 
     use super::*;
+
+    pub fn add_service_old(did: &str, service: &FullService) -> VcxResult<String> {
+        let ser_service = serde_json::to_string(service)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
+        let attrib_json = json!({ "service": ser_service }).to_string();
+        add_attr(did, &attrib_json)
+    }
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -521,6 +531,20 @@ mod test {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();
         add_service(&did, &expect_service).unwrap();
+        thread::sleep(Duration::from_millis(50));
+        let service = get_service(&Did::new(&did).unwrap()).unwrap();
+
+        assert_eq!(expect_service, service)
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_add_get_service_old() {
+        let _setup = SetupWithWalletAndAgency::init().await;
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let expect_service = FullService::default();
+        add_service_old(&did, &expect_service).unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&Did::new(&did).unwrap()).unwrap();
 
