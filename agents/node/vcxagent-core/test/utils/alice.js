@@ -14,7 +14,6 @@ module.exports.createAlice = async function createAlice () {
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Alice000',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
-    usePostgresWallet: false,
     logger
   }
   const vcxAgent = await createVcxAgent(aliceAgentConfig)

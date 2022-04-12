@@ -1,16 +1,17 @@
 const readlineSync = require('readline-sync')
 const sleepPromise = require('sleep-promise')
-const { initRustapi } = require('../src/index')
-const { createVcxAgent } = require('../src/index')
-const { testTailsUrl } = require('../src/common')
+const {initRustapi} = require('../src/index')
+const {createVcxAgent} = require('../src/index')
+const {testTailsUrl} = require('../src/common')
 const logger = require('./logger')('Alice')
-const { runScript } = require('./script-common')
+const {runScript} = require('./script-common')
 const uuid = require('uuid')
 const axios = require('axios')
 const isPortReachable = require('is-port-reachable')
 const url = require('url')
-const { extractProofRequestAttachement } = require('../src/utils/proofs')
+const {extractProofRequestAttachement} = require('../src/utils/proofs')
 const assert = require('assert')
+const {getStorageInfoMysql} = require('./wallet-common')
 
 const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
@@ -21,8 +22,8 @@ async function getInvitationString (fetchInviteUrl) {
     const fetchInviteTimeout = 1000
     let fetchInviteAttemps = 0
     while (!invitationString) {
-      if (await isPortReachable(url.parse(fetchInviteUrl).port, { host: url.parse(fetchInviteUrl).hostname })) { // eslint-disable-line
-        ({ data: { invitationString } } = await axios.get(fetchInviteUrl))
+      if (await isPortReachable(url.parse(fetchInviteUrl).port, {host: url.parse(fetchInviteUrl).hostname})) { // eslint-disable-line
+        ({data: {invitationString}} = await axios.get(fetchInviteUrl))
         logger.info(`Invitation ${invitationString} was loaded from ${fetchInviteUrl}.`)
       } else {
         logger.info(`Invitation fetch url ${fetchInviteUrl} not yet available. ${fetchInviteAttemps}/${fetchInviteAttemptThreshold}`)
@@ -47,11 +48,15 @@ async function runAlice (options) {
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
   const disclosedProofId = 'alice-proof'
+  const walletExtraConfigs = (process.env.USE_MYSQL === 'true')
+    ? getStorageInfoMysql()
+    : {}
+
   const vcxAgent = await createVcxAgent({
     agentName,
     agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
     seed: '000000000000000000000000Trustee1',
-    usePostgresWallet: false,
+    walletExtraConfigs,
     logger
   })
   await vcxAgent.agentInitVcx()
@@ -75,8 +80,8 @@ async function runAlice (options) {
   const requestInfo = extractProofRequestAttachement(proofRequest)
   logger.debug(`Proof request presentation attachment ${JSON.stringify(requestInfo, null, 2)}`)
 
-  const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
-  const selfAttestedAttrs = { attribute_3: 'Smith' }
+  const {selectedCreds} = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegIdToTailsFile)
+  const selfAttestedAttrs = {attribute_3: 'Smith'}
   await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
   await vcxAgent.serviceProver.sendDisclosedProofAndProgress(disclosedProofId, connectionId)
   logger.info('Faber received the proof')
@@ -116,7 +121,7 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'postgresql',
+    name: 'mysql',
     type: Boolean,
     description: 'If specified, postresql wallet will be used.',
     defaultValue: false
