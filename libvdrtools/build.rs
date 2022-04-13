@@ -1,9 +1,10 @@
 use std::env;
 use std::fs;
-use std::{
-    path::{Path, PathBuf},
-};
+use std::path::Path;
+#[cfg(feature = "cheqd")]
+use std::path::PathBuf;
 
+#[cfg(feature = "cheqd")]
 use walkdir::WalkDir;
 
 fn main() {
@@ -75,7 +76,9 @@ fn main() {
 
 /// ------ PROTO ------
 
+#[cfg(feature = "cheqd")]
 const COSMOS_SDK_DIR: &str = "cosmos-sdk-go";
+#[cfg(feature = "cheqd")]
 const CHEQDCOSMOS_DIR: &str = "cheqd-node";
 
 #[cfg(feature = "cheqd")]
