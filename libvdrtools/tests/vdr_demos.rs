@@ -440,6 +440,25 @@ mod demos {
         wallet::close_and_delete_wallet(holder_wallet_handle, &holder_wallet_config).unwrap();
     }
 
+    #[cfg(feature = "local_nodes_pool")]
+    #[test]
+    fn vdr_indy_submit_txn_works_for_failed_txn() {
+        let setup = Setup::did_fully_qualified();
+        let mut vdr_builder = vdr::vdr_builder_create().unwrap();
+        let namespace_list_of_default = json!(vec![DEFAULT_METHOD_NAME]).to_string();
+        vdr::vdr_builder_register_indy_ledger(&mut vdr_builder, &namespace_list_of_default, &vdr::local_genesis_txn(), None).unwrap();
+        let vdr = vdr::vdr_builder_finalize(vdr_builder).unwrap();
+        vdr::ping(&vdr, &namespace_list_of_default).unwrap();
+
+        let did_txn_params = json!({"dest": setup.did, "verkey": setup.verkey}).to_string();
+        let (namespace, txn_bytes, signature_spec, bytes_to_sign, _) =
+            vdr::prepare_did(&vdr, &did_txn_params, &setup.did, None).unwrap();
+        let signature = crypto::sign(setup.wallet_handle, &setup.verkey, &bytes_to_sign).unwrap();
+        let err = vdr::submit_txn(&vdr, &namespace, &txn_bytes, &signature_spec, &signature, None).unwrap_err();
+        assert!(!err.message.contains("no failure reason provided"));
+        assert!(err.message.contains("UnauthorizedClientRequest"));
+    }
+
     #[cfg(feature = "cheqd")]
     #[test]
     fn vdr_cheqd_demo_prepare_did() {

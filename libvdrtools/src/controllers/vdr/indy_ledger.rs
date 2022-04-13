@@ -364,6 +364,7 @@ impl IndyLedger {
 }
 
 fn validate_txn_response(response: String) -> IndyResult<String> {
+    trace!("validate_txn_response >>> {}", response);
     let message: serde_json::Value = serde_json::from_str(&response).to_indy(
         IndyErrorKind::InvalidTransaction,
         "Response is invalid json",
@@ -372,7 +373,7 @@ fn validate_txn_response(response: String) -> IndyResult<String> {
     if message["op"].as_str() == Some("REPLY") {
         Ok(response)
     } else {
-        let reason = message["data"]["reason"].as_str().unwrap_or("no failure reason provided");
+        let reason = message["reason"].as_str().unwrap_or("no failure reason provided");
         Err(err_msg(
             IndyErrorKind::InvalidTransaction,
             format!("Transaction has been failed: {:?}", reason),
