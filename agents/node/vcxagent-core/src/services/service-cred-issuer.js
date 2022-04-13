@@ -5,7 +5,6 @@ const {
 const { pollFunction } = require('../common')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds, issuerDid }) {
-
   async function buildOfferAndMarkAsSent (issuerCredId, credDefId, schemaAttrs) {
     const credDef = await loadCredDef(credDefId)
     logger.debug('Building issuer credential')

@@ -1,19 +1,18 @@
 const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
-
-  async function _createOobSender(message, label) {
-    logger.info(`createOobMsg >>>`)
+  async function _createOobSender (message, label) {
+    logger.info('createOobMsg >>>')
     const oob = await OutOfBandSender.create({ label })
     if (message) {
       const msgParsed = JSON.parse(message)
-      const msgType = msgParsed["@type"]
+      const msgType = msgParsed['@type']
       if (!msgType) {
         throw Error(`Message appended to OOB message must have @type. Invalid message: ${msgParsed}`)
       }
       logger.info(`createOobMsg >>> appending message of type ${msgType}`)
       await oob.appendMessage(message)
-      logger.info(`createOobMsg >>> append message`)
+      logger.info('createOobMsg >>> append message')
     }
     return oob
   }

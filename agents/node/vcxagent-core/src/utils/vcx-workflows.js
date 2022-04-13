@@ -15,7 +15,7 @@ async function initVcxWithProvisionedAgentConfig (config) {
 
 async function initRustapi (logLevel = 'vcx=error', num_threads = 4) {
   await initRustApiAndLogger(logLevel)
-  await initThreadpool({num_threads})
+  await initThreadpool({ num_threads })
 }
 
 async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger) {
@@ -38,8 +38,8 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
     wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
     wallet_key_derivation: 'RAW'
   }
-  for (let key of Object.keys(walletExtraConfigs)) {
-    let value = walletExtraConfigs[key]
+  for (const key of Object.keys(walletExtraConfigs)) {
+    const value = walletExtraConfigs[key]
     if (typeof value === 'object') {
       walletConfig[key] = JSON.stringify(value)
     } else {
@@ -67,7 +67,7 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   logger.debug(`Provisioned agent with config: ${JSON.stringify(agencyConfig, null, 2)}`)
   await closeMainWallet()
 
-  return {agencyConfig, issuerConfig, walletConfig}
+  return { agencyConfig, issuerConfig, walletConfig }
 }
 
 module.exports.initRustApiAndLogger = initRustApiAndLogger

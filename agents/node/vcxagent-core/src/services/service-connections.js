@@ -2,7 +2,7 @@ const { getMessagesForConnection } = require('../utils/messages')
 const {
   updateMessages,
   Connection,
-  ConnectionStateType,
+  ConnectionStateType
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
@@ -91,7 +91,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
 
   async function signData (connectionId, dataBase64) {
     const connection = await loadConnection(connectionId)
-    var challengeBuffer = Buffer.from(dataBase64, 'base64')
+    const challengeBuffer = Buffer.from(dataBase64, 'base64')
     let signatureBuffer
     try {
       signatureBuffer = await connection.signData(challengeBuffer)
@@ -159,17 +159,17 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     await updateMessages({ msgJson: JSON.stringify(updateInstructions) })
   }
 
-  async function updateAllReceivedMessages(connectionId) {
-    const receivedMessages = await getMessagesV2(connectionId, ["MS-103"], [])
+  async function updateAllReceivedMessages (connectionId) {
+    const receivedMessages = await getMessagesV2(connectionId, ['MS-103'], [])
     await updateMessagesStatus(connectionId, receivedMessages.map(m => m.uid))
   }
 
-  async function sendPing(connectionId) {
+  async function sendPing (connectionId) {
     const connection = await getVcxConnection(connectionId)
     await connection.sendPing()
   }
 
-  async function discoverTheirFeatures(connectionId) {
+  async function discoverTheirFeatures (connectionId) {
     const connection = await getVcxConnection(connectionId)
     await connection.sendDiscoveryFeatures()
   }

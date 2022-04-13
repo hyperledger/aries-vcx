@@ -1,17 +1,17 @@
-const {VerifierStateType, ProofState, Proof} = require('@hyperledger/node-vcx-wrapper')
+const { VerifierStateType, ProofState, Proof } = require('@hyperledger/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
-const {runScript} = require('./script-common')
-const {testTailsUrl} = require('../src/common')
+const { runScript } = require('./script-common')
+const { testTailsUrl } = require('../src/common')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
-const {getFaberProofDataWithNonRevocation} = require('../test/utils/data')
-const {createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails} = require('../src/index')
-const {getAliceSchemaAttrs, getFaberCredDefName} = require('../test/utils/data')
+const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
+const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
+const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
-const {getStorageInfoMysql} = require('./wallet-common')
+const { getStorageInfoMysql } = require('./wallet-common')
 
 const tailsDir = '/tmp/tails'
 
@@ -68,7 +68,7 @@ async function runFaber (options) {
           appCallbacks.use(bodyParser.json())
           appCallbacks.get('/',
             async function (req, res) {
-              res.status(200).send({invitationString})
+              res.status(200).send({ invitationString })
             }
           )
           faberServer = appCallbacks.listen(port)
@@ -109,7 +109,7 @@ async function runFaber (options) {
     }
 
     logger.info('#27 Process the proof provided by alice.')
-    const {proofState, proof} = await vcxProof.getProof()
+    const { proofState, proof } = await vcxProof.getProof()
     assert(proofState)
     assert(proof)
     logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)

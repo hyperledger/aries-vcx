@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const { createVcxAgent } = require('../../src/index')
-const { ConnectionStateType, ProverStateType, OutOfBandReceiver, HolderStateType} = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, ProverStateType, OutOfBandReceiver, HolderStateType } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createAlice = async function createAlice () {
   const agentName = `alice-${Math.floor(new Date() / 1000)}`
@@ -30,7 +30,7 @@ module.exports.createAlice = async function createAlice () {
   }
 
   async function createConnectionUsingOobMessage (oobMsg) {
-    logger.info(`createConnectionUsingOobMessage >> Alice going to create connection using oob message`)
+    logger.info('createConnectionUsingOobMessage >> Alice going to create connection using oob message')
     logger.debug(`createConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
     await vcxAgent.agentInitVcx()
 
@@ -74,13 +74,13 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function acceptOobCredentialOffer(oobCredOfferMsg) {
+  async function acceptOobCredentialOffer (oobCredOfferMsg) {
     await vcxAgent.agentInitVcx()
-    logger.info(`acceptOobCredentialOffer >>> Alice going to accept oob cred offer.`)
+    logger.info('acceptOobCredentialOffer >>> Alice going to accept oob cred offer.')
 
     const oobReceiver = await OutOfBandReceiver.createWithMessage(oobCredOfferMsg)
     const credOffer = await oobReceiver.extractMessage()
-    logger.info(`acceptOobCredentialOffer >>> Extracted attached message`)
+    logger.info('acceptOobCredentialOffer >>> Extracted attached message')
     logger.debug(`acceptOobCredentialOffer >>> attached message: ${credOffer}`)
     await vcxAgent.serviceCredHolder.createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, credOffer)
     const state = await vcxAgent.serviceCredHolder.getState(holderCredentialId)
@@ -167,14 +167,14 @@ module.exports.createAlice = async function createAlice () {
     logger.info('Alice is going to download messages using getMessagesV2')
     await vcxAgent.agentInitVcx()
 
-    const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ["MS-103"])
+    const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ['MS-103'])
 
     await vcxAgent.agentShutdownVcx()
     return agencyMessages
   }
 
-  async function sendPing() {
-    logger.info(`Alice is going to send ping`)
+  async function sendPing () {
+    logger.info('Alice is going to send ping')
     await vcxAgent.agentInitVcx()
 
     const res = await vcxAgent.serviceConnections.sendPing(connectionId)
@@ -183,8 +183,8 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function discoverTheirFeatures() {
-    logger.info(`Alice is going to request Faber's Aries features.`)
+  async function discoverTheirFeatures () {
+    logger.info('Alice is going to request Faber\'s Aries features.')
     await vcxAgent.agentInitVcx()
 
     const res = await vcxAgent.serviceConnections.discoverTheirFeatures(connectionId)

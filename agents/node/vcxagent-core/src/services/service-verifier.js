@@ -1,5 +1,5 @@
 const {
-  Proof, IssuerCredential, IssuerStateType, VerifierStateType
+  Proof, VerifierStateType
 } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
 

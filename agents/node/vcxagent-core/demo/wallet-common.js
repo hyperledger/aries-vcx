@@ -17,7 +17,7 @@ function indyBuildMysqlStorageConfig (readHost, writeHost, port, dbName, default
 
 function getStorageInfoMysql () {
   if (!process.env.MYSQL_DATABASE) {
-    throw Error("Env variable MYSQL_DATABASE must be specified")
+    throw Error('Env variable MYSQL_DATABASE must be specified')
   }
   const walletStorageConfig = indyBuildMysqlStorageConfig(
     process.env.MYSQL_HOST || 'localhost',
