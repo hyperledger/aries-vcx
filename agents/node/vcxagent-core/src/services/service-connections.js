@@ -34,10 +34,10 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return connection
   }
 
-  async function inviterConnectionCreateAndAccept (conenctionId, cbInvitation) {
+  async function inviterConnectionCreateAndAccept (conenctionId, cbInvitation, attemptThreshold = 20, timeoutMs = 500) {
     const invite = await inviterConnectionCreate(conenctionId, cbInvitation)
     const connection = await loadConnection(conenctionId)
-    await _progressConnectionToAcceptedState(connection, 20, 2000)
+    await _progressConnectionToAcceptedState(connection, attemptThreshold, timeoutMs)
 
     await saveConnection(conenctionId, connection)
     return invite
@@ -52,10 +52,10 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     await saveConnection(connectionId, connection)
   }
 
-  async function inviteeConnectionAcceptFromInvitationAndProgress (connectionId, invite) {
+  async function inviteeConnectionAcceptFromInvitationAndProgress (connectionId, invite, attemptThreshold = 20, timeoutMs = 500) {
     await inviteeConnectionAcceptFromInvitation(connectionId, invite)
     const connection = await loadConnection(connectionId)
-    await _progressConnectionToAcceptedState(connection, 20, 2000)
+    await _progressConnectionToAcceptedState(connection, attemptThreshold, timeoutMs)
     logger.info(`InviteeConnectionSM has established connection ${connectionId}`)
     await saveConnection(connectionId, connection)
   }
@@ -82,7 +82,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return state
   }
 
-  async function connectionAutoupdate (connectionId, updateAttemptsThreshold = 10, timeoutMs = 2000) {
+  async function connectionAutoupdate (connectionId, updateAttemptsThreshold = 20, timeoutMs = 500) {
     const connection = await loadConnection(connectionId)
     await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeoutMs)
     logger.info('Success! Connection was progressed to Accepted state.')

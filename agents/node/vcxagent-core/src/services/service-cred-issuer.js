@@ -49,29 +49,29 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     return state
   }
 
-  async function waitForCredentialAck (issuerCredId, connectionId) {
+  async function waitForCredentialAck (issuerCredId, connectionId, attemptThreshold = 20, timeoutMs = 500) {
     const connection = await loadConnection(connectionId)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     logger.info(`Waiting for ack on issuer credential '${issuerCredId}' with connection ${connectionId}`)
-    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.Finished, 10, 2000)
+    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.Finished, attemptThreshold, timeoutMs)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
-  async function sendOfferAndWaitForCredRequest (issuerCredId, connectionId, credDefId, schemaAttrs) {
+  async function sendOfferAndWaitForCredRequest (issuerCredId, connectionId, credDefId, schemaAttrs, attemptThreshold = 20, timeoutMs = 500) {
     await sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     const connection = await loadConnection(connectionId)
     logger.debug('Going to wait until credential request is received.')
-    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.RequestReceived, 10, 2000)
+    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.RequestReceived, attemptThreshold, timeoutMs)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
-  async function sendCredentialAndProgress (issuerCredId, connectionId) {
+  async function sendCredentialAndProgress (issuerCredId, connectionId, attemptThreshold = 20, timeoutMs = 500) {
     await sendCredential(issuerCredId, connectionId)
     const connection = await loadConnection(connectionId)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     logger.info('Going to wait until counterparty accepts the credential.')
-    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.Finished, 10, 2000)
+    await _progressIssuerCredentialToState(issuerCred, connection, IssuerStateType.Finished, attemptThreshold, timeoutMs)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 

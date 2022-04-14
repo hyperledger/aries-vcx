@@ -42,7 +42,7 @@ module.exports.createServiceProver = function createServiceProver ({ logger, loa
     return proofRequests
   }
 
-  async function waitForProofRequests (connectionId, attemptsThreshold = 10, timeoutMs = 2000) {
+  async function waitForProofRequests (connectionId, attemptsThreshold = 20, timeoutMs = 500) {
     const connection = await loadConnection(connectionId)
     const proofRequests = await _getProofRequests(connection, attemptsThreshold, timeoutMs)
     logger.info(`Found ${proofRequests.length} credential offers.`)
