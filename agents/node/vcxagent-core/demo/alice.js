@@ -48,7 +48,7 @@ async function runAlice (options) {
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
   const disclosedProofId = 'alice-proof'
-  const walletExtraConfigs = (process.env.USE_MYSQL === 'true')
+  const walletExtraConfigs = (options['mysql'])
     ? getStorageInfoMysql()
     : {}
 
@@ -123,7 +123,7 @@ const optionDefinitions = [
   {
     name: 'mysql',
     type: Boolean,
-    description: 'If specified, postresql wallet will be used.',
+    description: 'If specified, mysql wallet will be used.',
     defaultValue: false
   },
   {

@@ -27,7 +27,7 @@ async function runFaber (options) {
   const issuerCredId = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
-    const walletExtraConfigs = (process.env.USE_MYSQL === 'true')
+    const walletExtraConfigs = (options['mysql'])
       ? getStorageInfoMysql()
       : {}
 
@@ -161,7 +161,7 @@ const optionDefinitions = [
   {
     name: 'mysql',
     type: Boolean,
-    description: 'If specified, postresql wallet will be used.',
+    description: 'If specified, mysql wallet will be used.',
     defaultValue: false
   },
   {
