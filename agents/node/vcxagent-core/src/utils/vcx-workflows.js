@@ -38,6 +38,7 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
     wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
     wallet_key_derivation: 'RAW'
   }
+  walletExtraConfigs = walletExtraConfigs || { }
   for (const key of Object.keys(walletExtraConfigs)) {
     const value = walletExtraConfigs[key]
     if (typeof value === 'object') {
