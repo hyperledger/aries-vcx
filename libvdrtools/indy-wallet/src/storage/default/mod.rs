@@ -12,6 +12,7 @@ use sqlx::{
 };
 
 use async_trait::async_trait;
+use log::LevelFilter;
 
 use crate::{
     language,
@@ -790,6 +791,7 @@ impl WalletStorageType for SQLiteStorageType {
             .filename(db_path.as_path())
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal)
+            .log_statements(LevelFilter::Debug)
             .connect()
             .await?;
 
@@ -922,16 +924,17 @@ impl WalletStorageType for SQLiteStorageType {
             ));
         }
 
+        let mut connect_options = SqliteConnectOptions::new()
+            .filename(db_path.as_path())
+            .journal_mode(SqliteJournalMode::Wal);
+        connect_options.log_statements(LevelFilter::Debug);
+
         Ok(Box::new(SQLiteStorage {
             pool: SqlitePoolOptions::default()
                 .min_connections(1)
                 .max_connections(1)
                 .max_lifetime(None)
-                .connect_with(
-                    SqliteConnectOptions::new()
-                        .filename(db_path.as_path())
-                        .journal_mode(SqliteJournalMode::Wal),
-                )
+                .connect_with(connect_options)
                 .await?,
         }))
     }

@@ -618,9 +618,9 @@ pub extern "C" fn vdr_resolve_schema_with_cache(
     );
 
     check_useful_c_reference!(vdr, VDR, ErrorCode::CommonInvalidParam2);
-    check_useful_c_str!(fqschema, ErrorCode::CommonInvalidParam3);
+    check_useful_c_str!(fqschema, ErrorCode::CommonInvalidParam4);
     check_useful_json!(cache_options, ErrorCode::CommonInvalidParam5, GetCacheOptions);
-    check_useful_c_callback!(cb, ErrorCode::CommonInvalidParam5);
+    check_useful_c_callback!(cb, ErrorCode::CommonInvalidParam6);
 
     debug!(
         "vdr_resolve_schema_with_cache ? wallet_handle {:?} fqschema {:?} cache_options {:?}",
@@ -779,9 +779,9 @@ pub extern "C" fn vdr_resolve_cred_def_with_cache(
     );
 
     check_useful_c_reference!(vdr, VDR, ErrorCode::CommonInvalidParam2);
-    check_useful_c_str!(fqcreddef, ErrorCode::CommonInvalidParam3);
+    check_useful_c_str!(fqcreddef, ErrorCode::CommonInvalidParam4);
     check_useful_json!(cache_options, ErrorCode::CommonInvalidParam5, GetCacheOptions);
-    check_useful_c_callback!(cb, ErrorCode::CommonInvalidParam5);
+    check_useful_c_callback!(cb, ErrorCode::CommonInvalidParam6);
 
     debug!(
         "vdr_resolve_cred_def_with_cache ? wallet_handle {:?} fqcreddef {:?} cache_options {:?}",
