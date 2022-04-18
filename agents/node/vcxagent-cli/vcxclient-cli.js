@@ -9,12 +9,6 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'postgresql',
-    type: Boolean,
-    description: 'If specified, postresql wallet will be used.',
-    defaultValue: false
-  },
-  {
     name: 'acceptTaa',
     type: Boolean,
     description: 'If specified accpets taa',

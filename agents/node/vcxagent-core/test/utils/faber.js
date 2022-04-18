@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType, HolderStateType, generatePublicInvite} = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 
 module.exports.createFaber = async function createFaber () {
@@ -18,7 +18,6 @@ module.exports.createFaber = async function createFaber () {
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
-    usePostgresWallet: false,
     logger
   }
 
@@ -147,7 +146,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function buildLedgerPrimitives(revocationDetails, tailsUrl) {
+  async function buildLedgerPrimitives (revocationDetails, tailsUrl) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
@@ -237,7 +236,7 @@ module.exports.createFaber = async function createFaber () {
   async function downloadReceivedMessages () {
     logger.info('Faber is going to download messages using getMessages')
     await vcxAgent.agentInitVcx()
-    const agencyMessages = await vcxAgent.serviceConnections.getMessages(connectionId, ["MS-103"])
+    const agencyMessages = await vcxAgent.serviceConnections.getMessages(connectionId, ['MS-103'])
     await vcxAgent.agentShutdownVcx()
     return agencyMessages
   }
@@ -275,7 +274,7 @@ module.exports.createFaber = async function createFaber () {
   async function downloadReceivedMessagesV2 () {
     logger.info('Faber is going to download messages using getMessagesV2')
     await vcxAgent.agentInitVcx()
-    const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ["MS-103"])
+    const agencyMessages = await vcxAgent.serviceConnections.getMessagesV2(connectionId, ['MS-103'])
     await vcxAgent.agentShutdownVcx()
     return agencyMessages
   }

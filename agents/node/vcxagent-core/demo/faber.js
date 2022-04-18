@@ -11,6 +11,7 @@ const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
 const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
+const { getStorageInfoMysql } = require('./wallet-common')
 
 const tailsDir = '/tmp/tails'
 
@@ -26,11 +27,15 @@ async function runFaber (options) {
   const issuerCredId = 'cred-for-alice'
   try {
     const agentName = `faber-${uuid.v4()}`
+    const walletExtraConfigs = (options['mysql'])
+      ? getStorageInfoMysql()
+      : {}
+
     vcxAgent = await createVcxAgent({
       agentName,
       agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
       seed: '000000000000000000000000Trustee1',
-      usePostgresWallet: false,
+      walletExtraConfigs,
       logger
     })
     await vcxAgent.agentInitVcx()
@@ -41,12 +46,16 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({ supportRevocation: true, tailsDir, maxCreds: 5 }), testTailsUrl)
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({
+      supportRevocation: true,
+      tailsDir,
+      maxCreds: 5
+    }), testTailsUrl)
 
     await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
-      logger.info("**You'll ge queried to paste this data to alice side of the demo. This is invitation to connect.**")
-      logger.info("**It's assumed this is obtained by Alice from Faber by some existing secure channel.**")
+      logger.info('**You\'ll ge queried to paste this data to alice side of the demo. This is invitation to connect.**')
+      logger.info('**It\'s assumed this is obtained by Alice from Faber by some existing secure channel.**')
       logger.info('**Could be on website via HTTPS, QR code scanned at Faber institution, ...**')
       logger.info('\n******************\n\n')
       logger.info(invitationString)
@@ -150,9 +159,9 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'postgresql',
+    name: 'mysql',
     type: Boolean,
-    description: 'If specified, postresql wallet will be used.',
+    description: 'If specified, mysql wallet will be used.',
     defaultValue: false
   },
   {
@@ -181,4 +190,5 @@ const usage = [
 function areOptionsValid (_options) {
   return true
 }
+
 runScript(optionDefinitions, usage, areOptionsValid, runFaber)
