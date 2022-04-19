@@ -29,5 +29,6 @@ services:
       - MYSQL_DATABASE_WALLET_CONNECTION_LIMIT=50
 
       - SERVER_ENABLE_TLS=false
+      - DEV_MODE=true
     network_mode: "host"
     command: ["sh", "-c", "npm run dev:schema:migrate:all && npm run serve"]
