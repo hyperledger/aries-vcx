@@ -1414,12 +1414,6 @@ checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 
 [[package]]
 name = "futures"
-version = "0.1.31"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a471a38ef8ed83cd6e40aa59c1ffe17db6855c18e3604d9c4ed8c08ebc28678"
-
-[[package]]
-name = "futures"
 version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f21eda599937fba36daeb58a22e8f5cee2d14c4a17b5b7739c7c8e5e3b8230c"
@@ -1796,7 +1790,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "dashmap",
  "deadpool",
- "futures 0.3.24",
+ "futures",
  "http-types",
  "log",
 ]
@@ -1875,7 +1869,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca815a891b24fdfb243fa3239c86154392b0953ee584aa1a2a1f66d20cbe75cc"
 dependencies = [
  "bytes",
- "futures 0.3.24",
+ "futures",
  "headers",
  "http",
  "hyper",
@@ -1977,7 +1971,7 @@ dependencies = [
  "cosmrs",
  "eyre",
  "failure",
- "futures 0.3.24",
+ "futures",
  "http-client",
  "k256",
  "libc",
@@ -2020,7 +2014,7 @@ dependencies = [
  "async-trait",
  "bs58",
  "byteorder",
- "futures 0.3.24",
+ "futures",
  "indy-api-types",
  "indy-utils",
  "libc",
@@ -2208,7 +2202,7 @@ dependencies = [
  "env_logger",
  "etcommon-rlp",
  "failure",
- "futures 0.3.24",
+ "futures",
  "hex",
  "http-client",
  "ics23",
@@ -3993,7 +3987,7 @@ dependencies = [
  "ed25519",
  "ed25519-dalek",
  "flex-error",
- "futures 0.3.24",
+ "futures",
  "k256",
  "num-traits",
  "once_cell",
@@ -4043,7 +4037,7 @@ dependencies = [
  "bytes",
  "chrono",
  "flex-error",
- "futures 0.3.24",
+ "futures",
  "getrandom 0.1.16",
  "http",
  "hyper",
@@ -4457,7 +4451,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "failure",
- "futures 0.1.31",
+ "futures",
  "lazy_static",
  "libc",
  "log",
