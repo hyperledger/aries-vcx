@@ -3,6 +3,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 
 use futures::future::BoxFuture;
+use futures::stream::StreamExt;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
@@ -79,7 +80,7 @@ pub enum Actor {
 impl Connection {
     pub async fn create(source_id: &str, autohop_enabled: bool) -> VcxResult<Self> {
         trace!("Connection::create >>> source_id: {}", source_id);
-        let pairwise_info = PairwiseInfo::create()?;
+        let pairwise_info = PairwiseInfo::create().await?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         Ok(Self {
             cloud_agent_info,
@@ -90,7 +91,7 @@ impl Connection {
 
     pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
-        let pairwise_info = PairwiseInfo::create()?;
+        let pairwise_info = PairwiseInfo::create().await?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let mut connection = Self {
             cloud_agent_info,
@@ -300,7 +301,7 @@ impl Connection {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let new_pairwise_info = PairwiseInfo::create()?;
+                let new_pairwise_info = PairwiseInfo::create().await?;
                 let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys()?;
                 let new_service_endpoint = new_cloud_agent.service_endpoint()?;
@@ -433,7 +434,7 @@ impl Connection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
-                            let new_pairwise_info = PairwiseInfo::create()?;
+                            let new_pairwise_info = PairwiseInfo::create().await?;
                             let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys()?;
                             let new_service_endpoint = new_cloud_agent.service_endpoint()?;
@@ -723,22 +724,24 @@ impl Connection {
             ConnectionState::Invitee(InviteeState::Initial) |
             ConnectionState::Inviter(InviterState::Initial) |
             ConnectionState::Inviter(InviterState::Invited) => {
-                let msgs = self.cloud_agent_info()
+                let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-                    .await?
-                    .iter()
-                    .map(|msg| msg.decrypt_noauth())
-                    .collect::<Vec<Message>>();
+                    .await?)
+                    .then(|msg| async move { msg.decrypt_noauth().await })
+                    .collect::<Vec<Message>>()
+                    .await;
                 Ok(msgs)
             }
             _ => {
                 let expected_sender_vk = self.remote_vk()?;
-                self.cloud_agent_info()
+                let msgs =futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-                    .await?
-                    .iter()
-                    .map(|msg| msg.decrypt_auth(&expected_sender_vk).map_err(|err| err.into()))
-                    .collect::<VcxResult<Vec<Message>>>()
+                    .await?)
+                    .then(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .filter_map(|res| async { if res.is_ok() { res.ok() } else { None } })
+                    .collect::<Vec<Message>>()
+                    .await;
+                Ok(msgs)
             }
         }
     }

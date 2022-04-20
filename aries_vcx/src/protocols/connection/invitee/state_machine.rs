@@ -247,7 +247,7 @@ impl SmConnectionInvitee {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle response: remote verkey not found"))?;
 
-        let response = response.clone().decode(&remote_vk)?;
+        let response = response.clone().decode(&remote_vk).await?;
 
         if !response.from_thread(&request.get_thread_id()) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle response: thread id does not match: {:?}", response.thread)));

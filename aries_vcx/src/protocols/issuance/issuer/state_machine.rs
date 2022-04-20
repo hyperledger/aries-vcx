@@ -109,16 +109,16 @@ impl IssuerSM {
         }
     }
 
-    pub fn revoke(&self, publish: bool) -> VcxResult<()> {
+    pub async fn revoke(&self, publish: bool) -> VcxResult<()> {
         trace!("Issuer::revoke >>> publish: {}", publish);
-        fn _revoke(rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
+        async fn _revoke(rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
             match rev_info {
                 Some(rev_info) => {
                     if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
                         if publish {
-                            anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id)?;
+                            anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id).await?;
                         } else {
-                            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id)?;
+                            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id).await?;
                         }
                         Ok(())
                     } else {
@@ -130,8 +130,8 @@ impl IssuerSM {
         }
 
         match &self.state {
-            IssuerFullState::CredentialSent(state) => _revoke(&state.revocation_info_v1, publish),
-            IssuerFullState::Finished(state) => _revoke(&state.revocation_info_v1, publish),
+            IssuerFullState::CredentialSent(state) => _revoke(&state.revocation_info_v1, publish).await,
+            IssuerFullState::Finished(state) => _revoke(&state.revocation_info_v1, publish).await,
             _ => Err(VcxError::from(VcxErrorKind::NotReady))
         }
     }
@@ -331,7 +331,7 @@ impl IssuerSM {
             },
             IssuerFullState::RequestReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialSend() => {
-                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &thread_id);
+                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &thread_id).await;
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
                             let credential_msg = credential_msg.set_thread_id(&thread_id).ask_for_ack(); // TODO: Make configurable
@@ -405,7 +405,7 @@ impl IssuerSM {
     }
 }
 
-fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &CredentialOffer, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
+async fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &CredentialOffer, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
     let offer = offer.offers_attach.content()?;
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
     if !request.from_thread(&thread_id) {
@@ -417,7 +417,7 @@ fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, 
                                                                                        &request,
                                                                                        &cred_data,
                                                                                        rev_reg_id.clone(),
-                                                                                       tails_file.clone())?;
+                                                                                       tails_file.clone()).await?;
     let credential = Credential::create().set_credential(ser_credential)?;
     Ok((credential, cred_rev_id))
 }

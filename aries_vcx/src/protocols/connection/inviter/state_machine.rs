@@ -301,7 +301,7 @@ impl SmConnectionInviter {
                     &bootstrap_pairwise_info,
                     &new_pairwise_info,
                     new_routing_keys,
-                    new_service_endpoint) {
+                    new_service_endpoint).await {
                     Ok(signed_response) => {
                         InviterFullState::Requested((request, signed_response.clone()).into())
                     }
@@ -517,7 +517,7 @@ impl SmConnectionInviter {
         self.thread_id.clone()
     }
 
-    fn build_response(
+    async fn build_response(
         &self,
         request: &Request,
         bootstrap_pairwise_info: &PairwiseInfo,
@@ -534,6 +534,7 @@ impl SmConnectionInviter {
             .ask_for_ack()
             .set_thread_id(&request.get_thread_id())
             .encode(&bootstrap_pairwise_info.pw_vk)
+            .await
     }
 }
 

@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use futures::executor::block_on;
 
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::OutOfBandInvitation;
@@ -101,7 +102,7 @@ impl PublicInvitation {
 impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
     type Error = VcxError;
     fn try_from(service: &ServiceResolvable) -> Result<Self, Self::Error> {
-        let full_service = service.resolve()?;
+        let full_service = block_on(service.resolve())?;
         Ok(Self::create()
             .set_recipient_keys(full_service.recipient_keys)
             .set_routing_keys(full_service.routing_keys)

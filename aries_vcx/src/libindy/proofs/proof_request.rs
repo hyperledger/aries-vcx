@@ -26,10 +26,10 @@ pub struct ProofRequestData {
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
-    pub fn create(name: &str) -> VcxResult<Self> {
+    pub async fn create(name: &str) -> VcxResult<Self> {
         Ok(Self {
             name: name.to_string(),
-            nonce: anoncreds::generate_nonce()?,
+            nonce: anoncreds::generate_nonce().await?,
                 ..Self::default()
         })
     }

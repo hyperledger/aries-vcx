@@ -38,10 +38,10 @@ impl Prover {
         self.prover_sm.presentation_status()
     }
 
-    pub fn retrieve_credentials(&self) -> VcxResult<String> {
+    pub async fn retrieve_credentials(&self) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
-        anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request)
+        anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request).await
     }
 
     pub async fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {

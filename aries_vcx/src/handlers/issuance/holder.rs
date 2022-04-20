@@ -87,12 +87,12 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
-        self.holder_sm.is_revokable()
+    pub async fn is_revokable(&self) -> VcxResult<bool> {
+        self.holder_sm.is_revokable().await
     }
 
-    pub fn delete_credential(&self) -> VcxResult<()> {
-        self.holder_sm.delete_credential()
+    pub async fn delete_credential(&self) -> VcxResult<()> {
+        self.holder_sm.delete_credential().await
     }
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {

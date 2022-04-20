@@ -1,6 +1,5 @@
 use indy;
 use indy::ErrorCode;
-use indy::future::Future;
 use indy_sys::WalletHandle;
 
 use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
@@ -43,16 +42,18 @@ pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
+pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
     trace!("open_pool >>> pool_name: {}, path: {}, pool_config: {:?}", pool_name, config.genesis_path, config.pool_config);
 
     create_pool_ledger_config(&pool_name, &config.genesis_path)
+        .await
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
     debug!("open_pool ::: Pool Config Created Successfully");
 
     open_pool_ledger(&pool_name, config.pool_config.as_deref())
+        .await
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
 
     info!("open_pool ::: Pool Opened Successfully");
@@ -60,13 +61,13 @@ pub fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
     let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_deref(), wallet_config.storage_config.as_deref());
     let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
 
     let handle = indy::wallet::open_wallet(&config, &credentials)
-        .wait()
+        .await
         .map_err(|err|
             match err.error_code.clone() {
                 ErrorCode::WalletAlreadyOpenedError => {

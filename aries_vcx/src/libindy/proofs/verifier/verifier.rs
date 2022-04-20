@@ -3,7 +3,7 @@ use crate::libindy::proofs::verifier::verifier_internal::{build_cred_defs_json_v
 use crate::libindy::utils::anoncreds;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
-pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
+pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
         return mock_result;
     }
@@ -13,12 +13,16 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
     let credential_data = get_credential_info(&proof_json)?;
 
     let credential_defs_json = build_cred_defs_json_verifier(&credential_data)
+        .await
         .unwrap_or(json!({}).to_string());
     let schemas_json = build_schemas_json_verifier(&credential_data)
+        .await
         .unwrap_or(json!({}).to_string());
     let rev_reg_defs_json = build_rev_reg_defs_json(&credential_data)
+        .await
         .unwrap_or(json!({}).to_string());
     let rev_regs_json = build_rev_reg_json(&credential_data)
+        .await
         .unwrap_or(json!({}).to_string());
 
     debug!("*******\n{}\n********", credential_defs_json);
@@ -32,7 +36,7 @@ pub fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<
                                              &schemas_json,
                                              &credential_defs_json,
                                              &rev_reg_defs_json,
-                                             &rev_regs_json)
+                                             &rev_regs_json).await
 }
 
 #[cfg(test)]

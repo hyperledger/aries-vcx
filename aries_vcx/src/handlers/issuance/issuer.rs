@@ -71,9 +71,9 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
+    pub async fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
+        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id).await?;
         let cred_offer_msg = CredentialOffer::create()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?
@@ -127,8 +127,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(publish)
+    pub async fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {

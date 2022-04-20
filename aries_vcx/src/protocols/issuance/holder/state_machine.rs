@@ -166,7 +166,7 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                    let request = _make_credential_request(my_pw_did, &state_data.offer);
+                    let request = _make_credential_request(my_pw_did, &state_data.offer).await;
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
                             let cred_request = cred_request
@@ -211,7 +211,7 @@ impl HolderSM {
             },
             HolderFullState::RequestSent(state_data) => match cim {
                 CredentialIssuanceAction::Credential(credential) => {
-                    let result = _store_credential(&credential, &state_data.req_meta, &state_data.cred_def_json);
+                    let result = _store_credential(&credential, &state_data.req_meta, &state_data.cred_def_json).await;
                     match result {
                         Ok((cred_id, rev_reg_def_json)) => {
                             if credential.please_ack.is_some() {
@@ -322,23 +322,23 @@ impl HolderSM {
         Ok(self.thread_id.clone())
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
+    pub async fn is_revokable(&self) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(),
-            HolderFullState::OfferReceived(ref state) => state.is_revokable(),
+            HolderFullState::ProposalSent(ref state) => state.is_revokable().await,
+            HolderFullState::OfferReceived(ref state) => state.is_revokable().await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable()
         }
     }
 
-    pub fn delete_credential(&self) -> VcxResult<()> {
+    pub async fn delete_credential(&self) -> VcxResult<()> {
         trace!("Holder::delete_credential");
 
         match self.state {
             HolderFullState::Finished(ref state) => {
                 let cred_id = state.cred_id.clone().ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot get credential: credential id not found"))?;
-                _delete_credential(&cred_id)
+                _delete_credential(&cred_id).await
             }
             _ => Err(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot delete credential: credential issuance is not finished yet"))
         }
@@ -368,14 +368,14 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
     Ok(rev_reg_id)
 }
 
-fn _store_credential(credential: &Credential,
+async fn _store_credential(credential: &Credential,
                      req_meta: &str, cred_def_json: &str) -> VcxResult<(String, Option<String>)> {
     trace!("Holder::_store_credential >>> credential: {:?}, req_meta: {}, cred_def_json: {}", credential, req_meta, cred_def_json);
 
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let (_, json) = anoncreds::get_rev_reg_def_json(&rev_reg_id)?;
+        let (_, json) = anoncreds::get_rev_reg_def_json(&rev_reg_id).await?;
         Some(json)
     } else {
         None
@@ -385,32 +385,33 @@ fn _store_credential(credential: &Credential,
                                                   req_meta,
                                                   &credential_json,
                                                   cred_def_json,
-                                                  rev_reg_def_json.as_ref().map(String::as_str))?;
+                                                  rev_reg_def_json.as_ref().map(String::as_str)).await?;
     Ok((cred_id, rev_reg_def_json))
 }
 
-fn _delete_credential(cred_id: &str) -> VcxResult<()> {
+async fn _delete_credential(cred_id: &str) -> VcxResult<()> {
     trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
 
-    libindy_prover_delete_credential(cred_id)
+    libindy_prover_delete_credential(cred_id).await
 }
 
-pub fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
-    let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id)?;
+pub async fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
+    let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id).await?;
 
     libindy_prover_create_credential_req(&prover_did,
                                          &cred_offer,
                                          &cred_def_json)
+        .await
         .map_err(|err| err.extend("Cannot create credential request")).map(|(s1, s2)| (s1, s2, cred_def_id, cred_def_json))
 }
 
-fn _make_credential_request(my_pw_did: String, offer: &CredentialOffer) -> VcxResult<(CredentialRequest, String, String)> {
+async fn _make_credential_request(my_pw_did: String, offer: &CredentialOffer) -> VcxResult<(CredentialRequest, String, String)> {
     trace!("Holder::_make_credential_request >>> my_pw_did: {:?}, offer: {:?}", my_pw_did, offer);
 
     let cred_offer = offer.offers_attach.content()?;
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
-    let (req, req_meta, _cred_def_id, cred_def_json) = create_credential_request(&cred_def_id, &my_pw_did, &cred_offer)?;
+    let (req, req_meta, _cred_def_id, cred_def_json) = create_credential_request(&cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     Ok((CredentialRequest::create().set_requests_attach(req)?, req_meta, cred_def_json))
 }

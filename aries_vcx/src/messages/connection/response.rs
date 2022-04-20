@@ -73,7 +73,7 @@ impl Response {
         self
     }
 
-    pub fn encode(&self, key: &str) -> VcxResult<SignedResponse> {
+    pub async fn encode(&self, key: &str) -> VcxResult<SignedResponse> {
         let connection_data = json!(self.connection).to_string();
 
         let now: u64 = time::get_time().sec as u64;
@@ -82,7 +82,7 @@ impl Response {
 
         sig_data.extend(connection_data.as_bytes());
 
-        let signature = crypto::sign(key, &sig_data)?;
+        let signature = crypto::sign(key, &sig_data).await?;
 
         let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
 
@@ -111,14 +111,14 @@ threadlike!(Response);
 threadlike!(SignedResponse);
 
 impl SignedResponse {
-    pub fn decode(self, key: &str) -> VcxResult<Response> {
+    pub async fn decode(self, key: &str) -> VcxResult<Response> {
         let signature = base64::decode_config(&self.connection_sig.signature.as_bytes(), base64::URL_SAFE)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
 
         let sig_data = base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
 
-        if !crypto::verify(&key, &sig_data, &signature)? {
+        if !crypto::verify(&key, &sig_data, &signature).await? {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "ConnectionResponse signature is invalid for original Invite recipient key"));
         }
 

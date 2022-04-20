@@ -285,7 +285,7 @@ impl Message {
         new_message
     }
 
-    pub async fn decrypt_auth(&self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
+    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
         let mut new_message = self.clone();
         let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk).await?;
         trace!("decrypt_auth >>> decrypted_msg: {:?}", decrypted_msg);

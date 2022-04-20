@@ -111,7 +111,7 @@ impl CloudAgentInfo {
         trace!("CloudAgentInfo::get_messages >>> expect_sender_vk: {}", expect_sender_vk);
         let messages = self.download_encrypted_messages(None, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages >>> obtained {} messages", messages.len());
-        let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk)?;
+        let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk).await?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
@@ -120,7 +120,7 @@ impl CloudAgentInfo {
         trace!("CloudAgentInfo::get_messages_noauth >>>");
         let messages = self.download_encrypted_messages(uids, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages_noauth >>> obtained {} messages", messages.len());
-        let a2a_messages = self.decrypt_decode_messages_noauth(&messages)?;
+        let a2a_messages = self.decrypt_decode_messages_noauth(&messages).await?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
@@ -131,31 +131,31 @@ impl CloudAgentInfo {
         let message = messages
             .pop()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;
-        let message = self.decrypt_decode_message(&message, &expected_sender_vk)?;
+        let message = self.decrypt_decode_message(&message, &expected_sender_vk).await?;
         Ok(message)
     }
 
-    fn decrypt_decode_messages(&self, messages: &Vec<Message>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages(&self, messages: &Vec<Message>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(&message, expected_sender_vk)?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(&message, expected_sender_vk).await?);
         }
         return Ok(a2a_messages);
     }
 
-    fn decrypt_decode_messages_noauth(&self, messages: &Vec<Message>) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages_noauth(&self, messages: &Vec<Message>) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(&message)?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(&message).await?);
         }
         return Ok(a2a_messages);
     }
 
-    fn decrypt_decode_message(&self, message: &Message, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk)
+    async fn decrypt_decode_message(&self, message: &Message, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
+        EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk).await
     }
 
-    fn decrypt_decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::anon_unpack(message.payload()?)
+    async fn decrypt_decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
+        EncryptionEnvelope::anon_unpack(message.payload()?).await
     }
 }

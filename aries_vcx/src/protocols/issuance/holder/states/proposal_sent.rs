@@ -12,7 +12,7 @@ impl ProposalSentState {
         Self { credential_proposal }
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
-        is_cred_def_revokable(&self.credential_proposal.cred_def_id)
+    pub async fn is_revokable(&self) -> VcxResult<bool> {
+        is_cred_def_revokable(&self.credential_proposal.cred_def_id).await
     }
 }

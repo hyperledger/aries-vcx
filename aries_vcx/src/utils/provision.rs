@@ -25,7 +25,7 @@ pub struct AgencyClientConfig {
 }
 
 pub async fn provision_cloud_agent(provision_agent_config: &AgentProvisionConfig) -> VcxResult<AgencyClientConfig> {
-    let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None)?;
+    let (my_did, my_vk) = signus::create_and_store_my_did(provision_agent_config.agent_seed.as_ref().map(String::as_str), None).await?;
 
     settings::get_agency_client_mut().unwrap().set_agency_did(&provision_agent_config.agency_did);
     settings::get_agency_client_mut().unwrap().set_agency_vk(&provision_agent_config.agency_verkey);

@@ -21,13 +21,14 @@ pub struct CredInfoProver {
     pub timestamp: Option<u64>,
 }
 
-pub fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
             let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+                .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
             let schema_json = serde_json::from_str(&schema_json)
@@ -39,13 +40,14 @@ pub fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) 
     Ok(rtn.to_string())
 }
 
-pub fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
+                .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
 
             let credential_def = serde_json::from_str(&credential_def)
@@ -113,7 +115,7 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_rev_states_json >> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
@@ -125,20 +127,20 @@ pub fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) 
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
                 { (interval.from, interval.to) } else { (None, None) };
 
-                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id)?;
+                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id).await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
                     &rev_reg_id,
                     from,
                     to,
-                )?;
+                ).await?;
 
                 let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
                     &cred_rev_id,
                     &tails_file,
-                )?;
+                ).await?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json)
                     .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RevocationState: {}", err)))?;
