@@ -115,27 +115,27 @@ mod tests {
             .for_verkey(for_verkey).unwrap();
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_create_key_set_values_and_serialize() {
+    async fn test_create_key_set_values_and_serialize() {
         let _setup = SetupMocks::init();
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let my_vk = "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9";
         let bytes = CreateKeyBuilder::create()
             .for_did(&to_did).unwrap()
             .for_verkey(&my_vk).unwrap()
-            .prepare_request().unwrap();
+            .prepare_request().await.unwrap();
         assert!(bytes.len() > 0);
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_parse_create_keys_v2_response() {
+    async fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
 
         let mut builder = CreateKeyBuilder::create();
 
-        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
+        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).await.unwrap();
 
         assert_eq!(for_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(for_verkey, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");

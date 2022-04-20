@@ -25,7 +25,7 @@ indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "01c8e6340e22e30
 futures = "0.3.21"
 url = "1.5.1"
 failure = "0.1.6"
-async-std = "1.10.0"
+async-std = "1.11.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

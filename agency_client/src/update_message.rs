@@ -132,11 +132,11 @@ mod tests {
     use crate::utils::test_constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
     use crate::utils::test_utils::SetupMocks;
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_parse_update_messages_response() {
+    async fn test_parse_update_messages_response() {
         let _setup = SetupMocks::init();
         mocking::AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
-        UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).unwrap();
+        UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).await.unwrap();
     }
 }

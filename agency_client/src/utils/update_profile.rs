@@ -114,9 +114,9 @@ mod tests {
     use crate::utils::test_utils::SetupMocks;
     use crate::utils::update_profile::UpdateProfileDataBuilder;
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_update_data_post() {
+    async fn test_update_data_post() {
         let _setup = SetupMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
@@ -125,14 +125,14 @@ mod tests {
         let _msg = update_data()
             .to(to_did).unwrap()
             .name(&name).unwrap()
-            .prepare_request().unwrap();
+            .prepare_request().await.unwrap();
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_parse_update_profile_response() {
+    async fn test_parse_update_profile_response() {
         let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(AGENCY_CONFIGS_UPDATED);
-        UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).unwrap();
+        UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).await.unwrap();
     }
 }
