@@ -64,14 +64,14 @@ impl CreateKeyBuilder {
             AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
-        let data = self.prepare_request()?;
+        let data = self.prepare_request().await?;
 
         let response = post_to_agency(&data).await?;
 
-        self.parse_response(&response)
+        self.parse_response(&response).await
     }
 
-    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         trace!("CreateKeyBuilder::prepare_request >>>");
         let message = A2AMessage::Version2(
             A2AMessageV2::CreateKey(CreateKey {
@@ -83,11 +83,11 @@ impl CreateKeyBuilder {
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did)
+        prepare_message_for_agency(&message, &agency_did).await
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
-        let mut response = parse_response_from_agency(response)?;
+    async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
+        let mut response = parse_response_from_agency(response).await?;
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
             _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse))

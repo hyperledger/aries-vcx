@@ -3,6 +3,8 @@ use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult}
 use crate::message_type::MessageTypes;
 use crate::utils::comm::post_to_agency;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use async_trait::async_trait;
+use futures::stream::StreamExt;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -52,7 +54,7 @@ pub struct MessagesByConnections {
     msgs: Vec<MessageByConnection>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct MessageByConnection {
     #[serde(rename = "pairwiseDID")]
     pub pairwise_did: String,
@@ -118,17 +120,17 @@ impl GetMessagesBuilder {
     pub async fn send_secure(&mut self) -> AgencyClientResult<Vec<Message>> {
         debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
-        let data = self.prepare_request()?;
+        let data = self.prepare_request().await?;
 
         let response = post_to_agency(&data).await?;
 
-        self.parse_response(response)
+        self.parse_response(response).await
     }
 
-    fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<Message>> {
+    async fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<Message>> {
         trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
 
-        let mut response = parse_response_from_agency(&response)?;
+        let mut response = parse_response_from_agency(&response).await?;
 
         trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
 
@@ -144,7 +146,7 @@ impl GetMessagesBuilder {
     pub async fn download_messages_noauth(&mut self) -> AgencyClientResult<Vec<MessageByConnection>> {
         trace!("GetMessages::download >>>");
 
-        let data = self.prepare_download_request()?;
+        let data = self.prepare_download_request().await?;
 
         let response = post_to_agency(&data).await?;
 
@@ -152,12 +154,12 @@ impl GetMessagesBuilder {
             return Ok(Vec::new());
         }
 
-        let response = self.parse_download_messages_response_noauth(response)?;
+        let response = self.parse_download_messages_response_noauth(response).await?;
 
         Ok(response)
     }
 
-    fn prepare_download_request(&self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_download_request(&self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::GetMessages(
                 GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
@@ -169,13 +171,13 @@ impl GetMessagesBuilder {
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did)
+        prepare_message_for_agency(&message, &agency_did).await
     }
 
     // todo: This should be removed after public method vcx_messages_download is removed
-    fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> AgencyClientResult<Vec<MessageByConnection>> {
+    async fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> AgencyClientResult<Vec<MessageByConnection>> {
         trace!("parse_download_messages_response >>>");
-        let mut response = parse_response_from_agency(&response)?;
+        let mut response = parse_response_from_agency(&response).await?;
 
         trace!("parse_download_messages_response: parsed response {:?}", response);
         let msgs = match response.remove(0) {
@@ -183,19 +185,23 @@ impl GetMessagesBuilder {
             _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
         };
 
-        msgs
-            .iter()
-            .map(|connection| {
-                Ok(MessageByConnection {
-                    pairwise_did: connection.pairwise_did.clone(),
-                    msgs: connection.msgs.iter().map(|message| message.decrypt_noauth()).collect(),
-                })
+        let msgs: Vec<MessageByConnection> = futures::stream::iter(msgs.iter())
+            .then(|connection| {
+                async move {
+                    MessageByConnection {
+                        pairwise_did: connection.pairwise_did.clone(),
+                        msgs: futures::stream::iter(connection.msgs.iter()).then(|message| async move { message.decrypt_noauth().await }).collect().await,
+                    }
+                }
             })
-            .collect()
+            .collect::<Vec<MessageByConnection>>()
+            .await;
+        Ok(msgs)
     }
 }
 
 //Todo: Every GeneralMessage extension, duplicates code
+#[async_trait]
 impl GeneralMessage for GetMessagesBuilder {
     type Msg = GetMessagesBuilder;
 
@@ -204,7 +210,7 @@ impl GeneralMessage for GetMessagesBuilder {
     fn set_agent_did(&mut self, did: String) { self.agent_did = did; }
     fn set_agent_vk(&mut self, vk: String) { self.agent_vk = vk; }
 
-    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_request >>");
         let message = A2AMessage::Version2(
             A2AMessageV2::GetMessages(
@@ -215,11 +221,11 @@ impl GeneralMessage for GetMessagesBuilder {
                                    self.pairwise_dids.clone()))
         );
 
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk)
+        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct DeliveryDetails {
     to: String,
@@ -233,7 +239,13 @@ pub enum MessagePayload {
     V2(::serde_json::Value),
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+impl Default for MessagePayload {
+    fn default() -> Self {
+        Self::V2(::serde_json::Value::Null)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     #[serde(rename = "statusCode")]
@@ -262,9 +274,9 @@ impl Message {
         }
     }
 
-    pub fn decrypt_noauth(&self) -> Message {
+    pub async fn decrypt_noauth(&self) -> Message {
         let mut new_message = self.clone();
-        if let Ok(decrypted_msg) = self._noauth_decrypt_v3_message() {
+        if let Ok(decrypted_msg) = self._noauth_decrypt_v3_message().await {
             new_message.decrypted_msg = Some(decrypted_msg);
         } else {
             new_message.decrypted_msg = None;
@@ -273,21 +285,21 @@ impl Message {
         new_message
     }
 
-    pub fn decrypt_auth(&self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
+    pub async fn decrypt_auth(&self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
         let mut new_message = self.clone();
-        let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk)?;
+        let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk).await?;
         trace!("decrypt_auth >>> decrypted_msg: {:?}", decrypted_msg);
         new_message.decrypted_msg = Some(decrypted_msg);
         new_message.payload = None;
         Ok(new_message)
     }
 
-    fn _noauth_decrypt_v3_message(&self) -> AgencyClientResult<String> {
-        EncryptionEnvelope::anon_unpack(self.payload()?)
+    async fn _noauth_decrypt_v3_message(&self) -> AgencyClientResult<String> {
+        EncryptionEnvelope::anon_unpack(self.payload()?).await
     }
 
-    fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> AgencyClientResult<String> {
-        EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk)
+    async fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> AgencyClientResult<String> {
+        EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk).await
     }
 }
 

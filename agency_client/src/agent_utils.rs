@@ -238,13 +238,13 @@ async fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyC
 
 pub async fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
     trace!("send_message_to_agency >>> message: ..., did: {}", did);
-    let data = prepare_message_for_agency(message, &did)?;
+    let data = prepare_message_for_agency(message, &did).await?;
 
     let response = post_to_agency(&data)
         .await
         .map_err(|err| err.map(AgencyClientErrorKind::InvalidHttpResponse, error_utils::INVALID_HTTP_RESPONSE.message))?;
 
-    parse_response_from_agency(&response)
+    parse_response_from_agency(&response).await
 }
 
 #[cfg(test)]
