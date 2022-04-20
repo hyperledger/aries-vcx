@@ -20,7 +20,6 @@ pub struct UpdateMessageStatusByConnectionsResponse {
     #[serde(rename = "@type")]
     msg_type: MessageTypes,
     status_code: Option<String>,
-    updated_uids_by_conns: Vec<UIDsByConn>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]

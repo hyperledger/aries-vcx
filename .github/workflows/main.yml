@@ -126,7 +126,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_DOCKERFILE_HASH"
 
           echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:1.2.0"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.0.0"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$LIBVCX_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_CODECOV::codecov:$CODECOV_HASH"
@@ -520,7 +520,7 @@ jobs:
                                 cd $HOME/libvcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
 
-  test-libvcx-image-pool_tests:
+  test-libvcx-image-pool-tests:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
@@ -583,6 +583,22 @@ jobs:
                               cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
 
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-test-libvcx-image-pool-tests
+          path: ./logs.tgz
+
+
   test-libvcx-mysql-integration:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
@@ -644,7 +660,23 @@ jobs:
                               bash -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "mysql_test")'
 
-  test-libvcx-image-agency_pool_tests:
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-test-libvcx-mysql-integration
+          path: ./logs.tgz
+
+
+  test-libvcx-image-agency-pool-tests:
     runs-on: ubuntu-20.04
     needs: [workflow-setup, build-image-indypool, build-image-libvcx]
     env:
@@ -706,6 +738,22 @@ jobs:
                               cargo --version && \
                               rustc --version && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
+
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-test-libvcx-image-agency-pool-tests
+          path: ./logs.tgz
+
 
   test-android-build:
     runs-on: ubuntu-20.04
@@ -860,6 +908,21 @@ jobs:
                                 cd $HOME/agents/node/vcxagent-core && npm install && \
                                 cd $HOME/agents/node/vcxagent-cli && npm install && \
                                 cd $HOME/agents/node/vcxagent-core && npm run test:integration)'
+
+      - name: Collect docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs-test-integration-node-wrapper
+          path: ./logs.tgz
 
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
@@ -1043,7 +1106,7 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
@@ -1091,7 +1154,7 @@ jobs:
 
   publish-agent-core:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-node-wrapper, test-integration-node-wrapper]
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       CACHE_KEY_LIBVCX: ${{needs.workflow-setup.outputs.CACHE_KEY_LIBVCX}}
@@ -1138,7 +1201,7 @@ jobs:
 
   make-release:
     runs-on: ubuntu-20.04
-    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool_tests, test-libvcx-image-agency_pool_tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
+    needs: [workflow-setup, build-image-indypool, build-image-libvcx, build-image-android, publish-ios-wrapper, publish-android-wrapper-device, publish-android-wrapper-emulator, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-android-build, test-node-wrapper, test-integration-node-wrapper]
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
