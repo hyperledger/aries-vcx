@@ -123,12 +123,12 @@ mod tests {
         check_req_attrs
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_proof_request_msg() {
+    async fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create("Test").unwrap()
+        let request = ProofRequestData::create("Test").await.unwrap()
             .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
             .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap()
             .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
@@ -144,32 +144,32 @@ mod tests {
         assert_eq!(msg_as_value["requested_predicates"]["predicate_0"]["name"], "age");
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_requested_attrs_constructed_correctly() {
+    async fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create("").unwrap()
+        let request = ProofRequestData::create("").await.unwrap()
             .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap();
         assert_eq!(request.requested_attributes, _expected_req_attrs());
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_requested_attrs_constructed_correctly_preformatted() {
+    async fn test_requested_attrs_constructed_correctly_preformatted() {
         let _setup = SetupDefaults::init();
 
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
-        let request = ProofRequestData::create("").unwrap()
+        let request = ProofRequestData::create("").await.unwrap()
             .set_requested_attributes_as_string(req_attrs_string).unwrap();
         assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_requested_predicates_constructed_correctly() {
+    async fn test_requested_predicates_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
         let mut check_predicates: HashMap<String, PredicateInfo> = HashMap::new();
@@ -198,14 +198,14 @@ mod tests {
         }"#).unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let request = ProofRequestData::create("").unwrap()
+        let request = ProofRequestData::create("").await.unwrap()
             .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
         assert_eq!(request.requested_predicates, check_predicates);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_requested_attrs_constructed_correctly_for_names() {
+    async fn test_requested_attrs_constructed_correctly_for_names() {
         let _setup = SetupDefaults::init();
 
         let attr_info = json!({
@@ -219,7 +219,7 @@ mod tests {
 
         let requested_attrs = json!([ attr_info, attr_info_2 ]).to_string();
 
-        let request = ProofRequestData::create("").unwrap()
+        let request = ProofRequestData::create("").await.unwrap()
             .set_requested_attributes_as_string(requested_attrs.into()).unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
@@ -228,9 +228,9 @@ mod tests {
         assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_should_return_error_if_name_and_names_passed_together() {
+    async fn test_should_return_error_if_name_and_names_passed_together() {
         let _setup = SetupDefaults::init();
 
         let attr_info = json!({
@@ -241,7 +241,7 @@ mod tests {
 
         let requested_attrs = json!([ attr_info ]).to_string();
 
-        let err = ProofRequestData::create("").unwrap()
+        let err = ProofRequestData::create("").await.unwrap()
             .set_requested_attributes_as_string(requested_attrs.into()).unwrap_err();
 
         assert_eq!(VcxErrorKind::InvalidProofRequest, err.kind());

@@ -173,9 +173,9 @@ pub mod tests {
 
     use super::*;
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
+    async fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
@@ -191,16 +191,16 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_cred_defs_json_verifier(&credentials).unwrap();
+        let credential_json = build_cred_defs_json_verifier(&credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({CRED_DEF_ID:json}).to_string();
         assert_eq!(credential_json, expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_build_schemas_json_verifier_with_multiple_schemas() {
+    async fn test_build_schemas_json_verifier_with_multiple_schemas() {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
@@ -216,16 +216,16 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(&credentials).unwrap();
+        let schema_json = build_schemas_json_verifier(&credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(SCHEMA_JSON).unwrap();
         let expected = json!({SCHEMA_ID:json}).to_string();
         assert_eq!(schema_json, expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_build_rev_reg_defs_json() {
+    async fn test_build_rev_reg_defs_json() {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
@@ -241,16 +241,16 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_defs_json = build_rev_reg_defs_json(&credentials).unwrap();
+        let rev_reg_defs_json = build_rev_reg_defs_json(&credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
         let expected = json!({REV_REG_ID:json}).to_string();
         assert_eq!(rev_reg_defs_json, expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_build_rev_reg_json() {
+    async fn test_build_rev_reg_json() {
         let _setup = SetupMocks::init();
 
         let cred1 = CredInfoVerifier {
@@ -266,7 +266,7 @@ pub mod tests {
             timestamp: Some(2),
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(&credentials).unwrap();
+        let rev_reg_json = build_rev_reg_json(&credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(REV_REG_JSON).unwrap();
         let expected = json!({REV_REG_ID:{"1":json}}).to_string();

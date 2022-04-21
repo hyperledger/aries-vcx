@@ -83,6 +83,7 @@ version = "0.35.0"
 dependencies = [
  "agency_client",
  "android_logger",
+ "async-trait",
  "base64 0.8.0",
  "chrono",
  "derive_builder",

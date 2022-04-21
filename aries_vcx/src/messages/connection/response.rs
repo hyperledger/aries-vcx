@@ -224,12 +224,12 @@ pub mod tests {
         assert_eq!(_response(), response);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_response_encode_works() {
-        let setup = setup_wallet();
-        let trustee_key = create_trustee_key(setup.wh);
-        let signed_response: SignedResponse = _response().encode(&trustee_key).unwrap();
-        assert_eq!(_response(), signed_response.decode(&trustee_key).unwrap());
+    async fn test_response_encode_works() {
+        let setup = setup_wallet().await;
+        let trustee_key = create_trustee_key(setup.wh).await;
+        let signed_response: SignedResponse = _response().encode(&trustee_key).await.unwrap();
+        assert_eq!(_response(), signed_response.decode(&trustee_key).await.unwrap());
     }
 }

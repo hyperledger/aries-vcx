@@ -505,7 +505,7 @@ pub extern fn vcx_credential_send_request(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::send_credential_request(credential_handle, connection_handle).await {
             Ok(err) => {
-                trace!("vcx_credential_send_request_cb(command_handle: {}, rc: {}) source_id: {}",
+                trace!("vcx_credential_send_request_cb(command_hanndle: {}, rc: {}) source_id: {}",
                        command_handle, err.to_string(), source_id);
                 cb(command_handle, err);
             }

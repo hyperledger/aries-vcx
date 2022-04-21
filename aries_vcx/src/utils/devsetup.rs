@@ -276,10 +276,10 @@ impl Drop for SetupAgencyMock {
 }
 
 impl SetupLibraryAgencyV2 {
-    pub fn init() -> SetupLibraryAgencyV2 {
+    pub async fn init() -> SetupLibraryAgencyV2 {
         setup();
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
-        setup_agency_env();
+        setup_agency_env().await;
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
     }
@@ -373,12 +373,12 @@ pub async fn setup_indy_env() -> String {
     institution_did
 }
 
-pub async fn cleanup_indy_env() {
-    delete_test_pool().await;
+pub fn cleanup_indy_env() {
+    futures::executor::block_on(delete_test_pool());
 }
 
-pub async fn cleanup_agency_env() {
-    delete_test_pool().await;
+pub fn cleanup_agency_env() {
+    futures::executor::block_on(delete_test_pool());
 }
 
 pub async fn setup_agency_env() {

@@ -506,8 +506,8 @@ pub mod test {
             VcxResult::Ok(())
         }
 
-        pub fn invitee_sm() -> SmConnectionInvitee {
-            let pairwise_info = PairwiseInfo::create().unwrap();
+        pub async fn invitee_sm() -> SmConnectionInvitee {
+            let pairwise_info = PairwiseInfo::create().await.unwrap();
             SmConnectionInvitee::new(&source_id(), pairwise_info)
         }
 
@@ -533,38 +533,38 @@ pub mod test {
                 let routing_keys: Vec<String> = vec!(key.clone());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint, _send_message).await.unwrap();
-                self = self.handle_connection_response(_response(&key)).unwrap();
+                self = self.handle_connection_response(_response(&key).await).unwrap();
                 self = self.handle_send_ack(&_send_message).await.unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
             }
         }
 
-        fn _response(key: &str) -> SignedResponse {
+        async fn _response(key: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id(&_request().id.0)
-                .encode(&key).unwrap()
+                .encode(&key).await.unwrap()
         }
 
-        fn _response_1(key: &str) -> SignedResponse {
+        async fn _response_1(key: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id("testid_1")
-                .encode(&key).unwrap()
+                .encode(&key).await.unwrap()
         }
 
         mod new {
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_invitee_new() {
+            async fn test_invitee_new() {
                 let _setup = SetupMocks::init();
 
-                let invitee_sm = invitee_sm();
+                let invitee_sm = invitee_sm().await;
 
                 assert_match!(InviteeFullState::Initial(_), invitee_sm.state);
                 assert_eq!(source_id(), invitee_sm.source_id());
@@ -579,7 +579,7 @@ pub mod test {
             async fn handle_response_fails_with_incorrect_thread_id() {
                 let _setup = SetupMocks::init();
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-                let mut invitee = invitee_sm();
+                let mut invitee = invitee_sm().await;
 
                 invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
@@ -587,7 +587,7 @@ pub mod test {
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee.handle_connect(routing_keys, service_endpoint, _send_message).await.unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
-                invitee = invitee.handle_connection_response(_response_1(&key)).unwrap();
+                invitee = invitee.handle_connection_response(_response_1(&key).await).unwrap();
                 assert_match!(InviteeState::Responded, invitee.get_state());
                 invitee = invitee.handle_send_ack(&_send_message).await.unwrap();
                 assert_match!(InviteeState::Initial, invitee.get_state());
@@ -599,22 +599,22 @@ pub mod test {
 
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_init() {
+            async fn test_did_exchange_init() {
                 let _setup = SetupIndyMocks::init();
 
-                let did_exchange_sm = invitee_sm();
+                let did_exchange_sm = invitee_sm().await;
 
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_invite_message_from_null_state() {
+            async fn test_did_exchange_handle_invite_message_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm();
+                let mut did_exchange_sm = invitee_sm().await;
 
                 did_exchange_sm = did_exchange_sm.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
 
@@ -626,7 +626,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_message_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm();
+                let mut did_exchange_sm = invitee_sm().await;
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -642,7 +642,7 @@ pub mod test {
             async fn test_did_exchange_handle_connect_message_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_invited_state();
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -651,12 +651,12 @@ pub mod test {
                 assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
             }
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_problem_report_message_from_invited_state() {
+            async fn test_did_exchange_handle_problem_report_message_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_invited_state();
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
@@ -670,9 +670,9 @@ pub mod test {
 
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL";
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_requested_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
-                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(&key)).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(&key).await).unwrap();
                 did_exchange_sm = did_exchange_sm.handle_send_ack(&_send_message).await.unwrap();
 
                 assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
@@ -684,7 +684,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_messages_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_invited_state();
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_invited_state();
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
@@ -698,7 +698,7 @@ pub mod test {
             async fn test_did_exchange_handle_invalid_response_message_from_requested_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_requested_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 let mut signed_response = _signed_response();
                 signed_response.connection_sig.signature = String::from("other");
@@ -714,7 +714,7 @@ pub mod test {
             async fn test_did_exchange_handle_problem_report_message_from_requested_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_requested_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
@@ -726,7 +726,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_messages_from_requested_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_requested_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
@@ -740,7 +740,7 @@ pub mod test {
             async fn test_did_exchange_handle_messages_from_completed_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = invitee_sm().to_invitee_completed_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_completed_state().await;
 
                 // Send Ping
                 did_exchange_sm = did_exchange_sm.handle_send_ping(None, _send_message).await.unwrap();
@@ -786,12 +786,12 @@ pub mod test {
 
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_find_message_to_handle_from_invited_state() {
+            async fn test_find_message_to_handle_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = invitee_sm().to_invitee_invited_state();
+                let connection = invitee_sm().await.to_invitee_invited_state();
 
                 // No messages
                 {
@@ -812,7 +812,7 @@ pub mod test {
             async fn test_find_message_to_handle_from_requested_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = invitee_sm().to_invitee_requested_state().await;
+                let connection = invitee_sm().await.to_invitee_requested_state().await;
 
                 // Connection Response
                 {
@@ -856,7 +856,7 @@ pub mod test {
             async fn test_find_message_to_handle_from_completed_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = invitee_sm().to_invitee_completed_state().await;
+                let connection = invitee_sm().await.to_invitee_completed_state().await;
 
                 // Ping
                 {
@@ -924,9 +924,9 @@ pub mod test {
             async fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(InviteeState::Initial, invitee_sm().get_state());
-                assert_eq!(InviteeState::Invited, invitee_sm().to_invitee_invited_state().get_state());
-                assert_eq!(InviteeState::Requested, invitee_sm().to_invitee_requested_state().await.get_state());
+                assert_eq!(InviteeState::Initial, invitee_sm().await.get_state());
+                assert_eq!(InviteeState::Invited, invitee_sm().await.to_invitee_invited_state().get_state());
+                assert_eq!(InviteeState::Requested, invitee_sm().await.to_invitee_requested_state().await.get_state());
             }
         }
     }

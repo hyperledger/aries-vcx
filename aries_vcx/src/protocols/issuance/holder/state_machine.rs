@@ -765,9 +765,9 @@ mod test {
         #[cfg(feature = "general_test")]
         async fn test_is_revokable() {
             let _setup = SetupMocks::init();
-            assert_eq!(true, _holder_sm().is_revokable().unwrap());
-            assert_eq!(true, _holder_sm().to_request_sent_state().await.is_revokable().unwrap());
-            assert_eq!(true, _holder_sm().to_finished_state().await.is_revokable().unwrap());
+            assert_eq!(true, _holder_sm().is_revokable().await.unwrap());
+            assert_eq!(true, _holder_sm().to_request_sent_state().await.is_revokable().await.unwrap());
+            assert_eq!(true, _holder_sm().to_finished_state().await.is_revokable().await.unwrap());
         }
     }
 }

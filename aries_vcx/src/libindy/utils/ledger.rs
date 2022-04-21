@@ -478,11 +478,11 @@ mod test {
 
     use super::*;
 
-    pub fn add_service_old(did: &str, service: &FullService) -> VcxResult<String> {
+    pub async fn add_service_old(did: &str, service: &FullService) -> VcxResult<String> {
         let ser_service = serde_json::to_string(service)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
         let attrib_json = json!({ "service": ser_service }).to_string();
-        add_attr(did, &attrib_json)
+        add_attr(did, &attrib_json).await
     }
 
     #[test]
@@ -510,16 +510,16 @@ mod test {
 
         use crate::libindy::utils::ledger::add_new_did;
 
-        let (author_did, _) = add_new_did(None);
-        let (endorser_did, _) = add_new_did(Some("ENDORSER"));
+        let (author_did, _) = add_new_did(None).await;
+        let (endorser_did, _) = add_new_did(Some("ENDORSER")).await;
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
 
-        let schema_request = libindy_build_schema_request(&author_did, utils::constants::SCHEMA_DATA).unwrap();
+        let schema_request = libindy_build_schema_request(&author_did, utils::constants::SCHEMA_DATA).await.unwrap();
         let schema_request = ledger::append_request_endorser(&schema_request, &endorser_did).await.unwrap();
-        let schema_request = multisign_request(&author_did, &schema_request).unwrap();
+        let schema_request = multisign_request(&author_did, &schema_request).await.unwrap();
 
-        endorse_transaction(&schema_request).unwrap();
+        endorse_transaction(&schema_request).await.unwrap();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -529,9 +529,9 @@ mod test {
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();
-        add_service(&did, &expect_service).unwrap();
+        add_service(&did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
-        let service = get_service(&Did::new(&did).unwrap()).unwrap();
+        let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
 
         assert_eq!(expect_service, service)
     }
@@ -543,9 +543,9 @@ mod test {
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();
-        add_service_old(&did, &expect_service).unwrap();
+        add_service_old(&did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
-        let service = get_service(&Did::new(&did).unwrap()).unwrap();
+        let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
 
         assert_eq!(expect_service, service)
     }

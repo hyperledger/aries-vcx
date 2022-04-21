@@ -180,14 +180,14 @@ mod tests {
     async fn test_retrieve_credentials() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
-        let (_, _, req, _) = create_proof();
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
+        let (_, _, req, _) = create_proof().await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        let retrieved_creds = proof.retrieve_credentials().await.unwrap();
         assert!(retrieved_creds.len() > 500);
     }
 
@@ -208,7 +208,7 @@ mod tests {
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        let retrieved_creds = proof.retrieve_credentials().await.unwrap();
         assert_eq!(retrieved_creds, "{}".to_string());
 
         req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
@@ -216,7 +216,7 @@ mod tests {
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        let retrieved_creds = proof.retrieve_credentials().await.unwrap();
         assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
     }
 
@@ -224,7 +224,7 @@ mod tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWithWalletAndAgency::init().await;
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -244,7 +244,7 @@ mod tests {
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
         // All lower case
-        let retrieved_creds = proof.retrieve_credentials().unwrap();
+        let retrieved_creds = proof.retrieve_credentials().await.unwrap();
         assert!(retrieved_creds.contains(r#""zip":"84000""#));
         let ret_creds_as_value: serde_json::Value = serde_json::from_str(&retrieved_creds).unwrap();
         assert_eq!(ret_creds_as_value["attrs"]["zip_1"][0]["cred_info"]["attrs"]["zip"], "84000");
@@ -254,7 +254,7 @@ mod tests {
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
-        let retrieved_creds2 = proof.retrieve_credentials().unwrap();
+        let retrieved_creds2 = proof.retrieve_credentials().await.unwrap();
         assert!(retrieved_creds2.contains(r#""zip":"84000""#));
 
         // Entire word upper
@@ -262,18 +262,18 @@ mod tests {
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
-        let retrieved_creds3 = proof.retrieve_credentials().unwrap();
+        let retrieved_creds3 = proof.retrieve_credentials().await.unwrap();
         assert!(retrieved_creds3.contains(r#""zip":"84000""#));
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn test_retrieve_credentials_fails_with_no_proof_req() {
+    #[tokio::test]
+    async fn test_retrieve_credentials_fails_with_no_proof_req() {
         let _setup = SetupLibraryWallet::init();
 
         let proof_req = PresentationRequest::create();
         let proof = Prover::create_from_request("1", proof_req).unwrap();
-        assert_eq!(proof.retrieve_credentials().unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(proof.retrieve_credentials().await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -281,7 +281,7 @@ mod tests {
     async fn test_generate_proof() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -306,7 +306,7 @@ mod tests {
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
+        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().await.unwrap()).unwrap();
         let selected_credentials: serde_json::Value = json!({
            "attrs":{
               "address1_1": {
@@ -366,7 +366,7 @@ mod tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -393,7 +393,7 @@ mod tests {
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
-        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().unwrap()).unwrap();
+        let all_creds: serde_json::Value = serde_json::from_str(&proof.retrieve_credentials().await.unwrap()).unwrap();
         let selected_credentials: serde_json::Value = json!({
            "attrs":{
               "address1_1": {

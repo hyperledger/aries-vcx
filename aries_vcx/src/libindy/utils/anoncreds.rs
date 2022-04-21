@@ -917,7 +917,7 @@ pub mod tests {
     async fn test_prover_verify_proof() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof();
+        let (schemas, cred_defs, proof_req, proof) = create_proof().await;
 
         let proof_validation = libindy_verifier_verify_proof(
             &proof_req,
@@ -926,7 +926,7 @@ pub mod tests {
             &cred_defs,
             "{}",
             "{}",
-        ).unwrap();
+        ).await.unwrap();
 
         assert!(proof_validation);
     }
@@ -936,7 +936,7 @@ pub mod tests {
     async fn test_prover_verify_proof_with_predicate_success_case() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(true);
+        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(true).await;
 
         let proof_validation = libindy_verifier_verify_proof(
             &proof_req,
@@ -945,7 +945,7 @@ pub mod tests {
             &cred_defs,
             "{}",
             "{}",
-        ).unwrap();
+        ).await.unwrap();
 
         assert!(proof_validation);
     }
@@ -955,7 +955,7 @@ pub mod tests {
     async fn test_prover_verify_proof_with_predicate_fail_case() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(false);
+        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(false).await;
 
         libindy_verifier_verify_proof(
             &proof_req,
@@ -964,16 +964,16 @@ pub mod tests {
             &cred_defs,
             "{}",
             "{}",
-        ).unwrap_err();
+        ).await.unwrap_err();
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn tests_libindy_prover_get_credentials() {
-        let _setup = SetupLibraryWallet::init();
+    #[tokio::test]
+    async fn tests_libindy_prover_get_credentials() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let proof_req = "{";
-        let result = libindy_prover_get_credentials_for_proof_req(&proof_req);
+        let result = libindy_prover_get_credentials_for_proof_req(&proof_req).await;
         assert_eq!(result.unwrap_err().kind(), VcxErrorKind::InvalidProofRequest);
 
         let proof_req = json!({
@@ -990,9 +990,9 @@ pub mod tests {
            }),
            "requested_predicates": json!({}),
         }).to_string();
-        let _result = libindy_prover_get_credentials_for_proof_req(&proof_req).unwrap();
+        let _result = libindy_prover_get_credentials_for_proof_req(&proof_req).await.unwrap();
 
-        let result_malformed_json = libindy_prover_get_credentials_for_proof_req("{}").unwrap_err();
+        let result_malformed_json = libindy_prover_get_credentials_for_proof_req("{}").await.unwrap_err();
         assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
     }
 
@@ -1001,22 +1001,22 @@ pub mod tests {
     async fn test_issuer_revoke_credential() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), "", "");
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), "", "").await;
         assert!(rc.is_err());
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
-        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap());
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
+        let rc = libindy_issuer_revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id.unwrap(), &cred_rev_id.unwrap()).await;
 
         assert!(rc.is_ok());
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_cred_def() {
+    #[tokio::test]
+    async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
-        let (id, _) = generate_cred_def("did", SCHEMAS_JSON, "tag_1", None, Some(false)).unwrap();
+        let (id, _) = generate_cred_def("did", SCHEMAS_JSON, "tag_1", None, Some(false)).await.unwrap();
         assert_eq!(id, CRED_DEF_ID);
     }
 
@@ -1025,12 +1025,12 @@ pub mod tests {
     async fn test_create_cred_def_real() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let (_, schema_json) = get_schema_json(&schema_id).unwrap();
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (_, schema_json) = get_schema_json(&schema_id).await.unwrap();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let (_, cred_def_json) = generate_cred_def(&did, &schema_json, "tag_1", None, Some(true)).unwrap();
-        publish_cred_def(&did, &cred_def_json).unwrap();
+        let (_, cred_def_json) = generate_cred_def(&did, &schema_json, "tag_1", None, Some(true)).await.unwrap();
+        publish_cred_def(&did, &cred_def_json).await.unwrap();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1040,9 +1040,9 @@ pub mod tests {
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
-        let (_, _, cred_def_id, _, _) = create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+        let (_, _, cred_def_id, _, _) = create_and_store_credential_def(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let rc = generate_rev_reg(&did, &cred_def_id, get_temp_dir_path("path.txt").to_str().unwrap(), 2, "tag1");
+        let rc = generate_rev_reg(&did, &cred_def_id, get_temp_dir_path("path.txt").to_str().unwrap(), 2, "tag1").await;
 
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::LibindyInvalidStructure);
     }
@@ -1052,15 +1052,15 @@ pub mod tests {
     async fn test_create_rev_reg_def() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
-        let (_, schema_json) = get_schema_json(&schema_id).unwrap();
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (_, schema_json) = get_schema_json(&schema_id).await.unwrap();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let (cred_def_id, cred_def_json) = generate_cred_def(&did, &schema_json, "tag_1", None, Some(true)).unwrap();
-        publish_cred_def(&did, &cred_def_json).unwrap();
-        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(&did, &cred_def_id, "tails.txt", 2, "tag1").unwrap();
-        publish_rev_reg_def(&did, &rev_reg_def_json).unwrap();
-        publish_rev_reg_delta(&did, &rev_reg_def_id, &rev_reg_entry_json).unwrap();
+        let (cred_def_id, cred_def_json) = generate_cred_def(&did, &schema_json, "tag_1", None, Some(true)).await.unwrap();
+        publish_cred_def(&did, &cred_def_json).await.unwrap();
+        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(&did, &cred_def_id, "tails.txt", 2, "tag1").await.unwrap();
+        publish_rev_reg_def(&did, &rev_reg_def_json).await.unwrap();
+        publish_rev_reg_delta(&did, &rev_reg_def_id, &rev_reg_entry_json).await.unwrap();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1069,10 +1069,10 @@ pub mod tests {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true).await;
 
         let rev_reg_id = rev_reg_id.unwrap();
-        let (id, _json) = get_rev_reg_def_json(&rev_reg_id).unwrap();
+        let (id, _json) = get_rev_reg_def_json(&rev_reg_id).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 
@@ -1082,10 +1082,10 @@ pub mod tests {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true).await;
         let rev_reg_id = rev_reg_id.unwrap();
 
-        let (id, _delta, _timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).unwrap();
+        let (id, _delta, _timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 
@@ -1095,10 +1095,10 @@ pub mod tests {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true);
+        let (_, _, _, _, rev_reg_id) = create_and_store_credential_def(attrs, true).await;
         let rev_reg_id = rev_reg_id.unwrap();
 
-        let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).unwrap();
+        let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 
@@ -1108,9 +1108,9 @@ pub mod tests {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_credential_def(attrs, true);
+        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_credential_def(attrs, true).await;
 
-        let (id, cred_def) = get_cred_def(None, &cred_def_id).unwrap();
+        let (id, cred_def) = get_cred_def(None, &cred_def_id).await.unwrap();
         assert_eq!(id, cred_def_id);
         assert_eq!(serde_json::from_str::<serde_json::Value>(&cred_def).unwrap(), serde_json::from_str::<serde_json::Value>(&cred_def_json).unwrap());
     }
@@ -1120,7 +1120,7 @@ pub mod tests {
     async fn test_is_cred_def_on_ledger() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").unwrap(), false);
+        assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").await.unwrap(), false);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1128,20 +1128,20 @@ pub mod tests {
     async fn from_pool_ledger_with_id() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _schema_json) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _schema_json) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
-        let rc = get_schema_json(&schema_id);
+        let rc = get_schema_json(&schema_id).await;
 
         let (_id, retrieved_schema) = rc.unwrap();
         assert!(retrieved_schema.contains(&schema_id));
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn from_ledger_schema_id() {
+    #[tokio::test]
+    async fn from_ledger_schema_id() {
         let _setup = SetupMocks::init();
 
-        let (id, retrieved_schema) = get_schema_json(SCHEMA_ID).unwrap();
+        let (id, retrieved_schema) = get_schema_json(SCHEMA_ID).await.unwrap();
         assert_eq!(&retrieved_schema, SCHEMA_JSON);
         assert_eq!(&id, SCHEMA_ID);
     }
@@ -1152,19 +1152,19 @@ pub mod tests {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
 
         let rev_reg_id = rev_reg_id.unwrap();
-        let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).unwrap();
-        let (_, test_same_delta, test_same_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).unwrap();
+        let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (_, test_same_delta, test_same_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).unwrap();
+        revoke_credential(get_temp_dir_path(TAILS_DIR).to_str().unwrap(), &rev_reg_id, cred_rev_id.unwrap().as_str()).await.unwrap();
 
         // Delta should change after revocation
-        let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).unwrap();
+        let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).await.unwrap();
 
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
     }

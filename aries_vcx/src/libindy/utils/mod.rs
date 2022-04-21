@@ -104,13 +104,13 @@ pub mod tests {
     use super::*;
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_init_pool_and_wallet() {
+    #[tokio::test]
+    async fn test_init_pool_and_wallet() {
         let _setup_defaults = SetupDefaults::init();
-        let setup_wallet = SetupWallet::init();
-        let setup_pool = SetupPoolConfig::init();
+        let setup_wallet = SetupWallet::init().await;
+        let setup_pool = SetupPoolConfig::init().await;
 
-        open_main_pool(&setup_pool.pool_config).unwrap();
-        wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).unwrap();
+        open_main_pool(&setup_pool.pool_config).await.unwrap();
+        wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).await.unwrap();
     }
 }

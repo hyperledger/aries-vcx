@@ -277,9 +277,9 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[test]
-    fn test_update_agent_webhook_real() {
-        let _setup = SetupLibraryAgencyV2::init();
+    #[tokio::test]
+    async fn test_update_agent_webhook_real() {
+        let _setup = SetupLibraryAgencyV2::init().await;
 
         ::utils::devsetup::set_consumer(None);
         update_agent_webhook("https://example.org").unwrap();
