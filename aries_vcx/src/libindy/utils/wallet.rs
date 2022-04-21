@@ -364,7 +364,7 @@ pub mod tests {
         ("type1", "id1", "value1")
     }
 
-    pub fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
+    pub async fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
 
         let export_file = TempFile::prepare_path(wallet_name);
@@ -379,9 +379,9 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
-        let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
+        let _handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
-        let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
+        let (my_did, my_vk) = create_and_store_my_did(None, None).await.unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
         settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
@@ -389,11 +389,11 @@ pub mod tests {
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 
         let (type_, id, value) = _record();
-        add_record(type_, id, value, None).unwrap();
+        add_record(type_, id, value, None).await.unwrap();
 
-        export_main_wallet(&export_file.path, &backup_key).unwrap();
+        export_main_wallet(&export_file.path, &backup_key).await.unwrap();
 
-        close_main_wallet().unwrap();
+        close_main_wallet().await.unwrap();
 
         (export_file, wallet_name.to_string(), wallet_config)
     }

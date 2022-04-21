@@ -141,16 +141,15 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn is_revokable(handle: u32) -> VcxResult<bool> {
-    HANDLE_MAP.get(handle, |credential| {
-        credential.is_revokable().map_err(|err| err.into())
-    })
+pub async fn is_revokable(handle: u32) -> VcxResult<bool> {
+    let credential = HANDLE_MAP.get_cloned(handle)?;
+    credential.is_revokable().await.map_err(|err| err.into())
 }
 
-pub fn delete_credential(handle: u32) -> VcxResult<u32> {
+pub async fn delete_credential(handle: u32) -> VcxResult<u32> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle );
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    credential.delete_credential()?;
+    credential.delete_credential().await?;
     HANDLE_MAP.release(handle)?;
     Ok(error::SUCCESS.code_num)
 }

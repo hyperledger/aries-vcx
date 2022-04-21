@@ -160,10 +160,9 @@ pub async fn decline_presentation_request(handle: u32, connection_handle: u32, r
     Ok(error::SUCCESS.code_num)
 }
 
-pub fn retrieve_credentials(handle: u32) -> VcxResult<String> {
-    HANDLE_MAP.get(handle, |proof| {
-        proof.retrieve_credentials().map_err(|err| err.into())
-    })
+pub async fn retrieve_credentials(handle: u32) -> VcxResult<String> {
+    let proof = HANDLE_MAP.get_cloned(handle)?;
+    proof.retrieve_credentials().await.map_err(|err| err.into())
 }
 
 pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {

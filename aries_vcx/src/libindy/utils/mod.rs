@@ -85,8 +85,8 @@ pub mod test_setup {
     impl Drop for WalletSetup {
         fn drop(&mut self) {
             if self.wh.0 != 0 {
-                indy::wallet::close_wallet(self.wh).await.unwrap();
-                indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS).await.unwrap();
+                futures::executor::block_on(indy::wallet::close_wallet(self.wh)).unwrap();
+                futures::executor::block_on(indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS)).unwrap();
             }
         }
     }

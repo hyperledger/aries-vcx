@@ -14,8 +14,8 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error_vcx};
-use crate::api_lib::utils::runtime::{execute, execute_async};
+use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::runtime::execute_async;
 
 /// Provision an agent in the agency.
 ///
@@ -413,8 +413,8 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
     trace!("vcx_endorse_transaction(command_handle: {}, transaction: {})",
            command_handle, transaction);
 
-    execute(move || {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction).await {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -430,7 +430,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

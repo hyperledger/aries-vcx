@@ -14,7 +14,7 @@ lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
 }
 
-pub fn create_and_publish_schema(source_id: &str,
+pub async fn create_and_publish_schema(source_id: &str,
                                  issuer_did: String,
                                  name: String,
                                  version: String,
@@ -22,8 +22,8 @@ pub fn create_and_publish_schema(source_id: &str,
     trace!("create_new_schema >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}", source_id, issuer_did, name, version, data);
     debug!("creating schema with source_id: {}, name: {}, issuer_did: {}", source_id, name, issuer_did);
 
-    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
-    anoncreds::publish_schema(&schema)?;
+    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await?;
+    anoncreds::publish_schema(&schema).await?;
 
     debug!("created schema on ledger with id: {}", schema_id);
 
@@ -32,7 +32,7 @@ pub fn create_and_publish_schema(source_id: &str,
     Ok(schema_handle)
 }
 
-pub fn prepare_schema_for_endorser(source_id: &str,
+pub async fn prepare_schema_for_endorser(source_id: &str,
                                    issuer_did: String,
                                    name: String,
                                    version: String,
@@ -41,9 +41,9 @@ pub fn prepare_schema_for_endorser(source_id: &str,
     trace!("create_schema_for_endorser >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}, endorser: {}", source_id, issuer_did, name, version, data, endorser);
     debug!("preparing schema for endorser with source_id: {}, name: {}, issuer_did: {}", source_id, name, issuer_did);
 
-    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data)?;
-    let schema_request = anoncreds::build_schema_request(&schema)?;
-    let schema_request = ledger::set_endorser(&schema_request, &endorser)?;
+    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await?;
+    let schema_request = anoncreds::build_schema_request(&schema).await?;
+    let schema_request = ledger::set_endorser(&schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
@@ -71,10 +71,11 @@ fn _store_schema(source_id: &str,
         .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))
 }
 
-pub fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32, String)> {
+pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32, String)> {
     trace!("get_schema_attrs >>> source_id: {}, schema_id: {}", source_id, schema_id);
 
     let (schema_id, schema_data_json) = anoncreds::get_schema_json(&schema_id)
+        .await
         .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
 
     let schema_data: SchemaData = serde_json::from_str(&schema_data_json)
@@ -133,9 +134,9 @@ pub fn release_all() {
     SCHEMA_MAP.drain().ok();
 }
 
-pub fn update_state(handle: u32) -> VcxResult<u32> {
+pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut schema = SCHEMA_MAP.get_cloned(handle)?;
-    let res = schema.update_state()?;
+    let res = schema.update_state().await?;
     SCHEMA_MAP.insert(handle, schema)?;
     Ok(res)
 }

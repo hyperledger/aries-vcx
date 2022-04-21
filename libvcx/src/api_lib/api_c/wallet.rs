@@ -1,7 +1,7 @@
 use std::ptr::null;
-use std::thread;
 
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
@@ -12,7 +12,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::execute_async;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///
@@ -56,8 +56,8 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
         }
     };
 
-    thread::spawn(move || {
-        match wallet::create_wallet(&wallet_config) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::create_wallet(&wallet_config).await {
             Err(err) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());
@@ -68,7 +68,8 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
                 cb(command_handle, 0);
             }
         }
-    });
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }
@@ -101,8 +102,8 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
     trace!("vcx_configure_issuer_wallet(command_handle: {}, enterprise_seed: {})",
            command_handle, enterprise_seed);
 
-    thread::spawn(move || {
-        match wallet::configure_issuer_wallet(&enterprise_seed) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::configure_issuer_wallet(&enterprise_seed).await {
             Err(err) => {
                 error!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into(), null());
@@ -115,7 +116,8 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
                 cb(command_handle, 0, conf.as_ptr());
             }
         }
-    });
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }
@@ -151,8 +153,8 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
 
     trace!("vcx_open_main_wallet(command_handle: {})", command_handle);
 
-    thread::spawn(move || {
-        match open_as_main_wallet(&wallet_config) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match open_as_main_wallet(&wallet_config).await {
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_open_main_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
@@ -164,7 +166,8 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
                 cb(command_handle, 0, wh.0);
             }
         }
-    });
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }
@@ -185,8 +188,8 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
 
     trace!("vcx_close_main_wallet(command_handle: {})", command_handle);
 
-    thread::spawn(move || {
-        match wallet::close_main_wallet() {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::close_main_wallet().await {
             Err(err) => {
                 error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());
@@ -197,7 +200,8 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
                 cb(command_handle, 0);
             }
         }
-    });
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }
@@ -247,8 +251,8 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
     trace!("vcx_wallet_add_record(command_handle: {}, type_: {}, id: {}, value: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&value), secret!(&tags_json));
 
-    execute(move || {
-        match wallet::add_record(&type_, &id, &value, Some(&tags_json)) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::add_record(&type_, &id, &value, Some(&tags_json)).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -265,7 +269,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -303,8 +307,8 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
     trace!("vcx_wallet_update_record_value(command_handle: {}, type_: {}, id: {}, value: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&value));
 
-    execute(move || {
-        match wallet::update_record_value(&type_, &id, &value) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::update_record_value(&type_, &id, &value).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -321,7 +325,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -359,8 +363,8 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_update_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
-    execute(move || {
-        match wallet::update_record_tags(&type_, &id, &tags_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::update_record_tags(&type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -377,7 +381,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -415,8 +419,8 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_add_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
-    execute(move || {
-        match wallet::add_record_tags(&type_, &id, &tags_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::add_record_tags(&type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -433,7 +437,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -471,8 +475,8 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
     trace!("vcx_wallet_delete_record_tags(command_handle: {}, type_: {}, id: {}, tag_names_json: {})",
            command_handle, secret!(&type_), secret!(&id), secret!(&tag_names_json));
 
-    execute(move || {
-        match wallet::delete_record_tags(&type_, &id, &tag_names_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::delete_record_tags(&type_, &id, &tag_names_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -489,7 +493,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -526,8 +530,8 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
     trace!("vcx_wallet_get_record(command_handle: {}, type_: {}, id: {}, options: {})",
            command_handle, secret!(&type_), secret!(&id), options_json);
 
-    execute(move || {
-        match wallet::get_record(&type_, &id, &options_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::get_record(&type_, &id, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -547,7 +551,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -582,8 +586,8 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
     trace!("vcx_wallet_delete_record(command_handle: {}, type_: {}, id: {})",
            command_handle, secret!(&type_), secret!(&id));
 
-    execute(move || {
-        match wallet::delete_record(&type_, &id) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::delete_record(&type_, &id).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -600,7 +604,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -650,8 +654,8 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
     trace!("vcx_wallet_open_search(command_handle: {}, type_: {}, query_json: {}, options_json: {})",
            command_handle, secret!(&type_), secret!(&query_json), secret!(&options_json));
 
-    execute(move || {
-        match wallet::open_search(&type_, &query_json, &options_json) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::open_search(&type_, &query_json, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -668,7 +672,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -706,8 +710,8 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
     trace!("vcx_wallet_search_next_records(command_handle: {}, wallet_search_handle: {})",
            command_handle, wallet_search_handle);
 
-    execute(move || {
-        match wallet::fetch_next_records(wallet_search_handle, count) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::fetch_next_records(wallet_search_handle, count).await {
             Ok(err) => {
                 trace!("vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -727,7 +731,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -755,10 +759,10 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
     trace!("vcx_wallet_close_search(command_handle: {}, search_handle: {})",
            command_handle, search_handle);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_close_search(command_handle: {}, rc: {})",
                command_handle, error::SUCCESS.message);
-        match wallet::close_search(search_handle) {
+        match wallet::close_search(search_handle).await {
             Ok(()) => {
                 trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
@@ -770,7 +774,7 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -804,9 +808,9 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
            command_handle, path);
 
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_export(command_handle: {}, path: {}, backup_key: ****)", command_handle, path);
-        match export_main_wallet(&path, &backup_key) {
+        match export_main_wallet(&path, &backup_key).await {
             Ok(()) => {
                 let return_code = error::SUCCESS.code_num;
                 trace!("vcx_wallet_export(command_handle: {}, rc: {})", command_handle, return_code);
@@ -819,7 +823,7 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -864,9 +868,9 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
         }
     };
 
-    thread::spawn(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_import(command_handle: {}, config: ****)", command_handle);
-        match import(&config) {
+        match import(&config).await {
             Ok(()) => {
                 trace!("vcx_wallet_import(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
@@ -876,7 +880,8 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
                 cb(command_handle, err.into());
             }
         };
-    });
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }

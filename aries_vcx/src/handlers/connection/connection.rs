@@ -738,7 +738,7 @@ impl Connection {
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
                     .await?)
                     .then(|msg| msg.decrypt_auth(&expected_sender_vk))
-                    .filter_map(|res| async { if res.is_ok() { res.ok() } else { None } })
+                    .filter_map(|res| async { res.ok() })
                     .collect::<Vec<Message>>()
                     .await;
                 Ok(msgs)

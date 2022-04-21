@@ -110,28 +110,27 @@ pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
+pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
     trace!("connection_exists >>> handle: {}, conn_handles: {:?}", handle, conn_handles);
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
-        let mut conn_map = HashMap::new();
-        for conn_handle in conn_handles {
-            let connection = CONNECTION_MAP.get_cloned(*conn_handle)?;
-            conn_map.insert(*conn_handle, connection);
-        };
-        let connections = conn_map.values().collect();
+    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
+    let mut conn_map = HashMap::new();
+    for conn_handle in conn_handles {
+        let connection = CONNECTION_MAP.get_cloned(*conn_handle)?;
+        conn_map.insert(*conn_handle, connection);
+    };
+    let connections = conn_map.values().collect();
 
-        if let Some(connection) = oob.connection_exists(&connections)? {
-            if let Some((&handle, _)) = conn_map
-                .iter()
-                .find(|(_, conn)| *conn == connection) {
-                Ok((handle, true))
-            } else {
-                Err(VcxError::from(VcxErrorKind::InvalidState))
-            }
+    if let Some(connection) = oob.connection_exists(&connections).await? {
+        if let Some((&handle, _)) = conn_map
+            .iter()
+            .find(|(_, conn)| *conn == connection) {
+            Ok((handle, true))
         } else {
-            Ok((0, false))
+            Err(VcxError::from(VcxErrorKind::InvalidState))
         }
-    })
+    } else {
+        Ok((0, false))
+    }
 }
 
 pub async fn build_connection(handle: u32) -> VcxResult<String> {

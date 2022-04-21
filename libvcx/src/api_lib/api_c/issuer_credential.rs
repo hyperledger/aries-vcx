@@ -282,8 +282,8 @@ pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandl
     trace!("vcx_issuer_build_credential_offer_msg(command_handle: {}, credential_handle: {}) source_id: {}",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, &credential_data, comment.as_deref()) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, &credential_data, comment.as_deref()).await {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();
                 let offer_msg = CStringUtils::string_to_cstring(offer_msg);
@@ -300,7 +300,7 @@ pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandl
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -813,8 +813,8 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    execute(move || {
-        let err = match issuer_credential::revoke_credential(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::revoke_credential(credential_handle).await {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -831,7 +831,7 @@ pub extern fn vcx_issuer_revoke_credential(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -846,8 +846,8 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
     info!("vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}) source_id: {}",
           command_handle, credential_handle, source_id);
 
-    execute(move || {
-        let err = match issuer_credential::revoke_credential_local(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let err = match issuer_credential::revoke_credential_local(credential_handle).await {
             Ok(()) => {
                 info!("vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                       command_handle, credential_handle, error::SUCCESS.message, source_id);
@@ -864,7 +864,7 @@ pub extern fn vcx_issuer_revoke_credential_local(command_handle: CommandHandle,
         cb(command_handle, err);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

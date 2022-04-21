@@ -12,7 +12,7 @@ lazy_static! {
     static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
-pub fn create_and_store(source_id: String,
+pub async fn create_and_store(source_id: String,
                         schema_id: String,
                         issuer_did: String,
                         tag: String,
@@ -25,15 +25,15 @@ pub fn create_and_store(source_id: String,
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
     let revocation_details = serde_json::from_str::<RevocationDetails>(&revocation_details)
         .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Cannot deserialize RevocationDetails"))?;
-    let cred_def = CredentialDef::create_and_store(source_id, config, revocation_details)?;
+    let cred_def = CredentialDef::create_and_store(source_id, config, revocation_details).await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }
 
-pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
+pub async fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        cd = cd.publish_cred_def()?;
+        cd = cd.publish_cred_def().await?;
     } else {
         info!("publish >>> Credential definition was already published")
     }
@@ -45,7 +45,7 @@ pub fn publish(handle: u32, tails_url: Option<String>) -> VcxResult<()> {
                 ));
             }
             Some(tails_url) => {
-                cd.publish_revocation_primitives(&tails_url)?;
+                cd.publish_revocation_primitives(&tails_url).await?;
             }
         }
     } else {
@@ -60,15 +60,14 @@ pub fn has_pending_revocations_primitives_to_be_published(handle: u32) -> VcxRes
     })
 }
 
-pub fn publish_revocations(handle: u32) -> VcxResult<()> {
-    CREDENTIALDEF_MAP.get(handle, |cd| {
-        if let Some(rev_reg_id) = cd.get_rev_reg_id() {
-            anoncreds::publish_local_revocations(rev_reg_id.as_str())?;
-            Ok(())
-        } else {
-            Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle))
-        }
-    })
+pub async fn publish_revocations(handle: u32) -> VcxResult<()> {
+    let cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
+    if let Some(rev_reg_id) = cd.get_rev_reg_id() {
+        anoncreds::publish_local_revocations(rev_reg_id.as_str()).await?;
+        Ok(())
+    } else {
+        Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle))
+    }
 }
 
 pub fn is_valid_handle(handle: u32) -> bool {
@@ -125,9 +124,9 @@ pub fn release_all() {
     CREDENTIALDEF_MAP.drain().ok();
 }
 
-pub fn update_state(handle: u32) -> VcxResult<u32> {
+pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let res = cd.update_state()?;
+    let res = cd.update_state().await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }
@@ -144,13 +143,13 @@ pub fn check_is_published(handle: u32) -> VcxResult<bool> {
     })
 }
 
-pub fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
+pub async fn rotate_rev_reg_def(handle: u32, revocation_details: &str) -> VcxResult<String> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     let res = match &cd.get_rev_reg_def()? {
         Some(_) => {
             let revocation_details: RevocationDetails = serde_json::from_str(&revocation_details)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize revocation details: {:?}, error: {:?}", revocation_details, err)))?;
-            cd.rotate_rev_reg(revocation_details)?;
+            cd.rotate_rev_reg(revocation_details).await?;
             cd.to_string().map_err(|err| err.into())
         }
         None => Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Attempting to rotate revocation registry on unrevokable credential definition"))

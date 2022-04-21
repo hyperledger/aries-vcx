@@ -88,7 +88,7 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub fn build_credential_offer_msg(handle: u32,
+pub async fn build_credential_offer_msg(handle: u32,
                                         cred_def_handle: u32,
                                         credential_json: &str,
                                         comment: Option<&str>) -> VcxResult<()> {
@@ -102,7 +102,7 @@ pub fn build_credential_offer_msg(handle: u32,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
-    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string()))?;
+    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)
 }
 
@@ -130,7 +130,7 @@ pub async fn send_credential_offer(handle: u32,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
-    credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string()))?;
+    credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string())).await?;
     let send_message = connection::send_message_closure(connection_handle)?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
@@ -156,17 +156,15 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     Ok(error::SUCCESS.code_num)
 }
 
-pub fn revoke_credential(handle: u32) -> VcxResult<()> {
+pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.revoke_credential(true).map_err(|err| err.into())
-    })
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    credential.revoke_credential(true).await.map_err(|err| err.into())
 }
 
-pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.revoke_credential(false).map_err(|err| err.into())
-    })
+pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    credential.revoke_credential(false).await.map_err(|err| err.into())
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {

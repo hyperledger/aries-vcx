@@ -679,31 +679,31 @@ pub mod test_utils {
 
     extern crate serde_json;
 
-    pub fn create_schema(attr_list: &str) -> (String, String) {
+    pub async fn create_schema(attr_list: &str) -> (String, String) {
         let data = attr_list.to_string();
         let schema_name: String = crate::utils::random::generate_random_schema_name();
         let schema_version: String = crate::utils::random::generate_random_schema_version();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        libindy_issuer_create_schema(&institution_did, &schema_name, &schema_version, &data).unwrap()
+        libindy_issuer_create_schema(&institution_did, &schema_name, &schema_version, &data).await.unwrap()
     }
 
-    pub fn create_schema_req(schema_json: &str) -> String {
+    pub async fn create_schema_req(schema_json: &str) -> String {
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let request = libindy_build_schema_request(&institution_did, schema_json).unwrap();
-        append_txn_author_agreement_to_request(&request).unwrap()
+        let request = libindy_build_schema_request(&institution_did, schema_json).await.unwrap();
+        append_txn_author_agreement_to_request(&request).await.unwrap()
     }
 
-    pub fn create_and_write_test_schema(attr_list: &str) -> (String, String) {
-        let (schema_id, schema_json) = create_schema(attr_list);
-        let req = create_schema_req(&schema_json);
-        publish_txn_on_ledger(&req).unwrap();
+    pub async fn create_and_write_test_schema(attr_list: &str) -> (String, String) {
+        let (schema_id, schema_json) = create_schema(attr_list).await;
+        let req = create_schema_req(&schema_json).await;
+        publish_txn_on_ledger(&req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
 
-    pub fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, Option<String>) {
-        let (schema_id, schema_json) = create_and_write_test_schema(attr_list);
+    pub async fn create_and_store_credential_def(attr_list: &str, support_rev: bool) -> (String, String, String, String, Option<String>) {
+        let (schema_id, schema_json) = create_and_write_test_schema(attr_list).await;
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
             .schema_id(&schema_id)
@@ -727,55 +727,55 @@ pub mod test_utils {
         };
         let mut cred_def = CredentialDef::create_and_store("1".to_string(),
                                                          config,
-                                                         revocation_details).unwrap()
-            .publish_cred_def().unwrap();
+                                                         revocation_details).await.unwrap()
+            .publish_cred_def().await.unwrap();
         if let Some(tails_url) = tails_url {
-            cred_def.publish_revocation_primitives(tails_url).unwrap();
+            cred_def.publish_revocation_primitives(tails_url).await.unwrap();
         }
 
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let (_, cred_def_json) = get_cred_def_json(&cred_def_id).unwrap();
+        let (_, cred_def_json) = get_cred_def_json(&cred_def_id).await.unwrap();
         let rev_reg_id = cred_def.get_rev_reg_id();
         (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id)
     }
 
-    pub fn create_credential_offer(attr_list: &str, revocation: bool) -> (String, String, String, String, String, Option<String>) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id) = create_and_store_credential_def(attr_list, revocation);
+    pub async fn create_credential_offer(attr_list: &str, revocation: bool) -> (String, String, String, String, String, Option<String>) {
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id) = create_and_store_credential_def(attr_list, revocation).await;
 
-        let offer = libindy::utils::anoncreds::libindy_issuer_create_credential_offer(&cred_def_id).unwrap();
+        let offer = libindy::utils::anoncreds::libindy_issuer_create_credential_offer(&cred_def_id).await.unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, offer, rev_reg_id)
     }
 
-    pub fn create_credential_req(attr_list: &str, revocation: bool) -> (String, String, String, String, String, String, String, Option<String>) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, offer, rev_reg_id) = create_credential_offer(attr_list, revocation);
+    pub async fn create_credential_req(attr_list: &str, revocation: bool) -> (String, String, String, String, String, String, String, Option<String>) {
+        let (schema_id, schema_json, cred_def_id, cred_def_json, offer, rev_reg_id) = create_credential_offer(attr_list, revocation).await;
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (req, req_meta) = libindy::utils::anoncreds::libindy_prover_create_credential_req(&institution_did, &offer, &cred_def_json).unwrap();
+        let (req, req_meta) = libindy::utils::anoncreds::libindy_prover_create_credential_req(&institution_did, &offer, &cred_def_json).await.unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, offer, req, req_meta, rev_reg_id)
     }
 
-    pub fn create_and_store_credential(attr_list: &str, revocation: bool) -> (String, String, String, String, String, String, String, String, Option<String>, Option<String>) {
-        let (schema_id, schema_json, cred_def_id, cred_def_json, offer, req, req_meta, rev_reg_id) = create_credential_req(attr_list, revocation);
+    pub async fn create_and_store_credential(attr_list: &str, revocation: bool) -> (String, String, String, String, String, String, String, String, Option<String>, Option<String>) {
+        let (schema_id, schema_json, cred_def_id, cred_def_json, offer, req, req_meta, rev_reg_id) = create_credential_req(attr_list, revocation).await;
 
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
         let (rev_def_json, tails_file) = if revocation {
-            let (_id, json) = get_rev_reg_def_json(&rev_reg_id.clone().unwrap()).unwrap();
+            let (_id, json) = get_rev_reg_def_json(&rev_reg_id.clone().unwrap()).await.unwrap();
             (Some(json), Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string().to_string()))
         } else { (None, None) };
 
-        let (cred, cred_rev_id, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(&offer, &req, &encoded_attributes, rev_reg_id.clone(), tails_file).unwrap();
+        let (cred, cred_rev_id, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(&offer, &req, &encoded_attributes, rev_reg_id.clone(), tails_file).await.unwrap();
         /* store cred */
-        let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(None, &req_meta, &cred, &cred_def_json, rev_def_json.as_ref().map(String::as_str)).unwrap();
+        let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(None, &req_meta, &cred, &cred_def_json, rev_def_json.as_ref().map(String::as_str)).await.unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, offer, req, req_meta, cred_id, rev_reg_id, cred_rev_id)
     }
 
-    pub fn create_proof() -> (String, String, String, String) {
+    pub async fn create_proof() -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -816,7 +816,7 @@ pub mod test_utils {
             cred_def_id: cred_def_json,
         }).to_string();
 
-        libindy_prover_get_credentials_for_proof_req(&proof_req).unwrap();
+        libindy_prover_get_credentials_for_proof_req(&proof_req).await.unwrap();
 
         let proof = libindy_prover_create_proof(
             &proof_req,
@@ -824,14 +824,14 @@ pub mod test_utils {
             "main",
             &schemas,
             &cred_defs,
-            None).unwrap();
+            None).await.unwrap();
         (schemas, cred_defs, proof_req, proof)
     }
 
-    pub fn create_proof_with_predicate(include_predicate_cred: bool) -> (String, String, String, String) {
+    pub async fn create_proof_with_predicate(include_predicate_cred: bool) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false);
+            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -887,7 +887,7 @@ pub mod test_utils {
             cred_def_id: cred_def_json,
         }).to_string();
 
-        libindy_prover_get_credentials_for_proof_req(&proof_req).unwrap();
+        libindy_prover_get_credentials_for_proof_req(&proof_req).await.unwrap();
 
         let proof = libindy_prover_create_proof(
             &proof_req,
@@ -895,7 +895,7 @@ pub mod test_utils {
             "main",
             &schemas,
             &cred_defs,
-            None).unwrap();
+            None).await.unwrap();
         (schemas, cred_defs, proof_req, proof)
     }
 }

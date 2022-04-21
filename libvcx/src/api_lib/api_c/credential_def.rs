@@ -1,6 +1,7 @@
 use std::ptr;
 
 use libc::c_char;
+use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
@@ -10,7 +11,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
 pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
@@ -46,12 +47,12 @@ pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
            tag,
            revocation_details);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let (rc, handle) = match credential_def::create_and_store(source_id,
                                                                   schema_id,
                                                                   issuer_did,
                                                                   tag,
-                                                                  revocation_details) {
+                                                                  revocation_details).await {
             Ok(err) => {
                 trace!("vcx_credentialdef_create_and_store_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, err, credential_def::get_source_id(err).unwrap_or_default());
@@ -67,7 +68,7 @@ pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
         cb(command_handle, rc, handle);
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -90,8 +91,8 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
     trace!("vcx_credentialdef_publish(command_handle: {}, credentialdef_handle: {}, tails_url: {:?}), source_id: {:?}",
            command_handle, credentialdef_handle, tails_url, source_id);
 
-    execute(move || {
-        match credential_def::publish(credentialdef_handle, tails_url) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential_def::publish(credentialdef_handle, tails_url).await {
             Ok(_) => {
                 trace!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
                        command_handle, error::SUCCESS.message, credentialdef_handle, source_id);
@@ -105,7 +106,7 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
             }
         };
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -119,7 +120,7 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
 ///
 /// cb: Callback that provides json string of the credentialdef's attributes and provides error status
 ///
-/// #Returns
+// #Returns
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_credentialdef_serialize(command_handle: CommandHandle,
@@ -306,8 +307,8 @@ pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    execute(move || {
-        match credential_def::update_state(credentialdef_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential_def::update_state(credentialdef_handle).await {
             Ok(state) => {
                 trace!("vcx_credentialdef_update_state(command_handle: {}, rc: {}, state: {})",
                        command_handle, error::SUCCESS.message, state);
@@ -322,7 +323,7 @@ pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -396,8 +397,8 @@ pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    execute(move || {
-        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential_def::rotate_rev_reg_def(credentialdef_handle, &revocation_details).await {
             Ok(err) => {
                 trace!("vcx_credentialdef_rotate_rev_reg_def(command_handle: {}, credentialdef_handle: {}, rc: {}, rev_reg_def: {}), source_id: {:?}",
                        command_handle, credentialdef_handle, error::SUCCESS.message, err, source_id);
@@ -413,7 +414,7 @@ pub extern fn vcx_credentialdef_rotate_rev_reg_def(command_handle: CommandHandle
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -435,8 +436,8 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
         return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
     }
 
-    execute(move || {
-        match credential_def::publish_revocations(credentialdef_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential_def::publish_revocations(credentialdef_handle).await {
             Ok(()) => {
                 trace!("vcx_credentialdef_publish_revocations(command_handle: {}, credentialdef_handle: {}, rc: {})",
                        command_handle, credentialdef_handle, error::SUCCESS.message);
@@ -451,7 +452,7 @@ pub extern fn vcx_credentialdef_publish_revocations(command_handle: CommandHandl
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

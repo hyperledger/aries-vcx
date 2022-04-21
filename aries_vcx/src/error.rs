@@ -2,6 +2,7 @@ use std::fmt;
 use std::sync;
 
 use failure::{Backtrace, Context, Fail};
+use indy::IndyError;
 
 use agency_client;
 

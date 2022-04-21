@@ -226,8 +226,8 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         }
     };
 
-    execute(move || {
-        match open_main_pool(&pool_config) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match open_main_pool(&pool_config).await {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
@@ -240,7 +240,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
             }
         }
         Ok(())
-    });
+    }));
     error::SUCCESS.code_num
 }
 
@@ -267,62 +267,66 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match wallet::close_main_wallet() {
-        Ok(()) => {}
-        Err(_) => {}
-    };
-
-    match pool::close() {
-        Ok(()) => {}
-        Err(_) => {}
-    };
-
-    crate::api_lib::api_handle::schema::release_all();
-    crate::api_lib::api_handle::connection::release_all();
-    crate::api_lib::api_handle::issuer_credential::release_all();
-    crate::api_lib::api_handle::credential_def::release_all();
-    crate::api_lib::api_handle::proof::release_all();
-    crate::api_lib::api_handle::disclosed_proof::release_all();
-    crate::api_lib::api_handle::credential::release_all();
-
-    if delete {
-        let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
-            .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-        let wallet_name = settings::get_config_value(settings::CONFIG_WALLET_NAME)
-            .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
-        let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
-        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
-            .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-        let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
-            .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
-
-        let _res = close_main_wallet();
-
-
-        let wallet_config = WalletConfig {
-            wallet_name,
-            wallet_key,
-            wallet_key_derivation,
-            wallet_type,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match wallet::close_main_wallet().await {
+            Ok(()) => {}
+            Err(_) => {}
         };
 
-        match wallet::delete_wallet(&wallet_config) {
-            Ok(()) => (),
-            Err(_) => (),
+        match pool::close().await {
+            Ok(()) => {}
+            Err(_) => {}
         };
 
-        match pool::delete(&pool_name) {
-            Ok(()) => (),
-            Err(_) => (),
-        };
-    }
+        crate::api_lib::api_handle::schema::release_all();
+        crate::api_lib::api_handle::connection::release_all();
+        crate::api_lib::api_handle::issuer_credential::release_all();
+        crate::api_lib::api_handle::credential_def::release_all();
+        crate::api_lib::api_handle::proof::release_all();
+        crate::api_lib::api_handle::disclosed_proof::release_all();
+        crate::api_lib::api_handle::credential::release_all();
 
-    settings::clear_config();
-    trace!("vcx_shutdown(delete: {})", delete);
+        if delete {
+            let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
+                .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+            let wallet_name = settings::get_config_value(settings::CONFIG_WALLET_NAME)
+                .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
+            let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
+            let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
+                .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
+            let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
+                .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
+
+            let _res = close_main_wallet();
+
+
+            let wallet_config = WalletConfig {
+                wallet_name,
+                wallet_key,
+                wallet_key_derivation,
+                wallet_type,
+                storage_config: None,
+                storage_credentials: None,
+                rekey: None,
+                rekey_derivation_method: None,
+            };
+
+            match wallet::delete_wallet(&wallet_config).await {
+                Ok(()) => (),
+                Err(_) => (),
+            };
+
+            match pool::delete(&pool_name).await {
+                Ok(()) => (),
+                Err(_) => (),
+            };
+        }
+
+        settings::clear_config();
+        trace!("vcx_shutdown(delete: {})", delete);
+
+        Ok(())
+    }));
     error::SUCCESS.code_num
 }
 
@@ -396,8 +400,8 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     trace!("vcx_get_ledger_author_agreement(command_handle: {})",
            command_handle);
 
-    execute(move || {
-        match ledger::libindy_get_txn_author_agreement() {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match ledger::libindy_get_txn_author_agreement().await {
             Ok(err) => {
                 trace!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -414,7 +418,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }

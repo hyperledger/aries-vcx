@@ -177,7 +177,7 @@ pub extern fn vcx_delete_credential(command_handle: CommandHandle,
     trace!("vcx_delete_credential(command_handle: {}, credential_handle: {}), source_id: {})", command_handle, credential_handle, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match credential::delete_credential(credential_handle) {
+        match credential::delete_credential(credential_handle).await {
             Ok(_) => {
                 trace!("vcx_delete_credential_cb(command_handle: {}, rc: {}), credential_handle: {}, source_id: {})", command_handle, error::SUCCESS.message, credential_handle, source_id);
                 cb(command_handle, error::SUCCESS.code_num);
@@ -403,8 +403,8 @@ pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
     trace!("vcx_credential_is_revokable(command_handle: {}, credential_handle: {}) source_id: {})",
            command_handle, credential_handle, source_id);
 
-    execute(move || {
-        match credential::is_revokable(credential_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match credential::is_revokable(credential_handle).await {
             Ok(revokable) => {
                 trace!("vcx_credential_is_revokable_cb(commmand_handle: {}, rc: {}, revokable: {}) source_id: {}",
                        command_handle, error::SUCCESS.code_num, revokable, source_id);
@@ -418,7 +418,7 @@ pub extern fn vcx_credential_is_revokable(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

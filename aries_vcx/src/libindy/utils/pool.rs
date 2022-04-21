@@ -122,24 +122,24 @@ pub mod test_utils {
 
     use super::*;
 
-    pub fn create_test_ledger_config() {
+    pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
-        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
+        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).await.unwrap();
     }
 
-    pub fn delete_named_test_pool(pool_name: &str) {
-        close().ok();
-        delete(pool_name).unwrap();
+    pub async fn delete_named_test_pool(pool_name: &str) {
+        close().await.ok();
+        delete(pool_name).await.unwrap();
     }
 
-    pub fn delete_test_pool() {
-        close().ok();
-        delete(POOL).unwrap();
+    pub async fn delete_test_pool() {
+        close().await.ok();
+        delete(POOL).await.unwrap();
     }
 
-    pub fn open_test_pool() -> u32 {
-        create_test_ledger_config();
-        open_pool_ledger(POOL, None).unwrap()
+    pub async fn open_test_pool() -> u32 {
+        create_test_ledger_config().await;
+        open_pool_ledger(POOL, None).await.unwrap()
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {

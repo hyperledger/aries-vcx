@@ -118,7 +118,7 @@ impl Drop for SetupMocks {
 }
 
 impl SetupLibraryWallet {
-    pub fn init() -> SetupLibraryWallet {
+    pub async fn init() -> SetupLibraryWallet {
         setup();
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
@@ -136,21 +136,21 @@ impl SetupLibraryWallet {
 
         settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
         settings::get_agency_client_mut().unwrap().disable_test_mode();
-        create_and_open_as_main_wallet(&wallet_config).unwrap();
+        create_and_open_as_main_wallet(&wallet_config).await.unwrap();
         SetupLibraryWallet { wallet_config }
     }
 }
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
-        let _res = close_main_wallet().unwrap();
-        delete_wallet(&self.wallet_config).unwrap();
+        let _res = futures::executor::block_on(close_main_wallet()).unwrap();
+        futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap();
         tear_down()
     }
 }
 
 impl SetupWallet {
-    pub fn init() -> SetupWallet {
+    pub async fn init() -> SetupWallet {
         init_test_logging();
         let wallet_name: String = format!("Test_SetupWallet_{}", uuid::Uuid::new_v4().to_string());
         settings::get_agency_client_mut().unwrap().disable_test_mode();
@@ -164,7 +164,7 @@ impl SetupWallet {
             rekey: None,
             rekey_derivation_method: None,
         };
-        create_indy_wallet(&wallet_config).unwrap();
+        create_indy_wallet(&wallet_config).await.unwrap();
 
         SetupWallet { wallet_config, skip_cleanup: false }
     }
@@ -178,16 +178,16 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            let _res = close_main_wallet().unwrap_or_else(|_e| error!("Failed to close main wallet while dropping SetupWallet test config."));
-            delete_wallet(&self.wallet_config).unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
+            let _res = futures::executor::block_on(close_main_wallet()).unwrap_or_else(|_e| error!("Failed to close main wallet while dropping SetupWallet test config."));
+            futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
             reset_wallet_handle().unwrap_or_else(|_e| error!("Failed to reset wallet handle while dropping SetupWallet test config."));
         }
     }
 }
 
 impl SetupPoolConfig {
-    pub fn init() -> SetupPoolConfig {
-        create_test_ledger_config();
+    pub async fn init() -> SetupPoolConfig {
+        create_test_ledger_config().await;
         let genesis_path = utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
         let pool_config = PoolConfig {
             genesis_path,
@@ -207,7 +207,7 @@ impl SetupPoolConfig {
 impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            delete_test_pool();
+            futures::executor::block_on(delete_test_pool());
             reset_pool_handle();
         }
     }
@@ -246,7 +246,7 @@ impl Drop for SetupWithWalletAndAgency {
 }
 
 impl SetupAgencyMock {
-    pub fn init() -> SetupAgencyMock {
+    pub async fn init() -> SetupAgencyMock {
         setup();
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
         settings::get_agency_client_mut().unwrap().enable_test_mode();
@@ -261,7 +261,7 @@ impl SetupAgencyMock {
             rekey: None,
             rekey_derivation_method: None,
         };
-        create_and_open_as_main_wallet(&wallet_config).unwrap();
+        create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
         SetupAgencyMock { wallet_config }
     }
@@ -269,8 +269,8 @@ impl SetupAgencyMock {
 
 impl Drop for SetupAgencyMock {
     fn drop(&mut self) {
-        let _res = close_main_wallet().unwrap();
-        delete_wallet(&self.wallet_config).unwrap();
+        let _res = futures::executor::block_on(close_main_wallet()).unwrap();
+        futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap();
         tear_down()
     }
 }
@@ -328,10 +328,10 @@ pub fn create_new_seed() -> String {
     format!("{:032}", x)
 }
 
-pub fn configure_trustee_did() {
+pub async fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).unwrap();
-    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).unwrap();
+    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).await.unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
@@ -358,35 +358,35 @@ pub async fn setup_indy_env() -> String {
         agent_seed: None,
     };
 
-    create_wallet(&config_wallet).unwrap();
-    open_as_main_wallet(&config_wallet).unwrap();
+    create_wallet(&config_wallet).await.unwrap();
+    open_as_main_wallet(&config_wallet).await.unwrap();
 
-    let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
+    let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
 
     provision_cloud_agent(&config_provision_agent).await.unwrap();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
-    open_test_pool();
+    open_test_pool().await;
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did
 }
 
-pub fn cleanup_indy_env() {
-    delete_test_pool();
+pub async fn cleanup_indy_env() {
+    delete_test_pool().await;
 }
 
-pub fn cleanup_agency_env() {
-    delete_test_pool();
+pub async fn cleanup_agency_env() {
+    delete_test_pool().await;
 }
 
-pub fn setup_agency_env() {
+pub async fn setup_agency_env() {
     debug!("setup_agency_env >> clearing up settings");
     settings::clear_config();
 
     settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
-    open_test_pool();
+    open_test_pool().await;
 }
 
 pub struct TempFile {

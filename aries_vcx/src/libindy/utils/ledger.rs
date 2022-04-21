@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use indy::cache;
 use futures::executor::block_on;
+use futures::future::TryFutureExt;
 use indy::ledger;
 use serde_json;
 
@@ -17,14 +18,14 @@ use crate::utils::random::generate_random_did;
 
 pub async fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(get_wallet_handle(), did, request)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String> {
     ledger::sign_request(get_wallet_handle(), did, request)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &str) -> VcxResult<String> {
@@ -35,31 +36,31 @@ pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &st
     let wallet_handle = get_wallet_handle();
 
     ledger::sign_and_submit_request(pool_handle, wallet_handle, issuer_did, request_json)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
     let pool_handle = get_pool_handle()?;
 
     ledger::submit_request(pool_handle, request_json)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxResult<String> {
     trace!("libindy_build_schema_request >>> submitter_did: {}, data: {}", submitter_did, data);
     ledger::build_schema_request(submitter_did, data)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_build_create_credential_def_txn(submitter_did: &str,
                                                credential_def_json: &str) -> VcxResult<String> {
     trace!("libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}", submitter_did, credential_def_json);
     ledger::build_cred_def_request(submitter_did, credential_def_json)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
@@ -102,8 +103,8 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
                                                                   author_agreement.taa_digest.as_ref().map(String::as_str),
                                                                   &author_agreement.acceptance_mechanism_type,
                                                                   author_agreement.time_of_acceptance)
-            .await
             .map_err(VcxError::from)
+            .await
     } else {
         Ok(request_json.to_string())
     }
@@ -111,27 +112,27 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
 
 pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxResult<String> {
     ledger::build_auth_rules_request(submitter_did, data)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
     ledger::build_attrib_request(submitter_did, target_did, hash, raw, enc)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_build_get_auth_rule_request(submitter_did: Option<&str>, txn_type: Option<&str>, action: Option<&str>, field: Option<&str>,
                                            old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
     ledger::build_get_auth_rule_request(submitter_did, txn_type, action, field, old_value, new_value)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &str) -> VcxResult<String> {
     ledger::build_get_nym_request(submitter_did, did)
-        .await
         .map_err(VcxError::from)
+        .await
 }
 
 pub mod auth_rule {
