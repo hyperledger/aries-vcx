@@ -325,8 +325,8 @@ pub mod tests {
                                       schema_id,
                                       did,
                                       "tag1".to_string(),
-                                      revocation_details).unwrap();
-        publish(handle, Some(utils::constants::TEST_TAILS_URL.to_string())).unwrap();
+                                      revocation_details).await.unwrap();
+        publish(handle, Some(utils::constants::TEST_TAILS_URL.to_string())).await.unwrap();
         let rev_reg_def = get_rev_reg_def(handle).unwrap().unwrap();
         let rev_reg_def: serde_json::Value = serde_json::from_str(&rev_reg_def).unwrap();
         let _rev_reg_id = get_rev_reg_id(handle).unwrap();
@@ -352,13 +352,13 @@ pub mod tests {
                                       schema_id,
                                       did,
                                       "tag_1".to_string(),
-                                      revocation_details).unwrap();
-        publish(handle, Some("tails_url".to_string())).unwrap();
+                                      revocation_details).await.unwrap();
+        publish(handle, Some("tails_url".to_string())).await.unwrap();
 
         assert!(get_rev_reg_def(handle).unwrap().is_some());
         assert!(get_rev_reg_id(handle).ok().is_some());
         let cred_id = get_cred_def_id(handle).unwrap();
-        get_cred_def_json(&cred_id).unwrap();
+        get_cred_def_json(&cred_id).await.unwrap();
     }
 
     #[cfg(feature = "pool_tests")]

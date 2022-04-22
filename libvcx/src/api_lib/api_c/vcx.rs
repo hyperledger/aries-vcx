@@ -297,7 +297,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
             let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
                 .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
-            let _res = close_main_wallet();
+            let _res = close_main_wallet().await;
 
 
             let wallet_config = WalletConfig {
@@ -935,7 +935,7 @@ mod tests {
     async fn test_full_init() {
         let _setup_defaults = SetupDefaults::init();
         let setup_wallet = SetupWallet::init().await;
-        let setup_pool = SetupPoolConfig::init();
+        let setup_pool = SetupPoolConfig::init().await;
 
         _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
@@ -944,11 +944,11 @@ mod tests {
     }
 
     #[cfg(feature = "agency_tests")]
-    #[test]
-    fn test_provision_cloud_agent() {
+    #[tokio::test]
+    async fn test_provision_cloud_agent() {
         let _setup_defaults = SetupDefaults::init();
         let setup_wallet = SetupWallet::init().await;
-        let _setup_pool = SetupPoolConfig::init();
+        let _setup_pool = SetupPoolConfig::init().await;
 
         let config_wallet: &str = &json!(setup_wallet.wallet_config).to_string();
 
@@ -995,7 +995,7 @@ mod tests {
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
-            create_and_store_credential_def(&attrs_list, true);
+            create_and_store_credential_def(&attrs_list, true).await;
         assert!(schema_id.len() > 0);
 
         delete_test_pool();

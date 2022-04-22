@@ -282,7 +282,7 @@ pub mod tests {
     async fn test_create_schema_with_pool() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let handle = create_schema_real();
+        let handle = create_schema_real().await;
 
         let _source_id = get_source_id(handle).unwrap();
         let _schema_id = get_schema_id(handle).unwrap();
@@ -340,18 +340,18 @@ pub mod tests {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-        let (endorser_did, _) = add_new_did(Some("ENDORSER"));
+        let (endorser_did, _) = add_new_did(Some("ENDORSER")).await;
 
-        let (handle, schema_request) = prepare_schema_for_endorser("test_vcx_schema_update_state_with_ledger", did, schema_name, schema_version, data, endorser_did.clone()).unwrap();
+        let (handle, schema_request) = prepare_schema_for_endorser("test_vcx_schema_update_state_with_ledger", did, schema_name, schema_version, data, endorser_did.clone()).await.unwrap();
         assert_eq!(0, get_state(handle).unwrap());
-        assert_eq!(0, update_state(handle).unwrap());
+        assert_eq!(0, update_state(handle).await.unwrap());
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
-        ledger::endorse_transaction(&schema_request).unwrap();
+        ledger::endorse_transaction(&schema_request).await.unwrap();
 
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
-        assert_eq!(1, update_state(handle).unwrap());
+        assert_eq!(1, update_state(handle).await.unwrap());
         assert_eq!(1, get_state(handle).unwrap());
         warn!("Test finished")
     }
@@ -361,7 +361,7 @@ pub mod tests {
     async fn test_vcx_schema_get_state_with_ledger() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let handle = create_schema_real();
+        let handle = create_schema_real().await;
         assert_eq!(1, get_state(handle).unwrap());
     }
 }
