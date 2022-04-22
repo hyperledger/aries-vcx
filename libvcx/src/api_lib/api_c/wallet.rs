@@ -933,10 +933,10 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_custom(1)).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_add_record() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_add_record() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -967,10 +967,10 @@ pub mod tests {
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::DUPLICATE_WALLET_RECORD.code_num));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_add_record_with_tag() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_add_record_with_tag() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -988,10 +988,10 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_record_fails_with_no_value() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_get_record_fails_with_no_value() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -1046,17 +1046,17 @@ pub mod tests {
         assert!(record_value.contains("Record Value"));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_record_value_success() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_get_record_value_success() {
+        let _setup = SetupLibraryWallet::init().await;
         _test_add_and_get_wallet_record();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_delete_record() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_delete_record() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -1093,10 +1093,10 @@ pub mod tests {
                    Some(error::WALLET_RECORD_NOT_FOUND.code_num));
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_update_record_value() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_update_record_value() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());

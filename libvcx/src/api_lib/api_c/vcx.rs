@@ -267,66 +267,63 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match wallet::close_main_wallet().await {
-            Ok(()) => {}
-            Err(_) => {}
+    match futures::executor::block_on(wallet::close_main_wallet()) {
+        Ok(()) => {}
+        Err(_) => {}
+    };
+
+    match futures::executor::block_on(pool::close()) {
+        Ok(()) => {}
+        Err(_) => {}
+    };
+
+    crate::api_lib::api_handle::schema::release_all();
+    crate::api_lib::api_handle::connection::release_all();
+    crate::api_lib::api_handle::issuer_credential::release_all();
+    crate::api_lib::api_handle::credential_def::release_all();
+    crate::api_lib::api_handle::proof::release_all();
+    crate::api_lib::api_handle::disclosed_proof::release_all();
+    crate::api_lib::api_handle::credential::release_all();
+
+    if delete {
+        let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
+            .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+        let wallet_name = settings::get_config_value(settings::CONFIG_WALLET_NAME)
+            .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
+        let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
+        let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
+            .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
+        let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
+            .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
+
+        let _res = futures::executor::block_on(close_main_wallet());
+
+
+        let wallet_config = WalletConfig {
+            wallet_name,
+            wallet_key,
+            wallet_key_derivation,
+            wallet_type,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None,
         };
 
-        match pool::close().await {
-            Ok(()) => {}
-            Err(_) => {}
+        match futures::executor::block_on(wallet::delete_wallet(&wallet_config)) {
+            Ok(()) => (),
+            Err(_) => (),
         };
 
-        crate::api_lib::api_handle::schema::release_all();
-        crate::api_lib::api_handle::connection::release_all();
-        crate::api_lib::api_handle::issuer_credential::release_all();
-        crate::api_lib::api_handle::credential_def::release_all();
-        crate::api_lib::api_handle::proof::release_all();
-        crate::api_lib::api_handle::disclosed_proof::release_all();
-        crate::api_lib::api_handle::credential::release_all();
+        match futures::executor::block_on(pool::delete(&pool_name)) {
+            Ok(()) => (),
+            Err(_) => (),
+        };
+    }
 
-        if delete {
-            let pool_name = settings::get_config_value(settings::CONFIG_POOL_NAME)
-                .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-            let wallet_name = settings::get_config_value(settings::CONFIG_WALLET_NAME)
-                .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
-            let wallet_type = settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
-            let wallet_key = settings::get_config_value(settings::CONFIG_WALLET_KEY)
-                .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-            let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
-                .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
+    settings::clear_config();
+    trace!("vcx_shutdown(delete: {})", delete);
 
-            let _res = close_main_wallet().await;
-
-
-            let wallet_config = WalletConfig {
-                wallet_name,
-                wallet_key,
-                wallet_key_derivation,
-                wallet_type,
-                storage_config: None,
-                storage_credentials: None,
-                rekey: None,
-                rekey_derivation_method: None,
-            };
-
-            match wallet::delete_wallet(&wallet_config).await {
-                Ok(()) => (),
-                Err(_) => (),
-            };
-
-            match pool::delete(&pool_name).await {
-                Ok(()) => (),
-                Err(_) => (),
-            };
-        }
-
-        settings::clear_config();
-        trace!("vcx_shutdown(delete: {})", delete);
-
-        Ok(())
-    }));
     error::SUCCESS.code_num
 }
 
@@ -575,8 +572,8 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_open_pool_fails_if_genesis_file_is_invalid() {
+    #[tokio::test]
+    async fn test_open_pool_fails_if_genesis_file_is_invalid() {
         let _setup = SetupDefaults::init();
         let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
@@ -589,7 +586,7 @@ mod tests {
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
         assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
 
-        delete_named_test_pool(&pool_name);
+        delete_named_test_pool(&pool_name).await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -902,16 +899,16 @@ mod tests {
         assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_open_pool() {
+    async fn test_open_pool() {
         let _setup = SetupEmpty::init();
 
         let genesis_path = create_tmp_genesis_txn_file();
         let config = PoolConfig { genesis_path, pool_name: None, pool_config: None };
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
-        delete_test_pool();
+        delete_test_pool().await;
         settings::set_testing_defaults();
     }
 
@@ -990,7 +987,7 @@ mod tests {
         let genesis_path = create_tmp_genesis_txn_file();
 
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
-        configure_trustee_did();
+        configure_trustee_did().await;
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
@@ -998,7 +995,7 @@ mod tests {
             create_and_store_credential_def(&attrs_list, true).await;
         assert!(schema_id.len() > 0);
 
-        delete_test_pool();
+        delete_test_pool().await;
         settings::set_testing_defaults();
     }
 

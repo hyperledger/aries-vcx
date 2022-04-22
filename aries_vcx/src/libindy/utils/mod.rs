@@ -47,7 +47,6 @@ impl LibindyMock {
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
     use indy;
-    use indy::future::Future;
 
     use super::*;
 
@@ -95,8 +94,6 @@ pub mod test_setup {
 #[allow(unused_imports)]
 #[cfg(feature = "pool_tests")]
 pub mod tests {
-    use indy::future::Future;
-
     use crate::init::open_main_pool;
     use crate::settings;
     use crate::utils::devsetup::*;

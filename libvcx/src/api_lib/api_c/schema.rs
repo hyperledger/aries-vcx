@@ -3,7 +3,6 @@ use std::ptr;
 use libc::c_char;
 use serde_json;
 use futures::future::BoxFuture;
-use aries_vcx::indy::IndyError;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
