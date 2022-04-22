@@ -114,7 +114,7 @@ jobs:
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
           
           LIBVCX_HASH=${LIBVCX_DOCKERFILE_HASH:0:11}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
-          LIBVCX_TESTER_HASH=${LIBVCX_TESTER_DOCKERFILE_HASH}-${LIBVCX_HASH}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}
+          LIBVCX_TESTER_HASH=${LIBVCX_TESTER_DOCKERFILE_HASH:0:11}-${LIBVCX_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
           ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${ARIESVCX_SOURCE_HASH:0:11}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
@@ -287,13 +287,13 @@ jobs:
           docker load < /tmp/imgcache_alpine_core/img_alpine_core.rar
           rm /tmp/imgcache_alpine_core/img_alpine_core.rar
       - name: Try load from cache.
-        id: cache-image-libvcx
+        id: cache-image-libvcx-tester
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_LIBVCX_TESTER }}
       - name: If NOT found in cache, build and cache image.
-        if: steps.cache-image-libvcx.outputs.cache-hit != 'true'
+        if: steps.cache-image-libvcx-tester.outputs.cache-hit != 'true'
         run: |
           set -x
           docker build --build-arg "ALPINE_CORE_IMAGE=$DOCKER_IMG_NAME_ALPINE_CORE" \
@@ -301,12 +301,12 @@ jobs:
                        -t "$DOCKER_IMG_NAME_LIBVCX_TESTER" \
                         .
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_LIBVCX_TESTER" > /tmp/imgcache/img_libvcx.rar
+          docker save "$DOCKER_IMG_NAME_LIBVCX_TESTER" > /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Load libvcx image from cache
         run: |
-          docker load < /tmp/imgcache/img_libvcx.rar
-      - name: Verify libvcx image was loaded
+          docker load < /tmp/imgcache/img_libvcx_tester.rar
+      - name: Verify libvcx tester image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX_TESTER" || { echo "Image $DOCKER_IMG_NAME_LIBVCX_TESTER was not found!" ; exit 1; }
 
@@ -562,7 +562,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Run quick unit tests
         run: |
@@ -611,7 +611,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Login to docker
         uses: azure/docker-login@v1
@@ -690,7 +690,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Login to docker
         uses: azure/docker-login@v1
@@ -767,7 +767,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Login to docker
         uses: azure/docker-login@v1
@@ -861,7 +861,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Run wrapper tests
         run: |
@@ -912,7 +912,7 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
       - name: Login to docker
         uses: azure/docker-login@v1
@@ -1182,9 +1182,9 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
-      - name: Verify libvcx image were loaded
+      - name: Verify libvcx tester image were loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX_TESTER" || { echo "Image $DOCKER_IMG_NAME_LIBVCX_TESTER was not found!" ; exit 1; }
 
@@ -1230,9 +1230,9 @@ jobs:
         if: steps.load-cached-libvcx-image.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_LIBVCX_TESTER"; exit -1
       - name: Load image from cache
-        run: docker load < /tmp/imgcache/img_libvcx.rar
+        run: docker load < /tmp/imgcache/img_libvcx_tester.rar
 
-      - name: Verify libvcx image were loaded
+      - name: Verify libvcx tester image were loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_LIBVCX_TESTER" || { echo "Image $DOCKER_IMG_NAME_LIBVCX_TESTER was not found!" ; exit 1; }
       - name: Docker Login
