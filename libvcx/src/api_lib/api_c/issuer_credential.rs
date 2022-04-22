@@ -1063,7 +1063,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
                                                     credential_handle,
-                                                    credential_def::tests::create_cred_def_fake(),
+                                                    credential_def::tests::create_cred_def_fake().await,
                                                     connection_handle,
                                                     CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),
@@ -1091,7 +1091,7 @@ pub mod tests {
 
         assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
                                                     handle,
-                                                    credential_def::tests::create_cred_def_fake(),
+                                                    credential_def::tests::create_cred_def_fake().await,
                                                     connection_handle,
                                                     CString::new(DEFAULT_ATTR).unwrap().into_raw(),
                                                     Some(cb.get_callback())),

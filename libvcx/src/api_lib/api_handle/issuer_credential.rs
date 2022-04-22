@@ -222,12 +222,12 @@ pub mod tests {
 
     use super::*;
 
-    pub fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
+    pub async fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let tag = "test_tag";
         let config = "{support_revocation: false}";
 
-        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).unwrap();
+        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).await.unwrap();
     }
 
     fn _issuer_credential_create() -> u32 {
@@ -266,7 +266,7 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -279,7 +279,7 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake_unpublished(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake_unpublished().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -304,12 +304,12 @@ pub mod tests {
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let res = send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap_err();
+        let res = send_credential_offer(handle, create_cred_def_fake().await, connection_handle, _cred_json(), None).await.unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidState);
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        assert_eq!(send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle, create_cred_def_fake().await, connection_handle, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -341,7 +341,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).await.unwrap();
@@ -356,7 +356,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message

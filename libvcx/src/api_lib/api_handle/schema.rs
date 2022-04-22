@@ -179,9 +179,9 @@ pub mod tests {
         (did, schema_name, schema_version, data)
     }
 
-    pub fn create_schema_real() -> u32 {
+    pub async fn create_schema_real() -> u32 {
         let (did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema("id", did, schema_name, schema_version, data).unwrap()
+        create_and_publish_schema("id", did, schema_name, schema_version, data).await.unwrap()
     }
 
     fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
@@ -191,9 +191,9 @@ pub mod tests {
         assert!(schema_handle > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_schema_to_string() {
+    async fn test_create_schema_to_string() {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
@@ -201,7 +201,7 @@ pub mod tests {
                                                did,
                                                schema_name,
                                                schema_version,
-                                               data.clone()).unwrap();
+                                               data.clone()).await.unwrap();
 
         let schema_id = get_schema_id(handle).unwrap();
         let create_schema_json = to_string(handle).unwrap();
@@ -216,9 +216,9 @@ pub mod tests {
         check_schema(handle, &create_schema_json, &schema_id, &data);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_schema_success() {
+    async fn test_create_schema_success() {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
@@ -226,12 +226,12 @@ pub mod tests {
                                   did,
                                   schema_name,
                                   schema_version,
-                                  data).unwrap();
+                                  data).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_prepare_schema_success() {
+    async fn test_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
@@ -240,28 +240,28 @@ pub mod tests {
                                     schema_name,
                                     schema_version,
                                     data,
-                                    "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
+                                    "V4SGRU86Z58d6TV7PBUe6f".to_string()).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_get_schema_attrs_success() {
+    async fn test_get_schema_attrs_success() {
         let _setup = SetupMocks::init();
 
-        let (handle, schema_json) = get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string()).unwrap();
+        let (handle, schema_json) = get_schema_attrs("Check For Success".to_string(), SCHEMA_ID.to_string()).await.unwrap();
 
         check_schema(handle, &schema_json, SCHEMA_ID, r#"["name","age","height","sex"]"#);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_create_schema_fails() {
+    async fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
 
         let err = create_and_publish_schema("1", "VsKV7grR1BUE29mG2Fm2kX".to_string(),
                                             "name".to_string(),
                                             "1.0".to_string(),
-                                            "".to_string()).unwrap_err();
+                                            "".to_string()).await.unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::InvalidLibindyParam)
     }
 
@@ -270,9 +270,9 @@ pub mod tests {
     async fn test_get_schema_attrs_from_ledger() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(constants::DEFAULT_SCHEMA_ATTRS).await;
 
-        let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).unwrap();
+        let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
         check_schema(schema_handle, &schema_attrs, &schema_id, constants::DEFAULT_SCHEMA_ATTRS);
     }
@@ -289,32 +289,32 @@ pub mod tests {
         let _schema_json = to_string(handle).unwrap();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
+    #[cfg(feature = "pool_tests")]
     async fn test_create_duplicate_fails() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-        create_and_publish_schema("id", did.clone(), schema_name.clone(), schema_version.clone(), data.clone()).unwrap();
+        create_and_publish_schema("id", did.clone(), schema_name.clone(), schema_version.clone(), data.clone()).await.unwrap();
 
-        let err = create_and_publish_schema("id_2", did, schema_name, schema_version, data).unwrap_err();
+        let err = create_and_publish_schema("id_2", did, schema_name, schema_version, data).await.unwrap_err();
 
         assert_eq!(err.kind(), VcxErrorKind::DuplicationSchema)
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_all() {
+    async fn test_release_all() {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, version, data) = prepare_schema_data();
 
-        let h1 = create_and_publish_schema("1", did.clone(), schema_name.clone(), version.clone(), data.clone()).unwrap();
-        let h2 = create_and_publish_schema("2", did.clone(), schema_name.clone(), version.clone(), data.clone()).unwrap();
-        let h3 = create_and_publish_schema("3", did.clone(), schema_name.clone(), version.clone(), data.clone()).unwrap();
-        let h4 = create_and_publish_schema("4", did.clone(), schema_name.clone(), version.clone(), data.clone()).unwrap();
-        let h5 = create_and_publish_schema("5", did.clone(), schema_name.clone(), version.clone(), data.clone()).unwrap();
+        let h1 = create_and_publish_schema("1", did.clone(), schema_name.clone(), version.clone(), data.clone()).await.unwrap();
+        let h2 = create_and_publish_schema("2", did.clone(), schema_name.clone(), version.clone(), data.clone()).await.unwrap();
+        let h3 = create_and_publish_schema("3", did.clone(), schema_name.clone(), version.clone(), data.clone()).await.unwrap();
+        let h4 = create_and_publish_schema("4", did.clone(), schema_name.clone(), version.clone(), data.clone()).await.unwrap();
+        let h5 = create_and_publish_schema("5", did.clone(), schema_name.clone(), version.clone(), data.clone()).await.unwrap();
 
         release_all();
 

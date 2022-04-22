@@ -1140,9 +1140,9 @@ pub mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_wallet_export_import() {
+    async fn test_wallet_export_import() {
         let _setup = SetupDefaults::init();
 
         let wallet_name = "test_wallet_import_export";
@@ -1159,7 +1159,7 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
-        create_and_open_as_main_wallet(&wallet_config).unwrap();
+        create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 
@@ -1172,8 +1172,8 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        close_main_wallet().unwrap();
-        delete_wallet(&wallet_config).unwrap();
+        close_main_wallet().await.unwrap();
+        delete_wallet(&wallet_config).await.unwrap();
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_config.wallet_name.clone(),
@@ -1190,6 +1190,6 @@ pub mod tests {
                                      Some(cb.get_callback())), error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
-        delete_wallet(&wallet_config).unwrap();
+        delete_wallet(&wallet_config).await.unwrap();
     }
 }

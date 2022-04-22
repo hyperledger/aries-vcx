@@ -215,8 +215,8 @@ pub mod tests {
         (serde_json::to_string(&revoc_details).unwrap(), tails_file)
     }
 
-    pub fn prepare_create_cred_def_data(revoc: bool) -> (u32, String, String, String, Option<String>) {
-        let schema_handle = schema::tests::create_schema_real();
+    pub async fn prepare_create_cred_def_data(revoc: bool) -> (u32, String, String, String, Option<String>) {
+        let schema_handle = schema::tests::create_schema_real().await;
         sleep(Duration::from_secs(2));
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -224,26 +224,26 @@ pub mod tests {
         (schema_handle, schema_id, did, revocation_details, tails_file)
     }
 
-    pub fn create_cred_def_real(revoc: bool) -> (u32, u32) {
-        let (schema_handle, schema_id, did, revocation_details, tails_file) = prepare_create_cred_def_data(revoc);
+    pub async fn create_cred_def_real(revoc: bool) -> (u32, u32) {
+        let (schema_handle, schema_id, did, revocation_details, tails_file) = prepare_create_cred_def_data(revoc).await;
         sleep(Duration::from_secs(2));
         let cred_def_handle = create_and_store("1".to_string(),
                                                schema_id,
                                                did,
                                                "tag_1".to_string(),
-                                               revocation_details).unwrap();
-        publish(cred_def_handle, tails_file).unwrap();
+                                               revocation_details).await.unwrap();
+        publish(cred_def_handle, tails_file).await.unwrap();
 
         (schema_handle, cred_def_handle)
     }
 
-    pub fn create_cred_def_fake() -> u32 {
-        let handle = create_cred_def_fake_unpublished();
-        publish(handle, Some("dummy.org".to_string())).unwrap();
+    pub async fn create_cred_def_fake() -> u32 {
+        let handle = create_cred_def_fake_unpublished().await;
+        publish(handle, Some("dummy.org".to_string())).await.unwrap();
         handle
     }
 
-    pub fn create_cred_def_fake_unpublished() -> u32 {
+    pub async fn create_cred_def_fake_unpublished() -> u32 {
         let revocation_details = RevocationDetailsBuilder::default()
             .support_revocation(true)
             .tails_dir(get_temp_dir_path("tails.txt").to_str().unwrap())
@@ -256,7 +256,7 @@ pub mod tests {
                                       SCHEMA_ID.to_string(),
                                       ISSUER_DID.to_string(),
                                       "tag".to_string(),
-                                      revocation_details).unwrap();
+                                      revocation_details).await.unwrap();
         handle
     }
 
@@ -265,21 +265,21 @@ pub mod tests {
     async fn test_create_cred_def_without_rev_will_have_no_rev_id() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (_, handle) = create_cred_def_real(false);
+        let (_, handle) = create_cred_def_real(false).await;
         let rev_reg_id = get_rev_reg_id(handle).ok();
         assert!(rev_reg_id.is_none());
 
-        let (_, handle) = create_cred_def_real(true);
+        let (_, handle) = create_cred_def_real(true).await;
         let rev_reg_id = get_rev_reg_id(handle).ok();
         assert!(rev_reg_id.is_some());
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn test_create_cred_def() {
+    #[tokio::test]
+    async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
 
-        let (_, _) = create_cred_def_real(false);
+        let (_, _) = create_cred_def_real(false).await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -287,7 +287,7 @@ pub mod tests {
     async fn test_create_revocable_fails_with_no_tails_file() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()
@@ -301,8 +301,8 @@ pub mod tests {
                                       schema_id,
                                       did,
                                       "tag_1".to_string(),
-                                      revocation_details).unwrap();
-        let rc = publish(handle, None);
+                                      revocation_details).await.unwrap();
+        let rc = publish(handle, None).await;
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidOption);
     }
 
@@ -311,7 +311,7 @@ pub mod tests {
     async fn test_tails_url_written_to_ledger() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()
@@ -338,7 +338,7 @@ pub mod tests {
     async fn test_create_revocable_cred_def() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()
@@ -366,7 +366,7 @@ pub mod tests {
     async fn test_create_credential_def_real() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (_, handle) = create_cred_def_real(false);
+        let (_, handle) = create_cred_def_real(false).await;
 
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
@@ -378,39 +378,39 @@ pub mod tests {
     async fn test_create_credential_works_twice() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (_, schema_id, did, revocation_details, _) = prepare_create_cred_def_data(false);
+        let (_, schema_id, did, revocation_details, _) = prepare_create_cred_def_data(false).await;
         create_and_store("1".to_string(),
                          schema_id.clone(),
                          did.clone(),
                          "tag_1".to_string(),
-                         revocation_details.to_string()).unwrap();
+                         revocation_details.to_string()).await.unwrap();
 
         sleep(Duration::from_secs(1));
         let _err = create_and_store("1".to_string(),
                                     schema_id.clone(),
                                     did.clone(),
                                     "tag_1".to_string(),
-                                    revocation_details.to_string()).unwrap();
+                                    revocation_details.to_string()).await.unwrap();
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn test_to_string_succeeds() {
+    #[tokio::test]
+    async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_cred_def_fake();
+        let handle = create_cred_def_fake().await;
 
         let credential_string = to_string(handle).unwrap();
         let credential_values: serde_json::Value = serde_json::from_str(&credential_string).unwrap();
         assert_eq!(credential_values["version"].clone(), "1.0");
     }
 
-    #[test]
     #[cfg(feature = "general_test")]
-    fn test_from_string_succeeds() {
+    #[tokio::test]
+    async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_cred_def_fake();
+        let handle = create_cred_def_fake().await;
         let credentialdef_data = to_string(handle).unwrap();
         assert!(!credentialdef_data.is_empty());
         release(handle).unwrap();
@@ -425,16 +425,16 @@ pub mod tests {
         assert_eq!(CredentialDef::from_string("{}").unwrap_err().kind(), aries_vcx::error::VcxErrorKind::CreateCredDef);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_release_all() {
+    async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h2 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h3 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h4 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
-        let h5 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let h1 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let h2 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let h3 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let h4 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let h5 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);

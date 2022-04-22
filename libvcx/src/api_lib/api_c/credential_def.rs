@@ -553,10 +553,10 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_create_credentialdef_fails() {
-        let _setup = SetupLibraryWallet::init();
+    async fn test_vcx_create_credentialdef_fails() {
+        let _setup = SetupLibraryWallet::init().await;
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(vcx_credentialdef_create_and_store(cb.command_handle,
