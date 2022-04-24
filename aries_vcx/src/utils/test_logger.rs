@@ -21,11 +21,23 @@ use crate::chrono::Local;
 pub struct LibvcxDefaultLogger;
 
 fn standard_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args())
+    writeln!(buf, "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",
+             Local::now().format("%Y-%m-%d %H:%M.%S.%f"),
+             record.level(),
+             record.target(),
+             record.file().get_or_insert(""),
+             record.line().get_or_insert(0),
+             record.args()
+    )
 }
 
 fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",message:\"{}\"}}", Local::now().format("%Y-%m-%d %H:%M.%S"), record.level(), record.file().get_or_insert(""), record.args())
+    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",\"message\":\"{}\"}}",
+             Local::now().format("%Y-%m-%d %H:%M:%S.%f"),
+             record.level(),
+             record.file().get_or_insert(""),
+             record.args()
+    )
 }
 
 impl LibvcxDefaultLogger {
