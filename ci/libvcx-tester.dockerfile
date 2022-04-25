@@ -43,7 +43,7 @@ RUN apk add --no-cache \
         npm \
         make \
         openssl-dev \
-        python2 \
+        python3 \
         zeromq-dev
 RUN npm install -g npm@8.7.0
 
