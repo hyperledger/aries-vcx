@@ -45,6 +45,7 @@ RUN apk add --no-cache \
         openssl-dev \
         python2 \
         zeromq-dev
+RUN npm install -g npm@8.7.0
 
 USER node
 
@@ -56,5 +57,3 @@ ENV PATH="/home/node/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 RUN mkdir -p /home/node/.cargo/registry
 COPY --from=builder /home/indy/.cargo/registry /home/node/.cargo/registry
 RUN chown -R node:node /home/node/.cargo/registry
-
-RUN npm install -g npm@8.7.0
