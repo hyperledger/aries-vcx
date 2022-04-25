@@ -8,6 +8,7 @@ use std::env;
 use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
+use chrono::format::{DelayedFormat, StrftimeItems};
 
 pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
 use aries_vcx::libindy;
@@ -134,12 +135,33 @@ impl log::Log for LibvcxLogger {
 //WARN	Designates potentially harmful situations.
 pub struct LibvcxDefaultLogger;
 
-fn standard_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args())
+
+fn _get_timestamp<'a>() -> DelayedFormat<StrftimeItems<'a>> {
+    Local::now().format("%Y-%m-%d %H:%M:%S.%f")
 }
 
-fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",message:\"{}\"}}", Local::now().format("%Y-%m-%d %H:%M.%S"), record.level(), record.file().get_or_insert(""), record.args())
+fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    let level = buf.default_styled_level(record.level());
+    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
+             _get_timestamp(),
+             level,
+             record.target(),
+             record.file().get_or_insert(""),
+             record.line().get_or_insert(0),
+             record.args()
+    )
+}
+
+fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    let level = record.level();
+    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
+             _get_timestamp(),
+             level,
+             record.target(),
+             record.file().get_or_insert(""),
+             record.line().get_or_insert(0),
+             record.args()
+    )
 }
 
 impl LibvcxDefaultLogger {
@@ -168,10 +190,10 @@ impl LibvcxDefaultLogger {
         } else {
             let formatter = match env::var("RUST_LOG_FORMATTER") {
                 Ok(val) => match val.as_str() {
-                    "json" => json_format,
-                    _ => standard_format
+                    "text_no_color" => text_no_color_format,
+                    _ => text_format
                 }
-                _ => standard_format
+                _ => text_format
             };
             EnvLoggerBuilder::new()
                 .format(formatter)
