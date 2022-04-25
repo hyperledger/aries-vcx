@@ -50,15 +50,6 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
     )
 }
 
-fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",\"message\":\"{}\"}}",
-             _get_timestamp(),
-             record.level(),
-             record.file().get_or_insert(""),
-             record.args()
-    )
-}
-
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
         trace!("LibvcxDefaultLogger::init_testing_logger >>>");
@@ -92,7 +83,6 @@ impl LibvcxDefaultLogger {
         } else {
             let formatter = match env::var("RUST_LOG_FORMATTER") {
                 Ok(val) => match val.as_str() {
-                    "json" => json_format,
                     "text_no_color" => text_no_color_format,
                     _ => text_format
                 }

@@ -142,7 +142,7 @@ fn _get_timestamp<'a>() -> DelayedFormat<StrftimeItems<'a>> {
 
 fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let level = buf.default_styled_level(record.level());
-    writeln!(buf, "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",
+    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
              _get_timestamp(),
              level,
              record.target(),
@@ -154,21 +154,12 @@ fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
 
 fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let level = record.level();
-    writeln!(buf, "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",
+    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
              _get_timestamp(),
              level,
              record.target(),
              record.file().get_or_insert(""),
              record.line().get_or_insert(0),
-             record.args()
-    )
-}
-
-fn json_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
-    writeln!(buf, "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"filename\":\"{}\",\"message\":\"{}\"}}",
-             _get_timestamp(),
-             record.level(),
-             record.file().get_or_insert(""),
              record.args()
     )
 }
@@ -199,7 +190,6 @@ impl LibvcxDefaultLogger {
         } else {
             let formatter = match env::var("RUST_LOG_FORMATTER") {
                 Ok(val) => match val.as_str() {
-                    "json" => json_format,
                     "text_no_color" => text_no_color_format,
                     _ => text_format
                 }
