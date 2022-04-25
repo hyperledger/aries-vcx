@@ -32,19 +32,14 @@ RUN echo '@alpine38 http://dl-cdn.alpinelinux.org/alpine/v3.8/main' >> /etc/apk/
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
-        bash \
-        curl \
         g++ \
         gcc \
-        git \
         libsodium-dev \
         libzmq \
         nodejs \
         npm \
         make \
-        openssl-dev \
-        python2 \
-        zeromq-dev
+        python3
 
 USER node
 
