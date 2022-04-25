@@ -182,6 +182,29 @@ export async function endorseTransaction(transaction: string): Promise<void> {
   }
 }
 
+export async function rotateVerkey(did: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_endorse_transaction(0, did, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
 export async function downloadAllMessages({ status, uids, pwdids }: IConnectionDownloadAllMessages): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(

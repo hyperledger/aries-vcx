@@ -435,6 +435,37 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
+                                did: *const c_char,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_rotate_verkey >>>");
+
+    check_useful_c_str!(did, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::signus::rotate_verkey(&did).await {
+            Ok(()) => {
+                trace!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                error!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
 #[cfg(test)]
 mod tests {
     use std::ffi::CString;

@@ -135,6 +135,12 @@ pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &st
         .await
 }
 
+pub async fn libindy_build_nym_request(submitter_did: &str, target_did: &str, verkey: Option<&str>, data: Option<&str>, role: Option<&str>) -> VcxResult<String> {
+    ledger::build_nym_request(submitter_did, target_did, verkey, data, role)
+        .map_err(VcxError::from)
+        .await
+}
+
 pub mod auth_rule {
     use std::sync::Mutex;
     use std::sync::Once;
@@ -507,8 +513,6 @@ mod test {
     #[tokio::test]
     async fn test_endorse_transaction() {
         let _setup = SetupWithWalletAndAgency::init().await;
-
-        use crate::libindy::utils::ledger::add_new_did;
 
         let (author_did, _) = add_new_did(None).await;
         let (endorser_did, _) = add_new_did(Some("ENDORSER")).await;
