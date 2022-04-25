@@ -22,10 +22,10 @@ pub struct PublicAgent {
 
 impl PublicAgent {
     pub async fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
-        let pairwise_info = PairwiseInfo::create()?;
+        let pairwise_info = PairwiseInfo::create().await?;
         let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let service = FullService::try_from((&pairwise_info, &agent_info))?;
-        add_service(&institution_did, &service)?;
+        add_service(&institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })

@@ -31,7 +31,7 @@ impl OutOfBandReceiver {
         self.oob.id.0.clone()
     }
 
-    pub fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+    pub async fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
@@ -42,7 +42,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection))
                             }
                         };
-                        if did_doc.resolve_service()? == service.resolve()? {
+                        if did_doc.resolve_service()? == service.resolve().await? {
                             return Ok(Some(connection))
                         };
                     }

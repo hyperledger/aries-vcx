@@ -301,7 +301,7 @@ impl SmConnectionInviter {
                     &bootstrap_pairwise_info,
                     &new_pairwise_info,
                     new_routing_keys,
-                    new_service_endpoint) {
+                    new_service_endpoint).await {
                     Ok(signed_response) => {
                         InviterFullState::Requested((request, signed_response.clone()).into())
                     }
@@ -517,7 +517,7 @@ impl SmConnectionInviter {
         self.thread_id.clone()
     }
 
-    fn build_response(
+    async fn build_response(
         &self,
         request: &Request,
         bootstrap_pairwise_info: &PairwiseInfo,
@@ -534,6 +534,7 @@ impl SmConnectionInviter {
             .ask_for_ack()
             .set_thread_id(&request.get_thread_id())
             .encode(&bootstrap_pairwise_info.pw_vk)
+            .await
     }
 }
 
@@ -559,8 +560,8 @@ pub mod test {
             VcxResult::Ok(())
         }
 
-        pub fn inviter_sm() -> SmConnectionInviter {
-            let pairwise_info = PairwiseInfo::create().unwrap();
+        pub async fn inviter_sm() -> SmConnectionInviter {
+            let pairwise_info = PairwiseInfo::create().await.unwrap();
             SmConnectionInviter::new(&source_id(), pairwise_info)
         }
 
@@ -577,7 +578,7 @@ pub mod test {
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint).unwrap();
 
-                let new_pairwise_info = PairwiseInfo::create().unwrap();
+                let new_pairwise_info = PairwiseInfo::create().await.unwrap();
                 let new_routing_keys: Vec<String> = vec!("verkey456".into());
                 let new_service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connection_request(_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint, _send_message).await.unwrap();
@@ -609,7 +610,7 @@ pub mod test {
                 let _setup = SetupMocks::init();
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
-                let mut inviter = inviter_sm();
+                let mut inviter = inviter_sm().await;
                 inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo { pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(), pw_vk: "verkey456".to_string() };
@@ -625,12 +626,12 @@ pub mod test {
         mod new {
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_inviter_new() {
+            async fn test_inviter_new() {
                 let _setup = SetupMocks::init();
 
-                let inviter_sm = inviter_sm();
+                let inviter_sm = inviter_sm().await;
 
                 assert_match!(InviterFullState::Initial(_), inviter_sm.state);
                 assert_eq!(source_id(), inviter_sm.source_id());
@@ -642,21 +643,21 @@ pub mod test {
 
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_init() {
+            async fn test_did_exchange_init() {
                 let _setup = SetupIndyMocks::init();
 
-                let did_exchange_sm = inviter_sm();
+                let did_exchange_sm = inviter_sm().await;
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
             }
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_connect_message_from_null_state() {
+            async fn test_did_exchange_handle_connect_message_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm();
+                let mut did_exchange_sm = inviter_sm().await;
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -670,7 +671,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_messages_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm();
+                let mut did_exchange_sm = inviter_sm().await;
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack(), _send_message).await.unwrap();
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
@@ -684,7 +685,7 @@ pub mod test {
             async fn test_did_exchange_handle_exchange_request_message_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_invited_state();
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
                 let new_pairwise_info = PairwiseInfo { pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(), pw_vk: "verkey456".to_string() };
                 let new_routing_keys: Vec<String> = vec!("AC3Gx1RoAz8iYVcfY47gjJ".into());
@@ -699,7 +700,7 @@ pub mod test {
             async fn test_did_exchange_handle_invalid_exchange_request_message_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_invited_state();
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
                 let mut request = _request();
                 request.connection.did_doc = DidDoc::default();
@@ -712,12 +713,12 @@ pub mod test {
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
             }
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_did_exchange_handle_problem_report_message_from_invited_state() {
+            async fn test_did_exchange_handle_problem_report_message_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_invited_state();
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
@@ -729,7 +730,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_message_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_invited_state();
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -745,7 +746,7 @@ pub mod test {
             async fn test_did_exchange_handle_ack_message_from_responded_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_responded_state().await;
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack(), _send_message).await.unwrap();
 
@@ -757,7 +758,7 @@ pub mod test {
             async fn test_did_exchange_handle_ping_message_from_responded_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_responded_state().await;
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm.handle_ping(_ping(), _send_message).await.unwrap();
 
@@ -769,7 +770,7 @@ pub mod test {
             async fn test_did_exchange_handle_problem_report_message_from_responded_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_responded_state().await;
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
 
@@ -781,7 +782,7 @@ pub mod test {
             async fn test_did_exchange_handle_other_messages_from_responded_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_responded_state().await;
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 let routing_keys: Vec<String> = vec!("verkey123".into());
                 let service_endpoint = String::from("https://example.org/agent");
@@ -795,7 +796,7 @@ pub mod test {
             async fn test_did_exchange_handle_messages_from_completed_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let mut did_exchange_sm = inviter_sm().to_inviter_completed_state().await;
+                let mut did_exchange_sm = inviter_sm().await.to_inviter_completed_state().await;
 
                 // Send Ping
                 did_exchange_sm = did_exchange_sm.handle_send_ping(None, _send_message).await.unwrap();
@@ -841,12 +842,12 @@ pub mod test {
 
             use super::*;
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_find_message_to_handle_from_null_state() {
+            async fn test_find_message_to_handle_from_null_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = inviter_sm();
+                let connection = inviter_sm().await;
 
                 // No messages
                 {
@@ -862,12 +863,12 @@ pub mod test {
                 }
             }
 
-            #[test]
+            #[tokio::test]
             #[cfg(feature = "general_test")]
-            fn test_find_message_to_handle_from_invited_state() {
+            async fn test_find_message_to_handle_from_invited_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = inviter_sm().to_inviter_invited_state();
+                let connection = inviter_sm().await.to_inviter_invited_state();
 
                 // Connection Request
                 {
@@ -911,7 +912,7 @@ pub mod test {
             async fn test_find_message_to_handle_from_responded_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = inviter_sm().to_inviter_responded_state().await;
+                let connection = inviter_sm().await.to_inviter_responded_state().await;
 
                 // Ping
                 {
@@ -967,7 +968,7 @@ pub mod test {
             async fn test_find_message_to_handle_from_completed_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let connection = inviter_sm().to_inviter_completed_state().await;
+                let connection = inviter_sm().await.to_inviter_completed_state().await;
 
                 // Ping
                 {
@@ -1035,10 +1036,10 @@ pub mod test {
             async fn test_get_state() {
                 let _setup = SetupMocks::init();
 
-                assert_eq!(InviterState::Initial, inviter_sm().get_state());
-                assert_eq!(InviterState::Invited, inviter_sm().to_inviter_invited_state().get_state());
-                assert_eq!(InviterState::Responded, inviter_sm().to_inviter_responded_state().await.get_state());
-                assert_eq!(InviterState::Completed, inviter_sm().to_inviter_completed_state().await.get_state());
+                assert_eq!(InviterState::Initial, inviter_sm().await.get_state());
+                assert_eq!(InviterState::Invited, inviter_sm().await.to_inviter_invited_state().get_state());
+                assert_eq!(InviterState::Responded, inviter_sm().await.to_inviter_responded_state().await.get_state());
+                assert_eq!(InviterState::Completed, inviter_sm().await.to_inviter_completed_state().await.get_state());
             }
         }
     }

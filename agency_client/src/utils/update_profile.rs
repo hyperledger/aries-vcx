@@ -74,14 +74,14 @@ impl UpdateProfileDataBuilder {
 
         AgencyMock::set_next_response(constants::UPDATE_PROFILE_RESPONSE.to_vec());
 
-        let data = self.prepare_request()?;
+        let data = self.prepare_request().await?;
 
         let response = post_to_agency(&data).await?;
 
-        self.parse_response(response)
+        self.parse_response(response).await
     }
 
-    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateConfigs(
                 UpdateConfigs {
@@ -93,11 +93,11 @@ impl UpdateProfileDataBuilder {
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did)
+        prepare_message_for_agency(&message, &agency_did).await
     }
 
-    fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<()> {
-        let mut response = parse_response_from_agency(&response)?;
+    async fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<()> {
+        let mut response = parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConfigsResponse(_)) => Ok(()),
@@ -114,9 +114,9 @@ mod tests {
     use crate::utils::test_utils::SetupMocks;
     use crate::utils::update_profile::UpdateProfileDataBuilder;
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_update_data_post() {
+    async fn test_update_data_post() {
         let _setup = SetupMocks::init();
 
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
@@ -125,14 +125,14 @@ mod tests {
         let _msg = update_data()
             .to(to_did).unwrap()
             .name(&name).unwrap()
-            .prepare_request().unwrap();
+            .prepare_request().await.unwrap();
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_parse_update_profile_response() {
+    async fn test_parse_update_profile_response() {
         let _setup = SetupMocks::init();
         AgencyMockDecrypted::set_next_decrypted_response(AGENCY_CONFIGS_UPDATED);
-        UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).unwrap();
+        UpdateProfileDataBuilder::create().parse_response(Vec::from("<something_ecrypted>")).await.unwrap();
     }
 }

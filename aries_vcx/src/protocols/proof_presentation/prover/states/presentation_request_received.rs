@@ -19,10 +19,10 @@ impl PresentationRequestReceived {
         Self { presentation_request }
     }
 
-    pub fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
+    pub async fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
         generate_indy_proof(credentials,
                             self_attested_attrs,
-                            &self.presentation_request.request_presentations_attach.content()?)
+                            &self.presentation_request.request_presentations_attach.content()?).await
     }
 }
 

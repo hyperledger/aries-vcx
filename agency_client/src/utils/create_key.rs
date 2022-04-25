@@ -64,14 +64,14 @@ impl CreateKeyBuilder {
             AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
-        let data = self.prepare_request()?;
+        let data = self.prepare_request().await?;
 
         let response = post_to_agency(&data).await?;
 
-        self.parse_response(&response)
+        self.parse_response(&response).await
     }
 
-    fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         trace!("CreateKeyBuilder::prepare_request >>>");
         let message = A2AMessage::Version2(
             A2AMessageV2::CreateKey(CreateKey {
@@ -83,11 +83,11 @@ impl CreateKeyBuilder {
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        prepare_message_for_agency(&message, &agency_did)
+        prepare_message_for_agency(&message, &agency_did).await
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
-        let mut response = parse_response_from_agency(response)?;
+    async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
+        let mut response = parse_response_from_agency(response).await?;
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
             _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse))
@@ -115,27 +115,27 @@ mod tests {
             .for_verkey(for_verkey).unwrap();
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_create_key_set_values_and_serialize() {
+    async fn test_create_key_set_values_and_serialize() {
         let _setup = SetupMocks::init();
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         let my_vk = "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9";
         let bytes = CreateKeyBuilder::create()
             .for_did(&to_did).unwrap()
             .for_verkey(&my_vk).unwrap()
-            .prepare_request().unwrap();
+            .prepare_request().await.unwrap();
         assert!(bytes.len() > 0);
     }
 
-    #[test]
+    #[async_std::test]
     #[cfg(feature = "general_test")]
-    fn test_parse_create_keys_v2_response() {
+    async fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
 
         let mut builder = CreateKeyBuilder::create();
 
-        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).unwrap();
+        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).await.unwrap();
 
         assert_eq!(for_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(for_verkey, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");

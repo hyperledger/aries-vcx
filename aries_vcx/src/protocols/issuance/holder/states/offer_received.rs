@@ -35,12 +35,12 @@ impl OfferReceivedState {
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub fn is_revokable(&self) -> VcxResult<bool> {
+    pub async fn is_revokable(&self) -> VcxResult<bool> {
         let offer = self.offer.offers_attach.content()
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to get credential offer attachment content: {}", err)))?;
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to parse credential definition id from credential offer: {}", err)))?;
-        is_cred_def_revokable(&cred_def_id)
+        is_cred_def_revokable(&cred_def_id).await
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {

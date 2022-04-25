@@ -88,7 +88,7 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub fn build_credential_offer_msg(handle: u32,
+pub async fn build_credential_offer_msg(handle: u32,
                                         cred_def_handle: u32,
                                         credential_json: &str,
                                         comment: Option<&str>) -> VcxResult<()> {
@@ -102,7 +102,7 @@ pub fn build_credential_offer_msg(handle: u32,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
-    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string()))?;
+    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)
 }
 
@@ -130,7 +130,7 @@ pub async fn send_credential_offer(handle: u32,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
     };
-    credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string()))?;
+    credential.build_credential_offer_msg(offer_info, comment.map(|s| s.to_string())).await?;
     let send_message = connection::send_message_closure(connection_handle)?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
@@ -156,17 +156,15 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     Ok(error::SUCCESS.code_num)
 }
 
-pub fn revoke_credential(handle: u32) -> VcxResult<()> {
+pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.revoke_credential(true).map_err(|err| err.into())
-    })
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    credential.revoke_credential(true).await.map_err(|err| err.into())
 }
 
-pub fn revoke_credential_local(handle: u32) -> VcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        credential.revoke_credential(false).map_err(|err| err.into())
-    })
+pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
+    let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    credential.revoke_credential(false).await.map_err(|err| err.into())
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
@@ -224,12 +222,12 @@ pub mod tests {
 
     use super::*;
 
-    pub fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
+    pub async fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let tag = "test_tag";
         let config = "{support_revocation: false}";
 
-        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).unwrap();
+        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).await.unwrap();
     }
 
     fn _issuer_credential_create() -> u32 {
@@ -268,7 +266,7 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -281,7 +279,7 @@ pub mod tests {
 
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake_unpublished(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake_unpublished().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -306,12 +304,12 @@ pub mod tests {
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let res = send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap_err();
+        let res = send_credential_offer(handle, create_cred_def_fake().await, connection_handle, _cred_json(), None).await.unwrap_err();
         assert_eq!(res.kind(), VcxErrorKind::InvalidState);
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        assert_eq!(send_credential_offer(handle, create_cred_def_fake(), connection_handle, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle, create_cred_def_fake().await, connection_handle, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -343,7 +341,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         issuer_credential::update_state(handle_cred, Some(ARIES_CREDENTIAL_REQUEST), handle_conn).await.unwrap();
@@ -358,7 +356,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
 
-        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake(), handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer(handle_cred, create_cred_def_fake().await, handle_conn, _cred_json(), None).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message

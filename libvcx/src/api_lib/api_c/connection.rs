@@ -885,7 +885,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
     trace!("vcx_connection_sign_data: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}",
            connection_handle, data_raw, data_len);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let vk = match connection::get_pw_verkey(connection_handle) {
             Ok(err) => err,
             Err(err) => {
@@ -896,7 +896,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
             }
         };
 
-        match libindy::utils::crypto::sign(&vk, &data_raw) {
+        match libindy::utils::crypto::sign(&vk, &data_raw).await {
             Ok(err) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, err);
@@ -913,7 +913,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -965,7 +965,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}",
            connection_handle, data_raw, data_len, signature_raw, signature_len);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let vk = match connection::get_their_pw_verkey(connection_handle) {
             Ok(err) => err,
             Err(err) => {
@@ -976,7 +976,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
             }
         };
 
-        match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw) {
+        match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!("vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -992,7 +992,7 @@ pub extern fn vcx_connection_verify_signature(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

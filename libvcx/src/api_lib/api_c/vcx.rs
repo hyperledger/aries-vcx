@@ -226,8 +226,8 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
         }
     };
 
-    execute(move || {
-        match open_main_pool(&pool_config) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match open_main_pool(&pool_config).await {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
@@ -240,7 +240,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
             }
         }
         Ok(())
-    });
+    }));
     error::SUCCESS.code_num
 }
 
@@ -267,12 +267,12 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match wallet::close_main_wallet() {
+    match futures::executor::block_on(wallet::close_main_wallet()) {
         Ok(()) => {}
         Err(_) => {}
     };
 
-    match pool::close() {
+    match futures::executor::block_on(pool::close()) {
         Ok(()) => {}
         Err(_) => {}
     };
@@ -296,7 +296,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         let wallet_key_derivation = settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
             .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
 
-        let _res = close_main_wallet();
+        let _res = futures::executor::block_on(close_main_wallet());
 
 
         let wallet_config = WalletConfig {
@@ -310,12 +310,12 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
             rekey_derivation_method: None,
         };
 
-        match wallet::delete_wallet(&wallet_config) {
+        match futures::executor::block_on(wallet::delete_wallet(&wallet_config)) {
             Ok(()) => (),
             Err(_) => (),
         };
 
-        match pool::delete(&pool_name) {
+        match futures::executor::block_on(pool::delete(&pool_name)) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -323,6 +323,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
 
     settings::clear_config();
     trace!("vcx_shutdown(delete: {})", delete);
+
     error::SUCCESS.code_num
 }
 
@@ -396,8 +397,8 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
     trace!("vcx_get_ledger_author_agreement(command_handle: {})",
            command_handle);
 
-    execute(move || {
-        match ledger::libindy_get_txn_author_agreement() {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
+        match ledger::libindy_get_txn_author_agreement().await {
             Ok(err) => {
                 trace!("vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -414,7 +415,7 @@ pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }.boxed());
 
     error::SUCCESS.code_num
 }
@@ -571,8 +572,8 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_open_pool_fails_if_genesis_file_is_invalid() {
+    #[tokio::test]
+    async fn test_open_pool_fails_if_genesis_file_is_invalid() {
         let _setup = SetupDefaults::init();
         let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
@@ -585,7 +586,7 @@ mod tests {
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
         assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
 
-        delete_named_test_pool(&pool_name);
+        delete_named_test_pool(&pool_name).await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -601,12 +602,12 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_vcx_init_called_twice_passes_after_shutdown() {
+    #[tokio::test]
+    async fn test_vcx_init_called_twice_passes_after_shutdown() {
         for _ in 0..2 {
             let _setup_defaults = SetupDefaults::init();
-            let setup_wallet = SetupWallet::init().skip_cleanup();
-            let setup_pool = SetupPoolConfig::init().skip_cleanup();
+            let setup_wallet = SetupWallet::init().await.skip_cleanup();
+            let setup_pool = SetupPoolConfig::init().await.skip_cleanup();
 
             _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
@@ -620,14 +621,14 @@ mod tests {
     }
 
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_open_wallet_of_imported_wallet_succeeds() {
+    async fn test_open_wallet_of_imported_wallet_succeeds() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
 
-        wallet::delete_wallet(&wallet_config).unwrap();
+        wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),
@@ -636,7 +637,7 @@ mod tests {
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
             wallet_key_derivation: Some(settings::WALLET_KDF_RAW.into()),
         };
-        import(&import_config).unwrap();
+        import(&import_config).await.unwrap();
 
         let content = json!({
             "wallet_name": &wallet_name,
@@ -650,14 +651,14 @@ mod tests {
         vcx_shutdown(true);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_open_wallet_with_wrong_name_fails() {
+    async fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, _wallet_name, wallet_config) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, _wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
 
-        wallet::delete_wallet(&wallet_config).unwrap();
+        wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
         let wallet_config = WalletConfig {
@@ -678,7 +679,7 @@ mod tests {
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
             wallet_key_derivation: Some(wallet_config.wallet_key_derivation.clone()),
         };
-        import(&import_config).unwrap();
+        import(&import_config).await.unwrap();
 
         let content = json!({
             "wallet_name": "different_wallet_name",
@@ -690,15 +691,15 @@ mod tests {
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(&wallet_config).unwrap();
+        wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_import_of_opened_wallet_fails() {
+    async fn test_import_of_opened_wallet_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup();
+        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&serde_json::to_string(&wallet_config).unwrap()).unwrap();
@@ -710,7 +711,7 @@ mod tests {
             backup_key: settings::DEFAULT_WALLET_BACKUP_KEY.to_string(),
             wallet_key_derivation: None,
         };
-        assert_eq!(import(&import_config).unwrap_err().kind(), aries_vcx::error::VcxErrorKind::DuplicationWallet);
+        assert_eq!(import(&import_config).await.unwrap_err().kind(), aries_vcx::error::VcxErrorKind::DuplicationWallet);
 
         vcx_shutdown(true);
     }
@@ -739,10 +740,10 @@ mod tests {
 
         let data = r#"["name","male"]"#;
         let connection = connection::tests::build_test_connection_inviter_invited().await;
-        let credentialdef = credential_def::create_and_store("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), "{}".to_string()).unwrap();
+        let credentialdef = credential_def::create_and_store("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
-        let schema = schema::create_and_publish_schema("5", "VsKV7grR1BUE29mG2Fm2kX".to_string(), "name".to_string(), "0.1".to_string(), data.to_string()).unwrap();
+        let schema = schema::create_and_publish_schema("5", "VsKV7grR1BUE29mG2Fm2kX".to_string(), "name".to_string(), "0.1".to_string(), data.to_string()).await.unwrap();
         let disclosed_proof = disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER).unwrap();
 
@@ -898,23 +899,23 @@ mod tests {
         assert!(cb.receive(TimeoutUtils::some_medium()).unwrap() > 0);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_open_pool() {
+    async fn test_open_pool() {
         let _setup = SetupEmpty::init();
 
         let genesis_path = create_tmp_genesis_txn_file();
         let config = PoolConfig { genesis_path, pool_name: None, pool_config: None };
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
-        delete_test_pool();
+        delete_test_pool().await;
         settings::set_testing_defaults();
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_open_wallet() {
-        let setup: SetupWallet = SetupWallet::init();
+    async fn test_open_wallet() {
+        let setup: SetupWallet = SetupWallet::init().await;
 
         let cb = return_types_u32::Return_U32_I32::new().unwrap();
         let rc = vcx_open_main_wallet(cb.command_handle, CString::new(json!(setup.wallet_config).to_string()).unwrap().into_raw(), Some(cb.get_callback()));
@@ -927,11 +928,11 @@ mod tests {
     }
 
     #[cfg(feature = "pool_tests")]
-    #[test]
-    fn test_full_init() {
+    #[tokio::test]
+    async fn test_full_init() {
         let _setup_defaults = SetupDefaults::init();
-        let setup_wallet = SetupWallet::init();
-        let setup_pool = SetupPoolConfig::init();
+        let setup_wallet = SetupWallet::init().await;
+        let setup_pool = SetupPoolConfig::init().await;
 
         _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
@@ -940,11 +941,11 @@ mod tests {
     }
 
     #[cfg(feature = "agency_tests")]
-    #[test]
-    fn test_provision_cloud_agent() {
+    #[tokio::test]
+    async fn test_provision_cloud_agent() {
         let _setup_defaults = SetupDefaults::init();
-        let setup_wallet = SetupWallet::init();
-        let _setup_pool = SetupPoolConfig::init();
+        let setup_wallet = SetupWallet::init().await;
+        let _setup_pool = SetupPoolConfig::init().await;
 
         let config_wallet: &str = &json!(setup_wallet.wallet_config).to_string();
 
@@ -977,24 +978,24 @@ mod tests {
     }
 
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "pool_tests")]
-    fn test_init_composed() {
+    async fn test_init_composed() {
         let _setup = SetupEmpty::init();
-        let setup_wallet = SetupWallet::init();
+        let setup_wallet = SetupWallet::init().await;
 
         let genesis_path = create_tmp_genesis_txn_file();
 
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
-        configure_trustee_did();
+        configure_trustee_did().await;
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
-            create_and_store_credential_def(&attrs_list, true);
+            create_and_store_credential_def(&attrs_list, true).await;
         assert!(schema_id.len() > 0);
 
-        delete_test_pool();
+        delete_test_pool().await;
         settings::set_testing_defaults();
     }
 

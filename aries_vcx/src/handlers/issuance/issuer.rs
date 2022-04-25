@@ -71,9 +71,9 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
-    pub fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
+    pub async fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id)?;
+        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id).await?;
         let cred_offer_msg = CredentialOffer::create()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?
@@ -127,8 +127,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(publish)
+    pub async fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -222,14 +222,14 @@ pub mod test {
     }
 
     impl Issuer {
-        fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.build_credential_offer_msg(_offer_info_unrevokable(), None).unwrap();
+        async fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
+            self.build_credential_offer_msg(_offer_info_unrevokable(), None).await.unwrap();
             self.mark_credential_offer_msg_sent().unwrap();
             self
         }
 
         async fn to_request_received_state(mut self) -> Issuer {
-            self = self.to_offer_sent_state_unrevokable();
+            self = self.to_offer_sent_state_unrevokable().await;
             self.step(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
@@ -248,7 +248,7 @@ pub mod test {
         let _setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(true);
+        let revoc_result = issuer.revoke_credential(true).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 
@@ -275,7 +275,7 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -304,7 +304,7 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -315,7 +315,7 @@ pub mod test {
         issuer.step(msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).unwrap();
+        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -341,7 +341,7 @@ pub mod test {
     #[cfg(feature = "general_test")]
     async fn issuer_cant_send_offer_twice() {
         let _setup = SetupMocks::init();
-        let mut issuer = _issuer().to_offer_sent_state_unrevokable();
+        let mut issuer = _issuer().to_offer_sent_state_unrevokable().await;
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
         let res = issuer.send_credential_offer(_send_message_but_fail().unwrap()).await;

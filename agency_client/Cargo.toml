@@ -10,6 +10,7 @@ general_test = ["test_utils"]
 to_restore = []
 
 [dependencies]
+async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 lazy_static = "1.3"
@@ -20,11 +21,11 @@ reqwest = "0.11.10"
 regex = "1.1.0"
 rmp-serde = "0.13.7"
 rust-base58 = "0.0.4"
-indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee" }
-futures = "0.1.23"
+indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d" }
+futures = "0.3.21"
 url = "1.5.1"
 failure = "0.1.6"
-async-std = "1.10.0"
+async-std = "1.11.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

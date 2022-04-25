@@ -22,6 +22,7 @@ warnlog_fetched_messages = []
 mysql_test = ["test_utils", "sqlx", "tokio/rt", "tokio/macros"]
 
 [dependencies]
+async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 chrono = "0.4.19"
@@ -39,8 +40,8 @@ rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 num-traits = "0.2.0"
-indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee" }
-indy-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "edb569001fbd8db75bb8d3c0ffdfc8ddaed457ee" }
+indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d" }
+indy-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d" }
 futures = "0.3.15"
 libloading = "0.5.0"
 uuid = {version = "0.8", default-features = false, features = ["v4"]}

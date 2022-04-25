@@ -19,10 +19,10 @@ pub enum ServiceResolvable {
 }
 
 impl ServiceResolvable {
-    pub fn resolve(&self) -> VcxResult<FullService> {
+    pub async fn resolve(&self) -> VcxResult<FullService> {
         match self {
             ServiceResolvable::FullService(full_service) => Ok(full_service.clone()),
-            ServiceResolvable::Did(did) => ledger::get_service(&did)
+            ServiceResolvable::Did(did) => ledger::get_service(&did).await
         }
     }
 }
