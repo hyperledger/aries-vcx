@@ -12,6 +12,7 @@ const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
 const { getStorageInfoMysql } = require('./wallet-common')
+const sleep = require('sleep-promise')
 
 const tailsDir = '/tmp/tails'
 
@@ -46,6 +47,7 @@ async function runFaber (options) {
     }
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await sleep(500)
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({
       supportRevocation: true,
       tailsDir,
