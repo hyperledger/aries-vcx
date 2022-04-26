@@ -205,9 +205,9 @@ export async function rotateVerkey(did: string): Promise<void> {
   }
 }
 
-export async function getVerkeyFromWallet(did: string): Promise<void> {
+export async function getVerkeyFromWallet(did: string): Promise<string> {
   try {
-    return await createFFICallbackPromise<void>(
+    return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_get_verkey_from_wallet(0, did, cb);
         if (rc) {
@@ -215,12 +215,12 @@ export async function getVerkeyFromWallet(did: string): Promise<void> {
         }
       },
       (resolve, reject) =>
-        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+        Callback('void', ['uint32', 'uint32', 'string'], (xhandle: number, err: number, vk: string) => {
           if (err) {
             reject(err);
             return;
           }
-          resolve();
+          resolve(vk);
         }),
     );
   } catch (err) {
@@ -228,9 +228,9 @@ export async function getVerkeyFromWallet(did: string): Promise<void> {
   }
 }
 
-export async function getVerkeyFromLedger(did: string): Promise<void> {
+export async function getVerkeyFromLedger(did: string): Promise<string> {
   try {
-    return await createFFICallbackPromise<void>(
+    return await createFFICallbackPromise<string>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_get_verkey_from_ledger(0, did, cb);
         if (rc) {
@@ -238,12 +238,12 @@ export async function getVerkeyFromLedger(did: string): Promise<void> {
         }
       },
       (resolve, reject) =>
-        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+        Callback('void', ['uint32', 'uint32', 'string'], (xhandle: number, err: number, vk: string) => {
           if (err) {
             reject(err);
             return;
           }
-          resolve();
+          resolve(vk);
         }),
     );
   } catch (err) {

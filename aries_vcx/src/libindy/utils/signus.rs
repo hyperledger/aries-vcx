@@ -97,7 +97,7 @@ mod test {
         let (did, verkey) = ledger::add_new_did(None).await;
         rotate_verkey(&did).await.unwrap();
         let local_verkey = get_verkey_from_wallet(&did).await.unwrap();
-        let ledger_verkey = get_verkey_from_ledger(&did).await;
+        let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
     }
